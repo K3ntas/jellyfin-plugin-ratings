@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Ratings Plugin</title>
+</head>
+<body>
+    <div id="ratingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="ratingsConfigForm">
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Ratings Plugin Configuration</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableRatings" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Ratings</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Enable or disable the rating functionality for all users.
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
+                            <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
+                            <div class="fieldDescription">Minimum rating value (default: 1)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtMaxRating">Maximum Rating</label>
+                            <input id="txtMaxRating" type="number" is="emby-input" min="1" max="10" step="1" />
+                            <div class="fieldDescription">Maximum rating value (default: 10)</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowGuestRatings" type="checkbox" is="emby-checkbox" />
+                                <span>Allow Guest Ratings</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Allow guest users to rate items.
+                            </div>
+                        </div>
+
+                        <div>
+                            <button is="emby-button" type="submit" class="raised button-submit block">
+                                <span>Save</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var RatingsConfig = {
+                pluginId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
+            };
+
+            document.querySelector('#ratingsConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
+                    document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
+                    document.querySelector('#txtMinRating').value = config.MinRating;
+                    document.querySelector('#txtMaxRating').value = config.MaxRating;
+                    document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            document.querySelector('#ratingsConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+
+                ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
+                    config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
+                    config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
+                    config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
+                    config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
+
+                    ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
