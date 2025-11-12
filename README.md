@@ -26,7 +26,9 @@ The plugin adds a rating component to all media detail pages with:
 
 ## Installation
 
-### From Repository (Recommended)
+### Step 1: Install the Plugin
+
+#### From Repository (Recommended)
 
 1. Open Jellyfin Dashboard
 2. Go to **Plugins** → **Repositories**
@@ -39,7 +41,7 @@ The plugin adds a rating component to all media detail pages with:
 6. Click **Install**
 7. Restart Jellyfin
 
-### Manual Installation
+#### Manual Installation
 
 1. Download the latest release DLL from [GitHub Releases](https://github.com/K3ntas/jellyfin-plugin-ratings/releases)
 2. Place it in your Jellyfin plugins folder:
@@ -47,6 +49,21 @@ The plugin adds a rating component to all media detail pages with:
    - **Linux**: `/var/lib/jellyfin/plugins/Ratings_1.0.0.0/Jellyfin.Plugin.Ratings.dll`
    - **Docker**: `/config/plugins/Ratings_1.0.0.0/Jellyfin.Plugin.Ratings.dll`
 3. Restart Jellyfin
+
+### Step 2: Enable the Rating UI ⚠️ REQUIRED!
+
+After installing the plugin, you **MUST** enable the rating UI by adding a script loader to Jellyfin's Custom CSS:
+
+1. Go to **Dashboard** → **General**
+2. Scroll down to find the **Custom CSS** field
+3. Add this line at the **very top** of the Custom CSS field:
+   ```html
+   </style><script src="/web/ConfigurationPage?name=ratings.js"></script><style>
+   ```
+4. Click **Save**
+5. **Hard refresh your browser**: Press `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+
+The rating stars should now appear on all media detail pages! If you don't see them, check the browser console (F12) for errors.
 
 ## Building from Source
 
