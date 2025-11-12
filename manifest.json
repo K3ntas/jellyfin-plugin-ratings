@@ -12,7 +12,9 @@
         "version": "1.0.0.0",
         "changelog": "Initial release with 1-10 star rating system, hover popup with usernames, rating statistics, and configuration page.",
         "targetAbi": "10.11.0.0",
-        "timestamp": "2025-11-12T00:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.0.0/jellyfin-plugin-ratings_1.0.0.0.zip",
+        "checksum": "6965b77c0a746db4d2c6b682b174b194",
+        "timestamp": "2025-11-12T00:47:00Z"
       }
     ]
   }
