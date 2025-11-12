@@ -1,7 +1,7 @@
 # Jellyfin Ratings Plugin
 
-[![GitHub release](https://img.shields.io/github/v/release/jellyfinratings/jellyfin-plugin-ratings)](https://github.com/jellyfinratings/jellyfin-plugin-ratings/releases)
-[![License](https://img.shields.io/github/license/jellyfinratings/jellyfin-plugin-ratings)](https://github.com/jellyfinratings/jellyfin-plugin-ratings/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/K3ntas/jellyfin-plugin-ratings)](https://github.com/K3ntas/jellyfin-plugin-ratings/releases)
+[![License](https://img.shields.io/github/license/K3ntas/jellyfin-plugin-ratings)](https://github.com/K3ntas/jellyfin-plugin-ratings/blob/main/LICENSE)
 [![Jellyfin Version](https://img.shields.io/badge/Jellyfin-10.11.0-blue)](https://jellyfin.org)
 
 A comprehensive rating plugin for Jellyfin 10.11.0 that allows users to rate movies, series, episodes, music, and any other media with a 1-10 star rating system.
@@ -32,7 +32,7 @@ The plugin adds a rating component to all media detail pages with:
 2. Go to **Plugins** → **Repositories**
 3. Add this repository URL:
    ```
-   https://raw.githubusercontent.com/jellyfinratings/jellyfin-plugin-ratings/main/manifest.json
+   https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/manifest.json
    ```
 4. Go to **Catalog**
 5. Find **Ratings** plugin
@@ -41,7 +41,7 @@ The plugin adds a rating component to all media detail pages with:
 
 ### Manual Installation
 
-1. Download the latest release DLL from [GitHub Releases](https://github.com/jellyfinratings/jellyfin-plugin-ratings/releases)
+1. Download the latest release DLL from [GitHub Releases](https://github.com/K3ntas/jellyfin-plugin-ratings/releases)
 2. Place it in your Jellyfin plugins folder:
    - **Windows**: `%AppData%\Jellyfin\Server\plugins\Ratings_1.0.0.0\Jellyfin.Plugin.Ratings.dll`
    - **Linux**: `/var/lib/jellyfin/plugins/Ratings_1.0.0.0/Jellyfin.Plugin.Ratings.dll`
@@ -59,7 +59,7 @@ The plugin adds a rating component to all media detail pages with:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/jellyfinratings/jellyfin-plugin-ratings.git
+   git clone https://github.com/K3ntas/jellyfin-plugin-ratings.git
    cd jellyfin-plugin-ratings
    ```
 
@@ -208,15 +208,15 @@ This plugin is released under the MIT License. See LICENSE file for details.
 ## Support
 
 For issues, questions, or feature requests, please:
-- Open an issue on [GitHub Issues](https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues)
-- Check [existing issues](https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues) for solutions
+- Open an issue on [GitHub Issues](https://github.com/K3ntas/jellyfin-plugin-ratings/issues)
+- Check [existing issues](https://github.com/K3ntas/jellyfin-plugin-ratings/issues) for solutions
 - Provide Jellyfin version and plugin version when reporting bugs
 
 ## Repository
 
-- **GitHub**: https://github.com/jellyfinratings/jellyfin-plugin-ratings
-- **Manifest**: https://raw.githubusercontent.com/jellyfinratings/jellyfin-plugin-ratings/main/manifest.json
-- **Releases**: https://github.com/jellyfinratings/jellyfin-plugin-ratings/releases
+- **GitHub**: https://github.com/K3ntas/jellyfin-plugin-ratings
+- **Manifest**: https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/manifest.json
+- **Releases**: https://github.com/K3ntas/jellyfin-plugin-ratings/releases
 
 ## Changelog
 
