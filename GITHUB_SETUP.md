@@ -16,7 +16,7 @@ Your Jellyfin Ratings Plugin is ready to be pushed to GitHub!
 After creating the repository, run these commands:
 
 ```bash
-cd /c/Users/karol/Desktop/jellyfinratings
+cd /c/Users/karol/Desktop/K3ntas
 
 # Add GitHub as remote (replace YOUR_USERNAME with your actual GitHub username)
 git remote add origin https://github.com/YOUR_USERNAME/jellyfin-plugin-ratings.git
@@ -39,7 +39,7 @@ git push -u origin master
 
 ## Step 4: Update Repository URLs
 
-If you're using a different username than "jellyfinratings", you'll need to update URLs in:
+If you're using a different username than "K3ntas", you'll need to update URLs in:
 
 1. **README.md** - Update all GitHub links
 2. **manifest.json** - Update sourceUrl and imageUrl
@@ -47,7 +47,7 @@ If you're using a different username than "jellyfinratings", you'll need to upda
 4. **PROJECT_SUMMARY.md** - Update repository link
 
 Use Find & Replace:
-- Find: `jellyfinratings`
+- Find: `K3ntas`
 - Replace: `YOUR_USERNAME`
 
 ## Step 5: Create First Release

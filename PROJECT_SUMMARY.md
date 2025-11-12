@@ -1,7 +1,7 @@
 # Jellyfin Ratings Plugin - Project Summary
 
-**Repository**: https://github.com/jellyfinratings/jellyfin-plugin-ratings
-**Manifest**: https://raw.githubusercontent.com/jellyfinratings/jellyfin-plugin-ratings/main/manifest.json
+**Repository**: https://github.com/K3ntas/jellyfin-plugin-ratings
+**Manifest**: https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/manifest.json
 
 ## Overview
 
@@ -24,7 +24,7 @@ A complete, production-ready Jellyfin 10.11.0 plugin that enables users to rate 
 ## Project Structure
 
 ```
-jellyfinratings/
+K3ntas/
 ├── Api/
 │   └── RatingsController.cs          # REST API endpoints (5 endpoints)
 │

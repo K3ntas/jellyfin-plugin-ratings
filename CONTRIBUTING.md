@@ -4,15 +4,15 @@ Thank you for considering contributing to the Jellyfin Ratings Plugin! This docu
 
 ## Repository
 
-- **GitHub**: https://github.com/jellyfinratings/jellyfin-plugin-ratings
-- **Issues**: https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues
-- **Pull Requests**: https://github.com/jellyfinratings/jellyfin-plugin-ratings/pulls
+- **GitHub**: https://github.com/K3ntas/jellyfin-plugin-ratings
+- **Issues**: https://github.com/K3ntas/jellyfin-plugin-ratings/issues
+- **Pull Requests**: https://github.com/K3ntas/jellyfin-plugin-ratings/pulls
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-1. Check [existing issues](https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues) to avoid duplicates
+1. Check [existing issues](https://github.com/K3ntas/jellyfin-plugin-ratings/issues) to avoid duplicates
 2. Create a new issue with:
    - Clear, descriptive title
    - Jellyfin version
@@ -23,7 +23,7 @@ Thank you for considering contributing to the Jellyfin Ratings Plugin! This docu
 
 ### Suggesting Features
 
-1. Check [existing issues](https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues) for similar suggestions
+1. Check [existing issues](https://github.com/K3ntas/jellyfin-plugin-ratings/issues) for similar suggestions
 2. Create a new issue with:
    - Clear description of the feature
    - Use case and benefits
@@ -41,7 +41,7 @@ Thank you for considering contributing to the Jellyfin Ratings Plugin! This docu
    ```
 3. Add upstream remote:
    ```bash
-   git remote add upstream https://github.com/jellyfinratings/jellyfin-plugin-ratings.git
+   git remote add upstream https://github.com/K3ntas/jellyfin-plugin-ratings.git
    ```
 4. Install .NET 8.0 SDK
 5. Build the project:
@@ -149,8 +149,8 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/jellyfinratings/jellyfin-plugin-ratings/discussions)
-- Create an [Issue](https://github.com/jellyfinratings/jellyfin-plugin-ratings/issues)
+- Open a [Discussion](https://github.com/K3ntas/jellyfin-plugin-ratings/discussions)
+- Create an [Issue](https://github.com/K3ntas/jellyfin-plugin-ratings/issues)
 - Check the [README](README.md) for documentation
 
 ## Thank You!
