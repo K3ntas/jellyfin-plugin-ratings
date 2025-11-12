@@ -233,6 +233,38 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        /// <summary>
+        /// Serves the ratings.js file.
+        /// </summary>
+        /// <returns>The JavaScript file content.</returns>
+        [HttpGet("ratings.js")]
+        [AllowAnonymous]
+        [Produces("application/javascript")]
+        public ActionResult GetRatingsScript()
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
+
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    return NotFound($"Resource {resourceName} not found");
+                }
+
+                using var reader = new System.IO.StreamReader(stream);
+                var content = reader.ReadToEnd();
+
+                return Content(content, "application/javascript");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to serve ratings.js");
+                return StatusCode(500, $"Error loading script: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
