@@ -12,7 +12,7 @@ namespace Jellyfin.Plugin.Ratings
         /// <inheritdoc />
         public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
         {
-            serviceCollection.AddSingleton<StartupService>();
+            serviceCollection.AddHostedService<JavaScriptInjectionService>();
         }
     }
 }
