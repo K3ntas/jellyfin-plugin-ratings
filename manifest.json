@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.8.0",
+        "changelog": "FIXED: Correct Custom CSS URL for Docker/Synology. Use: </style><script src=\"/web/configurationpage?name=ratings.js\"></script><style>",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.8.0/jellyfin-plugin-ratings_1.0.8.0.zip",
+        "checksum": "813eb248650ec9efbffcbdf5fbbb5c3e",
+        "timestamp": "2025-11-16T01:30:00Z"
+      },
+      {
         "version": "1.0.7.0",
         "changelog": "DEBUG VERSION: Added extensive logging to diagnose injection issues. Check logs for RATINGS PLUGIN messages. For Docker: Use Custom CSS with /web/configurationpage?name=ratings.js",
         "targetAbi": "10.11.0.0",
