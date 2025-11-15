@@ -26,6 +26,7 @@ namespace Jellyfin.Plugin.Ratings
         {
             _logger = logger;
             _appPaths = appPaths;
+            _logger.LogWarning("==================== RATINGS PLUGIN: JavaScriptInjectionService CONSTRUCTOR CALLED ====================");
         }
 
         /// <summary>
@@ -35,22 +36,25 @@ namespace Jellyfin.Plugin.Ratings
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            _logger.LogWarning("==================== RATINGS PLUGIN: StartAsync CALLED ====================");
+            _logger.LogWarning("WebPath: {WebPath}", _appPaths.WebPath);
+
             return Task.Run(() =>
             {
                 try
                 {
-                    _logger.LogInformation("Ratings plugin JavaScript injection service started.");
+                    _logger.LogWarning("Ratings plugin JavaScript injection service started - RUNNING NOW");
 
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
                     CleanupOldInjection();
                     InjectRatingsScript();
-                    _logger.LogInformation("Ratings plugin JavaScript injection completed successfully.");
+                    _logger.LogWarning("==================== RATINGS PLUGIN: INJECTION COMPLETED ====================");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to inject ratings plugin JavaScript.");
+                    _logger.LogError(ex, "==================== RATINGS PLUGIN: INJECTION FAILED ====================");
                 }
             }, cancellationToken);
         }
