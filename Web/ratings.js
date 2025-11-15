@@ -282,17 +282,37 @@
                 </div>
             `;
 
-            // Insert after the title or at the beginning
-            const titleElement = detailPageContent.querySelector('.detailPagePrimaryTitle') ||
-                                detailPageContent.querySelector('h1') ||
-                                detailPageContent.firstChild;
+            // Find better insertion point - look for specific Jellyfin elements
+            let insertionPoint = null;
 
-            if (titleElement && titleElement.nextSibling) {
-                detailPageContent.insertBefore(container, titleElement.nextSibling);
-            } else if (detailPageContent.firstChild) {
-                detailPageContent.insertBefore(container, detailPageContent.firstChild);
+            // Try to find the overview section or similar elements
+            const overview = detailPageContent.querySelector('.overview') ||
+                           detailPageContent.querySelector('.itemOverview') ||
+                           detailPageContent.querySelector('[class*="overview"]');
+
+            if (overview) {
+                // Insert before the overview
+                insertionPoint = overview;
+                console.log('[Ratings Plugin] Inserting before overview');
             } else {
-                detailPageContent.appendChild(container);
+                // Try to find any section that contains movie details
+                const detailSections = detailPageContent.querySelectorAll('.detailSection, .itemDetails, [class*="detail"]');
+                if (detailSections.length > 0) {
+                    insertionPoint = detailSections[0];
+                    console.log('[Ratings Plugin] Inserting before first detail section');
+                }
+            }
+
+            if (insertionPoint) {
+                detailPageContent.insertBefore(container, insertionPoint);
+            } else {
+                // Fallback to appending at beginning
+                if (detailPageContent.firstChild) {
+                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                } else {
+                    detailPageContent.appendChild(container);
+                }
+                console.log('[Ratings Plugin] Using fallback insertion');
             }
 
             this.attachEventListeners(itemId);
@@ -410,24 +430,58 @@
         submitRating: function (itemId, rating) {
             const self = this;
 
-            ApiClient.fetch({
-                type: 'POST',
-                url: ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`),
-                dataType: 'json'
+            console.log('[Ratings Plugin] Submitting rating:', rating, 'for item:', itemId);
+
+            // Use native fetch with proper headers
+            const url = ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': ApiClient.authenticationInfo || ApiClient._authenticationInfo || this.getAuthHeader()
+                }
+            }).then(response => {
+                console.log('[Ratings Plugin] Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json().catch(() => ({})); // Handle empty response
             }).then(() => {
-                console.log('[Ratings Plugin] Rating submitted:', rating);
+                console.log('[Ratings Plugin] Rating submitted successfully:', rating);
                 self.loadRatings(itemId);
 
                 // Show notification
-                if (window.Dashboard && Dashboard.alert) {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(`Rated ${rating}/10`);
+                    });
+                } else if (window.Dashboard && Dashboard.alert) {
                     Dashboard.alert(`You rated this ${rating}/10`);
                 }
             }).catch(err => {
                 console.error('[Ratings Plugin] Error submitting rating:', err);
-                if (window.Dashboard && Dashboard.alert) {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error submitting rating. Please try again.');
+                    });
+                } else if (window.Dashboard && Dashboard.alert) {
                     Dashboard.alert('Error submitting rating. Please try again.');
                 }
             });
+        },
+
+        /**
+         * Get authentication header
+         */
+        getAuthHeader: function() {
+            if (window.ApiClient) {
+                const auth = ApiClient._authenticationInfo || ApiClient.authenticationInfo;
+                if (auth && auth.Token) {
+                    return `MediaBrowser Client="${auth.Client}", Device="${auth.Device}", DeviceId="${auth.DeviceId}", Version="${auth.Version}", Token="${auth.Token}"`;
+                }
+            }
+            return '';
         },
 
         /**
