@@ -235,12 +235,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Test endpoint to verify plugin is loaded.
+        /// </summary>
+        /// <returns>Test message.</returns>
+        [HttpGet("test")]
+        [AllowAnonymous]
+        public ActionResult GetTest()
+        {
+            return Ok(new { message = "Ratings plugin is loaded!", version = "1.0.8.0" });
+        }
+
+        /// <summary>
         /// Serves the ratings.js file.
         /// </summary>
         /// <returns>The JavaScript file content.</returns>
         [HttpGet("ratings.js")]
         [AllowAnonymous]
-        [Produces("application/javascript")]
         public ActionResult GetRatingsScript()
         {
             try
@@ -248,21 +258,30 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
 
+                _logger.LogInformation("Attempting to load embedded resource: {ResourceName}", resourceName);
+
+                // List all available resources for debugging
+                var allResources = assembly.GetManifestResourceNames();
+                _logger.LogInformation("Available resources: {Resources}", string.Join(", ", allResources));
+
                 using var stream = assembly.GetManifestResourceStream(resourceName);
                 if (stream == null)
                 {
-                    return NotFound($"Resource {resourceName} not found");
+                    _logger.LogError("Resource {ResourceName} not found in assembly", resourceName);
+                    return Content($"// ERROR: Resource {resourceName} not found\n// Available resources: {string.Join(", ", allResources)}", "application/javascript");
                 }
 
                 using var reader = new System.IO.StreamReader(stream);
                 var content = reader.ReadToEnd();
+
+                _logger.LogInformation("Successfully loaded ratings.js, {Length} characters", content.Length);
 
                 return Content(content, "application/javascript");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to serve ratings.js");
-                return StatusCode(500, $"Error loading script: {ex.Message}");
+                return Content($"// ERROR: {ex.Message}\n// Stack: {ex.StackTrace}", "application/javascript");
             }
         }
     }
