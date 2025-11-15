@@ -201,10 +201,47 @@
          * Get item ID from URL
          */
         getItemIdFromUrl: function () {
-            const match = window.location.pathname.match(/\/item\?id=([a-f0-9-]+)/i) ||
-                         window.location.pathname.match(/\/details\?id=([a-f0-9-]+)/i) ||
-                         window.location.hash.match(/\/item\?id=([a-f0-9-]+)/i);
-            return match ? match[1] : null;
+            // Try multiple URL patterns
+            const url = window.location.href;
+            const pathname = window.location.pathname;
+            const hash = window.location.hash;
+            const search = window.location.search;
+
+            console.log('[Ratings Plugin] Checking URL for item ID...');
+            console.log('[Ratings Plugin] Full URL:', url);
+            console.log('[Ratings Plugin] Hash:', hash);
+            console.log('[Ratings Plugin] Search:', search);
+
+            // Pattern 1: Hash-based routing (#!/details?id=...)
+            let match = hash.match(/[?&]id=([a-f0-9]+)/i);
+            if (match) {
+                console.log('[Ratings Plugin] Found item ID in hash:', match[1]);
+                return match[1];
+            }
+
+            // Pattern 2: Query string (?id=...)
+            match = search.match(/[?&]id=([a-f0-9]+)/i);
+            if (match) {
+                console.log('[Ratings Plugin] Found item ID in search:', match[1]);
+                return match[1];
+            }
+
+            // Pattern 3: Path-based (/item/id or /details/id)
+            match = pathname.match(/\/(?:item|details)\/([a-f0-9]+)/i);
+            if (match) {
+                console.log('[Ratings Plugin] Found item ID in path:', match[1]);
+                return match[1];
+            }
+
+            // Pattern 4: Anywhere in URL
+            match = url.match(/id=([a-f0-9]{32})/i);
+            if (match) {
+                console.log('[Ratings Plugin] Found item ID in full URL:', match[1]);
+                return match[1];
+            }
+
+            console.log('[Ratings Plugin] No item ID found in URL');
+            return null;
         },
 
         /**
@@ -437,11 +474,25 @@
     };
 
     // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => RatingsPlugin.init());
-    } else {
+    console.log('[Ratings Plugin] Script loaded, readyState:', document.readyState);
+
+    function initPlugin() {
+        console.log('[Ratings Plugin] Attempting initialization...');
+        console.log('[Ratings Plugin] Current URL:', window.location.href);
+        console.log('[Ratings Plugin] Current pathname:', window.location.pathname);
+        console.log('[Ratings Plugin] Current hash:', window.location.hash);
         RatingsPlugin.init();
     }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPlugin);
+    } else {
+        // Try immediate init
+        initPlugin();
+    }
+
+    // Also try after a delay to ensure Jellyfin is fully loaded
+    setTimeout(initPlugin, 2000);
 
     // Make it globally available
     window.RatingsPlugin = RatingsPlugin;
