@@ -385,8 +385,46 @@
             const self = this;
             const statsElement = document.getElementById('ratingsPluginStats');
 
-            ApiClient.getJSON(ApiClient.getUrl(`Ratings/Items/${itemId}/Stats`))
+            console.log('[Ratings Plugin] Loading ratings for item:', itemId);
+
+            // Build URL with authentication
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
+
+            // Get deviceId from localStorage or generate one
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            // Build proper X-Emby-Authorization header
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            console.log('[Ratings Plugin] Fetching stats with authentication');
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(stats => {
+                    console.log('[Ratings Plugin] Loaded stats:', stats);
+                    console.log('[Ratings Plugin] UserRating from stats:', stats.UserRating);
                     self.updateStarDisplay(stats.UserRating || 0);
 
                     let statsHtml = '';
@@ -415,13 +453,18 @@
          * Update star display
          */
         updateStarDisplay: function (rating) {
+            console.log('[Ratings Plugin] updateStarDisplay called with rating:', rating);
             const stars = document.querySelectorAll('.ratings-plugin-star');
+            console.log('[Ratings Plugin] Found', stars.length, 'stars');
+
             stars.forEach((star, index) => {
                 star.classList.remove('filled', 'hover');
                 if (index < rating) {
                     star.classList.add('filled');
+                    console.log('[Ratings Plugin] Filled star', index + 1);
                 }
             });
+            console.log('[Ratings Plugin] Star display updated - filled', rating, 'stars');
         },
 
         /**

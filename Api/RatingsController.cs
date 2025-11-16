@@ -157,8 +157,40 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound($"Item {itemId} not found");
                 }
 
+                // Try to get user from authentication
                 var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        _logger.LogInformation("GetStats - Auth header: {Header}", authHeader);
+
+                        // Extract token from header
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            _logger.LogInformation("GetStats - Extracted token: {Token}", token.Substring(0, Math.Min(10, token.Length)) + "...");
+
+                            // Get session by authentication token
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                                _logger.LogInformation("GetStats - Found user from session: {UserId}", userId);
+                            }
+                        }
+                    }
+                }
+
                 var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null);
+                _logger.LogInformation("GetStats - Returning stats for item {ItemId}, userId: {UserId}, UserRating: {UserRating}", itemId, userId, stats.UserRating);
 
                 return Ok(stats);
             }
