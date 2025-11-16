@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.15.0",
+        "changelog": "Fixed authentication by using ApiClient.fetch() method for automatic credential handling. Resolves HTTP 401 errors during rating submissions.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.15.0/jellyfin-plugin-ratings_1.0.15.0.zip",
+        "checksum": "f6c1194fdba80c57c70cc5171990d0b7",
+        "timestamp": "2025-11-16T03:45:00Z"
+      },
+      {
         "version": "1.0.14.0",
         "changelog": "Corrected authentication implementation using X-Emby-Token header with ApiClient.accessToken() method. Resolves persistent HTTP 401 errors.",
         "targetAbi": "10.11.0.0",
