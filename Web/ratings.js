@@ -204,22 +204,24 @@
         waitForElementAndInject: function (itemId) {
             const self = this;
             let attempts = 0;
-            const maxAttempts = 20; // Try for 10 seconds max
+            const maxAttempts = 60; // Try for 3 minutes max (every 3 seconds)
 
             const checkInterval = setInterval(() => {
                 attempts++;
 
-                // Check if the target elements exist
-                const detailPageContent = document.querySelector('.detailPageContent');
-                const detailLogo = detailPageContent?.querySelector('.detailLogo');
-                const castContent = detailPageContent?.querySelector('#castContent');
+                // Check if the infoWrapper and itemMiscInfo elements exist
+                const infoWrapper = document.querySelector('.infoWrapper');
+                const itemMiscInfo = infoWrapper?.querySelector('.itemMiscInfo-primary');
 
-                // If we found key elements OR reached max attempts, inject
-                if ((detailPageContent && (detailLogo || castContent)) || attempts >= maxAttempts) {
+                // If we found the elements, inject
+                if (infoWrapper && itemMiscInfo) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
+                } else if (attempts >= maxAttempts) {
+                    // Give up after max attempts
+                    clearInterval(checkInterval);
                 }
-            }, 500);
+            }, 3000); // Check every 3 seconds
         },
 
         /**
@@ -297,50 +299,16 @@
                 </div>
             `;
 
-            // Priority 1: Insert right after itemMiscInfo-primary (year, rating, score)
-            const itemMiscInfo = detailPageContent.querySelector('.itemMiscInfo-primary') ||
-                               detailPageContent.querySelector('.itemMiscInfo');
+            // Insert inside infoWrapper, right after itemMiscInfo-primary
+            const infoWrapper = detailPageContent.querySelector('.infoWrapper');
+            const itemMiscInfo = infoWrapper?.querySelector('.itemMiscInfo-primary');
 
-            let inserted = false;
-
-            // Try to insert after itemMiscInfo
             if (itemMiscInfo) {
-                // Insert right after the itemMiscInfo element
-                if (itemMiscInfo.nextSibling) {
-                    itemMiscInfo.parentNode.insertBefore(container, itemMiscInfo.nextSibling);
-                    inserted = true;
-                } else {
-                    // No next sibling, append to parent
-                    itemMiscInfo.parentNode.appendChild(container);
-                    inserted = true;
-                }
-            }
-
-            // Priority 2: Try infoWrapper as fallback
-            if (!inserted) {
-                const infoWrapper = detailPageContent.querySelector('.infoWrapper');
-                if (infoWrapper) {
-                    infoWrapper.appendChild(container);
-                    inserted = true;
-                }
-            }
-
-            // Priority 3: Try detailRibbon as fallback
-            if (!inserted) {
-                const detailRibbon = detailPageContent.querySelector('.detailRibbon');
-                if (detailRibbon) {
-                    detailRibbon.appendChild(container);
-                    inserted = true;
-                }
-            }
-
-            // Default fallback - insert at the top if not inserted yet
-            if (!inserted) {
-                if (detailPageContent.firstChild) {
-                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
-                } else {
-                    detailPageContent.appendChild(container);
-                }
+                // Use insertAdjacentElement to insert immediately after itemMiscInfo
+                itemMiscInfo.insertAdjacentElement('afterend', container);
+            } else {
+                // Fallback: insert at beginning of detailPageContent
+                detailPageContent.insertBefore(container, detailPageContent.firstChild);
             }
 
             this.attachEventListeners(itemId);
