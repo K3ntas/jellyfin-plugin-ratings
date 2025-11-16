@@ -271,13 +271,32 @@
             `;
 
             // Try to find the best position, but always show it somewhere
+            // Priority 1: After detailLogo (movie/series logo)
+            const detailLogo = detailPageContent.querySelector('.detailLogo');
+
+            // Priority 2: After itemMiscInfo (year, rating, score)
             const itemMiscInfo = detailPageContent.querySelector('.itemMiscInfo') ||
                                detailPageContent.querySelector('.itemMiscInfo-primary');
 
             let inserted = false;
 
-            // Try to insert after itemMiscInfo if found
-            if (itemMiscInfo) {
+            // Try to insert after detailLogo first
+            if (detailLogo && !inserted) {
+                if (detailLogo.nextSibling) {
+                    detailLogo.parentNode.insertBefore(container, detailLogo.nextSibling);
+                    inserted = true;
+                } else {
+                    // Try inserting after parent
+                    const parent = detailLogo.parentElement;
+                    if (parent && parent.nextSibling) {
+                        parent.parentNode.insertBefore(container, parent.nextSibling);
+                        inserted = true;
+                    }
+                }
+            }
+
+            // Try to insert after itemMiscInfo if detailLogo not found
+            if (itemMiscInfo && !inserted) {
                 if (itemMiscInfo.nextSibling) {
                     itemMiscInfo.parentNode.insertBefore(container, itemMiscInfo.nextSibling);
                     inserted = true;
