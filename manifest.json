@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.26.0",
+        "changelog": "Improved rating table positioning. Now displays after metadata section (Tags, IMDb, TMDB, Genres, Directors, Writers, Studios) for better visual hierarchy.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.26.0/jellyfin-plugin-ratings_1.0.26.0.zip",
+        "checksum": "c26adabea5a4aabda081b76f293d873d",
+        "timestamp": "2025-11-16T11:45:00Z"
+      },
+      {
         "version": "1.0.25.0",
         "changelog": "Fixed star persistence after page reload. Added authentication to GetStats endpoint so it returns UserRating correctly. Stars now remain highlighted at saved rating value.",
         "targetAbi": "10.11.0.0",
