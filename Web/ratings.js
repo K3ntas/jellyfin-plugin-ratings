@@ -12,7 +12,6 @@
          * Initialize the ratings plugin
          */
         init: function () {
-            console.log('[Ratings Plugin] Initializing...');
             this.injectStyles();
             this.observeDetailPages();
         },
@@ -282,37 +281,40 @@
                 </div>
             `;
 
-            // Find better insertion point - look for specific Jellyfin elements
-            let insertionPoint = null;
+            // Find metadata section (Tags, IMDb, Studios, etc.) to insert after
+            const metadataFields = detailPageContent.querySelectorAll('.detailSection, .flex, [class*="field"]');
+            let lastMetadataElement = null;
 
-            // Try to find the overview section or similar elements
-            const overview = detailPageContent.querySelector('.overview') ||
-                           detailPageContent.querySelector('.itemOverview') ||
-                           detailPageContent.querySelector('[class*="overview"]');
-
-            if (overview) {
-                // Insert before the overview
-                insertionPoint = overview;
-                console.log('[Ratings Plugin] Inserting before overview');
-            } else {
-                // Try to find any section that contains movie details
-                const detailSections = detailPageContent.querySelectorAll('.detailSection, .itemDetails, [class*="detail"]');
-                if (detailSections.length > 0) {
-                    insertionPoint = detailSections[0];
-                    console.log('[Ratings Plugin] Inserting before first detail section');
+            // Find the last metadata field (usually Studios, Writers, etc.)
+            for (let i = 0; i < metadataFields.length; i++) {
+                const elem = metadataFields[i];
+                const text = elem.textContent || '';
+                if (text.includes('Tags:') || text.includes('IMDb') || text.includes('TMDB') ||
+                    text.includes('Genres') || text.includes('Director') || text.includes('Writers') ||
+                    text.includes('Studios') || elem.querySelector('a[href*="imdb"]') || elem.querySelector('a[href*="themoviedb"]')) {
+                    lastMetadataElement = elem;
                 }
             }
 
-            if (insertionPoint) {
-                detailPageContent.insertBefore(container, insertionPoint);
+            if (lastMetadataElement && lastMetadataElement.nextSibling) {
+                // Insert after the last metadata element
+                lastMetadataElement.parentNode.insertBefore(container, lastMetadataElement.nextSibling);
             } else {
-                // Fallback to appending at beginning
-                if (detailPageContent.firstChild) {
-                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                // Fallback: try to find overview and insert before it
+                const overview = detailPageContent.querySelector('.overview') ||
+                               detailPageContent.querySelector('.itemOverview') ||
+                               detailPageContent.querySelector('[class*="overview"]');
+
+                if (overview) {
+                    detailPageContent.insertBefore(container, overview);
                 } else {
-                    detailPageContent.appendChild(container);
+                    // Last resort: insert at the beginning
+                    if (detailPageContent.firstChild) {
+                        detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                    } else {
+                        detailPageContent.appendChild(container);
+                    }
                 }
-                console.log('[Ratings Plugin] Using fallback insertion');
             }
 
             this.attachEventListeners(itemId);
