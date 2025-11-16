@@ -430,58 +430,87 @@
         submitRating: function (itemId, rating) {
             const self = this;
 
-            console.log('[Ratings Plugin] Submitting rating:', rating, 'for item:', itemId);
+            console.log('========== [Ratings Plugin] START SUBMIT RATING ==========');
+            console.log('[Ratings Plugin] Step 1: Submitting rating:', rating, 'for item:', itemId);
 
             if (!window.ApiClient) {
-                console.error('[Ratings Plugin] ApiClient not available');
+                console.error('[Ratings Plugin] ERROR: ApiClient not available');
                 return;
             }
+            console.log('[Ratings Plugin] Step 2: ApiClient is available');
 
-            // Build URL without api_key - authentication goes in Authorization header only
+            // Gather all authentication info
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
             const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
 
-            console.log('[Ratings Plugin] Submitting to URL:', url);
+            console.log('[Ratings Plugin] Step 3: Authentication details:');
+            console.log('  - Base URL:', baseUrl);
+            console.log('  - Access Token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NULL');
+            console.log('  - Device ID:', deviceId);
+            console.log('  - Full URL:', url);
 
-            // Build proper MediaBrowser Authorization header (this is the ONLY authentication method)
-            const authHeader = `MediaBrowser Token="${accessToken}", Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient.deviceId()}", Version="10.11.0"`;
-            console.log('[Ratings Plugin] Authorization header:', authHeader);
+            // Build proper X-Emby-Authorization header (Jellyfin's dedicated auth header)
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+            console.log('[Ratings Plugin] Step 4: X-Emby-Authorization header built:', authHeader);
 
-            fetch(url, {
+            const requestOptions = {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': authHeader
+                    'X-Emby-Authorization': authHeader
                 }
-            }).then(function(response) {
-                console.log('[Ratings Plugin] Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
-                return response.text().then(function(text) {
-                    return text ? JSON.parse(text) : {};
+            };
+            console.log('[Ratings Plugin] Step 5: Request options:', JSON.stringify(requestOptions, null, 2));
+
+            console.log('[Ratings Plugin] Step 6: Sending fetch request...');
+            fetch(url, requestOptions)
+                .then(function(response) {
+                    console.log('[Ratings Plugin] Step 7: Response received');
+                    console.log('  - Status:', response.status);
+                    console.log('  - Status Text:', response.statusText);
+                    console.log('  - OK:', response.ok);
+                    console.log('  - Headers:', Array.from(response.headers.entries()));
+
+                    if (!response.ok) {
+                        return response.text().then(function(errorText) {
+                            console.error('[Ratings Plugin] Step 8: ERROR Response body:', errorText);
+                            throw new Error('HTTP ' + response.status + ': ' + errorText);
+                        });
+                    }
+                    console.log('[Ratings Plugin] Step 8: Response OK, parsing...');
+                    return response.text().then(function(text) {
+                        console.log('[Ratings Plugin] Step 9: Response text:', text);
+                        return text ? JSON.parse(text) : {};
+                    });
+                })
+                .then(function(data) {
+                    console.log('[Ratings Plugin] Step 10: SUCCESS! Data:', data);
+                    console.log('[Ratings Plugin] Rating submitted successfully:', rating);
+                    self.loadRatings(itemId);
+
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Rated ' + rating + '/10');
+                        });
+                    }
+                    console.log('========== [Ratings Plugin] END SUBMIT RATING (SUCCESS) ==========');
+                })
+                .catch(function(err) {
+                    console.error('========== [Ratings Plugin] ERROR SUBMITTING RATING ==========');
+                    console.error('[Ratings Plugin] Error object:', err);
+                    console.error('[Ratings Plugin] Error message:', err.message);
+                    console.error('[Ratings Plugin] Error stack:', err.stack);
+
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Error submitting rating: ' + err.message);
+                        });
+                    }
+                    console.error('========== [Ratings Plugin] END SUBMIT RATING (ERROR) ==========');
                 });
-            }).then(function(data) {
-                console.log('[Ratings Plugin] Rating submitted successfully:', rating);
-                self.loadRatings(itemId);
-
-                // Show notification
-                if (window.require) {
-                    require(['toast'], function(toast) {
-                        toast('Rated ' + rating + '/10');
-                    });
-                }
-            }).catch(function(err) {
-                console.error('[Ratings Plugin] Error submitting rating:', err);
-
-                if (window.require) {
-                    require(['toast'], function(toast) {
-                        toast('Error submitting rating');
-                    });
-                }
-            });
         },
 
         /**
