@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.31.0",
+        "changelog": "Improved positioning to appear after detailLogo (movie/series logo image) for better visual placement. Falls back to itemMiscInfo, then top of page.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.31.0/jellyfin-plugin-ratings_1.0.31.0.zip",
+        "checksum": "705bd09715083dcd12086da46be7dea5",
+        "timestamp": "2025-11-16T13:00:00Z"
+      },
+      {
         "version": "1.0.30.0",
         "changelog": "Fixed fallback positioning to show at top of page instead of bottom when itemMiscInfo not found.",
         "targetAbi": "10.11.0.0",
