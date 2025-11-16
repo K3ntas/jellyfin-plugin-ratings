@@ -191,7 +191,6 @@
         onPageChange: function () {
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
-                console.log('[Ratings Plugin] Item detected:', itemId);
                 setTimeout(() => this.injectRatingComponent(itemId), 500);
             }
         },
@@ -206,40 +205,31 @@
             const hash = window.location.hash;
             const search = window.location.search;
 
-            console.log('[Ratings Plugin] Checking URL for item ID...');
-            console.log('[Ratings Plugin] Full URL:', url);
-            console.log('[Ratings Plugin] Hash:', hash);
-            console.log('[Ratings Plugin] Search:', search);
 
             // Pattern 1: Hash-based routing (#!/details?id=...)
             let match = hash.match(/[?&]id=([a-f0-9]+)/i);
             if (match) {
-                console.log('[Ratings Plugin] Found item ID in hash:', match[1]);
                 return match[1];
             }
 
             // Pattern 2: Query string (?id=...)
             match = search.match(/[?&]id=([a-f0-9]+)/i);
             if (match) {
-                console.log('[Ratings Plugin] Found item ID in search:', match[1]);
                 return match[1];
             }
 
             // Pattern 3: Path-based (/item/id or /details/id)
             match = pathname.match(/\/(?:item|details)\/([a-f0-9]+)/i);
             if (match) {
-                console.log('[Ratings Plugin] Found item ID in path:', match[1]);
                 return match[1];
             }
 
             // Pattern 4: Anywhere in URL
             match = url.match(/id=([a-f0-9]{32})/i);
             if (match) {
-                console.log('[Ratings Plugin] Found item ID in full URL:', match[1]);
                 return match[1];
             }
 
-            console.log('[Ratings Plugin] No item ID found in URL');
             return null;
         },
 
@@ -257,7 +247,6 @@
                                      document.querySelector('.detailPage-content');
 
             if (!detailPageContent) {
-                console.log('[Ratings Plugin] Could not find detail page content');
                 return;
             }
 
@@ -281,39 +270,29 @@
                 </div>
             `;
 
-            // Find metadata section (Tags, IMDb, Studios, etc.) to insert after
-            const metadataFields = detailPageContent.querySelectorAll('.detailSection, .flex, [class*="field"]');
-            let lastMetadataElement = null;
+            // Find the title element to insert after it
+            const titleElement = detailPageContent.querySelector('h1') ||
+                               detailPageContent.querySelector('h2') ||
+                               detailPageContent.querySelector('.itemName') ||
+                               detailPageContent.querySelector('[class*="title"]');
 
-            // Find the last metadata field (usually Studios, Writers, etc.)
-            for (let i = 0; i < metadataFields.length; i++) {
-                const elem = metadataFields[i];
-                const text = elem.textContent || '';
-                if (text.includes('Tags:') || text.includes('IMDb') || text.includes('TMDB') ||
-                    text.includes('Genres') || text.includes('Director') || text.includes('Writers') ||
-                    text.includes('Studios') || elem.querySelector('a[href*="imdb"]') || elem.querySelector('a[href*="themoviedb"]')) {
-                    lastMetadataElement = elem;
-                }
-            }
-
-            if (lastMetadataElement && lastMetadataElement.nextSibling) {
-                // Insert after the last metadata element
-                lastMetadataElement.parentNode.insertBefore(container, lastMetadataElement.nextSibling);
-            } else {
-                // Fallback: try to find overview and insert before it
-                const overview = detailPageContent.querySelector('.overview') ||
-                               detailPageContent.querySelector('.itemOverview') ||
-                               detailPageContent.querySelector('[class*="overview"]');
-
-                if (overview) {
-                    detailPageContent.insertBefore(container, overview);
+            if (titleElement && titleElement.nextSibling) {
+                // Insert right after the title
+                titleElement.parentNode.insertBefore(container, titleElement.nextSibling);
+            } else if (titleElement) {
+                // If no next sibling, try to insert after the parent's next sibling
+                const parent = titleElement.parentElement;
+                if (parent && parent.nextSibling) {
+                    parent.parentNode.insertBefore(container, parent.nextSibling);
                 } else {
-                    // Last resort: insert at the beginning
-                    if (detailPageContent.firstChild) {
-                        detailPageContent.insertBefore(container, detailPageContent.firstChild);
-                    } else {
-                        detailPageContent.appendChild(container);
-                    }
+                    detailPageContent.appendChild(container);
+                }
+            } else {
+                // Fallback: insert at the beginning
+                if (detailPageContent.firstChild) {
+                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                } else {
+                    detailPageContent.appendChild(container);
                 }
             }
 
@@ -387,7 +366,6 @@
             const self = this;
             const statsElement = document.getElementById('ratingsPluginStats');
 
-            console.log('[Ratings Plugin] Loading ratings for item:', itemId);
 
             // Build URL with authentication
             const baseUrl = ApiClient.serverAddress();
@@ -408,7 +386,6 @@
             // Build proper X-Emby-Authorization header
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            console.log('[Ratings Plugin] Fetching stats with authentication');
 
             fetch(url, {
                 method: 'GET',
@@ -425,8 +402,6 @@
                     return response.json();
                 })
                 .then(stats => {
-                    console.log('[Ratings Plugin] Loaded stats:', stats);
-                    console.log('[Ratings Plugin] UserRating from stats:', stats.UserRating);
                     self.updateStarDisplay(stats.UserRating || 0);
 
                     let statsHtml = '';
@@ -444,7 +419,6 @@
                     }
                 })
                 .catch(err => {
-                    console.error('[Ratings Plugin] Error loading stats:', err);
                     if (statsElement) {
                         statsElement.innerHTML = 'Error loading ratings';
                     }
@@ -455,18 +429,14 @@
          * Update star display
          */
         updateStarDisplay: function (rating) {
-            console.log('[Ratings Plugin] updateStarDisplay called with rating:', rating);
             const stars = document.querySelectorAll('.ratings-plugin-star');
-            console.log('[Ratings Plugin] Found', stars.length, 'stars');
 
             stars.forEach((star, index) => {
                 star.classList.remove('filled', 'hover');
                 if (index < rating) {
                     star.classList.add('filled');
-                    console.log('[Ratings Plugin] Filled star', index + 1);
                 }
             });
-            console.log('[Ratings Plugin] Star display updated - filled', rating, 'stars');
         },
 
         /**
@@ -475,14 +445,10 @@
         submitRating: function (itemId, rating) {
             const self = this;
 
-            console.log('========== [Ratings Plugin] START SUBMIT RATING ==========');
-            console.log('[Ratings Plugin] Step 1: Submitting rating:', rating, 'for item:', itemId);
 
             if (!window.ApiClient) {
-                console.error('[Ratings Plugin] ERROR: ApiClient not available');
                 return;
             }
-            console.log('[Ratings Plugin] Step 2: ApiClient is available');
 
             // Gather all authentication info
             const baseUrl = ApiClient.serverAddress();
@@ -490,15 +456,9 @@
             const deviceId = ApiClient.deviceId();
             const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
 
-            console.log('[Ratings Plugin] Step 3: Authentication details:');
-            console.log('  - Base URL:', baseUrl);
-            console.log('  - Access Token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NULL');
-            console.log('  - Device ID:', deviceId);
-            console.log('  - Full URL:', url);
 
             // Build proper X-Emby-Authorization header (Jellyfin's dedicated auth header)
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
-            console.log('[Ratings Plugin] Step 4: X-Emby-Authorization header built:', authHeader);
 
             const requestOptions = {
                 method: 'POST',
@@ -508,32 +468,20 @@
                     'X-Emby-Authorization': authHeader
                 }
             };
-            console.log('[Ratings Plugin] Step 5: Request options:', JSON.stringify(requestOptions, null, 2));
 
-            console.log('[Ratings Plugin] Step 6: Sending fetch request...');
             fetch(url, requestOptions)
                 .then(function(response) {
-                    console.log('[Ratings Plugin] Step 7: Response received');
-                    console.log('  - Status:', response.status);
-                    console.log('  - Status Text:', response.statusText);
-                    console.log('  - OK:', response.ok);
-                    console.log('  - Headers:', Array.from(response.headers.entries()));
 
                     if (!response.ok) {
                         return response.text().then(function(errorText) {
-                            console.error('[Ratings Plugin] Step 8: ERROR Response body:', errorText);
                             throw new Error('HTTP ' + response.status + ': ' + errorText);
                         });
                     }
-                    console.log('[Ratings Plugin] Step 8: Response OK, parsing...');
                     return response.text().then(function(text) {
-                        console.log('[Ratings Plugin] Step 9: Response text:', text);
                         return text ? JSON.parse(text) : {};
                     });
                 })
                 .then(function(data) {
-                    console.log('[Ratings Plugin] Step 10: SUCCESS! Data:', data);
-                    console.log('[Ratings Plugin] Rating submitted successfully:', rating);
 
                     // Immediately update the star display for instant feedback
                     self.updateStarDisplay(rating);
@@ -546,20 +494,14 @@
                             toast('Rated ' + rating + '/10');
                         });
                     }
-                    console.log('========== [Ratings Plugin] END SUBMIT RATING (SUCCESS) ==========');
                 })
                 .catch(function(err) {
-                    console.error('========== [Ratings Plugin] ERROR SUBMITTING RATING ==========');
-                    console.error('[Ratings Plugin] Error object:', err);
-                    console.error('[Ratings Plugin] Error message:', err.message);
-                    console.error('[Ratings Plugin] Error stack:', err.stack);
 
                     if (window.require) {
                         require(['toast'], function(toast) {
                             toast('Error submitting rating: ' + err.message);
                         });
                     }
-                    console.error('========== [Ratings Plugin] END SUBMIT RATING (ERROR) ==========');
                 });
         },
 
@@ -591,7 +533,6 @@
                     }
                 })
                 .catch(err => {
-                    console.error('[Ratings Plugin] Error loading detailed ratings:', err);
                     popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Error loading ratings</li>';
                 });
         },
@@ -607,13 +548,8 @@
     };
 
     // Initialize when DOM is ready
-    console.log('[Ratings Plugin] Script loaded, readyState:', document.readyState);
 
     function initPlugin() {
-        console.log('[Ratings Plugin] Attempting initialization...');
-        console.log('[Ratings Plugin] Current URL:', window.location.href);
-        console.log('[Ratings Plugin] Current pathname:', window.location.pathname);
-        console.log('[Ratings Plugin] Current hash:', window.location.hash);
         RatingsPlugin.init();
     }
 
