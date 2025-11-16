@@ -56,14 +56,53 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rating">Rating value (1-10).</param>
         /// <returns>The created or updated rating.</returns>
         [HttpPost("Items/{itemId}/Rating")]
-        [Authorize]
         public ActionResult<UserRating> SetRating(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] [Range(1, 10)] int rating)
         {
             try
             {
+                // Try to get user from authentication
                 var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(authHeader))
+                    {
+                        _logger.LogError("No authentication header found");
+                        return Unauthorized("No authentication header provided");
+                    }
+
+                    _logger.LogInformation("Auth header: {Header}", authHeader);
+
+                    // Extract token from header
+                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (!tokenMatch.Success)
+                    {
+                        _logger.LogError("Could not extract token from header");
+                        return Unauthorized("Invalid authentication header format");
+                    }
+
+                    var token = tokenMatch.Groups[1].Value;
+                    _logger.LogInformation("Extracted token: {Token}", token.Substring(0, Math.Min(10, token.Length)) + "...");
+
+                    // Get session by authentication token
+                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                    var session = sessionTask.Result;
+                    if (session == null)
+                    {
+                        _logger.LogError("No active session found for token");
+                        return Unauthorized("Invalid or expired token");
+                    }
+
+                    userId = session.UserId;
+                    _logger.LogInformation("Found user from session: {UserId}", userId);
+                }
+
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
