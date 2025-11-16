@@ -13,7 +13,7 @@
         "changelog": "Fixed authentication using api_key query parameter method. Passes access token directly in URL for proper request authentication.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.17.0/jellyfin-plugin-ratings_1.0.17.0.zip",
-        "checksum": "2bfb5a7305c8a74a0f81fbc823f5ade4",
+        "checksum": "0ab55ff6307a75207a8798b9b543aefb",
         "timestamp": "2025-11-16T09:30:00Z"
       },
       {
