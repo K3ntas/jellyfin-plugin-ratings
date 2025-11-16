@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.30.0",
+        "changelog": "Fixed fallback positioning to show at top of page instead of bottom when itemMiscInfo not found.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.30.0/jellyfin-plugin-ratings_1.0.30.0.zip",
+        "checksum": "66f4140055ead1ddd395b8b2d51e93f4",
+        "timestamp": "2025-11-16T12:45:00Z"
+      },
+      {
         "version": "1.0.29.0",
         "changelog": "Ensured rating table always displays. Added robust fallback logic to guarantee visibility even if optimal position cannot be found.",
         "targetAbi": "10.11.0.0",

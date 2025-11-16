@@ -291,9 +291,13 @@
                 }
             }
 
-            // Default fallback - ALWAYS append if not inserted yet
+            // Default fallback - ALWAYS insert at the top if not inserted yet
             if (!inserted) {
-                detailPageContent.appendChild(container);
+                if (detailPageContent.firstChild) {
+                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                } else {
+                    detailPageContent.appendChild(container);
+                }
             }
 
             this.attachEventListeners(itemId);
