@@ -437,14 +437,28 @@
                 return;
             }
 
-            // Use ApiClient.ajax() which automatically handles MediaBrowser authentication headers
-            const url = ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`);
+            // Build complete URL with api_key parameter for authentication
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}&api_key=${accessToken}`;
 
-            ApiClient.ajax({
-                type: 'POST',
-                url: url,
-                dataType: 'json'
-            }).then(function(result) {
+            console.log('[Ratings Plugin] Submitting to URL:', url);
+            console.log('[Ratings Plugin] Has access token:', !!accessToken);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
+                console.log('[Ratings Plugin] Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.text().then(function(text) {
+                    return text ? JSON.parse(text) : {};
+                });
+            }).then(function(data) {
                 console.log('[Ratings Plugin] Rating submitted successfully:', rating);
                 self.loadRatings(itemId);
 
