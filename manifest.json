@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.33.0",
+        "changelog": "Centered rating table with max-width constraint. Added element polling to ensure proper injection timing - waits for detailLogo/castContent before displaying.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.33.0/jellyfin-plugin-ratings_1.0.33.0.zip",
+        "checksum": "cb0089a52462aeca68417abf5a9fd423",
+        "timestamp": "2025-11-16T13:15:00Z"
+      },
+      {
         "version": "1.0.31.0",
         "changelog": "Improved positioning to appear after detailLogo (movie/series logo image) for better visual placement. Falls back to itemMiscInfo, then top of page.",
         "targetAbi": "10.11.0.0",

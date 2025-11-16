@@ -26,10 +26,12 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    margin: 1em 0;
+                    margin: 1em auto;
                     padding: 1em;
                     background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
+                    max-width: 800px;
+                    text-align: center;
                 }
 
                 .ratings-plugin-title {
@@ -42,6 +44,7 @@
                 .ratings-plugin-stars {
                     display: flex;
                     align-items: center;
+                    justify-content: center;
                     gap: 0.3em;
                     margin-bottom: 0.5em;
                     position: relative;
@@ -191,8 +194,32 @@
         onPageChange: function () {
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
-                setTimeout(() => this.injectRatingComponent(itemId), 500);
+                this.waitForElementAndInject(itemId);
             }
+        },
+
+        /**
+         * Wait for page elements to load before injecting
+         */
+        waitForElementAndInject: function (itemId) {
+            const self = this;
+            let attempts = 0;
+            const maxAttempts = 20; // Try for 10 seconds max
+
+            const checkInterval = setInterval(() => {
+                attempts++;
+
+                // Check if the target elements exist
+                const detailPageContent = document.querySelector('.detailPageContent');
+                const detailLogo = detailPageContent?.querySelector('.detailLogo');
+                const castContent = detailPageContent?.querySelector('#castContent');
+
+                // If we found key elements OR reached max attempts, inject
+                if ((detailPageContent && (detailLogo || castContent)) || attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    self.injectRatingComponent(itemId);
+                }
+            }, 500);
         },
 
         /**
