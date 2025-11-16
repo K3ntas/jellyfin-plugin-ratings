@@ -437,17 +437,14 @@
                 return;
             }
 
-            // Use ApiClient's fetch method which handles authentication automatically
-            const url = `Ratings/Items/${itemId}/Rating?rating=${rating}`;
+            // Use ApiClient.ajax() which automatically handles MediaBrowser authentication headers
+            const url = ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`);
 
-            ApiClient.fetch({
-                url: ApiClient.getUrl(url),
+            ApiClient.ajax({
                 type: 'POST',
-                dataType: 'json',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(function(response) {
+                url: url,
+                dataType: 'json'
+            }).then(function(result) {
                 console.log('[Ratings Plugin] Rating submitted successfully:', rating);
                 self.loadRatings(itemId);
 
