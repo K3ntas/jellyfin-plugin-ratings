@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.35.0",
+        "changelog": "Fixed rating table positioning - now correctly placed inside infoWrapper after itemMiscInfo-primary. Polling interval changed to 3 seconds for better element detection.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.35.0/jellyfin-plugin-ratings_1.0.35.0.zip",
+        "checksum": "47d91df0f163d4a570ba28289334352f",
+        "timestamp": "2025-11-16T13:45:00Z"
+      },
+      {
         "version": "1.0.34.0",
         "changelog": "Fixed rating table positioning to appear directly after itemMiscInfo section (year, duration, rating). Now positioned correctly below movie info instead of middle of page.",
         "targetAbi": "10.11.0.0",
