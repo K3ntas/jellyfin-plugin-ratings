@@ -13,7 +13,7 @@
         "changelog": "Fixed rating table positioning. Now correctly appears after itemMiscInfo section (year, rating, score) for proper visual placement.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.28.0/jellyfin-plugin-ratings_1.0.28.0.zip",
-        "checksum": "d0be9ddd01bfcb70f1c81db1a09f93c0",
+        "checksum": "880da8b7cfd4801c350b407ec2896577",
         "timestamp": "2025-11-16T12:15:00Z"
       },
       {
