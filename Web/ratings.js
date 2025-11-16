@@ -431,23 +431,22 @@
             const self = this;
 
             console.log('[Ratings Plugin] Submitting rating:', rating, 'for item:', itemId);
+            console.log('[Ratings Plugin] ApiClient available:', !!window.ApiClient);
 
-            // Use native fetch with proper headers
+            // Use ApiClient's ajax method which handles authentication automatically
+            if (!window.ApiClient || !ApiClient.ajax) {
+                console.error('[Ratings Plugin] ApiClient.ajax not available');
+                return;
+            }
+
             const url = ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`);
+            console.log('[Ratings Plugin] Request URL:', url);
 
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Emby-Authorization': ApiClient.authenticationInfo || ApiClient._authenticationInfo || this.getAuthHeader()
-                }
-            }).then(response => {
-                console.log('[Ratings Plugin] Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.json().catch(() => ({})); // Handle empty response
-            }).then(() => {
+            ApiClient.ajax({
+                type: 'POST',
+                url: url,
+                dataType: 'json'
+            }).then(function(response) {
                 console.log('[Ratings Plugin] Rating submitted successfully:', rating);
                 self.loadRatings(itemId);
 
@@ -459,29 +458,22 @@
                 } else if (window.Dashboard && Dashboard.alert) {
                     Dashboard.alert(`You rated this ${rating}/10`);
                 }
-            }).catch(err => {
+            }).catch(function(err) {
                 console.error('[Ratings Plugin] Error submitting rating:', err);
+                console.error('[Ratings Plugin] Error details:', {
+                    status: err.status,
+                    statusText: err.statusText,
+                    response: err.responseText
+                });
+
                 if (window.require) {
                     require(['toast'], function(toast) {
-                        toast('Error submitting rating. Please try again.');
+                        toast('Error submitting rating: ' + (err.status || 'Unknown error'));
                     });
                 } else if (window.Dashboard && Dashboard.alert) {
-                    Dashboard.alert('Error submitting rating. Please try again.');
+                    Dashboard.alert('Error submitting rating. Status: ' + (err.status || 'Unknown'));
                 }
             });
-        },
-
-        /**
-         * Get authentication header
-         */
-        getAuthHeader: function() {
-            if (window.ApiClient) {
-                const auth = ApiClient._authenticationInfo || ApiClient.authenticationInfo;
-                if (auth && auth.Token) {
-                    return `MediaBrowser Client="${auth.Client}", Device="${auth.Device}", DeviceId="${auth.DeviceId}", Version="${auth.Version}", Token="${auth.Token}"`;
-                }
-            }
-            return '';
         },
 
         /**
