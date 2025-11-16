@@ -437,18 +437,18 @@
                 return;
             }
 
-            // Build complete URL with api_key parameter for authentication
+            // Build URL and make authenticated request with credentials
             const baseUrl = ApiClient.serverAddress();
-            const accessToken = ApiClient.accessToken();
-            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}&api_key=${accessToken}`;
+            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
 
             console.log('[Ratings Plugin] Submitting to URL:', url);
-            console.log('[Ratings Plugin] Has access token:', !!accessToken);
 
             fetch(url, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Emby-Token': ApiClient.accessToken()
                 }
             }).then(function(response) {
                 console.log('[Ratings Plugin] Response status:', response.status);
