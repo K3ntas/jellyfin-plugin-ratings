@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.40.0",
+        "changelog": "Fixed layout - removed position: relative to prevent pushing other elements down. Kept z-index: 9999 for proper layering without affecting layout.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.40.0/jellyfin-plugin-ratings_1.0.40.0.zip",
+        "checksum": "1e1ea499104eb636076d8933f68ab2de",
+        "timestamp": "2025-11-16T15:00:00Z"
+      },
+      {
         "version": "1.0.39.0",
         "changelog": "Updated CSS spacing - margin: 0em 0em 80em, padding: 0em. Added z-index: 9999 to keep rating table on top of all elements.",
         "targetAbi": "10.11.0.0",

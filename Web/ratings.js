@@ -26,13 +26,12 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    margin: 0em 0em 80em;
+                    margin: 0em 0em 0em;
                     padding: 0em;
                     background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
                     max-width: 800px;
                     text-align: center;
-                    position: relative;
                     z-index: 9999;
                 }
 
