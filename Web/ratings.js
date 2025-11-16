@@ -431,47 +431,53 @@
             const self = this;
 
             console.log('[Ratings Plugin] Submitting rating:', rating, 'for item:', itemId);
-            console.log('[Ratings Plugin] ApiClient available:', !!window.ApiClient);
+            console.log('[Ratings Plugin] ApiClient:', window.ApiClient);
+            console.log('[Ratings Plugin] ApiClient methods:', Object.keys(window.ApiClient || {}));
 
-            // Use ApiClient's ajax method which handles authentication automatically
-            if (!window.ApiClient || !ApiClient.ajax) {
-                console.error('[Ratings Plugin] ApiClient.ajax not available');
+            if (!window.ApiClient) {
+                console.error('[Ratings Plugin] ApiClient not available');
                 return;
             }
 
             const url = ApiClient.getUrl(`Ratings/Items/${itemId}/Rating?rating=${rating}`);
             console.log('[Ratings Plugin] Request URL:', url);
 
-            ApiClient.ajax({
-                type: 'POST',
-                url: url,
-                dataType: 'json'
+            // Get auth token from ApiClient
+            const accessToken = ApiClient.accessToken();
+            console.log('[Ratings Plugin] Access token available:', !!accessToken);
+
+            // Use native fetch with Authorization header
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Emby-Token': accessToken,
+                    'Content-Type': 'application/json'
+                }
             }).then(function(response) {
+                console.log('[Ratings Plugin] Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.text().then(function(text) {
+                    return text ? JSON.parse(text) : {};
+                });
+            }).then(function(data) {
                 console.log('[Ratings Plugin] Rating submitted successfully:', rating);
                 self.loadRatings(itemId);
 
                 // Show notification
                 if (window.require) {
                     require(['toast'], function(toast) {
-                        toast(`Rated ${rating}/10`);
+                        toast('Rated ' + rating + '/10');
                     });
-                } else if (window.Dashboard && Dashboard.alert) {
-                    Dashboard.alert(`You rated this ${rating}/10`);
                 }
             }).catch(function(err) {
                 console.error('[Ratings Plugin] Error submitting rating:', err);
-                console.error('[Ratings Plugin] Error details:', {
-                    status: err.status,
-                    statusText: err.statusText,
-                    response: err.responseText
-                });
 
                 if (window.require) {
                     require(['toast'], function(toast) {
-                        toast('Error submitting rating: ' + (err.status || 'Unknown error'));
+                        toast('Error submitting rating: ' + err.message);
                     });
-                } else if (window.Dashboard && Dashboard.alert) {
-                    Dashboard.alert('Error submitting rating. Status: ' + (err.status || 'Unknown'));
                 }
             });
         },
