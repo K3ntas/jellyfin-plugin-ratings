@@ -437,23 +437,23 @@
                 return;
             }
 
-            // Build URL with api_key and use proper MediaBrowser Authorization header
+            // Build URL without api_key - authentication goes in Authorization header only
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
-            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}&api_key=${accessToken}`;
+            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
 
             console.log('[Ratings Plugin] Submitting to URL:', url);
 
-            // Build MediaBrowser Authorization header
+            // Build proper MediaBrowser Authorization header (this is the ONLY authentication method)
             const authHeader = `MediaBrowser Token="${accessToken}", Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient.deviceId()}", Version="10.11.0"`;
+            console.log('[Ratings Plugin] Authorization header:', authHeader);
 
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': authHeader,
-                    'X-Emby-Token': accessToken
+                    'Authorization': authHeader
                 }
             }).then(function(response) {
                 console.log('[Ratings Plugin] Response status:', response.status);
