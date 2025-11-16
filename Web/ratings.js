@@ -32,6 +32,8 @@
                     border-radius: 8px;
                     max-width: 800px;
                     text-align: center;
+                    position: relative;
+                    z-index: 9999;
                 }
 
                 .ratings-plugin-title {
