@@ -270,18 +270,16 @@
                 </div>
             `;
 
-            // Find the title element to insert after it
-            const titleElement = detailPageContent.querySelector('h1') ||
-                               detailPageContent.querySelector('h2') ||
-                               detailPageContent.querySelector('.itemName') ||
-                               detailPageContent.querySelector('[class*="title"]');
+            // Find the itemMiscInfo element to insert after it
+            const itemMiscInfo = detailPageContent.querySelector('.itemMiscInfo') ||
+                               detailPageContent.querySelector('.itemMiscInfo-primary');
 
-            if (titleElement && titleElement.nextSibling) {
-                // Insert right after the title
-                titleElement.parentNode.insertBefore(container, titleElement.nextSibling);
-            } else if (titleElement) {
-                // If no next sibling, try to insert after the parent's next sibling
-                const parent = titleElement.parentElement;
+            if (itemMiscInfo && itemMiscInfo.nextSibling) {
+                // Insert right after the itemMiscInfo element
+                itemMiscInfo.parentNode.insertBefore(container, itemMiscInfo.nextSibling);
+            } else if (itemMiscInfo) {
+                // If no next sibling, insert after the parent element
+                const parent = itemMiscInfo.parentElement;
                 if (parent && parent.nextSibling) {
                     parent.parentNode.insertBefore(container, parent.nextSibling);
                 } else {
