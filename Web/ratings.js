@@ -270,28 +270,30 @@
                 </div>
             `;
 
-            // Find the itemMiscInfo element to insert after it
+            // Try to find the best position, but always show it somewhere
             const itemMiscInfo = detailPageContent.querySelector('.itemMiscInfo') ||
                                detailPageContent.querySelector('.itemMiscInfo-primary');
 
-            if (itemMiscInfo && itemMiscInfo.nextSibling) {
-                // Insert right after the itemMiscInfo element
-                itemMiscInfo.parentNode.insertBefore(container, itemMiscInfo.nextSibling);
-            } else if (itemMiscInfo) {
-                // If no next sibling, insert after the parent element
-                const parent = itemMiscInfo.parentElement;
-                if (parent && parent.nextSibling) {
-                    parent.parentNode.insertBefore(container, parent.nextSibling);
+            let inserted = false;
+
+            // Try to insert after itemMiscInfo if found
+            if (itemMiscInfo) {
+                if (itemMiscInfo.nextSibling) {
+                    itemMiscInfo.parentNode.insertBefore(container, itemMiscInfo.nextSibling);
+                    inserted = true;
                 } else {
-                    detailPageContent.appendChild(container);
+                    // Try inserting after parent
+                    const parent = itemMiscInfo.parentElement;
+                    if (parent && parent.nextSibling) {
+                        parent.parentNode.insertBefore(container, parent.nextSibling);
+                        inserted = true;
+                    }
                 }
-            } else {
-                // Fallback: insert at the beginning
-                if (detailPageContent.firstChild) {
-                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
-                } else {
-                    detailPageContent.appendChild(container);
-                }
+            }
+
+            // Default fallback - ALWAYS append if not inserted yet
+            if (!inserted) {
+                detailPageContent.appendChild(container);
             }
 
             this.attachEventListeners(itemId);
