@@ -209,12 +209,11 @@
             const checkInterval = setInterval(() => {
                 attempts++;
 
-                // Check if the infoWrapper and itemMiscInfo elements exist
-                const infoWrapper = document.querySelector('.infoWrapper');
-                const itemMiscInfo = infoWrapper?.querySelector('.itemMiscInfo-primary');
+                // Check if the detailLogo element exists
+                const detailLogo = document.querySelector('.detailLogo');
 
-                // If we found the elements, inject
-                if (infoWrapper && itemMiscInfo) {
+                // If we found detailLogo, inject
+                if (detailLogo) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
                 } else if (attempts >= maxAttempts) {
@@ -299,13 +298,12 @@
                 </div>
             `;
 
-            // Insert inside infoWrapper, right after itemMiscInfo-primary
-            const infoWrapper = detailPageContent.querySelector('.infoWrapper');
-            const itemMiscInfo = infoWrapper?.querySelector('.itemMiscInfo-primary');
+            // Insert right after detailLogo element
+            const detailLogo = detailPageContent.querySelector('.detailLogo');
 
-            if (itemMiscInfo) {
-                // Use insertAdjacentElement to insert immediately after itemMiscInfo
-                itemMiscInfo.insertAdjacentElement('afterend', container);
+            if (detailLogo) {
+                // Use insertAdjacentElement to insert immediately after detailLogo
+                detailLogo.insertAdjacentElement('afterend', container);
             } else {
                 // Fallback: insert at beginning of detailPageContent
                 detailPageContent.insertBefore(container, detailPageContent.firstChild);
