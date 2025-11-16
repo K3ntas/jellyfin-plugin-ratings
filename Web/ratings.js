@@ -489,6 +489,11 @@
                 .then(function(data) {
                     console.log('[Ratings Plugin] Step 10: SUCCESS! Data:', data);
                     console.log('[Ratings Plugin] Rating submitted successfully:', rating);
+
+                    // Immediately update the star display for instant feedback
+                    self.updateStarDisplay(rating);
+
+                    // Then reload full stats from server
                     self.loadRatings(itemId);
 
                     if (window.require) {
