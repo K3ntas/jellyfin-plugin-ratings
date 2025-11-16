@@ -269,15 +269,6 @@
                 return; // Already injected
             }
 
-            // Find a good place to inject the component
-            const detailPageContent = document.querySelector('.detailPageContent') ||
-                                     document.querySelector('.itemDetailPage') ||
-                                     document.querySelector('.detailPage-content');
-
-            if (!detailPageContent) {
-                return;
-            }
-
             const container = document.createElement('div');
             container.id = 'ratingsPluginComponent';
             container.className = 'ratings-plugin-container';
@@ -298,15 +289,20 @@
                 </div>
             `;
 
-            // Insert right after detailLogo element
-            const detailLogo = detailPageContent.querySelector('.detailLogo');
+            // Search for detailLogo globally (not inside a specific container)
+            const detailLogo = document.querySelector('.detailLogo');
 
             if (detailLogo) {
                 // Use insertAdjacentElement to insert immediately after detailLogo
                 detailLogo.insertAdjacentElement('afterend', container);
             } else {
-                // Fallback: insert at beginning of detailPageContent
-                detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                // Fallback: try to find any suitable container
+                const detailPageContent = document.querySelector('.detailPageContent') ||
+                                         document.querySelector('.itemDetailPage') ||
+                                         document.querySelector('.detailPage-content');
+                if (detailPageContent) {
+                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                }
             }
 
             this.attachEventListeners(itemId);
