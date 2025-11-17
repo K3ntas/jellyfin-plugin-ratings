@@ -204,15 +204,37 @@
          */
         observeDetailPages: function () {
             const self = this;
-
-            // Create observer for route changes
             let lastUrl = location.href;
-            new MutationObserver(() => {
+            let lastItemId = null;
+
+            const checkForPageChange = function () {
                 const url = location.href;
-                if (url !== lastUrl) {
+                const itemId = self.getItemIdFromUrl();
+
+                // Only trigger if URL changed or item ID changed
+                if (url !== lastUrl || itemId !== lastItemId) {
                     lastUrl = url;
+                    lastItemId = itemId;
+
+                    // Remove old component if it exists
+                    const oldComponent = document.getElementById('ratingsPluginComponent');
+                    if (oldComponent) {
+                        oldComponent.remove();
+                    }
+
                     self.onPageChange();
                 }
+            };
+
+            // Listen for hash changes (Jellyfin uses hash-based routing)
+            window.addEventListener('hashchange', checkForPageChange);
+
+            // Listen for popstate (back/forward navigation)
+            window.addEventListener('popstate', checkForPageChange);
+
+            // MutationObserver as fallback for DOM changes
+            new MutationObserver(() => {
+                requestAnimationFrame(checkForPageChange);
             }).observe(document.querySelector('body'), { subtree: true, childList: true });
 
             // Initial check
