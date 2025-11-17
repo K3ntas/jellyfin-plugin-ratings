@@ -658,16 +658,26 @@
          * Get item ID from a card element
          */
         getItemIdFromCard: function (card) {
+            // Check if this is a folder card by looking at data attributes
+            if (card.getAttribute('data-isfolder') === 'true') {
+                return null; // Skip all folder cards
+            }
+
             // Try to find link with item ID
             const link = card.querySelector('a[href*="id="]');
             if (link) {
-                // Skip folder/library cards - these link to list/library views, not detail pages
-                if (link.href.includes('/list.html') ||
-                    link.href.includes('/library.html') ||
-                    link.href.includes('context=folders') ||
-                    link.href.includes('context=playlists') ||
-                    link.href.includes('context=collections') ||
-                    !link.href.includes('details')) {
+                // Skip folder/library view links (hash-based routing)
+                if (link.href.includes('#/list') ||
+                    link.href.includes('#/tv?') ||
+                    link.href.includes('#/movies?') ||
+                    link.href.includes('#/music?') ||
+                    link.href.includes('topParentId=') ||
+                    link.href.includes('parentId=')) {
+                    return null;
+                }
+
+                // Only process links to detail pages
+                if (!link.href.includes('#/details') && !link.href.includes('#!/details')) {
                     return null;
                 }
 
@@ -680,13 +690,18 @@
             // Try parent link
             const parentLink = card.closest('a[href*="id="]');
             if (parentLink) {
-                // Skip folder/library cards
-                if (parentLink.href.includes('/list.html') ||
-                    parentLink.href.includes('/library.html') ||
-                    parentLink.href.includes('context=folders') ||
-                    parentLink.href.includes('context=playlists') ||
-                    parentLink.href.includes('context=collections') ||
-                    !parentLink.href.includes('details')) {
+                // Skip folder/library view links
+                if (parentLink.href.includes('#/list') ||
+                    parentLink.href.includes('#/tv?') ||
+                    parentLink.href.includes('#/movies?') ||
+                    parentLink.href.includes('#/music?') ||
+                    parentLink.href.includes('topParentId=') ||
+                    parentLink.href.includes('parentId=')) {
+                    return null;
+                }
+
+                // Only process links to detail pages
+                if (!parentLink.href.includes('#/details') && !parentLink.href.includes('#!/details')) {
                     return null;
                 }
 
@@ -694,20 +709,6 @@
                 if (match) {
                     return match[1];
                 }
-            }
-
-            // Try data attributes
-            const itemLink = card.closest('[data-id]');
-            if (itemLink) {
-                const id = itemLink.getAttribute('data-id');
-                return id;
-            }
-
-            // Try data-itemid
-            const itemIdAttr = card.closest('[data-itemid]');
-            if (itemIdAttr) {
-                const id = itemIdAttr.getAttribute('data-itemid');
-                return id;
             }
 
             return null;
