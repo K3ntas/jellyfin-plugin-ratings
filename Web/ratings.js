@@ -26,7 +26,7 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    margin: 0em 0em 0em;
+                    margin: -12em 3em 8em;
                     padding: 0em;
                     background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
