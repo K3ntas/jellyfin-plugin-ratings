@@ -26,7 +26,7 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    margin: -12em 3em 8em;
+                    margin: -12em 40em 8em;
                     padding: 0em;
                     background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
@@ -525,11 +525,16 @@
             popup.classList.add('visible');
             popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Loading...</li>';
 
-            ApiClient.getJSON(ApiClient.getUrl(`Ratings/Items/${itemId}/DetailedRatings`))
+            const url = ApiClient.getUrl(`Ratings/Items/${itemId}/DetailedRatings`);
+            console.log('[Ratings Plugin] Fetching detailed ratings from:', url);
+
+            ApiClient.getJSON(url)
                 .then(ratings => {
+                    console.log('[Ratings Plugin] Received ratings:', ratings);
                     if (ratings && ratings.length > 0) {
                         let html = '';
                         ratings.forEach(rating => {
+                            console.log('[Ratings Plugin] Adding rating:', rating);
                             html += `
                                 <li class="ratings-plugin-popup-item">
                                     <span class="ratings-plugin-popup-username">${this.escapeHtml(rating.Username)}</span>
@@ -539,10 +544,12 @@
                         });
                         popupList.innerHTML = html;
                     } else {
+                        console.log('[Ratings Plugin] No ratings found');
                         popupList.innerHTML = '<li class="ratings-plugin-popup-empty">No ratings yet</li>';
                     }
                 })
                 .catch(err => {
+                    console.error('[Ratings Plugin] Error loading ratings:', err);
                     popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Error loading ratings</li>';
                 });
         },
