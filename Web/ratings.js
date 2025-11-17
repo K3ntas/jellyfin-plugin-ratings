@@ -7,6 +7,7 @@
 
     const RatingsPlugin = {
         pluginId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
+        ratingsCache: {}, // Cache for card ratings to avoid duplicate API calls
 
         /**
          * Initialize the ratings plugin
@@ -587,11 +588,38 @@
          */
         observeHomePageCards: function () {
             const self = this;
+            let debounceTimer = null;
+            let isPageLoaded = false;
+
+            // Wait for initial page load to complete before starting
+            const waitForPageLoad = () => {
+                // Wait for Jellyfin to finish loading content
+                setTimeout(() => {
+                    isPageLoaded = true;
+                    self.addRatingsToCards();
+                }, 5000); // Give 5 seconds for initial content to load
+            };
+
+            // Debounced function to add ratings
+            const debouncedAddRatings = () => {
+                // Don't process until page is initially loaded
+                if (!isPageLoaded) {
+                    return;
+                }
+
+                // Clear existing timer
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+
+                // Set new timer - only execute after 1 second of no changes
+                debounceTimer = setTimeout(() => {
+                    self.addRatingsToCards();
+                }, 1000);
+            };
 
             // Create observer to watch for new cards being added
-            const observer = new MutationObserver(() => {
-                self.addRatingsToCards();
-            });
+            const observer = new MutationObserver(debouncedAddRatings);
 
             // Start observing the document with all children
             observer.observe(document.body, {
@@ -599,8 +627,8 @@
                 subtree: true
             });
 
-            // Initial scan
-            setTimeout(() => self.addRatingsToCards(), 2000);
+            // Wait for initial load
+            waitForPageLoad();
         },
 
         /**
@@ -609,12 +637,18 @@
         addRatingsToCards: function () {
             const self = this;
 
-            // Find all card image containers
-            const cards = document.querySelectorAll('.cardImageContainer, .cardContent');
+            // Find all card containers - only select the outermost card containers
+            const cards = document.querySelectorAll('.card:not(.card .card)');
 
             cards.forEach(card => {
+                // Find the image container within this card
+                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
+                if (!imageContainer) {
+                    return;
+                }
+
                 // Skip if already has rating overlay
-                if (card.querySelector('.ratings-plugin-card-overlay')) {
+                if (imageContainer.querySelector('.ratings-plugin-card-overlay')) {
                     return;
                 }
 
@@ -624,13 +658,13 @@
                     return;
                 }
 
-                // Make card container position: relative so overlay positions correctly
-                if (card.style.position !== 'relative' && card.style.position !== 'absolute') {
-                    card.style.position = 'relative';
+                // Make image container position: relative so overlay positions correctly
+                if (imageContainer.style.position !== 'relative' && imageContainer.style.position !== 'absolute') {
+                    imageContainer.style.position = 'relative';
                 }
 
-                // Fetch rating for this item
-                self.addCardRating(card, itemId);
+                // Fetch rating for this item (with caching)
+                self.addCardRating(imageContainer, itemId);
             });
         },
 
@@ -647,10 +681,27 @@
                 }
             }
 
+            // Try parent link
+            const parentLink = card.closest('a[href*="id="]');
+            if (parentLink) {
+                const match = parentLink.href.match(/[?&]id=([a-f0-9]{32})/i);
+                if (match) {
+                    return match[1];
+                }
+            }
+
             // Try data attributes
             const itemLink = card.closest('[data-id]');
             if (itemLink) {
-                return itemLink.getAttribute('data-id');
+                const id = itemLink.getAttribute('data-id');
+                return id;
+            }
+
+            // Try data-itemid
+            const itemIdAttr = card.closest('[data-itemid]');
+            if (itemIdAttr) {
+                const id = itemIdAttr.getAttribute('data-itemid');
+                return id;
             }
 
             return null;
@@ -660,6 +711,24 @@
          * Add rating overlay to a specific card
          */
         addCardRating: function (card, itemId) {
+            const self = this;
+
+            // Check cache first
+            if (self.ratingsCache[itemId] !== undefined) {
+                // Use cached data
+                if (self.ratingsCache[itemId] !== null) {
+                    const stats = self.ratingsCache[itemId];
+                    const overlay = document.createElement('div');
+                    overlay.className = 'ratings-plugin-card-overlay';
+                    overlay.innerHTML = `
+                        <span class="ratings-plugin-card-star">★</span>
+                        <span class="ratings-plugin-card-rating">${stats.AverageRating.toFixed(1)}</span>
+                    `;
+                    card.appendChild(overlay);
+                }
+                return;
+            }
+
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
             const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
@@ -693,6 +762,9 @@
                 .then(stats => {
                     // Only show if there's at least one rating
                     if (stats.TotalRatings > 0) {
+                        // Cache the stats
+                        self.ratingsCache[itemId] = stats;
+
                         const overlay = document.createElement('div');
                         overlay.className = 'ratings-plugin-card-overlay';
                         overlay.innerHTML = `
@@ -700,10 +772,14 @@
                             <span class="ratings-plugin-card-rating">${stats.AverageRating.toFixed(1)}</span>
                         `;
                         card.appendChild(overlay);
+                    } else {
+                        // Cache as null (no ratings)
+                        self.ratingsCache[itemId] = null;
                     }
                 })
                 .catch(err => {
-                    // Silently fail - don't show overlay if we can't get rating
+                    // Cache as null on error to avoid retrying
+                    self.ratingsCache[itemId] = null;
                 });
         }
     };
