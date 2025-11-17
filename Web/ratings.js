@@ -588,84 +588,73 @@
          */
         observeHomePageCards: function () {
             const self = this;
-            let debounceTimer = null;
-            let isPageLoaded = false;
 
-            // Wait for initial page load to complete before starting
-            const waitForPageLoad = () => {
-                // Wait for Jellyfin to finish loading content
-                setTimeout(() => {
-                    isPageLoaded = true;
-                    self.addRatingsToCards();
-                }, 5000); // Give 5 seconds for initial content to load
-            };
+            // Use IntersectionObserver to only load ratings for visible cards
+            const intersectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
 
-            // Debounced function to add ratings
-            const debouncedAddRatings = () => {
-                // Don't process until page is initially loaded
-                if (!isPageLoaded) {
-                    return;
-                }
+                        // Find the image container within this card
+                        const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
+                        if (!imageContainer) {
+                            return;
+                        }
 
-                // Clear existing timer
-                if (debounceTimer) {
-                    clearTimeout(debounceTimer);
-                }
+                        // Skip if already has rating overlay
+                        if (imageContainer.querySelector('.ratings-plugin-card-overlay')) {
+                            return;
+                        }
 
-                // Set new timer - only execute after 1 second of no changes
-                debounceTimer = setTimeout(() => {
-                    self.addRatingsToCards();
-                }, 1000);
-            };
+                        // Get item ID from the card
+                        const itemId = self.getItemIdFromCard(card);
+                        if (!itemId) {
+                            return;
+                        }
 
-            // Create observer to watch for new cards being added
-            const observer = new MutationObserver(debouncedAddRatings);
+                        // Make image container position: relative so overlay positions correctly
+                        if (imageContainer.style.position !== 'relative' && imageContainer.style.position !== 'absolute') {
+                            imageContainer.style.position = 'relative';
+                        }
 
-            // Start observing the document with all children
-            observer.observe(document.body, {
+                        // Fetch rating for this item (with caching)
+                        self.addCardRating(imageContainer, itemId);
+
+                        // Stop observing this card once we've processed it
+                        intersectionObserver.unobserve(card);
+                    }
+                });
+            }, {
+                rootMargin: '50px' // Start loading slightly before card comes into view
+            });
+
+            // Create MutationObserver to watch for new cards being added to DOM
+            const mutationObserver = new MutationObserver(() => {
+                // Find all cards that aren't being observed yet
+                const cards = document.querySelectorAll('.card:not(.card .card)');
+                cards.forEach(card => {
+                    // Only observe if not already being watched
+                    if (!card.dataset.ratingsObserved) {
+                        card.dataset.ratingsObserved = 'true';
+                        intersectionObserver.observe(card);
+                    }
+                });
+            });
+
+            // Start observing DOM for new cards
+            mutationObserver.observe(document.body, {
                 childList: true,
                 subtree: true
             });
 
-            // Wait for initial load
-            waitForPageLoad();
-        },
-
-        /**
-         * Add rating overlays to all visible cards
-         */
-        addRatingsToCards: function () {
-            const self = this;
-
-            // Find all card containers - only select the outermost card containers
-            const cards = document.querySelectorAll('.card:not(.card .card)');
-
-            cards.forEach(card => {
-                // Find the image container within this card
-                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
-                if (!imageContainer) {
-                    return;
-                }
-
-                // Skip if already has rating overlay
-                if (imageContainer.querySelector('.ratings-plugin-card-overlay')) {
-                    return;
-                }
-
-                // Get item ID from the card
-                const itemId = self.getItemIdFromCard(card);
-                if (!itemId) {
-                    return;
-                }
-
-                // Make image container position: relative so overlay positions correctly
-                if (imageContainer.style.position !== 'relative' && imageContainer.style.position !== 'absolute') {
-                    imageContainer.style.position = 'relative';
-                }
-
-                // Fetch rating for this item (with caching)
-                self.addCardRating(imageContainer, itemId);
-            });
+            // Initial scan for existing cards
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card:not(.card .card)');
+                cards.forEach(card => {
+                    card.dataset.ratingsObserved = 'true';
+                    intersectionObserver.observe(card);
+                });
+            }, 2000);
         },
 
         /**

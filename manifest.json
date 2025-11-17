@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg",
     "versions": [
       {
+        "version": "1.0.49.0",
+        "changelog": "Performance optimization: IntersectionObserver for lazy loading. Only loads ratings for visible cards, preventing server overload with large libraries.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.49.0/jellyfin-plugin-ratings_1.0.49.0.zip",
+        "checksum": "8916086b80fd4c97f2867a5189c7c374",
+        "timestamp": "2025-11-17T07:57:00Z"
+      },
+      {
         "version": "1.0.48.0",
         "changelog": "HOTFIX: Fixed duplicate rating overlays appearing on cards. Now correctly shows only one rating badge per card.",
         "targetAbi": "10.11.0.0",
