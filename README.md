@@ -135,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.53.0 (Current)
+### 1.0.54.0 (Current)
+- Fixed plugin not loading during navigation between media items
+- Added hashchange and popstate event listeners for SPA routing detection
+- Automatic cleanup of old rating component when navigating
+- Plugin now loads correctly without requiring manual page refresh
+
+### 1.0.53.0
 - Fixed plugin loading delay on detail pages
 - Improved element detection speed (3 seconds → 100ms intervals)
 - Faster rating UI injection when navigating to media items
