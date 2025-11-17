@@ -275,7 +275,6 @@
             container.className = 'ratings-plugin-container';
 
             container.innerHTML = `
-                <div class="ratings-plugin-title">Rate This</div>
                 <div class="ratings-plugin-stars" id="ratingsPluginStars">
                     ${this.generateStars()}
                     <div class="ratings-plugin-popup" id="ratingsPluginPopup">
@@ -525,16 +524,11 @@
             popup.classList.add('visible');
             popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Loading...</li>';
 
-            const url = ApiClient.getUrl(`Ratings/Items/${itemId}/DetailedRatings`);
-            console.log('[Ratings Plugin] Fetching detailed ratings from:', url);
-
-            ApiClient.getJSON(url)
+            ApiClient.getJSON(ApiClient.getUrl(`Ratings/Items/${itemId}/DetailedRatings`))
                 .then(ratings => {
-                    console.log('[Ratings Plugin] Received ratings:', ratings);
                     if (ratings && ratings.length > 0) {
                         let html = '';
                         ratings.forEach(rating => {
-                            console.log('[Ratings Plugin] Adding rating:', rating);
                             html += `
                                 <li class="ratings-plugin-popup-item">
                                     <span class="ratings-plugin-popup-username">${this.escapeHtml(rating.Username)}</span>
@@ -544,12 +538,10 @@
                         });
                         popupList.innerHTML = html;
                     } else {
-                        console.log('[Ratings Plugin] No ratings found');
                         popupList.innerHTML = '<li class="ratings-plugin-popup-empty">No ratings yet</li>';
                     }
                 })
                 .catch(err => {
-                    console.error('[Ratings Plugin] Error loading ratings:', err);
                     popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Error loading ratings</li>';
                 });
         },

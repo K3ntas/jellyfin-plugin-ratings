@@ -146,20 +146,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                _logger.LogInformation("GetItemRatings - Searching for ItemId: {ItemId}", itemId);
-                _logger.LogInformation("GetItemRatings - Total ratings in memory: {Count}", _ratings.Count);
-
-                var itemRatings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
-                _logger.LogInformation("GetItemRatings - Found {Count} ratings for ItemId {ItemId}", itemRatings.Count, itemId);
-
-                // Log all ratings in memory for debugging
-                foreach (var rating in _ratings.Values.Take(10))
-                {
-                    _logger.LogInformation("  In-memory rating: Id={Id}, UserId={UserId}, ItemId={ItemId}, Rating={Rating}",
-                        rating.Id, rating.UserId, rating.ItemId, rating.Rating);
-                }
-
-                return itemRatings;
+                return _ratings.Values.Where(r => r.ItemId == itemId).ToList();
             }
         }
 
