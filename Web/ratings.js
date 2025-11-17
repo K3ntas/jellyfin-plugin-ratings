@@ -661,6 +661,16 @@
             // Try to find link with item ID
             const link = card.querySelector('a[href*="id="]');
             if (link) {
+                // Skip folder/library cards - these link to list/library views, not detail pages
+                if (link.href.includes('/list.html') ||
+                    link.href.includes('/library.html') ||
+                    link.href.includes('context=folders') ||
+                    link.href.includes('context=playlists') ||
+                    link.href.includes('context=collections') ||
+                    !link.href.includes('details')) {
+                    return null;
+                }
+
                 const match = link.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
                     return match[1];
@@ -670,6 +680,16 @@
             // Try parent link
             const parentLink = card.closest('a[href*="id="]');
             if (parentLink) {
+                // Skip folder/library cards
+                if (parentLink.href.includes('/list.html') ||
+                    parentLink.href.includes('/library.html') ||
+                    parentLink.href.includes('context=folders') ||
+                    parentLink.href.includes('context=playlists') ||
+                    parentLink.href.includes('context=collections') ||
+                    !parentLink.href.includes('details')) {
+                    return null;
+                }
+
                 const match = parentLink.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
                     return match[1];
