@@ -284,9 +284,17 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var ratings = _repository.GetItemRatings(itemId);
+                _logger.LogInformation("GetDetailedRatings - ItemId: {ItemId}, Found {Count} ratings in repository", itemId, ratings.Count);
+
+                foreach (var rating in ratings)
+                {
+                    _logger.LogInformation("  Rating: UserId={UserId}, Rating={Rating}, ItemId={ItemId}", rating.UserId, rating.Rating, rating.ItemId);
+                }
+
                 var detailedRatings = ratings.Select(r =>
                 {
                     var user = _userManager.GetUserById(r.UserId);
+                    _logger.LogInformation("  Mapping rating: UserId={UserId}, Username={Username}, Rating={Rating}", r.UserId, user?.Username ?? "Unknown User", r.Rating);
                     return new UserRatingDetail
                     {
                         UserId = r.UserId,
@@ -296,6 +304,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     };
                 }).OrderByDescending(r => r.Rating).ThenBy(r => r.Username).ToList();
 
+                _logger.LogInformation("GetDetailedRatings - Returning {Count} detailed ratings", detailedRatings.Count);
                 return Ok(detailedRatings);
             }
             catch (Exception ex)
