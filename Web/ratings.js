@@ -206,12 +206,45 @@
             const self = this;
             let lastUrl = location.href;
             let lastItemId = null;
+            let checkTimer = null;
 
             const checkForPageChange = function () {
+                // Debounce rapid checks
+                if (checkTimer) {
+                    clearTimeout(checkTimer);
+                }
+
+                checkTimer = setTimeout(() => {
+                    const url = location.href;
+                    const itemId = self.getItemIdFromUrl();
+
+                    // Only trigger if URL changed or item ID changed
+                    if (url !== lastUrl || itemId !== lastItemId) {
+                        lastUrl = url;
+                        lastItemId = itemId;
+
+                        // Remove old component if it exists
+                        const oldComponent = document.getElementById('ratingsPluginComponent');
+                        if (oldComponent) {
+                            oldComponent.remove();
+                        }
+
+                        self.onPageChange();
+                    }
+                }, 100); // Small debounce to prevent multiple rapid fires
+            };
+
+            // Listen for hash changes (Jellyfin uses hash-based routing)
+            window.addEventListener('hashchange', checkForPageChange);
+
+            // Listen for popstate (back/forward navigation)
+            window.addEventListener('popstate', checkForPageChange);
+
+            // Use setInterval as more aggressive polling for SPA navigation detection
+            setInterval(() => {
                 const url = location.href;
                 const itemId = self.getItemIdFromUrl();
 
-                // Only trigger if URL changed or item ID changed
                 if (url !== lastUrl || itemId !== lastItemId) {
                     lastUrl = url;
                     lastItemId = itemId;
@@ -224,18 +257,7 @@
 
                     self.onPageChange();
                 }
-            };
-
-            // Listen for hash changes (Jellyfin uses hash-based routing)
-            window.addEventListener('hashchange', checkForPageChange);
-
-            // Listen for popstate (back/forward navigation)
-            window.addEventListener('popstate', checkForPageChange);
-
-            // MutationObserver as fallback for DOM changes
-            new MutationObserver(() => {
-                requestAnimationFrame(checkForPageChange);
-            }).observe(document.querySelector('body'), { subtree: true, childList: true });
+            }, 500); // Check every 500ms for URL changes
 
             // Initial check
             this.onPageChange();
