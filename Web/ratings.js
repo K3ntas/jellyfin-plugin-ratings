@@ -235,7 +235,7 @@
         waitForElementAndInject: function (itemId) {
             const self = this;
             let attempts = 0;
-            const maxAttempts = 60; // Try for 3 minutes max (every 3 seconds)
+            const maxAttempts = 100; // Try for ~10 seconds max
 
             const checkInterval = setInterval(() => {
                 attempts++;
@@ -251,7 +251,7 @@
                     // Give up after max attempts
                     clearInterval(checkInterval);
                 }
-            }, 3000); // Check every 3 seconds
+            }, 100); // Check every 100ms for faster detection
         },
 
         /**

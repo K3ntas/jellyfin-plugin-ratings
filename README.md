@@ -2,6 +2,24 @@
 
 A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays designed for large media libraries.
 
+## Screenshots
+
+### Rating Detail Page
+![Rating interface on movie detail page](images/rating-detail-page.png)
+*Interactive 1-10 star rating system displayed below the movie title*
+
+### User Ratings Popup
+![Hover popup showing all user ratings](images/rating-hover-popup.png)
+*Hover over stars to see detailed ratings from all users*
+
+### Rated Media
+![Filled stars after rating](images/rating-filled-stars.png)
+*Your rating is saved and displayed with highlighted stars*
+
+### Card Overlays
+![Rating badges on media cards](images/rating-card-badges.png)
+*Rating badges automatically appear on media thumbnails throughout Jellyfin*
+
 ## Features
 
 ### ⭐ Star Rating System
@@ -117,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.52.0 (Current)
+### 1.0.53.0 (Current)
+- Fixed plugin loading delay on detail pages
+- Improved element detection speed (3 seconds → 100ms intervals)
+- Faster rating UI injection when navigating to media items
+- Added professional screenshots to README documentation
+
+### 1.0.52.0
 - HOTFIX: Improved folder card detection using data-isfolder attribute
 - Enhanced hash-based routing pattern detection (#/list, #/tv?, #/movies?)
 - Added URL parameter filtering (topParentId, parentId)
