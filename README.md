@@ -117,7 +117,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.51.0 (Current)
+### 1.0.52.0 (Current)
+- HOTFIX: Improved folder card detection using data-isfolder attribute
+- Enhanced hash-based routing pattern detection (#/list, #/tv?, #/movies?)
+- Added URL parameter filtering (topParentId, parentId)
+- Rating overlays now properly excluded from all library folders
+
+### 1.0.51.0
 - Fixed rating badges appearing on library folder cards
 - Rating overlays now only display on actual media items
 - Improved card filtering to differentiate folders from media content
