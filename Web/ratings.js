@@ -165,19 +165,21 @@
                 }
 
                 /* Card overlay ratings */
-                .ratings-plugin-card-overlay {
+                .cardImageContainer.has-rating::after,
+                .cardContent.has-rating::after,
+                .card-imageContainer.has-rating::after {
+                    content: attr(data-rating);
                     position: absolute;
                     top: 5px;
                     right: 5px;
-                    background: rgba(0, 0, 0, 0.75);
-                    padding: 3px 8px;
+                    background: rgba(0, 0, 0, 0.85);
+                    color: #fff;
+                    padding: 4px 8px;
                     border-radius: 4px;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
                     font-size: 0.85em;
                     z-index: 1000;
                     pointer-events: none;
+                    font-weight: 600;
                 }
 
                 .ratings-plugin-card-star {
@@ -602,7 +604,7 @@
                         }
 
                         // Skip if already has rating overlay
-                        if (imageContainer.querySelector('.ratings-plugin-card-overlay')) {
+                        if (imageContainer.classList.contains('has-rating')) {
                             return;
                         }
 
@@ -610,11 +612,6 @@
                         const itemId = self.getItemIdFromCard(card);
                         if (!itemId) {
                             return;
-                        }
-
-                        // Make image container position: relative so overlay positions correctly
-                        if (imageContainer.style.position !== 'relative' && imageContainer.style.position !== 'absolute') {
-                            imageContainer.style.position = 'relative';
                         }
 
                         // Fetch rating for this item (with caching)
@@ -707,13 +704,7 @@
                 // Use cached data
                 if (self.ratingsCache[itemId] !== null) {
                     const stats = self.ratingsCache[itemId];
-                    const overlay = document.createElement('div');
-                    overlay.className = 'ratings-plugin-card-overlay';
-                    overlay.innerHTML = `
-                        <span class="ratings-plugin-card-star">★</span>
-                        <span class="ratings-plugin-card-rating">${stats.AverageRating.toFixed(1)}</span>
-                    `;
-                    card.appendChild(overlay);
+                    self.createAndPositionOverlay(card, stats);
                 }
                 return;
             }
@@ -753,14 +744,7 @@
                     if (stats.TotalRatings > 0) {
                         // Cache the stats
                         self.ratingsCache[itemId] = stats;
-
-                        const overlay = document.createElement('div');
-                        overlay.className = 'ratings-plugin-card-overlay';
-                        overlay.innerHTML = `
-                            <span class="ratings-plugin-card-star">★</span>
-                            <span class="ratings-plugin-card-rating">${stats.AverageRating.toFixed(1)}</span>
-                        `;
-                        card.appendChild(overlay);
+                        self.createAndPositionOverlay(card, stats);
                     } else {
                         // Cache as null (no ratings)
                         self.ratingsCache[itemId] = null;
@@ -770,6 +754,15 @@
                     // Cache as null on error to avoid retrying
                     self.ratingsCache[itemId] = null;
                 });
+        },
+
+        /**
+         * Create and position overlay using CSS ::after pseudo-element
+         */
+        createAndPositionOverlay: function (imageContainer, stats) {
+            // Use CSS ::after pseudo-element by adding class and data attribute
+            imageContainer.classList.add('has-rating');
+            imageContainer.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
         }
     };
 
