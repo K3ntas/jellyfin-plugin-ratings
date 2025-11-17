@@ -117,7 +117,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.50.0 (Current)
+### 1.0.51.0 (Current)
+- Fixed rating badges appearing on library folder cards
+- Rating overlays now only display on actual media items
+- Improved card filtering to differentiate folders from media content
+
+### 1.0.50.0
 - Production release with optimized card overlays
 - Fixed image loading issues
 - Maintains lazy loading performance for large libraries
