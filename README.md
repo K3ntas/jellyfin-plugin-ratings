@@ -135,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.54.0 (Current)
+### 1.0.55.0 (Current)
+- Improved navigation detection with aggressive URL polling
+- Added 500ms interval checking for reliable SPA routing detection
+- Debounced event handlers to prevent duplicate injections
+- Enhanced compatibility with all Jellyfin navigation methods
+
+### 1.0.54.0
 - Fixed plugin not loading during navigation between media items
 - Added hashchange and popstate event listeners for SPA routing detection
 - Automatic cleanup of old rating component when navigating
