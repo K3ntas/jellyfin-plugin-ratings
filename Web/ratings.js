@@ -16,6 +16,15 @@
             this.injectStyles();
             this.observeDetailPages();
             this.observeHomePageCards();
+
+            // Initialize request button separately with delay and error handling
+            setTimeout(() => {
+                try {
+                    this.initRequestButton();
+                } catch (err) {
+                    console.error('Request button failed to initialize:', err);
+                }
+            }, 3000);
         },
 
         /**
@@ -211,6 +220,93 @@
                 .ratings-plugin-card-rating {
                     color: #fff;
                     font-weight: 600;
+                }
+
+                /* Request Media Button - Isolated and Safe */
+                #requestMediaBtn {
+                    position: fixed !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 12px 24px !important;
+                    border-radius: 25px !important;
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    z-index: 999999 !important;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+                    transition: all 0.3s ease !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                }
+
+                #requestMediaBtn:hover {
+                    transform: translateY(-2px) !important;
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+                }
+
+                #requestMediaBtn.hidden {
+                    display: none !important;
+                }
+
+                /* Request Modal - Completely Isolated */
+                #requestMediaModal {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: rgba(0, 0, 0, 0.8) !important;
+                    z-index: 9999999 !important;
+                    display: none !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                }
+
+                #requestMediaModal.show {
+                    display: flex !important;
+                }
+
+                #requestMediaModalContent {
+                    background: #1e1e1e !important;
+                    padding: 30px !important;
+                    border-radius: 15px !important;
+                    max-width: 600px !important;
+                    width: 90% !important;
+                    max-height: 80vh !important;
+                    overflow-y: auto !important;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+                    position: relative !important;
+                }
+
+                #requestMediaModalClose {
+                    position: absolute !important;
+                    top: 15px !important;
+                    right: 15px !important;
+                    font-size: 28px !important;
+                    color: #999 !important;
+                    cursor: pointer !important;
+                    background: none !important;
+                    border: none !important;
+                    line-height: 1 !important;
+                }
+
+                #requestMediaModalClose:hover {
+                    color: #fff !important;
+                }
+
+                #requestMediaModalTitle {
+                    font-size: 24px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    margin-bottom: 20px !important;
+                }
+
+                #requestMediaModalBody {
+                    color: #ccc !important;
+                    font-size: 16px !important;
                 }
             `;
 
@@ -862,6 +958,98 @@
             // Use CSS ::after pseudo-element by adding class and data attribute
             imageContainer.classList.add('has-rating');
             imageContainer.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+        },
+
+        /**
+         * Initialize Request Media Button - Completely isolated and safe
+         */
+        initRequestButton: function () {
+            try {
+                // Check if already exists
+                if (document.getElementById('requestMediaBtn')) {
+                    return;
+                }
+
+                // Create button
+                const btn = document.createElement('button');
+                btn.id = 'requestMediaBtn';
+                btn.textContent = '📬 Request Media';
+                btn.setAttribute('type', 'button');
+
+                // Create modal
+                const modal = document.createElement('div');
+                modal.id = 'requestMediaModal';
+                modal.innerHTML = `
+                    <div id="requestMediaModalContent">
+                        <button id="requestMediaModalClose" type="button">&times;</button>
+                        <div id="requestMediaModalTitle">Request Media</div>
+                        <div id="requestMediaModalBody">
+                            <p>Request feature coming soon...</p>
+                            <p style="margin-top: 15px; font-size: 14px;">This feature is under development.</p>
+                        </div>
+                    </div>
+                `;
+
+                // Add to DOM
+                document.body.appendChild(btn);
+                document.body.appendChild(modal);
+
+                // Button click - wrapped in try-catch
+                btn.addEventListener('click', (e) => {
+                    try {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        modal.classList.add('show');
+                    } catch (err) {
+                        console.error('Button click error:', err);
+                    }
+                });
+
+                // Close button - wrapped in try-catch
+                const closeBtn = document.getElementById('requestMediaModalClose');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        try {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            modal.classList.remove('show');
+                        } catch (err) {
+                            console.error('Close button error:', err);
+                        }
+                    });
+                }
+
+                // Click outside to close - wrapped in try-catch
+                modal.addEventListener('click', (e) => {
+                    try {
+                        if (e.target === modal) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            modal.classList.remove('show');
+                        }
+                    } catch (err) {
+                        console.error('Modal click error:', err);
+                    }
+                });
+
+                // Hide during video playback - wrapped in try-catch
+                setInterval(() => {
+                    try {
+                        const videoPlayer = document.querySelector('.videoPlayerContainer');
+                        if (videoPlayer && !videoPlayer.classList.contains('hide')) {
+                            btn.classList.add('hidden');
+                        } else {
+                            btn.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        // Silently fail - don't break anything
+                    }
+                }, 2000);
+
+            } catch (err) {
+                console.error('Request button initialization failed:', err);
+                // Fail silently - don't break the plugin
+            }
         }
     };
 
