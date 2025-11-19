@@ -28,13 +28,36 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    margin: -12em 40em 8em;
-                    padding: 0em;
                     background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
                     max-width: 800px;
                     text-align: center;
                     z-index: 9999;
+                }
+
+                /* Desktop styles */
+                @media (min-width: 768px) {
+                    .ratings-plugin-container {
+                        margin: -12em 40em 8em;
+                        padding: 0em;
+                    }
+
+                    .ratings-plugin-star {
+                        font-size: 2em;
+                    }
+                }
+
+                /* Mobile styles */
+                @media (max-width: 767px) {
+                    .ratings-plugin-container {
+                        margin: 1em 0 1em 0;
+                        padding: 1em;
+                        max-width: 100%;
+                    }
+
+                    .ratings-plugin-star {
+                        font-size: 1.5em;
+                    }
                 }
 
                 .ratings-plugin-title {
@@ -54,7 +77,6 @@
                 }
 
                 .ratings-plugin-star {
-                    font-size: 2em;
                     cursor: pointer;
                     color: #555;
                     transition: all 0.2s ease;
