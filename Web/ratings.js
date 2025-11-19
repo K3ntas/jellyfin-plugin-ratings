@@ -710,21 +710,17 @@
             // Try to find link with item ID
             const link = card.querySelector('a[href*="id="]');
             if (link) {
-                // Skip folder/library view links (hash-based routing)
-                if (link.href.includes('#/list') ||
-                    link.href.includes('#/tv?') ||
-                    link.href.includes('#/movies?') ||
-                    link.href.includes('#/music?') ||
-                    link.href.includes('topParentId=') ||
-                    link.href.includes('parentId=')) {
+                // Skip library/folder navigation links (these have topParentId or parentId)
+                if (link.href.includes('topParentId=') || link.href.includes('parentId=')) {
                     return null;
                 }
 
-                // Only process links to detail pages
-                if (!link.href.includes('#/details') && !link.href.includes('#!/details')) {
+                // Skip list views
+                if (link.href.includes('#/list')) {
                     return null;
                 }
 
+                // Extract item ID - works for both #/details and #/tv?id= and #/movies?id= formats
                 const match = link.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
                     return match[1];
@@ -734,21 +730,17 @@
             // Try parent link
             const parentLink = card.closest('a[href*="id="]');
             if (parentLink) {
-                // Skip folder/library view links
-                if (parentLink.href.includes('#/list') ||
-                    parentLink.href.includes('#/tv?') ||
-                    parentLink.href.includes('#/movies?') ||
-                    parentLink.href.includes('#/music?') ||
-                    parentLink.href.includes('topParentId=') ||
-                    parentLink.href.includes('parentId=')) {
+                // Skip library/folder navigation links
+                if (parentLink.href.includes('topParentId=') || parentLink.href.includes('parentId=')) {
                     return null;
                 }
 
-                // Only process links to detail pages
-                if (!parentLink.href.includes('#/details') && !parentLink.href.includes('#!/details')) {
+                // Skip list views
+                if (parentLink.href.includes('#/list')) {
                     return null;
                 }
 
+                // Extract item ID
                 const match = parentLink.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
                     return match[1];
