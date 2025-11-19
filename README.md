@@ -135,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.57.0 (Current)
+### 1.0.58.0 (Current)
+- Enhanced card detection using data-id attributes
+- More reliable detection of series and movie cards
+- Better handling of CollectionFolder and UserView types
+- Primary method now uses data-id attribute for consistent detection
+
+### 1.0.57.0
 - Fixed rating badges not appearing on TV series cards
 - Improved URL filtering to allow series-specific links
 - Properly distinguishes between library folders and individual series
