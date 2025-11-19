@@ -702,22 +702,31 @@
          * Get item ID from a card element
          */
         getItemIdFromCard: function (card) {
-            // Check if this is a folder card by looking at data attributes
-            if (card.getAttribute('data-isfolder') === 'true') {
-                console.log('[Ratings] Skipping folder card (data-isfolder=true)');
-                return null; // Skip all folder cards
-            }
-
             // Try data-id attribute first (most reliable)
             const dataId = card.getAttribute('data-id');
             if (dataId && dataId.length === 32) {
                 const dataType = card.getAttribute('data-type');
-                console.log('[Ratings] Found data-id:', dataId, 'data-type:', dataType);
+                const isFolder = card.getAttribute('data-isfolder');
+                console.log('[Ratings] Found data-id:', dataId, 'data-type:', dataType, 'data-isfolder:', isFolder);
 
-                // Still need to check if this is a folder
+                // Check data-type first (most reliable indicator)
                 if (dataType === 'CollectionFolder' || dataType === 'UserView') {
                     console.log('[Ratings] Skipping folder card (type:', dataType + ')');
                     return null; // Skip folders
+                }
+
+                // Allow Series, Movie, Episode, etc. even if data-isfolder="true"
+                // (Series items have isfolder=true but are actual media items)
+                if (dataType === 'Series' || dataType === 'Movie' || dataType === 'Episode' ||
+                    dataType === 'Audio' || dataType === 'MusicAlbum' || dataType === 'Video') {
+                    console.log('[Ratings] ✓ Valid media card with data-id:', dataId, 'type:', dataType);
+                    return dataId;
+                }
+
+                // If no recognized media type but has isfolder=true, skip it
+                if (isFolder === 'true') {
+                    console.log('[Ratings] Skipping folder card (data-isfolder=true, unknown type)');
+                    return null;
                 }
 
                 console.log('[Ratings] ✓ Valid card with data-id:', dataId);
