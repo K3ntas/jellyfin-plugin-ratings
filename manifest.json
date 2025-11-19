@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.64.0",
+        "changelog": "NEW: Added 'Request Media' button (top-right). Hidden during video playback. Foundation for upcoming media request feature!",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.64.0/jellyfin-plugin-ratings_1.0.64.0.zip",
+        "checksum": "a128069f7ae034fcaba639fb30aca2fb",
+        "timestamp": "2025-11-19T18:40:00Z"
+      },
+      {
         "version": "1.0.63.0",
         "changelog": "Improved mobile/tablet layout with margin-left: 136px at max-width: 1312px for better positioning.",
         "targetAbi": "10.11.0.0",
