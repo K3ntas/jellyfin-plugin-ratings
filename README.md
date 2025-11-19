@@ -20,6 +20,10 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 ![Rating badges on media cards](images/rating-card-badges.png)
 *Rating badges automatically appear on media thumbnails throughout Jellyfin*
 
+### Home Page View
+![Rating badges on home page](images/rating-home-page.png)
+*Rating badges displayed on movies and series throughout the home page - works with all media types*
+
 ## Features
 
 ### ⭐ Star Rating System
