@@ -36,7 +36,7 @@
                 }
 
                 /* Desktop styles */
-                @media (min-width: 768px) {
+                @media (min-width: 1313px) {
                     .ratings-plugin-container {
                         margin: -12em 40em 8em;
                         padding: 0em;
@@ -48,11 +48,10 @@
                 }
 
                 /* Mobile styles */
-                @media (max-width: 767px) {
+                @media (max-width: 1312px) {
                     .ratings-plugin-container {
-                        margin: 1em 0 1em 0;
-                        padding: 1em;
-                        max-width: 100%;
+                        margin-left: 136px;
+                        padding: 20px;
                     }
 
                     .ratings-plugin-star {
