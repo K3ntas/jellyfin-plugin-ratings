@@ -6,7 +6,7 @@
       <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
     </linearGradient>
     <filter id="shadow">
-      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3"/>
     </filter>
     <linearGradient id="starShine" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
@@ -16,8 +16,8 @@
 
   <rect width="512" height="512" fill="url(#bgGradient)" rx="80"/>
 
-  <!-- Main content group - scaled down 60% and centered -->
-  <g transform="translate(256, 220) scale(0.6)">
+  <!-- Main large star - centered and bigger -->
+  <g transform="translate(256, 200) scale(0.85)">
     <!-- Large golden star with shadow -->
     <path d="M 0,-100 L 23,-30 L 97,-30 L 38,13 L 60,83 L 0,40 L -60,83 L -38,13 L -97,-30 L -23,-30 Z"
           fill="#fbbf24" filter="url(#shadow)"/>
@@ -31,30 +31,17 @@
           fill="#fef3c7" opacity="0.6"/>
   </g>
 
-  <!-- Row of small stars showing rating scale - scaled and centered -->
-  <g transform="translate(110, 340) scale(0.7)">
-    <path d="M 0,-15 L 4,-5 L 15,-5 L 6,2 L 10,12 L 0,6 L -10,12 L -6,2 L -15,-5 L -4,-5 Z" fill="#fbbf24"/>
-    <path d="M 40,-15 L 44,-5 L 55,-5 L 46,2 L 50,12 L 40,6 L 30,12 L 34,2 L 25,-5 L 36,-5 Z" fill="#fbbf24"/>
-    <path d="M 80,-15 L 84,-5 L 95,-5 L 86,2 L 90,12 L 80,6 L 70,12 L 74,2 L 65,-5 L 76,-5 Z" fill="#fbbf24"/>
-    <path d="M 120,-15 L 124,-5 L 135,-5 L 126,2 L 130,12 L 120,6 L 110,12 L 114,2 L 105,-5 L 116,-5 Z" fill="#fbbf24"/>
-    <path d="M 160,-15 L 164,-5 L 175,-5 L 166,2 L 170,12 L 160,6 L 150,12 L 154,2 L 145,-5 L 156,-5 Z" fill="#fbbf24"/>
-    <path d="M 200,-15 L 204,-5 L 215,-5 L 206,2 L 210,12 L 200,6 L 190,12 L 194,2 L 185,-5 L 196,-5 Z" fill="#d1d5db"/>
-    <path d="M 240,-15 L 244,-5 L 255,-5 L 246,2 L 250,12 L 240,6 L 230,12 L 234,2 L 225,-5 L 236,-5 Z" fill="#d1d5db"/>
-    <path d="M 280,-15 L 284,-5 L 295,-5 L 286,2 L 290,12 L 280,6 L 270,12 L 274,2 L 265,-5 L 276,-5 Z" fill="#d1d5db"/>
-    <path d="M 320,-15 L 324,-5 L 335,-5 L 326,2 L 330,12 L 320,6 L 310,12 L 314,2 L 305,-5 L 316,-5 Z" fill="#d1d5db"/>
-    <path d="M 360,-15 L 364,-5 L 375,-5 L 366,2 L 370,12 L 360,6 L 350,12 L 354,2 L 345,-5 L 356,-5 Z" fill="#d1d5db"/>
+  <!-- Row of small stars showing rating scale - centered -->
+  <g transform="translate(95, 380) scale(0.8)">
+    <path d="M 0,-12 L 4,-4 L 13,-4 L 6,1 L 9,10 L 0,5 L -9,10 L -6,1 L -13,-4 L -4,-4 Z" fill="#fbbf24"/>
+    <path d="M 35,-12 L 39,-4 L 48,-4 L 41,1 L 44,10 L 35,5 L 26,10 L 29,1 L 22,-4 L 31,-4 Z" fill="#fbbf24"/>
+    <path d="M 70,-12 L 74,-4 L 83,-4 L 76,1 L 79,10 L 70,5 L 61,10 L 64,1 L 57,-4 L 66,-4 Z" fill="#fbbf24"/>
+    <path d="M 105,-12 L 109,-4 L 118,-4 L 111,1 L 114,10 L 105,5 L 96,10 L 99,1 L 92,-4 L 101,-4 Z" fill="#fbbf24"/>
+    <path d="M 140,-12 L 144,-4 L 153,-4 L 146,1 L 149,10 L 140,5 L 131,10 L 134,1 L 127,-4 L 136,-4 Z" fill="#fbbf24"/>
+    <path d="M 175,-12 L 179,-4 L 188,-4 L 181,1 L 184,10 L 175,5 L 166,10 L 169,1 L 162,-4 L 171,-4 Z" fill="#d1d5db"/>
+    <path d="M 210,-12 L 214,-4 L 223,-4 L 216,1 L 219,10 L 210,5 L 201,10 L 204,1 L 197,-4 L 206,-4 Z" fill="#d1d5db"/>
+    <path d="M 245,-12 L 249,-4 L 258,-4 L 251,1 L 254,10 L 245,5 L 236,10 L 239,1 L 232,-4 L 241,-4 Z" fill="#d1d5db"/>
+    <path d="M 280,-12 L 284,-4 L 293,-4 L 286,1 L 289,10 L 280,5 L 271,10 L 274,1 L 267,-4 L 276,-4 Z" fill="#d1d5db"/>
+    <path d="M 315,-12 L 319,-4 L 328,-4 L 321,1 L 324,10 L 315,5 L 306,10 L 309,1 L 302,-4 L 311,-4 Z" fill="#d1d5db"/>
   </g>
-
-  <!-- Text "RATINGS" with better visibility - smaller font -->
-  <text x="256" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1e293b" opacity="0.3">
-    RATINGS
-  </text>
-  <text x="256" y="408" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">
-    RATINGS
-  </text>
-
-  <!-- Subtitle - smaller -->
-  <text x="256" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#e2e8f0">
-    1-10 Star Rating System
-  </text>
 </svg>
