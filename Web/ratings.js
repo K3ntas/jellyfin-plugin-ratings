@@ -16,7 +16,6 @@
             this.injectStyles();
             this.observeDetailPages();
             this.observeHomePageCards();
-            this.initRequestButton();
         },
 
         /**
@@ -212,82 +211,6 @@
                 .ratings-plugin-card-rating {
                     color: #fff;
                     font-weight: 600;
-                }
-
-                /* Request Feature Button */
-                .request-feature-button {
-                    position: fixed;
-                    top: 15px;
-                    right: 15px;
-                    background: rgba(0, 123, 255, 0.9);
-                    color: #fff;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 10px 20px;
-                    font-size: 14px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    z-index: 10001;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                }
-
-                .request-feature-button:hover {
-                    background: rgba(0, 123, 255, 1);
-                    transform: scale(1.05);
-                }
-
-                .request-feature-button.hidden {
-                    display: none;
-                }
-
-                /* Request Modal */
-                .request-modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.7);
-                    z-index: 10002;
-                    display: none;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .request-modal-overlay.visible {
-                    display: flex;
-                }
-
-                .request-modal {
-                    background: #1c1c1c;
-                    border-radius: 12px;
-                    padding: 30px;
-                    max-width: 800px;
-                    width: 90%;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-                }
-
-                .request-modal-header {
-                    font-size: 1.5em;
-                    font-weight: 600;
-                    color: #fff;
-                    margin-bottom: 20px;
-                    border-bottom: 2px solid #444;
-                    padding-bottom: 10px;
-                }
-
-                .request-modal-close {
-                    float: right;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #999;
-                }
-
-                .request-modal-close:hover {
-                    color: #fff;
                 }
             `;
 
@@ -939,91 +862,6 @@
             // Use CSS ::after pseudo-element by adding class and data attribute
             imageContainer.classList.add('has-rating');
             imageContainer.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
-        },
-
-        /**
-         * Initialize Request Feature Button
-         */
-        initRequestButton: function () {
-            const self = this;
-
-            // Create the button
-            const button = document.createElement('button');
-            button.className = 'request-feature-button';
-            button.textContent = 'Request Media';
-            button.id = 'requestFeatureButton';
-
-            // Create the modal overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'request-modal-overlay';
-            overlay.id = 'requestModalOverlay';
-            overlay.innerHTML = `
-                <div class="request-modal">
-                    <div class="request-modal-header">
-                        <span class="request-modal-close" id="requestModalClose">&times;</span>
-                        Request Media
-                    </div>
-                    <div id="requestModalContent">
-                        <p style="color: #ccc;">Request feature coming soon...</p>
-                    </div>
-                </div>
-            `;
-
-            // Add to page
-            document.body.appendChild(button);
-            document.body.appendChild(overlay);
-
-            // Button click handler
-            button.addEventListener('click', function () {
-                overlay.classList.add('visible');
-            });
-
-            // Close button handler
-            document.getElementById('requestModalClose').addEventListener('click', function () {
-                overlay.classList.remove('visible');
-            });
-
-            // Close on overlay click
-            overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) {
-                    overlay.classList.remove('visible');
-                }
-            });
-
-            // Hide button when video is playing
-            self.observeVideoPlayer(button);
-        },
-
-        /**
-         * Observe video player to hide/show request button
-         */
-        observeVideoPlayer: function (button) {
-            // Check if video player is active
-            const checkVideoPlayer = function () {
-                const videoPlayer = document.querySelector('.videoPlayerContainer');
-                const isPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
-
-                if (isPlaying) {
-                    button.classList.add('hidden');
-                } else {
-                    button.classList.remove('hidden');
-                }
-            };
-
-            // Initial check
-            checkVideoPlayer();
-
-            // Watch for changes
-            setInterval(checkVideoPlayer, 1000);
-
-            // Also observe DOM changes
-            const observer = new MutationObserver(checkVideoPlayer);
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['class']
-            });
         }
     };
 
