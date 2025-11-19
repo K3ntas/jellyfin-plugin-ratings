@@ -135,7 +135,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.60.0 (Current)
+### 1.0.61.0 (Current)
+- Removed all console logging for production
+- Clean and optimized code for better performance
+- Production-ready release
+
+### 1.0.60.0
 - **FIXED: Series rating badges now working!**
 - Series items have `data-isfolder="true"` but are valid media items
 - Now checks `data-type` attribute first before `data-isfolder`
