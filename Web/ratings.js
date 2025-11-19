@@ -171,7 +171,7 @@
                     content: attr(data-rating);
                     position: absolute;
                     top: 5px;
-                    right: 5px;
+                    left: 5px;
                     background: rgba(0, 0, 0, 0.85);
                     color: #fff;
                     padding: 4px 8px;

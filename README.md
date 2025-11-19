@@ -135,7 +135,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.55.0 (Current)
+### 1.0.56.0 (Current)
+- Moved rating badge position from top-right to top-left corner
+- Fixes conflict with series episode count badges
+- Rating badges now display correctly on TV series cards
+
+### 1.0.55.0
 - Improved navigation detection with aggressive URL polling
 - Added 500ms interval checking for reliable SPA routing detection
 - Debounced event handlers to prevent duplicate injections
