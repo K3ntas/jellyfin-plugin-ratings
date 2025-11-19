@@ -704,36 +704,49 @@
         getItemIdFromCard: function (card) {
             // Check if this is a folder card by looking at data attributes
             if (card.getAttribute('data-isfolder') === 'true') {
+                console.log('[Ratings] Skipping folder card (data-isfolder=true)');
                 return null; // Skip all folder cards
             }
 
             // Try data-id attribute first (most reliable)
             const dataId = card.getAttribute('data-id');
             if (dataId && dataId.length === 32) {
+                const dataType = card.getAttribute('data-type');
+                console.log('[Ratings] Found data-id:', dataId, 'data-type:', dataType);
+
                 // Still need to check if this is a folder
-                if (card.getAttribute('data-type') === 'CollectionFolder' ||
-                    card.getAttribute('data-type') === 'UserView') {
+                if (dataType === 'CollectionFolder' || dataType === 'UserView') {
+                    console.log('[Ratings] Skipping folder card (type:', dataType + ')');
                     return null; // Skip folders
                 }
+
+                console.log('[Ratings] ✓ Valid card with data-id:', dataId);
                 return dataId;
             }
+
+            console.log('[Ratings] No valid data-id found (length:', dataId ? dataId.length : 'null', ')');
 
             // Try to find link with item ID
             const link = card.querySelector('a[href*="id="]');
             if (link) {
+                console.log('[Ratings] Found link href:', link.href);
+
                 // Skip library/folder navigation links (these have topParentId or parentId)
                 if (link.href.includes('topParentId=') || link.href.includes('parentId=')) {
+                    console.log('[Ratings] Skipping link (folder parameter)');
                     return null;
                 }
 
                 // Skip list views
                 if (link.href.includes('#/list')) {
+                    console.log('[Ratings] Skipping link (list view)');
                     return null;
                 }
 
                 // Extract item ID - works for both #/details and #/tv?id= and #/movies?id= formats
                 const match = link.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
+                    console.log('[Ratings] ✓ Extracted ID from link:', match[1]);
                     return match[1];
                 }
             }
@@ -741,23 +754,29 @@
             // Try parent link
             const parentLink = card.closest('a[href*="id="]');
             if (parentLink) {
+                console.log('[Ratings] Found parent link href:', parentLink.href);
+
                 // Skip library/folder navigation links
                 if (parentLink.href.includes('topParentId=') || parentLink.href.includes('parentId=')) {
+                    console.log('[Ratings] Skipping parent link (folder parameter)');
                     return null;
                 }
 
                 // Skip list views
                 if (parentLink.href.includes('#/list')) {
+                    console.log('[Ratings] Skipping parent link (list view)');
                     return null;
                 }
 
                 // Extract item ID
                 const match = parentLink.href.match(/[?&]id=([a-f0-9]{32})/i);
                 if (match) {
+                    console.log('[Ratings] ✓ Extracted ID from parent link:', match[1]);
                     return match[1];
                 }
             }
 
+            console.log('[Ratings] ✗ No valid item ID found for card');
             return null;
         },
 
@@ -767,8 +786,11 @@
         addCardRating: function (card, itemId) {
             const self = this;
 
+            console.log('[Ratings] addCardRating called for itemId:', itemId);
+
             // Check cache first
             if (self.ratingsCache[itemId] !== undefined) {
+                console.log('[Ratings] Using cached rating for:', itemId, '=', self.ratingsCache[itemId]);
                 // Use cached data
                 if (self.ratingsCache[itemId] !== null) {
                     const stats = self.ratingsCache[itemId];
@@ -780,6 +802,8 @@
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
             const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
+
+            console.log('[Ratings] Fetching rating from API:', url);
 
             let deviceId = localStorage.getItem('_deviceId2');
             if (!deviceId) {
@@ -802,23 +826,28 @@
                 }
             })
                 .then(response => {
+                    console.log('[Ratings] API response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(stats => {
+                    console.log('[Ratings] Received stats for', itemId, ':', stats);
                     // Only show if there's at least one rating
                     if (stats.TotalRatings > 0) {
                         // Cache the stats
                         self.ratingsCache[itemId] = stats;
+                        console.log('[Ratings] Creating overlay for item:', itemId, 'avg:', stats.AverageRating);
                         self.createAndPositionOverlay(card, stats);
                     } else {
+                        console.log('[Ratings] No ratings for item:', itemId);
                         // Cache as null (no ratings)
                         self.ratingsCache[itemId] = null;
                     }
                 })
                 .catch(err => {
+                    console.error('[Ratings] Error fetching rating for', itemId, ':', err);
                     // Cache as null on error to avoid retrying
                     self.ratingsCache[itemId] = null;
                 });

@@ -135,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.58.0 (Current)
+### 1.0.59.0 (Current - DEBUG VERSION)
+- Added extensive console logging to diagnose series card detection issues
+- Logs show card detection process, API calls, and overlay creation
+- Open browser console (F12) to see [Ratings] log messages
+- This is a temporary debug version to identify the series badge issue
+
+### 1.0.58.0
 - Enhanced card detection using data-id attributes
 - More reliable detection of series and movie cards
 - Better handling of CollectionFolder and UserView types
