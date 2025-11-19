@@ -135,7 +135,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.56.0 (Current)
+### 1.0.57.0 (Current)
+- Fixed rating badges not appearing on TV series cards
+- Improved URL filtering to allow series-specific links
+- Properly distinguishes between library folders and individual series
+- Rating badges now work on all media types (movies, series, etc.)
+
+### 1.0.56.0
 - Moved rating badge position from top-right to top-left corner
 - Fixes conflict with series episode count badges
 - Rating badges now display correctly on TV series cards
