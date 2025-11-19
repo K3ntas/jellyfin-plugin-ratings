@@ -6,14 +6,18 @@
       <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
     </linearGradient>
     <filter id="shadow">
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.3"/>
     </filter>
+    <linearGradient id="starShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0" />
+    </linearGradient>
   </defs>
 
   <rect width="512" height="512" fill="url(#bgGradient)" rx="80"/>
 
-  <!-- Main content group -->
-  <g transform="translate(256, 200)">
+  <!-- Main content group - scaled down 60% and centered -->
+  <g transform="translate(256, 220) scale(0.6)">
     <!-- Large golden star with shadow -->
     <path d="M 0,-100 L 23,-30 L 97,-30 L 38,13 L 60,83 L 0,40 L -60,83 L -38,13 L -97,-30 L -23,-30 Z"
           fill="#fbbf24" filter="url(#shadow)"/>
@@ -27,15 +31,8 @@
           fill="#fef3c7" opacity="0.6"/>
   </g>
 
-  <defs>
-    <linearGradient id="starShine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0" />
-    </linearGradient>
-  </defs>
-
-  <!-- Row of small stars showing rating scale -->
-  <g transform="translate(85, 340)">
+  <!-- Row of small stars showing rating scale - scaled and centered -->
+  <g transform="translate(110, 340) scale(0.7)">
     <path d="M 0,-15 L 4,-5 L 15,-5 L 6,2 L 10,12 L 0,6 L -10,12 L -6,2 L -15,-5 L -4,-5 Z" fill="#fbbf24"/>
     <path d="M 40,-15 L 44,-5 L 55,-5 L 46,2 L 50,12 L 40,6 L 30,12 L 34,2 L 25,-5 L 36,-5 Z" fill="#fbbf24"/>
     <path d="M 80,-15 L 84,-5 L 95,-5 L 86,2 L 90,12 L 80,6 L 70,12 L 74,2 L 65,-5 L 76,-5 Z" fill="#fbbf24"/>
@@ -48,16 +45,16 @@
     <path d="M 360,-15 L 364,-5 L 375,-5 L 366,2 L 370,12 L 360,6 L 350,12 L 354,2 L 345,-5 L 356,-5 Z" fill="#d1d5db"/>
   </g>
 
-  <!-- Text "RATINGS" with better visibility -->
-  <text x="256" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#1e293b" opacity="0.3">
+  <!-- Text "RATINGS" with better visibility - smaller font -->
+  <text x="256" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1e293b" opacity="0.3">
     RATINGS
   </text>
-  <text x="256" y="418" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#ffffff">
+  <text x="256" y="408" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">
     RATINGS
   </text>
 
-  <!-- Subtitle -->
-  <text x="256" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#e2e8f0">
+  <!-- Subtitle - smaller -->
+  <text x="256" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#e2e8f0">
     1-10 Star Rating System
   </text>
 </svg>
