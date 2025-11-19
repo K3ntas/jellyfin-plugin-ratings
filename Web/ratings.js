@@ -707,6 +707,17 @@
                 return null; // Skip all folder cards
             }
 
+            // Try data-id attribute first (most reliable)
+            const dataId = card.getAttribute('data-id');
+            if (dataId && dataId.length === 32) {
+                // Still need to check if this is a folder
+                if (card.getAttribute('data-type') === 'CollectionFolder' ||
+                    card.getAttribute('data-type') === 'UserView') {
+                    return null; // Skip folders
+                }
+                return dataId;
+            }
+
             // Try to find link with item ID
             const link = card.querySelector('a[href*="id="]');
             if (link) {
