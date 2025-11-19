@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.62.0",
+        "changelog": "Fixed mobile layout! Rating stars now display properly on mobile devices with responsive design.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.62.0/jellyfin-plugin-ratings_1.0.62.0.zip",
+        "checksum": "a4b7c4929040328ad57cd6c1abe9272c",
+        "timestamp": "2025-11-19T16:00:00Z"
+      },
+      {
         "version": "1.0.61.0",
         "changelog": "Removed all console logging for production. Clean and optimized code.",
         "targetAbi": "10.11.0.0",
