@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.67.0",
+        "changelog": "Enhanced Request Media: Button moved left, tooltip on hover, dropdown type selector (Movie/TV Series/Anime/etc), description box, users see their own requests with live status updates!",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.67.0/jellyfin-plugin-ratings_1.0.67.0.zip",
+        "checksum": "eb6e0b4bb227408ae1463208f83f2412",
+        "timestamp": "2025-11-21T00:40:00Z"
+      },
+      {
         "version": "1.0.66.0",
         "changelog": "Full Request Media system! User interface for submitting requests, admin interface for managing requests with status updates (pending/processing/done). Button repositioned to avoid blocking UI.",
         "targetAbi": "10.11.0.0",

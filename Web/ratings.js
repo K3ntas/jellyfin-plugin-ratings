@@ -226,7 +226,7 @@
                 #requestMediaBtn {
                     position: fixed !important;
                     top: 20px !important;
-                    right: 180px !important;
+                    right: 240px !important;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
                     color: white !important;
                     border: none !important;
@@ -248,6 +248,29 @@
 
                 #requestMediaBtn.hidden {
                     display: none !important;
+                }
+
+                /* Button Tooltip */
+                #requestMediaBtn::after {
+                    content: attr(data-tooltip) !important;
+                    position: absolute !important;
+                    bottom: -45px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    background: rgba(0, 0, 0, 0.95) !important;
+                    color: #fff !important;
+                    padding: 8px 12px !important;
+                    border-radius: 6px !important;
+                    font-size: 12px !important;
+                    white-space: nowrap !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                    transition: opacity 0.3s ease !important;
+                    z-index: 10000000 !important;
+                }
+
+                #requestMediaBtn:hover::after {
+                    opacity: 1 !important;
                 }
 
                 /* Request Modal - Completely Isolated */
@@ -337,6 +360,39 @@
                 .request-input-group textarea {
                     min-height: 100px !important;
                     resize: vertical !important;
+                }
+
+                .request-input-group select {
+                    width: 100% !important;
+                    padding: 12px !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid #444 !important;
+                    border-radius: 8px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-family: inherit !important;
+                    box-sizing: border-box !important;
+                    cursor: pointer !important;
+                }
+
+                .request-input-group select option {
+                    background: #2a2a2a !important;
+                    color: #fff !important;
+                }
+
+                .request-description {
+                    background: #2a2a2a !important;
+                    border: 1px solid #667eea !important;
+                    border-radius: 8px !important;
+                    padding: 15px !important;
+                    margin-bottom: 25px !important;
+                    color: #ccc !important;
+                    font-size: 14px !important;
+                    line-height: 1.6 !important;
+                }
+
+                .request-description strong {
+                    color: #fff !important;
                 }
 
                 .request-submit-btn {
@@ -459,6 +515,74 @@
                     color: #999 !important;
                     padding: 40px 20px !important;
                     font-style: italic !important;
+                }
+
+                /* User Request List */
+                .user-request-list {
+                    list-style: none !important;
+                    padding: 0 !important;
+                    margin: 20px 0 0 0 !important;
+                    max-height: 300px !important;
+                    overflow-y: auto !important;
+                }
+
+                .user-request-item {
+                    background: #2a2a2a !important;
+                    border: 1px solid #444 !important;
+                    border-radius: 8px !important;
+                    padding: 12px !important;
+                    margin-bottom: 10px !important;
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                }
+
+                .user-request-info {
+                    flex: 1 !important;
+                }
+
+                .user-request-item-title {
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    font-size: 14px !important;
+                    margin-bottom: 4px !important;
+                }
+
+                .user-request-item-type {
+                    color: #999 !important;
+                    font-size: 12px !important;
+                }
+
+                .user-request-status {
+                    padding: 4px 10px !important;
+                    border-radius: 10px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                }
+
+                .user-request-status.pending {
+                    background: #ff9800 !important;
+                    color: #000 !important;
+                }
+
+                .user-request-status.processing {
+                    background: #2196F3 !important;
+                    color: #fff !important;
+                }
+
+                .user-request-status.done {
+                    background: #4CAF50 !important;
+                    color: #fff !important;
+                }
+
+                .user-requests-title {
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    font-size: 16px !important;
+                    margin-top: 25px !important;
+                    margin-bottom: 10px !important;
+                    padding-top: 20px !important;
+                    border-top: 1px solid #444 !important;
                 }
             `;
 
@@ -1128,6 +1252,7 @@
                 btn.id = 'requestMediaBtn';
                 btn.textContent = '📬 Request Media';
                 btn.setAttribute('type', 'button');
+                btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
 
                 // Create modal
                 const modal = document.createElement('div');
@@ -1279,6 +1404,7 @@
          * Load user interface for making requests
          */
         loadUserInterface: function () {
+            const self = this;
             const modalBody = document.getElementById('requestMediaModalBody');
             const modalTitle = document.getElementById('requestMediaModalTitle');
 
@@ -1286,19 +1412,32 @@
 
             modalTitle.textContent = 'Request Media';
             modalBody.innerHTML = `
+                <div class="request-description">
+                    <strong>📬 Request Your Favorite Media!</strong><br>
+                    Use this form to request movies or TV series that you'd like to watch. The admin will review your request and add it to the library as soon as possible. You can track the status of all your requests below.
+                </div>
                 <div class="request-input-group">
                     <label for="requestMediaTitle">Media Title *</label>
                     <input type="text" id="requestMediaTitle" placeholder="e.g., Breaking Bad, The Godfather" required />
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaType">Type</label>
-                    <input type="text" id="requestMediaType" placeholder="e.g., TV Series, Movie, Anime" />
+                    <label for="requestMediaType">Type *</label>
+                    <select id="requestMediaType" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="Movie">Movie</option>
+                        <option value="TV Series">TV Series</option>
+                        <option value="Anime">Anime</option>
+                        <option value="Documentary">Documentary</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
                 <div class="request-input-group">
                     <label for="requestMediaNotes">Additional Notes</label>
-                    <textarea id="requestMediaNotes" placeholder="Any additional information (season, year, etc.)"></textarea>
+                    <textarea id="requestMediaNotes" placeholder="Season number, year, specific details, etc."></textarea>
                 </div>
                 <button class="request-submit-btn" id="submitRequestBtn">Submit Request</button>
+                <div class="user-requests-title">Your Requests</div>
+                <div id="userRequestsList"><p style="text-align: center; color: #999;">Loading your requests...</p></div>
             `;
 
             // Attach submit handler
@@ -1308,6 +1447,50 @@
                     this.submitMediaRequest();
                 });
             }
+
+            // Load user's own requests
+            this.loadUserRequests();
+        },
+
+        /**
+         * Load user's own requests
+         */
+        loadUserRequests: function () {
+            const self = this;
+            const listContainer = document.getElementById('userRequestsList');
+
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '<p style="text-align: center; color: #999;">Loading your requests...</p>';
+
+            this.fetchAllRequests().then(requests => {
+                // Filter to only current user's requests
+                const userId = ApiClient.getCurrentUserId();
+                const userRequests = requests.filter(r => r.UserId === userId);
+
+                if (userRequests.length === 0) {
+                    listContainer.innerHTML = '<p style="text-align: center; color: #999;">You haven\'t requested any media yet</p>';
+                    return;
+                }
+
+                let html = '<ul class="user-request-list">';
+                userRequests.forEach(request => {
+                    html += `
+                        <li class="user-request-item">
+                            <div class="user-request-info">
+                                <div class="user-request-item-title">${this.escapeHtml(request.Title)}</div>
+                                <div class="user-request-item-type">${request.Type ? this.escapeHtml(request.Type) : 'Not specified'}</div>
+                            </div>
+                            <span class="user-request-status ${request.Status}">${request.Status.toUpperCase()}</span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                listContainer.innerHTML = html;
+            }).catch(err => {
+                console.error('Error loading user requests:', err);
+                listContainer.innerHTML = '<p style="text-align: center; color: #f44336;">Error loading your requests</p>';
+            });
         },
 
         /**
@@ -1385,6 +1568,15 @@
                     return;
                 }
 
+                if (!type) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Please select a media type');
+                        });
+                    }
+                    return;
+                }
+
                 const baseUrl = ApiClient.serverAddress();
                 const accessToken = ApiClient.accessToken();
                 const deviceId = ApiClient.deviceId();
@@ -1425,11 +1617,8 @@
                     document.getElementById('requestMediaType').value = '';
                     document.getElementById('requestMediaNotes').value = '';
 
-                    // Close modal
-                    const modal = document.getElementById('requestMediaModal');
-                    if (modal) {
-                        modal.classList.remove('show');
-                    }
+                    // Reload user's request list to show the new request
+                    self.loadUserRequests();
                 })
                 .catch(err => {
                     console.error('Error submitting request:', err);
