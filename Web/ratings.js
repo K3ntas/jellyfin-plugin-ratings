@@ -225,7 +225,7 @@
                 /* Request Media Button - Aligned with Header */
                 #requestMediaBtn {
                     position: fixed !important;
-                    top: 20px !important;
+                    top: 8px !important;
                     right: 240px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -243,6 +243,7 @@
 
                 #requestMediaBtn .btn-text {
                     background: linear-gradient(to right, #9f9f9f 0, #fff 10%, #868686 20%) !important;
+                    background-size: 200% auto !important;
                     background-position: 0 !important;
                     -webkit-background-clip: text !important;
                     -webkit-text-fill-color: transparent !important;
@@ -1551,6 +1552,9 @@
 
             if (!modalBody || !modalTitle) return;
 
+            // Clear viewed requests when user opens modal
+            this.markDoneRequestsAsViewed();
+
             modalTitle.textContent = 'Request Media';
             modalBody.innerHTML = `
                 <div class="request-description">
@@ -1891,7 +1895,13 @@
                             // For users: show count of completed (done) requests they haven't seen yet
                             const userId = ApiClient.getCurrentUserId();
                             const userRequests = requests.filter(r => r.UserId === userId);
-                            count = userRequests.filter(r => r.Status === 'done').length;
+                            const doneRequests = userRequests.filter(r => r.Status === 'done');
+
+                            // Get viewed request IDs from localStorage
+                            const viewedRequests = self.getViewedRequestIds();
+
+                            // Count only done requests that haven't been viewed
+                            count = doneRequests.filter(r => !viewedRequests.includes(r.Id)).length;
                         }
 
                         // Remove existing badge
@@ -1915,6 +1925,56 @@
                 });
             } catch (err) {
                 console.error('Error in updateRequestBadge:', err);
+            }
+        },
+
+        /**
+         * Get list of viewed request IDs from localStorage
+         */
+        getViewedRequestIds: function () {
+            try {
+                const stored = localStorage.getItem('ratingsPlugin_viewedRequests');
+                return stored ? JSON.parse(stored) : [];
+            } catch (err) {
+                console.error('Error reading viewed requests:', err);
+                return [];
+            }
+        },
+
+        /**
+         * Mark all current done requests as viewed
+         */
+        markDoneRequestsAsViewed: function () {
+            const self = this;
+            try {
+                this.fetchAllRequests().then(requests => {
+                    const userId = ApiClient.getCurrentUserId();
+                    const userRequests = requests.filter(r => r.UserId === userId);
+                    const doneRequests = userRequests.filter(r => r.Status === 'done');
+
+                    // Get current viewed list
+                    const viewedIds = self.getViewedRequestIds();
+
+                    // Add all done request IDs
+                    doneRequests.forEach(request => {
+                        if (!viewedIds.includes(request.Id)) {
+                            viewedIds.push(request.Id);
+                        }
+                    });
+
+                    // Save back to localStorage
+                    localStorage.setItem('ratingsPlugin_viewedRequests', JSON.stringify(viewedIds));
+
+                    // Update badge immediately to reflect changes
+                    const btn = document.getElementById('requestMediaBtn');
+                    if (btn) {
+                        self.updateRequestBadge(btn);
+                    }
+                }).catch(err => {
+                    console.error('Error marking requests as viewed:', err);
+                });
+            } catch (err) {
+                console.error('Error in markDoneRequestsAsViewed:', err);
             }
         }
     };
