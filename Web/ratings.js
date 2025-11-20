@@ -226,7 +226,7 @@
                 #requestMediaBtn {
                     position: fixed !important;
                     top: 20px !important;
-                    right: 20px !important;
+                    right: 180px !important;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
                     color: white !important;
                     border: none !important;
@@ -307,6 +307,158 @@
                 #requestMediaModalBody {
                     color: #ccc !important;
                     font-size: 16px !important;
+                }
+
+                /* User Request Form */
+                .request-input-group {
+                    margin-bottom: 20px !important;
+                }
+
+                .request-input-group label {
+                    display: block !important;
+                    margin-bottom: 8px !important;
+                    color: #fff !important;
+                    font-weight: 500 !important;
+                }
+
+                .request-input-group input,
+                .request-input-group textarea {
+                    width: 100% !important;
+                    padding: 12px !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid #444 !important;
+                    border-radius: 8px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-family: inherit !important;
+                    box-sizing: border-box !important;
+                }
+
+                .request-input-group textarea {
+                    min-height: 100px !important;
+                    resize: vertical !important;
+                }
+
+                .request-submit-btn {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 12px 30px !important;
+                    border-radius: 25px !important;
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s ease !important;
+                    width: 100% !important;
+                }
+
+                .request-submit-btn:hover {
+                    transform: translateY(-2px) !important;
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+                }
+
+                /* Admin Request List */
+                .admin-request-list {
+                    list-style: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+
+                .admin-request-item {
+                    background: #2a2a2a !important;
+                    border: 1px solid #444 !important;
+                    border-radius: 8px !important;
+                    padding: 15px !important;
+                    margin-bottom: 15px !important;
+                }
+
+                .admin-request-header {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                    margin-bottom: 10px !important;
+                }
+
+                .admin-request-title {
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    font-size: 16px !important;
+                }
+
+                .admin-request-status {
+                    padding: 4px 12px !important;
+                    border-radius: 12px !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                }
+
+                .admin-request-status.pending {
+                    background: #ff9800 !important;
+                    color: #000 !important;
+                }
+
+                .admin-request-status.processing {
+                    background: #2196F3 !important;
+                    color: #fff !important;
+                }
+
+                .admin-request-status.done {
+                    background: #4CAF50 !important;
+                    color: #fff !important;
+                }
+
+                .admin-request-user {
+                    color: #999 !important;
+                    font-size: 13px !important;
+                    margin-bottom: 8px !important;
+                }
+
+                .admin-request-notes {
+                    color: #ccc !important;
+                    font-size: 14px !important;
+                    margin-bottom: 10px !important;
+                }
+
+                .admin-request-actions {
+                    display: flex !important;
+                    gap: 10px !important;
+                }
+
+                .admin-status-btn {
+                    padding: 6px 15px !important;
+                    border: none !important;
+                    border-radius: 15px !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-status-btn.pending {
+                    background: #ff9800 !important;
+                    color: #000 !important;
+                }
+
+                .admin-status-btn.processing {
+                    background: #2196F3 !important;
+                    color: #fff !important;
+                }
+
+                .admin-status-btn.done {
+                    background: #4CAF50 !important;
+                    color: #fff !important;
+                }
+
+                .admin-status-btn:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                }
+
+                .admin-request-empty {
+                    text-align: center !important;
+                    color: #999 !important;
+                    padding: 40px 20px !important;
+                    font-style: italic !important;
                 }
             `;
 
@@ -964,6 +1116,7 @@
          * Initialize Request Media Button - Completely isolated and safe
          */
         initRequestButton: function () {
+            const self = this;
             try {
                 // Check if already exists
                 if (document.getElementById('requestMediaBtn')) {
@@ -984,8 +1137,7 @@
                         <button id="requestMediaModalClose" type="button">&times;</button>
                         <div id="requestMediaModalTitle">Request Media</div>
                         <div id="requestMediaModalBody">
-                            <p>Request feature coming soon...</p>
-                            <p style="margin-top: 15px; font-size: 14px;">This feature is under development.</p>
+                            <p style="text-align: center; color: #999;">Loading...</p>
                         </div>
                     </div>
                 `;
@@ -1000,6 +1152,7 @@
                         e.preventDefault();
                         e.stopPropagation();
                         modal.classList.add('show');
+                        self.loadRequestInterface();
                     } catch (err) {
                         console.error('Button click error:', err);
                     }
@@ -1049,6 +1202,336 @@
             } catch (err) {
                 console.error('Request button initialization failed:', err);
                 // Fail silently - don't break the plugin
+            }
+        },
+
+        /**
+         * Load appropriate interface based on user role
+         */
+        loadRequestInterface: function () {
+            const self = this;
+            try {
+                // Check if user is admin
+                this.checkIfAdmin().then(isAdmin => {
+                    if (isAdmin) {
+                        self.loadAdminInterface();
+                    } else {
+                        self.loadUserInterface();
+                    }
+                }).catch(err => {
+                    console.error('Error checking admin status:', err);
+                    // Default to user interface on error
+                    self.loadUserInterface();
+                });
+            } catch (err) {
+                console.error('Error loading request interface:', err);
+            }
+        },
+
+        /**
+         * Check if current user is admin
+         */
+        checkIfAdmin: function () {
+            return new Promise((resolve, reject) => {
+                try {
+                    if (!window.ApiClient) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const userId = ApiClient.getCurrentUserId();
+                    const baseUrl = ApiClient.serverAddress();
+                    const accessToken = ApiClient.accessToken();
+
+                    if (!userId) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const url = `${baseUrl}/Users/${userId}`;
+                    const deviceId = ApiClient.deviceId();
+                    const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(user => {
+                        resolve(user.Policy && user.Policy.IsAdministrator === true);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching user info:', err);
+                        resolve(false);
+                    });
+                } catch (err) {
+                    console.error('Error in checkIfAdmin:', err);
+                    resolve(false);
+                }
+            });
+        },
+
+        /**
+         * Load user interface for making requests
+         */
+        loadUserInterface: function () {
+            const modalBody = document.getElementById('requestMediaModalBody');
+            const modalTitle = document.getElementById('requestMediaModalTitle');
+
+            if (!modalBody || !modalTitle) return;
+
+            modalTitle.textContent = 'Request Media';
+            modalBody.innerHTML = `
+                <div class="request-input-group">
+                    <label for="requestMediaTitle">Media Title *</label>
+                    <input type="text" id="requestMediaTitle" placeholder="e.g., Breaking Bad, The Godfather" required />
+                </div>
+                <div class="request-input-group">
+                    <label for="requestMediaType">Type</label>
+                    <input type="text" id="requestMediaType" placeholder="e.g., TV Series, Movie, Anime" />
+                </div>
+                <div class="request-input-group">
+                    <label for="requestMediaNotes">Additional Notes</label>
+                    <textarea id="requestMediaNotes" placeholder="Any additional information (season, year, etc.)"></textarea>
+                </div>
+                <button class="request-submit-btn" id="submitRequestBtn">Submit Request</button>
+            `;
+
+            // Attach submit handler
+            const submitBtn = document.getElementById('submitRequestBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', () => {
+                    this.submitMediaRequest();
+                });
+            }
+        },
+
+        /**
+         * Load admin interface for managing requests
+         */
+        loadAdminInterface: function () {
+            const modalBody = document.getElementById('requestMediaModalBody');
+            const modalTitle = document.getElementById('requestMediaModalTitle');
+
+            if (!modalBody || !modalTitle) return;
+
+            modalTitle.textContent = 'Manage Media Requests';
+            modalBody.innerHTML = '<p style="text-align: center; color: #999;">Loading requests...</p>';
+
+            // Fetch all requests
+            this.fetchAllRequests().then(requests => {
+                if (requests.length === 0) {
+                    modalBody.innerHTML = '<div class="admin-request-empty">No media requests yet</div>';
+                    return;
+                }
+
+                let html = '<ul class="admin-request-list">';
+                requests.forEach(request => {
+                    html += `
+                        <li class="admin-request-item" data-request-id="${request.Id}">
+                            <div class="admin-request-header">
+                                <div class="admin-request-title">${this.escapeHtml(request.Title)}</div>
+                                <span class="admin-request-status ${request.Status}">${request.Status.toUpperCase()}</span>
+                            </div>
+                            <div class="admin-request-user">Requested by: ${this.escapeHtml(request.Username)}</div>
+                            ${request.Type ? `<div class="admin-request-user">Type: ${this.escapeHtml(request.Type)}</div>` : ''}
+                            ${request.Notes ? `<div class="admin-request-notes">${this.escapeHtml(request.Notes)}</div>` : ''}
+                            <div class="admin-request-actions">
+                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">Pending</button>
+                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">Processing</button>
+                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">Done</button>
+                            </div>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                modalBody.innerHTML = html;
+
+                // Attach status change handlers
+                const statusBtns = modalBody.querySelectorAll('.admin-status-btn');
+                statusBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const newStatus = e.target.getAttribute('data-status');
+                        this.updateRequestStatus(requestId, newStatus);
+                    });
+                });
+            }).catch(err => {
+                console.error('Error loading requests:', err);
+                modalBody.innerHTML = '<div class="admin-request-empty">Error loading requests</div>';
+            });
+        },
+
+        /**
+         * Submit a new media request
+         */
+        submitMediaRequest: function () {
+            const self = this;
+            try {
+                const title = document.getElementById('requestMediaTitle').value.trim();
+                const type = document.getElementById('requestMediaType').value.trim();
+                const notes = document.getElementById('requestMediaNotes').value.trim();
+
+                if (!title) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Please enter a media title');
+                        });
+                    }
+                    return;
+                }
+
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const url = `${baseUrl}/Ratings/Requests`;
+
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                const requestData = {
+                    Title: title,
+                    Type: type,
+                    Notes: notes
+                };
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to submit request');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Request submitted successfully!');
+                        });
+                    }
+
+                    // Clear form
+                    document.getElementById('requestMediaTitle').value = '';
+                    document.getElementById('requestMediaType').value = '';
+                    document.getElementById('requestMediaNotes').value = '';
+
+                    // Close modal
+                    const modal = document.getElementById('requestMediaModal');
+                    if (modal) {
+                        modal.classList.remove('show');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error submitting request:', err);
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Error submitting request');
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error in submitMediaRequest:', err);
+            }
+        },
+
+        /**
+         * Fetch all media requests (admin only)
+         */
+        fetchAllRequests: function () {
+            return new Promise((resolve, reject) => {
+                try {
+                    const baseUrl = ApiClient.serverAddress();
+                    const accessToken = ApiClient.accessToken();
+                    const deviceId = ApiClient.deviceId();
+                    const url = `${baseUrl}/Ratings/Requests`;
+
+                    const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch requests');
+                        }
+                        return response.json();
+                    })
+                    .then(requests => {
+                        resolve(requests || []);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching requests:', err);
+                        reject(err);
+                    });
+                } catch (err) {
+                    console.error('Error in fetchAllRequests:', err);
+                    reject(err);
+                }
+            });
+        },
+
+        /**
+         * Update request status (admin only)
+         */
+        updateRequestStatus: function (requestId, newStatus) {
+            const self = this;
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const url = `${baseUrl}/Ratings/Requests/${requestId}/Status?status=${newStatus}`;
+
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update status');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Status updated to: ' + newStatus);
+                        });
+                    }
+
+                    // Reload the admin interface
+                    self.loadAdminInterface();
+                })
+                .catch(err => {
+                    console.error('Error updating status:', err);
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Error updating status');
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error in updateRequestStatus:', err);
             }
         }
     };

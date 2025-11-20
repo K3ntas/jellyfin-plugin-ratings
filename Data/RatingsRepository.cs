@@ -20,6 +20,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly string _dataPath;
         private readonly object _lock = new object();
         private Dictionary<Guid, UserRating> _ratings;
+        private Dictionary<Guid, MediaRequest> _mediaRequests;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -32,6 +33,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _logger = logger;
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings");
             _ratings = new Dictionary<Guid, UserRating>();
+            _mediaRequests = new Dictionary<Guid, MediaRequest>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -39,6 +41,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
 
             LoadRatings();
+            LoadMediaRequests();
         }
 
         /// <summary>
@@ -204,6 +207,139 @@ namespace Jellyfin.Plugin.Ratings.Data
                     _ratings.Remove(existing.Id);
                     _logger.LogInformation("Deleted rating for user {UserId} on item {ItemId}", userId, itemId);
                     _ = SaveRatingsAsync();
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        // Media Request Methods
+
+        /// <summary>
+        /// Loads media requests from disk.
+        /// </summary>
+        private void LoadMediaRequests()
+        {
+            try
+            {
+                var requestsFile = Path.Combine(_dataPath, "media_requests.json");
+                if (File.Exists(requestsFile))
+                {
+                    var json = File.ReadAllText(requestsFile);
+                    var requests = JsonSerializer.Deserialize<List<MediaRequest>>(json);
+                    if (requests != null)
+                    {
+                        _mediaRequests = requests.ToDictionary(r => r.Id);
+                        _logger.LogInformation("Loaded {Count} media requests from disk", _mediaRequests.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading media requests from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves media requests to disk.
+        /// </summary>
+        private async Task SaveMediaRequestsAsync()
+        {
+            try
+            {
+                var requestsFile = Path.Combine(_dataPath, "media_requests.json");
+                var json = JsonSerializer.Serialize(_mediaRequests.Values.ToList(), new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} media requests to disk", _mediaRequests.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving media requests to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a new media request.
+        /// </summary>
+        /// <param name="request">The media request to add.</param>
+        /// <returns>The created request.</returns>
+        public async Task<MediaRequest> AddMediaRequestAsync(MediaRequest request)
+        {
+            lock (_lock)
+            {
+                _mediaRequests[request.Id] = request;
+                _logger.LogInformation("Created media request {RequestId} by user {UserId} for '{Title}'", request.Id, request.UserId, request.Title);
+                _ = SaveMediaRequestsAsync();
+                return request;
+            }
+        }
+
+        /// <summary>
+        /// Gets all media requests.
+        /// </summary>
+        /// <returns>List of all media requests.</returns>
+        public async Task<List<MediaRequest>> GetAllMediaRequestsAsync()
+        {
+            lock (_lock)
+            {
+                return _mediaRequests.Values.OrderByDescending(r => r.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets a media request by ID.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <returns>The media request or null if not found.</returns>
+        public async Task<MediaRequest?> GetMediaRequestAsync(Guid requestId)
+        {
+            lock (_lock)
+            {
+                return _mediaRequests.ContainsKey(requestId) ? _mediaRequests[requestId] : null;
+            }
+        }
+
+        /// <summary>
+        /// Updates the status of a media request.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="status">The new status.</param>
+        /// <returns>The updated request or null if not found.</returns>
+        public async Task<MediaRequest?> UpdateMediaRequestStatusAsync(Guid requestId, string status)
+        {
+            lock (_lock)
+            {
+                if (_mediaRequests.ContainsKey(requestId))
+                {
+                    var request = _mediaRequests[requestId];
+                    request.Status = status;
+                    _logger.LogInformation("Updated media request {RequestId} status to '{Status}'", requestId, status);
+                    _ = SaveMediaRequestsAsync();
+                    return request;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a media request.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <returns>True if deleted, false if not found.</returns>
+        public async Task<bool> DeleteMediaRequestAsync(Guid requestId)
+        {
+            lock (_lock)
+            {
+                if (_mediaRequests.ContainsKey(requestId))
+                {
+                    _mediaRequests.Remove(requestId);
+                    _logger.LogInformation("Deleted media request {RequestId}", requestId);
+                    _ = SaveMediaRequestsAsync();
                     return true;
                 }
 
