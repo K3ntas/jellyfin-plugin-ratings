@@ -222,32 +222,74 @@
                     font-weight: 600;
                 }
 
-                /* Request Media Button - Isolated and Safe */
+                /* Request Media Button - Centered with Grey Style */
                 #requestMediaBtn {
                     position: fixed !important;
-                    top: 20px !important;
+                    top: 50% !important;
                     right: 240px !important;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    transform: translateY(-50%) !important;
+                    background: rgba(60, 60, 60, 0.9) !important;
                     color: white !important;
-                    border: none !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
                     padding: 12px 24px !important;
                     border-radius: 25px !important;
                     font-size: 14px !important;
                     font-weight: 600 !important;
                     cursor: pointer !important;
                     z-index: 999999 !important;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
                     transition: all 0.3s ease !important;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    animation: pulseButton 2s ease-in-out infinite !important;
+                }
+
+                @keyframes pulseButton {
+                    0%, 100% {
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(102, 126, 234, 0.7) !important;
+                    }
+                    50% {
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(102, 126, 234, 0) !important;
+                    }
                 }
 
                 #requestMediaBtn:hover {
-                    transform: translateY(-2px) !important;
-                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+                    background: rgba(70, 70, 70, 0.95) !important;
+                    border-color: rgba(255, 255, 255, 0.3) !important;
+                    transform: translateY(-50%) scale(1.05) !important;
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+                    animation: none !important;
                 }
 
                 #requestMediaBtn.hidden {
                     display: none !important;
+                }
+
+                /* Notification Badge */
+                .request-badge {
+                    position: absolute !important;
+                    top: -8px !important;
+                    right: -8px !important;
+                    background: #ff4444 !important;
+                    color: white !important;
+                    border-radius: 50% !important;
+                    width: 22px !important;
+                    height: 22px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    border: 2px solid #1e1e1e !important;
+                    animation: badgePulse 1.5s ease-in-out infinite !important;
+                }
+
+                @keyframes badgePulse {
+                    0%, 100% {
+                        transform: scale(1) !important;
+                    }
+                    50% {
+                        transform: scale(1.1) !important;
+                    }
                 }
 
                 /* Button Tooltip */
@@ -296,7 +338,7 @@
                     background: #1e1e1e !important;
                     padding: 30px !important;
                     border-radius: 15px !important;
-                    max-width: 600px !important;
+                    max-width: 900px !important;
                     width: 90% !important;
                     max-height: 80vh !important;
                     overflow-y: auto !important;
@@ -413,7 +455,7 @@
                     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
                 }
 
-                /* Admin Request List */
+                /* Admin Request List - Compact Table Style */
                 .admin-request-list {
                     list-style: none !important;
                     padding: 0 !important;
@@ -423,91 +465,116 @@
                 .admin-request-item {
                     background: #2a2a2a !important;
                     border: 1px solid #444 !important;
-                    border-radius: 8px !important;
-                    padding: 15px !important;
-                    margin-bottom: 15px !important;
-                }
-
-                .admin-request-header {
-                    display: flex !important;
-                    justify-content: space-between !important;
+                    border-radius: 6px !important;
+                    padding: 10px 15px !important;
+                    margin-bottom: 8px !important;
+                    display: grid !important;
+                    grid-template-columns: 2fr 1fr 1.5fr 100px auto !important;
+                    gap: 15px !important;
                     align-items: center !important;
-                    margin-bottom: 10px !important;
                 }
 
                 .admin-request-title {
                     color: #fff !important;
                     font-weight: 600 !important;
-                    font-size: 16px !important;
-                }
-
-                .admin-request-status {
-                    padding: 4px 12px !important;
-                    border-radius: 12px !important;
-                    font-size: 12px !important;
-                    font-weight: 600 !important;
-                }
-
-                .admin-request-status.pending {
-                    background: #ff9800 !important;
-                    color: #000 !important;
-                }
-
-                .admin-request-status.processing {
-                    background: #2196F3 !important;
-                    color: #fff !important;
-                }
-
-                .admin-request-status.done {
-                    background: #4CAF50 !important;
-                    color: #fff !important;
+                    font-size: 14px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
                 }
 
                 .admin-request-user {
                     color: #999 !important;
-                    font-size: 13px !important;
-                    margin-bottom: 8px !important;
-                }
-
-                .admin-request-notes {
-                    color: #ccc !important;
-                    font-size: 14px !important;
-                    margin-bottom: 10px !important;
-                }
-
-                .admin-request-actions {
-                    display: flex !important;
-                    gap: 10px !important;
-                }
-
-                .admin-status-btn {
-                    padding: 6px 15px !important;
-                    border: none !important;
-                    border-radius: 15px !important;
                     font-size: 12px !important;
-                    font-weight: 600 !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s ease !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
                 }
 
-                .admin-status-btn.pending {
+                .admin-request-details {
+                    color: #aaa !important;
+                    font-size: 11px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
+                }
+
+                .admin-request-status-badge {
+                    padding: 4px 10px !important;
+                    border-radius: 10px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    text-align: center !important;
+                    width: fit-content !important;
+                }
+
+                .admin-request-status-badge.pending {
                     background: #ff9800 !important;
                     color: #000 !important;
                 }
 
-                .admin-status-btn.processing {
+                .admin-request-status-badge.processing {
                     background: #2196F3 !important;
                     color: #fff !important;
                 }
 
-                .admin-status-btn.done {
+                .admin-request-status-badge.done {
                     background: #4CAF50 !important;
                     color: #fff !important;
                 }
 
+                .admin-request-actions {
+                    display: flex !important;
+                    gap: 6px !important;
+                }
+
+                .admin-status-btn {
+                    padding: 5px 12px !important;
+                    border: none !important;
+                    border-radius: 12px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    white-space: nowrap !important;
+                }
+
+                .admin-status-btn.pending {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                    color: #ff9800 !important;
+                    border: 1px solid #ff9800 !important;
+                }
+
+                .admin-status-btn.processing {
+                    background: rgba(33, 150, 243, 0.2) !important;
+                    color: #2196F3 !important;
+                    border: 1px solid #2196F3 !important;
+                }
+
+                .admin-status-btn.done {
+                    background: rgba(76, 175, 80, 0.2) !important;
+                    color: #4CAF50 !important;
+                    border: 1px solid #4CAF50 !important;
+                }
+
                 .admin-status-btn:hover {
-                    transform: translateY(-1px) !important;
-                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+                    transform: scale(1.05) !important;
+                    opacity: 1 !important;
+                }
+
+                .admin-status-btn.pending:hover {
+                    background: #ff9800 !important;
+                    color: #000 !important;
+                }
+
+                .admin-status-btn.processing:hover {
+                    background: #2196F3 !important;
+                    color: #fff !important;
+                }
+
+                .admin-status-btn.done:hover {
+                    background: #4CAF50 !important;
+                    color: #fff !important;
                 }
 
                 .admin-request-empty {
@@ -517,47 +584,54 @@
                     font-style: italic !important;
                 }
 
-                /* User Request List */
+                /* User Request List - Compact Style */
                 .user-request-list {
                     list-style: none !important;
                     padding: 0 !important;
-                    margin: 20px 0 0 0 !important;
-                    max-height: 300px !important;
+                    margin: 15px 0 0 0 !important;
+                    max-height: 250px !important;
                     overflow-y: auto !important;
                 }
 
                 .user-request-item {
                     background: #2a2a2a !important;
                     border: 1px solid #444 !important;
-                    border-radius: 8px !important;
-                    padding: 12px !important;
-                    margin-bottom: 10px !important;
+                    border-radius: 6px !important;
+                    padding: 8px 12px !important;
+                    margin-bottom: 6px !important;
                     display: flex !important;
                     justify-content: space-between !important;
                     align-items: center !important;
+                    gap: 10px !important;
                 }
 
                 .user-request-info {
                     flex: 1 !important;
+                    min-width: 0 !important;
                 }
 
                 .user-request-item-title {
                     color: #fff !important;
                     font-weight: 600 !important;
-                    font-size: 14px !important;
-                    margin-bottom: 4px !important;
+                    font-size: 13px !important;
+                    margin-bottom: 2px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
                 }
 
                 .user-request-item-type {
                     color: #999 !important;
-                    font-size: 12px !important;
+                    font-size: 11px !important;
                 }
 
                 .user-request-status {
                     padding: 4px 10px !important;
                     border-radius: 10px !important;
-                    font-size: 11px !important;
+                    font-size: 10px !important;
                     font-weight: 600 !important;
+                    white-space: nowrap !important;
+                    flex-shrink: 0 !important;
                 }
 
                 .user-request-status.pending {
@@ -578,10 +652,10 @@
                 .user-requests-title {
                     color: #fff !important;
                     font-weight: 600 !important;
-                    font-size: 16px !important;
-                    margin-top: 25px !important;
-                    margin-bottom: 10px !important;
-                    padding-top: 20px !important;
+                    font-size: 15px !important;
+                    margin-top: 20px !important;
+                    margin-bottom: 8px !important;
+                    padding-top: 15px !important;
                     border-top: 1px solid #444 !important;
                 }
             `;
@@ -1247,12 +1321,17 @@
                     return;
                 }
 
-                // Create button
+                // Create button with position relative for badge
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
-                btn.textContent = '📬 Request Media';
+                btn.style.position = 'relative';
+                btn.innerHTML = '📬 Request Media';
                 btn.setAttribute('type', 'button');
                 btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
+
+                // Update badge periodically
+                self.updateRequestBadge(btn);
+                setInterval(() => self.updateRequestBadge(btn), 30000); // Update every 30 seconds
 
                 // Create modal
                 const modal = document.createElement('div');
@@ -1514,15 +1593,17 @@
 
                 let html = '<ul class="admin-request-list">';
                 requests.forEach(request => {
+                    const details = [];
+                    if (request.Type) details.push(request.Type);
+                    if (request.Notes) details.push(request.Notes);
+                    const detailsText = details.join(' • ');
+
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
-                            <div class="admin-request-header">
-                                <div class="admin-request-title">${this.escapeHtml(request.Title)}</div>
-                                <span class="admin-request-status ${request.Status}">${request.Status.toUpperCase()}</span>
-                            </div>
-                            <div class="admin-request-user">Requested by: ${this.escapeHtml(request.Username)}</div>
-                            ${request.Type ? `<div class="admin-request-user">Type: ${this.escapeHtml(request.Type)}</div>` : ''}
-                            ${request.Notes ? `<div class="admin-request-notes">${this.escapeHtml(request.Notes)}</div>` : ''}
+                            <div class="admin-request-title" title="${this.escapeHtml(request.Title)}">${this.escapeHtml(request.Title)}</div>
+                            <div class="admin-request-user" title="${this.escapeHtml(request.Username)}">${this.escapeHtml(request.Username)}</div>
+                            <div class="admin-request-details" title="${this.escapeHtml(detailsText)}">${this.escapeHtml(detailsText) || 'No details'}</div>
+                            <span class="admin-request-status-badge ${request.Status}">${request.Status.toUpperCase()}</span>
                             <div class="admin-request-actions">
                                 <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">Pending</button>
                                 <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">Processing</button>
@@ -1721,6 +1802,51 @@
                 });
             } catch (err) {
                 console.error('Error in updateRequestStatus:', err);
+            }
+        },
+
+        /**
+         * Update notification badge on button
+         */
+        updateRequestBadge: function (btn) {
+            const self = this;
+            try {
+                this.fetchAllRequests().then(requests => {
+                    // Check if user is admin
+                    this.checkIfAdmin().then(isAdmin => {
+                        let count = 0;
+
+                        if (isAdmin) {
+                            // For admin: show count of pending requests
+                            count = requests.filter(r => r.Status === 'pending').length;
+                        } else {
+                            // For users: show count of completed (done) requests they haven't seen yet
+                            const userId = ApiClient.getCurrentUserId();
+                            const userRequests = requests.filter(r => r.UserId === userId);
+                            count = userRequests.filter(r => r.Status === 'done').length;
+                        }
+
+                        // Remove existing badge
+                        const existingBadge = btn.querySelector('.request-badge');
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
+
+                        // Add badge if count > 0
+                        if (count > 0) {
+                            const badge = document.createElement('span');
+                            badge.className = 'request-badge';
+                            badge.textContent = count;
+                            btn.appendChild(badge);
+                        }
+                    }).catch(err => {
+                        console.error('Error checking admin status for badge:', err);
+                    });
+                }).catch(err => {
+                    console.error('Error updating request badge:', err);
+                });
+            } catch (err) {
+                console.error('Error in updateRequestBadge:', err);
             }
         }
     };
