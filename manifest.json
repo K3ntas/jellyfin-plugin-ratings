@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.66.0",
+        "changelog": "Full Request Media system! User interface for submitting requests, admin interface for managing requests with status updates (pending/processing/done). Button repositioned to avoid blocking UI.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.66.0/jellyfin-plugin-ratings_1.0.66.0.zip",
+        "checksum": "d4fc6b5d262df36d88c79178f68f72d2",
+        "timestamp": "2025-11-20T22:10:00Z"
+      },
+      {
         "version": "1.0.65.0",
         "changelog": "SAFE Request Media button! Fully isolated with error handling, won't crash Jellyfin. Top-right corner, hides during video.",
         "targetAbi": "10.11.0.0",
