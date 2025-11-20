@@ -222,25 +222,83 @@
                     font-weight: 600;
                 }
 
-                /* Request Media Button - Centered with Grey Style */
+                /* Request Media Button - Aligned with Header */
                 #requestMediaBtn {
                     position: fixed !important;
-                    top: 50% !important;
+                    top: 20px !important;
                     right: 240px !important;
-                    transform: translateY(-50%) !important;
                     background: rgba(60, 60, 60, 0.9) !important;
-                    color: white !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    padding: 12px 24px !important;
+                    padding: 12px 48px !important;
                     border-radius: 25px !important;
-                    font-size: 14px !important;
+                    font-size: 16px !important;
                     font-weight: 600 !important;
                     cursor: pointer !important;
                     z-index: 999999 !important;
                     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
                     transition: all 0.3s ease !important;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
                     animation: pulseButton 2s ease-in-out infinite !important;
+                }
+
+                #requestMediaBtn .btn-text {
+                    background: linear-gradient(to right, #9f9f9f 0, #fff 10%, #868686 20%) !important;
+                    background-position: 0 !important;
+                    -webkit-background-clip: text !important;
+                    -webkit-text-fill-color: transparent !important;
+                    background-clip: text !important;
+                    animation: shine 3s infinite linear !important;
+                    animation-fill-mode: forwards !important;
+                    -webkit-text-size-adjust: none !important;
+                    display: inline-block !important;
+                }
+
+                @keyframes shine {
+                    0% {
+                        background-position: 0 !important;
+                    }
+                    60% {
+                        background-position: 180px !important;
+                    }
+                    100% {
+                        background-position: 180px !important;
+                    }
+                }
+
+                @-webkit-keyframes shine {
+                    0% {
+                        background-position: 0 !important;
+                    }
+                    60% {
+                        background-position: 180px !important;
+                    }
+                    100% {
+                        background-position: 180px !important;
+                    }
+                }
+
+                @-moz-keyframes shine {
+                    0% {
+                        background-position: 0 !important;
+                    }
+                    60% {
+                        background-position: 180px !important;
+                    }
+                    100% {
+                        background-position: 180px !important;
+                    }
+                }
+
+                @-o-keyframes shine {
+                    0% {
+                        background-position: 0 !important;
+                    }
+                    60% {
+                        background-position: 180px !important;
+                    }
+                    100% {
+                        background-position: 180px !important;
+                    }
                 }
 
                 @keyframes pulseButton {
@@ -255,9 +313,13 @@
                 #requestMediaBtn:hover {
                     background: rgba(70, 70, 70, 0.95) !important;
                     border-color: rgba(255, 255, 255, 0.3) !important;
-                    transform: translateY(-50%) scale(1.05) !important;
+                    transform: scale(1.05) !important;
                     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
-                    animation: none !important;
+                    animation: pulseButton 2s ease-in-out infinite !important;
+                }
+
+                #requestMediaBtn:hover .btn-text {
+                    animation: shine 3s infinite linear !important;
                 }
 
                 #requestMediaBtn.hidden {
@@ -1325,7 +1387,7 @@
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
                 btn.style.position = 'relative';
-                btn.innerHTML = '📬 Request Media';
+                btn.innerHTML = '<span class="btn-text">Request Media</span>';
                 btn.setAttribute('type', 'button');
                 btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
 
@@ -1791,6 +1853,12 @@
 
                     // Reload the admin interface
                     self.loadAdminInterface();
+
+                    // Update badge to reflect new counts
+                    const btn = document.getElementById('requestMediaBtn');
+                    if (btn) {
+                        self.updateRequestBadge(btn);
+                    }
                 })
                 .catch(err => {
                     console.error('Error updating status:', err);
