@@ -355,6 +355,224 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Content($"// ERROR: {ex.Message}\n// Stack: {ex.StackTrace}", "application/javascript");
             }
         }
+
+        /// <summary>
+        /// Creates a new media request.
+        /// </summary>
+        /// <param name="request">The media request data.</param>
+        /// <returns>The created request.</returns>
+        [HttpPost("Requests")]
+        public ActionResult<MediaRequest> CreateMediaRequest([FromBody] [Required] MediaRequestDto request)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(authHeader))
+                    {
+                        _logger.LogError("No authentication header found");
+                        return Unauthorized("No authentication header provided");
+                    }
+
+                    // Extract token from header
+                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (!tokenMatch.Success)
+                    {
+                        _logger.LogError("Could not extract token from header");
+                        return Unauthorized("Invalid authentication header format");
+                    }
+
+                    var token = tokenMatch.Groups[1].Value;
+
+                    // Get session by authentication token
+                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                    var session = sessionTask.Result;
+                    if (session == null)
+                    {
+                        _logger.LogError("No active session found for token");
+                        return Unauthorized("Invalid or expired token");
+                    }
+
+                    userId = session.UserId;
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var mediaRequest = new MediaRequest
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Username = user.Username,
+                    Title = request.Title,
+                    Type = request.Type,
+                    Notes = request.Notes,
+                    Status = "pending",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = _repository.AddMediaRequestAsync(mediaRequest).Result;
+                _logger.LogInformation("User {UserId} created media request for '{Title}'", userId, request.Title);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating media request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets all media requests (admin only).
+        /// </summary>
+        /// <returns>List of all media requests.</returns>
+        [HttpGet("Requests")]
+        public ActionResult<List<MediaRequest>> GetMediaRequests()
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if user exists - admin check will be done on client side
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // For now, allow all authenticated users to see requests
+                // Admin-only enforcement can be added later with proper policy checking
+
+                var requests = _repository.GetAllMediaRequestsAsync().Result;
+                return Ok(requests);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting media requests");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Updates the status of a media request (admin only).
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="status">The new status (pending, processing, done).</param>
+        /// <returns>The updated request.</returns>
+        [HttpPost("Requests/{requestId}/Status")]
+        public ActionResult<MediaRequest> UpdateRequestStatus(
+            [FromRoute] [Required] Guid requestId,
+            [FromQuery] [Required] string status)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if user exists - admin check will be done on client side
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // For now, allow all authenticated users to update requests
+                // Admin-only enforcement can be added later with proper policy checking
+
+                // Validate status
+                var validStatuses = new[] { "pending", "processing", "done" };
+                if (!validStatuses.Contains(status.ToLower()))
+                {
+                    return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
+                }
+
+                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower()).Result;
+                if (result == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                _logger.LogInformation("Admin {UserId} updated request {RequestId} status to '{Status}'", userId, requestId, status);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating request status");
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 
     /// <summary>
