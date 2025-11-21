@@ -256,58 +256,58 @@
 
                 @keyframes shine {
                     0% {
-                        background-position: 0 !important;
+                        background-position: 0;
                     }
                     60% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                     100% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                 }
 
                 @-webkit-keyframes shine {
                     0% {
-                        background-position: 0 !important;
+                        background-position: 0;
                     }
                     60% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                     100% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                 }
 
                 @-moz-keyframes shine {
                     0% {
-                        background-position: 0 !important;
+                        background-position: 0;
                     }
                     60% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                     100% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                 }
 
                 @-o-keyframes shine {
                     0% {
-                        background-position: 0 !important;
+                        background-position: 0;
                     }
                     60% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                     100% {
-                        background-position: 180px !important;
+                        background-position: 180px;
                     }
                 }
 
                 @keyframes pulseButton {
                     0%, 100% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(102, 126, 234, 0.7) !important;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(102, 126, 234, 0.7);
                     }
                     50% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(102, 126, 234, 0) !important;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(102, 126, 234, 0);
                     }
                 }
 
@@ -332,8 +332,8 @@
                     #requestMediaBtn {
                         padding: 8px 24px !important;
                         font-size: 11px !important;
-                        border-radius: 18px !important;
-                        right: 70px !important;
+                        border-radius: 15px !important;
+                        right: 190px !important;
                         top: 6px !important;
                     }
 
@@ -371,10 +371,10 @@
 
                 @keyframes badgePulse {
                     0%, 100% {
-                        transform: scale(1) !important;
+                        transform: scale(1);
                     }
                     50% {
-                        transform: scale(1.1) !important;
+                        transform: scale(1.1);
                     }
                 }
 
