@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.87.0",
+        "changelog": "Fixed overlay! Netflix view now uses position:fixed fullscreen overlay attached to body. No more dependency on parent container visibility. Works on first navigation!",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.87.0/jellyfin-plugin-ratings_1.0.87.0.zip",
+        "checksum": "020638d89402a65fb0dbb3948d2d5f98",
+        "timestamp": "2025-11-21T21:50:00Z"
+      },
+      {
         "version": "1.0.86.0",
         "changelog": "Force visibility fix! Inline styles with !important to override Jellyfin CSS that was hiding Netflix container on SPA navigation.",
         "targetAbi": "10.11.0.0",

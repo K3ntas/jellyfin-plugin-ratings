@@ -997,16 +997,20 @@
                 /* Netflix-Style View Styles */
                 .netflix-view-container {
                     padding: 20px 0 !important;
+                    padding-top: 70px !important;
                     background: #141414 !important;
-                    min-height: 100vh !important;
-                    position: relative !important;
-                    z-index: 1000 !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
                     width: 100% !important;
+                    height: 100% !important;
+                    overflow-y: auto !important;
+                    z-index: 9999 !important;
                     display: block !important;
                     visibility: visible !important;
                     opacity: 1 !important;
-                    overflow: visible !important;
-                    height: auto !important;
                 }
 
                 .netflix-genre-row {
@@ -2915,36 +2919,32 @@
 
             console.log('[RatingsPlugin] Creating Netflix view...');
 
-            // Create Netflix view container
+            // Create Netflix view container as a FIXED overlay
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
-            // Force visibility with inline styles to override any Jellyfin CSS
-            netflixContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 100vh !important; background: #141414 !important; position: relative !important; z-index: 1000 !important;';
+            // Use fixed positioning to overlay the entire page - this ensures visibility
+            netflixContainer.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow-y: auto !important;
+                background: #141414 !important;
+                z-index: 9999 !important;
+                padding-top: 70px !important;
+            `;
             netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
 
-            // Hide ALL potential content containers to prevent layering issues
-            document.querySelectorAll('.itemsContainer, .vertical-list, .view-inner').forEach(el => {
-                el.style.display = 'none';
-            });
+            // Insert directly into body as fixed overlay
+            document.body.appendChild(netflixContainer);
 
-            // Find the best parent to insert into
-            let insertParent = itemsContainer.parentNode;
-            if (!insertParent || insertParent === document.body) {
-                // Try to find a better parent
-                insertParent = document.querySelector('.view') ||
-                               document.querySelector('.page:not(.hide)') ||
-                               document.querySelector('[data-role="content"]') ||
-                               document.body;
-            }
-
-            // Insert Netflix container
-            if (insertParent === itemsContainer.parentNode) {
-                insertParent.insertBefore(netflixContainer, itemsContainer);
-            } else {
-                insertParent.appendChild(netflixContainer);
-            }
-
-            console.log('[RatingsPlugin] Netflix container inserted into:', insertParent.className || insertParent.tagName);
+            console.log('[RatingsPlugin] Netflix container inserted as fixed overlay');
 
             // Fetch genres and build view
             this.fetchGenresAndBuildView(parentId, netflixContainer);
