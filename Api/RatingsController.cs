@@ -331,6 +331,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     EnableRatings = config?.EnableRatings ?? true,
                     EnableNetflixView = config?.EnableNetflixView ?? false,
+                    EnableRequestButton = config?.EnableRequestButton ?? true,
                     MinRating = config?.MinRating ?? 1,
                     MaxRating = config?.MaxRating ?? 10
                 });

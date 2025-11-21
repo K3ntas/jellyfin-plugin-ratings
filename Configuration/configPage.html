@@ -54,6 +54,16 @@
                             </div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableRequestButton" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Request Media Button</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the "Request Media" button in the header for users to request new content.
+                            </div>
+                        </div>
+
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -77,6 +87,7 @@
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
+                    document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -91,6 +102,7 @@
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
+                    config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
