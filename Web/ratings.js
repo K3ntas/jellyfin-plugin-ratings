@@ -2656,6 +2656,7 @@
 
             // Check if feature is enabled via API
             this.checkNetflixViewEnabled().then(enabled => {
+                console.log('[RatingsPlugin] Netflix View enabled:', enabled);
                 self.netflixViewEnabled = enabled;
                 if (enabled) {
                     self.observeLibraryPages();
@@ -2670,12 +2671,14 @@
             return new Promise((resolve) => {
                 try {
                     if (!window.ApiClient) {
+                        console.log('[RatingsPlugin] ApiClient not available');
                         resolve(false);
                         return;
                     }
 
                     const baseUrl = ApiClient.serverAddress();
                     const url = `${baseUrl}/Ratings/Config`;
+                    console.log('[RatingsPlugin] Fetching config from:', url);
 
                     fetch(url, {
                         method: 'GET',
@@ -2683,10 +2686,15 @@
                     })
                     .then(response => response.json())
                     .then(config => {
+                        console.log('[RatingsPlugin] Config response:', config);
                         resolve(config.EnableNetflixView === true);
                     })
-                    .catch(() => resolve(false));
+                    .catch((err) => {
+                        console.log('[RatingsPlugin] Config fetch error:', err);
+                        resolve(false);
+                    });
                 } catch (err) {
+                    console.log('[RatingsPlugin] Config check error:', err);
                     resolve(false);
                 }
             });
@@ -2705,6 +2713,7 @@
                 lastUrl = url;
 
                 const hash = window.location.hash;
+                console.log('[RatingsPlugin] Checking page:', hash);
 
                 // Match URL patterns like:
                 // #/movies?topParentId=xxx&collectionType=movies
@@ -2714,9 +2723,11 @@
                 const hasTopParentId = hash.includes('topParentId=');
 
                 const shouldTransform = hasTopParentId && (isMoviesPage || isTVPage);
+                console.log('[RatingsPlugin] Should transform:', shouldTransform, '(movies:', isMoviesPage, 'tv:', isTVPage, 'hasParentId:', hasTopParentId, ')');
 
                 if (shouldTransform) {
                     // Wait for page to load before transforming
+                    console.log('[RatingsPlugin] Will transform in 1.5s...');
                     setTimeout(() => {
                         self.transformToNetflixView();
                     }, 1500);
