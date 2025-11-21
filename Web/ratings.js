@@ -667,6 +667,83 @@
                     font-style: italic !important;
                 }
 
+                /* Admin Status Dropdown (for mobile) */
+                .admin-status-select {
+                    display: none !important;
+                    padding: 6px 10px !important;
+                    border-radius: 8px !important;
+                    border: 1px solid #555 !important;
+                    background: #333 !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    min-width: 100px !important;
+                }
+
+                .admin-status-select:focus {
+                    outline: none !important;
+                    border-color: #667eea !important;
+                }
+
+                .admin-status-select option {
+                    background: #333 !important;
+                    color: #fff !important;
+                    padding: 8px !important;
+                }
+
+                /* Mobile Admin Table - Card Layout */
+                @media screen and (max-width: 768px) {
+                    .admin-request-item {
+                        grid-template-columns: 1fr !important;
+                        gap: 8px !important;
+                        padding: 12px !important;
+                    }
+
+                    .admin-request-title {
+                        font-size: 13px !important;
+                        white-space: normal !important;
+                        line-height: 1.3 !important;
+                    }
+
+                    .admin-request-user {
+                        font-size: 11px !important;
+                    }
+
+                    .admin-request-details {
+                        font-size: 10px !important;
+                        white-space: normal !important;
+                        line-height: 1.3 !important;
+                    }
+
+                    .admin-request-status-badge {
+                        font-size: 10px !important;
+                        padding: 3px 8px !important;
+                    }
+
+                    /* Hide buttons, show dropdown on mobile */
+                    .admin-request-actions {
+                        display: none !important;
+                    }
+
+                    .admin-status-select {
+                        display: block !important;
+                        width: 100% !important;
+                    }
+
+                    /* Request Modal - Full width on mobile */
+                    .request-media-modal .modal-content {
+                        width: 95% !important;
+                        max-width: none !important;
+                        margin: 10px !important;
+                    }
+
+                    .request-media-modal .modal-body {
+                        max-height: 70vh !important;
+                        padding: 15px !important;
+                    }
+                }
+
                 /* User Request List - Compact Style */
                 .user-request-list {
                     list-style: none !important;
@@ -1695,18 +1772,33 @@
                                 <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">Processing</button>
                                 <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">Done</button>
                             </div>
+                            <select class="admin-status-select" data-request-id="${request.Id}">
+                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>Processing</option>
+                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>Done</option>
+                            </select>
                         </li>
                     `;
                 });
                 html += '</ul>';
                 modalBody.innerHTML = html;
 
-                // Attach status change handlers
+                // Attach status change handlers for buttons (desktop)
                 const statusBtns = modalBody.querySelectorAll('.admin-status-btn');
                 statusBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const requestId = e.target.getAttribute('data-request-id');
                         const newStatus = e.target.getAttribute('data-status');
+                        this.updateRequestStatus(requestId, newStatus);
+                    });
+                });
+
+                // Attach status change handlers for dropdown (mobile)
+                const statusSelects = modalBody.querySelectorAll('.admin-status-select');
+                statusSelects.forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const newStatus = e.target.value;
                         this.updateRequestStatus(requestId, newStatus);
                     });
                 });

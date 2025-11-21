@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.74.0",
+        "changelog": "Mobile-friendly admin table! Card layout on mobile, dropdown select for status changes instead of 3 buttons. Modal now 95% width on mobile for better viewing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.74.0/jellyfin-plugin-ratings_1.0.74.0.zip",
+        "checksum": "dc3c1457583c48c7102d92e9d6b386b2",
+        "timestamp": "2025-11-21T10:40:00Z"
+      },
+      {
         "version": "1.0.73.0",
         "changelog": "Animation fix v2: Removed box-shadow conflict, fixed transition property, added vendor prefixes for webkit/moz/o. Animations should now work properly!",
         "targetAbi": "10.11.0.0",
