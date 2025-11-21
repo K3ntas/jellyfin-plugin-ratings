@@ -667,6 +667,83 @@
                     font-style: italic !important;
                 }
 
+                /* Delete Button */
+                .admin-delete-btn {
+                    padding: 5px 10px !important;
+                    border: 1px solid #f44336 !important;
+                    border-radius: 12px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    background: rgba(244, 67, 54, 0.2) !important;
+                    color: #f44336 !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-delete-btn:hover {
+                    background: #f44336 !important;
+                    color: #fff !important;
+                    transform: scale(1.05) !important;
+                }
+
+                /* Hide mobile delete button on desktop */
+                .admin-delete-btn.mobile-delete {
+                    display: none !important;
+                }
+
+                /* Timestamps */
+                .admin-request-time {
+                    color: #777 !important;
+                    font-size: 10px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 2px !important;
+                }
+
+                .admin-request-time span {
+                    white-space: nowrap !important;
+                }
+
+                /* Media Link Input */
+                .admin-link-input {
+                    padding: 6px 10px !important;
+                    border: 1px solid #555 !important;
+                    border-radius: 6px !important;
+                    background: #2a2a2a !important;
+                    color: #fff !important;
+                    font-size: 11px !important;
+                    width: 100% !important;
+                    margin-top: 8px !important;
+                }
+
+                .admin-link-input:focus {
+                    outline: none !important;
+                    border-color: #4CAF50 !important;
+                }
+
+                .admin-link-input::placeholder {
+                    color: #777 !important;
+                }
+
+                /* Media Link Display */
+                .request-media-link {
+                    display: inline-block !important;
+                    margin-top: 5px !important;
+                    padding: 4px 10px !important;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: #fff !important;
+                    text-decoration: none !important;
+                    border-radius: 12px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .request-media-link:hover {
+                    transform: scale(1.05) !important;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4) !important;
+                }
+
                 /* Admin Status Dropdown (for mobile) */
                 .admin-status-select {
                     display: none !important;
@@ -731,6 +808,28 @@
                         width: 100% !important;
                     }
 
+                    /* Show mobile delete button */
+                    .admin-delete-btn.mobile-delete {
+                        display: block !important;
+                        width: 100% !important;
+                        margin-top: 8px !important;
+                    }
+
+                    /* Hide desktop delete (inside actions) */
+                    .admin-request-actions .admin-delete-btn {
+                        display: none !important;
+                    }
+
+                    /* Timestamps on mobile */
+                    .admin-request-time {
+                        font-size: 9px !important;
+                    }
+
+                    /* Link input on mobile */
+                    .admin-link-input {
+                        font-size: 12px !important;
+                    }
+
                     /* Request Modal - Full width on mobile */
                     .request-media-modal .modal-content {
                         width: 95% !important;
@@ -741,6 +840,22 @@
                     .request-media-modal .modal-body {
                         max-height: 70vh !important;
                         padding: 15px !important;
+                    }
+
+                    /* User request list on mobile */
+                    .user-request-item {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 8px !important;
+                    }
+
+                    .user-request-time {
+                        font-size: 9px !important;
+                    }
+
+                    .request-media-link {
+                        font-size: 10px !important;
+                        padding: 3px 8px !important;
                     }
                 }
 
@@ -783,6 +898,12 @@
                 .user-request-item-type {
                     color: #999 !important;
                     font-size: 11px !important;
+                }
+
+                .user-request-time {
+                    color: #777 !important;
+                    font-size: 10px !important;
+                    margin-top: 3px !important;
                 }
 
                 .user-request-status {
@@ -1717,11 +1838,18 @@
 
                 let html = '<ul class="user-request-list">';
                 userRequests.forEach(request => {
+                    // Format timestamps
+                    const createdAt = request.CreatedAt ? this.formatDateTime(request.CreatedAt) : '';
+                    const completedAt = request.CompletedAt ? this.formatDateTime(request.CompletedAt) : null;
+                    const hasLink = request.MediaLink && request.Status === 'done';
+
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
                                 <div class="user-request-item-title">${this.escapeHtml(request.Title)}</div>
                                 <div class="user-request-item-type">${request.Type ? this.escapeHtml(request.Type) : 'Not specified'}</div>
+                                <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
+                                ${hasLink ? `<a href="${this.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">🎬 Watch Now</a>` : ''}
                             </div>
                             <span class="user-request-status ${request.Status}">${request.Status.toUpperCase()}</span>
                         </li>
@@ -1761,22 +1889,33 @@
                     if (request.Notes) details.push(request.Notes);
                     const detailsText = details.join(' • ');
 
+                    // Format timestamps
+                    const createdAt = request.CreatedAt ? this.formatDateTime(request.CreatedAt) : 'Unknown';
+                    const completedAt = request.CompletedAt ? this.formatDateTime(request.CompletedAt) : null;
+
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
                             <div class="admin-request-title" title="${this.escapeHtml(request.Title)}">${this.escapeHtml(request.Title)}</div>
                             <div class="admin-request-user" title="${this.escapeHtml(request.Username)}">${this.escapeHtml(request.Username)}</div>
                             <div class="admin-request-details" title="${this.escapeHtml(detailsText)}">${this.escapeHtml(detailsText) || 'No details'}</div>
+                            <div class="admin-request-time">
+                                <span>📅 ${createdAt}</span>
+                                ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
+                            </div>
                             <span class="admin-request-status-badge ${request.Status}">${request.Status.toUpperCase()}</span>
                             <div class="admin-request-actions">
                                 <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">Pending</button>
                                 <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">Processing</button>
                                 <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">Done</button>
+                                <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
                             </div>
                             <select class="admin-status-select" data-request-id="${request.Id}">
                                 <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>Pending</option>
                                 <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>Processing</option>
                                 <option value="done" ${request.Status === 'done' ? 'selected' : ''}>Done</option>
                             </select>
+                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="Media link (paste URL when done)" value="${this.escapeHtml(request.MediaLink || '')}">
+                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ Delete</button>
                         </li>
                     `;
                 });
@@ -1789,7 +1928,10 @@
                     btn.addEventListener('click', (e) => {
                         const requestId = e.target.getAttribute('data-request-id');
                         const newStatus = e.target.getAttribute('data-status');
-                        this.updateRequestStatus(requestId, newStatus);
+                        // Get the media link if marking as done
+                        const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
+                        const mediaLink = linkInput ? linkInput.value.trim() : '';
+                        this.updateRequestStatus(requestId, newStatus, mediaLink);
                     });
                 });
 
@@ -1799,7 +1941,21 @@
                     select.addEventListener('change', (e) => {
                         const requestId = e.target.getAttribute('data-request-id');
                         const newStatus = e.target.value;
-                        this.updateRequestStatus(requestId, newStatus);
+                        // Get the media link if marking as done
+                        const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
+                        const mediaLink = linkInput ? linkInput.value.trim() : '';
+                        this.updateRequestStatus(requestId, newStatus, mediaLink);
+                    });
+                });
+
+                // Attach delete handlers
+                const deleteBtns = modalBody.querySelectorAll('.admin-delete-btn');
+                deleteBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        if (confirm('Are you sure you want to delete this request? This cannot be undone.')) {
+                            this.deleteRequest(requestId);
+                        }
                     });
                 });
             }).catch(err => {
@@ -1934,15 +2090,88 @@
         },
 
         /**
-         * Update request status (admin only)
+         * Format date time for display
          */
-        updateRequestStatus: function (requestId, newStatus) {
+        formatDateTime: function (dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return dateString;
+            }
+        },
+
+        /**
+         * Delete a media request (admin only)
+         */
+        deleteRequest: function (requestId) {
             const self = this;
             try {
                 const baseUrl = ApiClient.serverAddress();
                 const accessToken = ApiClient.accessToken();
                 const deviceId = ApiClient.deviceId();
-                const url = `${baseUrl}/Ratings/Requests/${requestId}/Status?status=${newStatus}`;
+                const url = `${baseUrl}/Ratings/Requests/${requestId}`;
+
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                fetch(url, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete request');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Request deleted');
+                        });
+                    }
+
+                    // Reload the admin interface
+                    self.loadAdminInterface();
+
+                    // Update badge
+                    const btn = document.getElementById('requestMediaBtn');
+                    if (btn) {
+                        self.updateRequestBadge(btn);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error deleting request:', err);
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Error deleting request');
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error in deleteRequest:', err);
+            }
+        },
+
+        /**
+         * Update request status (admin only)
+         */
+        updateRequestStatus: function (requestId, newStatus, mediaLink) {
+            const self = this;
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                let url = `${baseUrl}/Ratings/Requests/${requestId}/Status?status=${newStatus}`;
+
+                // Add mediaLink if provided and status is done
+                if (mediaLink && newStatus === 'done') {
+                    url += `&mediaLink=${encodeURIComponent(mediaLink)}`;
+                }
 
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 

@@ -308,8 +308,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         /// <param name="requestId">The request ID.</param>
         /// <param name="status">The new status.</param>
+        /// <param name="mediaLink">Optional media link when marking as done.</param>
         /// <returns>The updated request or null if not found.</returns>
-        public async Task<MediaRequest?> UpdateMediaRequestStatusAsync(Guid requestId, string status)
+        public async Task<MediaRequest?> UpdateMediaRequestStatusAsync(Guid requestId, string status, string? mediaLink = null)
         {
             lock (_lock)
             {
@@ -317,6 +318,23 @@ namespace Jellyfin.Plugin.Ratings.Data
                 {
                     var request = _mediaRequests[requestId];
                     request.Status = status;
+
+                    // Set completion time when marked as done
+                    if (status == "done")
+                    {
+                        request.CompletedAt = DateTime.UtcNow;
+                        if (!string.IsNullOrEmpty(mediaLink))
+                        {
+                            request.MediaLink = mediaLink;
+                        }
+                    }
+                    else
+                    {
+                        // Clear completion data if status is changed back
+                        request.CompletedAt = null;
+                        request.MediaLink = string.Empty;
+                    }
+
                     _logger.LogInformation("Updated media request {RequestId} status to '{Status}'", requestId, status);
                     _ = SaveMediaRequestsAsync();
                     return request;

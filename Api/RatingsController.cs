@@ -502,11 +502,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="requestId">The request ID.</param>
         /// <param name="status">The new status (pending, processing, done).</param>
+        /// <param name="mediaLink">Optional media link when marking as done.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Status")]
         public ActionResult<MediaRequest> UpdateRequestStatus(
             [FromRoute] [Required] Guid requestId,
-            [FromQuery] [Required] string status)
+            [FromQuery] [Required] string status,
+            [FromQuery] string? mediaLink = null)
         {
             try
             {
@@ -557,7 +559,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
                 }
 
-                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower()).Result;
+                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower(), mediaLink).Result;
                 if (result == null)
                 {
                     return NotFound("Request not found");
@@ -570,6 +572,70 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating request status");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a media request (admin only).
+        /// </summary>
+        /// <param name="requestId">The request ID to delete.</param>
+        /// <returns>Success or failure.</returns>
+        [HttpDelete("Requests/{requestId}")]
+        public ActionResult DeleteRequest([FromRoute] [Required] Guid requestId)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if user exists
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var result = _repository.DeleteMediaRequestAsync(requestId).Result;
+                if (!result)
+                {
+                    return NotFound("Request not found");
+                }
+
+                _logger.LogInformation("Admin {UserId} deleted request {RequestId}", userId, requestId);
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting request");
                 return StatusCode(500, "Internal server error");
             }
         }
