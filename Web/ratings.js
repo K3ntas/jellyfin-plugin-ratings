@@ -2705,45 +2705,149 @@
         },
 
         /**
+         * Check if current page should show Netflix view
+         */
+        isNetflixViewPage: function () {
+            const hash = window.location.hash;
+            const isMoviesPage = hash.includes('#/movies') || hash.includes('collectionType=movies');
+            const isTVPage = hash.includes('#/tv') || hash.includes('collectionType=tvshows');
+            const hasTopParentId = hash.includes('topParentId=');
+            return hasTopParentId && (isMoviesPage || isTVPage);
+        },
+
+        /**
          * Observe library pages for Netflix view
          */
         observeLibraryPages: function () {
             const self = this;
             let lastUrl = '';
+            let transformTimeout = null;
+            let hideStyleElement = null;
 
-            const checkLibraryPage = () => {
-                const url = window.location.href;
-                if (url === lastUrl) return;
-                lastUrl = url;
-
-                const hash = window.location.hash;
-                console.log('[RatingsPlugin] Checking page:', hash);
-
-                // Match URL patterns like:
-                // #/movies?topParentId=xxx&collectionType=movies
-                // #/tv?topParentId=xxx&collectionType=tvshows
-                const isMoviesPage = hash.includes('#/movies') || hash.includes('collectionType=movies');
-                const isTVPage = hash.includes('#/tv') || hash.includes('collectionType=tvshows');
-                const hasTopParentId = hash.includes('topParentId=');
-
-                const shouldTransform = hasTopParentId && (isMoviesPage || isTVPage);
-                console.log('[RatingsPlugin] Should transform:', shouldTransform, '(movies:', isMoviesPage, 'tv:', isTVPage, 'hasParentId:', hasTopParentId, ')');
-
-                if (shouldTransform) {
-                    // Wait for page to load before transforming
-                    console.log('[RatingsPlugin] Will transform in 1.5s...');
-                    setTimeout(() => {
-                        self.transformToNetflixView();
-                    }, 1500);
+            // Inject CSS to instantly hide default content on Netflix pages
+            const injectHideStyles = () => {
+                if (self.isNetflixViewPage() && !hideStyleElement) {
+                    hideStyleElement = document.createElement('style');
+                    hideStyleElement.id = 'netflix-view-hide-default';
+                    hideStyleElement.textContent = `
+                        .itemsContainer:not(.netflix-view-active),
+                        .vertical-list:not(.netflix-view-active) {
+                            opacity: 0 !important;
+                            pointer-events: none !important;
+                        }
+                    `;
+                    document.head.appendChild(hideStyleElement);
                 }
             };
 
-            // Check on navigation
-            window.addEventListener('hashchange', checkLibraryPage);
-            setInterval(checkLibraryPage, 1000);
+            // Remove hide styles when not on Netflix page
+            const removeHideStyles = () => {
+                if (hideStyleElement) {
+                    hideStyleElement.remove();
+                    hideStyleElement = null;
+                }
+            };
+
+            const checkLibraryPage = () => {
+                const url = window.location.href;
+                const hash = window.location.hash;
+                const shouldTransform = self.isNetflixViewPage();
+
+                // Clean up Netflix view when navigating away
+                if (!shouldTransform) {
+                    removeHideStyles();
+                    const existingNetflix = document.querySelector('.netflix-view-container');
+                    if (existingNetflix) {
+                        // Show original content again
+                        const itemsContainer = document.querySelector('.itemsContainer');
+                        if (itemsContainer) {
+                            itemsContainer.style.display = '';
+                        }
+                        existingNetflix.remove();
+                    }
+                    lastUrl = url;
+                    return;
+                }
+
+                // Don't re-process same URL
+                if (url === lastUrl && document.querySelector('.netflix-view-container')) {
+                    return;
+                }
+                lastUrl = url;
+
+                console.log('[RatingsPlugin] Netflix page detected:', hash);
+
+                // Clear any pending transform
+                if (transformTimeout) {
+                    clearTimeout(transformTimeout);
+                }
+
+                // Inject hide styles immediately
+                injectHideStyles();
+
+                // Remove old Netflix view if exists (for re-navigation)
+                const existingNetflix = document.querySelector('.netflix-view-container');
+                if (existingNetflix) {
+                    existingNetflix.remove();
+                }
+
+                // Use MutationObserver to detect when itemsContainer appears
+                const tryTransform = () => {
+                    const itemsContainer = document.querySelector('.itemsContainer') ||
+                                           document.querySelector('.vertical-list');
+
+                    if (itemsContainer) {
+                        console.log('[RatingsPlugin] Found container, transforming...');
+                        removeHideStyles();
+                        self.transformToNetflixView();
+                        return true;
+                    }
+                    return false;
+                };
+
+                // Try immediately
+                if (tryTransform()) return;
+
+                // Watch for DOM changes
+                const observer = new MutationObserver((mutations, obs) => {
+                    if (tryTransform()) {
+                        obs.disconnect();
+                    }
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // Fallback timeout
+                transformTimeout = setTimeout(() => {
+                    observer.disconnect();
+                    removeHideStyles();
+                    if (!document.querySelector('.netflix-view-container')) {
+                        self.transformToNetflixView();
+                    }
+                }, 3000);
+            };
+
+            // Listen for hash changes (SPA navigation)
+            window.addEventListener('hashchange', () => {
+                console.log('[RatingsPlugin] Hash changed');
+                // Small delay to let Jellyfin start loading new page
+                setTimeout(checkLibraryPage, 100);
+            });
+
+            // Also watch for popstate (back/forward navigation)
+            window.addEventListener('popstate', () => {
+                console.log('[RatingsPlugin] Popstate event');
+                setTimeout(checkLibraryPage, 100);
+            });
+
+            // Periodic check as fallback (less frequent)
+            setInterval(checkLibraryPage, 2000);
 
             // Initial check
-            setTimeout(checkLibraryPage, 2000);
+            setTimeout(checkLibraryPage, 500);
         },
 
         /**
