@@ -235,23 +235,26 @@
                     font-weight: 600 !important;
                     cursor: pointer !important;
                     z-index: 999999 !important;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
-                    transition: all 0.3s ease !important;
+                    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease !important;
                     font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    -webkit-animation: pulseButton 2s ease-in-out infinite !important;
+                    -moz-animation: pulseButton 2s ease-in-out infinite !important;
+                    -o-animation: pulseButton 2s ease-in-out infinite !important;
                     animation: pulseButton 2s ease-in-out infinite !important;
                 }
 
                 #requestMediaBtn .btn-text {
-                    background: linear-gradient(to right, #9f9f9f 0, #fff 10%, #868686 20%) !important;
+                    background: linear-gradient(to right, #9f9f9f 0%, #fff 10%, #868686 20%) !important;
                     background-size: 200% auto !important;
-                    background-position: 0 !important;
                     -webkit-background-clip: text !important;
                     -webkit-text-fill-color: transparent !important;
                     background-clip: text !important;
-                    animation: shine 3s infinite linear !important;
-                    animation-fill-mode: forwards !important;
                     -webkit-text-size-adjust: none !important;
                     display: inline-block !important;
+                    -webkit-animation: shine 3s linear infinite !important;
+                    -moz-animation: shine 3s linear infinite !important;
+                    -o-animation: shine 3s linear infinite !important;
+                    animation: shine 3s linear infinite !important;
                 }
 
                 @keyframes shine {
@@ -315,12 +318,6 @@
                     background: rgba(70, 70, 70, 0.95) !important;
                     border-color: rgba(255, 255, 255, 0.3) !important;
                     transform: scale(1.05) !important;
-                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
-                    animation: pulseButton 2s ease-in-out infinite !important;
-                }
-
-                #requestMediaBtn:hover .btn-text {
-                    animation: shine 3s infinite linear !important;
                 }
 
                 #requestMediaBtn.hidden {
