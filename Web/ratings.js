@@ -17,14 +17,61 @@
             this.observeDetailPages();
             this.observeHomePageCards();
 
-            // Initialize request button separately with delay and error handling
-            setTimeout(() => {
+            // Initialize request button with multiple attempts for reliability
+            this.initRequestButtonWithRetry();
+        },
+
+        /**
+         * Initialize request button with retry logic for SPA navigation
+         */
+        initRequestButtonWithRetry: function () {
+            const self = this;
+            let attempts = 0;
+            const maxAttempts = 10;
+
+            const tryInit = () => {
+                attempts++;
                 try {
-                    this.initRequestButton();
+                    // Check if button already exists
+                    if (document.getElementById('requestMediaBtn')) {
+                        return; // Already initialized
+                    }
+
+                    // Check if ApiClient is ready
+                    if (!window.ApiClient) {
+                        if (attempts < maxAttempts) {
+                            setTimeout(tryInit, 1000);
+                        }
+                        return;
+                    }
+
+                    self.initRequestButton();
                 } catch (err) {
-                    console.error('Request button failed to initialize:', err);
+                    console.error('Request button init attempt failed:', err);
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryInit, 1000);
+                    }
                 }
-            }, 3000);
+            };
+
+            // Initial attempt after short delay
+            setTimeout(tryInit, 1500);
+
+            // Also try on page visibility change (when user returns to tab)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && !document.getElementById('requestMediaBtn')) {
+                    setTimeout(tryInit, 500);
+                }
+            });
+
+            // Listen for Jellyfin navigation events if available
+            if (window.Emby && window.Emby.Page) {
+                Emby.Page.addEventListener('pageshow', () => {
+                    if (!document.getElementById('requestMediaBtn')) {
+                        setTimeout(tryInit, 500);
+                    }
+                });
+            }
         },
 
         /**
@@ -1705,22 +1752,37 @@
             try {
                 // Check URL for login indicators
                 const url = window.location.href.toLowerCase();
-                if (url.includes('/login') || url.includes('#!/login') || url.includes('/startup')) {
-                    return true;
-                }
+                const hash = window.location.hash.toLowerCase();
 
-                // Check if login form is visible
-                const loginForm = document.querySelector('.loginPage, #loginPage, [data-role="loginPage"], .manualLoginForm');
-                if (loginForm) {
-                    return true;
-                }
+                // Check URL patterns for login/startup pages
+                if (url.includes('/login') ||
+                    url.includes('/startup') ||
+                    hash.includes('login') ||
+                    hash.includes('startup') ||
+                    hash === '#' ||
+                    hash === '') {
 
-                // Check if no user is logged in
-                if (window.ApiClient) {
-                    const userId = ApiClient.getCurrentUserId();
-                    if (!userId) {
+                    // Double check - if there's a login form visible, it's definitely login page
+                    const loginForm = document.querySelector('.loginPage, #loginPage, .manualLoginForm, #manualLoginForm, .selectServer');
+                    if (loginForm) {
                         return true;
                     }
+
+                    // If URL suggests login but no login form, check if user exists
+                    if (window.ApiClient && ApiClient.getCurrentUserId()) {
+                        return false; // User is logged in, not a login page
+                    }
+
+                    // Only return true for login URL if we're sure
+                    if (hash.includes('login') || url.includes('/login')) {
+                        return true;
+                    }
+                }
+
+                // Check if login form is visible (definitive check)
+                const loginForm = document.querySelector('.loginPage, #loginPage, .manualLoginForm, #manualLoginForm');
+                if (loginForm && loginForm.offsetParent !== null) {
+                    return true;
                 }
 
                 return false;
