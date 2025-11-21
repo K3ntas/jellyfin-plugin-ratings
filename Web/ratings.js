@@ -996,12 +996,17 @@
 
                 /* Netflix-Style View Styles */
                 .netflix-view-container {
-                    padding: 20px 0;
-                    background: #141414;
-                    min-height: 100vh;
-                    position: relative;
-                    z-index: 1000;
-                    width: 100%;
+                    padding: 20px 0 !important;
+                    background: #141414 !important;
+                    min-height: 100vh !important;
+                    position: relative !important;
+                    z-index: 1000 !important;
+                    width: 100% !important;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    overflow: visible !important;
+                    height: auto !important;
                 }
 
                 .netflix-genre-row {
@@ -2913,6 +2918,8 @@
             // Create Netflix view container
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
+            // Force visibility with inline styles to override any Jellyfin CSS
+            netflixContainer.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 100vh !important; background: #141414 !important; position: relative !important; z-index: 1000 !important;';
             netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
 
             // Hide ALL potential content containers to prevent layering issues
