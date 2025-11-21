@@ -16,6 +16,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             MaxRating = 10;
             MinRating = 1;
             AllowGuestRatings = false;
+            EnableNetflixView = false;
         }
 
         /// <summary>
@@ -37,5 +38,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether guest users can rate items.
         /// </summary>
         public bool AllowGuestRatings { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether Netflix-style genre view is enabled.
+        /// </summary>
+        public bool EnableNetflixView { get; set; }
     }
 }

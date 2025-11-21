@@ -19,6 +19,9 @@
 
             // Initialize request button with multiple attempts for reliability
             this.initRequestButtonWithRetry();
+
+            // Initialize Netflix view if enabled
+            this.initNetflixView();
         },
 
         /**
@@ -985,6 +988,154 @@
                     margin-bottom: 8px !important;
                     padding-top: 15px !important;
                     border-top: 1px solid #444 !important;
+                }
+
+                /* Netflix-Style View Styles */
+                .netflix-view-container {
+                    padding: 20px 0;
+                    background: #141414;
+                    min-height: 100vh;
+                }
+
+                .netflix-genre-row {
+                    margin-bottom: 30px;
+                    position: relative;
+                }
+
+                .netflix-genre-title {
+                    color: #fff;
+                    font-size: 1.4em;
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                    padding-left: 4%;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                }
+
+                .netflix-row-wrapper {
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .netflix-row-content {
+                    display: flex;
+                    overflow-x: auto;
+                    scroll-behavior: smooth;
+                    gap: 8px;
+                    padding: 10px 4%;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+
+                .netflix-row-content::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .netflix-card {
+                    flex: 0 0 auto;
+                    width: 200px;
+                    height: 300px;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    position: relative;
+                    cursor: pointer;
+                    transition: transform 0.3s ease, z-index 0.3s ease;
+                    background: #2a2a2a;
+                }
+
+                .netflix-card:hover {
+                    transform: scale(1.1);
+                    z-index: 100;
+                }
+
+                .netflix-card img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .netflix-card-overlay {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+                    padding: 40px 10px 10px;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+
+                .netflix-card:hover .netflix-card-overlay {
+                    opacity: 1;
+                }
+
+                .netflix-card-title {
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .netflix-card-rating {
+                    color: #ffd700;
+                    font-size: 12px;
+                    margin-top: 4px;
+                }
+
+                .netflix-scroll-btn {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 50px;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.6);
+                    border: none;
+                    color: #fff;
+                    font-size: 24px;
+                    cursor: pointer;
+                    z-index: 10;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+
+                .netflix-row-wrapper:hover .netflix-scroll-btn {
+                    opacity: 1;
+                }
+
+                .netflix-scroll-btn:hover {
+                    background: rgba(0, 0, 0, 0.8);
+                }
+
+                .netflix-scroll-btn.left {
+                    left: 0;
+                }
+
+                .netflix-scroll-btn.right {
+                    right: 0;
+                }
+
+                .netflix-loading {
+                    text-align: center;
+                    color: #999;
+                    padding: 40px;
+                    font-size: 16px;
+                }
+
+                /* Mobile responsive */
+                @media screen and (max-width: 768px) {
+                    .netflix-card {
+                        width: 140px;
+                        height: 210px;
+                    }
+
+                    .netflix-genre-title {
+                        font-size: 1.1em;
+                    }
+
+                    .netflix-scroll-btn {
+                        display: none;
+                    }
                 }
             `;
 
@@ -2489,6 +2640,273 @@
             } catch (err) {
                 console.error('Error in markDoneRequestsAsViewed:', err);
             }
+        },
+
+        /**
+         * Netflix View Configuration
+         */
+        netflixViewEnabled: false,
+        netflixViewInitialized: false,
+
+        /**
+         * Initialize Netflix-style view
+         */
+        initNetflixView: function () {
+            const self = this;
+
+            // Check if feature is enabled via API
+            this.checkNetflixViewEnabled().then(enabled => {
+                self.netflixViewEnabled = enabled;
+                if (enabled) {
+                    self.observeLibraryPages();
+                }
+            });
+        },
+
+        /**
+         * Check if Netflix view is enabled in plugin config
+         */
+        checkNetflixViewEnabled: function () {
+            return new Promise((resolve) => {
+                try {
+                    if (!window.ApiClient) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const baseUrl = ApiClient.serverAddress();
+                    const url = `${baseUrl}/Ratings/Config`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                    .then(response => response.json())
+                    .then(config => {
+                        resolve(config.EnableNetflixView === true);
+                    })
+                    .catch(() => resolve(false));
+                } catch (err) {
+                    resolve(false);
+                }
+            });
+        },
+
+        /**
+         * Observe library pages for Netflix view
+         */
+        observeLibraryPages: function () {
+            const self = this;
+            let lastUrl = '';
+
+            const checkLibraryPage = () => {
+                const url = window.location.href;
+                if (url === lastUrl) return;
+                lastUrl = url;
+
+                // Check if we're on a movies or TV shows library page
+                const hash = window.location.hash.toLowerCase();
+                const isMoviesLibrary = hash.includes('#/movies') || hash.includes('movies.html');
+                const isTVLibrary = hash.includes('#/tv') || hash.includes('tvshows.html') || hash.includes('#/shows');
+                const isLibraryPage = hash.includes('#/list') && (hash.includes('movies') || hash.includes('tv'));
+
+                if (isMoviesLibrary || isTVLibrary || isLibraryPage) {
+                    // Wait for page to load before transforming
+                    setTimeout(() => {
+                        self.transformToNetflixView();
+                    }, 1500);
+                }
+            };
+
+            // Check on navigation
+            window.addEventListener('hashchange', checkLibraryPage);
+            setInterval(checkLibraryPage, 1000);
+
+            // Initial check
+            setTimeout(checkLibraryPage, 2000);
+        },
+
+        /**
+         * Transform library page to Netflix-style view
+         */
+        transformToNetflixView: function () {
+            const self = this;
+
+            // Don't transform if already done or not on library page
+            if (document.querySelector('.netflix-view-container')) {
+                return;
+            }
+
+            // Find the main content area
+            const itemsContainer = document.querySelector('.itemsContainer') ||
+                                   document.querySelector('.vertical-list') ||
+                                   document.querySelector('[data-role="content"]');
+
+            if (!itemsContainer) {
+                return;
+            }
+
+            // Get parent library ID from URL
+            const parentId = this.getParentIdFromUrl();
+            if (!parentId) {
+                return;
+            }
+
+            // Create Netflix view container
+            const netflixContainer = document.createElement('div');
+            netflixContainer.className = 'netflix-view-container';
+            netflixContainer.innerHTML = '<div class="netflix-loading">Loading genres...</div>';
+
+            // Hide original content and insert Netflix view
+            itemsContainer.style.display = 'none';
+            itemsContainer.parentNode.insertBefore(netflixContainer, itemsContainer);
+
+            // Fetch genres and build view
+            this.fetchGenresAndBuildView(parentId, netflixContainer);
+        },
+
+        /**
+         * Get parent library ID from URL
+         */
+        getParentIdFromUrl: function () {
+            const hash = window.location.hash;
+            const match = hash.match(/[?&]parentId=([a-f0-9]+)/i) ||
+                          hash.match(/[?&]topParentId=([a-f0-9]+)/i);
+            return match ? match[1] : null;
+        },
+
+        /**
+         * Fetch genres and build Netflix-style view
+         */
+        fetchGenresAndBuildView: function (parentId, container) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+
+            // First, get available genres for this library
+            const genresUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres&EnableTotalRecordCount=false&Limit=0`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Get all items to extract genres
+            fetch(`${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio&EnableTotalRecordCount=true&Limit=500`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const items = data.Items || [];
+
+                // Extract unique genres
+                const genreMap = new Map();
+                items.forEach(item => {
+                    if (item.Genres) {
+                        item.Genres.forEach(genre => {
+                            if (!genreMap.has(genre)) {
+                                genreMap.set(genre, []);
+                            }
+                            genreMap.get(genre).push(item);
+                        });
+                    }
+                });
+
+                // Sort genres by number of items (most popular first)
+                const sortedGenres = Array.from(genreMap.entries())
+                    .sort((a, b) => b[1].length - a[1].length)
+                    .slice(0, 15); // Limit to top 15 genres
+
+                if (sortedGenres.length === 0) {
+                    container.innerHTML = '<div class="netflix-loading">No genres found</div>';
+                    return;
+                }
+
+                // Build Netflix view HTML
+                let html = '';
+                sortedGenres.forEach(([genre, genreItems]) => {
+                    html += self.buildGenreRow(genre, genreItems, baseUrl);
+                });
+
+                container.innerHTML = html;
+
+                // Attach scroll button handlers
+                self.attachScrollHandlers(container);
+            })
+            .catch(err => {
+                console.error('Error fetching items for Netflix view:', err);
+                container.innerHTML = '<div class="netflix-loading">Error loading content</div>';
+            });
+        },
+
+        /**
+         * Build HTML for a genre row
+         */
+        buildGenreRow: function (genre, items, baseUrl) {
+            const self = this;
+
+            // Limit to 20 items per row
+            const rowItems = items.slice(0, 20);
+
+            let cardsHtml = '';
+            rowItems.forEach(item => {
+                const imageUrl = item.ImageTags && item.ImageTags.Primary
+                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
+                    : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
+
+                const itemUrl = `#!/details?id=${item.Id}`;
+
+                cardsHtml += `
+                    <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
+                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22><rect fill=%22%232a2a2a%22 width=%22300%22 height=%22450%22/><text x=%22150%22 y=%22225%22 fill=%22%23666%22 text-anchor=%22middle%22 font-size=%2220%22>No Image</text></svg>'">
+                        <div class="netflix-card-overlay">
+                            <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
+                            <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
+                        </div>
+                    </a>
+                `;
+            });
+
+            return `
+                <div class="netflix-genre-row">
+                    <div class="netflix-genre-title">${this.escapeHtml(genre)}</div>
+                    <div class="netflix-row-wrapper">
+                        <button class="netflix-scroll-btn left" aria-label="Scroll left">‹</button>
+                        <div class="netflix-row-content">
+                            ${cardsHtml}
+                        </div>
+                        <button class="netflix-scroll-btn right" aria-label="Scroll right">›</button>
+                    </div>
+                </div>
+            `;
+        },
+
+        /**
+         * Attach scroll button handlers
+         */
+        attachScrollHandlers: function (container) {
+            const rows = container.querySelectorAll('.netflix-row-wrapper');
+
+            rows.forEach(row => {
+                const content = row.querySelector('.netflix-row-content');
+                const leftBtn = row.querySelector('.netflix-scroll-btn.left');
+                const rightBtn = row.querySelector('.netflix-scroll-btn.right');
+
+                if (leftBtn && content) {
+                    leftBtn.addEventListener('click', () => {
+                        content.scrollBy({ left: -600, behavior: 'smooth' });
+                    });
+                }
+
+                if (rightBtn && content) {
+                    rightBtn.addEventListener('click', () => {
+                        content.scrollBy({ left: 600, behavior: 'smooth' });
+                    });
+                }
+            });
         }
     };
 
