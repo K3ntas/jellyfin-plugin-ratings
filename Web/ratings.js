@@ -999,6 +999,9 @@
                     padding: 20px 0;
                     background: #141414;
                     min-height: 100vh;
+                    position: relative;
+                    z-index: 1000;
+                    width: 100%;
                 }
 
                 .netflix-genre-row {
@@ -2912,18 +2915,29 @@
             netflixContainer.className = 'netflix-view-container';
             netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
 
-            // Hide original content and insert Netflix view
-            itemsContainer.style.display = 'none';
+            // Hide ALL potential content containers to prevent layering issues
+            document.querySelectorAll('.itemsContainer, .vertical-list, .view-inner').forEach(el => {
+                el.style.display = 'none';
+            });
 
-            // Insert before the hidden container
-            if (itemsContainer.parentNode) {
-                itemsContainer.parentNode.insertBefore(netflixContainer, itemsContainer);
-            } else {
-                // Fallback: append to body
-                document.body.appendChild(netflixContainer);
+            // Find the best parent to insert into
+            let insertParent = itemsContainer.parentNode;
+            if (!insertParent || insertParent === document.body) {
+                // Try to find a better parent
+                insertParent = document.querySelector('.view') ||
+                               document.querySelector('.page:not(.hide)') ||
+                               document.querySelector('[data-role="content"]') ||
+                               document.body;
             }
 
-            console.log('[RatingsPlugin] Netflix container inserted, fetching genres...');
+            // Insert Netflix container
+            if (insertParent === itemsContainer.parentNode) {
+                insertParent.insertBefore(netflixContainer, itemsContainer);
+            } else {
+                insertParent.appendChild(netflixContainer);
+            }
+
+            console.log('[RatingsPlugin] Netflix container inserted into:', insertParent.className || insertParent.tagName);
 
             // Fetch genres and build view
             this.fetchGenresAndBuildView(parentId, netflixContainer);
@@ -2994,21 +3008,40 @@
                     .sort((a, b) => b[1].length - a[1].length)
                     .slice(0, 15); // Limit to top 15 genres
 
+                console.log('[RatingsPlugin] Genres found:', sortedGenres.length);
+
                 if (sortedGenres.length === 0) {
-                    container.innerHTML = '<div class="netflix-loading">No genres found</div>';
+                    container.innerHTML = '<div class="netflix-loading" style="color: white; padding: 50px; text-align: center;">No genres found</div>';
                     return;
                 }
 
-                // Build Netflix view HTML
+                // Shuffle function for randomizing items within each genre
+                const shuffleArray = (array) => {
+                    const shuffled = [...array];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    return shuffled;
+                };
+
+                // Build Netflix view HTML with shuffled items per genre
                 let html = '';
                 sortedGenres.forEach(([genre, genreItems]) => {
-                    html += self.buildGenreRow(genre, genreItems, baseUrl);
+                    const shuffledItems = shuffleArray(genreItems);
+                    html += self.buildGenreRow(genre, shuffledItems, baseUrl);
                 });
 
+                console.log('[RatingsPlugin] Built HTML, inserting into container...');
                 container.innerHTML = html;
+                console.log('[RatingsPlugin] HTML inserted, container visible:', container.offsetHeight > 0);
+
+                // Make sure container is visible
+                container.style.display = 'block';
 
                 // Attach scroll button handlers
                 self.attachScrollHandlers(container);
+                console.log('[RatingsPlugin] Netflix view complete!');
             })
             .catch(err => {
                 console.error('Error fetching items for Netflix view:', err);
