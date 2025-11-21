@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.83.0",
+        "changelog": "Smooth Netflix View! No more refresh needed - activates instantly on navigation. Hidden default layout prevents flickering. MutationObserver for reliable detection.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.83.0/jellyfin-plugin-ratings_1.0.83.0.zip",
+        "checksum": "92e55a93be4e27f1c45dec90505acfb6",
+        "timestamp": "2025-11-21T20:15:00Z"
+      },
+      {
         "version": "1.0.82.0",
         "changelog": "Fixed crash on init! Emby.Page.addEventListener compatibility fix for Jellyfin 10.11. Netflix View should now work.",
         "targetAbi": "10.11.0.0",
