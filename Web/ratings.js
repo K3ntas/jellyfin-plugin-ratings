@@ -2704,13 +2704,18 @@
                 if (url === lastUrl) return;
                 lastUrl = url;
 
-                // Check if we're on a movies or TV shows library page
-                const hash = window.location.hash.toLowerCase();
-                const isMoviesLibrary = hash.includes('#/movies') || hash.includes('movies.html');
-                const isTVLibrary = hash.includes('#/tv') || hash.includes('tvshows.html') || hash.includes('#/shows');
-                const isLibraryPage = hash.includes('#/list') && (hash.includes('movies') || hash.includes('tv'));
+                const hash = window.location.hash;
 
-                if (isMoviesLibrary || isTVLibrary || isLibraryPage) {
+                // Match URL patterns like:
+                // #/movies?topParentId=xxx&collectionType=movies
+                // #/tv?topParentId=xxx&collectionType=tvshows
+                const isMoviesPage = hash.includes('#/movies') || hash.includes('collectionType=movies');
+                const isTVPage = hash.includes('#/tv') || hash.includes('collectionType=tvshows');
+                const hasTopParentId = hash.includes('topParentId=');
+
+                const shouldTransform = hasTopParentId && (isMoviesPage || isTVPage);
+
+                if (shouldTransform) {
                     // Wait for page to load before transforming
                     setTimeout(() => {
                         self.transformToNetflixView();
@@ -2770,8 +2775,11 @@
          */
         getParentIdFromUrl: function () {
             const hash = window.location.hash;
-            const match = hash.match(/[?&]parentId=([a-f0-9]+)/i) ||
-                          hash.match(/[?&]topParentId=([a-f0-9]+)/i);
+            // Match various GUID formats (with or without dashes)
+            const match = hash.match(/[?&]parentId=([a-f0-9-]+)/i) ||
+                          hash.match(/[?&]topParentId=([a-f0-9-]+)/i) ||
+                          hash.match(/parentId=([a-f0-9-]+)/i) ||
+                          hash.match(/topParentId=([a-f0-9-]+)/i);
             return match ? match[1] : null;
         },
 
