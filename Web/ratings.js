@@ -327,6 +327,29 @@
                     display: none !important;
                 }
 
+                /* Mobile Responsive - 70% size, positioned more to the right */
+                @media screen and (max-width: 768px) {
+                    #requestMediaBtn {
+                        padding: 8px 24px !important;
+                        font-size: 11px !important;
+                        border-radius: 18px !important;
+                        right: 70px !important;
+                        top: 6px !important;
+                    }
+
+                    #requestMediaBtn .btn-text {
+                        font-size: 11px !important;
+                    }
+
+                    .request-badge {
+                        width: 16px !important;
+                        height: 16px !important;
+                        font-size: 9px !important;
+                        top: -5px !important;
+                        right: -5px !important;
+                    }
+                }
+
                 /* Notification Badge */
                 .request-badge {
                     position: absolute !important;
