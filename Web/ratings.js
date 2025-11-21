@@ -997,17 +997,15 @@
                 /* Netflix-Style View Styles */
                 .netflix-view-container {
                     padding: 20px 0 !important;
-                    padding-top: 70px !important;
                     background: #141414 !important;
                     position: fixed !important;
-                    top: 0 !important;
+                    top: 56px !important;
                     left: 0 !important;
                     right: 0 !important;
                     bottom: 0 !important;
                     width: 100% !important;
-                    height: 100% !important;
                     overflow-y: auto !important;
-                    z-index: 9999 !important;
+                    z-index: 100 !important;
                     display: block !important;
                     visibility: visible !important;
                     opacity: 1 !important;
@@ -1097,6 +1095,22 @@
                     color: #ffd700;
                     font-size: 12px;
                     margin-top: 4px;
+                }
+
+                /* Rating badge on Netflix cards */
+                .netflix-card.has-rating::after {
+                    content: attr(data-rating);
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    background: rgba(0, 0, 0, 0.85);
+                    color: #fff;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.85em;
+                    z-index: 10;
+                    pointer-events: none;
+                    font-weight: 600;
                 }
 
                 .netflix-scroll-btn {
@@ -2922,22 +2936,20 @@
             // Create Netflix view container as a FIXED overlay
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
-            // Use fixed positioning to overlay the entire page - this ensures visibility
+            // Use fixed positioning to overlay below header - this ensures visibility
             netflixContainer.style.cssText = `
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 position: fixed !important;
-                top: 0 !important;
+                top: 56px !important;
                 left: 0 !important;
                 right: 0 !important;
                 bottom: 0 !important;
                 width: 100% !important;
-                height: 100% !important;
                 overflow-y: auto !important;
                 background: #141414 !important;
-                z-index: 9999 !important;
-                padding-top: 70px !important;
+                z-index: 100 !important;
             `;
             netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
 
@@ -3048,6 +3060,9 @@
 
                 // Attach scroll button handlers
                 self.attachScrollHandlers(container);
+
+                // Apply rating badges to Netflix cards
+                self.applyNetflixRatingBadges(container);
                 console.log('[RatingsPlugin] Netflix view complete!');
             })
             .catch(err => {
@@ -3120,6 +3135,73 @@
                         content.scrollBy({ left: 600, behavior: 'smooth' });
                     });
                 }
+            });
+        },
+
+        /**
+         * Apply rating badges to Netflix cards
+         */
+        applyNetflixRatingBadges: function (container) {
+            const self = this;
+            const cards = container.querySelectorAll('.netflix-card[data-item-id]');
+
+            console.log('[RatingsPlugin] Applying rating badges to', cards.length, 'Netflix cards');
+
+            cards.forEach(card => {
+                const itemId = card.getAttribute('data-item-id');
+                if (!itemId) return;
+
+                // Check cache first
+                if (self.ratingsCache[itemId] !== undefined) {
+                    if (self.ratingsCache[itemId] !== null) {
+                        const stats = self.ratingsCache[itemId];
+                        card.classList.add('has-rating');
+                        card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+                    }
+                    return;
+                }
+
+                // Fetch rating from API
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
+
+                let deviceId = localStorage.getItem('_deviceId2');
+                if (!deviceId) {
+                    deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0;
+                        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                    localStorage.setItem('_deviceId2', deviceId);
+                }
+
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(stats => {
+                        if (stats.TotalRatings > 0) {
+                            self.ratingsCache[itemId] = stats;
+                            card.classList.add('has-rating');
+                            card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+                        } else {
+                            self.ratingsCache[itemId] = null;
+                        }
+                    })
+                    .catch(() => {
+                        self.ratingsCache[itemId] = null;
+                    });
             });
         }
     };
