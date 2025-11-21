@@ -1052,13 +1052,7 @@
                     overflow: hidden;
                     position: relative;
                     cursor: pointer;
-                    transition: transform 0.3s ease, z-index 0.3s ease;
                     background: #2a2a2a;
-                }
-
-                .netflix-card:hover {
-                    transform: scale(1.1);
-                    z-index: 100;
                 }
 
                 .netflix-card img {
@@ -1124,7 +1118,7 @@
                     color: #fff;
                     font-size: 24px;
                     cursor: pointer;
-                    z-index: 10;
+                    z-index: 200;
                     opacity: 0;
                     transition: opacity 0.3s ease;
                 }
