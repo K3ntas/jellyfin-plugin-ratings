@@ -1670,11 +1670,16 @@
                     }
                 });
 
-                // Hide during video playback - wrapped in try-catch
+                // Hide during video playback and on login page - wrapped in try-catch
                 setInterval(() => {
                     try {
                         const videoPlayer = document.querySelector('.videoPlayerContainer');
-                        if (videoPlayer && !videoPlayer.classList.contains('hide')) {
+                        const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+
+                        // Check if on login page
+                        const isLoginPage = self.isOnLoginPage();
+
+                        if (isVideoPlaying || isLoginPage) {
                             btn.classList.add('hidden');
                         } else {
                             btn.classList.remove('hidden');
@@ -1682,11 +1687,114 @@
                     } catch (err) {
                         // Silently fail - don't break anything
                     }
-                }, 2000);
+                }, 1000);
+
+                // Listen for user changes to clear cache
+                self.setupUserChangeListener();
 
             } catch (err) {
                 console.error('Request button initialization failed:', err);
                 // Fail silently - don't break the plugin
+            }
+        },
+
+        /**
+         * Check if currently on login page
+         */
+        isOnLoginPage: function () {
+            try {
+                // Check URL for login indicators
+                const url = window.location.href.toLowerCase();
+                if (url.includes('/login') || url.includes('#!/login') || url.includes('/startup')) {
+                    return true;
+                }
+
+                // Check if login form is visible
+                const loginForm = document.querySelector('.loginPage, #loginPage, [data-role="loginPage"], .manualLoginForm');
+                if (loginForm) {
+                    return true;
+                }
+
+                // Check if no user is logged in
+                if (window.ApiClient) {
+                    const userId = ApiClient.getCurrentUserId();
+                    if (!userId) {
+                        return true;
+                    }
+                }
+
+                return false;
+            } catch (err) {
+                return false;
+            }
+        },
+
+        /**
+         * Setup listener for user changes (login/logout)
+         */
+        setupUserChangeListener: function () {
+            const self = this;
+            try {
+                // Store current user ID to detect changes
+                let lastUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+
+                // Check for user changes periodically
+                setInterval(() => {
+                    try {
+                        const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+
+                        // User changed (login/logout/switch account)
+                        if (currentUserId !== lastUserId) {
+                            // Clear all cached data
+                            self.clearRequestCache();
+                            lastUserId = currentUserId;
+
+                            // Update badge for new user
+                            const btn = document.getElementById('requestMediaBtn');
+                            if (btn && currentUserId) {
+                                self.updateRequestBadge(btn);
+                            }
+                        }
+                    } catch (err) {
+                        // Silently fail
+                    }
+                }, 2000);
+
+                // Also listen for Jellyfin events if available
+                if (window.Events) {
+                    Events.on(ApiClient, 'authenticated', () => {
+                        self.clearRequestCache();
+                        const btn = document.getElementById('requestMediaBtn');
+                        if (btn) {
+                            self.updateRequestBadge(btn);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error setting up user change listener:', err);
+            }
+        },
+
+        /**
+         * Clear all cached request data
+         */
+        clearRequestCache: function () {
+            try {
+                // Clear viewed request IDs
+                localStorage.removeItem('ratings_viewed_requests');
+
+                // Clear any other cached data related to requests
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('ratings_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+
+            } catch (err) {
+                console.error('Error clearing request cache:', err);
             }
         },
 
