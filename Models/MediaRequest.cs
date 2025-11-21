@@ -48,6 +48,16 @@ namespace Jellyfin.Plugin.Ratings.Models
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
+        /// Gets or sets the timestamp when the request was completed (marked as done).
+        /// </summary>
+        public DateTime? CompletedAt { get; set; }
+
+        /// <summary>
+        /// Gets or sets the media link (URL to the media in Jellyfin) when request is fulfilled.
+        /// </summary>
+        public string MediaLink { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MediaRequest"/> class.
         /// </summary>
         public MediaRequest()
