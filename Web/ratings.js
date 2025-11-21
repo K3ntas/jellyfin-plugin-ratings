@@ -68,12 +68,16 @@
             });
 
             // Listen for Jellyfin navigation events if available
-            if (window.Emby && window.Emby.Page) {
-                Emby.Page.addEventListener('pageshow', () => {
-                    if (!document.getElementById('requestMediaBtn')) {
-                        setTimeout(tryInit, 500);
-                    }
-                });
+            try {
+                if (window.Emby && window.Emby.Page && typeof Emby.Page.addEventListener === 'function') {
+                    Emby.Page.addEventListener('pageshow', () => {
+                        if (!document.getElementById('requestMediaBtn')) {
+                            setTimeout(tryInit, 500);
+                        }
+                    });
+                }
+            } catch (e) {
+                // Emby.Page.addEventListener not available in this version
             }
         },
 
