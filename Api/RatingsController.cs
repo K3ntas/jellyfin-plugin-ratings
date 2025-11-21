@@ -317,6 +317,32 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets plugin configuration for client-side use.
+        /// </summary>
+        /// <returns>Plugin configuration settings.</returns>
+        [HttpGet("Config")]
+        [AllowAnonymous]
+        public ActionResult GetConfig()
+        {
+            try
+            {
+                var config = Plugin.Instance?.Configuration;
+                return Ok(new
+                {
+                    EnableRatings = config?.EnableRatings ?? true,
+                    EnableNetflixView = config?.EnableNetflixView ?? false,
+                    MinRating = config?.MinRating ?? 1,
+                    MaxRating = config?.MaxRating ?? 10
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting plugin configuration");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Serves the ratings.js file.
         /// </summary>
         /// <returns>The JavaScript file content.</returns>

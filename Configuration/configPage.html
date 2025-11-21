@@ -44,6 +44,16 @@
                             </div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableNetflixView" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Netflix-Style View</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Display libraries with horizontal genre rows like Netflix. When enabled, movie and TV show libraries will show content organized by genre in scrollable rows.
+                            </div>
+                        </div>
+
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -66,6 +76,7 @@
                     document.querySelector('#txtMinRating').value = config.MinRating;
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
+                    document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -79,6 +90,7 @@
                     config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
+                    config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
