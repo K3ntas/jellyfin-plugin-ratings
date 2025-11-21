@@ -17,6 +17,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             MinRating = 1;
             AllowGuestRatings = false;
             EnableNetflixView = false;
+            EnableRequestButton = true;
         }
 
         /// <summary>
@@ -43,5 +44,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether Netflix-style genre view is enabled.
         /// </summary>
         public bool EnableNetflixView { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Request Media button is shown.
+        /// </summary>
+        public bool EnableRequestButton { get; set; }
     }
 }

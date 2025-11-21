@@ -48,7 +48,19 @@
                         return;
                     }
 
-                    self.initRequestButton();
+                    // Check if request button is enabled in config
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.EnableRequestButton === true) {
+                                self.initRequestButton();
+                            }
+                        })
+                        .catch(() => {
+                            // Default to showing button if config fails
+                            self.initRequestButton();
+                        });
                 } catch (err) {
                     console.error('Request button init attempt failed:', err);
                     if (attempts < maxAttempts) {
@@ -1052,7 +1064,13 @@
                     overflow: hidden;
                     position: relative;
                     cursor: pointer;
+                    transition: transform 0.3s ease;
                     background: #2a2a2a;
+                }
+
+                .netflix-card:hover {
+                    transform: scale(1.08);
+                    z-index: 50;
                 }
 
                 .netflix-card img {
