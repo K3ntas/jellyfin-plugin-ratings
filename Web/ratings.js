@@ -2062,6 +2062,7 @@
                     // Format timestamps
                     const createdAt = request.CreatedAt ? this.formatDateTime(request.CreatedAt) : 'Unknown';
                     const completedAt = request.CompletedAt ? this.formatDateTime(request.CompletedAt) : null;
+                    const hasLink = request.MediaLink && request.Status === 'done';
 
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
@@ -2071,6 +2072,7 @@
                             <div class="admin-request-time">
                                 <span>📅 ${createdAt}</span>
                                 ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
+                                ${hasLink ? `<a href="${this.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">🎬 Watch Now</a>` : ''}
                             </div>
                             <span class="admin-request-status-badge ${request.Status}">${request.Status.toUpperCase()}</span>
                             <div class="admin-request-actions">
