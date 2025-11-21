@@ -2855,35 +2855,75 @@
          */
         transformToNetflixView: function () {
             const self = this;
+            console.log('[RatingsPlugin] transformToNetflixView called');
 
-            // Don't transform if already done or not on library page
+            // Don't transform if already done
             if (document.querySelector('.netflix-view-container')) {
+                console.log('[RatingsPlugin] Netflix view already exists, skipping');
                 return;
             }
 
-            // Find the main content area
-            const itemsContainer = document.querySelector('.itemsContainer') ||
-                                   document.querySelector('.vertical-list') ||
-                                   document.querySelector('[data-role="content"]');
+            // Find the main content area - try multiple selectors
+            // Jellyfin uses different containers depending on navigation method
+            let itemsContainer = document.querySelector('.itemsContainer');
+            if (!itemsContainer) {
+                itemsContainer = document.querySelector('.vertical-list');
+            }
+            if (!itemsContainer) {
+                itemsContainer = document.querySelector('.view-inner');
+            }
+            if (!itemsContainer) {
+                itemsContainer = document.querySelector('[data-role="content"] .padded-left');
+            }
+            if (!itemsContainer) {
+                itemsContainer = document.querySelector('.libraryPage');
+            }
+            if (!itemsContainer) {
+                // Try finding any scrollable content area
+                itemsContainer = document.querySelector('.page:not(.hide) .content-primary');
+            }
+
+            console.log('[RatingsPlugin] Found container:', itemsContainer ? itemsContainer.className : 'null');
 
             if (!itemsContainer) {
+                console.log('[RatingsPlugin] No container found, will retry...');
+                // Retry after a delay - content may still be loading
+                setTimeout(() => {
+                    if (!document.querySelector('.netflix-view-container')) {
+                        self.transformToNetflixView();
+                    }
+                }, 500);
                 return;
             }
 
             // Get parent library ID from URL
             const parentId = this.getParentIdFromUrl();
+            console.log('[RatingsPlugin] Parent ID from URL:', parentId);
+
             if (!parentId) {
+                console.log('[RatingsPlugin] No parent ID found in URL');
                 return;
             }
+
+            console.log('[RatingsPlugin] Creating Netflix view...');
 
             // Create Netflix view container
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
-            netflixContainer.innerHTML = '<div class="netflix-loading">Loading genres...</div>';
+            netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
 
             // Hide original content and insert Netflix view
             itemsContainer.style.display = 'none';
-            itemsContainer.parentNode.insertBefore(netflixContainer, itemsContainer);
+
+            // Insert before the hidden container
+            if (itemsContainer.parentNode) {
+                itemsContainer.parentNode.insertBefore(netflixContainer, itemsContainer);
+            } else {
+                // Fallback: append to body
+                document.body.appendChild(netflixContainer);
+            }
+
+            console.log('[RatingsPlugin] Netflix container inserted, fetching genres...');
 
             // Fetch genres and build view
             this.fetchGenresAndBuildView(parentId, netflixContainer);
@@ -2911,13 +2951,16 @@
             const accessToken = ApiClient.accessToken();
             const deviceId = ApiClient.deviceId();
 
-            // First, get available genres for this library
-            const genresUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres&EnableTotalRecordCount=false&Limit=0`;
+            console.log('[RatingsPlugin] fetchGenresAndBuildView - parentId:', parentId);
+            console.log('[RatingsPlugin] baseUrl:', baseUrl);
 
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
+            const fetchUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio&EnableTotalRecordCount=true&Limit=500`;
+            console.log('[RatingsPlugin] Fetching:', fetchUrl);
+
             // Get all items to extract genres
-            fetch(`${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio&EnableTotalRecordCount=true&Limit=500`, {
+            fetch(fetchUrl, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -2925,8 +2968,12 @@
                     'X-Emby-Authorization': authHeader
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('[RatingsPlugin] API response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('[RatingsPlugin] Items received:', data.Items ? data.Items.length : 0);
                 const items = data.Items || [];
 
                 // Extract unique genres
