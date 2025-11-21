@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=3",
     "versions": [
       {
+        "version": "1.0.72.0",
+        "changelog": "Fixed shine animation! Removed invalid !important from @keyframes. Mobile button repositioned to right: 190px with border-radius: 15px.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.72.0/jellyfin-plugin-ratings_1.0.72.0.zip",
+        "checksum": "8514ef48b5f9d4b95dc62c6436b5884f",
+        "timestamp": "2025-11-21T10:00:00Z"
+      },
+      {
         "version": "1.0.71.0",
         "changelog": "Mobile responsive! Request Media button now 70% smaller on mobile devices (screens under 768px), positioned to the right for better fit. Desktop unchanged.",
         "targetAbi": "10.11.0.0",
