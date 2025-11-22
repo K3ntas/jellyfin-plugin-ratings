@@ -20,6 +20,14 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 ![Rating badges on media cards](images/rating-card-badges.png)
 *Rating badges automatically appear on media thumbnails throughout Jellyfin*
 
+### Netflix-Style View
+![Netflix-style genre rows](images/netflix-view.png)
+*Optional Netflix-style view with horizontal genre rows and smooth scrolling*
+
+---
+
+> **Note:** All features are optional and can be enabled/disabled through the plugin settings in the Jellyfin Dashboard.
+
 ---
 
 ## Media Request System
