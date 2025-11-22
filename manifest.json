@@ -6,8 +6,16 @@
     "overview": "Comprehensive rating plugin with star-based UI, average ratings display, detailed user rating popups, and performance-optimized card overlays for large media libraries.",
     "owner": "K3ntas",
     "category": "Metadata",
-    "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=4",
+    "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=5",
     "versions": [
+      {
+        "version": "1.0.92.0",
+        "changelog": "Simplified plugin logo SVG for better compatibility. Fixed plugin logo display.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.92.0/jellyfin-plugin-ratings_1.0.92.0.zip",
+        "checksum": "03e14ded04ca66acf24add5941f6c339",
+        "timestamp": "2025-11-22T14:00:00Z"
+      },
       {
         "version": "1.0.91.0",
         "changelog": "Fixed plugin logo to fit container properly. Added Netflix view screenshot to README. All features are now documented as optional in settings.",
