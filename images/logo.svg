@@ -1,34 +1,11 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-  <!-- Background gradient - no rounded corners for proper container fit -->
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-    </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3"/>
-    </filter>
-    <linearGradient id="starShine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0" />
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
     </linearGradient>
   </defs>
-
-  <!-- Full-bleed background rectangle -->
-  <rect x="0" y="0" width="512" height="512" fill="url(#bgGradient)"/>
-
-  <!-- Main large star - centered -->
-  <g transform="translate(256, 230) scale(1.1)">
-    <!-- Large golden star with shadow -->
-    <path d="M 0,-100 L 23,-30 L 97,-30 L 38,13 L 60,83 L 0,40 L -60,83 L -38,13 L -97,-30 L -23,-30 Z"
-          fill="#fbbf24" filter="url(#shadow)"/>
-
-    <!-- Star highlight -->
-    <path d="M 0,-100 L 23,-30 L 97,-30 L 38,13 L 60,83 L 0,40 L -60,83 L -38,13 L -97,-30 L -23,-30 Z"
-          fill="url(#starShine)" opacity="0.4"/>
-
-    <!-- Inner star detail -->
-    <path d="M 0,-70 L 15,-25 L 65,-25 L 25,5 L 40,50 L 0,25 L -40,50 L -25,5 L -65,-25 L -15,-25 Z"
-          fill="#fef3c7" opacity="0.6"/>
-  </g>
+  <rect width="512" height="512" fill="url(#bgGradient)"/>
+  <path d="M256 80 L296 200 L420 200 L320 270 L356 390 L256 320 L156 390 L192 270 L92 200 L216 200 Z" fill="#fbbf24"/>
+  <path d="M256 120 L284 205 L375 205 L302 255 L328 340 L256 295 L184 340 L210 255 L137 205 L228 205 Z" fill="#fef3c7" opacity="0.5"/>
 </svg>
