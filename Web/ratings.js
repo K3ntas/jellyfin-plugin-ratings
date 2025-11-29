@@ -2259,8 +2259,24 @@
             try {
                 const lowerQuery = query.toLowerCase();
 
-                // Find all media cards on the page
-                const cards = document.querySelectorAll('.card, .itemTile, .portraitCard, .squareCard, .overflowPortraitCard, .overflowSquareCard, .overflowBackdropCard');
+                // Find all media cards on the page - comprehensive selector
+                const cards = document.querySelectorAll([
+                    '.card',
+                    '.itemTile',
+                    '.portraitCard',
+                    '.squareCard',
+                    '.overflowPortraitCard',
+                    '.overflowSquareCard',
+                    '.overflowBackdropCard',
+                    '[data-type="Program"]',
+                    '[data-type="Movie"]',
+                    '[data-type="Series"]',
+                    '[data-type="Episode"]',
+                    '.listItem'
+                ].join(', '));
+
+                let matchCount = 0;
+                let hideCount = 0;
 
                 cards.forEach(card => {
                     try {
@@ -2268,7 +2284,7 @@
                         let title = '';
 
                         // Try to find title in card text
-                        const cardText = card.querySelector('.cardText, .cardTextCentered, .cardText-first, .itemName');
+                        const cardText = card.querySelector('.cardText, .cardTextCentered, .cardText-first, .itemName, .listItemBodyText');
                         if (cardText) {
                             title = cardText.textContent || cardText.innerText || '';
                         }
@@ -2277,14 +2293,25 @@
                         if (!title) {
                             title = card.getAttribute('data-title') ||
                                    card.getAttribute('data-name') ||
-                                   card.getAttribute('aria-label') || '';
+                                   card.getAttribute('aria-label') ||
+                                   card.getAttribute('data-playername') || '';
                         }
 
                         // Check if link has title
                         if (!title) {
                             const link = card.querySelector('a');
                             if (link) {
-                                title = link.getAttribute('title') || link.getAttribute('aria-label') || '';
+                                title = link.getAttribute('title') ||
+                                       link.getAttribute('aria-label') ||
+                                       link.textContent || '';
+                            }
+                        }
+
+                        // Check image alt text
+                        if (!title) {
+                            const img = card.querySelector('img');
+                            if (img) {
+                                title = img.getAttribute('alt') || '';
                             }
                         }
 
@@ -2293,12 +2320,15 @@
                             // Show card
                             card.style.display = '';
                             card.style.opacity = '1';
+                            card.style.visibility = 'visible';
+                            matchCount++;
 
                             // Also show parent containers
                             let parent = card.parentElement;
                             while (parent && parent !== document.body) {
                                 if (parent.classList.contains('itemsContainer') ||
-                                    parent.classList.contains('scrollSlider')) {
+                                    parent.classList.contains('scrollSlider') ||
+                                    parent.classList.contains('itemsWrapper')) {
                                     parent.style.display = '';
                                 }
                                 parent = parent.parentElement;
@@ -2307,6 +2337,8 @@
                             // Hide card
                             card.style.display = 'none';
                             card.style.opacity = '0';
+                            card.style.visibility = 'hidden';
+                            hideCount++;
                         }
                     } catch (err) {
                         // Skip this card if error
@@ -2314,10 +2346,10 @@
                 });
 
                 // Handle sections/rows - hide empty ones
-                const sections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
+                const sections = document.querySelectorAll('.verticalSection, .section, .homePageSection, .padded-top, .padded-bottom');
                 sections.forEach(section => {
                     try {
-                        const visibleCards = section.querySelectorAll('.card:not([style*="display: none"]), .itemTile:not([style*="display: none"])');
+                        const visibleCards = section.querySelectorAll('.card:not([style*="display: none"]):not([style*="display:none"]), .itemTile:not([style*="display: none"]):not([style*="display:none"])');
                         if (lowerQuery !== '' && visibleCards.length === 0) {
                             section.style.display = 'none';
                         } else {
@@ -2327,6 +2359,11 @@
                         // Skip this section if error
                     }
                 });
+
+                // Debug log
+                if (lowerQuery) {
+                    console.log(`Search filter: "${lowerQuery}" - Found ${cards.length} total cards, ${matchCount} matches, ${hideCount} hidden`);
+                }
 
             } catch (err) {
                 console.error('Error filtering content:', err);
