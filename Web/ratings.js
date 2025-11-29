@@ -2272,7 +2272,8 @@
                     '[data-type="Movie"]',
                     '[data-type="Series"]',
                     '[data-type="Episode"]',
-                    '.listItem'
+                    '.listItem',
+                    '.netflix-card'  // Netflix view cards
                 ].join(', '));
 
                 let matchCount = 0;
@@ -2284,7 +2285,7 @@
                         let title = '';
 
                         // Try to find title in card text
-                        const cardText = card.querySelector('.cardText, .cardTextCentered, .cardText-first, .itemName, .listItemBodyText');
+                        const cardText = card.querySelector('.cardText, .cardTextCentered, .cardText-first, .itemName, .listItemBodyText, .netflix-card-title');
                         if (cardText) {
                             title = cardText.textContent || cardText.innerText || '';
                         }
@@ -2346,10 +2347,10 @@
                 });
 
                 // Handle sections/rows - hide empty ones
-                const sections = document.querySelectorAll('.verticalSection, .section, .homePageSection, .padded-top, .padded-bottom');
+                const sections = document.querySelectorAll('.verticalSection, .section, .homePageSection, .padded-top, .padded-bottom, .netflix-genre-row');
                 sections.forEach(section => {
                     try {
-                        const visibleCards = section.querySelectorAll('.card:not([style*="display: none"]):not([style*="display:none"]), .itemTile:not([style*="display: none"]):not([style*="display:none"])');
+                        const visibleCards = section.querySelectorAll('.card:not([style*="display: none"]):not([style*="display:none"]), .itemTile:not([style*="display: none"]):not([style*="display:none"]), .netflix-card:not([style*="display: none"]):not([style*="display:none"])');
                         if (lowerQuery !== '' && visibleCards.length === 0) {
                             section.style.display = 'none';
                         } else {
