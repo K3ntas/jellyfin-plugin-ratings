@@ -2259,6 +2259,30 @@
                     // Emby.Page.addEventListener not available
                 }
 
+                // Monitor for URL changes to clear search (works for SPA navigation)
+                let lastUrl = window.location.href;
+                setInterval(() => {
+                    try {
+                        const currentUrl = window.location.href;
+                        if (currentUrl !== lastUrl) {
+                            lastUrl = currentUrl;
+                            const searchInput = document.getElementById('headerSearchInput');
+                            const searchIcon = document.getElementById('headerSearchIcon');
+                            if (searchInput && searchInput.value.trim()) {
+                                searchInput.value = '';
+                                if (searchIcon) {
+                                    searchIcon.innerHTML = '🔍';
+                                    searchIcon.style.fontSize = '18px';
+                                }
+                                // Reset filters
+                                self.filterCurrentPageContent('');
+                            }
+                        }
+                    } catch (err) {
+                        // Silently fail
+                    }
+                }, 500);
+
                 // Also listen for hash changes (SPA navigation)
                 window.addEventListener('hashchange', () => {
                     try {
