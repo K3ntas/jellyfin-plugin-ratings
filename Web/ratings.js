@@ -2240,12 +2240,42 @@
                         Emby.Page.addEventListener('pageshow', () => {
                             if (!document.getElementById('headerSearchField')) {
                                 setTimeout(createSearchField, 500);
+                            } else {
+                                // Clear search when navigating to a new page
+                                const searchInput = document.getElementById('headerSearchInput');
+                                const searchIcon = document.getElementById('headerSearchIcon');
+                                if (searchInput && searchInput.value.trim()) {
+                                    searchInput.value = '';
+                                    if (searchIcon) {
+                                        searchIcon.innerHTML = '🔍';
+                                        searchIcon.style.fontSize = '18px';
+                                    }
+                                    self.filterCurrentPageContent('');
+                                }
                             }
                         });
                     }
                 } catch (e) {
                     // Emby.Page.addEventListener not available
                 }
+
+                // Also listen for hash changes (SPA navigation)
+                window.addEventListener('hashchange', () => {
+                    try {
+                        const searchInput = document.getElementById('headerSearchInput');
+                        const searchIcon = document.getElementById('headerSearchIcon');
+                        if (searchInput && searchInput.value.trim()) {
+                            searchInput.value = '';
+                            if (searchIcon) {
+                                searchIcon.innerHTML = '🔍';
+                                searchIcon.style.fontSize = '18px';
+                            }
+                            self.filterCurrentPageContent('');
+                        }
+                    } catch (err) {
+                        // Silently fail
+                    }
+                });
 
             } catch (err) {
                 console.error('Search field initialization failed:', err);
