@@ -2165,23 +2165,38 @@
                         searchContainer.appendChild(searchInput);
                         document.body.appendChild(searchContainer);
 
-                        // Handle enter key
+                        // Real-time search filtering
+                        let searchTimeout;
+                        searchInput.addEventListener('input', function() {
+                            // Update icon based on input
+                            if (searchInput.value.trim()) {
+                                searchIcon.innerHTML = '✕';
+                                searchIcon.style.fontSize = '20px';
+                            } else {
+                                searchIcon.innerHTML = '🔍';
+                                searchIcon.style.fontSize = '18px';
+                            }
+
+                            clearTimeout(searchTimeout);
+                            searchTimeout = setTimeout(() => {
+                                self.filterCurrentPageContent(searchInput.value.trim());
+                            }, 300); // Debounce for performance
+                        });
+
+                        // Handle enter key - also filter
                         searchInput.addEventListener('keypress', function(e) {
                             if (e.key === 'Enter') {
-                                const query = searchInput.value.trim();
-                                if (query) {
-                                    window.location.hash = '#/search?query=' + encodeURIComponent(query);
-                                    searchInput.value = '';
-                                }
+                                self.filterCurrentPageContent(searchInput.value.trim());
                             }
                         });
 
-                        // Handle icon click
+                        // Handle icon click - clear search or focus
                         searchIcon.addEventListener('click', function() {
-                            const query = searchInput.value.trim();
-                            if (query) {
-                                window.location.hash = '#/search?query=' + encodeURIComponent(query);
+                            if (searchInput.value.trim()) {
                                 searchInput.value = '';
+                                searchIcon.innerHTML = '🔍';
+                                searchIcon.style.fontSize = '18px';
+                                self.filterCurrentPageContent('');
                             } else {
                                 searchInput.focus();
                             }
@@ -2234,6 +2249,87 @@
 
             } catch (err) {
                 console.error('Search field initialization failed:', err);
+            }
+        },
+
+        /**
+         * Filter current page content based on search query
+         */
+        filterCurrentPageContent: function (query) {
+            try {
+                const lowerQuery = query.toLowerCase();
+
+                // Find all media cards on the page
+                const cards = document.querySelectorAll('.card, .itemTile, .portraitCard, .squareCard, .overflowPortraitCard, .overflowSquareCard, .overflowBackdropCard');
+
+                cards.forEach(card => {
+                    try {
+                        // Get card title from various possible locations
+                        let title = '';
+
+                        // Try to find title in card text
+                        const cardText = card.querySelector('.cardText, .cardTextCentered, .cardText-first, .itemName');
+                        if (cardText) {
+                            title = cardText.textContent || cardText.innerText || '';
+                        }
+
+                        // Also check data attributes
+                        if (!title) {
+                            title = card.getAttribute('data-title') ||
+                                   card.getAttribute('data-name') ||
+                                   card.getAttribute('aria-label') || '';
+                        }
+
+                        // Check if link has title
+                        if (!title) {
+                            const link = card.querySelector('a');
+                            if (link) {
+                                title = link.getAttribute('title') || link.getAttribute('aria-label') || '';
+                            }
+                        }
+
+                        // Filter based on title
+                        if (lowerQuery === '' || title.toLowerCase().includes(lowerQuery)) {
+                            // Show card
+                            card.style.display = '';
+                            card.style.opacity = '1';
+
+                            // Also show parent containers
+                            let parent = card.parentElement;
+                            while (parent && parent !== document.body) {
+                                if (parent.classList.contains('itemsContainer') ||
+                                    parent.classList.contains('scrollSlider')) {
+                                    parent.style.display = '';
+                                }
+                                parent = parent.parentElement;
+                            }
+                        } else {
+                            // Hide card
+                            card.style.display = 'none';
+                            card.style.opacity = '0';
+                        }
+                    } catch (err) {
+                        // Skip this card if error
+                    }
+                });
+
+                // Handle sections/rows - hide empty ones
+                const sections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
+                sections.forEach(section => {
+                    try {
+                        const visibleCards = section.querySelectorAll('.card:not([style*="display: none"]), .itemTile:not([style*="display: none"])');
+                        if (lowerQuery !== '' && visibleCards.length === 0) {
+                            section.style.display = 'none';
+                        } else {
+                            section.style.display = '';
+                        }
+                    } catch (err) {
+                        // Skip this section if error
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error filtering content:', err);
             }
         },
 
