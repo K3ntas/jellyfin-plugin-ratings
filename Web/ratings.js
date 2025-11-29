@@ -2415,13 +2415,8 @@
                     }
                 });
 
-                // Debug log
-                if (lowerQuery) {
-                    console.log(`Search filter: "${lowerQuery}" - Found ${cards.length} total cards, ${matchCount} matches, ${hideCount} hidden`);
-                }
-
             } catch (err) {
-                console.error('Error filtering content:', err);
+                // Silently fail
             }
         },
 
@@ -3070,7 +3065,6 @@
 
             // Check if feature is enabled via API
             this.checkNetflixViewEnabled().then(enabled => {
-                console.log('[RatingsPlugin] Netflix View enabled:', enabled);
                 self.netflixViewEnabled = enabled;
                 if (enabled) {
                     self.observeLibraryPages();
@@ -3085,14 +3079,12 @@
             return new Promise((resolve) => {
                 try {
                     if (!window.ApiClient) {
-                        console.log('[RatingsPlugin] ApiClient not available');
                         resolve(false);
                         return;
                     }
 
                     const baseUrl = ApiClient.serverAddress();
                     const url = `${baseUrl}/Ratings/Config`;
-                    console.log('[RatingsPlugin] Fetching config from:', url);
 
                     fetch(url, {
                         method: 'GET',
@@ -3100,15 +3092,12 @@
                     })
                     .then(response => response.json())
                     .then(config => {
-                        console.log('[RatingsPlugin] Config response:', config);
                         resolve(config.EnableNetflixView === true);
                     })
-                    .catch((err) => {
-                        console.log('[RatingsPlugin] Config fetch error:', err);
+                    .catch(() => {
                         resolve(false);
                     });
                 } catch (err) {
-                    console.log('[RatingsPlugin] Config check error:', err);
                     resolve(false);
                 }
             });
@@ -3184,9 +3173,6 @@
                     return;
                 }
                 lastUrl = url;
-
-                console.log('[RatingsPlugin] Netflix page detected:', hash);
-
                 // Clear any pending transform
                 if (transformTimeout) {
                     clearTimeout(transformTimeout);
@@ -3206,9 +3192,7 @@
                     const itemsContainer = document.querySelector('.itemsContainer') ||
                                            document.querySelector('.vertical-list');
 
-                    if (itemsContainer) {
-                        console.log('[RatingsPlugin] Found container, transforming...');
-                        removeHideStyles();
+                    if (itemsContainer) {                        removeHideStyles();
                         self.transformToNetflixView();
                         return true;
                     }
@@ -3241,16 +3225,12 @@
             };
 
             // Listen for hash changes (SPA navigation)
-            window.addEventListener('hashchange', () => {
-                console.log('[RatingsPlugin] Hash changed');
-                // Small delay to let Jellyfin start loading new page
+            window.addEventListener('hashchange', () => {                // Small delay to let Jellyfin start loading new page
                 setTimeout(checkLibraryPage, 100);
             });
 
             // Also watch for popstate (back/forward navigation)
-            window.addEventListener('popstate', () => {
-                console.log('[RatingsPlugin] Popstate event');
-                setTimeout(checkLibraryPage, 100);
+            window.addEventListener('popstate', () => {                setTimeout(checkLibraryPage, 100);
             });
 
             // Periodic check as fallback (less frequent)
@@ -3265,12 +3245,8 @@
          */
         transformToNetflixView: function () {
             const self = this;
-            console.log('[RatingsPlugin] transformToNetflixView called');
-
             // Don't transform if already done
-            if (document.querySelector('.netflix-view-container')) {
-                console.log('[RatingsPlugin] Netflix view already exists, skipping');
-                return;
+            if (document.querySelector('.netflix-view-container')) {                return;
             }
 
             // Find the main content area - try multiple selectors
@@ -3292,12 +3268,7 @@
                 // Try finding any scrollable content area
                 itemsContainer = document.querySelector('.page:not(.hide) .content-primary');
             }
-
-            console.log('[RatingsPlugin] Found container:', itemsContainer ? itemsContainer.className : 'null');
-
-            if (!itemsContainer) {
-                console.log('[RatingsPlugin] No container found, will retry...');
-                // Retry after a delay - content may still be loading
+            if (!itemsContainer) {                // Retry after a delay - content may still be loading
                 setTimeout(() => {
                     if (!document.querySelector('.netflix-view-container')) {
                         self.transformToNetflixView();
@@ -3308,15 +3279,8 @@
 
             // Get parent library ID from URL
             const parentId = this.getParentIdFromUrl();
-            console.log('[RatingsPlugin] Parent ID from URL:', parentId);
-
-            if (!parentId) {
-                console.log('[RatingsPlugin] No parent ID found in URL');
-                return;
+            if (!parentId) {                return;
             }
-
-            console.log('[RatingsPlugin] Creating Netflix view...');
-
             // Create Netflix view container as a FIXED overlay
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
@@ -3339,9 +3303,6 @@
 
             // Insert directly into body as fixed overlay
             document.body.appendChild(netflixContainer);
-
-            console.log('[RatingsPlugin] Netflix container inserted as fixed overlay');
-
             // Fetch genres and build view
             this.fetchGenresAndBuildView(parentId, netflixContainer);
         },
@@ -3367,15 +3328,9 @@
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
             const deviceId = ApiClient.deviceId();
-
-            console.log('[RatingsPlugin] fetchGenresAndBuildView - parentId:', parentId);
-            console.log('[RatingsPlugin] baseUrl:', baseUrl);
-
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
             const fetchUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio&EnableTotalRecordCount=true&Limit=500`;
-            console.log('[RatingsPlugin] Fetching:', fetchUrl);
-
             // Get all items to extract genres
             fetch(fetchUrl, {
                 method: 'GET',
@@ -3385,13 +3340,9 @@
                     'X-Emby-Authorization': authHeader
                 }
             })
-            .then(response => {
-                console.log('[RatingsPlugin] API response status:', response.status);
-                return response.json();
+            .then(response => {                return response.json();
             })
-            .then(data => {
-                console.log('[RatingsPlugin] Items received:', data.Items ? data.Items.length : 0);
-                const items = data.Items || [];
+            .then(data => {                const items = data.Items || [];
 
                 // Extract unique genres
                 const genreMap = new Map();
@@ -3410,9 +3361,6 @@
                 const sortedGenres = Array.from(genreMap.entries())
                     .sort((a, b) => b[1].length - a[1].length)
                     .slice(0, 15); // Limit to top 15 genres
-
-                console.log('[RatingsPlugin] Genres found:', sortedGenres.length);
-
                 if (sortedGenres.length === 0) {
                     container.innerHTML = '<div class="netflix-loading" style="color: white; padding: 50px; text-align: center;">No genres found</div>';
                     return;
@@ -3433,12 +3381,7 @@
                 sortedGenres.forEach(([genre, genreItems]) => {
                     const shuffledItems = shuffleArray(genreItems);
                     html += self.buildGenreRow(genre, shuffledItems, baseUrl);
-                });
-
-                console.log('[RatingsPlugin] Built HTML, inserting into container...');
-                container.innerHTML = html;
-                console.log('[RatingsPlugin] HTML inserted, container visible:', container.offsetHeight > 0);
-
+                });                container.innerHTML = html;
                 // Make sure container is visible
                 container.style.display = 'block';
 
@@ -3446,9 +3389,7 @@
                 self.attachScrollHandlers(container);
 
                 // Apply rating badges to Netflix cards
-                self.applyNetflixRatingBadges(container);
-                console.log('[RatingsPlugin] Netflix view complete!');
-            })
+                self.applyNetflixRatingBadges(container);            })
             .catch(err => {
                 console.error('Error fetching items for Netflix view:', err);
                 container.innerHTML = '<div class="netflix-loading">Error loading content</div>';
@@ -3528,9 +3469,6 @@
         applyNetflixRatingBadges: function (container) {
             const self = this;
             const cards = container.querySelectorAll('.netflix-card[data-item-id]');
-
-            console.log('[RatingsPlugin] Applying rating badges to', cards.length, 'Netflix cards');
-
             cards.forEach(card => {
                 const itemId = card.getAttribute('data-item-id');
                 if (!itemId) return;
