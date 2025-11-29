@@ -20,6 +20,9 @@
             // Initialize request button with multiple attempts for reliability
             this.initRequestButtonWithRetry();
 
+            // Initialize search field in header
+            this.initSearchField();
+
             // Initialize Netflix view if enabled
             this.initNetflixView();
         },
@@ -462,6 +465,76 @@
 
                 #requestMediaBtn:hover::after {
                     opacity: 1 !important;
+                }
+
+                /* Search Field in Header */
+                #headerSearchField {
+                    position: fixed !important;
+                    top: 8px !important;
+                    right: 480px !important;
+                    z-index: 999998 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    background: rgba(60, 60, 60, 0.9) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 25px !important;
+                    padding: 8px 16px !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                #headerSearchField:hover {
+                    background: rgba(70, 70, 70, 0.95) !important;
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                }
+
+                #headerSearchField.hidden {
+                    display: none !important;
+                }
+
+                #headerSearchIcon {
+                    font-size: 18px !important;
+                    margin-right: 8px !important;
+                    cursor: pointer !important;
+                    opacity: 0.8 !important;
+                    transition: opacity 0.3s ease !important;
+                }
+
+                #headerSearchIcon:hover {
+                    opacity: 1 !important;
+                }
+
+                #headerSearchInput {
+                    background: transparent !important;
+                    border: none !important;
+                    outline: none !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    width: 200px !important;
+                    padding: 4px 0 !important;
+                }
+
+                #headerSearchInput::placeholder {
+                    color: rgba(255, 255, 255, 0.5) !important;
+                }
+
+                /* Mobile Responsive for Search Field */
+                @media screen and (max-width: 768px) {
+                    #headerSearchField {
+                        right: 280px !important;
+                        top: 6px !important;
+                        padding: 6px 12px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 120px !important;
+                        font-size: 12px !important;
+                    }
+
+                    #headerSearchIcon {
+                        font-size: 14px !important;
+                        margin-right: 6px !important;
+                    }
                 }
 
                 /* Request Modal - Completely Isolated */
@@ -2050,6 +2123,117 @@
 
             } catch (err) {
                 console.error('Error clearing request cache:', err);
+            }
+        },
+
+        /**
+         * Initialize search field in header
+         */
+        initSearchField: function () {
+            const self = this;
+            try {
+                // Check if already exists
+                if (document.getElementById('headerSearchField')) {
+                    return;
+                }
+
+                // Wait for DOM to be ready
+                const createSearchField = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('headerSearchField')) {
+                            return;
+                        }
+
+                        // Create search container
+                        const searchContainer = document.createElement('div');
+                        searchContainer.id = 'headerSearchField';
+
+                        // Create search input
+                        const searchInput = document.createElement('input');
+                        searchInput.type = 'text';
+                        searchInput.placeholder = 'Search...';
+                        searchInput.id = 'headerSearchInput';
+
+                        // Create search icon
+                        const searchIcon = document.createElement('span');
+                        searchIcon.id = 'headerSearchIcon';
+                        searchIcon.innerHTML = '🔍';
+
+                        // Append elements
+                        searchContainer.appendChild(searchIcon);
+                        searchContainer.appendChild(searchInput);
+                        document.body.appendChild(searchContainer);
+
+                        // Handle enter key
+                        searchInput.addEventListener('keypress', function(e) {
+                            if (e.key === 'Enter') {
+                                const query = searchInput.value.trim();
+                                if (query) {
+                                    window.location.hash = '#/search?query=' + encodeURIComponent(query);
+                                    searchInput.value = '';
+                                }
+                            }
+                        });
+
+                        // Handle icon click
+                        searchIcon.addEventListener('click', function() {
+                            const query = searchInput.value.trim();
+                            if (query) {
+                                window.location.hash = '#/search?query=' + encodeURIComponent(query);
+                                searchInput.value = '';
+                            } else {
+                                searchInput.focus();
+                            }
+                        });
+
+                        // Hide during video playback and on login page
+                        setInterval(() => {
+                            try {
+                                const videoPlayer = document.querySelector('.videoPlayerContainer');
+                                const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+                                const isLoginPage = self.isOnLoginPage();
+
+                                if (isVideoPlaying || isLoginPage) {
+                                    searchContainer.classList.add('hidden');
+                                } else {
+                                    searchContainer.classList.remove('hidden');
+                                }
+                            } catch (err) {
+                                // Silently fail
+                            }
+                        }, 1000);
+
+                    } catch (err) {
+                        console.error('Error creating search field:', err);
+                    }
+                };
+
+                // Try to create immediately
+                setTimeout(createSearchField, 1500);
+
+                // Also try on page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && !document.getElementById('headerSearchField')) {
+                        setTimeout(createSearchField, 500);
+                    }
+                });
+
+                // Listen for Jellyfin navigation events
+                try {
+                    if (window.Emby && window.Emby.Page && typeof Emby.Page.addEventListener === 'function') {
+                        Emby.Page.addEventListener('pageshow', () => {
+                            if (!document.getElementById('headerSearchField')) {
+                                setTimeout(createSearchField, 500);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // Emby.Page.addEventListener not available
+                }
+
+            } catch (err) {
+                console.error('Search field initialization failed:', err);
             }
         },
 
