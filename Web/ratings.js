@@ -297,7 +297,7 @@
                 /* Request Media Button - Aligned with Header */
                 #requestMediaBtn {
                     position: absolute !important;
-                    top: 8px !important;
+                    top: 8px;
                     right: 240px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -472,7 +472,7 @@
                 /* Search Field in Header */
                 #headerSearchField {
                     position: absolute !important;
-                    top: 8px !important;
+                    top: 8px;
                     right: 480px !important;
                     z-index: 999998 !important;
                     display: flex !important;
