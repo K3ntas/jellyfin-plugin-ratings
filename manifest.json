@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.106.0",
+        "changelog": "FIXED dynamic scaling! Using clamp() to ensure proper responsive behavior. Elements now smoothly scale from 100% (925px) to 50% (300px).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.106.0/jellyfin-plugin-ratings_1.0.106.0.zip",
+        "checksum": "dadf70a9b03e6cac7a6589691250ca59",
+        "timestamp": "2025-11-23T01:30:00Z"
+      },
+      {
         "version": "1.0.105.0",
         "changelog": "Dynamic responsive scaling! Elements scale smoothly from 100% at 925px to 50% at 300px using calc() formula. Perfect fluid layout.",
         "targetAbi": "10.11.0.0",
