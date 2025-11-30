@@ -403,6 +403,7 @@
                         font-size: 16px !important;
                         border-radius: 55px !important;
                         right: 6px !important;
+                        top: 55px !important;
                     }
 
                     #requestMediaBtn .btn-text {
@@ -525,6 +526,7 @@
                     #headerSearchField {
                         left: 6px !important;
                         right: auto !important;
+                        top: 55px !important;
                         padding: 8px 16px !important;
                     }
 
@@ -1943,14 +1945,9 @@
                 `;
 
                 // Add to DOM - append to header container so they scroll with header
-                // Prefer .emby-tabs-slider on pages with tabs (Movies, TV Shows, etc.)
-                const tabsContainer = document.querySelector('.emby-tabs-slider');
                 const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-
-                if (tabsContainer) {
-                    tabsContainer.style.position = 'relative';
-                    tabsContainer.appendChild(btn);
-                } else if (headerContainer) {
+                if (headerContainer) {
+                    // Make header container position relative so absolute positioning works
                     headerContainer.style.position = 'relative';
                     headerContainer.appendChild(btn);
                 } else {
@@ -2179,14 +2176,8 @@
                         searchContainer.appendChild(searchInput);
 
                         // Append to header container so it scrolls with header
-                        // Prefer .emby-tabs-slider on pages with tabs (Movies, TV Shows, etc.)
-                        const tabsContainer = document.querySelector('.emby-tabs-slider');
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-
-                        if (tabsContainer) {
-                            tabsContainer.style.position = 'relative';
-                            tabsContainer.appendChild(searchContainer);
-                        } else if (headerContainer) {
+                        if (headerContainer) {
                             headerContainer.style.position = 'relative';
                             headerContainer.appendChild(searchContainer);
                         } else {
