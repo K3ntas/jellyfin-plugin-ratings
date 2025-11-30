@@ -2333,36 +2333,56 @@
                 const width = window.innerWidth;
                 let scale = 1;
                 let searchWidth = 200; // Default width
+                let btnPaddingH = 16; // Horizontal padding for button
 
                 if (width <= 300) {
                     scale = 0.5;
                     searchWidth = 100;
+                    btnPaddingH = 8;
                 } else if (width <= 500) {
                     // Extra scaling for search field below 500px
                     scale = 0.5 + ((width - 300) / (500 - 300)) * 0.3; // 0.5 to 0.8
                     searchWidth = 100 + ((width - 300) / (500 - 300)) * 50; // 100px to 150px
+                    btnPaddingH = 8 + ((width - 300) / (500 - 300)) * 4; // 8px to 12px
                 } else if (width < 925) {
                     // Linear interpolation: scale from 1.0 at 925px to 0.8 at 500px
                     scale = 0.8 + ((width - 500) / (925 - 500)) * 0.2;
                     searchWidth = 150 + ((width - 500) / (925 - 500)) * 50; // 150px to 200px
+                    btnPaddingH = 12 + ((width - 500) / (925 - 500)) * 4; // 12px to 16px
                 }
 
                 const searchField = document.getElementById('headerSearchField');
                 const searchInput = document.getElementById('headerSearchInput');
                 const requestBtn = document.getElementById('requestMediaBtn');
 
-                if (searchField && width <= 925) {
-                    searchField.style.transform = `scale(${scale})`;
-                    searchField.style.transformOrigin = 'left center';
+                if (searchField) {
+                    if (width <= 925) {
+                        searchField.style.transform = `scale(${scale})`;
+                        searchField.style.transformOrigin = 'left center';
+                    } else {
+                        searchField.style.transform = '';
+                    }
                 }
 
-                if (searchInput && width <= 925) {
-                    searchInput.style.width = `${searchWidth}px`;
+                if (searchInput) {
+                    if (width <= 925) {
+                        searchInput.style.width = `${searchWidth}px`;
+                    } else {
+                        searchInput.style.width = '';
+                    }
                 }
 
-                if (requestBtn && width <= 925) {
-                    requestBtn.style.transform = `scale(${scale})`;
-                    requestBtn.style.transformOrigin = 'right center';
+                if (requestBtn) {
+                    if (width <= 925) {
+                        requestBtn.style.transform = `scale(${scale})`;
+                        requestBtn.style.transformOrigin = 'right center';
+                        requestBtn.style.paddingLeft = `${btnPaddingH}px`;
+                        requestBtn.style.paddingRight = `${btnPaddingH}px`;
+                    } else {
+                        requestBtn.style.transform = '';
+                        requestBtn.style.paddingLeft = '';
+                        requestBtn.style.paddingRight = '';
+                    }
                 }
             };
 
