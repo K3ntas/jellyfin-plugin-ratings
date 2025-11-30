@@ -393,26 +393,28 @@
                     display: none !important;
                 }
 
-                /* Mobile Responsive - 70% size, positioned more to the right */
+                /* Mobile Responsive - 50% size, positioned to the right */
                 @media screen and (max-width: 925px) {
                     #requestMediaBtn {
-                        padding: 8px 24px !important;
-                        font-size: 16px !important;
-                        border-radius: 55px !important;
+                        padding: 4px 12px !important;
+                        font-size: 11px !important;
+                        border-radius: 27.5px !important;
                         right: 6px !important;
                         top: 65px !important;
+                        transform: scale(0.5) !important;
+                        transform-origin: right center !important;
                     }
 
                     #requestMediaBtn .btn-text {
-                        font-size: 16px !important;
+                        font-size: 11px !important;
                     }
 
                     .request-badge {
-                        width: 16px !important;
-                        height: 16px !important;
-                        font-size: 9px !important;
-                        top: -5px !important;
-                        right: -5px !important;
+                        width: 12px !important;
+                        height: 12px !important;
+                        font-size: 7px !important;
+                        top: -3px !important;
+                        right: -3px !important;
                     }
                 }
 
@@ -518,23 +520,25 @@
                     color: rgba(255, 255, 255, 0.5) !important;
                 }
 
-                /* Mobile Responsive for Search Field */
+                /* Mobile Responsive for Search Field - 50% size */
                 @media screen and (max-width: 925px) {
                     #headerSearchField {
                         left: 6px !important;
                         right: auto !important;
                         top: 65px !important;
-                        padding: 6px 1px !important;
+                        padding: 3px 0.5px !important;
+                        transform: scale(0.5) !important;
+                        transform-origin: left center !important;
                     }
 
                     #headerSearchInput {
-                        width: 120px !important;
-                        font-size: 12px !important;
+                        width: 100px !important;
+                        font-size: 10px !important;
                     }
 
                     #headerSearchIcon {
-                        font-size: 14px !important;
-                        margin-right: 6px !important;
+                        font-size: 12px !important;
+                        margin-right: 4px !important;
                     }
                 }
 
