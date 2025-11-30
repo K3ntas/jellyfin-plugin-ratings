@@ -296,7 +296,7 @@
 
                 /* Request Media Button - Aligned with Header */
                 #requestMediaBtn {
-                    position: fixed !important;
+                    position: absolute !important;
                     top: 8px !important;
                     right: 240px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
@@ -472,7 +472,7 @@
 
                 /* Search Field in Header */
                 #headerSearchField {
-                    position: fixed !important;
+                    position: absolute !important;
                     top: 8px !important;
                     right: 480px !important;
                     z-index: 999998 !important;
@@ -1944,8 +1944,15 @@
                     </div>
                 `;
 
-                // Add to DOM
-                document.body.appendChild(btn);
+                // Add to DOM - append to header container so they scroll with header
+                const headerContainer = document.querySelector('.headerTabs, .skinHeader');
+                if (headerContainer) {
+                    // Make header container position relative so absolute positioning works
+                    headerContainer.style.position = 'relative';
+                    headerContainer.appendChild(btn);
+                } else {
+                    document.body.appendChild(btn);
+                }
                 document.body.appendChild(modal);
 
                 // Button click - wrapped in try-catch
@@ -2167,7 +2174,15 @@
                         // Append elements
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
-                        document.body.appendChild(searchContainer);
+
+                        // Append to header container so it scrolls with header
+                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
+                        if (headerContainer) {
+                            headerContainer.style.position = 'relative';
+                            headerContainer.appendChild(searchContainer);
+                        } else {
+                            document.body.appendChild(searchContainer);
+                        }
 
                         // Real-time search filtering
                         let searchTimeout;
@@ -2317,20 +2332,32 @@
             const updateScale = () => {
                 const width = window.innerWidth;
                 let scale = 1;
+                let searchWidth = 200; // Default width
 
                 if (width <= 300) {
                     scale = 0.5;
+                    searchWidth = 100;
+                } else if (width <= 500) {
+                    // Extra scaling for search field below 500px
+                    scale = 0.5 + ((width - 300) / (500 - 300)) * 0.3; // 0.5 to 0.8
+                    searchWidth = 100 + ((width - 300) / (500 - 300)) * 50; // 100px to 150px
                 } else if (width < 925) {
-                    // Linear interpolation: scale from 1.0 at 925px to 0.5 at 300px
-                    scale = 0.5 + ((width - 300) / (925 - 300)) * 0.5;
+                    // Linear interpolation: scale from 1.0 at 925px to 0.8 at 500px
+                    scale = 0.8 + ((width - 500) / (925 - 500)) * 0.2;
+                    searchWidth = 150 + ((width - 500) / (925 - 500)) * 50; // 150px to 200px
                 }
 
                 const searchField = document.getElementById('headerSearchField');
+                const searchInput = document.getElementById('headerSearchInput');
                 const requestBtn = document.getElementById('requestMediaBtn');
 
                 if (searchField && width <= 925) {
                     searchField.style.transform = `scale(${scale})`;
                     searchField.style.transformOrigin = 'left center';
+                }
+
+                if (searchInput && width <= 925) {
+                    searchInput.style.width = `${searchWidth}px`;
                 }
 
                 if (requestBtn && width <= 925) {
