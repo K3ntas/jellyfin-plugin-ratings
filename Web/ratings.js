@@ -401,7 +401,7 @@
                         border-radius: 55px !important;
                         right: 6px !important;
                         top: 65px !important;
-                        transform: scale(calc(0.5 + (100vw - 300px) / (925 - 300) * 0.5)) !important;
+                        transform: scale(clamp(0.5, calc(0.5 + (100vw - 300px) / 625 * 0.5), 1)) !important;
                         transform-origin: right center !important;
                     }
 
@@ -415,13 +415,6 @@
                         font-size: 9px !important;
                         top: -5px !important;
                         right: -5px !important;
-                    }
-                }
-
-                /* Ensure minimum 50% scale at 300px and below */
-                @media screen and (max-width: 300px) {
-                    #requestMediaBtn {
-                        transform: scale(0.5) !important;
                     }
                 }
 
@@ -534,7 +527,7 @@
                         right: auto !important;
                         top: 65px !important;
                         padding: 8px 16px !important;
-                        transform: scale(calc(0.5 + (100vw - 300px) / (925 - 300) * 0.5)) !important;
+                        transform: scale(clamp(0.5, calc(0.5 + (100vw - 300px) / 625 * 0.5), 1)) !important;
                         transform-origin: left center !important;
                     }
 
@@ -546,13 +539,6 @@
                     #headerSearchIcon {
                         font-size: 18px !important;
                         margin-right: 8px !important;
-                    }
-                }
-
-                /* Ensure minimum 50% scale at 300px and below */
-                @media screen and (max-width: 300px) {
-                    #headerSearchField {
-                        transform: scale(0.5) !important;
                     }
                 }
 
