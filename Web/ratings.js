@@ -399,8 +399,8 @@
                         padding: 8px 24px !important;
                         font-size: 11px !important;
                         border-radius: 15px !important;
-                        right: 190px !important;
-                        top: 6px !important;
+                        right: 70px !important;
+                        top: 65px !important;
                     }
 
                     #requestMediaBtn .btn-text {
@@ -521,8 +521,8 @@
                 /* Mobile Responsive for Search Field */
                 @media screen and (max-width: 768px) {
                     #headerSearchField {
-                        right: 280px !important;
-                        top: 6px !important;
+                        right: 400px !important;
+                        top: 65px !important;
                         padding: 6px 12px !important;
                     }
 
