@@ -393,28 +393,35 @@
                     display: none !important;
                 }
 
-                /* Mobile Responsive - 50% size, positioned to the right */
+                /* Mobile Responsive - Dynamic scaling from 925px (100%) to 300px (50%) */
                 @media screen and (max-width: 925px) {
                     #requestMediaBtn {
-                        padding: 4px 12px !important;
-                        font-size: 11px !important;
-                        border-radius: 27.5px !important;
+                        padding: 8px 24px !important;
+                        font-size: 16px !important;
+                        border-radius: 55px !important;
                         right: 6px !important;
                         top: 65px !important;
-                        transform: scale(0.5) !important;
+                        transform: scale(calc(0.5 + (100vw - 300px) / (925 - 300) * 0.5)) !important;
                         transform-origin: right center !important;
                     }
 
                     #requestMediaBtn .btn-text {
-                        font-size: 11px !important;
+                        font-size: 16px !important;
                     }
 
                     .request-badge {
-                        width: 12px !important;
-                        height: 12px !important;
-                        font-size: 7px !important;
-                        top: -3px !important;
-                        right: -3px !important;
+                        width: 16px !important;
+                        height: 16px !important;
+                        font-size: 9px !important;
+                        top: -5px !important;
+                        right: -5px !important;
+                    }
+                }
+
+                /* Ensure minimum 50% scale at 300px and below */
+                @media screen and (max-width: 300px) {
+                    #requestMediaBtn {
+                        transform: scale(0.5) !important;
                     }
                 }
 
@@ -520,25 +527,32 @@
                     color: rgba(255, 255, 255, 0.5) !important;
                 }
 
-                /* Mobile Responsive for Search Field - 50% size */
+                /* Mobile Responsive for Search Field - Dynamic scaling from 925px (100%) to 300px (50%) */
                 @media screen and (max-width: 925px) {
                     #headerSearchField {
                         left: 6px !important;
                         right: auto !important;
                         top: 65px !important;
-                        padding: 3px 0.5px !important;
-                        transform: scale(0.5) !important;
+                        padding: 8px 16px !important;
+                        transform: scale(calc(0.5 + (100vw - 300px) / (925 - 300) * 0.5)) !important;
                         transform-origin: left center !important;
                     }
 
                     #headerSearchInput {
-                        width: 100px !important;
-                        font-size: 10px !important;
+                        width: 200px !important;
+                        font-size: 14px !important;
                     }
 
                     #headerSearchIcon {
-                        font-size: 12px !important;
-                        margin-right: 4px !important;
+                        font-size: 18px !important;
+                        margin-right: 8px !important;
+                    }
+                }
+
+                /* Ensure minimum 50% scale at 300px and below */
+                @media screen and (max-width: 300px) {
+                    #headerSearchField {
+                        transform: scale(0.5) !important;
                     }
                 }
 
