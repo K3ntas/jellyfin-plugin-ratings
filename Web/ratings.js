@@ -397,14 +397,14 @@
                 @media screen and (max-width: 768px) {
                     #requestMediaBtn {
                         padding: 8px 24px !important;
-                        font-size: 11px !important;
-                        border-radius: 15px !important;
-                        right: 70px !important;
+                        font-size: 16px !important;
+                        border-radius: 55px !important;
+                        right: 6px !important;
                         top: 65px !important;
                     }
 
                     #requestMediaBtn .btn-text {
-                        font-size: 11px !important;
+                        font-size: 16px !important;
                     }
 
                     .request-badge {
@@ -521,9 +521,9 @@
                 /* Mobile Responsive for Search Field */
                 @media screen and (max-width: 768px) {
                     #headerSearchField {
-                        right: 400px !important;
+                        right: 288px !important;
                         top: 65px !important;
-                        padding: 6px 12px !important;
+                        padding: 6px 1px !important;
                     }
 
                     #headerSearchInput {
