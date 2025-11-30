@@ -2353,6 +2353,18 @@
                 const hasTabs = document.querySelector('.emby-tabs-slider .emby-tab-button');
                 const topPosition = (width <= 925 && hasTabs) ? '105px' : (width <= 925 ? '55px' : '');
 
+                // Extend header height when tabs are present at ≤925px
+                const tabsSlider = document.querySelector('.emby-tabs-slider');
+                if (tabsSlider) {
+                    if (width <= 925 && hasTabs) {
+                        tabsSlider.style.minHeight = '150px';
+                        tabsSlider.style.paddingBottom = '60px';
+                    } else {
+                        tabsSlider.style.minHeight = '';
+                        tabsSlider.style.paddingBottom = '';
+                    }
+                }
+
                 const searchField = document.getElementById('headerSearchField');
                 const searchInput = document.getElementById('headerSearchInput');
                 const requestBtn = document.getElementById('requestMediaBtn');
