@@ -1943,9 +1943,14 @@
                 `;
 
                 // Add to DOM - append to header container so they scroll with header
+                // Prefer .emby-tabs-slider on pages with tabs (Movies, TV Shows, etc.)
+                const tabsContainer = document.querySelector('.emby-tabs-slider');
                 const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                if (headerContainer) {
-                    // Make header container position relative so absolute positioning works
+
+                if (tabsContainer) {
+                    tabsContainer.style.position = 'relative';
+                    tabsContainer.appendChild(btn);
+                } else if (headerContainer) {
                     headerContainer.style.position = 'relative';
                     headerContainer.appendChild(btn);
                 } else {
@@ -2174,8 +2179,14 @@
                         searchContainer.appendChild(searchInput);
 
                         // Append to header container so it scrolls with header
+                        // Prefer .emby-tabs-slider on pages with tabs (Movies, TV Shows, etc.)
+                        const tabsContainer = document.querySelector('.emby-tabs-slider');
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                        if (headerContainer) {
+
+                        if (tabsContainer) {
+                            tabsContainer.style.position = 'relative';
+                            tabsContainer.appendChild(searchContainer);
+                        } else if (headerContainer) {
                             headerContainer.style.position = 'relative';
                             headerContainer.appendChild(searchContainer);
                         } else {
@@ -2349,10 +2360,6 @@
                     btnPaddingH = 12 + ((width - 500) / (925 - 500)) * 4; // 12px to 16px
                 }
 
-                // Detect if on a page with tabs (Movies, TV Shows, etc.)
-                const hasTabs = document.querySelector('.emby-tabs-slider .emby-tab-button');
-                const topPosition = (width <= 925 && hasTabs) ? '105px' : (width <= 925 ? '55px' : '');
-
                 const searchField = document.getElementById('headerSearchField');
                 const searchInput = document.getElementById('headerSearchInput');
                 const requestBtn = document.getElementById('requestMediaBtn');
@@ -2361,10 +2368,8 @@
                     if (width <= 925) {
                         searchField.style.transform = `scale(${scale})`;
                         searchField.style.transformOrigin = 'left center';
-                        searchField.style.top = topPosition;
                     } else {
                         searchField.style.transform = '';
-                        searchField.style.top = '';
                     }
                 }
 
@@ -2382,12 +2387,10 @@
                         requestBtn.style.transformOrigin = 'right center';
                         requestBtn.style.paddingLeft = `${btnPaddingH}px`;
                         requestBtn.style.paddingRight = `${btnPaddingH}px`;
-                        requestBtn.style.top = topPosition;
                     } else {
                         requestBtn.style.transform = '';
                         requestBtn.style.paddingLeft = '';
                         requestBtn.style.paddingRight = '';
-                        requestBtn.style.top = '';
                     }
                 }
             };
