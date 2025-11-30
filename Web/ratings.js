@@ -23,6 +23,9 @@
             // Initialize search field in header
             this.initSearchField();
 
+            // Initialize responsive scaling
+            this.updateResponsiveScaling();
+
             // Initialize Netflix view if enabled
             this.initNetflixView();
         },
@@ -393,7 +396,7 @@
                     display: none !important;
                 }
 
-                /* Mobile Responsive - Dynamic scaling from 925px (100%) to 300px (50%) */
+                /* Mobile Responsive - Dynamic scaling handled by JavaScript */
                 @media screen and (max-width: 925px) {
                     #requestMediaBtn {
                         padding: 8px 24px !important;
@@ -401,8 +404,6 @@
                         border-radius: 55px !important;
                         right: 6px !important;
                         top: 65px !important;
-                        transform: scale(clamp(0.5, calc(0.5 + (100vw - 300px) / 625 * 0.5), 1)) !important;
-                        transform-origin: right center !important;
                     }
 
                     #requestMediaBtn .btn-text {
@@ -520,15 +521,13 @@
                     color: rgba(255, 255, 255, 0.5) !important;
                 }
 
-                /* Mobile Responsive for Search Field - Dynamic scaling from 925px (100%) to 300px (50%) */
+                /* Mobile Responsive for Search Field - Dynamic scaling handled by JavaScript */
                 @media screen and (max-width: 925px) {
                     #headerSearchField {
                         left: 6px !important;
                         right: auto !important;
                         top: 65px !important;
                         padding: 8px 16px !important;
-                        transform: scale(clamp(0.5, calc(0.5 + (100vw - 300px) / 625 * 0.5), 1)) !important;
-                        transform-origin: left center !important;
                     }
 
                     #headerSearchInput {
@@ -2309,6 +2308,46 @@
             } catch (err) {
                 console.error('Search field initialization failed:', err);
             }
+        },
+
+        /**
+         * Update dynamic responsive scaling based on window width
+         */
+        updateResponsiveScaling: function () {
+            const updateScale = () => {
+                const width = window.innerWidth;
+                let scale = 1;
+
+                if (width <= 300) {
+                    scale = 0.5;
+                } else if (width < 925) {
+                    // Linear interpolation: scale from 1.0 at 925px to 0.5 at 300px
+                    scale = 0.5 + ((width - 300) / (925 - 300)) * 0.5;
+                }
+
+                const searchField = document.getElementById('headerSearchField');
+                const requestBtn = document.getElementById('requestMediaBtn');
+
+                if (searchField && width <= 925) {
+                    searchField.style.transform = `scale(${scale})`;
+                    searchField.style.transformOrigin = 'left center';
+                }
+
+                if (requestBtn && width <= 925) {
+                    requestBtn.style.transform = `scale(${scale})`;
+                    requestBtn.style.transformOrigin = 'right center';
+                }
+            };
+
+            // Update on load
+            updateScale();
+
+            // Update on resize with debounce
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(updateScale, 100);
+            });
         },
 
         /**
