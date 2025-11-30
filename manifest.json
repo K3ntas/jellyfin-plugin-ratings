@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.103.0",
+        "changelog": "Responsive layout update! Search field sticks to left (left: 6px), Request button sticks to right (right: 6px). Mobile breakpoint: 925px.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.103.0/jellyfin-plugin-ratings_1.0.103.0.zip",
+        "checksum": "b8284e6b1bcf5a734dd3fa57992a47c4",
+        "timestamp": "2025-11-23T00:00:00Z"
+      },
+      {
         "version": "1.0.102.0",
         "changelog": "Fixed mobile CSS! Search field (right: 288px, padding: 6px 1px), Request button (right: 6px, font-size: 16px, border-radius: 55px). Works in mobile view and small windows.",
         "targetAbi": "10.11.0.0",

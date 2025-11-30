@@ -394,7 +394,7 @@
                 }
 
                 /* Mobile Responsive - 70% size, positioned more to the right */
-                @media screen and (max-width: 768px) {
+                @media screen and (max-width: 925px) {
                     #requestMediaBtn {
                         padding: 8px 24px !important;
                         font-size: 16px !important;
@@ -519,9 +519,10 @@
                 }
 
                 /* Mobile Responsive for Search Field */
-                @media screen and (max-width: 768px) {
+                @media screen and (max-width: 925px) {
                     #headerSearchField {
-                        right: 288px !important;
+                        left: 6px !important;
+                        right: auto !important;
                         top: 65px !important;
                         padding: 6px 1px !important;
                     }
