@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.102.0",
+        "changelog": "Fixed mobile CSS! Search field (right: 288px, padding: 6px 1px), Request button (right: 6px, font-size: 16px, border-radius: 55px). Works in mobile view and small windows.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.102.0/jellyfin-plugin-ratings_1.0.102.0.zip",
+        "checksum": "8ffec2c87b384297c172eba829b2d119",
+        "timestamp": "2025-11-22T23:30:00Z"
+      },
+      {
         "version": "1.0.101.0",
         "changelog": "Mobile layout update! Search field and Request button repositioned for better mobile viewing (top: 65px, optimized spacing).",
         "targetAbi": "10.11.0.0",
