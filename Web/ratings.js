@@ -399,11 +399,11 @@
                 /* Mobile Responsive - Dynamic scaling handled by JavaScript */
                 @media screen and (max-width: 925px) {
                     #requestMediaBtn {
-                        padding: 8px 24px !important;
+                        padding: 8px 16px !important;
                         font-size: 16px !important;
                         border-radius: 55px !important;
                         right: 6px !important;
-                        top: 65px !important;
+                        top: 55px !important;
                     }
 
                     #requestMediaBtn .btn-text {
@@ -526,12 +526,12 @@
                     #headerSearchField {
                         left: 6px !important;
                         right: auto !important;
-                        top: 65px !important;
+                        top: 55px !important;
                         padding: 8px 16px !important;
                     }
 
                     #headerSearchInput {
-                        width: 200px !important;
+                        width: 100px !important;
                         font-size: 14px !important;
                     }
 
