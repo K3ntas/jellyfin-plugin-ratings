@@ -2349,16 +2349,18 @@
                     btnPaddingH = 12 + ((width - 500) / (925 - 500)) * 4; // 12px to 16px
                 }
 
-                // Detect if on a page with tabs (Movies, TV Shows, etc.)
-                const hasTabs = document.querySelector('.emby-tabs-slider .emby-tab-button');
-                const topPosition = (width <= 925 && hasTabs) ? '105px' : (width <= 925 ? '55px' : '');
+                // Detect if on Movies or TV Shows page by URL
+                const currentUrl = window.location.href;
+                const isMoviesOrTVPage = (currentUrl.includes('#/movies?') || currentUrl.includes('#/tv?')) &&
+                                        (currentUrl.includes('collectionType=movies') || currentUrl.includes('collectionType=tvshows'));
+                const topPosition = (width <= 925 && isMoviesOrTVPage) ? '105px' : (width <= 925 ? '55px' : '');
 
-                // Extend header height when tabs are present at ≤925px
+                // Extend header height when on Movies/TV pages at ≤925px
                 const tabsSlider = document.querySelector('.emby-tabs-slider');
                 if (tabsSlider) {
-                    if (width <= 925 && hasTabs) {
-                        tabsSlider.style.minHeight = '150px';
-                        tabsSlider.style.paddingBottom = '60px';
+                    if (width <= 925 && isMoviesOrTVPage) {
+                        tabsSlider.style.minHeight = '110px';
+                        tabsSlider.style.paddingBottom = '50px';
                     } else {
                         tabsSlider.style.minHeight = '';
                         tabsSlider.style.paddingBottom = '';

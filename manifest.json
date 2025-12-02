@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.116.0",
+        "changelog": "URL-based detection! Now ONLY extends header on Movies/TV pages (#/movies or #/tv URLs). Home unchanged. Reduced extension: 110px minHeight, 50px padding.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.116.0/jellyfin-plugin-ratings_1.0.116.0.zip",
+        "checksum": "2f8a5d1fa8d4629f9c5cb0f0eeaa83d9",
+        "timestamp": "2025-11-23T06:30:00Z"
+      },
+      {
         "version": "1.0.115.0",
         "changelog": "Extended header height! .emby-tabs-slider now expands with minHeight: 150px and paddingBottom: 60px at ≤925px to show search/button.",
         "targetAbi": "10.11.0.0",
