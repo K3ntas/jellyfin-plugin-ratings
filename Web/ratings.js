@@ -2359,7 +2359,7 @@
                 const tabsSlider = document.querySelector('.emby-tabs-slider');
                 if (tabsSlider) {
                     if (width <= 925 && isMoviesOrTVPage) {
-                        tabsSlider.style.paddingBottom = '50px';
+                        tabsSlider.style.paddingBottom = '80px';
                     } else {
                         tabsSlider.style.paddingBottom = '';
                     }
@@ -2372,6 +2372,7 @@
                     '[data-role="page"]',
                     '.itemsContainer',
                     '.verticalSection',
+                    '.netflix-view-container',
                     '.netflix-genre-row'
                 ];
 
@@ -2380,7 +2381,7 @@
                     elements.forEach(element => {
                         if (element) {
                             if (width <= 925 && isMoviesOrTVPage) {
-                                element.style.paddingTop = '50px';
+                                element.style.paddingTop = '80px';
                             } else {
                                 element.style.paddingTop = '';
                             }
