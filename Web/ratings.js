@@ -2359,9 +2359,19 @@
                 const tabsSlider = document.querySelector('.emby-tabs-slider');
                 if (tabsSlider) {
                     if (width <= 925 && isMoviesOrTVPage) {
-                        tabsSlider.style.paddingBottom = '10px';
+                        tabsSlider.style.paddingBottom = '50px';
                     } else {
                         tabsSlider.style.paddingBottom = '';
+                    }
+                }
+
+                // Push content down on Movies/TV pages
+                const mainContent = document.querySelector('.mainAnimatedPage, .page, [data-role="page"]');
+                if (mainContent) {
+                    if (width <= 925 && isMoviesOrTVPage) {
+                        mainContent.style.marginTop = '50px';
+                    } else {
+                        mainContent.style.marginTop = '';
                     }
                 }
 
