@@ -2423,6 +2423,27 @@
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(updateScale, 100);
             });
+
+            // Monitor URL changes for SPA navigation
+            let lastUrl = window.location.href;
+            const urlCheckInterval = setInterval(() => {
+                const currentUrl = window.location.href;
+                if (currentUrl !== lastUrl) {
+                    lastUrl = currentUrl;
+                    // URL changed, update positioning
+                    setTimeout(updateScale, 100);
+                }
+            }, 300);
+
+            // Also listen for popstate (back/forward navigation)
+            window.addEventListener('popstate', () => {
+                setTimeout(updateScale, 100);
+            });
+
+            // Listen for hash changes
+            window.addEventListener('hashchange', () => {
+                setTimeout(updateScale, 100);
+            });
         },
 
         /**
