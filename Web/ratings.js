@@ -2459,6 +2459,38 @@
             window.addEventListener('hashchange', () => {
                 setTimeout(updateScale, 100);
             });
+
+            // MutationObserver to detect when Netflix content is loaded dynamically
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    // Check if any added nodes contain Netflix genre rows or titles
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === 1) { // Element node
+                            if (node.classList && (node.classList.contains('netflix-genre-row') ||
+                                                   node.classList.contains('netflix-view-container') ||
+                                                   node.classList.contains('netflix-genre-title'))) {
+                                // Netflix content added, trigger update
+                                setTimeout(updateScale, 50);
+                                return;
+                            }
+                            // Check children too
+                            if (node.querySelector && (node.querySelector('.netflix-genre-row') ||
+                                                       node.querySelector('.netflix-view-container') ||
+                                                       node.querySelector('.netflix-genre-title'))) {
+                                setTimeout(updateScale, 50);
+                                return;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Start observing the main content area for Netflix content
+            const observeTarget = document.querySelector('.mainAnimatedPage') || document.body;
+            observer.observe(observeTarget, {
+                childList: true,
+                subtree: true
+            });
         },
 
         /**
