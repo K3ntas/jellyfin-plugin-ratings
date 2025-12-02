@@ -2359,10 +2359,8 @@
                 const tabsSlider = document.querySelector('.emby-tabs-slider');
                 if (tabsSlider) {
                     if (width <= 925 && isMoviesOrTVPage) {
-                        tabsSlider.style.minHeight = '110px';
-                        tabsSlider.style.paddingBottom = '50px';
+                        tabsSlider.style.paddingBottom = '10px';
                     } else {
-                        tabsSlider.style.minHeight = '';
                         tabsSlider.style.paddingBottom = '';
                     }
                 }
