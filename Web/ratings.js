@@ -2371,7 +2371,8 @@
                     '.page',
                     '[data-role="page"]',
                     '.itemsContainer',
-                    '.verticalSection'
+                    '.verticalSection',
+                    '.netflix-view-container'
                 ];
 
                 contentSelectors.forEach(selector => {
