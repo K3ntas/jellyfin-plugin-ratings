@@ -2365,15 +2365,27 @@
                     }
                 }
 
-                // Push content down on Movies/TV pages
-                const mainContent = document.querySelector('.mainAnimatedPage, .page, [data-role="page"]');
-                if (mainContent) {
-                    if (width <= 925 && isMoviesOrTVPage) {
-                        mainContent.style.marginTop = '50px';
-                    } else {
-                        mainContent.style.marginTop = '';
-                    }
-                }
+                // Push content down on Movies/TV pages - try multiple containers
+                const contentSelectors = [
+                    '.mainAnimatedPage',
+                    '.page',
+                    '[data-role="page"]',
+                    '.itemsContainer',
+                    '.verticalSection'
+                ];
+
+                contentSelectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        if (element) {
+                            if (width <= 925 && isMoviesOrTVPage) {
+                                element.style.paddingTop = '50px';
+                            } else {
+                                element.style.paddingTop = '';
+                            }
+                        }
+                    });
+                });
 
                 const searchField = document.getElementById('headerSearchField');
                 const searchInput = document.getElementById('headerSearchInput');
