@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.121.0",
+        "changelog": "Netflix cards fixed! Added .netflix-view-container to paddingTop selectors. Custom Netflix-style card view now properly pushed down on Movies/TV pages.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.121.0/jellyfin-plugin-ratings_1.0.121.0.zip",
+        "checksum": "1966a72d8dbde0263dde8db9d80947b5",
+        "timestamp": "2025-11-23T09:00:00Z"
+      },
+      {
         "version": "1.0.120.0",
         "changelog": "Fixed content overlap! Changed marginTop to paddingTop on multiple content containers (.mainAnimatedPage, .itemsContainer, .verticalSection). Content now properly pushed down.",
         "targetAbi": "10.11.0.0",
