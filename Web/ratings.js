@@ -2372,7 +2372,7 @@
                     '[data-role="page"]',
                     '.itemsContainer',
                     '.verticalSection',
-                    '.netflix-view-container'
+                    '.netflix-genre-row'
                 ];
 
                 contentSelectors.forEach(selector => {
