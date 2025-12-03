@@ -2322,8 +2322,12 @@
                                     searchIcon.innerHTML = '🔍';
                                     searchIcon.style.fontSize = '18px';
                                 }
-                                // Reset filters
+                                // Reset filters and clear full library search
                                 self.filterCurrentPageContent('');
+                                self.clearFullLibrarySearch();
+                            } else {
+                                // Also clear full library search when URL changes even if search is empty
+                                self.clearFullLibrarySearch();
                             }
                         }
                     } catch (err) {
@@ -2587,10 +2591,9 @@
                     const itemId = item.Id;
                     const itemName = item.Name || 'Unknown';
                     const itemType = item.Type;
-                    const imageTag = item.ImageTags?.Primary;
-                    const imageSrc = imageTag
-                        ? `${baseUrl}/Items/${itemId}/Images/Primary?tag=${imageTag}&quality=90&maxWidth=400`
-                        : '';
+
+                    // Build image URL - use Primary image type
+                    const imageSrc = `${baseUrl}/Items/${itemId}/Images/Primary?quality=90&maxWidth=400`;
 
                     html += `
                         <a href="#!/details?id=${itemId}" class="card portraitCard" style="width: 200px;">
@@ -2598,11 +2601,16 @@
                                 <div class="cardScalable">
                                     <div class="cardPadder-portrait"></div>
                                     <div class="cardContent">
-                                        ${imageSrc ? `<div class="cardImageContainer"><img src="${imageSrc}" class="cardImage" alt="${itemName}"/></div>` : ''}
+                                        <div class="cardImageContainer coveredImage">
+                                            <div class="cardPadder-portrait"></div>
+                                            <div class="cardImageContainerInner">
+                                                <img src="${imageSrc}" class="cardImage itemAction" alt="${itemName}" loading="lazy"/>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="cardFooter">
-                                    <div class="cardText">${itemName}</div>
+                                    <div class="cardText cardText-first">${itemName}</div>
                                     <div class="cardText cardText-secondary">${itemType}</div>
                                 </div>
                             </div>
