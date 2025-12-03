@@ -2196,14 +2196,37 @@
 
                             clearTimeout(searchTimeout);
                             searchTimeout = setTimeout(() => {
-                                self.filterCurrentPageContent(searchInput.value.trim());
+                                const query = searchInput.value.trim();
+                                const currentUrl = window.location.href;
+                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
+
+                                if (isHomePage && query) {
+                                    // Use full library search on homepage
+                                    self.searchFullLibrary(query);
+                                } else if (isHomePage && !query) {
+                                    // Clear full library search and restore homepage
+                                    self.clearFullLibrarySearch();
+                                } else {
+                                    // Use page filtering on other pages
+                                    self.filterCurrentPageContent(query);
+                                }
                             }, 300); // Debounce for performance
                         });
 
-                        // Handle enter key - also filter
+                        // Handle enter key - also filter/search
                         searchInput.addEventListener('keypress', function(e) {
                             if (e.key === 'Enter') {
-                                self.filterCurrentPageContent(searchInput.value.trim());
+                                const query = searchInput.value.trim();
+                                const currentUrl = window.location.href;
+                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
+
+                                if (isHomePage && query) {
+                                    self.searchFullLibrary(query);
+                                } else if (isHomePage && !query) {
+                                    self.clearFullLibrarySearch();
+                                } else {
+                                    self.filterCurrentPageContent(query);
+                                }
                             }
                         });
 
@@ -2213,7 +2236,15 @@
                                 searchInput.value = '';
                                 searchIcon.innerHTML = '🔍';
                                 searchIcon.style.fontSize = '18px';
-                                self.filterCurrentPageContent('');
+
+                                const currentUrl = window.location.href;
+                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
+
+                                if (isHomePage) {
+                                    self.clearFullLibrarySearch();
+                                } else {
+                                    self.filterCurrentPageContent('');
+                                }
                             } else {
                                 searchInput.focus();
                             }
@@ -2490,6 +2521,116 @@
             observer.observe(observeTarget, {
                 childList: true,
                 subtree: true
+            });
+        },
+
+        /**
+         * Search full library using Jellyfin API and display results
+         */
+        searchFullLibrary: async function (query) {
+            try {
+                if (!query || !window.ApiClient) {
+                    return;
+                }
+
+                const userId = ApiClient.getCurrentUserId();
+                const baseUrl = ApiClient.serverAddress();
+
+                // Use Jellyfin's search hints API
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode&Limit=50`;
+
+                const response = await fetch(searchUrl, {
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Firefox", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('Search API failed:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                const searchItems = data.SearchHints || [];
+
+                // Create or get search results container
+                let resultsContainer = document.getElementById('fullLibrarySearchResults');
+                if (!resultsContainer) {
+                    resultsContainer = document.createElement('div');
+                    resultsContainer.id = 'fullLibrarySearchResults';
+                    resultsContainer.style.cssText = `
+                        position: relative;
+                        padding: 20px;
+                        min-height: 400px;
+                    `;
+
+                    // Find main content area and insert results
+                    const mainContent = document.querySelector('.mainAnimatedPage, [data-role="page"]');
+                    if (mainContent) {
+                        mainContent.insertBefore(resultsContainer, mainContent.firstChild);
+                    }
+                }
+
+                // Hide original homepage content
+                const homeSections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
+                homeSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+
+                // Build results HTML
+                let html = `
+                    <h2 style="color: #fff; margin-bottom: 20px;">Search Results for "${query}" (${searchItems.length} found)</h2>
+                    <div class="itemsContainer vertical-wrap" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                `;
+
+                searchItems.forEach(item => {
+                    const itemId = item.Id;
+                    const itemName = item.Name || 'Unknown';
+                    const itemType = item.Type;
+                    const imageTag = item.ImageTags?.Primary;
+                    const imageSrc = imageTag
+                        ? `${baseUrl}/Items/${itemId}/Images/Primary?tag=${imageTag}&quality=90&maxWidth=400`
+                        : '';
+
+                    html += `
+                        <a href="#!/details?id=${itemId}" class="card portraitCard" style="width: 200px;">
+                            <div class="cardBox visualCardBox">
+                                <div class="cardScalable">
+                                    <div class="cardPadder-portrait"></div>
+                                    <div class="cardContent">
+                                        ${imageSrc ? `<div class="cardImageContainer"><img src="${imageSrc}" class="cardImage" alt="${itemName}"/></div>` : ''}
+                                    </div>
+                                </div>
+                                <div class="cardFooter">
+                                    <div class="cardText">${itemName}</div>
+                                    <div class="cardText cardText-secondary">${itemType}</div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                html += '</div>';
+                resultsContainer.innerHTML = html;
+
+            } catch (error) {
+                console.error('Full library search error:', error);
+            }
+        },
+
+        /**
+         * Clear full library search results and restore homepage
+         */
+        clearFullLibrarySearch: function () {
+            const resultsContainer = document.getElementById('fullLibrarySearchResults');
+            if (resultsContainer) {
+                resultsContainer.remove();
+            }
+
+            // Show original homepage content
+            const homeSections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
+            homeSections.forEach(section => {
+                section.style.display = '';
             });
         },
 
