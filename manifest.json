@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.129.0",
+        "changelog": "Extended debug logging! Logs homepage sections count, HTML building, and results visibility. Check console for detailed diagnostics.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.129.0/jellyfin-plugin-ratings_1.0.129.0.zip",
+        "checksum": "ad445b18c1550f4aa2b6d0ba3e18dd1e",
+        "timestamp": "2025-11-23T13:00:00Z"
+      },
+      {
         "version": "1.0.128.0",
         "changelog": "Debug version with logging! Always recreates results container fresh. Added console logs to track search behavior. Please check browser console (F12) for 'RatingsPlugin:' messages.",
         "targetAbi": "10.11.0.0",
