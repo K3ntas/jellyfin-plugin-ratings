@@ -2567,30 +2567,37 @@
                     oldContainer.remove();
                 }
 
-                // Create fresh results container
+                // Create fresh results container - insert directly into body to avoid Jellyfin page transition issues
                 const resultsContainer = document.createElement('div');
                 resultsContainer.id = 'fullLibrarySearchResults';
                 resultsContainer.style.cssText = `
-                    position: relative;
+                    position: fixed;
+                    top: 60px;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
                     padding: 20px;
-                    min-height: 400px;
+                    overflow-y: auto;
                     display: block !important;
                     visibility: visible !important;
                     opacity: 1 !important;
-                    z-index: 1000;
+                    z-index: 9999;
                     background-color: #0b0b0b;
-                    width: 100%;
                 `;
 
-                // Find main content area and insert results
-                const mainContent = document.querySelector('.mainAnimatedPage, [data-role="page"]');
-                if (mainContent) {
-                    mainContent.insertBefore(resultsContainer, mainContent.firstChild);
-                    console.log('RatingsPlugin: Results container inserted into DOM');
-                } else {
-                    console.error('RatingsPlugin: Could not find main content container');
-                    return;
-                }
+                // Insert directly into body to avoid being affected by page transitions
+                document.body.appendChild(resultsContainer);
+                console.log('RatingsPlugin: Results container appended to body');
+
+                // Add MutationObserver to detect if something tries to modify the container
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            console.log('RatingsPlugin: Container style was modified!', resultsContainer.style.cssText);
+                        }
+                    });
+                });
+                observer.observe(resultsContainer, { attributes: true, attributeFilter: ['style'] });
 
                 // Hide original homepage content
                 const homeSections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
@@ -2639,8 +2646,16 @@
 
                 html += '</div>';
                 resultsContainer.innerHTML = html;
-                console.log('RatingsPlugin: HTML set, resultsContainer visible:', resultsContainer.offsetHeight > 0);
+                console.log('RatingsPlugin: HTML set immediately, resultsContainer visible:', resultsContainer.offsetHeight > 0);
                 console.log('RatingsPlugin: resultsContainer HTML length:', resultsContainer.innerHTML.length);
+
+                // Check visibility after a delay to detect if Jellyfin page rendering affects it
+                setTimeout(() => {
+                    console.log('RatingsPlugin: After 100ms delay, resultsContainer visible:', resultsContainer.offsetHeight > 0);
+                    console.log('RatingsPlugin: After 100ms delay, display:', window.getComputedStyle(resultsContainer).display);
+                    console.log('RatingsPlugin: After 100ms delay, visibility:', window.getComputedStyle(resultsContainer).visibility);
+                    console.log('RatingsPlugin: After 100ms delay, opacity:', window.getComputedStyle(resultsContainer).opacity);
+                }, 100);
 
             } catch (error) {
                 console.error('RatingsPlugin: Full library search error:', error);
