@@ -2574,6 +2574,12 @@
                     position: relative;
                     padding: 20px;
                     min-height: 400px;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    z-index: 1000;
+                    background-color: #0b0b0b;
+                    width: 100%;
                 `;
 
                 // Find main content area and insert results
