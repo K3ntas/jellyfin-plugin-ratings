@@ -713,6 +713,87 @@ Before releasing a new version, check:
 
 ---
 
-**This workflow was created based on real-world experience releasing the Jellyfin Ratings Plugin from v1.0.0 to v1.0.56.0 (56 releases!).**
+## Technical Problem Solving Documentation
+
+### Mobile Responsive Layout Issue (v1.0.122.0 - v1.0.125.0)
+
+**Problem**: When implementing mobile responsive layout (≤925px width) for search field and request button on Movies/TV pages, the extended header was covering Netflix-style custom card genre row titles like "Action", "Adventure", etc.
+
+**Solution Timeline**:
+
+1. **v1.0.122.0** - Initial approach:
+   - Applied 50px `paddingTop` to content selectors including `.netflix-genre-row`
+   - Applied 50px `paddingBottom` to `.emby-tabs-slider` header
+   - **Issue**: Genre row titles still covered
+
+2. **v1.0.123.0** - Incorrect fix attempt:
+   - Increased padding from 50px to 80px
+   - **Issue**: Made problem worse, cards became partially hidden
+
+3. **v1.0.124.0** - Correct fix:
+   - Reverted to 50px padding
+   - **Key Discovery**: Added `.netflix-genre-title` to contentSelectors array
+   - This selector targets the actual genre title divs that were hidden
+   - Result: Cards remained visible, titles properly pushed down
+
+4. **v1.0.125.0** - Auto-detection fix:
+   - **New Issue**: Padding only applied after manual window resize
+   - **Solution**: Added MutationObserver to detect when Netflix content loads dynamically
+   - Observer watches for `.netflix-genre-row`, `.netflix-view-container`, `.netflix-genre-title` being added to DOM
+   - Automatically triggers `updateScale()` when detected
+   - Result: No manual browser resize needed
+
+**Key Learnings**:
+- Target the correct specific elements (`.netflix-genre-title`) not just parent containers
+- 50px padding was sufficient; more padding made things worse
+- Dynamic content requires MutationObserver for automatic detection
+- Include both parent containers and specific child elements in selectors
+
+**Final Implementation** (Web/ratings.js):
+
+```javascript
+// Content selectors with .netflix-genre-title
+const contentSelectors = [
+    '.mainAnimatedPage',
+    '.page',
+    '[data-role="page"]',
+    '.itemsContainer',
+    '.verticalSection',
+    '.netflix-view-container',
+    '.netflix-genre-row',
+    '.netflix-genre-title'  // Critical for visible genre titles
+];
+
+// MutationObserver for auto-detection
+const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1) {
+                if (node.classList && (node.classList.contains('netflix-genre-row') ||
+                                       node.classList.contains('netflix-view-container') ||
+                                       node.classList.contains('netflix-genre-title'))) {
+                    setTimeout(updateScale, 50);
+                    return;
+                }
+                if (node.querySelector && (node.querySelector('.netflix-genre-row') ||
+                                           node.querySelector('.netflix-view-container') ||
+                                           node.querySelector('.netflix-genre-title'))) {
+                    setTimeout(updateScale, 50);
+                    return;
+                }
+            }
+        }
+    }
+});
+
+observer.observe(document.querySelector('.mainAnimatedPage') || document.body, {
+    childList: true,
+    subtree: true
+});
+```
+
+---
+
+**This workflow was created based on real-world experience releasing the Jellyfin Ratings Plugin from v1.0.0 to v1.0.125.0 (125 releases!).**
 
 Good luck with your plugin releases! 🚀

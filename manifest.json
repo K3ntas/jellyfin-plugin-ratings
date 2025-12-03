@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.126.0",
+        "changelog": "Homepage Full Library Search! Search field on homepage now queries entire library using Jellyfin API instead of just filtering visible content. Results display as clickable cards.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.126.0/jellyfin-plugin-ratings_1.0.126.0.zip",
+        "checksum": "b95a3f40567ab1eb2e3db88acc8befed",
+        "timestamp": "2025-11-23T11:30:00Z"
+      },
+      {
         "version": "1.0.125.0",
         "changelog": "Auto-detection! Added MutationObserver to detect when Netflix content loads dynamically. No more manual window resize needed - genre titles appear automatically!",
         "targetAbi": "10.11.0.0",
