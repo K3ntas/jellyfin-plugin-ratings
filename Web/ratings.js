@@ -2588,6 +2588,7 @@
 
                 // Hide original homepage content
                 const homeSections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
+                console.log('RatingsPlugin: Found', homeSections.length, 'homepage sections to hide');
                 homeSections.forEach(section => {
                     section.style.display = 'none';
                 });
@@ -2597,6 +2598,7 @@
                     <h2 style="color: #fff; margin-bottom: 20px;">Search Results for "${query}" (${searchItems.length} found)</h2>
                     <div class="itemsContainer vertical-wrap" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 `;
+                console.log('RatingsPlugin: Building HTML for', searchItems.length, 'items');
 
                 searchItems.forEach(item => {
                     const itemId = item.Id;
@@ -2631,9 +2633,11 @@
 
                 html += '</div>';
                 resultsContainer.innerHTML = html;
+                console.log('RatingsPlugin: HTML set, resultsContainer visible:', resultsContainer.offsetHeight > 0);
+                console.log('RatingsPlugin: resultsContainer HTML length:', resultsContainer.innerHTML.length);
 
             } catch (error) {
-                console.error('Full library search error:', error);
+                console.error('RatingsPlugin: Full library search error:', error);
             }
         },
 
