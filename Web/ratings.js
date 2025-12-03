@@ -2534,8 +2534,11 @@
         searchFullLibrary: async function (query) {
             try {
                 if (!query || !window.ApiClient) {
+                    console.log('RatingsPlugin: Search cancelled - no query or ApiClient');
                     return;
                 }
+
+                console.log('RatingsPlugin: Searching full library for:', query);
 
                 const userId = ApiClient.getCurrentUserId();
                 const baseUrl = ApiClient.serverAddress();
@@ -2550,29 +2553,37 @@
                 });
 
                 if (!response.ok) {
-                    console.error('Search API failed:', response.status);
+                    console.error('RatingsPlugin: Search API failed:', response.status);
                     return;
                 }
 
                 const data = await response.json();
                 const searchItems = data.SearchHints || [];
+                console.log('RatingsPlugin: Found', searchItems.length, 'items');
 
-                // Create or get search results container
-                let resultsContainer = document.getElementById('fullLibrarySearchResults');
-                if (!resultsContainer) {
-                    resultsContainer = document.createElement('div');
-                    resultsContainer.id = 'fullLibrarySearchResults';
-                    resultsContainer.style.cssText = `
-                        position: relative;
-                        padding: 20px;
-                        min-height: 400px;
-                    `;
+                // Always remove old results container first
+                const oldContainer = document.getElementById('fullLibrarySearchResults');
+                if (oldContainer) {
+                    oldContainer.remove();
+                }
 
-                    // Find main content area and insert results
-                    const mainContent = document.querySelector('.mainAnimatedPage, [data-role="page"]');
-                    if (mainContent) {
-                        mainContent.insertBefore(resultsContainer, mainContent.firstChild);
-                    }
+                // Create fresh results container
+                const resultsContainer = document.createElement('div');
+                resultsContainer.id = 'fullLibrarySearchResults';
+                resultsContainer.style.cssText = `
+                    position: relative;
+                    padding: 20px;
+                    min-height: 400px;
+                `;
+
+                // Find main content area and insert results
+                const mainContent = document.querySelector('.mainAnimatedPage, [data-role="page"]');
+                if (mainContent) {
+                    mainContent.insertBefore(resultsContainer, mainContent.firstChild);
+                    console.log('RatingsPlugin: Results container inserted into DOM');
+                } else {
+                    console.error('RatingsPlugin: Could not find main content container');
+                    return;
                 }
 
                 // Hide original homepage content
