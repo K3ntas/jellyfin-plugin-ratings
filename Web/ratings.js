@@ -3535,6 +3535,16 @@
                             itemsContainer.style.display = '';
                         }
                         existingNetflix.remove();
+
+                        // Reset header and main content styles
+                        const skinHeader = document.querySelector('.skinHeader');
+                        if (skinHeader) {
+                            skinHeader.style.cssText = '';
+                        }
+                        const mainAnimatedPages = document.querySelector('.mainAnimatedPages, .view');
+                        if (mainAnimatedPages) {
+                            mainAnimatedPages.style.cssText = '';
+                        }
                     }
                     lastUrl = url;
                     return;
@@ -3653,6 +3663,28 @@
             const parentId = this.getParentIdFromUrl();
             if (!parentId) {                return;
             }
+            // Fix the header to stay at top when Netflix view is active
+            const skinHeader = document.querySelector('.skinHeader');
+            if (skinHeader) {
+                skinHeader.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    z-index: 1000 !important;
+                    background: #101010 !important;
+                `;
+            }
+
+            // Also ensure body doesn't scroll and main content area is pushed down
+            const mainAnimatedPages = document.querySelector('.mainAnimatedPages, .view');
+            if (mainAnimatedPages) {
+                mainAnimatedPages.style.cssText = `
+                    margin-top: 56px !important;
+                    overflow: hidden !important;
+                `;
+            }
+
             // Create Netflix view container as a FIXED overlay
             const netflixContainer = document.createElement('div');
             netflixContainer.className = 'netflix-view-container';
