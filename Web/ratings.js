@@ -3545,6 +3545,10 @@
                         if (mainAnimatedPages) {
                             mainAnimatedPages.style.cssText = '';
                         }
+
+                        // Restore body and html scrolling
+                        document.body.style.overflow = '';
+                        document.documentElement.style.overflow = '';
                     }
                     lastUrl = url;
                     return;
@@ -3676,7 +3680,11 @@
                 `;
             }
 
-            // Also ensure body doesn't scroll and main content area is pushed down
+            // Hide body and html scrollbars - only Netflix container should scroll
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+
+            // Also ensure main content area doesn't scroll
             const mainAnimatedPages = document.querySelector('.mainAnimatedPages, .view');
             if (mainAnimatedPages) {
                 mainAnimatedPages.style.cssText = `
