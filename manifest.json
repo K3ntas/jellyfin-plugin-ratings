@@ -13,7 +13,7 @@
         "changelog": "Fixed header scrolling with Netflix genre view. Header now stays fixed at top when scrolling through genre rows.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.132.0/jellyfin-plugin-ratings_1.0.132.0.zip",
-        "checksum": "664bb69d7ac21e2dfc9ab7554b16a9a3",
+        "checksum": "5eed8f3eba269e8b8b086bbf751994bc",
         "timestamp": "2025-12-14T12:00:00Z"
       },
       {
