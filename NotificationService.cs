@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Data;
@@ -7,6 +9,8 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +22,7 @@ namespace Jellyfin.Plugin.Ratings
     public class NotificationService : IHostedService
     {
         private readonly ILibraryManager _libraryManager;
+        private readonly ISessionManager _sessionManager;
         private readonly RatingsRepository _repository;
         private readonly ILogger<NotificationService> _logger;
 
@@ -25,14 +30,17 @@ namespace Jellyfin.Plugin.Ratings
         /// Initializes a new instance of the <see cref="NotificationService"/> class.
         /// </summary>
         /// <param name="libraryManager">Library manager.</param>
+        /// <param name="sessionManager">Session manager for sending messages to clients.</param>
         /// <param name="repository">Ratings repository.</param>
         /// <param name="logger">Logger instance.</param>
         public NotificationService(
             ILibraryManager libraryManager,
+            ISessionManager sessionManager,
             RatingsRepository repository,
             ILogger<NotificationService> logger)
         {
             _libraryManager = libraryManager;
+            _sessionManager = sessionManager;
             _repository = repository;
             _logger = logger;
         }
@@ -116,6 +124,62 @@ namespace Jellyfin.Plugin.Ratings
 
             _repository.AddNotification(notification);
             _logger.LogInformation("Created notification for new {MediaType}: '{Title}' ({Year})", mediaType, title, year);
+
+            // Send DisplayMessage to all native app clients
+            _ = SendDisplayMessageToAllSessionsAsync(title, mediaType, year);
+        }
+
+        /// <summary>
+        /// Sends a DisplayMessage to all active sessions for native app support.
+        /// </summary>
+        /// <param name="title">Media title.</param>
+        /// <param name="mediaType">Type of media (Movie/Series).</param>
+        /// <param name="year">Production year.</param>
+        private async Task SendDisplayMessageToAllSessionsAsync(string title, string mediaType, int? year)
+        {
+            try
+            {
+                var sessions = _sessionManager.Sessions
+                    .Where(s => s.IsActive && s.SupportsRemoteControl)
+                    .ToList();
+
+                if (sessions.Count == 0)
+                {
+                    _logger.LogDebug("No active sessions to send DisplayMessage to");
+                    return;
+                }
+
+                var yearText = year.HasValue ? $" ({year})" : string.Empty;
+                var header = mediaType == "Movie" ? "New Movie Available" : "New Series Available";
+                var text = $"{title}{yearText}";
+
+                var command = new GeneralCommand
+                {
+                    Name = GeneralCommandType.DisplayMessage
+                };
+                command.Arguments["Header"] = header;
+                command.Arguments["Text"] = text;
+                command.Arguments["TimeoutMs"] = "8000";
+
+                foreach (var session in sessions)
+                {
+                    try
+                    {
+                        await _sessionManager.SendGeneralCommand(null, session.Id, command, CancellationToken.None).ConfigureAwait(false);
+                        _logger.LogDebug("Sent DisplayMessage to session {SessionId} ({DeviceName})", session.Id, session.DeviceName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to send DisplayMessage to session {SessionId}", session.Id);
+                    }
+                }
+
+                _logger.LogInformation("Sent DisplayMessage to {Count} active sessions for: {Title}", sessions.Count, title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error sending DisplayMessage to sessions");
+            }
         }
     }
 }
