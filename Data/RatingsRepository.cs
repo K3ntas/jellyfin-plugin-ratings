@@ -21,6 +21,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly object _lock = new object();
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
+        private List<NewMediaNotification> _notifications;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -34,6 +35,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings");
             _ratings = new Dictionary<Guid, UserRating>();
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
+            _notifications = new List<NewMediaNotification>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -362,6 +364,70 @@ namespace Jellyfin.Plugin.Ratings.Data
                 }
 
                 return false;
+            }
+        }
+
+        // Notification Methods
+
+        /// <summary>
+        /// Adds a new media notification.
+        /// </summary>
+        /// <param name="notification">The notification to add.</param>
+        public void AddNotification(NewMediaNotification notification)
+        {
+            lock (_lock)
+            {
+                _notifications.Add(notification);
+                _logger.LogInformation("Added notification for '{Title}' ({MediaType})", notification.Title, notification.MediaType);
+
+                // Keep only last 100 notifications to prevent memory issues
+                while (_notifications.Count > 100)
+                {
+                    _notifications.RemoveAt(0);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets all notifications newer than the specified time.
+        /// </summary>
+        /// <param name="since">The time to get notifications since.</param>
+        /// <returns>List of notifications.</returns>
+        public List<NewMediaNotification> GetNotificationsSince(DateTime since)
+        {
+            lock (_lock)
+            {
+                return _notifications
+                    .Where(n => n.CreatedAt > since)
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets all notifications.
+        /// </summary>
+        /// <returns>List of all notifications.</returns>
+        public List<NewMediaNotification> GetAllNotifications()
+        {
+            lock (_lock)
+            {
+                return _notifications
+                    .OrderByDescending(n => n.CreatedAt)
+                    .Take(50)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Clears all notifications.
+        /// </summary>
+        public void ClearNotifications()
+        {
+            lock (_lock)
+            {
+                _notifications.Clear();
+                _logger.LogInformation("Cleared all notifications");
             }
         }
     }

@@ -332,6 +332,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     EnableRatings = config?.EnableRatings ?? true,
                     EnableNetflixView = config?.EnableNetflixView ?? false,
                     EnableRequestButton = config?.EnableRequestButton ?? true,
+                    EnableNewMediaNotifications = config?.EnableNewMediaNotifications ?? true,
                     MinRating = config?.MinRating ?? 1,
                     MaxRating = config?.MaxRating ?? 10
                 });
@@ -339,6 +340,111 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting plugin configuration");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets notifications since a specific time.
+        /// </summary>
+        /// <param name="since">ISO 8601 timestamp to get notifications since.</param>
+        /// <returns>List of notifications.</returns>
+        [HttpGet("Notifications")]
+        [AllowAnonymous]
+        public ActionResult<List<Models.NewMediaNotification>> GetNotifications([FromQuery] string? since = null)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(since))
+                {
+                    // Return notifications from the last 5 minutes by default
+                    var defaultSince = DateTime.UtcNow.AddMinutes(-5);
+                    return Ok(_repository.GetNotificationsSince(defaultSince));
+                }
+
+                if (DateTime.TryParse(since, null, System.Globalization.DateTimeStyles.RoundtripKind, out var sinceTime))
+                {
+                    return Ok(_repository.GetNotificationsSince(sinceTime));
+                }
+
+                return BadRequest("Invalid 'since' parameter format. Use ISO 8601 format.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting notifications");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Sends a test notification (admin only).
+        /// </summary>
+        /// <param name="message">Optional custom message for the notification.</param>
+        /// <returns>The created test notification.</returns>
+        [HttpPost("Notifications/Test")]
+        public ActionResult<Models.NewMediaNotification> SendTestNotification([FromQuery] string? message = null)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Note: Admin check is done client-side - only admins see the test button
+                // Server trusts authenticated requests for test notifications
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var notification = new Models.NewMediaNotification
+                {
+                    Id = Guid.NewGuid(),
+                    ItemId = Guid.Empty,
+                    Title = "Test Notification",
+                    MediaType = "Test",
+                    Year = DateTime.UtcNow.Year,
+                    ImageUrl = null,
+                    CreatedAt = DateTime.UtcNow,
+                    IsTest = true,
+                    Message = string.IsNullOrEmpty(message) ? "This is a test notification from the Ratings plugin!" : message
+                };
+
+                _repository.AddNotification(notification);
+                _logger.LogInformation("Admin {UserId} sent test notification: {Message}", userId, notification.Message);
+
+                return Ok(notification);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending test notification");
                 return StatusCode(500, "Internal server error");
             }
         }

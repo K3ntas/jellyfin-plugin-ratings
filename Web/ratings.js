@@ -28,6 +28,9 @@
 
             // Initialize Netflix view if enabled
             this.initNetflixView();
+
+            // Initialize new media notifications
+            this.initNotifications();
         },
 
         /**
@@ -1252,6 +1255,197 @@
 
                     .netflix-scroll-btn {
                         display: none;
+                    }
+                }
+
+                /* New Media Notifications - Bottom Left Corner */
+                .ratings-notification-container {
+                    position: fixed !important;
+                    bottom: 20px !important;
+                    left: 20px !important;
+                    z-index: 9999999 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 10px !important;
+                    max-width: 350px !important;
+                    pointer-events: none !important;
+                }
+
+                .ratings-notification {
+                    background: linear-gradient(135deg, rgba(30, 30, 30, 0.98) 0%, rgba(45, 45, 45, 0.98) 100%) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-left: 4px solid #4CAF50 !important;
+                    border-radius: 12px !important;
+                    padding: 16px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+                    animation: notificationSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+                    pointer-events: auto !important;
+                    display: flex !important;
+                    gap: 12px !important;
+                    align-items: flex-start !important;
+                    backdrop-filter: blur(10px) !important;
+                    -webkit-backdrop-filter: blur(10px) !important;
+                }
+
+                .ratings-notification.test-notification {
+                    border-left-color: #2196F3 !important;
+                }
+
+                .ratings-notification.hiding {
+                    animation: notificationSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+                }
+
+                @keyframes notificationSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-100%);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+
+                @keyframes notificationSlideOut {
+                    from {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                    to {
+                        opacity: 0;
+                        transform: translateX(-100%);
+                    }
+                }
+
+                .ratings-notification-image {
+                    width: 50px !important;
+                    height: 75px !important;
+                    border-radius: 6px !important;
+                    object-fit: cover !important;
+                    flex-shrink: 0 !important;
+                    background: #333 !important;
+                }
+
+                .ratings-notification-content {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                }
+
+                .ratings-notification-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    margin-bottom: 4px !important;
+                }
+
+                .ratings-notification-icon {
+                    font-size: 14px !important;
+                }
+
+                .ratings-notification-label {
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    color: #4CAF50 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                }
+
+                .test-notification .ratings-notification-label {
+                    color: #2196F3 !important;
+                }
+
+                .ratings-notification-title {
+                    font-size: 15px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    margin-bottom: 4px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
+                }
+
+                .ratings-notification-meta {
+                    font-size: 12px !important;
+                    color: #aaa !important;
+                }
+
+                .ratings-notification-message {
+                    font-size: 13px !important;
+                    color: #ccc !important;
+                    line-height: 1.4 !important;
+                }
+
+                .ratings-notification-close {
+                    position: absolute !important;
+                    top: 8px !important;
+                    right: 8px !important;
+                    background: none !important;
+                    border: none !important;
+                    color: #666 !important;
+                    font-size: 18px !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    line-height: 1 !important;
+                    transition: color 0.2s ease !important;
+                }
+
+                .ratings-notification-close:hover {
+                    color: #fff !important;
+                }
+
+                .ratings-notification {
+                    position: relative !important;
+                }
+
+                /* Admin Test Notification Button */
+                #testNotificationBtn {
+                    position: absolute !important;
+                    top: 8px !important;
+                    right: 500px !important;
+                    background: rgba(33, 150, 243, 0.9) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    padding: 10px 20px !important;
+                    border-radius: 20px !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    z-index: 999997 !important;
+                    transition: all 0.3s ease !important;
+                    color: #fff !important;
+                    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                }
+
+                #testNotificationBtn:hover {
+                    background: rgba(33, 150, 243, 1) !important;
+                    transform: scale(1.05) !important;
+                }
+
+                #testNotificationBtn.hidden {
+                    display: none !important;
+                }
+
+                @media screen and (max-width: 925px) {
+                    #testNotificationBtn {
+                        display: none !important;
+                    }
+
+                    .ratings-notification-container {
+                        left: 10px !important;
+                        right: 10px !important;
+                        max-width: none !important;
+                    }
+
+                    .ratings-notification {
+                        padding: 12px !important;
+                    }
+
+                    .ratings-notification-image {
+                        width: 40px !important;
+                        height: 60px !important;
+                    }
+
+                    .ratings-notification-title {
+                        font-size: 14px !important;
                     }
                 }
             `;
@@ -3421,6 +3615,322 @@
             } catch (err) {
                 console.error('Error in markDoneRequestsAsViewed:', err);
             }
+        },
+
+        // ============================================
+        // NEW MEDIA NOTIFICATIONS
+        // ============================================
+
+        /**
+         * Notification state
+         */
+        notificationsEnabled: false,
+        lastNotificationCheck: null,
+        notificationPollingInterval: null,
+        shownNotificationIds: [],
+
+        /**
+         * Initialize notifications system
+         */
+        initNotifications: function () {
+            const self = this;
+
+            // Check if notifications are enabled in config
+            this.checkNotificationsEnabled().then(enabled => {
+                self.notificationsEnabled = enabled;
+                if (enabled) {
+                    // Create notification container
+                    self.createNotificationContainer();
+
+                    // Initialize the last check time
+                    self.lastNotificationCheck = new Date().toISOString();
+
+                    // Start polling for notifications
+                    self.startNotificationPolling();
+
+                    // Initialize admin test button
+                    self.initTestNotificationButton();
+                }
+            });
+        },
+
+        /**
+         * Check if notifications are enabled
+         */
+        checkNotificationsEnabled: function () {
+            return new Promise((resolve) => {
+                try {
+                    if (!window.ApiClient) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => response.json())
+                        .then(config => {
+                            resolve(config.EnableNewMediaNotifications === true);
+                        })
+                        .catch(() => {
+                            resolve(false);
+                        });
+                } catch (err) {
+                    resolve(false);
+                }
+            });
+        },
+
+        /**
+         * Create notification container
+         */
+        createNotificationContainer: function () {
+            if (document.getElementById('ratingsNotificationContainer')) {
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.id = 'ratingsNotificationContainer';
+            container.className = 'ratings-notification-container';
+            document.body.appendChild(container);
+        },
+
+        /**
+         * Start polling for new notifications
+         */
+        startNotificationPolling: function () {
+            const self = this;
+
+            // Poll every 10 seconds
+            this.notificationPollingInterval = setInterval(() => {
+                self.checkForNewNotifications();
+            }, 10000);
+
+            // Also check immediately
+            this.checkForNewNotifications();
+        },
+
+        /**
+         * Check for new notifications from server
+         */
+        checkForNewNotifications: function () {
+            const self = this;
+
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            const since = this.lastNotificationCheck || new Date(Date.now() - 60000).toISOString();
+
+            fetch(`${baseUrl}/Ratings/Notifications?since=${encodeURIComponent(since)}`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(notifications => {
+                    if (notifications && notifications.length > 0) {
+                        notifications.forEach(notification => {
+                            // Don't show duplicates
+                            if (!self.shownNotificationIds.includes(notification.Id)) {
+                                self.shownNotificationIds.push(notification.Id);
+                                self.showNotification(notification);
+                            }
+                        });
+                    }
+
+                    // Update last check time
+                    self.lastNotificationCheck = new Date().toISOString();
+                })
+                .catch(err => {
+                    console.error('Error checking for notifications:', err);
+                });
+        },
+
+        /**
+         * Show a notification
+         */
+        showNotification: function (notification) {
+            const container = document.getElementById('ratingsNotificationContainer');
+            if (!container) return;
+
+            const baseUrl = window.ApiClient ? ApiClient.serverAddress() : '';
+
+            // Create notification element
+            const notifEl = document.createElement('div');
+            notifEl.className = 'ratings-notification' + (notification.IsTest ? ' test-notification' : '');
+            notifEl.setAttribute('data-notification-id', notification.Id);
+
+            // Build image URL
+            let imageHtml = '';
+            if (notification.ImageUrl && !notification.IsTest) {
+                imageHtml = `<img class="ratings-notification-image" src="${baseUrl}${notification.ImageUrl}" alt="" onerror="this.style.display='none'">`;
+            }
+
+            // Build content based on notification type
+            let contentHtml = '';
+            if (notification.IsTest) {
+                contentHtml = `
+                    <div class="ratings-notification-content">
+                        <div class="ratings-notification-header">
+                            <span class="ratings-notification-icon">🔔</span>
+                            <span class="ratings-notification-label">Test Notification</span>
+                        </div>
+                        <div class="ratings-notification-message">${this.escapeHtml(notification.Message || 'Test notification')}</div>
+                    </div>
+                `;
+            } else {
+                const yearText = notification.Year ? ` (${notification.Year})` : '';
+                const typeLabel = notification.MediaType === 'Movie' ? 'New Movie Available' : 'New Series Available';
+                contentHtml = `
+                    <div class="ratings-notification-content">
+                        <div class="ratings-notification-header">
+                            <span class="ratings-notification-icon">🎬</span>
+                            <span class="ratings-notification-label">${typeLabel}</span>
+                        </div>
+                        <div class="ratings-notification-title">${this.escapeHtml(notification.Title)}${yearText}</div>
+                    </div>
+                `;
+            }
+
+            notifEl.innerHTML = `
+                ${imageHtml}
+                ${contentHtml}
+                <button class="ratings-notification-close" title="Dismiss">&times;</button>
+            `;
+
+            // Add close button handler
+            const closeBtn = notifEl.querySelector('.ratings-notification-close');
+            closeBtn.addEventListener('click', () => {
+                this.hideNotification(notifEl);
+            });
+
+            // Add click handler to navigate to item (if not a test)
+            if (!notification.IsTest && notification.ItemId && notification.ItemId !== '00000000-0000-0000-0000-000000000000') {
+                notifEl.style.cursor = 'pointer';
+                notifEl.addEventListener('click', (e) => {
+                    if (e.target !== closeBtn && !closeBtn.contains(e.target)) {
+                        window.location.hash = `#/details?id=${notification.ItemId}`;
+                        this.hideNotification(notifEl);
+                    }
+                });
+            }
+
+            // Add to container
+            container.appendChild(notifEl);
+
+            // Auto-hide after 8 seconds
+            setTimeout(() => {
+                this.hideNotification(notifEl);
+            }, 8000);
+        },
+
+        /**
+         * Hide a notification with animation
+         */
+        hideNotification: function (notifEl) {
+            if (!notifEl || !notifEl.parentNode) return;
+
+            notifEl.classList.add('hiding');
+            setTimeout(() => {
+                if (notifEl.parentNode) {
+                    notifEl.remove();
+                }
+            }, 300);
+        },
+
+        /**
+         * Initialize admin test notification button
+         */
+        initTestNotificationButton: function () {
+            const self = this;
+
+            // Check if user is admin first
+            this.checkIfAdmin().then(isAdmin => {
+                if (!isAdmin) return;
+
+                // Don't create if already exists
+                if (document.getElementById('testNotificationBtn')) return;
+
+                const header = document.querySelector('.skinHeader') || document.querySelector('header');
+                if (!header) return;
+
+                const btn = document.createElement('button');
+                btn.id = 'testNotificationBtn';
+                btn.innerHTML = '🔔 Test';
+                btn.title = 'Send a test notification';
+
+                btn.addEventListener('click', () => {
+                    self.sendTestNotification();
+                });
+
+                header.appendChild(btn);
+            });
+        },
+
+        /**
+         * Send a test notification
+         */
+        sendTestNotification: function () {
+            const self = this;
+
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Notifications/Test`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        if (window.require) {
+                            require(['toast'], function (toast) {
+                                toast('Test notification sent!');
+                            });
+                        }
+                        // Check for notifications immediately
+                        setTimeout(() => {
+                            self.checkForNewNotifications();
+                        }, 500);
+                    } else {
+                        throw new Error('Failed to send test notification');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error sending test notification:', err);
+                    if (window.require) {
+                        require(['toast'], function (toast) {
+                            toast('Error sending test notification');
+                        });
+                    }
+                });
+        },
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        escapeHtml: function (text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         },
 
         /**
