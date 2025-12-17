@@ -395,6 +395,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpPost("Notifications/Test")]
         public async Task<ActionResult<Models.NewMediaNotification>> SendTestNotification([FromQuery] string? message = null)
         {
+            _logger.LogWarning("TEST NOTIFICATION ENDPOINT CALLED");
             try
             {
                 // Try to get user from authentication
@@ -531,12 +532,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                _logger.LogWarning("SendDisplayMessageToAllSessionsAsync CALLED for: {Title}", title);
                 // Log ALL sessions for debugging
                 var allSessions = _sessionManager.Sessions.ToList();
-                _logger.LogInformation("Total sessions: {Count}", allSessions.Count);
+                _logger.LogWarning("TOTAL SESSIONS: {Count}", allSessions.Count);
                 foreach (var s in allSessions)
                 {
-                    _logger.LogInformation("Session: Id={Id}, Device={Device}, Client={Client}, IsActive={IsActive}, SupportsRemoteControl={SupportsRemote}, SupportsMediaControl={SupportsMedia}",
+                    _logger.LogWarning("SESSION: Id={Id}, Device={Device}, Client={Client}, IsActive={IsActive}, SupportsRemoteControl={SupportsRemote}, SupportsMediaControl={SupportsMedia}",
                         s.Id, s.DeviceName, s.Client, s.IsActive, s.SupportsRemoteControl, s.SupportsMediaControl);
                 }
 
