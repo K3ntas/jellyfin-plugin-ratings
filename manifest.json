@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.138.0",
+        "changelog": "Native app notifications! Now sends DisplayMessage to all connected clients (Firestick, Android TV, iOS, etc.) when new media is added. Web notifications unchanged.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.138.0/jellyfin-plugin-ratings_1.0.138.0.zip",
+        "checksum": "2e303596db89274c8ccbfb4077f5071a",
+        "timestamp": "2025-12-17T23:30:00Z"
+      },
+      {
         "version": "1.0.137.0",
         "changelog": "Test button hides instantly when non-admin logs in. All buttons hidden on login page. Test notification now shows random movie/series from your library with poster!",
         "targetAbi": "10.11.0.0",

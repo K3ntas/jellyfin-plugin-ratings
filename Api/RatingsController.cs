@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mime;
+using System.Threading;
+using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
@@ -391,7 +393,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="message">Optional custom message for the notification.</param>
         /// <returns>The created test notification.</returns>
         [HttpPost("Notifications/Test")]
-        public ActionResult<Models.NewMediaNotification> SendTestNotification([FromQuery] string? message = null)
+        public async Task<ActionResult<Models.NewMediaNotification>> SendTestNotification([FromQuery] string? message = null)
         {
             try
             {
@@ -510,12 +512,65 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 _repository.AddNotification(notification);
 
+                // Also send DisplayMessage to all active sessions for native app support
+                await SendDisplayMessageToAllSessionsAsync(notification.Title, notification.MediaType, notification.Year).ConfigureAwait(false);
+
                 return Ok(notification);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending test notification");
                 return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Sends a DisplayMessage to all active sessions for native app support.
+        /// </summary>
+        private async Task SendDisplayMessageToAllSessionsAsync(string title, string mediaType, int? year)
+        {
+            try
+            {
+                var sessions = _sessionManager.Sessions
+                    .Where(s => s.IsActive && s.SupportsRemoteControl)
+                    .ToList();
+
+                if (sessions.Count == 0)
+                {
+                    _logger.LogDebug("No active sessions to send DisplayMessage to");
+                    return;
+                }
+
+                var yearText = year.HasValue ? $" ({year})" : string.Empty;
+                var header = mediaType == "Movie" ? "New Movie Available" : (mediaType == "Series" ? "New Series Available" : "Notification");
+                var text = $"{title}{yearText}";
+
+                var command = new MediaBrowser.Model.Session.GeneralCommand
+                {
+                    Name = MediaBrowser.Model.Session.GeneralCommandType.DisplayMessage
+                };
+                command.Arguments["Header"] = header;
+                command.Arguments["Text"] = text;
+                command.Arguments["TimeoutMs"] = "8000";
+
+                foreach (var session in sessions)
+                {
+                    try
+                    {
+                        await _sessionManager.SendGeneralCommand(null, session.Id, command, CancellationToken.None).ConfigureAwait(false);
+                        _logger.LogDebug("Sent DisplayMessage to session {SessionId} ({DeviceName})", session.Id, session.DeviceName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to send DisplayMessage to session {SessionId}", session.Id);
+                    }
+                }
+
+                _logger.LogInformation("Sent DisplayMessage to {Count} active sessions for: {Title}", sessions.Count, title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error sending DisplayMessage to sessions");
             }
         }
 
