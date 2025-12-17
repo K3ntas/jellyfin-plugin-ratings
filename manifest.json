@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.140.0",
+        "changelog": "Debug logging with WARNING level to ensure visibility in logs.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.140.0/jellyfin-plugin-ratings_1.0.140.0.zip",
+        "checksum": "8bab4ee88e005529b778f12ed5015f04",
+        "timestamp": "2025-12-18T00:05:00Z"
+      },
+      {
         "version": "1.0.139.0",
         "changelog": "Debug logging for native app sessions. Now logs all sessions with device info to diagnose Firestick notification issues.",
         "targetAbi": "10.11.0.0",
