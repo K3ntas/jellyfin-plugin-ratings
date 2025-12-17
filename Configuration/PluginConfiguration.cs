@@ -18,6 +18,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             AllowGuestRatings = false;
             EnableNetflixView = false;
             EnableRequestButton = true;
+            EnableNewMediaNotifications = true;
         }
 
         /// <summary>
@@ -49,5 +50,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the Request Media button is shown.
         /// </summary>
         public bool EnableRequestButton { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether new media notifications are enabled.
+        /// </summary>
+        public bool EnableNewMediaNotifications { get; set; }
     }
 }

@@ -18,6 +18,9 @@ namespace Jellyfin.Plugin.Ratings
 
             // Register hosted service for JavaScript injection (though it doesn't work in Docker)
             serviceCollection.AddHostedService<JavaScriptInjectionService>();
+
+            // Register notification service to monitor library for new media
+            serviceCollection.AddHostedService<NotificationService>();
         }
     }
 }
