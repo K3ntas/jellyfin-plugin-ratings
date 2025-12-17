@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.139.0",
+        "changelog": "Debug logging for native app sessions. Now logs all sessions with device info to diagnose Firestick notification issues.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.139.0/jellyfin-plugin-ratings_1.0.139.0.zip",
+        "checksum": "b05be0f0a0e6ba997f52e5011c7fdab0",
+        "timestamp": "2025-12-18T00:00:00Z"
+      },
+      {
         "version": "1.0.138.0",
         "changelog": "Native app notifications! Now sends DisplayMessage to all connected clients (Firestick, Android TV, iOS, etc.) when new media is added. Web notifications unchanged.",
         "targetAbi": "10.11.0.0",
