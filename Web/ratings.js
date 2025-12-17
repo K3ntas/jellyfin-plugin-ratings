@@ -1401,7 +1401,7 @@
                 #testNotificationBtn {
                     position: absolute !important;
                     top: 8px !important;
-                    right: 500px !important;
+                    right: 700px !important;
                     background: rgba(33, 150, 243, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                     padding: 10px 20px !important;
@@ -1409,7 +1409,7 @@
                     font-size: 13px !important;
                     font-weight: 600 !important;
                     cursor: pointer !important;
-                    z-index: 999997 !important;
+                    z-index: 999999 !important;
                     transition: all 0.3s ease !important;
                     color: #fff !important;
                     font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
