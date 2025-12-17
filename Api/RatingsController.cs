@@ -355,19 +355,28 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                DateTime sinceTime;
                 if (string.IsNullOrEmpty(since))
                 {
                     // Return notifications from the last 5 minutes by default
-                    var defaultSince = DateTime.UtcNow.AddMinutes(-5);
-                    return Ok(_repository.GetNotificationsSince(defaultSince));
+                    sinceTime = DateTime.UtcNow.AddMinutes(-5);
                 }
-
-                if (DateTime.TryParse(since, null, System.Globalization.DateTimeStyles.RoundtripKind, out var sinceTime))
+                else if (DateTime.TryParse(since, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out sinceTime))
                 {
-                    return Ok(_repository.GetNotificationsSince(sinceTime));
+                    // Ensure it's UTC
+                    if (sinceTime.Kind != DateTimeKind.Utc)
+                    {
+                        sinceTime = sinceTime.ToUniversalTime();
+                    }
+                }
+                else
+                {
+                    return BadRequest("Invalid 'since' parameter format. Use ISO 8601 format.");
                 }
 
-                return BadRequest("Invalid 'since' parameter format. Use ISO 8601 format.");
+                var notifications = _repository.GetNotificationsSince(sinceTime);
+                _logger.LogInformation("GetNotifications: since={Since}, found={Count} notifications", sinceTime.ToString("o"), notifications.Count);
+                return Ok(notifications);
             }
             catch (Exception ex)
             {

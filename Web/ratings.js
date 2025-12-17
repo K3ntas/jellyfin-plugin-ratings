@@ -3638,12 +3638,14 @@
             // Check if notifications are enabled in config
             this.checkNotificationsEnabled().then(enabled => {
                 self.notificationsEnabled = enabled;
+                console.log('RatingsPlugin: Notifications enabled:', enabled);
                 if (enabled) {
                     // Create notification container
                     self.createNotificationContainer();
 
-                    // Initialize the last check time
-                    self.lastNotificationCheck = new Date().toISOString();
+                    // Initialize the last check time to 5 minutes ago so we catch recent notifications
+                    self.lastNotificationCheck = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                    console.log('RatingsPlugin: Initial lastNotificationCheck:', self.lastNotificationCheck);
 
                     // Start polling for notifications
                     self.startNotificationPolling();
@@ -3718,23 +3720,38 @@
         checkForNewNotifications: function () {
             const self = this;
 
-            if (!window.ApiClient) return;
+            if (!window.ApiClient) {
+                console.log('RatingsPlugin: No ApiClient available for notifications');
+                return;
+            }
 
             const baseUrl = ApiClient.serverAddress();
-            const since = this.lastNotificationCheck || new Date(Date.now() - 60000).toISOString();
+            const since = this.lastNotificationCheck || new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+            console.log('RatingsPlugin: Checking notifications since:', since);
 
             fetch(`${baseUrl}/Ratings/Notifications?since=${encodeURIComponent(since)}`, {
                 method: 'GET',
                 credentials: 'include'
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(notifications => {
+                    console.log('RatingsPlugin: Received notifications:', notifications ? notifications.length : 0, notifications);
+
                     if (notifications && notifications.length > 0) {
                         notifications.forEach(notification => {
                             // Don't show duplicates
                             if (!self.shownNotificationIds.includes(notification.Id)) {
+                                console.log('RatingsPlugin: Showing notification:', notification.Title || notification.Message);
                                 self.shownNotificationIds.push(notification.Id);
                                 self.showNotification(notification);
+                            } else {
+                                console.log('RatingsPlugin: Skipping duplicate notification:', notification.Id);
                             }
                         });
                     }
@@ -3743,7 +3760,7 @@
                     self.lastNotificationCheck = new Date().toISOString();
                 })
                 .catch(err => {
-                    console.error('Error checking for notifications:', err);
+                    console.error('RatingsPlugin: Error checking for notifications:', err);
                 });
         },
 
