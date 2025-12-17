@@ -531,13 +531,23 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                // Log ALL sessions for debugging
+                var allSessions = _sessionManager.Sessions.ToList();
+                _logger.LogInformation("Total sessions: {Count}", allSessions.Count);
+                foreach (var s in allSessions)
+                {
+                    _logger.LogInformation("Session: Id={Id}, Device={Device}, Client={Client}, IsActive={IsActive}, SupportsRemoteControl={SupportsRemote}, SupportsMediaControl={SupportsMedia}",
+                        s.Id, s.DeviceName, s.Client, s.IsActive, s.SupportsRemoteControl, s.SupportsMediaControl);
+                }
+
+                // Try sending to ALL active sessions, not just SupportsRemoteControl
                 var sessions = _sessionManager.Sessions
-                    .Where(s => s.IsActive && s.SupportsRemoteControl)
+                    .Where(s => s.IsActive)
                     .ToList();
 
                 if (sessions.Count == 0)
                 {
-                    _logger.LogDebug("No active sessions to send DisplayMessage to");
+                    _logger.LogWarning("No active sessions to send DisplayMessage to");
                     return;
                 }
 
