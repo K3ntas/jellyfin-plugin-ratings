@@ -2285,6 +2285,19 @@
                             if (btn && currentUserId) {
                                 self.updateRequestBadge(btn);
                             }
+
+                            // Remove test notification button and re-check admin status
+                            const testBtn = document.getElementById('testNotificationBtn');
+                            if (testBtn) {
+                                testBtn.remove();
+                            }
+                            // Re-initialize test button (will only show if new user is admin)
+                            if (currentUserId) {
+                                self.initTestNotificationButton();
+                            }
+
+                            // Clear shown notification IDs for new user
+                            self.shownNotificationIds = [];
                         }
                     } catch (err) {
                         // Silently fail
@@ -3862,9 +3875,19 @@
         initTestNotificationButton: function () {
             const self = this;
 
+            // Don't show on login page
+            if (this.isOnLoginPage()) return;
+
             // Check if user is admin first
             this.checkIfAdmin().then(isAdmin => {
-                if (!isAdmin) return;
+                if (!isAdmin) {
+                    // Remove button if exists and user is not admin
+                    const existingBtn = document.getElementById('testNotificationBtn');
+                    if (existingBtn) {
+                        existingBtn.remove();
+                    }
+                    return;
+                }
 
                 // Don't create if already exists
                 if (document.getElementById('testNotificationBtn')) return;
@@ -3875,13 +3898,33 @@
                 const btn = document.createElement('button');
                 btn.id = 'testNotificationBtn';
                 btn.innerHTML = '🔔 Test';
-                btn.title = 'Send a test notification';
+                btn.title = 'Send a test notification to all users';
 
                 btn.addEventListener('click', () => {
                     self.sendTestNotification();
                 });
 
                 header.appendChild(btn);
+
+                // Hide on login page - check periodically
+                setInterval(() => {
+                    try {
+                        const testBtn = document.getElementById('testNotificationBtn');
+                        if (!testBtn) return;
+
+                        const isLoginPage = self.isOnLoginPage();
+                        const videoPlayer = document.querySelector('.videoPlayerContainer');
+                        const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+
+                        if (isLoginPage || isVideoPlaying) {
+                            testBtn.style.display = 'none';
+                        } else {
+                            testBtn.style.display = '';
+                        }
+                    } catch (err) {
+                        // Silently fail
+                    }
+                }, 500);
             });
         },
 
