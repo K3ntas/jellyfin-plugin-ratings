@@ -433,21 +433,82 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                var notification = new Models.NewMediaNotification
+                // Try to get a random movie or series from the library
+                Models.NewMediaNotification notification;
+                try
                 {
-                    Id = Guid.NewGuid(),
-                    ItemId = Guid.Empty,
-                    Title = "Test Notification",
-                    MediaType = "Test",
-                    Year = DateTime.UtcNow.Year,
-                    ImageUrl = null,
-                    CreatedAt = DateTime.UtcNow,
-                    IsTest = true,
-                    Message = string.IsNullOrEmpty(message) ? "This is a test notification from the Ratings plugin!" : message
-                };
+                    var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                        Recursive = true,
+                        Limit = 100
+                    };
+
+                    var items = _libraryManager.GetItemList(query);
+                    if (items != null && items.Count > 0)
+                    {
+                        // Pick a random item
+                        var random = new Random();
+                        var randomItem = items[random.Next(items.Count)];
+
+                        var isMovie = randomItem is MediaBrowser.Controller.Entities.Movies.Movie;
+                        string? imageUrl = null;
+                        if (randomItem.ImageInfos != null && randomItem.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
+                        {
+                            imageUrl = $"/Items/{randomItem.Id}/Images/Primary";
+                        }
+
+                        notification = new Models.NewMediaNotification
+                        {
+                            Id = Guid.NewGuid(),
+                            ItemId = randomItem.Id,
+                            Title = randomItem.Name,
+                            MediaType = isMovie ? "Movie" : "Series",
+                            Year = randomItem.ProductionYear,
+                            ImageUrl = imageUrl,
+                            CreatedAt = DateTime.UtcNow,
+                            IsTest = false, // Show as real notification so it looks authentic
+                            Message = null
+                        };
+
+                        _logger.LogInformation("Admin {UserId} sent test notification with random media: {Title} ({Year})", userId, randomItem.Name, randomItem.ProductionYear);
+                    }
+                    else
+                    {
+                        // Fallback if no media found
+                        notification = new Models.NewMediaNotification
+                        {
+                            Id = Guid.NewGuid(),
+                            ItemId = Guid.Empty,
+                            Title = "Test Notification",
+                            MediaType = "Test",
+                            Year = DateTime.UtcNow.Year,
+                            ImageUrl = null,
+                            CreatedAt = DateTime.UtcNow,
+                            IsTest = true,
+                            Message = string.IsNullOrEmpty(message) ? "This is a test notification from the Ratings plugin!" : message
+                        };
+                        _logger.LogInformation("Admin {UserId} sent test notification (no media in library)", userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get random media for test notification, using fallback");
+                    notification = new Models.NewMediaNotification
+                    {
+                        Id = Guid.NewGuid(),
+                        ItemId = Guid.Empty,
+                        Title = "Test Notification",
+                        MediaType = "Test",
+                        Year = DateTime.UtcNow.Year,
+                        ImageUrl = null,
+                        CreatedAt = DateTime.UtcNow,
+                        IsTest = true,
+                        Message = string.IsNullOrEmpty(message) ? "This is a test notification from the Ratings plugin!" : message
+                    };
+                }
 
                 _repository.AddNotification(notification);
-                _logger.LogInformation("Admin {UserId} sent test notification: {Message}", userId, notification.Message);
 
                 return Ok(notification);
             }
