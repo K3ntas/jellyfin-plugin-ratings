@@ -553,6 +553,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return;
                 }
 
+                // Warn about sessions without WebSocket (SupportsRemoteControl=false)
+                // These sessions cannot receive DisplayMessage - typically caused by blocked WebSocket at reverse proxy
+                var incapableSessions = sessions.Where(s => !s.SupportsRemoteControl).ToList();
+                if (incapableSessions.Count > 0)
+                {
+                    _logger.LogWarning(
+                        "WARNING: {Count} session(s) have SupportsRemoteControl=false and CANNOT receive notifications. " +
+                        "This is usually caused by WebSocket being blocked at the reverse proxy. " +
+                        "Affected devices: {Devices}",
+                        incapableSessions.Count,
+                        string.Join(", ", incapableSessions.Select(s => $"{s.DeviceName} ({s.Client})")));
+                }
+
+                var capableSessions = sessions.Where(s => s.SupportsRemoteControl).ToList();
+                _logger.LogWarning("Sessions with WebSocket support: {Count}, without: {Count2}",
+                    capableSessions.Count, incapableSessions.Count);
+
                 var yearText = year.HasValue ? $" ({year})" : string.Empty;
                 var header = mediaType == "Movie" ? "New Movie Available" : (mediaType == "Series" ? "New Series Available" : "Notification");
                 var text = $"{title}{yearText}";
