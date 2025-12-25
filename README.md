@@ -232,7 +232,20 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.78.0 (Current)
+### 1.0.143.0 (Current)
+- **Cross-platform compatibility fix!** Plugin now works on ALL platforms:
+  - Docker containers (no more permission errors)
+  - Linux package installs (root-owned web folders)
+  - Windows services (limited permissions)
+- Uses HTTP middleware injection instead of modifying index.html
+- No file write permissions required
+- Added fallback option in Advanced Settings for legacy file-based injection
+
+### 1.0.142.0
+- WebSocket diagnostics for test button
+- Shows WARNING in logs when Fire TV/Android TV cannot receive notifications
+
+### 1.0.78.0
 - Added "Watch Now" button for admins on completed requests
 - Updated README with comprehensive Request Media documentation
 - Added new screenshots showing the request system

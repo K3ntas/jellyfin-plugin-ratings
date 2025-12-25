@@ -11,6 +11,8 @@ namespace Jellyfin.Plugin.Ratings
 {
     /// <summary>
     /// Background service that injects the ratings JavaScript into Jellyfin's web client on startup.
+    /// This is a FALLBACK method - the primary injection is done via HTTP middleware.
+    /// Only runs when EnableFileBasedInjection is set to true in plugin configuration.
     /// </summary>
     public class JavaScriptInjectionService : IHostedService
     {
@@ -26,7 +28,6 @@ namespace Jellyfin.Plugin.Ratings
         {
             _logger = logger;
             _appPaths = appPaths;
-            _logger.LogWarning("==================== RATINGS PLUGIN: JavaScriptInjectionService CONSTRUCTOR CALLED ====================");
         }
 
         /// <summary>
@@ -36,25 +37,30 @@ namespace Jellyfin.Plugin.Ratings
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogWarning("==================== RATINGS PLUGIN: StartAsync CALLED ====================");
-            _logger.LogWarning("WebPath: {WebPath}", _appPaths.WebPath);
+            // Check if file-based injection is enabled in configuration
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableFileBasedInjection != true)
+            {
+                _logger.LogInformation("Ratings plugin: File-based injection is disabled (using HTTP middleware instead - works on all platforms)");
+                return Task.CompletedTask;
+            }
+
+            _logger.LogInformation("Ratings plugin: File-based injection is ENABLED (fallback mode)");
+            _logger.LogInformation("WebPath: {WebPath}", _appPaths.WebPath);
 
             return Task.Run(() =>
             {
                 try
                 {
-                    _logger.LogWarning("Ratings plugin JavaScript injection service started - RUNNING NOW");
-
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
                     CleanupOldInjection();
                     InjectRatingsScript();
-                    _logger.LogWarning("==================== RATINGS PLUGIN: INJECTION COMPLETED ====================");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "==================== RATINGS PLUGIN: INJECTION FAILED ====================");
+                    _logger.LogError(ex, "Ratings plugin: File-based injection failed. The HTTP middleware will handle script injection instead.");
                 }
             }, cancellationToken);
         }
@@ -66,7 +72,6 @@ namespace Jellyfin.Plugin.Ratings
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Ratings plugin JavaScript injection service stopped.");
             return Task.CompletedTask;
         }
 
