@@ -19,6 +19,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             EnableNetflixView = false;
             EnableRequestButton = true;
             EnableNewMediaNotifications = true;
+            EnableFileBasedInjection = false;
         }
 
         /// <summary>
@@ -55,5 +56,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether new media notifications are enabled.
         /// </summary>
         public bool EnableNewMediaNotifications { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether file-based script injection is enabled.
+        /// When disabled (default), the plugin uses HTTP middleware injection which works on all platforms.
+        /// Enable this only if the middleware approach fails on your system and you have write permissions.
+        /// </summary>
+        public bool EnableFileBasedInjection { get; set; }
     }
 }
