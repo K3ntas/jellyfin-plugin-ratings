@@ -9,14 +9,6 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
-        "version": "1.0.143.0",
-        "changelog": "Cross-platform compatibility! Plugin now works on Docker, Linux, and Windows without requiring file write permissions. Uses HTTP middleware injection instead of modifying index.html.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.143.0/jellyfin-plugin-ratings_1.0.143.0.zip",
-        "checksum": "309da0d35ebfca02505da4dec64f85de",
-        "timestamp": "2025-12-25T16:45:00Z"
-      },
-      {
         "version": "1.0.142.0",
         "changelog": "WebSocket diagnostics for test button! Now shows WARNING in logs when Fire TV/Android TV cannot receive notifications due to WebSocket being blocked by reverse proxy.",
         "targetAbi": "10.11.0.0",
