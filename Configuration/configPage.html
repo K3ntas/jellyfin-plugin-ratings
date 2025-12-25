@@ -64,33 +64,6 @@
                             </div>
                         </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableNewMediaNotifications" type="checkbox" is="emby-checkbox" />
-                                <span>Enable New Media Notifications</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show notifications when new movies or series are added to the library.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Advanced Settings</h2>
-                        <p style="color: #888; margin-bottom: 1em;">These settings are for troubleshooting. Most users should leave them at their defaults.</p>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableFileBasedInjection" type="checkbox" is="emby-checkbox" />
-                                <span>Enable File-Based Script Injection (Fallback)</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                <strong>Default: OFF</strong> - By default, the plugin uses HTTP middleware injection which works on ALL platforms (Docker, Linux, Windows) without requiring file write permissions.
-                                <br><br>
-                                Only enable this if the middleware approach fails on your system AND you have write permissions to the Jellyfin web directory. When enabled, the plugin will modify index.html directly.
-                            </div>
-                        </div>
-
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -115,8 +88,6 @@
                     document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
-                    document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
-                    document.querySelector('#chkEnableFileBasedInjection').checked = config.EnableFileBasedInjection;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -132,8 +103,6 @@
                     config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
-                    config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
-                    config.EnableFileBasedInjection = document.querySelector('#chkEnableFileBasedInjection').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
