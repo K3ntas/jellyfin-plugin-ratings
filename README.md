@@ -232,7 +232,10 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.147.0 (Current)
+### 1.0.148.0 (Current)
+- Clean titles: automatically removes IMDB IDs like `[tt14364480]` from notification titles
+
+### 1.0.147.0
 - Removed test notification button from web UI
 - Use TV app (JellyPush) for testing notifications instead
 

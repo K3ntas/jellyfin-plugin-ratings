@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Data;
@@ -165,6 +166,20 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
+        /// Cleans a media title by removing IMDB ID patterns like [tt14364480].
+        /// </summary>
+        private static string CleanTitle(string? title)
+        {
+            if (string.IsNullOrEmpty(title))
+            {
+                return string.Empty;
+            }
+
+            // Remove IMDB ID pattern [ttXXXXXXX] and trim
+            return Regex.Replace(title, @"\s*\[tt\d+\]\s*", " ").Trim();
+        }
+
+        /// <summary>
         /// Creates a notification for a new media item and queues it for delayed release.
         /// </summary>
         private void CreateNotification(Guid itemId, string title, string mediaType, int? year, BaseItem item)
@@ -176,10 +191,11 @@ namespace Jellyfin.Plugin.Ratings
                 imageUrl = $"/Items/{itemId}/Images/Primary";
             }
 
+            var cleanedTitle = CleanTitle(title);
             var notification = new NewMediaNotification
             {
                 ItemId = itemId,
-                Title = title,
+                Title = cleanedTitle,
                 MediaType = mediaType,
                 Year = year,
                 ImageUrl = imageUrl,
@@ -189,7 +205,7 @@ namespace Jellyfin.Plugin.Ratings
 
             // Queue notification for delayed release
             _notificationQueue.Enqueue(notification);
-            _logger.LogInformation("Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}", mediaType, title, year, _notificationQueue.Count);
+            _logger.LogInformation("Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}", mediaType, cleanedTitle, year, _notificationQueue.Count);
         }
 
         /// <summary>
@@ -208,13 +224,15 @@ namespace Jellyfin.Plugin.Ratings
                 imageUrl = $"/Items/{episode.Series.Id}/Images/Primary";
             }
 
+            var cleanedTitle = CleanTitle(episode.Name);
+            var cleanedSeriesName = CleanTitle(episode.SeriesName);
             var notification = new NewMediaNotification
             {
                 ItemId = episode.Id,
-                Title = episode.Name,
+                Title = cleanedTitle,
                 MediaType = "Episode",
                 Year = episode.ProductionYear ?? episode.PremiereDate?.Year,
-                SeriesName = episode.SeriesName,
+                SeriesName = cleanedSeriesName,
                 SeasonNumber = episode.ParentIndexNumber,
                 EpisodeNumber = episode.IndexNumber,
                 ImageUrl = imageUrl,
@@ -226,10 +244,10 @@ namespace Jellyfin.Plugin.Ratings
             _notificationQueue.Enqueue(notification);
             _logger.LogInformation(
                 "Queued notification for new Episode: '{SeriesName}' S{Season:D2}E{Episode:D2} - '{Title}'. Queue size: {QueueSize}",
-                episode.SeriesName,
+                cleanedSeriesName,
                 episode.ParentIndexNumber,
                 episode.IndexNumber,
-                episode.Name,
+                cleanedTitle,
                 _notificationQueue.Count);
         }
     }
