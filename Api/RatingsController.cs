@@ -436,13 +436,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                // Try to get a random movie or series from the library
+                // Try to get a random movie, series, or episode from the library
                 Models.NewMediaNotification notification;
                 try
                 {
                     var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
                     {
-                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.Episode },
                         Recursive = true,
                         Limit = 100
                     };
@@ -454,27 +454,72 @@ namespace Jellyfin.Plugin.Ratings.Api
                         var random = new Random();
                         var randomItem = items[random.Next(items.Count)];
 
-                        var isMovie = randomItem is MediaBrowser.Controller.Entities.Movies.Movie;
                         string? imageUrl = null;
                         if (randomItem.ImageInfos != null && randomItem.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
                         {
                             imageUrl = $"/Items/{randomItem.Id}/Images/Primary";
                         }
 
-                        notification = new Models.NewMediaNotification
+                        if (randomItem is MediaBrowser.Controller.Entities.Movies.Movie)
                         {
-                            Id = Guid.NewGuid(),
-                            ItemId = randomItem.Id,
-                            Title = randomItem.Name,
-                            MediaType = isMovie ? "Movie" : "Series",
-                            Year = randomItem.ProductionYear,
-                            ImageUrl = imageUrl,
-                            CreatedAt = DateTime.UtcNow,
-                            IsTest = false, // Show as real notification so it looks authentic
-                            Message = null
-                        };
+                            notification = new Models.NewMediaNotification
+                            {
+                                Id = Guid.NewGuid(),
+                                ItemId = randomItem.Id,
+                                Title = randomItem.Name,
+                                MediaType = "Movie",
+                                Year = randomItem.ProductionYear,
+                                ImageUrl = imageUrl,
+                                CreatedAt = DateTime.UtcNow,
+                                IsTest = false,
+                                Message = null
+                            };
+                            _logger.LogInformation("Admin {UserId} sent test notification with random Movie: {Title} ({Year})", userId, randomItem.Name, randomItem.ProductionYear);
+                        }
+                        else if (randomItem is MediaBrowser.Controller.Entities.TV.Episode episode)
+                        {
+                            // For episodes, prefer series image if episode doesn't have one
+                            if (string.IsNullOrEmpty(imageUrl) && episode.Series != null &&
+                                episode.Series.ImageInfos != null && episode.Series.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
+                            {
+                                imageUrl = $"/Items/{episode.Series.Id}/Images/Primary";
+                            }
 
-                        _logger.LogInformation("Admin {UserId} sent test notification with random media: {Title} ({Year})", userId, randomItem.Name, randomItem.ProductionYear);
+                            notification = new Models.NewMediaNotification
+                            {
+                                Id = Guid.NewGuid(),
+                                ItemId = episode.Id,
+                                Title = episode.Name,
+                                MediaType = "Episode",
+                                Year = episode.ProductionYear ?? episode.PremiereDate?.Year,
+                                SeriesName = episode.SeriesName,
+                                SeasonNumber = episode.ParentIndexNumber,
+                                EpisodeNumber = episode.IndexNumber,
+                                ImageUrl = imageUrl,
+                                CreatedAt = DateTime.UtcNow,
+                                IsTest = false,
+                                Message = null
+                            };
+                            _logger.LogInformation("Admin {UserId} sent test notification with random Episode: {SeriesName} S{Season}E{Episode} - {Title}",
+                                userId, episode.SeriesName, episode.ParentIndexNumber, episode.IndexNumber, episode.Name);
+                        }
+                        else
+                        {
+                            // Series
+                            notification = new Models.NewMediaNotification
+                            {
+                                Id = Guid.NewGuid(),
+                                ItemId = randomItem.Id,
+                                Title = randomItem.Name,
+                                MediaType = "Series",
+                                Year = randomItem.ProductionYear,
+                                ImageUrl = imageUrl,
+                                CreatedAt = DateTime.UtcNow,
+                                IsTest = false,
+                                Message = null
+                            };
+                            _logger.LogInformation("Admin {UserId} sent test notification with random Series: {Title} ({Year})", userId, randomItem.Name, randomItem.ProductionYear);
+                        }
                     }
                     else
                     {
@@ -514,7 +559,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _repository.AddNotification(notification);
 
                 // Also send DisplayMessage to all active sessions for native app support
-                await SendDisplayMessageToAllSessionsAsync(notification.Title, notification.MediaType, notification.Year).ConfigureAwait(false);
+                // For episodes, show series name with episode info instead of just episode title
+                string displayTitle = notification.Title;
+                if (notification.MediaType == "Episode" && !string.IsNullOrEmpty(notification.SeriesName))
+                {
+                    displayTitle = $"{notification.SeriesName} S{notification.SeasonNumber:D2}E{notification.EpisodeNumber:D2}";
+                }
+
+                await SendDisplayMessageToAllSessionsAsync(displayTitle, notification.MediaType, notification.Year).ConfigureAwait(false);
 
                 return Ok(notification);
             }
@@ -571,7 +623,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                     capableSessions.Count, incapableSessions.Count);
 
                 var yearText = year.HasValue ? $" ({year})" : string.Empty;
-                var header = mediaType == "Movie" ? "New Movie Available" : (mediaType == "Series" ? "New Series Available" : "Notification");
+                string header;
+                switch (mediaType)
+                {
+                    case "Movie":
+                        header = "New Movie Available";
+                        break;
+                    case "Series":
+                        header = "New Series Available";
+                        break;
+                    case "Episode":
+                        header = "New Episode Available";
+                        break;
+                    default:
+                        header = "Notification";
+                        break;
+                }
+
                 var text = $"{title}{yearText}";
 
                 var command = new MediaBrowser.Model.Session.GeneralCommand

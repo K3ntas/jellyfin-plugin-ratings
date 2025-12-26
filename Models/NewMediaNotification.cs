@@ -33,6 +33,21 @@ namespace Jellyfin.Plugin.Ratings.Models
         public int? Year { get; set; }
 
         /// <summary>
+        /// Gets or sets the series name (for episodes).
+        /// </summary>
+        public string? SeriesName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the season number (for episodes).
+        /// </summary>
+        public int? SeasonNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the episode number (for episodes).
+        /// </summary>
+        public int? EpisodeNumber { get; set; }
+
+        /// <summary>
         /// Gets or sets the image URL for the media.
         /// </summary>
         public string? ImageUrl { get; set; }

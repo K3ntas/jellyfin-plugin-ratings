@@ -83,7 +83,7 @@ namespace Jellyfin.Plugin.Ratings
 
                 var item = e.Item;
 
-                // Only notify for movies and series (not episodes, seasons, etc.)
+                // Notify for movies, series, and episodes
                 if (item is Movie movie)
                 {
                     CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
@@ -91,6 +91,10 @@ namespace Jellyfin.Plugin.Ratings
                 else if (item is Series series)
                 {
                     CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
+                }
+                else if (item is Episode episode)
+                {
+                    CreateEpisodeNotification(episode);
                 }
             }
             catch (Exception ex)
@@ -127,6 +131,49 @@ namespace Jellyfin.Plugin.Ratings
 
             // Send DisplayMessage to all native app clients
             _ = SendDisplayMessageToAllSessionsAsync(title, mediaType, year);
+        }
+
+        /// <summary>
+        /// Creates a notification for a new episode.
+        /// </summary>
+        private void CreateEpisodeNotification(Episode episode)
+        {
+            // Build image URL - prefer episode image, fall back to series image
+            string? imageUrl = null;
+            if (episode.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+            {
+                imageUrl = $"/Items/{episode.Id}/Images/Primary";
+            }
+            else if (episode.Series != null && episode.Series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+            {
+                imageUrl = $"/Items/{episode.Series.Id}/Images/Primary";
+            }
+
+            var notification = new NewMediaNotification
+            {
+                ItemId = episode.Id,
+                Title = episode.Name,
+                MediaType = "Episode",
+                Year = episode.ProductionYear ?? episode.PremiereDate?.Year,
+                SeriesName = episode.SeriesName,
+                SeasonNumber = episode.ParentIndexNumber,
+                EpisodeNumber = episode.IndexNumber,
+                ImageUrl = imageUrl,
+                CreatedAt = DateTime.UtcNow,
+                IsTest = false
+            };
+
+            _repository.AddNotification(notification);
+            _logger.LogInformation(
+                "Created notification for new Episode: '{SeriesName}' S{Season:D2}E{Episode:D2} - '{Title}'",
+                episode.SeriesName,
+                episode.ParentIndexNumber,
+                episode.IndexNumber,
+                episode.Name);
+
+            // Send DisplayMessage to all native app clients
+            var displayTitle = $"{episode.SeriesName} S{episode.ParentIndexNumber:D2}E{episode.IndexNumber:D2}";
+            _ = SendDisplayMessageToAllSessionsAsync(displayTitle, "Episode", episode.ProductionYear);
         }
 
         /// <summary>
@@ -177,7 +224,23 @@ namespace Jellyfin.Plugin.Ratings
                     capableSessions.Count, incapableSessions.Count);
 
                 var yearText = year.HasValue ? $" ({year})" : string.Empty;
-                var header = mediaType == "Movie" ? "New Movie Available" : "New Series Available";
+                string header;
+                switch (mediaType)
+                {
+                    case "Movie":
+                        header = "New Movie Available";
+                        break;
+                    case "Series":
+                        header = "New Series Available";
+                        break;
+                    case "Episode":
+                        header = "New Episode Available";
+                        break;
+                    default:
+                        header = "New Media Available";
+                        break;
+                }
+
                 var text = $"{title}{yearText}";
 
                 var command = new GeneralCommand
