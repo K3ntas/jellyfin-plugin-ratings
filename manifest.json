@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.158.0",
+        "changelog": "Added notification toggle slider in header near search field. Users can enable/disable notifications. Responsive design.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.158.0/jellyfin-plugin-ratings_1.0.158.0.zip",
+        "checksum": "63e15c9f19c167890950d53fbfc8ace6",
+        "timestamp": "2025-12-27T00:30:00Z"
+      },
+      {
         "version": "1.0.157.0",
         "changelog": "Fixed season number - now gets from parent folder structure using GetParent(). Debug logging to track data.",
         "targetAbi": "10.11.0.0",
