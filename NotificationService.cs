@@ -112,6 +112,10 @@ namespace Jellyfin.Plugin.Ratings
         {
             if (_notificationQueue.TryDequeue(out var notification))
             {
+                // Update CreatedAt to NOW (when actually released), not when queued
+                // This ensures browser polling catches it with lastNotificationCheck
+                notification.CreatedAt = DateTime.UtcNow;
+
                 _repository.AddNotification(notification);
                 _logger.LogInformation(
                     "Released queued notification: {MediaType} - '{Title}'",
