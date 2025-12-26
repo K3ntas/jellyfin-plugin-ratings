@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.154.0",
+        "changelog": "Fixed episode number display - no more '?' for episode 0. Proper null/zero handling for season and episode numbers.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.154.0/jellyfin-plugin-ratings_1.0.154.0.zip",
+        "checksum": "10342857a9672c5dd26e36f7a4d712e5",
+        "timestamp": "2025-12-26T22:30:00Z"
+      },
+      {
         "version": "1.0.153.0",
         "changelog": "Episode notifications show season (S01). Added settings: Enable Notifications, Group Episodes. Fire TV app updated for grouped episodes.",
         "targetAbi": "10.11.0.0",
