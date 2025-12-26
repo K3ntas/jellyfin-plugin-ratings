@@ -331,10 +331,14 @@ namespace Jellyfin.Plugin.Ratings
                 imageUrl = $"/Items/{episode.Id}/Images/Primary";
             }
 
-            var cleanedSeriesName = CleanTitle(episode.SeriesName);
+            // Get series name - try SeriesName first, then Series.Name as fallback
+            var seriesName = !string.IsNullOrEmpty(episode.SeriesName)
+                ? episode.SeriesName
+                : episode.Series?.Name;
+            var cleanedSeriesName = CleanTitle(seriesName);
             var cleanedTitle = CleanTitle(episode.Name);
-            var seasonNumber = episode.ParentIndexNumber ?? 0;
-            var episodeNumber = episode.IndexNumber ?? 0;
+            var seasonNumber = episode.ParentIndexNumber;
+            var episodeNumber = episode.IndexNumber;
 
             // Check if episode grouping is enabled
             var config = Plugin.Instance?.Configuration;
@@ -359,24 +363,24 @@ namespace Jellyfin.Plugin.Ratings
                 _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
 
                 _logger.LogInformation(
-                    "Queued individual episode notification: '{SeriesName}' S{Season:D2}E{Episode:D2}. Queue size: {QueueSize}",
+                    "Queued individual episode notification: '{SeriesName}' S{Season}E{Episode}. Queue size: {QueueSize}",
                     cleanedSeriesName,
-                    seasonNumber,
-                    episodeNumber,
+                    seasonNumber?.ToString("D2") ?? "?",
+                    episodeNumber?.ToString("D2") ?? "?",
                     _notificationQueue.Count);
                 return;
             }
 
             // Create batch key: SeriesName|SeasonNumber
-            var batchKey = $"{cleanedSeriesName}|{seasonNumber}";
+            var batchKey = $"{cleanedSeriesName}|{seasonNumber ?? 0}";
 
             var pendingEpisode = new PendingEpisode
             {
                 EpisodeId = episode.Id,
                 SeriesId = episode.Series?.Id ?? Guid.Empty,
                 SeriesName = cleanedSeriesName,
-                SeasonNumber = seasonNumber,
-                EpisodeNumber = episodeNumber,
+                SeasonNumber = seasonNumber ?? 0,
+                EpisodeNumber = episodeNumber ?? 0,
                 Year = episode.ProductionYear ?? episode.PremiereDate?.Year,
                 ImageUrl = imageUrl,
                 AddedAt = DateTime.UtcNow
