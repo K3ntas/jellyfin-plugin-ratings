@@ -545,11 +545,11 @@
                     }
                 }
 
-                /* Notification Toggle Styles */
+                /* Notification Toggle Styles - Positioned LEFT of search field */
                 #notificationToggle {
                     position: absolute !important;
                     top: 8px;
-                    right: 365px !important;
+                    right: 600px !important;
                     z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
@@ -565,6 +565,11 @@
                 #notificationToggle:hover {
                     background: rgba(70, 70, 70, 0.95) !important;
                     border-color: rgba(255, 255, 255, 0.4) !important;
+                }
+
+                #notificationToggle:hover #notificationTooltip {
+                    opacity: 1 !important;
+                    visibility: visible !important;
                 }
 
                 #notificationToggle.hidden {
@@ -605,19 +610,60 @@
                     transform: translateX(16px) !important;
                 }
 
-                /* Mobile Responsive for Notification Toggle */
+                /* Tooltip for notification toggle */
+                #notificationTooltip {
+                    position: absolute !important;
+                    top: 45px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    background: rgba(30, 30, 30, 0.95) !important;
+                    color: #fff !important;
+                    padding: 8px 12px !important;
+                    border-radius: 8px !important;
+                    font-size: 12px !important;
+                    white-space: nowrap !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+                    pointer-events: none !important;
+                    z-index: 9999999 !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                }
+
+                #notificationTooltip::before {
+                    content: '' !important;
+                    position: absolute !important;
+                    top: -6px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    border-left: 6px solid transparent !important;
+                    border-right: 6px solid transparent !important;
+                    border-bottom: 6px solid rgba(30, 30, 30, 0.95) !important;
+                }
+
+                /* Mobile Responsive for Notification Toggle - LEFT of search */
                 @media screen and (max-width: 925px) {
                     #notificationToggle {
-                        left: 170px !important;
+                        left: 6px !important;
                         right: auto !important;
                         padding: 8px 12px !important;
+                    }
+
+                    #headerSearchField {
+                        left: 95px !important;
+                        right: auto !important;
                     }
                 }
 
                 @media screen and (max-width: 600px) {
                     #notificationToggle {
-                        left: 140px !important;
+                        left: 6px !important;
                         padding: 6px 10px !important;
+                    }
+
+                    #headerSearchField {
+                        left: 80px !important;
                     }
 
                     #notificationToggleSwitch {
@@ -636,6 +682,11 @@
 
                     #notificationToggleIcon {
                         font-size: 14px !important;
+                    }
+
+                    #notificationTooltip {
+                        font-size: 11px !important;
+                        padding: 6px 10px !important;
                     }
                 }
 
@@ -2682,7 +2733,6 @@
                         // Create toggle container
                         const toggleContainer = document.createElement('div');
                         toggleContainer.id = 'notificationToggle';
-                        toggleContainer.title = 'Toggle Notifications';
 
                         // Create bell icon
                         const bellIcon = document.createElement('span');
@@ -2691,6 +2741,11 @@
                         // Create toggle switch
                         const toggleSwitch = document.createElement('div');
                         toggleSwitch.id = 'notificationToggleSwitch';
+
+                        // Create tooltip
+                        const tooltip = document.createElement('div');
+                        tooltip.id = 'notificationTooltip';
+                        tooltip.textContent = 'Enable/disable new media notifications';
 
                         // Get saved preference (default to enabled)
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
@@ -2723,6 +2778,7 @@
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
                         toggleContainer.appendChild(toggleSwitch);
+                        toggleContainer.appendChild(tooltip);
 
                         // Append to header container
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
