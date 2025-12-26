@@ -232,7 +232,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.150.0 (Current)
+### 1.0.151.0 (Current)
+- Fix browser real-time notifications
+- CreatedAt timestamp now set when notification is released, not when queued
+- This ensures browser polling catches notifications correctly
+
+### 1.0.150.0
 - Fix notifications not showing in real-time
 - Now listens to both ItemAdded and ItemUpdated events
 - Catches metadata/image updates after initial item creation
