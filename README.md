@@ -232,7 +232,11 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.78.0 (Current)
+### 1.0.147.0 (Current)
+- Removed test notification button from web UI
+- Use TV app (JellyPush) for testing notifications instead
+
+### 1.0.78.0
 - Added "Watch Now" button for admins on completed requests
 - Updated README with comprehensive Request Media documentation
 - Added new screenshots showing the request system

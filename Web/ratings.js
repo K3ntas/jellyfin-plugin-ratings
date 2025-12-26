@@ -2286,15 +2286,14 @@
                                 self.updateRequestBadge(btn);
                             }
 
-                            // Remove test notification button and re-check admin status
-                            const testBtn = document.getElementById('testNotificationBtn');
-                            if (testBtn) {
-                                testBtn.remove();
-                            }
-                            // Re-initialize test button (will only show if new user is admin)
-                            if (currentUserId) {
-                                self.initTestNotificationButton();
-                            }
+                            // Test notification button disabled - use TV app for testing
+                            // const testBtn = document.getElementById('testNotificationBtn');
+                            // if (testBtn) {
+                            //     testBtn.remove();
+                            // }
+                            // if (currentUserId) {
+                            //     self.initTestNotificationButton();
+                            // }
 
                             // Clear shown notification IDs for new user
                             self.shownNotificationIds = [];
@@ -3663,8 +3662,8 @@
                     // Start polling for notifications
                     self.startNotificationPolling();
 
-                    // Initialize admin test button
-                    self.initTestNotificationButton();
+                    // Admin test button disabled - use TV app for testing
+                    // self.initTestNotificationButton();
                 }
             });
         },
