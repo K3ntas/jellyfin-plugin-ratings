@@ -546,10 +546,12 @@
                 }
 
                 /* Notification Toggle Styles - Positioned LEFT of search field */
+                /* Search field: right:480px, ~258px wide = ends at ~738px from right */
+                /* Toggle must be at right:750px+ to be LEFT of search */
                 #notificationToggle {
                     position: absolute !important;
                     top: 8px;
-                    right: 600px !important;
+                    right: 755px !important;
                     z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
@@ -560,6 +562,7 @@
                     transition: all 0.3s ease !important;
                     cursor: pointer !important;
                     gap: 8px !important;
+                    overflow: visible !important;
                 }
 
                 #notificationToggle:hover {
@@ -567,10 +570,6 @@
                     border-color: rgba(255, 255, 255, 0.4) !important;
                 }
 
-                #notificationToggle:hover #notificationTooltip {
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
 
                 #notificationToggle.hidden {
                     display: none !important;
@@ -610,36 +609,22 @@
                     transform: translateX(16px) !important;
                 }
 
-                /* Tooltip for notification toggle */
+                /* Tooltip for notification toggle - using fixed positioning to avoid clipping */
                 #notificationTooltip {
-                    position: absolute !important;
-                    top: 45px !important;
-                    left: 50% !important;
-                    transform: translateX(-50%) !important;
-                    background: rgba(30, 30, 30, 0.95) !important;
+                    position: fixed !important;
+                    background: rgba(20, 20, 20, 0.98) !important;
                     color: #fff !important;
-                    padding: 8px 12px !important;
+                    padding: 10px 14px !important;
                     border-radius: 8px !important;
-                    font-size: 12px !important;
+                    font-size: 13px !important;
                     white-space: nowrap !important;
                     opacity: 0 !important;
                     visibility: hidden !important;
                     transition: opacity 0.2s ease, visibility 0.2s ease !important;
                     pointer-events: none !important;
-                    z-index: 9999999 !important;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                }
-
-                #notificationTooltip::before {
-                    content: '' !important;
-                    position: absolute !important;
-                    top: -6px !important;
-                    left: 50% !important;
-                    transform: translateX(-50%) !important;
-                    border-left: 6px solid transparent !important;
-                    border-right: 6px solid transparent !important;
-                    border-bottom: 6px solid rgba(30, 30, 30, 0.95) !important;
+                    z-index: 99999999 !important;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
                 }
 
                 /* Mobile Responsive for Notification Toggle - LEFT of search */
@@ -682,11 +667,6 @@
 
                     #notificationToggleIcon {
                         font-size: 14px !important;
-                    }
-
-                    #notificationTooltip {
-                        font-size: 11px !important;
-                        padding: 6px 10px !important;
                     }
                 }
 
@@ -2778,7 +2758,22 @@
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
                         toggleContainer.appendChild(toggleSwitch);
-                        toggleContainer.appendChild(tooltip);
+                        document.body.appendChild(tooltip); // Tooltip in body to avoid clipping
+
+                        // Position tooltip on hover
+                        toggleContainer.addEventListener('mouseenter', () => {
+                            const rect = toggleContainer.getBoundingClientRect();
+                            tooltip.style.top = (rect.bottom + 8) + 'px';
+                            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                            tooltip.style.transform = 'translateX(-50%)';
+                            tooltip.style.opacity = '1';
+                            tooltip.style.visibility = 'visible';
+                        });
+
+                        toggleContainer.addEventListener('mouseleave', () => {
+                            tooltip.style.opacity = '0';
+                            tooltip.style.visibility = 'hidden';
+                        });
 
                         // Append to header container
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
