@@ -337,8 +337,18 @@ namespace Jellyfin.Plugin.Ratings
                 : episode.Series?.Name;
             var cleanedSeriesName = CleanTitle(seriesName);
             var cleanedTitle = CleanTitle(episode.Name);
-            var seasonNumber = episode.ParentIndexNumber;
+
+            // Get season number - try ParentIndexNumber first, then Season.IndexNumber as fallback
+            var seasonNumber = episode.ParentIndexNumber ?? episode.Season?.IndexNumber;
             var episodeNumber = episode.IndexNumber;
+
+            _logger.LogInformation(
+                "Episode data: SeriesName='{SeriesName}', Season={Season}, Episode={Episode}, ParentIndexNumber={ParentIdx}, SeasonIndexNumber={SeasonIdx}",
+                seriesName,
+                seasonNumber,
+                episodeNumber,
+                episode.ParentIndexNumber,
+                episode.Season?.IndexNumber);
 
             // Check if episode grouping is enabled
             var config = Plugin.Instance?.Configuration;
