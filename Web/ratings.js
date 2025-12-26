@@ -638,11 +638,12 @@
                     }
                 }
 
-                @media screen and (max-width: 600px) {
+                @media screen and (max-width: 590px) {
                     #notificationToggle {
-                        top: 55px !important;
-                        right: 150px !important;
-                        padding: 6px 8px !important;
+                        position: absolute !important;
+                        top: 58px !important;
+                        right: 130px !important;
+                        padding: 6px 10px !important;
                     }
 
                     #notificationToggleSwitch {
