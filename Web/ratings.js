@@ -3818,11 +3818,10 @@
                     titleText = this.escapeHtml(notification.Title) + yearText;
                     icon = '🎬';
                 } else if (notification.MediaType === 'Episode') {
-                    typeLabel = 'New Episode Available';
-                    const seasonNum = notification.SeasonNumber ? notification.SeasonNumber.toString().padStart(2, '0') : '00';
-                    const episodeNum = notification.EpisodeNumber ? notification.EpisodeNumber.toString().padStart(2, '0') : '00';
-                    const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : '';
-                    titleText = seriesName ? `${seriesName} S${seasonNum}E${episodeNum}` : this.escapeHtml(notification.Title);
+                    const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : 'Series';
+                    const episodeNum = notification.EpisodeNumber || '?';
+                    typeLabel = seriesName + yearText;
+                    titleText = `Episode ${episodeNum} is available`;
                     icon = '📺';
                 } else {
                     typeLabel = 'New Series Available';
