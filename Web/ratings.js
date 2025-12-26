@@ -3811,14 +3811,32 @@
                 `;
             } else {
                 const yearText = notification.Year ? ` (${notification.Year})` : '';
-                const typeLabel = notification.MediaType === 'Movie' ? 'New Movie Available' : 'New Series Available';
+                let typeLabel, titleText, icon;
+
+                if (notification.MediaType === 'Movie') {
+                    typeLabel = 'New Movie Available';
+                    titleText = this.escapeHtml(notification.Title) + yearText;
+                    icon = '🎬';
+                } else if (notification.MediaType === 'Episode') {
+                    typeLabel = 'New Episode Available';
+                    const seasonNum = notification.SeasonNumber ? notification.SeasonNumber.toString().padStart(2, '0') : '00';
+                    const episodeNum = notification.EpisodeNumber ? notification.EpisodeNumber.toString().padStart(2, '0') : '00';
+                    const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : '';
+                    titleText = seriesName ? `${seriesName} S${seasonNum}E${episodeNum}` : this.escapeHtml(notification.Title);
+                    icon = '📺';
+                } else {
+                    typeLabel = 'New Series Available';
+                    titleText = this.escapeHtml(notification.Title) + yearText;
+                    icon = '📺';
+                }
+
                 contentHtml = `
                     <div class="ratings-notification-content">
                         <div class="ratings-notification-header">
-                            <span class="ratings-notification-icon">🎬</span>
+                            <span class="ratings-notification-icon">${icon}</span>
                             <span class="ratings-notification-label">${typeLabel}</span>
                         </div>
-                        <div class="ratings-notification-title">${this.escapeHtml(notification.Title)}${yearText}</div>
+                        <div class="ratings-notification-title">${titleText}</div>
                     </div>
                 `;
             }
