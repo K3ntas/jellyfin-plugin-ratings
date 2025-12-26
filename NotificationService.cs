@@ -338,17 +338,24 @@ namespace Jellyfin.Plugin.Ratings
             var cleanedSeriesName = CleanTitle(seriesName);
             var cleanedTitle = CleanTitle(episode.Name);
 
-            // Get season number - try ParentIndexNumber first, then Season.IndexNumber as fallback
-            var seasonNumber = episode.ParentIndexNumber ?? episode.Season?.IndexNumber;
+            // Get season number - try multiple fallbacks
+            // 1. ParentIndexNumber (direct property)
+            // 2. Season.IndexNumber (Season object)
+            // 3. GetParent() - from library structure
+            var parentItem = episode.GetParent();
+            int? seasonNumber = episode.ParentIndexNumber
+                ?? episode.Season?.IndexNumber
+                ?? (parentItem as MediaBrowser.Controller.Entities.TV.Season)?.IndexNumber;
             var episodeNumber = episode.IndexNumber;
 
             _logger.LogInformation(
-                "Episode data: SeriesName='{SeriesName}', Season={Season}, Episode={Episode}, ParentIndexNumber={ParentIdx}, SeasonIndexNumber={SeasonIdx}",
+                "Episode data: SeriesName='{SeriesName}', Season={Season}, Episode={Episode}, ParentIndexNumber={ParentIdx}, SeasonIdx={SeasonIdx}, ParentType={ParentType}",
                 seriesName,
                 seasonNumber,
                 episodeNumber,
                 episode.ParentIndexNumber,
-                episode.Season?.IndexNumber);
+                episode.Season?.IndexNumber,
+                parentItem?.GetType().Name);
 
             // Check if episode grouping is enabled
             var config = Plugin.Instance?.Configuration;

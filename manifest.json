@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.157.0",
+        "changelog": "Fixed season number - now gets from parent folder structure using GetParent(). Debug logging to track data.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.157.0/jellyfin-plugin-ratings_1.0.157.0.zip",
+        "checksum": "fa49a7710f864ed0f0e629fa024cde7a",
+        "timestamp": "2025-12-27T00:00:00Z"
+      },
+      {
         "version": "1.0.156.0",
         "changelog": "Fixed season number not showing - now uses fallback to episode.Season.IndexNumber. Added debug logging.",
         "targetAbi": "10.11.0.0",
