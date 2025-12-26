@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Data;
@@ -9,8 +8,6 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Session;
-using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -19,30 +16,32 @@ namespace Jellyfin.Plugin.Ratings
     /// <summary>
     /// Service that monitors library for new media additions and creates notifications.
     /// </summary>
-    public class NotificationService : IHostedService
+    public class NotificationService : IHostedService, IDisposable
     {
         private readonly ILibraryManager _libraryManager;
-        private readonly ISessionManager _sessionManager;
         private readonly RatingsRepository _repository;
         private readonly ILogger<NotificationService> _logger;
+        private readonly ConcurrentQueue<NewMediaNotification> _notificationQueue;
+        private readonly Random _random;
+        private Timer? _queueTimer;
+        private bool _disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NotificationService"/> class.
         /// </summary>
         /// <param name="libraryManager">Library manager.</param>
-        /// <param name="sessionManager">Session manager for sending messages to clients.</param>
         /// <param name="repository">Ratings repository.</param>
         /// <param name="logger">Logger instance.</param>
         public NotificationService(
             ILibraryManager libraryManager,
-            ISessionManager sessionManager,
             RatingsRepository repository,
             ILogger<NotificationService> logger)
         {
             _libraryManager = libraryManager;
-            _sessionManager = sessionManager;
             _repository = repository;
             _logger = logger;
+            _notificationQueue = new ConcurrentQueue<NewMediaNotification>();
+            _random = new Random();
         }
 
         /// <inheritdoc />
@@ -52,6 +51,9 @@ namespace Jellyfin.Plugin.Ratings
 
             // Subscribe to library item added events
             _libraryManager.ItemAdded += OnItemAdded;
+
+            // Start queue processing timer - checks every 30 seconds
+            _queueTimer = new Timer(ProcessNotificationQueue, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
 
             return Task.CompletedTask;
         }
@@ -64,7 +66,66 @@ namespace Jellyfin.Plugin.Ratings
             // Unsubscribe from events
             _libraryManager.ItemAdded -= OnItemAdded;
 
+            // Stop timer
+            _queueTimer?.Change(Timeout.Infinite, 0);
+
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Disposes resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes resources.
+        /// </summary>
+        /// <param name="disposing">Whether disposing managed resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _queueTimer?.Dispose();
+            }
+
+            _disposed = true;
+        }
+
+        /// <summary>
+        /// Processes the notification queue, releasing one notification at a time with random delays.
+        /// </summary>
+        private void ProcessNotificationQueue(object? state)
+        {
+            if (_notificationQueue.TryDequeue(out var notification))
+            {
+                _repository.AddNotification(notification);
+                _logger.LogInformation(
+                    "Released queued notification: {MediaType} - '{Title}'",
+                    notification.MediaType,
+                    notification.Title);
+
+                // If there are more notifications, schedule next one with random delay (1-3 minutes)
+                if (!_notificationQueue.IsEmpty)
+                {
+                    var delayMs = _random.Next(60000, 180001); // 1-3 minutes in milliseconds
+                    _logger.LogInformation("Next notification will be released in {Seconds} seconds", delayMs / 1000);
+                    _queueTimer?.Change(delayMs, Timeout.Infinite);
+                }
+                else
+                {
+                    // Resume regular 30-second checks
+                    _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+                }
+            }
         }
 
         /// <summary>
@@ -104,7 +165,7 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
-        /// Creates a notification for a new media item.
+        /// Creates a notification for a new media item and queues it for delayed release.
         /// </summary>
         private void CreateNotification(Guid itemId, string title, string mediaType, int? year, BaseItem item)
         {
@@ -126,15 +187,13 @@ namespace Jellyfin.Plugin.Ratings
                 IsTest = false
             };
 
-            _repository.AddNotification(notification);
-            _logger.LogInformation("Created notification for new {MediaType}: '{Title}' ({Year})", mediaType, title, year);
-
-            // Send DisplayMessage to all native app clients
-            _ = SendDisplayMessageToAllSessionsAsync(title, mediaType, year);
+            // Queue notification for delayed release
+            _notificationQueue.Enqueue(notification);
+            _logger.LogInformation("Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}", mediaType, title, year, _notificationQueue.Count);
         }
 
         /// <summary>
-        /// Creates a notification for a new episode.
+        /// Creates a notification for a new episode and queues it for delayed release.
         /// </summary>
         private void CreateEpisodeNotification(Episode episode)
         {
@@ -163,113 +222,15 @@ namespace Jellyfin.Plugin.Ratings
                 IsTest = false
             };
 
-            _repository.AddNotification(notification);
+            // Queue notification for delayed release
+            _notificationQueue.Enqueue(notification);
             _logger.LogInformation(
-                "Created notification for new Episode: '{SeriesName}' S{Season:D2}E{Episode:D2} - '{Title}'",
+                "Queued notification for new Episode: '{SeriesName}' S{Season:D2}E{Episode:D2} - '{Title}'. Queue size: {QueueSize}",
                 episode.SeriesName,
                 episode.ParentIndexNumber,
                 episode.IndexNumber,
-                episode.Name);
-
-            // Send DisplayMessage to all native app clients
-            var displayTitle = $"{episode.SeriesName} S{episode.ParentIndexNumber:D2}E{episode.IndexNumber:D2}";
-            _ = SendDisplayMessageToAllSessionsAsync(displayTitle, "Episode", episode.ProductionYear);
-        }
-
-        /// <summary>
-        /// Sends a DisplayMessage to all active sessions for native app support.
-        /// </summary>
-        /// <param name="title">Media title.</param>
-        /// <param name="mediaType">Type of media (Movie/Series).</param>
-        /// <param name="year">Production year.</param>
-        private async Task SendDisplayMessageToAllSessionsAsync(string title, string mediaType, int? year)
-        {
-            try
-            {
-                // Log ALL sessions for debugging
-                var allSessions = _sessionManager.Sessions.ToList();
-                _logger.LogInformation("Total sessions: {Count}", allSessions.Count);
-                foreach (var s in allSessions)
-                {
-                    _logger.LogInformation("Session: Id={Id}, Device={Device}, Client={Client}, IsActive={IsActive}, SupportsRemoteControl={SupportsRemote}, SupportsMediaControl={SupportsMedia}",
-                        s.Id, s.DeviceName, s.Client, s.IsActive, s.SupportsRemoteControl, s.SupportsMediaControl);
-                }
-
-                // Try sending to ALL active sessions
-                var sessions = _sessionManager.Sessions
-                    .Where(s => s.IsActive)
-                    .ToList();
-
-                if (sessions.Count == 0)
-                {
-                    _logger.LogWarning("No active sessions to send DisplayMessage to");
-                    return;
-                }
-
-                // Warn about sessions without WebSocket (SupportsRemoteControl=false)
-                // These sessions cannot receive DisplayMessage - typically caused by blocked WebSocket at reverse proxy
-                var incapableSessions = sessions.Where(s => !s.SupportsRemoteControl).ToList();
-                if (incapableSessions.Count > 0)
-                {
-                    _logger.LogWarning(
-                        "WARNING: {Count} session(s) have SupportsRemoteControl=false and CANNOT receive notifications. " +
-                        "This is usually caused by WebSocket being blocked at the reverse proxy. " +
-                        "Affected devices: {Devices}",
-                        incapableSessions.Count,
-                        string.Join(", ", incapableSessions.Select(s => $"{s.DeviceName} ({s.Client})")));
-                }
-
-                var capableSessions = sessions.Where(s => s.SupportsRemoteControl).ToList();
-                _logger.LogInformation("Sessions with WebSocket support: {Count}, without: {Count2}",
-                    capableSessions.Count, incapableSessions.Count);
-
-                var yearText = year.HasValue ? $" ({year})" : string.Empty;
-                string header;
-                switch (mediaType)
-                {
-                    case "Movie":
-                        header = "New Movie Available";
-                        break;
-                    case "Series":
-                        header = "New Series Available";
-                        break;
-                    case "Episode":
-                        header = "New Episode Available";
-                        break;
-                    default:
-                        header = "New Media Available";
-                        break;
-                }
-
-                var text = $"{title}{yearText}";
-
-                var command = new GeneralCommand
-                {
-                    Name = GeneralCommandType.DisplayMessage
-                };
-                command.Arguments["Header"] = header;
-                command.Arguments["Text"] = text;
-                command.Arguments["TimeoutMs"] = "8000";
-
-                foreach (var session in sessions)
-                {
-                    try
-                    {
-                        await _sessionManager.SendGeneralCommand(null, session.Id, command, CancellationToken.None).ConfigureAwait(false);
-                        _logger.LogDebug("Sent DisplayMessage to session {SessionId} ({DeviceName})", session.Id, session.DeviceName);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "Failed to send DisplayMessage to session {SessionId}", session.Id);
-                    }
-                }
-
-                _logger.LogInformation("Sent DisplayMessage to {Count} active sessions for: {Title}", sessions.Count, title);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error sending DisplayMessage to sessions");
-            }
+                episode.Name,
+                _notificationQueue.Count);
         }
     }
 }

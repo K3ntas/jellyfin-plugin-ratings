@@ -393,7 +393,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="message">Optional custom message for the notification.</param>
         /// <returns>The created test notification.</returns>
         [HttpPost("Notifications/Test")]
-        public async Task<ActionResult<Models.NewMediaNotification>> SendTestNotification([FromQuery] string? message = null)
+        public ActionResult<Models.NewMediaNotification> SendTestNotification([FromQuery] string? message = null)
         {
             _logger.LogWarning("TEST NOTIFICATION ENDPOINT CALLED");
             try
@@ -558,116 +558,12 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 _repository.AddNotification(notification);
 
-                // Also send DisplayMessage to all active sessions for native app support
-                // For episodes, show series name with episode info instead of just episode title
-                string displayTitle = notification.Title;
-                if (notification.MediaType == "Episode" && !string.IsNullOrEmpty(notification.SeriesName))
-                {
-                    displayTitle = $"{notification.SeriesName} S{notification.SeasonNumber:D2}E{notification.EpisodeNumber:D2}";
-                }
-
-                await SendDisplayMessageToAllSessionsAsync(displayTitle, notification.MediaType, notification.Year).ConfigureAwait(false);
-
                 return Ok(notification);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending test notification");
                 return StatusCode(500, "Internal server error");
-            }
-        }
-
-        /// <summary>
-        /// Sends a DisplayMessage to all active sessions for native app support.
-        /// </summary>
-        private async Task SendDisplayMessageToAllSessionsAsync(string title, string mediaType, int? year)
-        {
-            try
-            {
-                _logger.LogWarning("SendDisplayMessageToAllSessionsAsync CALLED for: {Title}", title);
-                // Log ALL sessions for debugging
-                var allSessions = _sessionManager.Sessions.ToList();
-                _logger.LogWarning("TOTAL SESSIONS: {Count}", allSessions.Count);
-                foreach (var s in allSessions)
-                {
-                    _logger.LogWarning("SESSION: Id={Id}, Device={Device}, Client={Client}, IsActive={IsActive}, SupportsRemoteControl={SupportsRemote}, SupportsMediaControl={SupportsMedia}",
-                        s.Id, s.DeviceName, s.Client, s.IsActive, s.SupportsRemoteControl, s.SupportsMediaControl);
-                }
-
-                // Try sending to ALL active sessions, not just SupportsRemoteControl
-                var sessions = _sessionManager.Sessions
-                    .Where(s => s.IsActive)
-                    .ToList();
-
-                if (sessions.Count == 0)
-                {
-                    _logger.LogWarning("No active sessions to send DisplayMessage to");
-                    return;
-                }
-
-                // Warn about sessions without WebSocket (SupportsRemoteControl=false)
-                // These sessions cannot receive DisplayMessage - typically caused by blocked WebSocket at reverse proxy
-                var incapableSessions = sessions.Where(s => !s.SupportsRemoteControl).ToList();
-                if (incapableSessions.Count > 0)
-                {
-                    _logger.LogWarning(
-                        "WARNING: {Count} session(s) have SupportsRemoteControl=false and CANNOT receive notifications. " +
-                        "This is usually caused by WebSocket being blocked at the reverse proxy. " +
-                        "Affected devices: {Devices}",
-                        incapableSessions.Count,
-                        string.Join(", ", incapableSessions.Select(s => $"{s.DeviceName} ({s.Client})")));
-                }
-
-                var capableSessions = sessions.Where(s => s.SupportsRemoteControl).ToList();
-                _logger.LogWarning("Sessions with WebSocket support: {Count}, without: {Count2}",
-                    capableSessions.Count, incapableSessions.Count);
-
-                var yearText = year.HasValue ? $" ({year})" : string.Empty;
-                string header;
-                switch (mediaType)
-                {
-                    case "Movie":
-                        header = "New Movie Available";
-                        break;
-                    case "Series":
-                        header = "New Series Available";
-                        break;
-                    case "Episode":
-                        header = "New Episode Available";
-                        break;
-                    default:
-                        header = "Notification";
-                        break;
-                }
-
-                var text = $"{title}{yearText}";
-
-                var command = new MediaBrowser.Model.Session.GeneralCommand
-                {
-                    Name = MediaBrowser.Model.Session.GeneralCommandType.DisplayMessage
-                };
-                command.Arguments["Header"] = header;
-                command.Arguments["Text"] = text;
-                command.Arguments["TimeoutMs"] = "8000";
-
-                foreach (var session in sessions)
-                {
-                    try
-                    {
-                        await _sessionManager.SendGeneralCommand(null, session.Id, command, CancellationToken.None).ConfigureAwait(false);
-                        _logger.LogDebug("Sent DisplayMessage to session {SessionId} ({DeviceName})", session.Id, session.DeviceName);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "Failed to send DisplayMessage to session {SessionId}", session.Id);
-                    }
-                }
-
-                _logger.LogInformation("Sent DisplayMessage to {Count} active sessions for: {Title}", sessions.Count, title);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error sending DisplayMessage to sessions");
             }
         }
 
