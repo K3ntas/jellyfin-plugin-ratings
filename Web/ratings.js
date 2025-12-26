@@ -3818,9 +3818,16 @@
                     icon = '🎬';
                 } else if (notification.MediaType === 'Episode') {
                     const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : 'Series';
-                    const episodeNum = notification.EpisodeNumber || '?';
                     typeLabel = seriesName + yearText;
-                    titleText = `Episode ${episodeNum} is available`;
+
+                    // Handle grouped episode notifications
+                    if (notification.EpisodeNumbers && notification.EpisodeNumbers.length > 1) {
+                        const episodeDisplay = this.formatEpisodeRange(notification.EpisodeNumbers);
+                        titleText = `New episodes available: ${episodeDisplay}`;
+                    } else {
+                        const episodeNum = notification.EpisodeNumber || '?';
+                        titleText = `Episode ${episodeNum} is available`;
+                    }
                     icon = '📺';
                 } else {
                     typeLabel = 'New Series Available';
@@ -3869,6 +3876,32 @@
             setTimeout(() => {
                 this.hideNotification(notifEl);
             }, 8000);
+        },
+
+        /**
+         * Format episode numbers into a readable range (e.g., "4-8" or "1, 3, 5")
+         */
+        formatEpisodeRange: function (episodeNumbers) {
+            if (!episodeNumbers || episodeNumbers.length === 0) return '';
+            if (episodeNumbers.length === 1) return episodeNumbers[0].toString();
+
+            // Sort episodes
+            const sorted = [...episodeNumbers].sort((a, b) => a - b);
+
+            // Check if consecutive
+            let isConsecutive = true;
+            for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i] !== sorted[i - 1] + 1) {
+                    isConsecutive = false;
+                    break;
+                }
+            }
+
+            if (isConsecutive) {
+                return `${sorted[0]}-${sorted[sorted.length - 1]}`;
+            } else {
+                return sorted.join(', ');
+            }
         },
 
         /**

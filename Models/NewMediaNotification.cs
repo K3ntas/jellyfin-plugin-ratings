@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -43,9 +44,14 @@ namespace Jellyfin.Plugin.Ratings.Models
         public int? SeasonNumber { get; set; }
 
         /// <summary>
-        /// Gets or sets the episode number (for episodes).
+        /// Gets or sets the episode number (for single episodes).
         /// </summary>
         public int? EpisodeNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of episode numbers (for grouped episode notifications).
+        /// </summary>
+        public List<int>? EpisodeNumbers { get; set; }
 
         /// <summary>
         /// Gets or sets the image URL for the media.
