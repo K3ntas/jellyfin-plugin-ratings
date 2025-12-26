@@ -627,28 +627,19 @@
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                 }
 
-                /* Mobile Responsive for Notification Toggle - LEFT of search */
+                /* Mobile Responsive for Notification Toggle - LEFT of Request button */
                 @media screen and (max-width: 925px) {
                     #notificationToggle {
-                        left: 6px !important;
-                        right: auto !important;
+                        left: auto !important;
+                        right: 170px !important;
                         padding: 8px 12px !important;
-                    }
-
-                    #headerSearchField {
-                        left: 95px !important;
-                        right: auto !important;
                     }
                 }
 
                 @media screen and (max-width: 600px) {
                     #notificationToggle {
-                        left: 6px !important;
+                        right: 150px !important;
                         padding: 6px 10px !important;
-                    }
-
-                    #headerSearchField {
-                        left: 80px !important;
                     }
 
                     #notificationToggleSwitch {
