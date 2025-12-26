@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.159.0",
+        "changelog": "Fixed notification toggle position - now correctly placed between search field and request button.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.159.0/jellyfin-plugin-ratings_1.0.159.0.zip",
+        "checksum": "57dd6d537b65feb6822c4c5f8b5b9eb4",
+        "timestamp": "2025-12-27T01:00:00Z"
+      },
+      {
         "version": "1.0.158.0",
         "changelog": "Added notification toggle slider in header near search field. Users can enable/disable notifications. Responsive design.",
         "targetAbi": "10.11.0.0",
