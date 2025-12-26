@@ -665,6 +665,15 @@
                     }
                 }
 
+                @media screen and (max-width: 470px) {
+                    #notificationToggle {
+                        position: absolute !important;
+                        top: 10px !important;
+                        right: 180px !important;
+                        padding: 6px 10px !important;
+                    }
+                }
+
                 /* Request Modal - Completely Isolated */
                 #requestMediaModal {
                     position: fixed !important;
