@@ -3819,7 +3819,8 @@
                 } else if (notification.MediaType === 'Episode') {
                     const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : 'Series';
                     const seasonNum = notification.SeasonNumber;
-                    const seasonText = seasonNum ? ` S${seasonNum.toString().padStart(2, '0')}` : '';
+                    const seasonText = (seasonNum !== null && seasonNum !== undefined && seasonNum > 0)
+                        ? ` S${seasonNum.toString().padStart(2, '0')}` : '';
                     typeLabel = seriesName + seasonText + yearText;
 
                     // Handle grouped episode notifications
@@ -3828,7 +3829,10 @@
                         titleText = `New episodes: ${episodeDisplay}`;
                     } else {
                         const episodeNum = notification.EpisodeNumber;
-                        titleText = episodeNum ? `Episode ${episodeNum} is available` : 'New episode available';
+                        // Check for valid episode number (not null, not undefined, not 0)
+                        titleText = (episodeNum !== null && episodeNum !== undefined && episodeNum > 0)
+                            ? `Episode ${episodeNum} is available`
+                            : 'New episode available';
                     }
                     icon = '📺';
                 } else {
