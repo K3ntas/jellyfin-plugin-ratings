@@ -52,8 +52,9 @@ namespace Jellyfin.Plugin.Ratings
         {
             _logger.LogInformation("NotificationService starting - subscribing to library events");
 
-            // Subscribe to library item added events
+            // Subscribe to library events - both Added and Updated to catch metadata completion
             _libraryManager.ItemAdded += OnItemAdded;
+            _libraryManager.ItemUpdated += OnItemUpdated;
 
             // Start queue processing timer - checks every 30 seconds
             _queueTimer = new Timer(ProcessNotificationQueue, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
@@ -68,6 +69,7 @@ namespace Jellyfin.Plugin.Ratings
 
             // Unsubscribe from events
             _libraryManager.ItemAdded -= OnItemAdded;
+            _libraryManager.ItemUpdated -= OnItemUpdated;
 
             // Stop timer
             _queueTimer?.Change(Timeout.Infinite, 0);
@@ -194,6 +196,56 @@ namespace Jellyfin.Plugin.Ratings
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error handling item added event");
+            }
+        }
+
+        /// <summary>
+        /// Handles item updated events - catches when metadata/images are added after initial item creation.
+        /// </summary>
+        private void OnItemUpdated(object? sender, ItemChangeEventArgs e)
+        {
+            try
+            {
+                // Check if notifications are enabled
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableNewMediaNotifications != true)
+                {
+                    return;
+                }
+
+                var item = e.Item;
+
+                // Skip if we've already notified about this item
+                if (_recentlyNotifiedItems.ContainsKey(item.Id))
+                {
+                    return;
+                }
+
+                // Only process movies, series, and episodes that now have images
+                if (item is Movie movie && movie.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                {
+                    _logger.LogDebug("Item updated with image, creating notification for movie: {Title}", movie.Name);
+                    CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
+                }
+                else if (item is Series series && series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                {
+                    _logger.LogDebug("Item updated with image, creating notification for series: {Title}", series.Name);
+                    CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
+                }
+                else if (item is Episode episode)
+                {
+                    var hasImage = episode.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ||
+                                   (episode.Series?.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ?? false);
+                    if (hasImage)
+                    {
+                        _logger.LogDebug("Item updated with image, creating notification for episode: {Title}", episode.Name);
+                        CreateEpisodeNotification(episode);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling item updated event");
             }
         }
 
