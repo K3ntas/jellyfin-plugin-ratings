@@ -23,6 +23,7 @@ namespace Jellyfin.Plugin.Ratings
         private readonly RatingsRepository _repository;
         private readonly ILogger<NotificationService> _logger;
         private readonly ConcurrentQueue<NewMediaNotification> _notificationQueue;
+        private readonly ConcurrentDictionary<Guid, DateTime> _recentlyNotifiedItems;
         private readonly Random _random;
         private Timer? _queueTimer;
         private bool _disposed;
@@ -42,6 +43,7 @@ namespace Jellyfin.Plugin.Ratings
             _repository = repository;
             _logger = logger;
             _notificationQueue = new ConcurrentQueue<NewMediaNotification>();
+            _recentlyNotifiedItems = new ConcurrentDictionary<Guid, DateTime>();
             _random = new Random();
         }
 
@@ -145,17 +147,47 @@ namespace Jellyfin.Plugin.Ratings
 
                 var item = e.Item;
 
-                // Notify for movies, series, and episodes
+                // Skip if we've already notified about this item recently (within 1 hour)
+                if (_recentlyNotifiedItems.TryGetValue(item.Id, out var notifiedAt))
+                {
+                    if (DateTime.UtcNow - notifiedAt < TimeSpan.FromHours(1))
+                    {
+                        _logger.LogDebug("Skipping duplicate notification for item {ItemId} - already notified at {Time}", item.Id, notifiedAt);
+                        return;
+                    }
+                    // Remove old entry
+                    _recentlyNotifiedItems.TryRemove(item.Id, out _);
+                }
+
+                // Notify for movies, series, and episodes - but only if they have an image (metadata complete)
                 if (item is Movie movie)
                 {
+                    if (!movie.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                    {
+                        _logger.LogDebug("Skipping notification for movie '{Title}' - no primary image yet", movie.Name);
+                        return;
+                    }
                     CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
                 }
                 else if (item is Series series)
                 {
+                    if (!series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
+                    {
+                        _logger.LogDebug("Skipping notification for series '{Title}' - no primary image yet", series.Name);
+                        return;
+                    }
                     CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
                 }
                 else if (item is Episode episode)
                 {
+                    // For episodes, check if either episode or series has an image
+                    var hasImage = episode.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ||
+                                   (episode.Series?.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ?? false);
+                    if (!hasImage)
+                    {
+                        _logger.LogDebug("Skipping notification for episode '{Title}' - no primary image yet", episode.Name);
+                        return;
+                    }
                     CreateEpisodeNotification(episode);
                 }
             }
@@ -205,6 +237,10 @@ namespace Jellyfin.Plugin.Ratings
 
             // Queue notification for delayed release
             _notificationQueue.Enqueue(notification);
+
+            // Track this item to prevent duplicate notifications
+            _recentlyNotifiedItems[itemId] = DateTime.UtcNow;
+
             _logger.LogInformation("Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}", mediaType, cleanedTitle, year, _notificationQueue.Count);
         }
 
@@ -242,6 +278,10 @@ namespace Jellyfin.Plugin.Ratings
 
             // Queue notification for delayed release
             _notificationQueue.Enqueue(notification);
+
+            // Track this item to prevent duplicate notifications
+            _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
+
             _logger.LogInformation(
                 "Queued notification for new Episode: '{SeriesName}' S{Season:D2}E{Episode:D2} - '{Title}'. Queue size: {QueueSize}",
                 cleanedSeriesName,
