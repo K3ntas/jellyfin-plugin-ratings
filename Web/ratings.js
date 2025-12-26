@@ -549,7 +549,7 @@
                 #notificationToggle {
                     position: absolute !important;
                     top: 8px;
-                    right: 260px !important;
+                    right: 365px !important;
                     z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
