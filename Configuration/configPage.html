@@ -64,6 +64,26 @@
                             </div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableNewMediaNotifications" type="checkbox" is="emby-checkbox" />
+                                <span>Enable New Media Notifications</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show browser notifications when new movies, series, or episodes are added to the library.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableEpisodeGrouping" type="checkbox" is="emby-checkbox" />
+                                <span>Group Episode Notifications</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When multiple episodes are added at once, show a single notification like "Episodes 4-8" instead of individual notifications for each episode.
+                            </div>
+                        </div>
+
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -88,6 +108,8 @@
                     document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
+                    document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
+                    document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -103,6 +125,8 @@
                     config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
+                    config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
+                    config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

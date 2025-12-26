@@ -19,6 +19,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             EnableNetflixView = false;
             EnableRequestButton = true;
             EnableNewMediaNotifications = true;
+            EnableEpisodeGrouping = true;
         }
 
         /// <summary>
@@ -55,5 +56,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether new media notifications are enabled.
         /// </summary>
         public bool EnableNewMediaNotifications { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether episode notifications should be grouped.
+        /// When enabled, multiple episodes added at once show as "Episodes 4-8" instead of individual notifications.
+        /// </summary>
+        public bool EnableEpisodeGrouping { get; set; }
     }
 }

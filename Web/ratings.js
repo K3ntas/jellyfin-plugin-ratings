@@ -3818,15 +3818,17 @@
                     icon = '🎬';
                 } else if (notification.MediaType === 'Episode') {
                     const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : 'Series';
-                    typeLabel = seriesName + yearText;
+                    const seasonNum = notification.SeasonNumber;
+                    const seasonText = seasonNum ? ` S${seasonNum.toString().padStart(2, '0')}` : '';
+                    typeLabel = seriesName + seasonText + yearText;
 
                     // Handle grouped episode notifications
                     if (notification.EpisodeNumbers && notification.EpisodeNumbers.length > 1) {
                         const episodeDisplay = this.formatEpisodeRange(notification.EpisodeNumbers);
-                        titleText = `New episodes available: ${episodeDisplay}`;
+                        titleText = `New episodes: ${episodeDisplay}`;
                     } else {
-                        const episodeNum = notification.EpisodeNumber || '?';
-                        titleText = `Episode ${episodeNum} is available`;
+                        const episodeNum = notification.EpisodeNumber;
+                        titleText = episodeNum ? `Episode ${episodeNum} is available` : 'New episode available';
                     }
                     icon = '📺';
                 } else {

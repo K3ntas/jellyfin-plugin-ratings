@@ -316,6 +316,7 @@ namespace Jellyfin.Plugin.Ratings
 
         /// <summary>
         /// Creates a pending episode entry for batching. Episodes are grouped by series+season.
+        /// If grouping is disabled, creates individual notifications immediately.
         /// </summary>
         private void CreateEpisodeNotification(Episode episode)
         {
@@ -331,8 +332,40 @@ namespace Jellyfin.Plugin.Ratings
             }
 
             var cleanedSeriesName = CleanTitle(episode.SeriesName);
+            var cleanedTitle = CleanTitle(episode.Name);
             var seasonNumber = episode.ParentIndexNumber ?? 0;
             var episodeNumber = episode.IndexNumber ?? 0;
+
+            // Check if episode grouping is enabled
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableEpisodeGrouping != true)
+            {
+                // Grouping disabled - create individual notification immediately
+                var notification = new NewMediaNotification
+                {
+                    ItemId = episode.Id,
+                    Title = cleanedTitle,
+                    MediaType = "Episode",
+                    Year = episode.ProductionYear ?? episode.PremiereDate?.Year,
+                    SeriesName = cleanedSeriesName,
+                    SeasonNumber = seasonNumber,
+                    EpisodeNumber = episodeNumber,
+                    ImageUrl = imageUrl,
+                    CreatedAt = DateTime.UtcNow,
+                    IsTest = false
+                };
+
+                _notificationQueue.Enqueue(notification);
+                _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
+
+                _logger.LogInformation(
+                    "Queued individual episode notification: '{SeriesName}' S{Season:D2}E{Episode:D2}. Queue size: {QueueSize}",
+                    cleanedSeriesName,
+                    seasonNumber,
+                    episodeNumber,
+                    _notificationQueue.Count);
+                return;
+            }
 
             // Create batch key: SeriesName|SeasonNumber
             var batchKey = $"{cleanedSeriesName}|{seasonNumber}";
