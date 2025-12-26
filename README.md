@@ -232,7 +232,11 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.148.0 (Current)
+### 1.0.149.0 (Current)
+- Fix duplicate notifications: only notify when image/metadata is ready
+- Prevent same item from being notified twice within 1 hour
+
+### 1.0.148.0
 - Clean titles: automatically removes IMDB IDs like `[tt14364480]` from notification titles
 
 ### 1.0.147.0
