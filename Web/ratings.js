@@ -630,16 +630,19 @@
                 /* Mobile Responsive for Notification Toggle - LEFT of Request button */
                 @media screen and (max-width: 925px) {
                     #notificationToggle {
+                        position: absolute !important;
+                        top: 55px !important;
                         left: auto !important;
-                        right: 170px !important;
-                        padding: 8px 12px !important;
+                        right: 150px !important;
+                        padding: 8px 10px !important;
                     }
                 }
 
                 @media screen and (max-width: 600px) {
                     #notificationToggle {
+                        top: 55px !important;
                         right: 150px !important;
-                        padding: 6px 10px !important;
+                        padding: 6px 8px !important;
                     }
 
                     #notificationToggleSwitch {
