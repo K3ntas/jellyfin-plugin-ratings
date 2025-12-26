@@ -23,6 +23,9 @@
             // Initialize search field in header
             this.initSearchField();
 
+            // Initialize notification toggle in header
+            this.initNotificationToggle();
+
             // Initialize responsive scaling
             this.updateResponsiveScaling();
 
@@ -539,6 +542,100 @@
                     #headerSearchIcon {
                         font-size: 18px !important;
                         margin-right: 8px !important;
+                    }
+                }
+
+                /* Notification Toggle Styles */
+                #notificationToggle {
+                    position: absolute !important;
+                    top: 8px;
+                    right: 260px !important;
+                    z-index: 999998 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    background: rgba(60, 60, 60, 0.9) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 25px !important;
+                    padding: 8px 14px !important;
+                    transition: all 0.3s ease !important;
+                    cursor: pointer !important;
+                    gap: 8px !important;
+                }
+
+                #notificationToggle:hover {
+                    background: rgba(70, 70, 70, 0.95) !important;
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                }
+
+                #notificationToggle.hidden {
+                    display: none !important;
+                }
+
+                #notificationToggleIcon {
+                    font-size: 16px !important;
+                    opacity: 0.9 !important;
+                }
+
+                #notificationToggleSwitch {
+                    position: relative !important;
+                    width: 36px !important;
+                    height: 20px !important;
+                    background: rgba(100, 100, 100, 0.8) !important;
+                    border-radius: 10px !important;
+                    transition: background 0.3s ease !important;
+                }
+
+                #notificationToggleSwitch.enabled {
+                    background: rgba(0, 164, 220, 0.9) !important;
+                }
+
+                #notificationToggleSwitch::after {
+                    content: '' !important;
+                    position: absolute !important;
+                    top: 2px !important;
+                    left: 2px !important;
+                    width: 16px !important;
+                    height: 16px !important;
+                    background: #fff !important;
+                    border-radius: 50% !important;
+                    transition: transform 0.3s ease !important;
+                }
+
+                #notificationToggleSwitch.enabled::after {
+                    transform: translateX(16px) !important;
+                }
+
+                /* Mobile Responsive for Notification Toggle */
+                @media screen and (max-width: 925px) {
+                    #notificationToggle {
+                        left: 170px !important;
+                        right: auto !important;
+                        padding: 8px 12px !important;
+                    }
+                }
+
+                @media screen and (max-width: 600px) {
+                    #notificationToggle {
+                        left: 140px !important;
+                        padding: 6px 10px !important;
+                    }
+
+                    #notificationToggleSwitch {
+                        width: 32px !important;
+                        height: 18px !important;
+                    }
+
+                    #notificationToggleSwitch::after {
+                        width: 14px !important;
+                        height: 14px !important;
+                    }
+
+                    #notificationToggleSwitch.enabled::after {
+                        transform: translateX(14px) !important;
+                    }
+
+                    #notificationToggleIcon {
+                        font-size: 14px !important;
                     }
                 }
 
@@ -2565,6 +2662,115 @@
         },
 
         /**
+         * Initialize notification toggle in header
+         */
+        initNotificationToggle: function () {
+            const self = this;
+            try {
+                // Check if already exists
+                if (document.getElementById('notificationToggle')) {
+                    return;
+                }
+
+                const createNotificationToggle = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('notificationToggle')) {
+                            return;
+                        }
+
+                        // Create toggle container
+                        const toggleContainer = document.createElement('div');
+                        toggleContainer.id = 'notificationToggle';
+                        toggleContainer.title = 'Toggle Notifications';
+
+                        // Create bell icon
+                        const bellIcon = document.createElement('span');
+                        bellIcon.id = 'notificationToggleIcon';
+
+                        // Create toggle switch
+                        const toggleSwitch = document.createElement('div');
+                        toggleSwitch.id = 'notificationToggleSwitch';
+
+                        // Get saved preference (default to enabled)
+                        const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
+                        const isEnabled = savedPref === null ? true : savedPref === 'true';
+
+                        // Update visual state
+                        const updateToggleState = (enabled) => {
+                            bellIcon.innerHTML = enabled ? '🔔' : '🔕';
+                            if (enabled) {
+                                toggleSwitch.classList.add('enabled');
+                            } else {
+                                toggleSwitch.classList.remove('enabled');
+                            }
+                            // Store in localStorage for this user
+                            localStorage.setItem('ratingsNotificationsEnabled', enabled.toString());
+                            // Also store in self for notification checking
+                            self.userNotificationsEnabled = enabled;
+                        };
+
+                        // Set initial state
+                        updateToggleState(isEnabled);
+                        self.userNotificationsEnabled = isEnabled;
+
+                        // Handle click
+                        toggleContainer.addEventListener('click', () => {
+                            const currentState = self.userNotificationsEnabled;
+                            updateToggleState(!currentState);
+                        });
+
+                        // Append elements
+                        toggleContainer.appendChild(bellIcon);
+                        toggleContainer.appendChild(toggleSwitch);
+
+                        // Append to header container
+                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
+                        if (headerContainer) {
+                            headerContainer.style.position = 'relative';
+                            headerContainer.appendChild(toggleContainer);
+                        } else {
+                            document.body.appendChild(toggleContainer);
+                        }
+
+                        // Hide during video playback and on login page
+                        setInterval(() => {
+                            try {
+                                const videoPlayer = document.querySelector('.videoPlayerContainer');
+                                const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+                                const isLoginPage = self.isOnLoginPage();
+
+                                if (isVideoPlaying || isLoginPage) {
+                                    toggleContainer.classList.add('hidden');
+                                } else {
+                                    toggleContainer.classList.remove('hidden');
+                                }
+                            } catch (err) {
+                                // Silently fail
+                            }
+                        }, 1000);
+
+                    } catch (err) {
+                        console.error('Error creating notification toggle:', err);
+                    }
+                };
+
+                // Try to create after a delay
+                setTimeout(createNotificationToggle, 1600);
+
+                // Also try on page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && !document.getElementById('notificationToggle')) {
+                        setTimeout(createNotificationToggle, 500);
+                    }
+                });
+
+            } catch (err) {
+                console.error('Notification toggle initialization failed:', err);
+            }
+        },
+
+        /**
          * Update dynamic responsive scaling based on window width
          */
         updateResponsiveScaling: function () {
@@ -3731,6 +3937,11 @@
          */
         checkForNewNotifications: function () {
             const self = this;
+
+            // Check if user has disabled notifications via toggle
+            if (this.userNotificationsEnabled === false) {
+                return;
+            }
 
             if (!window.ApiClient) {
                 console.log('RatingsPlugin: No ApiClient available for notifications');
