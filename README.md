@@ -232,7 +232,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.149.0 (Current)
+### 1.0.150.0 (Current)
+- Fix notifications not showing in real-time
+- Now listens to both ItemAdded and ItemUpdated events
+- Catches metadata/image updates after initial item creation
+
+### 1.0.149.0
 - Fix duplicate notifications: only notify when image/metadata is ready
 - Prevent same item from being notified twice within 1 hour
 
