@@ -736,13 +736,18 @@
                     border-radius: 8px !important;
                     font-size: 13px !important;
                     white-space: nowrap !important;
-                    opacity: 0 !important;
-                    visibility: hidden !important;
+                    opacity: 0;
+                    visibility: hidden;
                     transition: opacity 0.2s ease, visibility 0.2s ease !important;
                     pointer-events: none !important;
                     z-index: 99999999 !important;
                     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                }
+
+                #notificationTooltip.show {
+                    opacity: 1 !important;
+                    visibility: visible !important;
                 }
 
                 /* Mobile Responsive for Notification Toggle - LEFT of Request button */
@@ -2949,13 +2954,11 @@
                             tooltip.style.top = (rect.bottom + 8) + 'px';
                             tooltip.style.left = (rect.left + rect.width / 2) + 'px';
                             tooltip.style.transform = 'translateX(-50%)';
-                            tooltip.style.opacity = '1';
-                            tooltip.style.visibility = 'visible';
+                            tooltip.classList.add('show');
                         });
 
                         toggleContainer.addEventListener('mouseleave', () => {
-                            tooltip.style.opacity = '0';
-                            tooltip.style.visibility = 'hidden';
+                            tooltip.classList.remove('show');
                         });
 
                         // Append to header container
