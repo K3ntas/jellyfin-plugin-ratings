@@ -8,11 +8,129 @@
     const RatingsPlugin = {
         pluginId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
         ratingsCache: {}, // Cache for card ratings to avoid duplicate API calls
+        currentLanguage: 'en', // Default language
+
+        // Translations for request modal
+        translations: {
+            en: {
+                requestMedia: 'Request Media',
+                manageRequests: 'Manage Media Requests',
+                requestDescription: '📬 Request Your Favorite Media!',
+                requestDescriptionText: 'Use this form to request movies or TV series that you\'d like to watch. The admin will review your request and add it to the library as soon as possible. You can track the status of all your requests below.',
+                mediaTitle: 'Media Title *',
+                mediaTitlePlaceholder: 'e.g., Breaking Bad, The Godfather',
+                type: 'Type *',
+                selectType: '-- Select Type --',
+                movie: 'Movie',
+                tvSeries: 'TV Series',
+                anime: 'Anime',
+                documentary: 'Documentary',
+                other: 'Other',
+                additionalNotes: 'Additional Notes',
+                notesPlaceholder: 'Season number, year, specific details, etc.',
+                submitRequest: 'Submit Request',
+                yourRequests: 'Your Requests',
+                loadingRequests: 'Loading your requests...',
+                noRequests: 'You haven\'t requested any media yet',
+                errorLoading: 'Error loading your requests',
+                notSpecified: 'Not specified',
+                noDetails: 'No details',
+                watchNow: '🎬 Watch Now',
+                noRequestsYet: 'No media requests yet',
+                pending: 'PENDING',
+                processing: 'PROCESSING',
+                done: 'DONE',
+                rejected: 'REJECTED',
+                titleRequired: 'Please enter a media title',
+                typeRequired: 'Please select a media type',
+                requestSubmitted: 'Request submitted successfully!',
+                requestFailed: 'Failed to submit request',
+                statusUpdated: 'Status updated',
+                statusUpdateFailed: 'Failed to update status',
+                addLink: '+ Link',
+                enterMediaLink: 'Enter media link:',
+                delete: 'Delete',
+                confirmDelete: 'Are you sure you want to delete this request?',
+                mediaLinkPlaceholder: 'Media link (paste URL when done)',
+                unknown: 'Unknown',
+                loading: 'Loading...'
+            },
+            lt: {
+                requestMedia: 'Užsakyti Mediją',
+                manageRequests: 'Tvarkyti Medijos Užklausas',
+                requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
+                requestDescriptionText: 'Naudokite šią formą, kad užsakytumėte filmus ar TV serialus, kuriuos norėtumėte žiūrėti. Administratorius peržiūrės jūsų užklausą ir pridės ją į biblioteką kuo greičiau. Žemiau galite sekti visų savo užklausų būseną.',
+                mediaTitle: 'Medijos Pavadinimas *',
+                mediaTitlePlaceholder: 'pvz., Breaking Bad, Krikštatėvis',
+                type: 'Tipas *',
+                selectType: '-- Pasirinkite Tipą --',
+                movie: 'Filmas',
+                tvSeries: 'TV Serialas',
+                anime: 'Anime',
+                documentary: 'Dokumentika',
+                other: 'Kita',
+                additionalNotes: 'Papildomos Pastabos',
+                notesPlaceholder: 'Sezono numeris, metai, specifinė informacija ir t.t.',
+                submitRequest: 'Pateikti Užklausą',
+                yourRequests: 'Jūsų Užklausos',
+                loadingRequests: 'Kraunamos jūsų užklausos...',
+                noRequests: 'Jūs dar neužsakėte jokios medijos',
+                errorLoading: 'Klaida kraunant jūsų užklausas',
+                notSpecified: 'Nenurodyta',
+                noDetails: 'Nėra detalių',
+                watchNow: '🎬 Žiūrėti Dabar',
+                noRequestsYet: 'Medijos užklausų dar nėra',
+                pending: 'LAUKIAMA',
+                processing: 'VYKDOMA',
+                done: 'ATLIKTA',
+                rejected: 'ATMESTA',
+                titleRequired: 'Įveskite medijos pavadinimą',
+                typeRequired: 'Pasirinkite medijos tipą',
+                requestSubmitted: 'Užklausa sėkmingai pateikta!',
+                requestFailed: 'Nepavyko pateikti užklausos',
+                statusUpdated: 'Būsena atnaujinta',
+                statusUpdateFailed: 'Nepavyko atnaujinti būsenos',
+                addLink: '+ Nuoroda',
+                enterMediaLink: 'Įveskite medijos nuorodą:',
+                delete: 'Ištrinti',
+                confirmDelete: 'Ar tikrai norite ištrinti šią užklausą?',
+                mediaLinkPlaceholder: 'Medijos nuoroda (įklijuokite URL kai baigta)',
+                unknown: 'Nežinoma',
+                loading: 'Kraunama...'
+            }
+        },
+
+        // Get translation for current language
+        t: function(key) {
+            return this.translations[this.currentLanguage]?.[key] || this.translations.en[key] || key;
+        },
+
+        // Set language and refresh modal if open
+        setLanguage: function(lang) {
+            this.currentLanguage = lang;
+            localStorage.setItem('ratingsPluginLanguage', lang);
+            // Update language toggle visual state
+            const toggle = document.getElementById('languageToggle');
+            if (toggle) {
+                toggle.checked = lang === 'lt';
+            }
+            // Update button text
+            const btnText = document.querySelector('#requestMediaBtn .btn-text');
+            if (btnText) {
+                btnText.textContent = this.t('requestMedia');
+            }
+        },
 
         /**
          * Initialize the ratings plugin
          */
         init: function () {
+            // Load saved language preference
+            const savedLang = localStorage.getItem('ratingsPluginLanguage');
+            if (savedLang && (savedLang === 'en' || savedLang === 'lt')) {
+                this.currentLanguage = savedLang;
+            }
+
             this.injectStyles();
             this.observeDetailPages();
             this.observeHomePageCards();
@@ -812,6 +930,67 @@
                 .request-submit-btn:hover {
                     transform: translateY(-2px) !important;
                     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+                }
+
+                /* Language Toggle Container */
+                .language-toggle-container {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 10px !important;
+                    margin-bottom: 15px !important;
+                    padding: 10px !important;
+                    background: rgba(255, 255, 255, 0.05) !important;
+                    border-radius: 8px !important;
+                }
+
+                .lang-label {
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #aaa !important;
+                    min-width: 20px !important;
+                    text-align: center !important;
+                }
+
+                .language-switch {
+                    position: relative !important;
+                    display: inline-block !important;
+                    width: 50px !important;
+                    height: 26px !important;
+                }
+
+                .language-switch input {
+                    opacity: 0 !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                }
+
+                .lang-slider {
+                    position: absolute !important;
+                    cursor: pointer !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    transition: 0.3s !important;
+                    border-radius: 26px !important;
+                }
+
+                .lang-slider:before {
+                    position: absolute !important;
+                    content: "" !important;
+                    height: 20px !important;
+                    width: 20px !important;
+                    left: 3px !important;
+                    bottom: 3px !important;
+                    background: white !important;
+                    transition: 0.3s !important;
+                    border-radius: 50% !important;
+                }
+
+                .language-switch input:checked + .lang-slider:before {
+                    transform: translateX(24px) !important;
                 }
 
                 /* Admin Request List - Compact Table Style */
@@ -2247,7 +2426,7 @@
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
                 btn.style.position = 'relative';
-                btn.innerHTML = '<span class="btn-text">Request Media</span>';
+                btn.innerHTML = '<span class="btn-text">' + self.t('requestMedia') + '</span>';
                 btn.setAttribute('type', 'button');
                 btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
 
@@ -3342,35 +3521,52 @@
             // Clear viewed requests when user opens modal
             this.markDoneRequestsAsViewed();
 
-            modalTitle.textContent = 'Request Media';
+            modalTitle.textContent = this.t('requestMedia');
             modalBody.innerHTML = `
+                <div class="language-toggle-container">
+                    <span class="lang-label">EN</span>
+                    <label class="language-switch">
+                        <input type="checkbox" id="languageToggle" ${this.currentLanguage === 'lt' ? 'checked' : ''}>
+                        <span class="lang-slider"></span>
+                    </label>
+                    <span class="lang-label">LT</span>
+                </div>
                 <div class="request-description">
-                    <strong>📬 Request Your Favorite Media!</strong><br>
-                    Use this form to request movies or TV series that you'd like to watch. The admin will review your request and add it to the library as soon as possible. You can track the status of all your requests below.
+                    <strong>${this.t('requestDescription')}</strong><br>
+                    ${this.t('requestDescriptionText')}
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaTitle">Media Title *</label>
-                    <input type="text" id="requestMediaTitle" placeholder="e.g., Breaking Bad, The Godfather" required />
+                    <label for="requestMediaTitle">${this.t('mediaTitle')}</label>
+                    <input type="text" id="requestMediaTitle" placeholder="${this.t('mediaTitlePlaceholder')}" required />
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaType">Type *</label>
+                    <label for="requestMediaType">${this.t('type')}</label>
                     <select id="requestMediaType" required>
-                        <option value="">-- Select Type --</option>
-                        <option value="Movie">Movie</option>
-                        <option value="TV Series">TV Series</option>
-                        <option value="Anime">Anime</option>
-                        <option value="Documentary">Documentary</option>
-                        <option value="Other">Other</option>
+                        <option value="">${this.t('selectType')}</option>
+                        <option value="Movie">${this.t('movie')}</option>
+                        <option value="TV Series">${this.t('tvSeries')}</option>
+                        <option value="Anime">${this.t('anime')}</option>
+                        <option value="Documentary">${this.t('documentary')}</option>
+                        <option value="Other">${this.t('other')}</option>
                     </select>
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">Additional Notes</label>
-                    <textarea id="requestMediaNotes" placeholder="Season number, year, specific details, etc."></textarea>
+                    <label for="requestMediaNotes">${this.t('additionalNotes')}</label>
+                    <textarea id="requestMediaNotes" placeholder="${this.t('notesPlaceholder')}"></textarea>
                 </div>
-                <button class="request-submit-btn" id="submitRequestBtn">Submit Request</button>
-                <div class="user-requests-title">Your Requests</div>
-                <div id="userRequestsList"><p style="text-align: center; color: #999;">Loading your requests...</p></div>
+                <button class="request-submit-btn" id="submitRequestBtn">${this.t('submitRequest')}</button>
+                <div class="user-requests-title">${this.t('yourRequests')}</div>
+                <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests')}</p></div>
             `;
+
+            // Attach language toggle handler
+            const langToggle = document.getElementById('languageToggle');
+            if (langToggle) {
+                langToggle.addEventListener('change', () => {
+                    self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                    self.loadUserInterface(); // Reload interface with new language
+                });
+            }
 
             // Attach submit handler
             const submitBtn = document.getElementById('submitRequestBtn');
@@ -3393,7 +3589,7 @@
 
             if (!listContainer) return;
 
-            listContainer.innerHTML = '<p style="text-align: center; color: #999;">Loading your requests...</p>';
+            listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loadingRequests') + '</p>';
 
             this.fetchAllRequests().then(requests => {
                 // Filter to only current user's requests
@@ -3401,26 +3597,27 @@
                 const userRequests = requests.filter(r => r.UserId === userId);
 
                 if (userRequests.length === 0) {
-                    listContainer.innerHTML = '<p style="text-align: center; color: #999;">You haven\'t requested any media yet</p>';
+                    listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + self.t('noRequests') + '</p>';
                     return;
                 }
 
                 let html = '<ul class="user-request-list">';
                 userRequests.forEach(request => {
                     // Format timestamps
-                    const createdAt = request.CreatedAt ? this.formatDateTime(request.CreatedAt) : '';
-                    const completedAt = request.CompletedAt ? this.formatDateTime(request.CompletedAt) : null;
+                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : '';
+                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
                     const hasLink = request.MediaLink && request.Status === 'done';
+                    const statusText = self.t(request.Status);
 
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
-                                <div class="user-request-item-title">${this.escapeHtml(request.Title)}</div>
-                                <div class="user-request-item-type">${request.Type ? this.escapeHtml(request.Type) : 'Not specified'}</div>
+                                <div class="user-request-item-title">${self.escapeHtml(request.Title)}</div>
+                                <div class="user-request-item-type">${request.Type ? self.escapeHtml(request.Type) : self.t('notSpecified')}</div>
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
-                                ${hasLink ? `<a href="${this.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">🎬 Watch Now</a>` : ''}
+                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                             </div>
-                            <span class="user-request-status ${request.Status}">${request.Status.toUpperCase()}</span>
+                            <span class="user-request-status ${request.Status}">${statusText}</span>
                         </li>
                     `;
                 });
@@ -3428,7 +3625,7 @@
                 listContainer.innerHTML = html;
             }).catch(err => {
                 console.error('Error loading user requests:', err);
-                listContainer.innerHTML = '<p style="text-align: center; color: #f44336;">Error loading your requests</p>';
+                listContainer.innerHTML = '<p style="text-align: center; color: #f44336;">' + self.t('errorLoading') + '</p>';
             });
         },
 
@@ -3436,22 +3633,42 @@
          * Load admin interface for managing requests
          */
         loadAdminInterface: function () {
+            const self = this;
             const modalBody = document.getElementById('requestMediaModalBody');
             const modalTitle = document.getElementById('requestMediaModalTitle');
 
             if (!modalBody || !modalTitle) return;
 
-            modalTitle.textContent = 'Manage Media Requests';
-            modalBody.innerHTML = '<p style="text-align: center; color: #999;">Loading requests...</p>';
+            modalTitle.textContent = this.t('manageRequests');
+            modalBody.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
 
             // Fetch all requests
             this.fetchAllRequests().then(requests => {
+                let html = `
+                    <div class="language-toggle-container">
+                        <span class="lang-label">EN</span>
+                        <label class="language-switch">
+                            <input type="checkbox" id="languageToggle" ${self.currentLanguage === 'lt' ? 'checked' : ''}>
+                            <span class="lang-slider"></span>
+                        </label>
+                        <span class="lang-label">LT</span>
+                    </div>
+                `;
+
                 if (requests.length === 0) {
-                    modalBody.innerHTML = '<div class="admin-request-empty">No media requests yet</div>';
+                    modalBody.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
+                    // Attach language toggle handler
+                    const langToggle = document.getElementById('languageToggle');
+                    if (langToggle) {
+                        langToggle.addEventListener('change', () => {
+                            self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                            self.loadAdminInterface();
+                        });
+                    }
                     return;
                 }
 
-                let html = '<ul class="admin-request-list">';
+                html += '<ul class="admin-request-list">';
                 requests.forEach(request => {
                     const details = [];
                     if (request.Type) details.push(request.Type);
@@ -3459,39 +3676,49 @@
                     const detailsText = details.join(' • ');
 
                     // Format timestamps
-                    const createdAt = request.CreatedAt ? this.formatDateTime(request.CreatedAt) : 'Unknown';
-                    const completedAt = request.CompletedAt ? this.formatDateTime(request.CompletedAt) : null;
+                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
+                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
                     const hasLink = request.MediaLink && request.Status === 'done';
+                    const statusText = self.t(request.Status);
 
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
-                            <div class="admin-request-title" title="${this.escapeHtml(request.Title)}">${this.escapeHtml(request.Title)}</div>
-                            <div class="admin-request-user" title="${this.escapeHtml(request.Username)}">${this.escapeHtml(request.Username)}</div>
-                            <div class="admin-request-details" title="${this.escapeHtml(detailsText)}">${this.escapeHtml(detailsText) || 'No details'}</div>
+                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
+                            <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
+                            <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
                             <div class="admin-request-time">
                                 <span>📅 ${createdAt}</span>
                                 ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
-                                ${hasLink ? `<a href="${this.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">🎬 Watch Now</a>` : ''}
+                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                             </div>
-                            <span class="admin-request-status-badge ${request.Status}">${request.Status.toUpperCase()}</span>
+                            <span class="admin-request-status-badge ${request.Status}">${statusText}</span>
                             <div class="admin-request-actions">
-                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">Pending</button>
-                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">Processing</button>
-                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">Done</button>
+                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
+                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
+                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
                                 <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
                             </div>
                             <select class="admin-status-select" data-request-id="${request.Id}">
-                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>Processing</option>
-                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>Done</option>
+                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
+                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
+                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
                             </select>
-                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="Media link (paste URL when done)" value="${this.escapeHtml(request.MediaLink || '')}">
-                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ Delete</button>
+                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
                         </li>
                     `;
                 });
                 html += '</ul>';
                 modalBody.innerHTML = html;
+
+                // Attach language toggle handler
+                const langToggle = document.getElementById('languageToggle');
+                if (langToggle) {
+                    langToggle.addEventListener('change', () => {
+                        self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                        self.loadAdminInterface();
+                    });
+                }
 
                 // Attach status change handlers for buttons (desktop)
                 const statusBtns = modalBody.querySelectorAll('.admin-status-btn');
@@ -3502,7 +3729,7 @@
                         // Get the media link if marking as done
                         const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
                         const mediaLink = linkInput ? linkInput.value.trim() : '';
-                        this.updateRequestStatus(requestId, newStatus, mediaLink);
+                        self.updateRequestStatus(requestId, newStatus, mediaLink);
                     });
                 });
 
@@ -3515,7 +3742,7 @@
                         // Get the media link if marking as done
                         const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
                         const mediaLink = linkInput ? linkInput.value.trim() : '';
-                        this.updateRequestStatus(requestId, newStatus, mediaLink);
+                        self.updateRequestStatus(requestId, newStatus, mediaLink);
                     });
                 });
 
@@ -3524,14 +3751,14 @@
                 deleteBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const requestId = e.target.getAttribute('data-request-id');
-                        if (confirm('Are you sure you want to delete this request? This cannot be undone.')) {
-                            this.deleteRequest(requestId);
+                        if (confirm(self.t('confirmDelete'))) {
+                            self.deleteRequest(requestId);
                         }
                     });
                 });
             }).catch(err => {
                 console.error('Error loading requests:', err);
-                modalBody.innerHTML = '<div class="admin-request-empty">Error loading requests</div>';
+                modalBody.innerHTML = '<div class="admin-request-empty">' + self.t('errorLoading') + '</div>';
             });
         },
 
@@ -3547,8 +3774,9 @@
 
                 if (!title) {
                     if (window.require) {
+                        const msg = self.t('titleRequired');
                         require(['toast'], function(toast) {
-                            toast('Please enter a media title');
+                            toast(msg);
                         });
                     }
                     return;
@@ -3556,8 +3784,9 @@
 
                 if (!type) {
                     if (window.require) {
+                        const msg = self.t('typeRequired');
                         require(['toast'], function(toast) {
-                            toast('Please select a media type');
+                            toast(msg);
                         });
                     }
                     return;
@@ -3593,8 +3822,9 @@
                 })
                 .then(data => {
                     if (window.require) {
+                        const msg = self.t('requestSubmitted');
                         require(['toast'], function(toast) {
-                            toast('Request submitted successfully!');
+                            toast(msg);
                         });
                     }
 
@@ -3609,8 +3839,9 @@
                 .catch(err => {
                     console.error('Error submitting request:', err);
                     if (window.require) {
+                        const msg = self.t('requestFailed');
                         require(['toast'], function(toast) {
-                            toast('Error submitting request');
+                            toast(msg);
                         });
                     }
                 });
@@ -3762,8 +3993,9 @@
                 })
                 .then(data => {
                     if (window.require) {
+                        const msg = self.t('statusUpdated') + ': ' + self.t(newStatus);
                         require(['toast'], function(toast) {
-                            toast('Status updated to: ' + newStatus);
+                            toast(msg);
                         });
                     }
 
@@ -3779,8 +4011,9 @@
                 .catch(err => {
                     console.error('Error updating status:', err);
                     if (window.require) {
+                        const msg = self.t('statusUpdateFailed');
                         require(['toast'], function(toast) {
-                            toast('Error updating status');
+                            toast(msg);
                         });
                     }
                 });
