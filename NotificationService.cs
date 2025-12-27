@@ -124,30 +124,55 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         private void ProcessNotificationQueue(object? state)
         {
-            if (_notificationQueue.TryDequeue(out var notification))
+            try
             {
-                // Update CreatedAt to NOW (when actually released), not when queued
-                // This ensures browser polling catches it with lastNotificationCheck
-                notification.CreatedAt = DateTime.UtcNow;
+                var queueCount = _notificationQueue.Count;
+                _logger.LogDebug("ProcessNotificationQueue called. Queue size: {QueueSize}", queueCount);
 
-                _repository.AddNotification(notification);
-                _logger.LogInformation(
-                    "Released queued notification: {MediaType} - '{Title}'",
-                    notification.MediaType,
-                    notification.Title);
+                if (_notificationQueue.TryDequeue(out var notification))
+                {
+                    // Update CreatedAt to NOW (when actually released), not when queued
+                    // This ensures browser/TV polling catches it with lastNotificationCheck
+                    notification.CreatedAt = DateTime.UtcNow;
 
-                // If there are more notifications, schedule next one with random delay (1-3 minutes)
-                if (!_notificationQueue.IsEmpty)
-                {
-                    var delayMs = _random.Next(60000, 180001); // 1-3 minutes in milliseconds
-                    _logger.LogInformation("Next notification will be released in {Seconds} seconds", delayMs / 1000);
-                    _queueTimer?.Change(delayMs, Timeout.Infinite);
+                    _repository.AddNotification(notification);
+                    _logger.LogInformation(
+                        "Released queued notification: {MediaType} - '{Title}'. Remaining in queue: {Remaining}",
+                        notification.MediaType,
+                        notification.Title,
+                        _notificationQueue.Count);
+
+                    // Schedule next notification with random delay (2-10 minutes)
+                    // This ensures ALL queued items get shown, one by one
+                    var remainingCount = _notificationQueue.Count;
+                    if (remainingCount > 0)
+                    {
+                        var delayMs = _random.Next(120000, 600001); // 2-10 minutes in milliseconds
+                        _logger.LogInformation(
+                            "Next notification will be released in {Minutes} minutes. {Remaining} items remaining in queue.",
+                            delayMs / 60000.0,
+                            remainingCount);
+                        _queueTimer?.Change(delayMs, Timeout.Infinite);
+                    }
+                    else
+                    {
+                        // Queue empty - resume regular checks to catch new items
+                        _logger.LogInformation("Notification queue empty. Resuming regular 30-second checks.");
+                        _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+                    }
                 }
-                else
+                else if (queueCount > 0)
                 {
-                    // Resume regular 30-second checks
-                    _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+                    // TryDequeue failed but queue had items - this shouldn't happen
+                    _logger.LogWarning("TryDequeue failed but queue reported {Count} items. Retrying in 10 seconds.", queueCount);
+                    _queueTimer?.Change(10000, Timeout.Infinite);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing notification queue. Queue size: {QueueSize}", _notificationQueue.Count);
+                // Ensure timer keeps running even after error
+                _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
             }
         }
 
@@ -167,10 +192,10 @@ namespace Jellyfin.Plugin.Ratings
 
                 var item = e.Item;
 
-                // Skip if we've already notified about this item recently (within 1 hour)
+                // Skip if we've already notified about this item recently (within 24 hours)
                 if (_recentlyNotifiedItems.TryGetValue(item.Id, out var notifiedAt))
                 {
-                    if (DateTime.UtcNow - notifiedAt < TimeSpan.FromHours(1))
+                    if (DateTime.UtcNow - notifiedAt < TimeSpan.FromHours(24))
                     {
                         _logger.LogDebug("Skipping duplicate notification for item {ItemId} - already notified at {Time}", item.Id, notifiedAt);
                         return;
@@ -308,10 +333,12 @@ namespace Jellyfin.Plugin.Ratings
             // Queue notification for delayed release
             _notificationQueue.Enqueue(notification);
 
-            // Track this item to prevent duplicate notifications
+            // Track this item to prevent duplicate notifications (24 hours)
             _recentlyNotifiedItems[itemId] = DateTime.UtcNow;
 
-            _logger.LogInformation("Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}", mediaType, cleanedTitle, year, _notificationQueue.Count);
+            _logger.LogInformation(
+                "Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}, Total tracked items: {TrackedCount}",
+                mediaType, cleanedTitle, year, _notificationQueue.Count, _recentlyNotifiedItems.Count);
         }
 
         /// <summary>
