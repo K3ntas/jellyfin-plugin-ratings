@@ -2,6 +2,10 @@
 
 A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays, a built-in media request system, and real-time new media notifications.
 
+**Issues & Support**: https://github.com/K3ntas/jellyfin-plugin-ratings/issues
+
+---
+
 ## Screenshots
 
 ### Rating Detail Page
@@ -119,7 +123,7 @@ The plugin includes a complete media request system that allows users to request
 - **Request caching** eliminates duplicate API calls
 - **Efficient DOM handling** prevents UI lag
 - **Minimal server load** even with thousands of media items
-- **Reduced logging** - server logs only errors, not every request
+- **Silent logging** - server only logs errors, not routine operations
 
 ---
 
@@ -219,7 +223,7 @@ The plugin includes a complete media request system that allows users to request
 - **Per-card overhead**: Single cached API request per unique item
 - **Memory usage**: Minimal (~1MB for 1000 cached ratings)
 - **Server load**: Negligible (lazy loading prevents request storms)
-- **Notification polling**: 10-second intervals, minimal logging
+- **Notification polling**: 10-second intervals, silent operation
 
 ---
 
@@ -256,10 +260,6 @@ dotnet build -c Release
 
 Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
-## Support
-
-**Issues**: https://github.com/K3ntas/jellyfin-plugin-ratings/issues
-
 ---
 
 ## Version History
@@ -277,12 +277,9 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ### 1.0.168.0
 - Language translation (EN/LT) for request modal
-- Button, form, status messages, and admin interface translated
 
 ### 1.0.167.0
-- Improved notification queue: 2-10 min random delay
-- 24-hour duplicate prevention
-- Better error handling for queued notifications
+- Improved notification queue: 2-10 min random delay, 24-hour duplicate prevention
 
 ### 1.0.165.0
 - Added 470px breakpoint for very small screens
@@ -294,21 +291,16 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 - Mobile toggle positioning improvements
 
 ### 1.0.160.0 - 1.0.162.0
-- Notification toggle moved left of search field
-- Added hover tooltip explaining toggle function
-- Mobile responsive positioning
+- Notification toggle moved left of search field with hover tooltip
 
 ### 1.0.158.0 - 1.0.159.0
 - Added notification toggle slider in header
-- Users can enable/disable notifications
 
 ### 1.0.153.0 - 1.0.157.0
-- Episode notifications show season number (S01)
-- Added settings for Enable Notifications and Group Episodes
-- Fixed season/series name extraction
+- Episode notifications with season number, settings for notifications
 
 ### 1.0.152.0
-- Episode grouping: multiple episodes show as single notification
+- Episode grouping: multiple episodes as single notification
 
 ### 1.0.151.0
 - Fix browser real-time notifications timing
@@ -317,19 +309,14 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 - Listen to both ItemAdded and ItemUpdated events
 
 ### 1.0.134.0 - 1.0.149.0
-- New media notifications system
-- Beautiful popup UI with poster images
-- Duplicate prevention and clean titles
-- Test notification button for admins
+- New media notifications system with popup UI
 
 ---
 
 ## Contributing
 
-This is a personal project created for the Jellyfin community. Bug reports and feature requests are welcome via GitHub Issues.
+Bug reports and feature requests are welcome via GitHub Issues.
 
 ## Acknowledgments
 
-Built for the Jellyfin community with love.
-
-Special thanks to the Jellyfin team for creating an amazing open-source media server platform.
+Built for the Jellyfin community. Special thanks to the Jellyfin team for creating an amazing open-source media server platform.
