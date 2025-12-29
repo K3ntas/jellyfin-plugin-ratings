@@ -264,9 +264,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.170.0 (Current)
+### 1.0.171.0 (Current)
+- Completely silent logging - no notification polling logs at all
+- Server only logs errors now
+
+### 1.0.170.0
 - Reduced server logging - notification polling no longer floods logs
-- Only logs when notifications are actually found
 - Removed verbose startup/shutdown banners
 
 ### 1.0.169.0

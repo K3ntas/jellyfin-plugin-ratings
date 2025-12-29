@@ -366,10 +366,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var notifications = _repository.GetNotificationsSince(sinceTime);
-                if (notifications.Count > 0)
-                {
-                    _logger.LogInformation("GetNotifications: since={Since}, found={Count} notifications", sinceTime.ToString("o"), notifications.Count);
-                }
                 return Ok(notifications);
             }
             catch (Exception ex)
