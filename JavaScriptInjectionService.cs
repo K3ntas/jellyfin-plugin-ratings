@@ -26,7 +26,6 @@ namespace Jellyfin.Plugin.Ratings
         {
             _logger = logger;
             _appPaths = appPaths;
-            _logger.LogWarning("==================== RATINGS PLUGIN: JavaScriptInjectionService CONSTRUCTOR CALLED ====================");
         }
 
         /// <summary>
@@ -36,25 +35,19 @@ namespace Jellyfin.Plugin.Ratings
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogWarning("==================== RATINGS PLUGIN: StartAsync CALLED ====================");
-            _logger.LogWarning("WebPath: {WebPath}", _appPaths.WebPath);
-
             return Task.Run(() =>
             {
                 try
                 {
-                    _logger.LogWarning("Ratings plugin JavaScript injection service started - RUNNING NOW");
-
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
                     CleanupOldInjection();
                     InjectRatingsScript();
-                    _logger.LogWarning("==================== RATINGS PLUGIN: INJECTION COMPLETED ====================");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "==================== RATINGS PLUGIN: INJECTION FAILED ====================");
+                    _logger.LogError(ex, "Ratings plugin JavaScript injection failed");
                 }
             }, cancellationToken);
         }
@@ -66,7 +59,6 @@ namespace Jellyfin.Plugin.Ratings
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Ratings plugin JavaScript injection service stopped.");
             return Task.CompletedTask;
         }
 
@@ -75,7 +67,6 @@ namespace Jellyfin.Plugin.Ratings
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
             if (!File.Exists(indexPath))
             {
-                _logger.LogWarning("index.html not found at: {Path}", indexPath);
                 return;
             }
 
@@ -91,7 +82,6 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     content = cleanupRegex.Replace(content, string.Empty);
                     File.WriteAllText(indexPath, content);
-                    _logger.LogInformation("Removed old Ratings plugin injection from index.html");
                 }
             }
             catch (Exception ex)
@@ -116,7 +106,6 @@ namespace Jellyfin.Plugin.Ratings
                 // Check if already injected (in case cleanup failed)
                 if (content.Contains("<!-- BEGIN Ratings Plugin -->", StringComparison.Ordinal))
                 {
-                    _logger.LogInformation("Ratings plugin script already injected.");
                     return;
                 }
 
@@ -130,7 +119,6 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     content = content.Replace("</body>", $"{injectionBlock}</body>", StringComparison.Ordinal);
                     File.WriteAllText(indexPath, content);
-                    _logger.LogInformation("Successfully injected Ratings plugin script into index.html");
                 }
                 else
                 {
@@ -139,7 +127,7 @@ namespace Jellyfin.Plugin.Ratings
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogError(ex, "Permission denied when trying to modify index.html. Please ensure Jellyfin has write permissions to the web directory.");
+                _logger.LogError(ex, "Permission denied when trying to modify index.html");
             }
             catch (Exception ex)
             {

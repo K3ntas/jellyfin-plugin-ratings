@@ -109,7 +109,6 @@ namespace Jellyfin.Plugin.Ratings.Data
                 {
                     existing.Rating = rating;
                     existing.UpdatedAt = DateTime.UtcNow;
-                    _logger.LogInformation("Updated rating for user {UserId} on item {ItemId}: {Rating}", userId, itemId, rating);
                     _ = SaveRatingsAsync();
                     return existing;
                 }
@@ -122,7 +121,6 @@ namespace Jellyfin.Plugin.Ratings.Data
                 };
 
                 _ratings[newRating.Id] = newRating;
-                _logger.LogInformation("Created rating for user {UserId} on item {ItemId}: {Rating}", userId, itemId, rating);
                 _ = SaveRatingsAsync();
                 return newRating;
             }
@@ -207,7 +205,6 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (existing != null)
                 {
                     _ratings.Remove(existing.Id);
-                    _logger.LogInformation("Deleted rating for user {UserId} on item {ItemId}", userId, itemId);
                     _ = SaveRatingsAsync();
                     return true;
                 }
@@ -274,7 +271,6 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 _mediaRequests[request.Id] = request;
-                _logger.LogInformation("Created media request {RequestId} by user {UserId} for '{Title}'", request.Id, request.UserId, request.Title);
                 _ = SaveMediaRequestsAsync();
                 return request;
             }
@@ -337,7 +333,6 @@ namespace Jellyfin.Plugin.Ratings.Data
                         request.MediaLink = string.Empty;
                     }
 
-                    _logger.LogInformation("Updated media request {RequestId} status to '{Status}'", requestId, status);
                     _ = SaveMediaRequestsAsync();
                     return request;
                 }
@@ -358,7 +353,6 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (_mediaRequests.ContainsKey(requestId))
                 {
                     _mediaRequests.Remove(requestId);
-                    _logger.LogInformation("Deleted media request {RequestId}", requestId);
                     _ = SaveMediaRequestsAsync();
                     return true;
                 }
@@ -378,7 +372,6 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 _notifications.Add(notification);
-                _logger.LogInformation("Added notification for '{Title}' ({MediaType})", notification.Title, notification.MediaType);
 
                 // Keep only last 100 notifications to prevent memory issues
                 while (_notifications.Count > 100)
@@ -427,7 +420,6 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 _notifications.Clear();
-                _logger.LogInformation("Cleared all notifications");
             }
         }
     }
