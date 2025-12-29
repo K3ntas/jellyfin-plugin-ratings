@@ -1,6 +1,6 @@
 # Jellyfin Ratings Plugin
 
-A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays and a built-in media request system.
+A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays, a built-in media request system, and real-time new media notifications.
 
 ## Screenshots
 
@@ -23,6 +23,10 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 ### Netflix-Style View
 ![Netflix-style genre rows](images/netflix-view.png)
 *Optional Netflix-style view with horizontal genre rows and smooth scrolling*
+
+### New Media Notifications
+![New media notification popup](images/notification-popup.png)
+*Real-time notifications when new movies or episodes are added to your library*
 
 ---
 
@@ -81,6 +85,16 @@ The plugin includes a complete media request system that allows users to request
 - **Optimized for large libraries** (tested with 15TB+ media collections)
 - **Non-intrusive design** that doesn't interfere with Jellyfin's UI
 
+### New Media Notifications
+- **Real-time notifications** when new movies, series, or episodes are added
+- **Beautiful popup UI** with media poster, title, and year
+- **Episode grouping** - multiple episodes show as single notification (e.g., "Episodes 4-8")
+- **Smart timing** - 2-10 minute random delay between notifications to avoid spam
+- **24-hour duplicate prevention** - same item won't notify twice
+- **Toggle control** - users can enable/disable notifications via header toggle
+- **Works during playback** - notifications appear even in fullscreen mode
+- **Fire TV/Android TV support** - native app notifications via DisplayMessage
+
 ### Media Request System
 - **Request Button** - Animated "Request Media" button in the header
 - **User Features**:
@@ -89,6 +103,7 @@ The plugin includes a complete media request system that allows users to request
   - Track request status (Pending → Processing → Done)
   - See timestamps for when requested and completed
   - "Watch Now" button when request is fulfilled with link
+  - Multi-language support (EN/LT)
 - **Admin Features**:
   - Notification badge showing pending request count
   - View all requests with user info and notes
@@ -104,6 +119,7 @@ The plugin includes a complete media request system that allows users to request
 - **Request caching** eliminates duplicate API calls
 - **Efficient DOM handling** prevents UI lag
 - **Minimal server load** even with thousands of media items
+- **Reduced logging** - server logs only errors, not every request
 
 ---
 
@@ -121,6 +137,7 @@ The plugin includes a complete media request system that allows users to request
 3. **Automatic Setup**
    - Plugin automatically injects rating UI on detail pages
    - Request Media button appears in the header
+   - Notification toggle appears near the search field
    - No manual configuration required
    - Works immediately after server restart
 
@@ -139,6 +156,12 @@ The plugin includes a complete media request system that allows users to request
 - **Average rating**: Shown as "X.X/10" with total count
 - **All user ratings**: Hover over stars to see detailed popup
 - **Card badges**: Rating badges appear on media thumbnails automatically
+
+### New Media Notifications
+- Notifications appear automatically when new content is added
+- Use the toggle switch in the header to enable/disable notifications
+- Episode notifications show series name with season (e.g., "SPOOKS S01 - Episodes 4-8")
+- Click notification to navigate to the media item
 
 ### Requesting Media (Users)
 1. Click the "Request Media" button in the header
@@ -170,6 +193,7 @@ The plugin includes a complete media request system that allows users to request
 - **Frontend**: Vanilla JavaScript (no dependencies)
 - **Storage**: JSON-based file storage in plugin data directory
 - **Authentication**: Jellyfin's built-in authentication system
+- **Notifications**: Library event subscription with queue-based delivery
 
 ### API Endpoints
 
@@ -178,6 +202,11 @@ The plugin includes a complete media request system that allows users to request
 - `GET /Ratings/Items/{itemId}/Stats` - Get rating statistics
 - `GET /Ratings/Items/{itemId}/DetailedRatings` - Get all user ratings
 - `DELETE /Ratings/Items/{itemId}/Rating` - Delete your rating
+
+#### Notifications
+- `GET /Ratings/Notifications?since={ISO8601}` - Get notifications since timestamp
+- `POST /Ratings/Notifications/Test` - Send test notification (admin only)
+- `GET /Ratings/Config` - Get plugin configuration
 
 #### Media Requests
 - `POST /Ratings/Requests` - Create new request
@@ -190,6 +219,7 @@ The plugin includes a complete media request system that allows users to request
 - **Per-card overhead**: Single cached API request per unique item
 - **Memory usage**: Minimal (~1MB for 1000 cached ratings)
 - **Server load**: Negligible (lazy loading prevents request storms)
+- **Notification polling**: 10-second intervals, minimal logging
 
 ---
 
@@ -210,11 +240,13 @@ dotnet build -c Release
 │   └── RatingsRepository.cs
 ├── Models/                 # Data models
 │   ├── Rating.cs
-│   └── MediaRequest.cs
+│   ├── MediaRequest.cs
+│   └── NewMediaNotification.cs
 ├── Web/                    # Frontend assets
 │   └── ratings.js         # Main client-side script
 ├── Configuration/          # Plugin config pages
 ├── images/                 # README screenshots
+├── NotificationService.cs  # Library event handler
 └── manifest.json          # Plugin catalog manifest
 ```
 
@@ -232,60 +264,60 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.151.0 (Current)
-- Fix browser real-time notifications
-- CreatedAt timestamp now set when notification is released, not when queued
-- This ensures browser polling catches notifications correctly
+### 1.0.170.0 (Current)
+- Reduced server logging - notification polling no longer floods logs
+- Only logs when notifications are actually found
+- Removed verbose startup/shutdown banners
+
+### 1.0.169.0
+- Fixed notification toggle hover tooltip
+
+### 1.0.168.0
+- Language translation (EN/LT) for request modal
+- Button, form, status messages, and admin interface translated
+
+### 1.0.167.0
+- Improved notification queue: 2-10 min random delay
+- 24-hour duplicate prevention
+- Better error handling for queued notifications
+
+### 1.0.165.0
+- Added 470px breakpoint for very small screens
+
+### 1.0.164.0
+- Added 590px breakpoint for smaller screens
+
+### 1.0.163.0
+- Mobile toggle positioning improvements
+
+### 1.0.160.0 - 1.0.162.0
+- Notification toggle moved left of search field
+- Added hover tooltip explaining toggle function
+- Mobile responsive positioning
+
+### 1.0.158.0 - 1.0.159.0
+- Added notification toggle slider in header
+- Users can enable/disable notifications
+
+### 1.0.153.0 - 1.0.157.0
+- Episode notifications show season number (S01)
+- Added settings for Enable Notifications and Group Episodes
+- Fixed season/series name extraction
+
+### 1.0.152.0
+- Episode grouping: multiple episodes show as single notification
+
+### 1.0.151.0
+- Fix browser real-time notifications timing
 
 ### 1.0.150.0
-- Fix notifications not showing in real-time
-- Now listens to both ItemAdded and ItemUpdated events
-- Catches metadata/image updates after initial item creation
+- Listen to both ItemAdded and ItemUpdated events
 
-### 1.0.149.0
-- Fix duplicate notifications: only notify when image/metadata is ready
-- Prevent same item from being notified twice within 1 hour
-
-### 1.0.148.0
-- Clean titles: automatically removes IMDB IDs like `[tt14364480]` from notification titles
-
-### 1.0.147.0
-- Removed test notification button from web UI
-- Use TV app (JellyPush) for testing notifications instead
-
-### 1.0.78.0
-- Added "Watch Now" button for admins on completed requests
-- Updated README with comprehensive Request Media documentation
-- Added new screenshots showing the request system
-
-### 1.0.77.0
-- Fixed button initialization with retry logic
-- Smarter login page detection
-- SPA navigation support
-
-### 1.0.76.0
-- Button hides on login/startup pages
-- Cache clears on logout and account switch
-
-### 1.0.75.0
-- Full request management: delete, timestamps, media links
-- "Watch Now" button for users when request fulfilled
-
-### 1.0.74.0
-- Mobile-friendly admin table with card layout
-- Dropdown status selector on mobile
-
-### 1.0.73.0
-- Animation fixes for shine effect
-
-### 1.0.70.0 - 1.0.72.0
-- Request Media button positioning and styling
-- Mobile responsive design
-- Badge notification system
-
-### 1.0.61.0
-- Production-ready ratings release
-- Optimized performance
+### 1.0.134.0 - 1.0.149.0
+- New media notifications system
+- Beautiful popup UI with poster images
+- Duplicate prevention and clean titles
+- Test notification button for admins
 
 ---
 
