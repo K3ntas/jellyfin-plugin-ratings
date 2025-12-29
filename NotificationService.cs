@@ -59,8 +59,6 @@ namespace Jellyfin.Plugin.Ratings
         /// <inheritdoc />
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("NotificationService starting - subscribing to library events");
-
             // Subscribe to library events - both Added and Updated to catch metadata completion
             _libraryManager.ItemAdded += OnItemAdded;
             _libraryManager.ItemUpdated += OnItemUpdated;
@@ -77,8 +75,6 @@ namespace Jellyfin.Plugin.Ratings
         /// <inheritdoc />
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("NotificationService stopping - unsubscribing from library events");
-
             // Unsubscribe from events
             _libraryManager.ItemAdded -= OnItemAdded;
             _libraryManager.ItemUpdated -= OnItemUpdated;
@@ -127,7 +123,6 @@ namespace Jellyfin.Plugin.Ratings
             try
             {
                 var queueCount = _notificationQueue.Count;
-                _logger.LogDebug("ProcessNotificationQueue called. Queue size: {QueueSize}", queueCount);
 
                 if (_notificationQueue.TryDequeue(out var notification))
                 {
@@ -136,11 +131,6 @@ namespace Jellyfin.Plugin.Ratings
                     notification.CreatedAt = DateTime.UtcNow;
 
                     _repository.AddNotification(notification);
-                    _logger.LogInformation(
-                        "Released queued notification: {MediaType} - '{Title}'. Remaining in queue: {Remaining}",
-                        notification.MediaType,
-                        notification.Title,
-                        _notificationQueue.Count);
 
                     // Schedule next notification with random delay (2-10 minutes)
                     // This ensures ALL queued items get shown, one by one
@@ -148,16 +138,11 @@ namespace Jellyfin.Plugin.Ratings
                     if (remainingCount > 0)
                     {
                         var delayMs = _random.Next(120000, 600001); // 2-10 minutes in milliseconds
-                        _logger.LogInformation(
-                            "Next notification will be released in {Minutes} minutes. {Remaining} items remaining in queue.",
-                            delayMs / 60000.0,
-                            remainingCount);
                         _queueTimer?.Change(delayMs, Timeout.Infinite);
                     }
                     else
                     {
                         // Queue empty - resume regular checks to catch new items
-                        _logger.LogInformation("Notification queue empty. Resuming regular 30-second checks.");
                         _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
                     }
                 }
@@ -170,7 +155,7 @@ namespace Jellyfin.Plugin.Ratings
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing notification queue. Queue size: {QueueSize}", _notificationQueue.Count);
+                _logger.LogError(ex, "Error processing notification queue");
                 // Ensure timer keeps running even after error
                 _queueTimer?.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
             }
@@ -335,10 +320,6 @@ namespace Jellyfin.Plugin.Ratings
 
             // Track this item to prevent duplicate notifications (24 hours)
             _recentlyNotifiedItems[itemId] = DateTime.UtcNow;
-
-            _logger.LogInformation(
-                "Queued notification for new {MediaType}: '{Title}' ({Year}). Queue size: {QueueSize}, Total tracked items: {TrackedCount}",
-                mediaType, cleanedTitle, year, _notificationQueue.Count, _recentlyNotifiedItems.Count);
         }
 
         /// <summary>
@@ -375,15 +356,6 @@ namespace Jellyfin.Plugin.Ratings
                 ?? (parentItem as MediaBrowser.Controller.Entities.TV.Season)?.IndexNumber;
             var episodeNumber = episode.IndexNumber;
 
-            _logger.LogInformation(
-                "Episode data: SeriesName='{SeriesName}', Season={Season}, Episode={Episode}, ParentIndexNumber={ParentIdx}, SeasonIdx={SeasonIdx}, ParentType={ParentType}",
-                seriesName,
-                seasonNumber,
-                episodeNumber,
-                episode.ParentIndexNumber,
-                episode.Season?.IndexNumber,
-                parentItem?.GetType().Name);
-
             // Check if episode grouping is enabled
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableEpisodeGrouping != true)
@@ -405,13 +377,6 @@ namespace Jellyfin.Plugin.Ratings
 
                 _notificationQueue.Enqueue(notification);
                 _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
-
-                _logger.LogInformation(
-                    "Queued individual episode notification: '{SeriesName}' S{Season}E{Episode}. Queue size: {QueueSize}",
-                    cleanedSeriesName,
-                    seasonNumber?.ToString("D2") ?? "?",
-                    episodeNumber?.ToString("D2") ?? "?",
-                    _notificationQueue.Count);
                 return;
             }
 
@@ -448,13 +413,6 @@ namespace Jellyfin.Plugin.Ratings
 
             // Track this item to prevent duplicate notifications
             _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
-
-            _logger.LogInformation(
-                "Added episode to pending batch: '{SeriesName}' S{Season:D2}E{Episode:D2}. Batch key: {BatchKey}",
-                cleanedSeriesName,
-                seasonNumber,
-                episodeNumber,
-                batchKey);
         }
 
         /// <summary>
@@ -525,14 +483,6 @@ namespace Jellyfin.Plugin.Ratings
 
             // Queue the grouped notification for release
             _notificationQueue.Enqueue(notification);
-
-            var episodeDisplay = FormatEpisodeRange(episodeNumbers);
-            _logger.LogInformation(
-                "Created grouped notification: '{SeriesName}' S{Season:D2} {Episodes}. Queue size: {QueueSize}",
-                first.SeriesName,
-                first.SeasonNumber,
-                episodeDisplay,
-                _notificationQueue.Count);
         }
 
         /// <summary>

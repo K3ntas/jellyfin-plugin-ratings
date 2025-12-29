@@ -50,11 +50,10 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     CleanupOldInjection();
                     InjectRatingsScript();
-                    _logger.LogInformation("Ratings plugin JavaScript injection completed successfully.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to inject ratings plugin JavaScript.");
+                    _logger.LogError(ex, "Failed to inject ratings plugin JavaScript");
                 }
             }, cancellationToken);
         }
@@ -70,7 +69,6 @@ namespace Jellyfin.Plugin.Ratings
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
             if (!File.Exists(indexPath))
             {
-                _logger.LogWarning("index.html not found at: {Path}", indexPath);
                 return;
             }
 
@@ -86,7 +84,6 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     content = cleanupRegex.Replace(content, string.Empty);
                     File.WriteAllText(indexPath, content);
-                    _logger.LogInformation("Removed old Ratings plugin injection from index.html");
                 }
             }
             catch (Exception ex)
@@ -111,7 +108,6 @@ namespace Jellyfin.Plugin.Ratings
                 // Check if already injected (in case cleanup failed)
                 if (content.Contains("<!-- BEGIN Ratings Plugin -->"))
                 {
-                    _logger.LogInformation("Ratings plugin script already injected.");
                     return;
                 }
 
@@ -125,7 +121,6 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     content = content.Replace("</body>", $"{injectionBlock}</body>");
                     File.WriteAllText(indexPath, content);
-                    _logger.LogInformation("Successfully injected Ratings plugin script into index.html");
                 }
                 else
                 {
@@ -134,7 +129,7 @@ namespace Jellyfin.Plugin.Ratings
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogError(ex, "Permission denied when trying to modify index.html. Please ensure Jellyfin has write permissions to the web directory.");
+                _logger.LogError(ex, "Permission denied when trying to modify index.html");
             }
             catch (Exception ex)
             {

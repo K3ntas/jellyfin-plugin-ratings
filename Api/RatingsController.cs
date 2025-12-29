@@ -79,30 +79,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                         return Unauthorized("No authentication header provided");
                     }
 
-                    _logger.LogInformation("Auth header: {Header}", authHeader);
-
                     // Extract token from header
                     var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
                     if (!tokenMatch.Success)
                     {
-                        _logger.LogError("Could not extract token from header");
                         return Unauthorized("Invalid authentication header format");
                     }
 
                     var token = tokenMatch.Groups[1].Value;
-                    _logger.LogInformation("Extracted token: {Token}", token.Substring(0, Math.Min(10, token.Length)) + "...");
 
                     // Get session by authentication token
                     var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
                     var session = sessionTask.Result;
                     if (session == null)
                     {
-                        _logger.LogError("No active session found for token");
                         return Unauthorized("Invalid or expired token");
                     }
 
                     userId = session.UserId;
-                    _logger.LogInformation("Found user from session: {UserId}", userId);
                 }
 
                 if (userId == Guid.Empty)
@@ -170,14 +164,11 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     if (!string.IsNullOrEmpty(authHeader))
                     {
-                        _logger.LogInformation("GetStats - Auth header: {Header}", authHeader);
-
                         // Extract token from header
                         var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            _logger.LogInformation("GetStats - Extracted token: {Token}", token.Substring(0, Math.Min(10, token.Length)) + "...");
 
                             // Get session by authentication token
                             var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
@@ -185,14 +176,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                             if (session != null)
                             {
                                 userId = session.UserId;
-                                _logger.LogInformation("GetStats - Found user from session: {UserId}", userId);
                             }
                         }
                     }
                 }
 
                 var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null);
-                _logger.LogInformation("GetStats - Returning stats for item {ItemId}, userId: {UserId}, UserRating: {UserRating}", itemId, userId, stats.UserRating);
 
                 return Ok(stats);
             }
@@ -377,7 +366,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var notifications = _repository.GetNotificationsSince(sinceTime);
-                _logger.LogInformation("GetNotifications: since={Since}, found={Count} notifications", sinceTime.ToString("o"), notifications.Count);
+                if (notifications.Count > 0)
+                {
+                    _logger.LogInformation("GetNotifications: since={Since}, found={Count} notifications", sinceTime.ToString("o"), notifications.Count);
+                }
                 return Ok(notifications);
             }
             catch (Exception ex)
@@ -395,7 +387,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpPost("Notifications/Test")]
         public ActionResult<Models.NewMediaNotification> SendTestNotification([FromQuery] string? message = null)
         {
-            _logger.LogWarning("TEST NOTIFICATION ENDPOINT CALLED");
             try
             {
                 // Try to get user from authentication
@@ -580,23 +571,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
 
-                _logger.LogInformation("Attempting to load embedded resource: {ResourceName}", resourceName);
-
-                // List all available resources for debugging
-                var allResources = assembly.GetManifestResourceNames();
-                _logger.LogInformation("Available resources: {Resources}", string.Join(", ", allResources));
-
                 using var stream = assembly.GetManifestResourceStream(resourceName);
                 if (stream == null)
                 {
-                    _logger.LogError("Resource {ResourceName} not found in assembly", resourceName);
-                    return Content($"// ERROR: Resource {resourceName} not found\n// Available resources: {string.Join(", ", allResources)}", "application/javascript");
+                    var allResources = assembly.GetManifestResourceNames();
+                    _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
+                    return Content($"// ERROR: Resource {resourceName} not found", "application/javascript");
                 }
 
                 using var reader = new System.IO.StreamReader(stream);
                 var content = reader.ReadToEnd();
-
-                _logger.LogInformation("Successfully loaded ratings.js, {Length} characters", content.Length);
 
                 return Content(content, "application/javascript");
             }
