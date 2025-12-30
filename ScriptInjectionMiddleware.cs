@@ -45,6 +45,9 @@ namespace Jellyfin.Plugin.Ratings
                 return;
             }
 
+            // Remove Accept-Encoding to get uncompressed response that we can modify
+            context.Request.Headers.Remove("Accept-Encoding");
+
             // Capture the original response body
             var originalBodyStream = context.Response.Body;
 
@@ -55,6 +58,16 @@ namespace Jellyfin.Plugin.Ratings
 
                 // Call the next middleware
                 await _next(context);
+
+                // Check if response is compressed - if so, pass through unchanged
+                var contentEncoding = context.Response.Headers["Content-Encoding"].ToString();
+                if (!string.IsNullOrEmpty(contentEncoding))
+                {
+                    // Response is compressed, pass through unchanged
+                    memoryStream.Position = 0;
+                    await memoryStream.CopyToAsync(originalBodyStream);
+                    return;
+                }
 
                 // Only process HTML responses
                 var contentType = context.Response.ContentType ?? string.Empty;
