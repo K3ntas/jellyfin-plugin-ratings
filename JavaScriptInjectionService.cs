@@ -11,6 +11,8 @@ namespace Jellyfin.Plugin.Ratings
 {
     /// <summary>
     /// Background service that injects the ratings JavaScript into Jellyfin's web client on startup.
+    /// This is a FALLBACK method - the primary injection is done via HTTP middleware.
+    /// File injection works on systems where Jellyfin has write access to jellyfin-web folder.
     /// </summary>
     public class JavaScriptInjectionService : IHostedService
     {
@@ -45,9 +47,9 @@ namespace Jellyfin.Plugin.Ratings
                     CleanupOldInjection();
                     InjectRatingsScript();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, "Ratings plugin JavaScript injection failed");
+                    // Silent failure - middleware will handle injection if file method fails
                 }
             }, cancellationToken);
         }
@@ -84,9 +86,9 @@ namespace Jellyfin.Plugin.Ratings
                     File.WriteAllText(indexPath, content);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Failed to cleanup old injection from index.html");
+                // Silent failure - not critical, middleware handles injection
             }
         }
 
@@ -95,7 +97,6 @@ namespace Jellyfin.Plugin.Ratings
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
             if (!File.Exists(indexPath))
             {
-                _logger.LogError("index.html not found at: {Path}", indexPath);
                 return;
             }
 
@@ -120,18 +121,10 @@ namespace Jellyfin.Plugin.Ratings
                     content = content.Replace("</body>", $"{injectionBlock}</body>", StringComparison.Ordinal);
                     File.WriteAllText(indexPath, content);
                 }
-                else
-                {
-                    _logger.LogError("Could not find </body> tag in index.html");
-                }
             }
-            catch (UnauthorizedAccessException ex)
+            catch
             {
-                _logger.LogError(ex, "Permission denied when trying to modify index.html");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to inject script into index.html");
+                // Silent failure - middleware will handle injection
             }
         }
     }

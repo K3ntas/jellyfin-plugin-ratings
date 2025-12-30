@@ -51,9 +51,9 @@ namespace Jellyfin.Plugin.Ratings
                     CleanupOldInjection();
                     InjectRatingsScript();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, "Failed to inject ratings plugin JavaScript");
+                    // Silent failure - middleware will handle injection if file method fails
                 }
             }, cancellationToken);
         }
@@ -86,9 +86,9 @@ namespace Jellyfin.Plugin.Ratings
                     File.WriteAllText(indexPath, content);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Failed to cleanup old injection from index.html");
+                // Silent failure - middleware handles injection
             }
         }
 
@@ -97,7 +97,6 @@ namespace Jellyfin.Plugin.Ratings
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
             if (!File.Exists(indexPath))
             {
-                _logger.LogError("index.html not found at: {Path}", indexPath);
                 return;
             }
 
@@ -122,18 +121,10 @@ namespace Jellyfin.Plugin.Ratings
                     content = content.Replace("</body>", $"{injectionBlock}</body>");
                     File.WriteAllText(indexPath, content);
                 }
-                else
-                {
-                    _logger.LogError("Could not find </body> tag in index.html");
-                }
             }
-            catch (UnauthorizedAccessException ex)
+            catch
             {
-                _logger.LogError(ex, "Permission denied when trying to modify index.html");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to inject script into index.html");
+                // Silent failure - middleware handles injection
             }
         }
     }

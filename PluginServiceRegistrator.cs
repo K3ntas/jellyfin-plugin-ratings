@@ -1,6 +1,7 @@
 using Jellyfin.Plugin.Ratings.Data;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.Ratings
@@ -16,7 +17,10 @@ namespace Jellyfin.Plugin.Ratings
             // Register RatingsRepository as a singleton
             serviceCollection.AddSingleton<RatingsRepository>();
 
-            // Register hosted service for JavaScript injection (though it doesn't work in Docker)
+            // Register middleware startup filter for script injection (works without file permissions)
+            serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();
+
+            // Register hosted service for JavaScript injection as fallback (for setups where file modification works)
             serviceCollection.AddHostedService<JavaScriptInjectionService>();
 
             // Register notification service to monitor library for new media
