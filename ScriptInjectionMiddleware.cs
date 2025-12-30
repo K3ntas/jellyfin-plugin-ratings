@@ -16,7 +16,6 @@ namespace Jellyfin.Plugin.Ratings
         private readonly RequestDelegate _next;
         private readonly ILogger<ScriptInjectionMiddleware> _logger;
         private const string ScriptTag = "<script defer src=\"/Ratings/ratings.js\"></script>";
-        private const string InjectionMarker = "<!-- Ratings Plugin Injected -->";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptInjectionMiddleware"/> class.
@@ -38,17 +37,17 @@ namespace Jellyfin.Plugin.Ratings
         {
             var path = context.Request.Path.Value ?? string.Empty;
 
-            // Only intercept requests for index.html or root path
+            // Only intercept exact index.html requests (strict matching)
             if (!IsIndexHtmlRequest(path))
             {
-                await _next(context);
+                await _next(context).ConfigureAwait(false);
                 return;
             }
 
-            // Remove Accept-Encoding to get uncompressed response that we can modify
+            // Remove Accept-Encoding to prevent compressed response
             context.Request.Headers.Remove("Accept-Encoding");
 
-            // Capture the original response body
+            // Store original body stream
             var originalBodyStream = context.Response.Body;
 
             try
@@ -57,47 +56,77 @@ namespace Jellyfin.Plugin.Ratings
                 context.Response.Body = memoryStream;
 
                 // Call the next middleware
-                await _next(context);
+                await _next(context).ConfigureAwait(false);
 
-                // Check if response is compressed - if so, pass through unchanged
-                var contentEncoding = context.Response.Headers["Content-Encoding"].ToString();
-                if (!string.IsNullOrEmpty(contentEncoding))
+                // Only process successful HTML responses
+                if (context.Response.StatusCode != 200)
                 {
-                    // Response is compressed, pass through unchanged
-                    memoryStream.Position = 0;
-                    await memoryStream.CopyToAsync(originalBodyStream);
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
 
-                // Only process HTML responses
-                var contentType = context.Response.ContentType ?? string.Empty;
-                if (!contentType.Contains("text/html", StringComparison.OrdinalIgnoreCase))
+                // Check for compression (shouldn't happen but safety check)
+                var contentEncoding = context.Response.Headers.ContentEncoding.ToString();
+                if (!string.IsNullOrEmpty(contentEncoding))
                 {
-                    memoryStream.Position = 0;
-                    await memoryStream.CopyToAsync(originalBodyStream);
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
+                    return;
+                }
+
+                // Only process text/html
+                var contentType = context.Response.ContentType ?? string.Empty;
+                if (!contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
+                {
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
 
                 // Read the response body
                 memoryStream.Position = 0;
-                var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
-
-                // Check if already injected (either by file modification or previous middleware run)
-                if (responseBody.Contains("Ratings Plugin", StringComparison.OrdinalIgnoreCase))
+                string responseBody;
+                using (var reader = new StreamReader(memoryStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
                 {
-                    // Already has the script, write original response
-                    memoryStream.Position = 0;
-                    await memoryStream.CopyToAsync(originalBodyStream);
+                    responseBody = await reader.ReadToEndAsync().ConfigureAwait(false);
+                }
+
+                // Check if already injected or empty
+                if (string.IsNullOrEmpty(responseBody) ||
+                    responseBody.Contains("ratings.js", StringComparison.OrdinalIgnoreCase))
+                {
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
 
                 // Inject the script before </body>
                 var modifiedBody = InjectScript(responseBody);
+                if (modifiedBody == responseBody)
+                {
+                    // Injection failed (no </body> found), write original
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
+                    return;
+                }
 
-                // Write the modified response
+                // Write modified response
                 var modifiedBytes = Encoding.UTF8.GetBytes(modifiedBody);
+
+                // Clear and set new content length
+                context.Response.Headers.Remove("Content-Length");
                 context.Response.ContentLength = modifiedBytes.Length;
-                await originalBodyStream.WriteAsync(modifiedBytes);
+
+                await originalBodyStream.WriteAsync(modifiedBytes, 0, modifiedBytes.Length).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // On any error, try to write original response
+                _logger.LogDebug(ex, "Script injection failed, passing through original response");
+                try
+                {
+                    await WriteOriginalResponse(context.Response.Body as MemoryStream ?? new MemoryStream(), originalBodyStream).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Last resort - nothing we can do
+                }
             }
             finally
             {
@@ -105,14 +134,23 @@ namespace Jellyfin.Plugin.Ratings
             }
         }
 
+        private static async Task WriteOriginalResponse(MemoryStream memoryStream, Stream originalBodyStream)
+        {
+            if (memoryStream.Length > 0)
+            {
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(originalBodyStream).ConfigureAwait(false);
+            }
+        }
+
         private static bool IsIndexHtmlRequest(string path)
         {
-            // Match root path, /index.html, or /web/index.html
+            // Strict matching - only exact paths
             return path.Equals("/", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/index.html", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/web", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/web/", StringComparison.OrdinalIgnoreCase)
-                || path.Equals("/web/index.html", StringComparison.OrdinalIgnoreCase)
-                || path.EndsWith("/index.html", StringComparison.OrdinalIgnoreCase);
+                || path.Equals("/web/index.html", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string InjectScript(string html)
@@ -121,12 +159,11 @@ namespace Jellyfin.Plugin.Ratings
             var bodyCloseIndex = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
             if (bodyCloseIndex == -1)
             {
-                // No </body> tag found, append to end
-                return html + $"\n{InjectionMarker}\n{ScriptTag}\n";
+                // No </body> tag found, return unchanged
+                return html;
             }
 
-            var injection = $"{InjectionMarker}\n{ScriptTag}\n";
-            return html.Insert(bodyCloseIndex, injection);
+            return html.Insert(bodyCloseIndex, ScriptTag + "\n");
         }
     }
 }
