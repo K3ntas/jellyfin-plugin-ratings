@@ -5480,9 +5480,7 @@
                 <div class="dm-header">
                     <h3>⬇️ Downloads</h3>
                     <div class="dm-header-actions">
-                        <button class="dm-header-btn" data-action="pauseAll">⏸ Pause All</button>
-                        <button class="dm-header-btn" data-action="resumeAll">▶ Resume All</button>
-                        <button class="dm-header-btn" data-action="clearCompleted">🗑 Clear</button>
+                        <button class="dm-header-btn" data-action="clearCompleted">🗑 Clear All</button>
                     </div>
                 </div>
                 <div class="dm-list" id="downloadManagerList">
@@ -5623,14 +5621,7 @@
                 progress: 0,
                 loaded: 0,
                 total: 0,
-                speed: 0,
-                abortController: null,
-                pausedAt: 0,
-                blob: null,
-                chunks: [],
-                startTime: null,
-                lastLoaded: 0,
-                lastTime: null
+                startTime: null
             };
 
             this.downloads.set(id, download);
@@ -5681,107 +5672,50 @@
         },
 
         /**
-         * Start a download
+         * Start a download - uses native browser download for large files
          */
         startDownload: async function(id, resumeFrom = 0) {
             const download = this.downloads.get(id);
             if (!download) return;
 
             download.state = this.STATES.DOWNLOADING;
-            download.abortController = new AbortController();
             download.startTime = Date.now();
-            download.lastTime = Date.now();
             this.activeCount++;
             this.renderDownloads();
 
-            const headers = {};
-            if (resumeFrom > 0) {
-                headers['Range'] = `bytes=${resumeFrom}-`;
-            }
-
             try {
-                // Use originalFetch to bypass any interception
+                // First, get file size with HEAD request
                 const fetchFn = this.originalFetch || fetch;
-                const response = await fetchFn(download.url, {
-                    signal: download.abortController.signal,
-                    headers,
+                const headResponse = await fetchFn(download.url, {
+                    method: 'HEAD',
                     credentials: 'include'
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                // Get total size
-                const contentLength = response.headers.get('content-length');
-                const contentRange = response.headers.get('content-range');
-
-                if (contentRange) {
-                    // Resume response: "bytes 12345-67890/123456"
-                    const match = contentRange.match(/\/(\d+)/);
-                    if (match) download.total = parseInt(match[1]);
-                } else if (contentLength) {
-                    download.total = parseInt(contentLength) + resumeFrom;
-                }
-
-                download.loaded = resumeFrom;
-
-                // Stream the response
-                const reader = response.body.getReader();
-
-                while (true) {
-                    const { done, value } = await reader.read();
-
-                    if (done) break;
-
-                    if (download.state === this.STATES.PAUSED) {
-                        reader.cancel();
-                        break;
+                if (headResponse.ok) {
+                    const contentLength = headResponse.headers.get('content-length');
+                    if (contentLength) {
+                        download.total = parseInt(contentLength);
                     }
-
-                    download.chunks.push(value);
-                    download.loaded += value.length;
-
-                    // Calculate speed
-                    const now = Date.now();
-                    const timeDiff = (now - download.lastTime) / 1000;
-                    if (timeDiff >= 0.5) {
-                        const bytesDiff = download.loaded - download.lastLoaded;
-                        download.speed = bytesDiff / timeDiff;
-                        download.lastLoaded = download.loaded;
-                        download.lastTime = now;
-                    }
-
-                    // Calculate progress
-                    if (download.total > 0) {
-                        download.progress = Math.round((download.loaded / download.total) * 100);
-                    }
-
-                    this.renderDownloads();
                 }
 
-                if (download.state !== this.STATES.PAUSED) {
-                    // Combine chunks and create blob
-                    download.blob = new Blob(download.chunks);
-                    download.state = this.STATES.COMPLETED;
-                    download.progress = 100;
+                // Trigger native browser download
+                this.triggerNativeDownload(download);
 
-                    // Auto-save the file
-                    this.saveFile(download);
-                }
+                // Mark as completed (browser handles the actual download)
+                download.state = this.STATES.COMPLETED;
+                download.progress = 100;
+                download.loaded = download.total;
 
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    if (download.state !== this.STATES.PAUSED) {
-                        download.state = this.STATES.CANCELLED;
-                    }
-                } else {
-                    console.error('[DownloadManager] Download failed:', error);
-                    download.state = this.STATES.FAILED;
-                    download.error = error.message;
-                }
+                console.error('[DownloadManager] Download failed:', error);
+                download.state = this.STATES.FAILED;
+                download.error = error.message;
             } finally {
                 this.activeCount--;
+                // Clear from active URLs so same file can be downloaded again
+                if (download.normalizedUrl) {
+                    this.activeUrls.delete(download.normalizedUrl);
+                }
                 this.renderDownloads();
                 this.updateBadge();
                 this.processQueue();
@@ -5789,48 +5723,51 @@
         },
 
         /**
-         * Save the downloaded file
+         * Trigger native browser download (handles large files properly)
          */
-        saveFile: function(download) {
-            if (!download.blob) return;
-
-            const url = URL.createObjectURL(download.blob);
+        triggerNativeDownload: function(download) {
+            // Create a temporary anchor to trigger download
             const a = document.createElement('a');
-            a.href = url;
+            a.href = download.url;
             a.download = download.filename;
+            a.style.display = 'none';
+
+            // For cross-origin, we need to use a different approach
+            // Open in new tab which will trigger download
+            if (download.url.includes('api_key') || download.url.includes('Download')) {
+                // Jellyfin download URL - open directly
+                a.target = '_blank';
+            }
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+
+            console.log('[DownloadManager] Native download triggered:', download.filename);
         },
 
         /**
-         * Pause a download
+         * Re-download a completed file
+         */
+        saveFile: function(download) {
+            this.triggerNativeDownload(download);
+        },
+
+        /**
+         * Pause a download (not supported for native browser downloads)
          */
         pauseDownload: function(id) {
-            const download = this.downloads.get(id);
-            if (!download || download.state !== this.STATES.DOWNLOADING) return;
-
-            download.state = this.STATES.PAUSED;
-            download.pausedAt = download.loaded;
-            if (download.abortController) {
-                download.abortController.abort();
-            }
-            this.renderDownloads();
-            this.updateBadge();
+            // Native browser downloads cannot be paused from JavaScript
+            console.log('[DownloadManager] Pause not supported for native downloads');
         },
 
         /**
-         * Resume a download
+         * Resume a download (not supported for native browser downloads)
          */
         resumeDownload: function(id) {
-            const download = this.downloads.get(id);
-            if (!download || download.state !== this.STATES.PAUSED) return;
-
-            download.state = this.STATES.QUEUED;
-            download.chunks = []; // Clear chunks for fresh resume
-            this.queue.unshift(id); // Add to front of queue
-            this.processQueue();
+            // Native browser downloads cannot be resumed from JavaScript
+            // User can re-trigger download with save button
+            console.log('[DownloadManager] Resume not supported - use save button to re-download');
         },
 
         /**
@@ -5921,38 +5858,27 @@
             let html = '';
             for (const [id, download] of this.downloads) {
                 const stateClass = download.state.toLowerCase();
-                const progressClass = download.state === this.STATES.PAUSED ? 'paused' :
-                                     download.state === this.STATES.COMPLETED ? 'completed' :
+                const progressClass = download.state === this.STATES.COMPLETED ? 'completed' :
                                      download.state === this.STATES.FAILED ? 'failed' : '';
 
                 let actions = '';
                 switch (download.state) {
                     case this.STATES.DOWNLOADING:
-                        actions = `
-                            <button class="dm-action-btn pause" data-action="pause" data-id="${id}" title="Pause">⏸</button>
-                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
-                        `;
-                        break;
-                    case this.STATES.PAUSED:
-                        actions = `
-                            <button class="dm-action-btn resume" data-action="resume" data-id="${id}" title="Resume">▶</button>
-                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
-                        `;
-                        break;
                     case this.STATES.QUEUED:
                         actions = `
-                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
+                            <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                     case this.STATES.COMPLETED:
                         actions = `
-                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Save Again">💾</button>
+                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Download Again">💾</button>
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                     case this.STATES.FAILED:
                     case this.STATES.CANCELLED:
                         actions = `
+                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Retry">🔄</button>
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
@@ -5960,12 +5886,9 @@
 
                 let statusText = '';
                 if (download.state === this.STATES.DOWNLOADING) {
-                    statusText = `<span class="dm-item-size">${this.formatBytes(download.loaded)} / ${this.formatBytes(download.total)}</span>`;
-                    if (download.speed > 0) {
-                        statusText += `<span class="dm-item-speed">${this.formatSpeed(download.speed)}</span>`;
-                    }
-                } else if (download.state === this.STATES.PAUSED) {
-                    statusText = `<span class="dm-item-size">${this.formatBytes(download.pausedAt)} / ${this.formatBytes(download.total)}</span>`;
+                    statusText = `<span class="dm-item-size">Starting download...</span>`;
+                } else if (download.state === this.STATES.QUEUED) {
+                    statusText = `<span class="dm-item-size">Queued</span>`;
                 } else if (download.state === this.STATES.COMPLETED) {
                     statusText = `<span class="dm-item-size">${this.formatBytes(download.total)}</span>`;
                 } else if (download.state === this.STATES.FAILED) {
