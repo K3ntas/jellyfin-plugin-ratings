@@ -6278,7 +6278,12 @@
                 if (tagName.toLowerCase() === 'a') {
                     const originalClick = element.click.bind(element);
                     element.click = function() {
-                        if (this.href && (this.href.includes('/Download') || this.download)) {
+                        // Skip blob: URLs (these are our own saved files)
+                        if (this.href && this.href.startsWith('blob:')) {
+                            return originalClick();
+                        }
+                        // Intercept Jellyfin downloads
+                        if (this.href && (this.href.includes('/Download') || (this.download && this.href.includes('/Items/')))) {
                             const url = this.href;
                             const filename = this.download || self.extractFilename(url);
                             console.log('[DownloadManager] Intercepted programmatic download:', url);
