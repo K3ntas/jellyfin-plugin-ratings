@@ -5819,23 +5819,41 @@
             try {
                 const fetchFn = this.originalFetch || fetch;
 
-                // Get file size with HEAD request
-                const headResponse = await fetchFn(download.url, {
-                    method: 'HEAD',
+                // Get file size with Range request (HEAD not supported by Jellyfin)
+                const sizeResponse = await fetchFn(download.url, {
+                    headers: { 'Range': 'bytes=0-0' },
                     credentials: 'include',
                     signal: download.abortController.signal
                 });
 
-                if (!headResponse.ok) {
-                    throw new Error(`HTTP ${headResponse.status}`);
+                if (!sizeResponse.ok && sizeResponse.status !== 206) {
+                    throw new Error(`HTTP ${sizeResponse.status}`);
                 }
 
-                const contentLength = headResponse.headers.get('content-length');
-                if (!contentLength) {
+                // Parse Content-Range header: "bytes 0-0/123456789"
+                const contentRange = sizeResponse.headers.get('content-range');
+                let totalSize = 0;
+
+                if (contentRange) {
+                    const match = contentRange.match(/\/(\d+)/);
+                    if (match) {
+                        totalSize = parseInt(match[1]);
+                    }
+                }
+
+                // Fallback to content-length if no range support
+                if (!totalSize) {
+                    const contentLength = sizeResponse.headers.get('content-length');
+                    if (contentLength) {
+                        totalSize = parseInt(contentLength);
+                    }
+                }
+
+                if (!totalSize) {
                     throw new Error('Server does not report file size');
                 }
 
-                download.total = parseInt(contentLength);
+                download.total = totalSize;
                 download.totalChunks = Math.ceil(download.total / this.CHUNK_SIZE);
 
                 // Get existing chunks count
