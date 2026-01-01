@@ -5068,34 +5068,180 @@
     };
 
     /**
-     * Download Manager - Enhanced download experience with progress, cancel, pause/resume
+     * Download Manager - Chunked downloads with IndexedDB for pause/resume/cancel
      */
     const DownloadManager = {
-        downloads: new Map(), // Map of downloadId -> download info
-        queue: [], // Queue of pending downloads
-        activeUrls: new Set(), // Track URLs being downloaded to prevent duplicates
-        maxConcurrent: 2, // Max concurrent downloads
+        downloads: new Map(),
+        activeUrls: new Set(),
+        maxConcurrent: 1, // One at a time for chunked downloads
         activeCount: 0,
         isVisible: false,
         downloadIdCounter: 0,
+        db: null, // IndexedDB instance
+        CHUNK_SIZE: 10 * 1024 * 1024, // 10MB chunks
 
-        // Download states
         STATES: {
             QUEUED: 'queued',
             DOWNLOADING: 'downloading',
-            STARTED: 'started',  // Sent to browser
-            FAILED: 'failed'
+            PAUSED: 'paused',
+            COMPLETED: 'completed',
+            FAILED: 'failed',
+            CANCELLED: 'cancelled'
         },
 
         /**
          * Initialize the download manager
          */
-        init: function() {
+        init: async function() {
+            await this.initDB();
             this.injectStyles();
             this.createUI();
             this.interceptDownloads();
             this.observeForNewButtons();
-            console.log('[DownloadManager] Initialized');
+            await this.loadPendingDownloads();
+            console.log('[DownloadManager] Initialized with IndexedDB');
+        },
+
+        /**
+         * Initialize IndexedDB
+         */
+        initDB: function() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('JellyfinDownloads', 1);
+
+                request.onerror = () => {
+                    console.error('[DownloadManager] IndexedDB error:', request.error);
+                    reject(request.error);
+                };
+
+                request.onsuccess = () => {
+                    this.db = request.result;
+                    console.log('[DownloadManager] IndexedDB opened');
+                    resolve();
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+
+                    // Store for download metadata
+                    if (!db.objectStoreNames.contains('downloads')) {
+                        const downloadStore = db.createObjectStore('downloads', { keyPath: 'id' });
+                        downloadStore.createIndex('state', 'state', { unique: false });
+                    }
+
+                    // Store for chunks
+                    if (!db.objectStoreNames.contains('chunks')) {
+                        const chunkStore = db.createObjectStore('chunks', { keyPath: ['downloadId', 'index'] });
+                        chunkStore.createIndex('downloadId', 'downloadId', { unique: false });
+                    }
+                };
+            });
+        },
+
+        /**
+         * Load pending downloads from IndexedDB
+         */
+        loadPendingDownloads: async function() {
+            if (!this.db) return;
+
+            return new Promise((resolve) => {
+                const tx = this.db.transaction('downloads', 'readonly');
+                const store = tx.objectStore('downloads');
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    const savedDownloads = request.result || [];
+                    for (const dl of savedDownloads) {
+                        // Restore paused downloads
+                        if (dl.state === this.STATES.PAUSED || dl.state === this.STATES.DOWNLOADING) {
+                            dl.state = this.STATES.PAUSED;
+                            dl.abortController = null;
+                            this.downloads.set(dl.id, dl);
+                            this.downloadIdCounter = Math.max(this.downloadIdCounter, dl.id);
+                        }
+                    }
+                    this.renderDownloads();
+                    this.updateBadge();
+                    resolve();
+                };
+
+                request.onerror = () => resolve();
+            });
+        },
+
+        /**
+         * Save download metadata to IndexedDB
+         */
+        saveDownloadMeta: function(download) {
+            if (!this.db) return;
+
+            const tx = this.db.transaction('downloads', 'readwrite');
+            const store = tx.objectStore('downloads');
+            // Save without abortController (can't serialize)
+            const toSave = { ...download, abortController: null };
+            store.put(toSave);
+        },
+
+        /**
+         * Delete download from IndexedDB
+         */
+        deleteDownloadFromDB: async function(downloadId) {
+            if (!this.db) return;
+
+            // Delete metadata
+            const tx1 = this.db.transaction('downloads', 'readwrite');
+            tx1.objectStore('downloads').delete(downloadId);
+
+            // Delete all chunks for this download
+            const tx2 = this.db.transaction('chunks', 'readwrite');
+            const store = tx2.objectStore('chunks');
+            const index = store.index('downloadId');
+            const request = index.openCursor(IDBKeyRange.only(downloadId));
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+        },
+
+        /**
+         * Save a chunk to IndexedDB
+         */
+        saveChunk: function(downloadId, chunkIndex, data) {
+            if (!this.db) return Promise.resolve();
+
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction('chunks', 'readwrite');
+                const store = tx.objectStore('chunks');
+                store.put({ downloadId, index: chunkIndex, data });
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        },
+
+        /**
+         * Get all chunks for a download
+         */
+        getChunks: function(downloadId) {
+            if (!this.db) return Promise.resolve([]);
+
+            return new Promise((resolve) => {
+                const tx = this.db.transaction('chunks', 'readonly');
+                const store = tx.objectStore('chunks');
+                const index = store.index('downloadId');
+                const request = index.getAll(IDBKeyRange.only(downloadId));
+
+                request.onsuccess = () => {
+                    const chunks = request.result || [];
+                    chunks.sort((a, b) => a.index - b.index);
+                    resolve(chunks);
+                };
+
+                request.onerror = () => resolve([]);
+            });
         },
 
         /**
@@ -5478,7 +5624,9 @@
                 <div class="dm-header">
                     <h3>⬇️ Downloads</h3>
                     <div class="dm-header-actions">
-                        <button class="dm-header-btn" data-action="clearCompleted">🗑 Clear All</button>
+                        <button class="dm-header-btn" data-action="pauseAll">⏸ Pause All</button>
+                        <button class="dm-header-btn" data-action="resumeAll">▶ Resume All</button>
+                        <button class="dm-header-btn" data-action="clearCompleted">🗑 Clear</button>
                     </div>
                 </div>
                 <div class="dm-list" id="downloadManagerList">
@@ -5573,35 +5721,25 @@
          * Add a download to the queue
          */
         addDownload: async function(url, filename, itemId) {
-            const self = this;
+            const normalizedUrl = url.split('?')[0];
 
-            // Normalize URL for duplicate detection
-            const normalizedUrl = url.split('?')[0]; // Remove query params for comparison
-
-            // Check for duplicates
             if (this.activeUrls.has(normalizedUrl)) {
-                console.log('[DownloadManager] Duplicate download ignored:', normalizedUrl);
+                console.log('[DownloadManager] Duplicate download ignored');
                 return null;
             }
 
-            // Mark URL as active
             this.activeUrls.add(normalizedUrl);
 
-            // Extract itemId from URL if not provided
             if (!itemId && url) {
                 const match = url.match(/\/Items\/([a-f0-9-]+)\//i);
-                if (match) {
-                    itemId = match[1];
-                }
+                if (match) itemId = match[1];
             }
 
-            // Always try to get proper filename from Jellyfin API
             let finalFilename = filename;
             if (itemId && window.ApiClient) {
                 try {
                     finalFilename = await this.getItemName(itemId);
                 } catch (e) {
-                    console.log('[DownloadManager] Could not get item name, using fallback');
                     finalFilename = filename || this.extractFilename(url);
                 }
             } else {
@@ -5619,16 +5757,22 @@
                 progress: 0,
                 loaded: 0,
                 total: 0,
-                startTime: null
+                speed: 0,
+                chunksCompleted: 0,
+                totalChunks: 0,
+                currentChunk: 0,
+                abortController: null,
+                startTime: null,
+                lastTime: null,
+                lastLoaded: 0
             };
 
             this.downloads.set(id, download);
-            this.queue.push(id);
+            this.saveDownloadMeta(download);
             this.renderDownloads();
             this.updateBadge();
-            this.processQueue();
+            this.startDownload(id);
 
-            // Auto-show panel when download starts
             if (!this.isVisible) {
                 this.togglePanel();
             }
@@ -5657,102 +5801,191 @@
         },
 
         /**
-         * Process the download queue
+         * Start a chunked download
          */
-        processQueue: function() {
-            while (this.activeCount < this.maxConcurrent && this.queue.length > 0) {
-                const id = this.queue.shift();
-                const download = this.downloads.get(id);
-                if (download && download.state === this.STATES.QUEUED) {
-                    this.startDownload(id);
-                }
-            }
-        },
-
-        /**
-         * Start a download - uses native browser download for large files
-         */
-        startDownload: async function(id, resumeFrom = 0) {
+        startDownload: async function(id) {
             const download = this.downloads.get(id);
             if (!download) return;
+            if (download.state === this.STATES.DOWNLOADING) return;
 
             download.state = this.STATES.DOWNLOADING;
+            download.abortController = new AbortController();
             download.startTime = Date.now();
+            download.lastTime = Date.now();
             this.activeCount++;
+            this.saveDownloadMeta(download);
             this.renderDownloads();
 
             try {
-                // Trigger native browser download
-                this.triggerNativeDownload(download);
+                const fetchFn = this.originalFetch || fetch;
 
-                // Mark as started (browser handles the actual download)
-                download.state = this.STATES.STARTED;
+                // Get file size with HEAD request
+                const headResponse = await fetchFn(download.url, {
+                    method: 'HEAD',
+                    credentials: 'include',
+                    signal: download.abortController.signal
+                });
+
+                if (!headResponse.ok) {
+                    throw new Error(`HTTP ${headResponse.status}`);
+                }
+
+                const contentLength = headResponse.headers.get('content-length');
+                if (!contentLength) {
+                    throw new Error('Server does not report file size');
+                }
+
+                download.total = parseInt(contentLength);
+                download.totalChunks = Math.ceil(download.total / this.CHUNK_SIZE);
+
+                // Get existing chunks count
+                const existingChunks = await this.getChunks(download.id);
+                download.chunksCompleted = existingChunks.length;
+                download.currentChunk = download.chunksCompleted;
+                download.loaded = download.chunksCompleted * this.CHUNK_SIZE;
+
+                console.log(`[DownloadManager] Starting ${download.filename}: ${download.totalChunks} chunks, resuming from chunk ${download.currentChunk}`);
+
+                // Download remaining chunks
+                while (download.currentChunk < download.totalChunks && download.state === this.STATES.DOWNLOADING) {
+                    const start = download.currentChunk * this.CHUNK_SIZE;
+                    const end = Math.min(start + this.CHUNK_SIZE - 1, download.total - 1);
+
+                    const chunkResponse = await fetchFn(download.url, {
+                        headers: { 'Range': `bytes=${start}-${end}` },
+                        credentials: 'include',
+                        signal: download.abortController.signal
+                    });
+
+                    if (!chunkResponse.ok && chunkResponse.status !== 206) {
+                        throw new Error(`Chunk download failed: HTTP ${chunkResponse.status}`);
+                    }
+
+                    const chunkData = await chunkResponse.arrayBuffer();
+                    await this.saveChunk(download.id, download.currentChunk, chunkData);
+
+                    download.currentChunk++;
+                    download.chunksCompleted++;
+                    download.loaded = Math.min(download.currentChunk * this.CHUNK_SIZE, download.total);
+                    download.progress = Math.round((download.loaded / download.total) * 100);
+
+                    // Calculate speed
+                    const now = Date.now();
+                    const timeDiff = (now - download.lastTime) / 1000;
+                    if (timeDiff >= 0.5) {
+                        download.speed = (download.loaded - download.lastLoaded) / timeDiff;
+                        download.lastLoaded = download.loaded;
+                        download.lastTime = now;
+                    }
+
+                    this.saveDownloadMeta(download);
+                    this.renderDownloads();
+                }
+
+                // If completed, combine chunks and save
+                if (download.state === this.STATES.DOWNLOADING && download.currentChunk >= download.totalChunks) {
+                    await this.completeDownload(download);
+                }
 
             } catch (error) {
-                console.error('[DownloadManager] Download failed:', error);
-                download.state = this.STATES.FAILED;
-                download.error = error.message;
+                if (error.name === 'AbortError') {
+                    // Paused or cancelled - state already set
+                    console.log('[DownloadManager] Download aborted:', download.filename);
+                } else {
+                    console.error('[DownloadManager] Download failed:', error);
+                    download.state = this.STATES.FAILED;
+                    download.error = error.message;
+                    this.saveDownloadMeta(download);
+                }
             } finally {
                 this.activeCount--;
-                // Clear from active URLs so same file can be downloaded again
-                if (download.normalizedUrl) {
-                    this.activeUrls.delete(download.normalizedUrl);
-                }
                 this.renderDownloads();
                 this.updateBadge();
-                this.processQueue();
             }
         },
 
         /**
-         * Trigger native browser download (handles large files properly)
+         * Complete download - combine chunks and save file
          */
-        triggerNativeDownload: function(download) {
-            console.log('[DownloadManager] Triggering download:', download.url);
+        completeDownload: async function(download) {
+            console.log('[DownloadManager] Combining chunks for:', download.filename);
 
-            // Use hidden iframe for download - most reliable method
-            let iframe = document.getElementById('downloadManagerIframe');
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.id = 'downloadManagerIframe';
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
+            const chunks = await this.getChunks(download.id);
+            const blobParts = chunks.map(c => c.data);
+            const blob = new Blob(blobParts);
+
+            // Trigger download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = download.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            download.state = this.STATES.COMPLETED;
+            download.progress = 100;
+
+            // Clean up IndexedDB
+            await this.deleteDownloadFromDB(download.id);
+            if (download.normalizedUrl) {
+                this.activeUrls.delete(download.normalizedUrl);
             }
 
-            // Navigate iframe to download URL - this triggers browser download
-            iframe.src = download.url;
-
-            console.log('[DownloadManager] Download started via iframe:', download.filename);
+            console.log('[DownloadManager] Download completed:', download.filename);
         },
 
         /**
-         * Re-download a completed file
+         * Save file (re-download or save completed)
          */
-        saveFile: function(download) {
-            this.triggerNativeDownload(download);
+        saveFile: async function(download) {
+            if (download.state === this.STATES.COMPLETED) {
+                // Re-trigger the download
+                download.state = this.STATES.QUEUED;
+                download.progress = 0;
+                download.loaded = 0;
+                download.chunksCompleted = 0;
+                download.currentChunk = 0;
+                this.startDownload(download.id);
+            }
         },
 
         /**
-         * Pause a download (not supported for native browser downloads)
+         * Pause a download
          */
         pauseDownload: function(id) {
-            // Native browser downloads cannot be paused from JavaScript
-            console.log('[DownloadManager] Pause not supported for native downloads');
+            const download = this.downloads.get(id);
+            if (!download || download.state !== this.STATES.DOWNLOADING) return;
+
+            download.state = this.STATES.PAUSED;
+            if (download.abortController) {
+                download.abortController.abort();
+            }
+            this.saveDownloadMeta(download);
+            this.renderDownloads();
+            this.updateBadge();
+            console.log('[DownloadManager] Paused:', download.filename);
         },
 
         /**
-         * Resume a download (not supported for native browser downloads)
+         * Resume a download (or retry failed)
          */
         resumeDownload: function(id) {
-            // Native browser downloads cannot be resumed from JavaScript
-            // User can re-trigger download with save button
-            console.log('[DownloadManager] Resume not supported - use save button to re-download');
+            const download = this.downloads.get(id);
+            if (!download) return;
+            if (download.state !== this.STATES.PAUSED && download.state !== this.STATES.FAILED) return;
+
+            console.log('[DownloadManager] Resuming:', download.filename);
+            download.state = this.STATES.QUEUED;
+            download.error = null;
+            this.startDownload(id);
         },
 
         /**
          * Cancel a download
          */
-        cancelDownload: function(id) {
+        cancelDownload: async function(id) {
             const download = this.downloads.get(id);
             if (!download) return;
 
@@ -5764,6 +5997,8 @@
             if (download.normalizedUrl) {
                 this.activeUrls.delete(download.normalizedUrl);
             }
+            // Clean up IndexedDB
+            await this.deleteDownloadFromDB(id);
             this.renderDownloads();
             this.updateBadge();
         },
@@ -5771,11 +6006,18 @@
         /**
          * Remove a download from the list
          */
-        removeDownload: function(id) {
+        removeDownload: async function(id) {
             const download = this.downloads.get(id);
-            if (download && download.normalizedUrl) {
-                this.activeUrls.delete(download.normalizedUrl);
+            if (download) {
+                if (download.abortController) {
+                    download.abortController.abort();
+                }
+                if (download.normalizedUrl) {
+                    this.activeUrls.delete(download.normalizedUrl);
+                }
             }
+            // Clean up IndexedDB
+            await this.deleteDownloadFromDB(id);
             this.downloads.delete(id);
             this.renderDownloads();
             this.updateBadge();
@@ -5837,26 +6079,42 @@
             let html = '';
             for (const [id, download] of this.downloads) {
                 const stateClass = download.state.toLowerCase();
-                const progressClass = download.state === this.STATES.STARTED ? 'completed' :
+                const progressClass = download.state === this.STATES.COMPLETED ? 'completed' :
+                                     download.state === this.STATES.PAUSED ? 'paused' :
                                      download.state === this.STATES.FAILED ? 'failed' : '';
 
                 let actions = '';
                 switch (download.state) {
                     case this.STATES.DOWNLOADING:
-                    case this.STATES.QUEUED:
                         actions = `
-                            <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
+                            <button class="dm-action-btn pause" data-action="pause" data-id="${id}" title="Pause">⏸</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
                         `;
                         break;
-                    case this.STATES.STARTED:
+                    case this.STATES.QUEUED:
                         actions = `
-                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Download Again">💾</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
+                        `;
+                        break;
+                    case this.STATES.PAUSED:
+                        actions = `
+                            <button class="dm-action-btn resume" data-action="resume" data-id="${id}" title="Resume">▶</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
+                        `;
+                        break;
+                    case this.STATES.COMPLETED:
+                        actions = `
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                     case this.STATES.FAILED:
                         actions = `
-                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Retry">🔄</button>
+                            <button class="dm-action-btn resume" data-action="resume" data-id="${id}" title="Retry">🔄</button>
+                            <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
+                        `;
+                        break;
+                    case this.STATES.CANCELLED:
+                        actions = `
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
@@ -5864,13 +6122,28 @@
 
                 let statusText = '';
                 if (download.state === this.STATES.DOWNLOADING) {
-                    statusText = `<span class="dm-item-size">Starting...</span>`;
+                    const progress = download.progress || 0;
+                    const loaded = this.formatBytes(download.loaded);
+                    const total = this.formatBytes(download.total);
+                    const speed = download.speed > 0 ? this.formatSpeed(download.speed) : '';
+                    const chunkInfo = download.totalChunks > 0 ? ` (chunk ${download.currentChunk}/${download.totalChunks})` : '';
+                    statusText = `<span class="dm-item-size">${loaded} / ${total}</span>`;
+                    if (speed) statusText += `<span class="dm-item-speed">${speed}</span>`;
+                    statusText += `<span>${progress}%${chunkInfo}</span>`;
                 } else if (download.state === this.STATES.QUEUED) {
-                    statusText = `<span class="dm-item-size">Queued</span>`;
-                } else if (download.state === this.STATES.STARTED) {
-                    statusText = `<span class="dm-item-size" style="color: #4CAF50;">Sent to browser - check your downloads</span>`;
+                    statusText = `<span class="dm-item-size">Waiting to start...</span>`;
+                } else if (download.state === this.STATES.PAUSED) {
+                    const loaded = this.formatBytes(download.loaded);
+                    const total = this.formatBytes(download.total);
+                    const chunkInfo = download.totalChunks > 0 ? ` (chunk ${download.currentChunk}/${download.totalChunks})` : '';
+                    statusText = `<span class="dm-item-size">${loaded} / ${total} - Paused${chunkInfo}</span>`;
+                } else if (download.state === this.STATES.COMPLETED) {
+                    const total = this.formatBytes(download.total);
+                    statusText = `<span class="dm-item-size" style="color: #4CAF50;">Completed - ${total}</span>`;
                 } else if (download.state === this.STATES.FAILED) {
                     statusText = `<span style="color: #f44336;">${download.error || 'Download failed'}</span>`;
+                } else if (download.state === this.STATES.CANCELLED) {
+                    statusText = `<span style="color: #9e9e9e;">Cancelled</span>`;
                 }
 
                 html += `
