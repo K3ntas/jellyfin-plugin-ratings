@@ -5111,14 +5111,14 @@
                     position: fixed;
                     bottom: 20px;
                     right: 20px;
-                    width: 56px;
-                    height: 56px;
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50%;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     border: none;
                     cursor: pointer;
                     z-index: 999998;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
                     transition: transform 0.3s ease, box-shadow 0.3s ease;
                     display: flex;
                     align-items: center;
@@ -5127,11 +5127,11 @@
 
                 #downloadManagerBtn:hover {
                     transform: scale(1.1);
-                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6);
                 }
 
                 #downloadManagerBtn .dm-icon {
-                    font-size: 24px;
+                    font-size: 18px;
                     color: white;
                 }
 
@@ -5412,7 +5412,7 @@
                 @media (max-width: 480px) {
                     #downloadManagerPanel {
                         width: calc(100vw - 40px);
-                        bottom: 80px;
+                        bottom: 70px;
                         right: 10px;
                         left: 10px;
                         max-height: 60vh;
@@ -5421,8 +5421,12 @@
                     #downloadManagerBtn {
                         bottom: 15px;
                         right: 15px;
-                        width: 50px;
-                        height: 50px;
+                        width: 36px;
+                        height: 36px;
+                    }
+
+                    #downloadManagerBtn .dm-icon {
+                        font-size: 16px;
                     }
                 }
 
@@ -5912,18 +5916,16 @@
         interceptDownloads: function() {
             const self = this;
 
-            // Override the native download behavior
+            // Override the native download behavior for click events
             document.addEventListener('click', function(e) {
-                // Check for download buttons/links
-                const target = e.target.closest('button[data-action="download"], a[download], .btnDownload, [data-command="download"]');
+                // Check for download buttons/links - expanded selectors for Jellyfin
+                const target = e.target.closest('button[data-action="download"], a[download], .btnDownload, [data-command="download"], button[is="paper-icon-button-light"][title*="ownload"], .downloadButton, [data-id][onclick*="download"]');
 
                 if (target) {
-                    // Try to get download URL
                     let url = target.href || target.dataset.url;
                     let filename = target.download || target.dataset.filename;
                     let itemId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
 
-                    // For Jellyfin, construct the download URL if not directly available
                     if (!url && itemId && window.ApiClient) {
                         url = `${ApiClient.serverAddress()}/Items/${itemId}/Download?api_key=${ApiClient.accessToken()}`;
                     }
@@ -5932,7 +5934,6 @@
                         e.preventDefault();
                         e.stopPropagation();
 
-                        // Get filename from item if possible
                         if (!filename && itemId) {
                             self.getItemName(itemId).then(name => {
                                 self.addDownload(url, name, itemId);
@@ -5947,15 +5948,18 @@
                 }
             }, true);
 
-            // Also intercept any programmatic downloads
+            // Intercept programmatic anchor downloads (Jellyfin creates temp anchors)
             const originalCreateElement = document.createElement.bind(document);
             document.createElement = function(tagName) {
                 const element = originalCreateElement(tagName);
                 if (tagName.toLowerCase() === 'a') {
                     const originalClick = element.click.bind(element);
                     element.click = function() {
-                        if (this.download && this.href && this.href.includes('/Download')) {
-                            self.addDownload(this.href, this.download);
+                        if (this.href && (this.href.includes('/Download') || this.download)) {
+                            const url = this.href;
+                            const filename = this.download || self.extractFilename(url);
+                            console.log('[DownloadManager] Intercepted programmatic download:', url);
+                            self.addDownload(url, filename);
                             return;
                         }
                         return originalClick();
@@ -5963,6 +5967,37 @@
                 }
                 return element;
             };
+
+            // Also intercept window.location downloads
+            const originalAssign = window.location.assign?.bind(window.location);
+            if (originalAssign) {
+                window.location.assign = function(url) {
+                    if (url && url.includes('/Download')) {
+                        console.log('[DownloadManager] Intercepted location.assign download:', url);
+                        self.addDownload(url, self.extractFilename(url));
+                        return;
+                    }
+                    return originalAssign(url);
+                };
+            }
+
+            // Intercept fetch downloads that return blob/file
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = async function(input, init) {
+                const url = typeof input === 'string' ? input : input.url;
+
+                // Check if this is a download request
+                if (url && url.includes('/Download')) {
+                    console.log('[DownloadManager] Intercepted fetch download:', url);
+                    self.addDownload(url, self.extractFilename(url));
+                    // Return a mock response to prevent double download
+                    return new Response(new Blob(), { status: 200 });
+                }
+
+                return originalFetch(input, init);
+            };
+
+            console.log('[DownloadManager] Download interception enabled');
         },
 
         /**
