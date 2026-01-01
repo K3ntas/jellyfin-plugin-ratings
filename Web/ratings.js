@@ -5639,8 +5639,11 @@
             `;
             document.body.appendChild(panel);
 
-            // Event delegation for all buttons
+            // Event delegation for all buttons - stop propagation to prevent download interception
             panel.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
                 const btn = e.target.closest('button[data-action]');
                 if (!btn) return;
 
@@ -5945,12 +5948,23 @@
 
                 const chunks = await this.getChunks(download.id);
                 if (!chunks || chunks.length === 0) {
-                    console.error('[DownloadManager] No chunks found for download');
+                    console.error('[DownloadManager] No chunks found - need to re-download');
+                    // Chunks are gone (old version deleted them), mark as failed to allow retry
+                    download.state = this.STATES.FAILED;
+                    download.error = 'Chunks lost - click retry to re-download';
+                    this.renderDownloads();
                     return;
                 }
 
                 const blobParts = chunks.map(c => c.data);
                 const blob = new Blob(blobParts);
+
+                if (blob.size === 0) {
+                    download.state = this.STATES.FAILED;
+                    download.error = 'File is empty - click retry';
+                    this.renderDownloads();
+                    return;
+                }
 
                 console.log('[DownloadManager] Created blob:', blob.size, 'bytes');
 
@@ -5974,6 +5988,9 @@
                 console.log('[DownloadManager] Save triggered for:', download.filename);
             } catch (error) {
                 console.error('[DownloadManager] Save failed:', error);
+                download.state = this.STATES.FAILED;
+                download.error = error.message;
+                this.renderDownloads();
             }
         },
 
@@ -5997,14 +6014,30 @@
         /**
          * Resume a download (or retry failed)
          */
-        resumeDownload: function(id) {
+        resumeDownload: async function(id) {
             const download = this.downloads.get(id);
             if (!download) return;
             if (download.state !== this.STATES.PAUSED && download.state !== this.STATES.FAILED) return;
 
             console.log('[DownloadManager] Resuming:', download.filename);
+
+            // If retrying from failed, check if we need to start fresh
+            if (download.state === this.STATES.FAILED) {
+                const chunks = await this.getChunks(download.id);
+                if (!chunks || chunks.length === 0) {
+                    // No chunks, start fresh
+                    download.chunksCompleted = 0;
+                    download.currentChunk = 0;
+                    download.loaded = 0;
+                    download.progress = 0;
+                    download.total = 0;
+                    download.totalChunks = 0;
+                }
+            }
+
             download.state = this.STATES.QUEUED;
             download.error = null;
+            this.renderDownloads();
             this.startDownload(id);
         },
 
