@@ -5073,6 +5073,7 @@
     const DownloadManager = {
         downloads: new Map(), // Map of downloadId -> download info
         queue: [], // Queue of pending downloads
+        activeUrls: new Set(), // Track URLs being downloaded to prevent duplicates
         maxConcurrent: 2, // Max concurrent downloads
         activeCount: 0,
         isVisible: false,
@@ -5578,9 +5579,21 @@
         addDownload: async function(url, filename, itemId) {
             const self = this;
 
+            // Normalize URL for duplicate detection
+            const normalizedUrl = url.split('?')[0]; // Remove query params for comparison
+
+            // Check for duplicates
+            if (this.activeUrls.has(normalizedUrl)) {
+                console.log('[DownloadManager] Duplicate download ignored:', normalizedUrl);
+                return null;
+            }
+
+            // Mark URL as active
+            this.activeUrls.add(normalizedUrl);
+
             // Extract itemId from URL if not provided
             if (!itemId && url) {
-                const match = url.match(/\/Items\/([a-f0-9]+)\//i);
+                const match = url.match(/\/Items\/([a-f0-9-]+)\//i);
                 if (match) {
                     itemId = match[1];
                 }
@@ -5603,6 +5616,7 @@
             const download = {
                 id,
                 url,
+                normalizedUrl,
                 filename: finalFilename,
                 itemId,
                 state: this.STATES.QUEUED,
@@ -5686,7 +5700,9 @@
             }
 
             try {
-                const response = await fetch(download.url, {
+                // Use originalFetch to bypass any interception
+                const fetchFn = this.originalFetch || fetch;
+                const response = await fetchFn(download.url, {
                     signal: download.abortController.signal,
                     headers,
                     credentials: 'include'
@@ -5828,6 +5844,10 @@
                 download.abortController.abort();
             }
             download.state = this.STATES.CANCELLED;
+            // Remove from active URLs
+            if (download.normalizedUrl) {
+                this.activeUrls.delete(download.normalizedUrl);
+            }
             this.renderDownloads();
             this.updateBadge();
         },
@@ -5836,6 +5856,10 @@
          * Remove a download from the list
          */
         removeDownload: function(id) {
+            const download = this.downloads.get(id);
+            if (download && download.normalizedUrl) {
+                this.activeUrls.delete(download.normalizedUrl);
+            }
             this.downloads.delete(id);
             this.renderDownloads();
             this.updateBadge();
@@ -6010,6 +6034,9 @@
                 }
             }, true);
 
+            // Store original fetch for our own use (before any interception)
+            self.originalFetch = window.fetch.bind(window);
+
             // Intercept programmatic anchor downloads (Jellyfin creates temp anchors)
             const originalCreateElement = document.createElement.bind(document);
             document.createElement = function(tagName) {
@@ -6030,35 +6057,6 @@
                 return element;
             };
 
-            // Also intercept window.location downloads
-            const originalAssign = window.location.assign?.bind(window.location);
-            if (originalAssign) {
-                window.location.assign = function(url) {
-                    if (url && url.includes('/Download')) {
-                        console.log('[DownloadManager] Intercepted location.assign download:', url);
-                        self.addDownload(url, self.extractFilename(url));
-                        return;
-                    }
-                    return originalAssign(url);
-                };
-            }
-
-            // Intercept fetch downloads that return blob/file
-            const originalFetch = window.fetch.bind(window);
-            window.fetch = async function(input, init) {
-                const url = typeof input === 'string' ? input : input.url;
-
-                // Check if this is a download request
-                if (url && url.includes('/Download')) {
-                    console.log('[DownloadManager] Intercepted fetch download:', url);
-                    self.addDownload(url, self.extractFilename(url));
-                    // Return a mock response to prevent double download
-                    return new Response(new Blob(), { status: 200 });
-                }
-
-                return originalFetch(input, init);
-            };
-
             console.log('[DownloadManager] Download interception enabled');
         },
 
@@ -6068,7 +6066,8 @@
         getItemName: async function(itemId) {
             if (!window.ApiClient) throw new Error('ApiClient not available');
 
-            const response = await fetch(
+            const fetchFn = this.originalFetch || fetch;
+            const response = await fetchFn(
                 `${ApiClient.serverAddress()}/Items/${itemId}?api_key=${ApiClient.accessToken()}`,
                 { credentials: 'include' }
             );
