@@ -5460,6 +5460,8 @@
          * Create the download manager UI
          */
         createUI: function() {
+            const self = this;
+
             // Create floating button
             const btn = document.createElement('button');
             btn.id = 'downloadManagerBtn';
@@ -5477,9 +5479,9 @@
                 <div class="dm-header">
                     <h3>⬇️ Downloads</h3>
                     <div class="dm-header-actions">
-                        <button class="dm-header-btn" onclick="DownloadManager.pauseAll()">⏸ Pause All</button>
-                        <button class="dm-header-btn" onclick="DownloadManager.resumeAll()">▶ Resume All</button>
-                        <button class="dm-header-btn" onclick="DownloadManager.clearCompleted()">🗑 Clear</button>
+                        <button class="dm-header-btn" data-action="pauseAll">⏸ Pause All</button>
+                        <button class="dm-header-btn" data-action="resumeAll">▶ Resume All</button>
+                        <button class="dm-header-btn" data-action="clearCompleted">🗑 Clear</button>
                     </div>
                 </div>
                 <div class="dm-list" id="downloadManagerList">
@@ -5491,6 +5493,43 @@
                 </div>
             `;
             document.body.appendChild(panel);
+
+            // Event delegation for all buttons
+            panel.addEventListener('click', function(e) {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+
+                const action = btn.dataset.action;
+                const id = parseInt(btn.dataset.id);
+
+                switch (action) {
+                    case 'pause':
+                        self.pauseDownload(id);
+                        break;
+                    case 'resume':
+                        self.resumeDownload(id);
+                        break;
+                    case 'cancel':
+                        self.cancelDownload(id);
+                        break;
+                    case 'save':
+                        const download = self.downloads.get(id);
+                        if (download) self.saveFile(download);
+                        break;
+                    case 'remove':
+                        self.removeDownload(id);
+                        break;
+                    case 'pauseAll':
+                        self.pauseAll();
+                        break;
+                    case 'resumeAll':
+                        self.resumeAll();
+                        break;
+                    case 'clearCompleted':
+                        self.clearCompleted();
+                        break;
+                }
+            });
         },
 
         /**
@@ -5536,12 +5575,35 @@
         /**
          * Add a download to the queue
          */
-        addDownload: function(url, filename, itemId) {
+        addDownload: async function(url, filename, itemId) {
+            const self = this;
+
+            // Extract itemId from URL if not provided
+            if (!itemId && url) {
+                const match = url.match(/\/Items\/([a-f0-9]+)\//i);
+                if (match) {
+                    itemId = match[1];
+                }
+            }
+
+            // Always try to get proper filename from Jellyfin API
+            let finalFilename = filename;
+            if (itemId && window.ApiClient) {
+                try {
+                    finalFilename = await this.getItemName(itemId);
+                } catch (e) {
+                    console.log('[DownloadManager] Could not get item name, using fallback');
+                    finalFilename = filename || this.extractFilename(url);
+                }
+            } else {
+                finalFilename = filename || this.extractFilename(url);
+            }
+
             const id = ++this.downloadIdCounter;
             const download = {
                 id,
                 url,
-                filename: filename || this.extractFilename(url),
+                filename: finalFilename,
                 itemId,
                 state: this.STATES.QUEUED,
                 progress: 0,
@@ -5843,31 +5905,31 @@
                 switch (download.state) {
                     case this.STATES.DOWNLOADING:
                         actions = `
-                            <button class="dm-action-btn pause" onclick="DownloadManager.pauseDownload(${id})" title="Pause">⏸</button>
-                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                            <button class="dm-action-btn pause" data-action="pause" data-id="${id}" title="Pause">⏸</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
                         `;
                         break;
                     case this.STATES.PAUSED:
                         actions = `
-                            <button class="dm-action-btn resume" onclick="DownloadManager.resumeDownload(${id})" title="Resume">▶</button>
-                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                            <button class="dm-action-btn resume" data-action="resume" data-id="${id}" title="Resume">▶</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
                         `;
                         break;
                     case this.STATES.QUEUED:
                         actions = `
-                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                            <button class="dm-action-btn cancel" data-action="cancel" data-id="${id}" title="Cancel">✕</button>
                         `;
                         break;
                     case this.STATES.COMPLETED:
                         actions = `
-                            <button class="dm-action-btn open" onclick="DownloadManager.saveFile(DownloadManager.downloads.get(${id}))" title="Save Again">💾</button>
-                            <button class="dm-action-btn cancel" onclick="DownloadManager.removeDownload(${id})" title="Remove">✕</button>
+                            <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Save Again">💾</button>
+                            <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                     case this.STATES.FAILED:
                     case this.STATES.CANCELLED:
                         actions = `
-                            <button class="dm-action-btn cancel" onclick="DownloadManager.removeDownload(${id})" title="Remove">✕</button>
+                            <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                 }
