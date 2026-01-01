@@ -6243,6 +6243,12 @@
 
                 if (target) {
                     let url = target.href || target.dataset.url;
+
+                    // Skip blob: URLs (these are our own saved files)
+                    if (url && url.startsWith('blob:')) {
+                        return; // Let it proceed normally
+                    }
+
                     let filename = target.download || target.dataset.filename;
                     let itemId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
 
