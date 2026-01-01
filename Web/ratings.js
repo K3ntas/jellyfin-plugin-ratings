@@ -5067,10 +5067,952 @@
         }
     };
 
+    /**
+     * Download Manager - Enhanced download experience with progress, cancel, pause/resume
+     */
+    const DownloadManager = {
+        downloads: new Map(), // Map of downloadId -> download info
+        queue: [], // Queue of pending downloads
+        maxConcurrent: 2, // Max concurrent downloads
+        activeCount: 0,
+        isVisible: false,
+        downloadIdCounter: 0,
+
+        // Download states
+        STATES: {
+            QUEUED: 'queued',
+            DOWNLOADING: 'downloading',
+            PAUSED: 'paused',
+            COMPLETED: 'completed',
+            FAILED: 'failed',
+            CANCELLED: 'cancelled'
+        },
+
+        /**
+         * Initialize the download manager
+         */
+        init: function() {
+            this.injectStyles();
+            this.createUI();
+            this.interceptDownloads();
+            this.observeForNewButtons();
+            console.log('[DownloadManager] Initialized');
+        },
+
+        /**
+         * Inject download manager styles
+         */
+        injectStyles: function() {
+            if (document.getElementById('downloadManagerStyles')) return;
+
+            const styles = `
+                /* Download Manager Button */
+                #downloadManagerBtn {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border: none;
+                    cursor: pointer;
+                    z-index: 999998;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #downloadManagerBtn:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                }
+
+                #downloadManagerBtn .dm-icon {
+                    font-size: 24px;
+                    color: white;
+                }
+
+                #downloadManagerBtn .dm-badge {
+                    position: absolute;
+                    top: -5px;
+                    right: -5px;
+                    background: #e74c3c;
+                    color: white;
+                    border-radius: 50%;
+                    width: 22px;
+                    height: 22px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #downloadManagerBtn .dm-badge.hidden {
+                    display: none;
+                }
+
+                /* Download Manager Panel */
+                #downloadManagerPanel {
+                    position: fixed;
+                    bottom: 90px;
+                    right: 20px;
+                    width: 420px;
+                    max-height: 500px;
+                    background: rgba(20, 20, 25, 0.98);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                    z-index: 999997;
+                    display: none;
+                    flex-direction: column;
+                    overflow: hidden;
+                    backdrop-filter: blur(10px);
+                }
+
+                #downloadManagerPanel.visible {
+                    display: flex;
+                }
+
+                .dm-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 16px 20px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .dm-header h3 {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .dm-header-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                .dm-header-btn {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: none;
+                    color: #aaa;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.2s ease;
+                }
+
+                .dm-header-btn:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    color: #fff;
+                }
+
+                .dm-list {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 12px;
+                }
+
+                .dm-empty {
+                    text-align: center;
+                    padding: 40px 20px;
+                    color: #666;
+                }
+
+                .dm-empty-icon {
+                    font-size: 48px;
+                    margin-bottom: 12px;
+                    opacity: 0.5;
+                }
+
+                /* Download Item */
+                .dm-item {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-bottom: 8px;
+                    transition: background 0.2s ease;
+                }
+
+                .dm-item:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                }
+
+                .dm-item-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 8px;
+                }
+
+                .dm-item-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .dm-item-name {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #fff;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 4px;
+                }
+
+                .dm-item-status {
+                    font-size: 12px;
+                    color: #888;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .dm-item-size {
+                    color: #667eea;
+                }
+
+                .dm-item-speed {
+                    color: #4CAF50;
+                }
+
+                .dm-item-actions {
+                    display: flex;
+                    gap: 6px;
+                    flex-shrink: 0;
+                }
+
+                .dm-action-btn {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 6px;
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    font-size: 14px;
+                }
+
+                .dm-action-btn.pause {
+                    background: rgba(255, 193, 7, 0.2);
+                    color: #ffc107;
+                }
+
+                .dm-action-btn.pause:hover {
+                    background: rgba(255, 193, 7, 0.3);
+                }
+
+                .dm-action-btn.resume {
+                    background: rgba(76, 175, 80, 0.2);
+                    color: #4CAF50;
+                }
+
+                .dm-action-btn.resume:hover {
+                    background: rgba(76, 175, 80, 0.3);
+                }
+
+                .dm-action-btn.cancel {
+                    background: rgba(244, 67, 54, 0.2);
+                    color: #f44336;
+                }
+
+                .dm-action-btn.cancel:hover {
+                    background: rgba(244, 67, 54, 0.3);
+                }
+
+                .dm-action-btn.open {
+                    background: rgba(102, 126, 234, 0.2);
+                    color: #667eea;
+                }
+
+                .dm-action-btn.open:hover {
+                    background: rgba(102, 126, 234, 0.3);
+                }
+
+                /* Progress Bar */
+                .dm-progress-container {
+                    height: 6px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin-top: 8px;
+                }
+
+                .dm-progress-bar {
+                    height: 100%;
+                    background: linear-gradient(90deg, #667eea, #764ba2);
+                    border-radius: 3px;
+                    transition: width 0.3s ease;
+                }
+
+                .dm-progress-bar.paused {
+                    background: linear-gradient(90deg, #ffc107, #ff9800);
+                }
+
+                .dm-progress-bar.completed {
+                    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+                }
+
+                .dm-progress-bar.failed {
+                    background: linear-gradient(90deg, #f44336, #e91e63);
+                }
+
+                /* State badges */
+                .dm-state-badge {
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+
+                .dm-state-badge.queued {
+                    background: rgba(158, 158, 158, 0.2);
+                    color: #9e9e9e;
+                }
+
+                .dm-state-badge.downloading {
+                    background: rgba(102, 126, 234, 0.2);
+                    color: #667eea;
+                }
+
+                .dm-state-badge.paused {
+                    background: rgba(255, 193, 7, 0.2);
+                    color: #ffc107;
+                }
+
+                .dm-state-badge.completed {
+                    background: rgba(76, 175, 80, 0.2);
+                    color: #4CAF50;
+                }
+
+                .dm-state-badge.failed {
+                    background: rgba(244, 67, 54, 0.2);
+                    color: #f44336;
+                }
+
+                .dm-state-badge.cancelled {
+                    background: rgba(158, 158, 158, 0.2);
+                    color: #9e9e9e;
+                }
+
+                /* Mobile responsive */
+                @media (max-width: 480px) {
+                    #downloadManagerPanel {
+                        width: calc(100vw - 40px);
+                        bottom: 80px;
+                        right: 10px;
+                        left: 10px;
+                        max-height: 60vh;
+                    }
+
+                    #downloadManagerBtn {
+                        bottom: 15px;
+                        right: 15px;
+                        width: 50px;
+                        height: 50px;
+                    }
+                }
+
+                /* Custom scrollbar for download list */
+                .dm-list::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                .dm-list::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 3px;
+                }
+
+                .dm-list::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 3px;
+                }
+
+                .dm-list::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+            `;
+
+            const styleEl = document.createElement('style');
+            styleEl.id = 'downloadManagerStyles';
+            styleEl.textContent = styles;
+            document.head.appendChild(styleEl);
+        },
+
+        /**
+         * Create the download manager UI
+         */
+        createUI: function() {
+            // Create floating button
+            const btn = document.createElement('button');
+            btn.id = 'downloadManagerBtn';
+            btn.innerHTML = `
+                <span class="dm-icon">⬇️</span>
+                <span class="dm-badge hidden">0</span>
+            `;
+            btn.onclick = () => this.togglePanel();
+            document.body.appendChild(btn);
+
+            // Create panel
+            const panel = document.createElement('div');
+            panel.id = 'downloadManagerPanel';
+            panel.innerHTML = `
+                <div class="dm-header">
+                    <h3>⬇️ Downloads</h3>
+                    <div class="dm-header-actions">
+                        <button class="dm-header-btn" onclick="DownloadManager.pauseAll()">⏸ Pause All</button>
+                        <button class="dm-header-btn" onclick="DownloadManager.resumeAll()">▶ Resume All</button>
+                        <button class="dm-header-btn" onclick="DownloadManager.clearCompleted()">🗑 Clear</button>
+                    </div>
+                </div>
+                <div class="dm-list" id="downloadManagerList">
+                    <div class="dm-empty">
+                        <div class="dm-empty-icon">📥</div>
+                        <div>No downloads yet</div>
+                        <div style="font-size: 12px; margin-top: 8px;">Click download on any media to start</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(panel);
+        },
+
+        /**
+         * Toggle panel visibility
+         */
+        togglePanel: function() {
+            const panel = document.getElementById('downloadManagerPanel');
+            this.isVisible = !this.isVisible;
+            panel.classList.toggle('visible', this.isVisible);
+        },
+
+        /**
+         * Update the badge count
+         */
+        updateBadge: function() {
+            const badge = document.querySelector('#downloadManagerBtn .dm-badge');
+            const activeDownloads = Array.from(this.downloads.values()).filter(
+                d => d.state === this.STATES.DOWNLOADING || d.state === this.STATES.QUEUED || d.state === this.STATES.PAUSED
+            ).length;
+
+            badge.textContent = activeDownloads;
+            badge.classList.toggle('hidden', activeDownloads === 0);
+        },
+
+        /**
+         * Format bytes to human readable
+         */
+        formatBytes: function(bytes, decimals = 2) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+        },
+
+        /**
+         * Format speed
+         */
+        formatSpeed: function(bytesPerSecond) {
+            return this.formatBytes(bytesPerSecond) + '/s';
+        },
+
+        /**
+         * Add a download to the queue
+         */
+        addDownload: function(url, filename, itemId) {
+            const id = ++this.downloadIdCounter;
+            const download = {
+                id,
+                url,
+                filename: filename || this.extractFilename(url),
+                itemId,
+                state: this.STATES.QUEUED,
+                progress: 0,
+                loaded: 0,
+                total: 0,
+                speed: 0,
+                abortController: null,
+                pausedAt: 0,
+                blob: null,
+                chunks: [],
+                startTime: null,
+                lastLoaded: 0,
+                lastTime: null
+            };
+
+            this.downloads.set(id, download);
+            this.queue.push(id);
+            this.renderDownloads();
+            this.updateBadge();
+            this.processQueue();
+
+            // Auto-show panel when download starts
+            if (!this.isVisible) {
+                this.togglePanel();
+            }
+
+            return id;
+        },
+
+        /**
+         * Extract filename from URL
+         */
+        extractFilename: function(url) {
+            try {
+                const urlObj = new URL(url);
+                const params = new URLSearchParams(urlObj.search);
+                // Try to get filename from query params first
+                if (params.has('filename')) return params.get('filename');
+                // Then try path
+                const path = urlObj.pathname;
+                const parts = path.split('/');
+                const lastPart = parts[parts.length - 1];
+                if (lastPart && lastPart.includes('.')) return decodeURIComponent(lastPart);
+                return 'download_' + Date.now();
+            } catch {
+                return 'download_' + Date.now();
+            }
+        },
+
+        /**
+         * Process the download queue
+         */
+        processQueue: function() {
+            while (this.activeCount < this.maxConcurrent && this.queue.length > 0) {
+                const id = this.queue.shift();
+                const download = this.downloads.get(id);
+                if (download && download.state === this.STATES.QUEUED) {
+                    this.startDownload(id);
+                }
+            }
+        },
+
+        /**
+         * Start a download
+         */
+        startDownload: async function(id, resumeFrom = 0) {
+            const download = this.downloads.get(id);
+            if (!download) return;
+
+            download.state = this.STATES.DOWNLOADING;
+            download.abortController = new AbortController();
+            download.startTime = Date.now();
+            download.lastTime = Date.now();
+            this.activeCount++;
+            this.renderDownloads();
+
+            const headers = {};
+            if (resumeFrom > 0) {
+                headers['Range'] = `bytes=${resumeFrom}-`;
+            }
+
+            try {
+                const response = await fetch(download.url, {
+                    signal: download.abortController.signal,
+                    headers,
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Get total size
+                const contentLength = response.headers.get('content-length');
+                const contentRange = response.headers.get('content-range');
+
+                if (contentRange) {
+                    // Resume response: "bytes 12345-67890/123456"
+                    const match = contentRange.match(/\/(\d+)/);
+                    if (match) download.total = parseInt(match[1]);
+                } else if (contentLength) {
+                    download.total = parseInt(contentLength) + resumeFrom;
+                }
+
+                download.loaded = resumeFrom;
+
+                // Stream the response
+                const reader = response.body.getReader();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) break;
+
+                    if (download.state === this.STATES.PAUSED) {
+                        reader.cancel();
+                        break;
+                    }
+
+                    download.chunks.push(value);
+                    download.loaded += value.length;
+
+                    // Calculate speed
+                    const now = Date.now();
+                    const timeDiff = (now - download.lastTime) / 1000;
+                    if (timeDiff >= 0.5) {
+                        const bytesDiff = download.loaded - download.lastLoaded;
+                        download.speed = bytesDiff / timeDiff;
+                        download.lastLoaded = download.loaded;
+                        download.lastTime = now;
+                    }
+
+                    // Calculate progress
+                    if (download.total > 0) {
+                        download.progress = Math.round((download.loaded / download.total) * 100);
+                    }
+
+                    this.renderDownloads();
+                }
+
+                if (download.state !== this.STATES.PAUSED) {
+                    // Combine chunks and create blob
+                    download.blob = new Blob(download.chunks);
+                    download.state = this.STATES.COMPLETED;
+                    download.progress = 100;
+
+                    // Auto-save the file
+                    this.saveFile(download);
+                }
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    if (download.state !== this.STATES.PAUSED) {
+                        download.state = this.STATES.CANCELLED;
+                    }
+                } else {
+                    console.error('[DownloadManager] Download failed:', error);
+                    download.state = this.STATES.FAILED;
+                    download.error = error.message;
+                }
+            } finally {
+                this.activeCount--;
+                this.renderDownloads();
+                this.updateBadge();
+                this.processQueue();
+            }
+        },
+
+        /**
+         * Save the downloaded file
+         */
+        saveFile: function(download) {
+            if (!download.blob) return;
+
+            const url = URL.createObjectURL(download.blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = download.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
+        /**
+         * Pause a download
+         */
+        pauseDownload: function(id) {
+            const download = this.downloads.get(id);
+            if (!download || download.state !== this.STATES.DOWNLOADING) return;
+
+            download.state = this.STATES.PAUSED;
+            download.pausedAt = download.loaded;
+            if (download.abortController) {
+                download.abortController.abort();
+            }
+            this.renderDownloads();
+            this.updateBadge();
+        },
+
+        /**
+         * Resume a download
+         */
+        resumeDownload: function(id) {
+            const download = this.downloads.get(id);
+            if (!download || download.state !== this.STATES.PAUSED) return;
+
+            download.state = this.STATES.QUEUED;
+            download.chunks = []; // Clear chunks for fresh resume
+            this.queue.unshift(id); // Add to front of queue
+            this.processQueue();
+        },
+
+        /**
+         * Cancel a download
+         */
+        cancelDownload: function(id) {
+            const download = this.downloads.get(id);
+            if (!download) return;
+
+            if (download.abortController) {
+                download.abortController.abort();
+            }
+            download.state = this.STATES.CANCELLED;
+            this.renderDownloads();
+            this.updateBadge();
+        },
+
+        /**
+         * Remove a download from the list
+         */
+        removeDownload: function(id) {
+            this.downloads.delete(id);
+            this.renderDownloads();
+            this.updateBadge();
+        },
+
+        /**
+         * Pause all active downloads
+         */
+        pauseAll: function() {
+            for (const [id, download] of this.downloads) {
+                if (download.state === this.STATES.DOWNLOADING) {
+                    this.pauseDownload(id);
+                }
+            }
+        },
+
+        /**
+         * Resume all paused downloads
+         */
+        resumeAll: function() {
+            for (const [id, download] of this.downloads) {
+                if (download.state === this.STATES.PAUSED) {
+                    this.resumeDownload(id);
+                }
+            }
+        },
+
+        /**
+         * Clear completed/cancelled/failed downloads
+         */
+        clearCompleted: function() {
+            for (const [id, download] of this.downloads) {
+                if ([this.STATES.COMPLETED, this.STATES.CANCELLED, this.STATES.FAILED].includes(download.state)) {
+                    this.downloads.delete(id);
+                }
+            }
+            this.renderDownloads();
+            this.updateBadge();
+        },
+
+        /**
+         * Render the downloads list
+         */
+        renderDownloads: function() {
+            const list = document.getElementById('downloadManagerList');
+            if (!list) return;
+
+            if (this.downloads.size === 0) {
+                list.innerHTML = `
+                    <div class="dm-empty">
+                        <div class="dm-empty-icon">📥</div>
+                        <div>No downloads yet</div>
+                        <div style="font-size: 12px; margin-top: 8px;">Click download on any media to start</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            for (const [id, download] of this.downloads) {
+                const stateClass = download.state.toLowerCase();
+                const progressClass = download.state === this.STATES.PAUSED ? 'paused' :
+                                     download.state === this.STATES.COMPLETED ? 'completed' :
+                                     download.state === this.STATES.FAILED ? 'failed' : '';
+
+                let actions = '';
+                switch (download.state) {
+                    case this.STATES.DOWNLOADING:
+                        actions = `
+                            <button class="dm-action-btn pause" onclick="DownloadManager.pauseDownload(${id})" title="Pause">⏸</button>
+                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                        `;
+                        break;
+                    case this.STATES.PAUSED:
+                        actions = `
+                            <button class="dm-action-btn resume" onclick="DownloadManager.resumeDownload(${id})" title="Resume">▶</button>
+                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                        `;
+                        break;
+                    case this.STATES.QUEUED:
+                        actions = `
+                            <button class="dm-action-btn cancel" onclick="DownloadManager.cancelDownload(${id})" title="Cancel">✕</button>
+                        `;
+                        break;
+                    case this.STATES.COMPLETED:
+                        actions = `
+                            <button class="dm-action-btn open" onclick="DownloadManager.saveFile(DownloadManager.downloads.get(${id}))" title="Save Again">💾</button>
+                            <button class="dm-action-btn cancel" onclick="DownloadManager.removeDownload(${id})" title="Remove">✕</button>
+                        `;
+                        break;
+                    case this.STATES.FAILED:
+                    case this.STATES.CANCELLED:
+                        actions = `
+                            <button class="dm-action-btn cancel" onclick="DownloadManager.removeDownload(${id})" title="Remove">✕</button>
+                        `;
+                        break;
+                }
+
+                let statusText = '';
+                if (download.state === this.STATES.DOWNLOADING) {
+                    statusText = `<span class="dm-item-size">${this.formatBytes(download.loaded)} / ${this.formatBytes(download.total)}</span>`;
+                    if (download.speed > 0) {
+                        statusText += `<span class="dm-item-speed">${this.formatSpeed(download.speed)}</span>`;
+                    }
+                } else if (download.state === this.STATES.PAUSED) {
+                    statusText = `<span class="dm-item-size">${this.formatBytes(download.pausedAt)} / ${this.formatBytes(download.total)}</span>`;
+                } else if (download.state === this.STATES.COMPLETED) {
+                    statusText = `<span class="dm-item-size">${this.formatBytes(download.total)}</span>`;
+                } else if (download.state === this.STATES.FAILED) {
+                    statusText = `<span style="color: #f44336;">${download.error || 'Download failed'}</span>`;
+                }
+
+                html += `
+                    <div class="dm-item" data-id="${id}">
+                        <div class="dm-item-header">
+                            <div class="dm-item-info">
+                                <div class="dm-item-name" title="${download.filename}">${download.filename}</div>
+                                <div class="dm-item-status">
+                                    <span class="dm-state-badge ${stateClass}">${download.state}</span>
+                                    ${statusText}
+                                </div>
+                            </div>
+                            <div class="dm-item-actions">
+                                ${actions}
+                            </div>
+                        </div>
+                        <div class="dm-progress-container">
+                            <div class="dm-progress-bar ${progressClass}" style="width: ${download.progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            list.innerHTML = html;
+        },
+
+        /**
+         * Intercept Jellyfin download buttons
+         */
+        interceptDownloads: function() {
+            const self = this;
+
+            // Override the native download behavior
+            document.addEventListener('click', function(e) {
+                // Check for download buttons/links
+                const target = e.target.closest('button[data-action="download"], a[download], .btnDownload, [data-command="download"]');
+
+                if (target) {
+                    // Try to get download URL
+                    let url = target.href || target.dataset.url;
+                    let filename = target.download || target.dataset.filename;
+                    let itemId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
+
+                    // For Jellyfin, construct the download URL if not directly available
+                    if (!url && itemId && window.ApiClient) {
+                        url = `${ApiClient.serverAddress()}/Items/${itemId}/Download?api_key=${ApiClient.accessToken()}`;
+                    }
+
+                    if (url) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Get filename from item if possible
+                        if (!filename && itemId) {
+                            self.getItemName(itemId).then(name => {
+                                self.addDownload(url, name, itemId);
+                            }).catch(() => {
+                                self.addDownload(url, filename, itemId);
+                            });
+                        } else {
+                            self.addDownload(url, filename, itemId);
+                        }
+                        return false;
+                    }
+                }
+            }, true);
+
+            // Also intercept any programmatic downloads
+            const originalCreateElement = document.createElement.bind(document);
+            document.createElement = function(tagName) {
+                const element = originalCreateElement(tagName);
+                if (tagName.toLowerCase() === 'a') {
+                    const originalClick = element.click.bind(element);
+                    element.click = function() {
+                        if (this.download && this.href && this.href.includes('/Download')) {
+                            self.addDownload(this.href, this.download);
+                            return;
+                        }
+                        return originalClick();
+                    };
+                }
+                return element;
+            };
+        },
+
+        /**
+         * Get item name from Jellyfin API
+         */
+        getItemName: async function(itemId) {
+            if (!window.ApiClient) throw new Error('ApiClient not available');
+
+            const response = await fetch(
+                `${ApiClient.serverAddress()}/Items/${itemId}?api_key=${ApiClient.accessToken()}`,
+                { credentials: 'include' }
+            );
+
+            if (!response.ok) throw new Error('Failed to get item');
+
+            const item = await response.json();
+            let filename = item.Name || 'download';
+
+            // Add extension based on media type
+            if (item.MediaSources && item.MediaSources[0]) {
+                const container = item.MediaSources[0].Container;
+                if (container) {
+                    filename += '.' + container;
+                }
+            }
+
+            return filename;
+        },
+
+        /**
+         * Observe for dynamically added download buttons
+         */
+        observeForNewButtons: function() {
+            const observer = new MutationObserver((mutations) => {
+                // The event listener handles all clicks, so we don't need to do anything special here
+                // This is just for future enhancements like adding visual indicators to buttons
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
+    };
+
     // Initialize when DOM is ready
 
     function initPlugin() {
         RatingsPlugin.init();
+        DownloadManager.init();
     }
 
     if (document.readyState === 'loading') {
@@ -5085,4 +6027,5 @@
 
     // Make it globally available
     window.RatingsPlugin = RatingsPlugin;
+    window.DownloadManager = DownloadManager;
 })();
