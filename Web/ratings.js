@@ -5726,24 +5726,21 @@
          * Trigger native browser download (handles large files properly)
          */
         triggerNativeDownload: function(download) {
-            // Create a temporary anchor to trigger download
-            const a = document.createElement('a');
-            a.href = download.url;
-            a.download = download.filename;
-            a.style.display = 'none';
+            console.log('[DownloadManager] Triggering download:', download.url);
 
-            // For cross-origin, we need to use a different approach
-            // Open in new tab which will trigger download
-            if (download.url.includes('api_key') || download.url.includes('Download')) {
-                // Jellyfin download URL - open directly
-                a.target = '_blank';
+            // Use hidden iframe for download - most reliable method
+            let iframe = document.getElementById('downloadManagerIframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'downloadManagerIframe';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
             }
 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            // Navigate iframe to download URL - this triggers browser download
+            iframe.src = download.url;
 
-            console.log('[DownloadManager] Native download triggered:', download.filename);
+            console.log('[DownloadManager] Download started via iframe:', download.filename);
         },
 
         /**
