@@ -5923,49 +5923,57 @@
         },
 
         /**
-         * Complete download - combine chunks and save file
+         * Complete download - mark as ready to save (don't delete chunks yet)
          */
         completeDownload: async function(download) {
-            console.log('[DownloadManager] Combining chunks for:', download.filename);
-
-            const chunks = await this.getChunks(download.id);
-            const blobParts = chunks.map(c => c.data);
-            const blob = new Blob(blobParts);
-
-            // Trigger download
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = download.filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            console.log('[DownloadManager] Download ready:', download.filename);
 
             download.state = this.STATES.COMPLETED;
             download.progress = 100;
+            this.saveDownloadMeta(download);
 
-            // Clean up IndexedDB
-            await this.deleteDownloadFromDB(download.id);
-            if (download.normalizedUrl) {
-                this.activeUrls.delete(download.normalizedUrl);
-            }
-
-            console.log('[DownloadManager] Download completed:', download.filename);
+            // Try auto-save
+            await this.saveFile(download);
         },
 
         /**
-         * Save file (re-download or save completed)
+         * Save file to disk from IndexedDB chunks
          */
         saveFile: async function(download) {
-            if (download.state === this.STATES.COMPLETED) {
-                // Re-trigger the download
-                download.state = this.STATES.QUEUED;
-                download.progress = 0;
-                download.loaded = 0;
-                download.chunksCompleted = 0;
-                download.currentChunk = 0;
-                this.startDownload(download.id);
+            try {
+                console.log('[DownloadManager] Saving file:', download.filename);
+
+                const chunks = await this.getChunks(download.id);
+                if (!chunks || chunks.length === 0) {
+                    console.error('[DownloadManager] No chunks found for download');
+                    return;
+                }
+
+                const blobParts = chunks.map(c => c.data);
+                const blob = new Blob(blobParts);
+
+                console.log('[DownloadManager] Created blob:', blob.size, 'bytes');
+
+                // Trigger download with delay to ensure browser processes it
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = download.filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+
+                // Use setTimeout to ensure the click registers
+                setTimeout(() => {
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                }, 100);
+
+                console.log('[DownloadManager] Save triggered for:', download.filename);
+            } catch (error) {
+                console.error('[DownloadManager] Save failed:', error);
             }
         },
 
@@ -6122,6 +6130,7 @@
                         break;
                     case this.STATES.COMPLETED:
                         actions = `
+                            <button class="dm-action-btn resume" data-action="save" data-id="${id}" title="Save File">💾</button>
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
@@ -6157,7 +6166,7 @@
                     statusText = `<span class="dm-item-size">${loaded} / ${total} - Paused${chunkInfo}</span>`;
                 } else if (download.state === this.STATES.COMPLETED) {
                     const total = this.formatBytes(download.total);
-                    statusText = `<span class="dm-item-size" style="color: #4CAF50;">Completed - ${total}</span>`;
+                    statusText = `<span class="dm-item-size" style="color: #4CAF50;">Ready - ${total} - Click 💾 to save</span>`;
                 } else if (download.state === this.STATES.FAILED) {
                     statusText = `<span style="color: #f44336;">${download.error || 'Download failed'}</span>`;
                 } else if (download.state === this.STATES.CANCELLED) {
