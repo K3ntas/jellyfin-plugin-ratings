@@ -5083,10 +5083,8 @@
         STATES: {
             QUEUED: 'queued',
             DOWNLOADING: 'downloading',
-            PAUSED: 'paused',
-            COMPLETED: 'completed',
-            FAILED: 'failed',
-            CANCELLED: 'cancelled'
+            STARTED: 'started',  // Sent to browser
+            FAILED: 'failed'
         },
 
         /**
@@ -5684,27 +5682,11 @@
             this.renderDownloads();
 
             try {
-                // First, get file size with HEAD request
-                const fetchFn = this.originalFetch || fetch;
-                const headResponse = await fetchFn(download.url, {
-                    method: 'HEAD',
-                    credentials: 'include'
-                });
-
-                if (headResponse.ok) {
-                    const contentLength = headResponse.headers.get('content-length');
-                    if (contentLength) {
-                        download.total = parseInt(contentLength);
-                    }
-                }
-
                 // Trigger native browser download
                 this.triggerNativeDownload(download);
 
-                // Mark as completed (browser handles the actual download)
-                download.state = this.STATES.COMPLETED;
-                download.progress = 100;
-                download.loaded = download.total;
+                // Mark as started (browser handles the actual download)
+                download.state = this.STATES.STARTED;
 
             } catch (error) {
                 console.error('[DownloadManager] Download failed:', error);
@@ -5855,7 +5837,7 @@
             let html = '';
             for (const [id, download] of this.downloads) {
                 const stateClass = download.state.toLowerCase();
-                const progressClass = download.state === this.STATES.COMPLETED ? 'completed' :
+                const progressClass = download.state === this.STATES.STARTED ? 'completed' :
                                      download.state === this.STATES.FAILED ? 'failed' : '';
 
                 let actions = '';
@@ -5866,14 +5848,13 @@
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
-                    case this.STATES.COMPLETED:
+                    case this.STATES.STARTED:
                         actions = `
                             <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Download Again">💾</button>
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
                         `;
                         break;
                     case this.STATES.FAILED:
-                    case this.STATES.CANCELLED:
                         actions = `
                             <button class="dm-action-btn open" data-action="save" data-id="${id}" title="Retry">🔄</button>
                             <button class="dm-action-btn cancel" data-action="remove" data-id="${id}" title="Remove">✕</button>
@@ -5883,11 +5864,11 @@
 
                 let statusText = '';
                 if (download.state === this.STATES.DOWNLOADING) {
-                    statusText = `<span class="dm-item-size">Starting download...</span>`;
+                    statusText = `<span class="dm-item-size">Starting...</span>`;
                 } else if (download.state === this.STATES.QUEUED) {
                     statusText = `<span class="dm-item-size">Queued</span>`;
-                } else if (download.state === this.STATES.COMPLETED) {
-                    statusText = `<span class="dm-item-size">${this.formatBytes(download.total)}</span>`;
+                } else if (download.state === this.STATES.STARTED) {
+                    statusText = `<span class="dm-item-size" style="color: #4CAF50;">Sent to browser - check your downloads</span>`;
                 } else if (download.state === this.STATES.FAILED) {
                     statusText = `<span style="color: #f44336;">${download.error || 'Download failed'}</span>`;
                 }
