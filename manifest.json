@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.186.0",
+        "changelog": "Download Manager: Fixed blob URL interception - file saves now work! Blob URLs are no longer caught by download interceptor.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.186.0/jellyfin-plugin-ratings_1.0.186.0.zip",
+        "checksum": "8075eb478e0a84e8a0986b8b417e5999",
+        "timestamp": "2026-01-01T21:00:00Z"
+      },
+      {
         "version": "1.0.185.0",
         "changelog": "Download Manager: Fixed duplicate downloads, better error handling, proper retry from failed state.",
         "targetAbi": "10.11.0.0",
