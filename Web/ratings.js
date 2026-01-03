@@ -2578,6 +2578,7 @@
 
         /**
          * Setup listener for user changes (login/logout)
+         * Manages notification session lifecycle
          */
         setupUserChangeListener: function () {
             const self = this;
@@ -2592,8 +2593,44 @@
 
                         // User changed (login/logout/switch account)
                         if (currentUserId !== lastUserId) {
+                            console.log('RatingsPlugin: User changed from', lastUserId, 'to', currentUserId);
+
                             // Clear all cached data
                             self.clearRequestCache();
+
+                            // Handle notification session lifecycle
+                            if (lastUserId && !currentUserId) {
+                                // User logged out - clear notification session and stop polling
+                                console.log('RatingsPlugin: User logged out, clearing notification session');
+                                self.clearNotificationSession();
+                                self.stopNotificationPolling();
+                            } else if (!lastUserId && currentUserId) {
+                                // User just logged in - start new notification session
+                                console.log('RatingsPlugin: User logged in, starting notification session');
+                                self.startNotificationSession();
+                                // Reinitialize notifications for new user
+                                if (self.notificationsEnabled) {
+                                    self.createNotificationContainer();
+                                    self.startNotificationPolling();
+                                } else {
+                                    // Check if notifications are enabled and start if so
+                                    self.initNotifications();
+                                }
+                            } else if (lastUserId && currentUserId && lastUserId !== currentUserId) {
+                                // User switched accounts - clear old session and start new one
+                                console.log('RatingsPlugin: User switched accounts, resetting notification session');
+                                self.clearNotificationSession();
+                                self.stopNotificationPolling();
+                                self.startNotificationSession();
+                                // Reinitialize notifications for new user
+                                if (self.notificationsEnabled) {
+                                    self.createNotificationContainer();
+                                    self.startNotificationPolling();
+                                } else {
+                                    self.initNotifications();
+                                }
+                            }
+
                             lastUserId = currentUserId;
 
                             // Update badge for new user
@@ -2610,9 +2647,6 @@
                             // if (currentUserId) {
                             //     self.initTestNotificationButton();
                             // }
-
-                            // Clear shown notification IDs for new user
-                            self.shownNotificationIds = [];
                         }
                     } catch (err) {
                         // Silently fail
@@ -2622,10 +2656,16 @@
                 // Also listen for Jellyfin events if available
                 if (window.Events) {
                     Events.on(ApiClient, 'authenticated', () => {
+                        console.log('RatingsPlugin: Jellyfin authenticated event received');
                         self.clearRequestCache();
                         const btn = document.getElementById('requestMediaBtn');
                         if (btn) {
                             self.updateRequestBadge(btn);
+                        }
+                        // Start notification session on authentication
+                        if (!self.notificationSessionUserId) {
+                            self.startNotificationSession();
+                            self.initNotifications();
                         }
                     });
                 }
@@ -4132,17 +4172,142 @@
 
         /**
          * Notification state
+         * Session-based: only shows notifications for media added AFTER user login
          */
         notificationsEnabled: false,
         lastNotificationCheck: null,
         notificationPollingInterval: null,
         shownNotificationIds: [],
+        notificationSessionUserId: null, // Track which user session this is for
+
+        /**
+         * SessionStorage keys for notification persistence
+         */
+        NOTIFICATION_KEYS: {
+            SESSION_START: 'ratingsNotificationSessionStart',    // When user logged in (ISO timestamp)
+            SHOWN_IDS: 'ratingsShownNotificationIds',            // Array of shown notification IDs
+            LAST_CHECK: 'ratingsLastNotificationCheck',          // Last poll timestamp
+            SESSION_USER: 'ratingsNotificationSessionUser'       // User ID for this session
+        },
+
+        /**
+         * Load notification session from sessionStorage
+         */
+        loadNotificationSession: function () {
+            try {
+                const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+                const storedUserId = sessionStorage.getItem(this.NOTIFICATION_KEYS.SESSION_USER);
+
+                // If user changed, clear session data
+                if (currentUserId && storedUserId && currentUserId !== storedUserId) {
+                    console.log('RatingsPlugin: User changed, clearing notification session');
+                    this.clearNotificationSession();
+                    return null;
+                }
+
+                // Load shown notification IDs
+                const shownIdsJson = sessionStorage.getItem(this.NOTIFICATION_KEYS.SHOWN_IDS);
+                if (shownIdsJson) {
+                    try {
+                        this.shownNotificationIds = JSON.parse(shownIdsJson);
+                    } catch (e) {
+                        this.shownNotificationIds = [];
+                    }
+                }
+
+                // Load last check time
+                const lastCheck = sessionStorage.getItem(this.NOTIFICATION_KEYS.LAST_CHECK);
+                if (lastCheck) {
+                    this.lastNotificationCheck = lastCheck;
+                }
+
+                // Load session start time
+                const sessionStart = sessionStorage.getItem(this.NOTIFICATION_KEYS.SESSION_START);
+
+                this.notificationSessionUserId = currentUserId;
+
+                return sessionStart;
+            } catch (err) {
+                console.error('RatingsPlugin: Error loading notification session:', err);
+                return null;
+            }
+        },
+
+        /**
+         * Save notification session to sessionStorage
+         */
+        saveNotificationSession: function () {
+            try {
+                const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+                if (currentUserId) {
+                    sessionStorage.setItem(this.NOTIFICATION_KEYS.SESSION_USER, currentUserId);
+                }
+                sessionStorage.setItem(this.NOTIFICATION_KEYS.SHOWN_IDS, JSON.stringify(this.shownNotificationIds));
+                if (this.lastNotificationCheck) {
+                    sessionStorage.setItem(this.NOTIFICATION_KEYS.LAST_CHECK, this.lastNotificationCheck);
+                }
+            } catch (err) {
+                console.error('RatingsPlugin: Error saving notification session:', err);
+            }
+        },
+
+        /**
+         * Clear notification session data (on logout or user change)
+         */
+        clearNotificationSession: function () {
+            try {
+                sessionStorage.removeItem(this.NOTIFICATION_KEYS.SESSION_START);
+                sessionStorage.removeItem(this.NOTIFICATION_KEYS.SHOWN_IDS);
+                sessionStorage.removeItem(this.NOTIFICATION_KEYS.LAST_CHECK);
+                sessionStorage.removeItem(this.NOTIFICATION_KEYS.SESSION_USER);
+                this.shownNotificationIds = [];
+                this.lastNotificationCheck = null;
+                this.notificationSessionUserId = null;
+            } catch (err) {
+                console.error('RatingsPlugin: Error clearing notification session:', err);
+            }
+        },
+
+        /**
+         * Start a new notification session (on login)
+         */
+        startNotificationSession: function () {
+            try {
+                const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+                if (!currentUserId) {
+                    console.log('RatingsPlugin: Cannot start notification session - no user');
+                    return;
+                }
+
+                const now = new Date().toISOString();
+                sessionStorage.setItem(this.NOTIFICATION_KEYS.SESSION_START, now);
+                sessionStorage.setItem(this.NOTIFICATION_KEYS.SESSION_USER, currentUserId);
+                sessionStorage.setItem(this.NOTIFICATION_KEYS.SHOWN_IDS, '[]');
+                sessionStorage.setItem(this.NOTIFICATION_KEYS.LAST_CHECK, now);
+
+                this.lastNotificationCheck = now;
+                this.shownNotificationIds = [];
+                this.notificationSessionUserId = currentUserId;
+
+                console.log('RatingsPlugin: Started notification session at:', now, 'for user:', currentUserId);
+            } catch (err) {
+                console.error('RatingsPlugin: Error starting notification session:', err);
+            }
+        },
 
         /**
          * Initialize notifications system
+         * Uses session-based tracking: only shows notifications for media added AFTER user login
          */
         initNotifications: function () {
             const self = this;
+
+            // Check if user is logged in
+            const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
+            if (!currentUserId) {
+                console.log('RatingsPlugin: No user logged in, skipping notification init');
+                return;
+            }
 
             // Check if notifications are enabled in config
             this.checkNotificationsEnabled().then(enabled => {
@@ -4152,9 +4317,19 @@
                     // Create notification container
                     self.createNotificationContainer();
 
-                    // Initialize the last check time to 5 minutes ago so we catch recent notifications
-                    self.lastNotificationCheck = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-                    console.log('RatingsPlugin: Initial lastNotificationCheck:', self.lastNotificationCheck);
+                    // Load existing session or start new one
+                    const sessionStart = self.loadNotificationSession();
+
+                    if (sessionStart) {
+                        // Existing session - use stored timestamp
+                        // lastNotificationCheck was already loaded in loadNotificationSession
+                        console.log('RatingsPlugin: Restored notification session, lastCheck:', self.lastNotificationCheck);
+                    } else {
+                        // New session - start from NOW (not 5 minutes ago!)
+                        // This prevents old notifications from appearing
+                        self.startNotificationSession();
+                        console.log('RatingsPlugin: Started new notification session at:', self.lastNotificationCheck);
+                    }
 
                     // Start polling for notifications
                     self.startNotificationPolling();
@@ -4225,6 +4400,7 @@
 
         /**
          * Check for new notifications from server
+         * Only polls when user is logged in, persists state to sessionStorage
          */
         checkForNewNotifications: function () {
             const self = this;
@@ -4239,8 +4415,24 @@
                 return;
             }
 
+            // Check if user is logged in
+            const currentUserId = ApiClient.getCurrentUserId();
+            if (!currentUserId) {
+                console.log('RatingsPlugin: No user logged in, stopping notification poll');
+                this.stopNotificationPolling();
+                return;
+            }
+
+            // Verify user hasn't changed mid-session
+            if (this.notificationSessionUserId && this.notificationSessionUserId !== currentUserId) {
+                console.log('RatingsPlugin: User changed during session, reinitializing notifications');
+                this.clearNotificationSession();
+                this.startNotificationSession();
+            }
+
             const baseUrl = ApiClient.serverAddress();
-            const since = this.lastNotificationCheck || new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            // Use session start time as fallback - NEVER use 5 minutes ago
+            const since = this.lastNotificationCheck || new Date().toISOString();
 
             console.log('RatingsPlugin: Checking notifications since:', since);
 
@@ -4272,10 +4464,24 @@
 
                     // Update last check time
                     self.lastNotificationCheck = new Date().toISOString();
+
+                    // Persist session state to sessionStorage
+                    self.saveNotificationSession();
                 })
                 .catch(err => {
                     console.error('RatingsPlugin: Error checking for notifications:', err);
                 });
+        },
+
+        /**
+         * Stop notification polling
+         */
+        stopNotificationPolling: function () {
+            if (this.notificationPollingInterval) {
+                clearInterval(this.notificationPollingInterval);
+                this.notificationPollingInterval = null;
+                console.log('RatingsPlugin: Stopped notification polling');
+            }
         },
 
         /**
