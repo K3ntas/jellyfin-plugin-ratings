@@ -58,6 +58,16 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string MediaLink { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the rejection reason when request is rejected.
+        /// </summary>
+        public string RejectionReason { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets custom fields as JSON string (key-value pairs).
+        /// </summary>
+        public string CustomFields { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MediaRequest"/> class.
         /// </summary>
         public MediaRequest()
