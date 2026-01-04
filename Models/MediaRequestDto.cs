@@ -19,5 +19,10 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// Gets or sets additional notes or details about the request.
         /// </summary>
         public string Notes { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets custom fields as JSON string (key-value pairs).
+        /// </summary>
+        public string CustomFields { get; set; } = string.Empty;
     }
 }
