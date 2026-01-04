@@ -325,7 +325,18 @@ namespace Jellyfin.Plugin.Ratings.Api
                     EnableRequestButton = config?.EnableRequestButton ?? true,
                     EnableNewMediaNotifications = config?.EnableNewMediaNotifications ?? true,
                     MinRating = config?.MinRating ?? 1,
-                    MaxRating = config?.MaxRating ?? 10
+                    MaxRating = config?.MaxRating ?? 10,
+                    ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
+                    ShowSearchButton = config?.ShowSearchButton ?? true,
+                    CustomRequestFields = config?.CustomRequestFields ?? string.Empty,
+                    RequestWindowTitle = config?.RequestWindowTitle ?? string.Empty,
+                    RequestWindowDescription = config?.RequestWindowDescription ?? string.Empty,
+                    RequestTitleLabel = config?.RequestTitleLabel ?? string.Empty,
+                    RequestTitlePlaceholder = config?.RequestTitlePlaceholder ?? string.Empty,
+                    RequestTypeLabel = config?.RequestTypeLabel ?? string.Empty,
+                    RequestNotesLabel = config?.RequestNotesLabel ?? string.Empty,
+                    RequestNotesPlaceholder = config?.RequestNotesPlaceholder ?? string.Empty,
+                    RequestSubmitButtonText = config?.RequestSubmitButtonText ?? string.Empty
                 });
             }
             catch (Exception ex)
@@ -653,6 +664,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Title = request.Title,
                     Type = request.Type,
                     Notes = request.Notes,
+                    CustomFields = request.CustomFields,
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -732,14 +744,16 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Updates the status of a media request (admin only).
         /// </summary>
         /// <param name="requestId">The request ID.</param>
-        /// <param name="status">The new status (pending, processing, done).</param>
+        /// <param name="status">The new status (pending, processing, done, rejected).</param>
         /// <param name="mediaLink">Optional media link when marking as done.</param>
+        /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Status")]
         public ActionResult<MediaRequest> UpdateRequestStatus(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string status,
-            [FromQuery] string? mediaLink = null)
+            [FromQuery] string? mediaLink = null,
+            [FromQuery] string? rejectionReason = null)
         {
             try
             {
@@ -784,13 +798,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Admin-only enforcement can be added later with proper policy checking
 
                 // Validate status
-                var validStatuses = new[] { "pending", "processing", "done" };
+                var validStatuses = new[] { "pending", "processing", "done", "rejected" };
                 if (!validStatuses.Contains(status.ToLower()))
                 {
                     return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
                 }
 
-                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower(), mediaLink).Result;
+                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower(), mediaLink, rejectionReason).Result;
                 if (result == null)
                 {
                     return NotFound("Request not found");
