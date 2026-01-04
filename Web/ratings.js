@@ -1066,6 +1066,39 @@
                     color: #fff !important;
                 }
 
+                .admin-request-status-badge.rejected {
+                    background: #f44336 !important;
+                    color: #fff !important;
+                }
+
+                .admin-rejection-reason {
+                    color: #f44336 !important;
+                    font-size: 11px !important;
+                    margin-top: 4px !important;
+                    font-style: italic !important;
+                }
+
+                .admin-rejection-input {
+                    width: 100% !important;
+                    padding: 8px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #444 !important;
+                    background: #333 !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                    margin-top: 4px !important;
+                }
+
+                .admin-rejection-input::placeholder {
+                    color: #888 !important;
+                }
+
+                .admin-request-custom-field {
+                    color: #9c9 !important;
+                    font-size: 11px !important;
+                    margin-top: 2px !important;
+                }
+
                 .admin-request-actions {
                     display: flex !important;
                     gap: 6px !important;
@@ -1117,6 +1150,17 @@
 
                 .admin-status-btn.done:hover {
                     background: #4CAF50 !important;
+                    color: #fff !important;
+                }
+
+                .admin-status-btn.rejected {
+                    background: rgba(244, 67, 54, 0.2) !important;
+                    color: #f44336 !important;
+                    border: 1px solid #f44336 !important;
+                }
+
+                .admin-status-btn.rejected:hover {
+                    background: #f44336 !important;
                     color: #fff !important;
                 }
 
@@ -1388,6 +1432,27 @@
                 .user-request-status.done {
                     background: #4CAF50 !important;
                     color: #fff !important;
+                }
+
+                .user-request-status.rejected {
+                    background: #f44336 !important;
+                    color: #fff !important;
+                }
+
+                .user-request-rejection-reason {
+                    color: #f44336 !important;
+                    font-size: 12px !important;
+                    margin-top: 6px !important;
+                    font-style: italic !important;
+                    padding: 6px 10px !important;
+                    background: rgba(244, 67, 54, 0.1) !important;
+                    border-radius: 4px !important;
+                }
+
+                .user-request-custom-field {
+                    color: #9c9 !important;
+                    font-size: 12px !important;
+                    margin-top: 2px !important;
                 }
 
                 .user-requests-title {
@@ -2708,6 +2773,27 @@
                     return;
                 }
 
+                // Check config if search button should be shown
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.ShowSearchButton === false) {
+                                return; // Don't create search field
+                            }
+                            createSearchField();
+                        })
+                        .catch(() => {
+                            // Default to showing if config fails
+                            createSearchField();
+                        });
+                };
+
                 // Wait for DOM to be ready
                 const createSearchField = () => {
                     try {
@@ -2834,13 +2920,13 @@
                     }
                 };
 
-                // Try to create immediately
-                setTimeout(createSearchField, 1500);
+                // Try to create immediately (check config first)
+                setTimeout(checkConfigAndCreate, 1500);
 
                 // Also try on page visibility change
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible' && !document.getElementById('headerSearchField')) {
-                        setTimeout(createSearchField, 500);
+                        setTimeout(checkConfigAndCreate, 500);
                     }
                 });
 
@@ -2849,7 +2935,7 @@
                     if (window.Emby && window.Emby.Page && typeof Emby.Page.addEventListener === 'function') {
                         Emby.Page.addEventListener('pageshow', () => {
                             if (!document.getElementById('headerSearchField')) {
-                                setTimeout(createSearchField, 500);
+                                setTimeout(checkConfigAndCreate, 500);
                             } else {
                                 // Clear search when navigating to a new page
                                 const searchInput = document.getElementById('headerSearchInput');
@@ -2930,6 +3016,27 @@
                 if (document.getElementById('notificationToggle')) {
                     return;
                 }
+
+                // Check config if notifications are enabled
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.EnableNewMediaNotifications === false) {
+                                return; // Don't create notification toggle
+                            }
+                            createNotificationToggle();
+                        })
+                        .catch(() => {
+                            // Default to showing if config fails
+                            createNotificationToggle();
+                        });
+                };
 
                 const createNotificationToggle = () => {
                     try {
@@ -3032,13 +3139,13 @@
                     }
                 };
 
-                // Try to create after a delay
-                setTimeout(createNotificationToggle, 1600);
+                // Try to create after a delay (check config first)
+                setTimeout(checkConfigAndCreate, 1600);
 
                 // Also try on page visibility change
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible' && !document.getElementById('notificationToggle')) {
-                        setTimeout(createNotificationToggle, 500);
+                        setTimeout(checkConfigAndCreate, 500);
                     }
                 });
 
@@ -3564,8 +3671,62 @@
             // Clear viewed requests when user opens modal
             this.markDoneRequestsAsViewed();
 
-            modalTitle.textContent = this.t('requestMedia');
-            modalBody.innerHTML = `
+            // Fetch config and render with custom settings
+            const baseUrl = ApiClient.serverAddress();
+            fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                .then(response => response.json())
+                .then(config => {
+                    self.renderUserInterface(modalBody, modalTitle, config);
+                })
+                .catch(() => {
+                    // Fallback with default config
+                    self.renderUserInterface(modalBody, modalTitle, {});
+                });
+        },
+
+        /**
+         * Render user interface with config
+         */
+        renderUserInterface: function (modalBody, modalTitle, config) {
+            const self = this;
+
+            // Get custom texts or use defaults
+            const windowTitle = config.RequestWindowTitle || this.t('requestMedia');
+            const windowDesc = config.RequestWindowDescription || this.t('requestDescriptionText');
+            const titleLabel = config.RequestTitleLabel || this.t('mediaTitle');
+            const titlePlaceholder = config.RequestTitlePlaceholder || this.t('mediaTitlePlaceholder');
+            const typeLabel = config.RequestTypeLabel || this.t('type');
+            const notesLabel = config.RequestNotesLabel || this.t('additionalNotes');
+            const notesPlaceholder = config.RequestNotesPlaceholder || this.t('notesPlaceholder');
+            const submitText = config.RequestSubmitButtonText || this.t('submitRequest');
+            const showLangSwitch = config.ShowLanguageSwitch !== false;
+
+            // Parse custom fields
+            let customFields = [];
+            if (config.CustomRequestFields) {
+                try {
+                    customFields = JSON.parse(config.CustomRequestFields);
+                } catch (e) {
+                    console.error('Error parsing custom fields:', e);
+                }
+            }
+
+            // Build custom fields HTML
+            let customFieldsHtml = '';
+            customFields.forEach((field, index) => {
+                const fieldId = `customField_${index}`;
+                const requiredAttr = field.required ? 'required' : '';
+                const requiredMark = field.required ? ' *' : '';
+                customFieldsHtml += `
+                    <div class="request-input-group">
+                        <label for="${fieldId}">${self.escapeHtml(field.name)}${requiredMark}</label>
+                        <input type="text" id="${fieldId}" data-field-name="${self.escapeHtml(field.name)}" placeholder="${self.escapeHtml(field.placeholder || '')}" ${requiredAttr} />
+                    </div>
+                `;
+            });
+
+            // Language switch HTML (only if enabled)
+            const langSwitchHtml = showLangSwitch ? `
                 <div class="language-toggle-container">
                     <span class="lang-label">EN</span>
                     <label class="language-switch">
@@ -3574,16 +3735,21 @@
                     </label>
                     <span class="lang-label">LT</span>
                 </div>
+            ` : '';
+
+            modalTitle.textContent = windowTitle;
+            modalBody.innerHTML = `
+                ${langSwitchHtml}
                 <div class="request-description">
                     <strong>${this.t('requestDescription')}</strong><br>
-                    ${this.t('requestDescriptionText')}
+                    ${windowDesc}
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaTitle">${this.t('mediaTitle')}</label>
-                    <input type="text" id="requestMediaTitle" placeholder="${this.t('mediaTitlePlaceholder')}" required />
+                    <label for="requestMediaTitle">${titleLabel}</label>
+                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
                 </div>
                 <div class="request-input-group">
-                    <label for="requestMediaType">${this.t('type')}</label>
+                    <label for="requestMediaType">${typeLabel}</label>
                     <select id="requestMediaType" required>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
@@ -3593,16 +3759,17 @@
                         <option value="Other">${this.t('other')}</option>
                     </select>
                 </div>
+                ${customFieldsHtml}
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">${this.t('additionalNotes')}</label>
-                    <textarea id="requestMediaNotes" placeholder="${this.t('notesPlaceholder')}"></textarea>
+                    <label for="requestMediaNotes">${notesLabel}</label>
+                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}"></textarea>
                 </div>
-                <button class="request-submit-btn" id="submitRequestBtn">${this.t('submitRequest')}</button>
+                <button class="request-submit-btn" id="submitRequestBtn">${submitText}</button>
                 <div class="user-requests-title">${this.t('yourRequests')}</div>
                 <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests')}</p></div>
             `;
 
-            // Attach language toggle handler
+            // Attach language toggle handler (only if it exists)
             const langToggle = document.getElementById('languageToggle');
             if (langToggle) {
                 langToggle.addEventListener('change', () => {
@@ -3650,14 +3817,35 @@
                     const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : '';
                     const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
                     const hasLink = request.MediaLink && request.Status === 'done';
+                    const isRejected = request.Status === 'rejected';
                     const statusText = self.t(request.Status);
+
+                    // Parse custom fields if present
+                    let customFieldsHtml = '';
+                    if (request.CustomFields) {
+                        try {
+                            const customFields = JSON.parse(request.CustomFields);
+                            for (const [key, value] of Object.entries(customFields)) {
+                                customFieldsHtml += `<div class="user-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
+                            }
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
+                    }
+
+                    // Rejection reason
+                    const rejectionHtml = isRejected && request.RejectionReason
+                        ? `<div class="user-request-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
+                        : '';
 
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
                                 <div class="user-request-item-title">${self.escapeHtml(request.Title)}</div>
                                 <div class="user-request-item-type">${request.Type ? self.escapeHtml(request.Type) : self.t('notSpecified')}</div>
+                                ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
+                                ${rejectionHtml}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                             </div>
                             <span class="user-request-status ${request.Status}">${statusText}</span>
@@ -3685,9 +3873,29 @@
             modalTitle.textContent = this.t('manageRequests');
             modalBody.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
 
+            // Fetch config and then requests
+            const baseUrl = ApiClient.serverAddress();
+            fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                .then(response => response.json())
+                .then(config => {
+                    self.renderAdminInterface(modalBody, config);
+                })
+                .catch(() => {
+                    self.renderAdminInterface(modalBody, {});
+                });
+        },
+
+        /**
+         * Render admin interface with config
+         */
+        renderAdminInterface: function (modalBody, config) {
+            const self = this;
+            const showLangSwitch = config.ShowLanguageSwitch !== false;
+
             // Fetch all requests
             this.fetchAllRequests().then(requests => {
-                let html = `
+                // Language switch HTML (only if enabled)
+                const langSwitchHtml = showLangSwitch ? `
                     <div class="language-toggle-container">
                         <span class="lang-label">EN</span>
                         <label class="language-switch">
@@ -3696,7 +3904,9 @@
                         </label>
                         <span class="lang-label">LT</span>
                     </div>
-                `;
+                ` : '';
+
+                let html = langSwitchHtml;
 
                 if (requests.length === 0) {
                     modalBody.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
@@ -3718,35 +3928,59 @@
                     if (request.Notes) details.push(request.Notes);
                     const detailsText = details.join(' • ');
 
+                    // Parse custom fields for display
+                    let customFieldsHtml = '';
+                    if (request.CustomFields) {
+                        try {
+                            const customFields = JSON.parse(request.CustomFields);
+                            for (const [key, value] of Object.entries(customFields)) {
+                                customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
+                            }
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
+                    }
+
                     // Format timestamps
                     const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
                     const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
                     const hasLink = request.MediaLink && request.Status === 'done';
+                    const isRejected = request.Status === 'rejected';
                     const statusText = self.t(request.Status);
+
+                    // Rejection reason display
+                    const rejectionDisplay = isRejected && request.RejectionReason
+                        ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
+                        : '';
 
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
                             <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
                             <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
                             <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
+                            ${customFieldsHtml}
                             <div class="admin-request-time">
                                 <span>📅 ${createdAt}</span>
                                 ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                             </div>
+                            ${rejectionDisplay}
                             <span class="admin-request-status-badge ${request.Status}">${statusText}</span>
                             <div class="admin-request-actions">
                                 <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
                                 <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
                                 <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
+                                <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
                                 <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
                             </div>
                             <select class="admin-status-select" data-request-id="${request.Id}">
                                 <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
                                 <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
                                 <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
+                                <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
                             </select>
                             <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                            <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
                             <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
                         </li>
                     `;
@@ -3754,7 +3988,7 @@
                 html += '</ul>';
                 modalBody.innerHTML = html;
 
-                // Attach language toggle handler
+                // Attach language toggle handler (only if it exists)
                 const langToggle = document.getElementById('languageToggle');
                 if (langToggle) {
                     langToggle.addEventListener('change', () => {
@@ -3772,7 +4006,10 @@
                         // Get the media link if marking as done
                         const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
                         const mediaLink = linkInput ? linkInput.value.trim() : '';
-                        self.updateRequestStatus(requestId, newStatus, mediaLink);
+                        // Get rejection reason if rejecting
+                        const rejectionInput = modalBody.querySelector(`.admin-rejection-input[data-request-id="${requestId}"]`);
+                        const rejectionReason = rejectionInput ? rejectionInput.value.trim() : '';
+                        self.updateRequestStatus(requestId, newStatus, mediaLink, rejectionReason);
                     });
                 });
 
@@ -3785,7 +4022,10 @@
                         // Get the media link if marking as done
                         const linkInput = modalBody.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
                         const mediaLink = linkInput ? linkInput.value.trim() : '';
-                        self.updateRequestStatus(requestId, newStatus, mediaLink);
+                        // Get rejection reason if rejecting
+                        const rejectionInput = modalBody.querySelector(`.admin-rejection-input[data-request-id="${requestId}"]`);
+                        const rejectionReason = rejectionInput ? rejectionInput.value.trim() : '';
+                        self.updateRequestStatus(requestId, newStatus, mediaLink, rejectionReason);
                     });
                 });
 
@@ -3835,6 +4075,30 @@
                     return;
                 }
 
+                // Collect custom fields
+                const customFieldInputs = document.querySelectorAll('[id^="customField_"]');
+                const customFieldsObj = {};
+                let customFieldsValid = true;
+                customFieldInputs.forEach(input => {
+                    const fieldName = input.getAttribute('data-field-name');
+                    const value = input.value.trim();
+                    if (input.hasAttribute('required') && !value) {
+                        customFieldsValid = false;
+                        if (window.require) {
+                            require(['toast'], function(toast) {
+                                toast(`Please fill in: ${fieldName}`);
+                            });
+                        }
+                    }
+                    if (fieldName && value) {
+                        customFieldsObj[fieldName] = value;
+                    }
+                });
+
+                if (!customFieldsValid) {
+                    return;
+                }
+
                 const baseUrl = ApiClient.serverAddress();
                 const accessToken = ApiClient.accessToken();
                 const deviceId = ApiClient.deviceId();
@@ -3845,7 +4109,8 @@
                 const requestData = {
                     Title: title,
                     Type: type,
-                    Notes: notes
+                    Notes: notes,
+                    CustomFields: Object.keys(customFieldsObj).length > 0 ? JSON.stringify(customFieldsObj) : ''
                 };
 
                 fetch(url, {
@@ -3875,6 +4140,10 @@
                     document.getElementById('requestMediaTitle').value = '';
                     document.getElementById('requestMediaType').value = '';
                     document.getElementById('requestMediaNotes').value = '';
+                    // Clear custom fields
+                    customFieldInputs.forEach(input => {
+                        input.value = '';
+                    });
 
                     // Reload user's request list to show the new request
                     self.loadUserRequests();
@@ -4005,7 +4274,7 @@
         /**
          * Update request status (admin only)
          */
-        updateRequestStatus: function (requestId, newStatus, mediaLink) {
+        updateRequestStatus: function (requestId, newStatus, mediaLink, rejectionReason) {
             const self = this;
             try {
                 const baseUrl = ApiClient.serverAddress();
@@ -4016,6 +4285,11 @@
                 // Add mediaLink if provided and status is done
                 if (mediaLink && newStatus === 'done') {
                     url += `&mediaLink=${encodeURIComponent(mediaLink)}`;
+                }
+
+                // Add rejectionReason if provided and status is rejected
+                if (rejectionReason && newStatus === 'rejected') {
+                    url += `&rejectionReason=${encodeURIComponent(rejectionReason)}`;
                 }
 
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
