@@ -1455,6 +1455,29 @@
                     margin-top: 2px !important;
                 }
 
+                .user-request-imdb {
+                    color: #f5c518 !important;
+                    font-size: 12px !important;
+                    margin-top: 2px !important;
+                }
+
+                .user-request-imdb .imdb-link,
+                .admin-request-imdb .imdb-link {
+                    color: #f5c518 !important;
+                    text-decoration: none !important;
+                }
+
+                .user-request-imdb .imdb-link:hover,
+                .admin-request-imdb .imdb-link:hover {
+                    text-decoration: underline !important;
+                }
+
+                .admin-request-imdb {
+                    color: #f5c518 !important;
+                    font-size: 11px !important;
+                    margin-top: 2px !important;
+                }
+
                 .user-requests-title {
                     color: #fff !important;
                     font-weight: 600 !important;
@@ -3759,6 +3782,14 @@
                         <option value="Other">${this.t('other')}</option>
                     </select>
                 </div>
+                <div class="request-input-group">
+                    <label for="requestImdbCode">IMDB Code (optional)</label>
+                    <input type="text" id="requestImdbCode" placeholder="tt0448134" />
+                </div>
+                <div class="request-input-group">
+                    <label for="requestImdbLink">IMDB Link (optional)</label>
+                    <input type="text" id="requestImdbLink" placeholder="https://www.imdb.com/title/tt0448134/" />
+                </div>
                 ${customFieldsHtml}
                 <div class="request-input-group">
                     <label for="requestMediaNotes">${notesLabel}</label>
@@ -3838,11 +3869,21 @@
                         ? `<div class="user-request-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
                         : '';
 
+                    // IMDB info
+                    let imdbHtml = '';
+                    if (request.ImdbCode) {
+                        imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+                    }
+                    if (request.ImdbLink) {
+                        imdbHtml += `<div class="user-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                    }
+
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
                                 <div class="user-request-item-title">${self.escapeHtml(request.Title)}</div>
                                 <div class="user-request-item-type">${request.Type ? self.escapeHtml(request.Type) : self.t('notSpecified')}</div>
+                                ${imdbHtml}
                                 ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
@@ -3953,11 +3994,21 @@
                         ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
                         : '';
 
+                    // IMDB info for admin
+                    let imdbHtml = '';
+                    if (request.ImdbCode) {
+                        imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+                    }
+                    if (request.ImdbLink) {
+                        imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                    }
+
                     html += `
                         <li class="admin-request-item" data-request-id="${request.Id}">
                             <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
                             <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
                             <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
+                            ${imdbHtml}
                             ${customFieldsHtml}
                             <div class="admin-request-time">
                                 <span>📅 ${createdAt}</span>
@@ -4106,11 +4157,19 @@
 
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
+                // Get IMDB fields
+                const imdbCodeEl = document.getElementById('requestImdbCode');
+                const imdbLinkEl = document.getElementById('requestImdbLink');
+                const imdbCode = imdbCodeEl ? imdbCodeEl.value.trim() : '';
+                const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
+
                 const requestData = {
                     Title: title,
                     Type: type,
                     Notes: notes,
-                    CustomFields: Object.keys(customFieldsObj).length > 0 ? JSON.stringify(customFieldsObj) : ''
+                    CustomFields: Object.keys(customFieldsObj).length > 0 ? JSON.stringify(customFieldsObj) : '',
+                    ImdbCode: imdbCode,
+                    ImdbLink: imdbLink
                 };
 
                 fetch(url, {
@@ -4140,6 +4199,9 @@
                     document.getElementById('requestMediaTitle').value = '';
                     document.getElementById('requestMediaType').value = '';
                     document.getElementById('requestMediaNotes').value = '';
+                    // Clear IMDB fields
+                    if (imdbCodeEl) imdbCodeEl.value = '';
+                    if (imdbLinkEl) imdbLinkEl.value = '';
                     // Clear custom fields
                     customFieldInputs.forEach(input => {
                         input.value = '';
