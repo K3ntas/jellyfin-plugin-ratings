@@ -84,6 +84,90 @@
                             </div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkShowSearchButton" type="checkbox" is="emby-checkbox" />
+                                <span>Show Search Button</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the custom search button in the header. Disable if you prefer using Jellyfin's built-in search.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkShowLanguageSwitch" type="checkbox" is="emby-checkbox" />
+                                <span>Show Language Switch (EN/LT)</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the EN/LT language toggle in the request modal. Disable if not needed.
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form Customization</h2>
+                        <div class="fieldDescription" style="margin-bottom: 15px;">
+                            Customize the text shown in the request form. Leave empty to use defaults.
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowTitle">Window Title</label>
+                            <input id="txtRequestWindowTitle" type="text" is="emby-input" />
+                            <div class="fieldDescription">Custom title for the request window</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowDescription">Window Description</label>
+                            <input id="txtRequestWindowDescription" type="text" is="emby-input" />
+                            <div class="fieldDescription">Custom description text shown in the request form</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTitleLabel">Title Field Label</label>
+                            <input id="txtRequestTitleLabel" type="text" is="emby-input" />
+                            <div class="fieldDescription">Label for the media title field</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTitlePlaceholder">Title Field Placeholder</label>
+                            <input id="txtRequestTitlePlaceholder" type="text" is="emby-input" />
+                            <div class="fieldDescription">Placeholder text for the title input</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTypeLabel">Type Field Label</label>
+                            <input id="txtRequestTypeLabel" type="text" is="emby-input" />
+                            <div class="fieldDescription">Label for the media type dropdown</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesLabel">Notes Field Label</label>
+                            <input id="txtRequestNotesLabel" type="text" is="emby-input" />
+                            <div class="fieldDescription">Label for the notes field</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesPlaceholder">Notes Field Placeholder</label>
+                            <input id="txtRequestNotesPlaceholder" type="text" is="emby-input" />
+                            <div class="fieldDescription">Placeholder text for the notes input</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestSubmitButtonText">Submit Button Text</label>
+                            <input id="txtRequestSubmitButtonText" type="text" is="emby-input" />
+                            <div class="fieldDescription">Text for the submit button</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtCustomRequestFields">Custom Fields (JSON)</label>
+                            <textarea id="txtCustomRequestFields" is="emby-input" rows="4" style="font-family: monospace;"></textarea>
+                            <div class="fieldDescription">
+                                Add custom fields to the request form. Format: [{"name": "IMDB Link", "placeholder": "https://imdb.com/...", "required": true}]
+                            </div>
+                        </div>
+
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -110,6 +194,17 @@
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
+                    document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
+                    document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
+                    document.querySelector('#txtRequestWindowTitle').value = config.RequestWindowTitle || '';
+                    document.querySelector('#txtRequestWindowDescription').value = config.RequestWindowDescription || '';
+                    document.querySelector('#txtRequestTitleLabel').value = config.RequestTitleLabel || '';
+                    document.querySelector('#txtRequestTitlePlaceholder').value = config.RequestTitlePlaceholder || '';
+                    document.querySelector('#txtRequestTypeLabel').value = config.RequestTypeLabel || '';
+                    document.querySelector('#txtRequestNotesLabel').value = config.RequestNotesLabel || '';
+                    document.querySelector('#txtRequestNotesPlaceholder').value = config.RequestNotesPlaceholder || '';
+                    document.querySelector('#txtRequestSubmitButtonText').value = config.RequestSubmitButtonText || '';
+                    document.querySelector('#txtCustomRequestFields').value = config.CustomRequestFields || '';
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -127,6 +222,17 @@
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
+                    config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
+                    config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
+                    config.RequestWindowTitle = document.querySelector('#txtRequestWindowTitle').value;
+                    config.RequestWindowDescription = document.querySelector('#txtRequestWindowDescription').value;
+                    config.RequestTitleLabel = document.querySelector('#txtRequestTitleLabel').value;
+                    config.RequestTitlePlaceholder = document.querySelector('#txtRequestTitlePlaceholder').value;
+                    config.RequestTypeLabel = document.querySelector('#txtRequestTypeLabel').value;
+                    config.RequestNotesLabel = document.querySelector('#txtRequestNotesLabel').value;
+                    config.RequestNotesPlaceholder = document.querySelector('#txtRequestNotesPlaceholder').value;
+                    config.RequestSubmitButtonText = document.querySelector('#txtRequestSubmitButtonText').value;
+                    config.CustomRequestFields = document.querySelector('#txtCustomRequestFields').value;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
