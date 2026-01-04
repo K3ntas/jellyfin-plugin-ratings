@@ -68,6 +68,16 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string CustomFields { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the IMDB code (e.g., tt0448134).
+        /// </summary>
+        public string ImdbCode { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the full IMDB link.
+        /// </summary>
+        public string ImdbLink { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MediaRequest"/> class.
         /// </summary>
         public MediaRequest()
