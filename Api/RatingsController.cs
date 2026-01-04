@@ -665,6 +665,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Type = request.Type,
                     Notes = request.Notes,
                     CustomFields = request.CustomFields,
+                    ImdbCode = request.ImdbCode,
+                    ImdbLink = request.ImdbLink,
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
                 };
