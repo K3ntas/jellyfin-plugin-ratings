@@ -692,11 +692,11 @@
                     max-width: 450px !important;
                     max-height: 70vh !important;
                     overflow-y: auto !important;
-                    background: rgba(30, 30, 30, 0.98) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    background: #1e1e1e !important;
+                    border: 1px solid rgba(255, 255, 255, 0.3) !important;
                     border-radius: 12px !important;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-                    z-index: 9999999 !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+                    z-index: 2147483647 !important;
                     display: none;
                 }
 
