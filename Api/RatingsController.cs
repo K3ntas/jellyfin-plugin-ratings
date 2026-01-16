@@ -336,12 +336,35 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Items/{itemId}/Rating")]
-        [Authorize]
         public ActionResult DeleteRating([FromRoute] [Required] Guid itemId)
         {
             try
             {
+                // Try to get user from authentication
                 var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
