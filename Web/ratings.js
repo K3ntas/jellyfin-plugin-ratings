@@ -1472,6 +1472,40 @@
                     text-decoration: underline !important;
                 }
 
+                .user-request-actions {
+                    display: flex !important;
+                    gap: 8px !important;
+                    margin-top: 10px !important;
+                }
+
+                .user-edit-btn,
+                .user-delete-btn {
+                    padding: 6px 12px !important;
+                    border: none !important;
+                    border-radius: 4px !important;
+                    cursor: pointer !important;
+                    font-size: 12px !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .user-edit-btn {
+                    background: #4a90d9 !important;
+                    color: #fff !important;
+                }
+
+                .user-edit-btn:hover {
+                    background: #3a7bc8 !important;
+                }
+
+                .user-delete-btn {
+                    background: #d94a4a !important;
+                    color: #fff !important;
+                }
+
+                .user-delete-btn:hover {
+                    background: #c83a3a !important;
+                }
+
                 .admin-request-imdb {
                     color: #f5c518 !important;
                     font-size: 11px !important;
@@ -3987,6 +4021,15 @@
                         imdbHtml += `<div class="user-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
                     }
 
+                    // Edit/Delete buttons only for pending requests
+                    const isPending = request.Status === 'pending';
+                    const actionsHtml = isPending ? `
+                        <div class="user-request-actions">
+                            <button class="user-edit-btn" data-request-id="${request.Id}" data-request-title="${self.escapeHtml(request.Title)}" data-request-type="${self.escapeHtml(request.Type || '')}" data-request-notes="${self.escapeHtml(request.Notes || '')}" data-request-imdb-code="${self.escapeHtml(request.ImdbCode || '')}" data-request-imdb-link="${self.escapeHtml(request.ImdbLink || '')}" data-request-custom-fields="${self.escapeHtml(request.CustomFields || '')}">✏️ ${self.t('edit') || 'Edit'}</button>
+                            <button class="user-delete-btn" data-request-id="${request.Id}">🗑️ ${self.t('delete') || 'Delete'}</button>
+                        </div>
+                    ` : '';
+
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
@@ -3997,6 +4040,7 @@
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${actionsHtml}
                             </div>
                             <span class="user-request-status ${request.Status}">${statusText}</span>
                         </li>
@@ -4004,10 +4048,270 @@
                 });
                 html += '</ul>';
                 listContainer.innerHTML = html;
+
+                // Attach edit button handlers
+                const editBtns = listContainer.querySelectorAll('.user-edit-btn');
+                editBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const title = e.target.getAttribute('data-request-title');
+                        const type = e.target.getAttribute('data-request-type');
+                        const notes = e.target.getAttribute('data-request-notes');
+                        const imdbCode = e.target.getAttribute('data-request-imdb-code');
+                        const imdbLink = e.target.getAttribute('data-request-imdb-link');
+                        const customFields = e.target.getAttribute('data-request-custom-fields');
+                        self.showEditRequestForm(requestId, title, type, notes, imdbCode, imdbLink, customFields);
+                    });
+                });
+
+                // Attach delete button handlers
+                const deleteBtns = listContainer.querySelectorAll('.user-delete-btn');
+                deleteBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        if (confirm(self.t('confirmDelete') || 'Are you sure you want to delete this request?')) {
+                            self.deleteUserRequest(requestId);
+                        }
+                    });
+                });
             }).catch(err => {
                 console.error('Error loading user requests:', err);
                 listContainer.innerHTML = '<p style="text-align: center; color: #f44336;">' + self.t('errorLoading') + '</p>';
             });
+        },
+
+        /**
+         * Show edit form for a request
+         */
+        showEditRequestForm: function (requestId, title, type, notes, imdbCode, imdbLink, customFields) {
+            const self = this;
+
+            // Fill the existing form with request data
+            const titleInput = document.getElementById('requestMediaTitle');
+            const typeSelect = document.getElementById('requestMediaType');
+            const notesInput = document.getElementById('requestMediaNotes');
+            const imdbCodeInput = document.getElementById('requestImdbCode');
+            const imdbLinkInput = document.getElementById('requestImdbLink');
+
+            if (titleInput) titleInput.value = title || '';
+            if (typeSelect) typeSelect.value = type || '';
+            if (notesInput) notesInput.value = notes || '';
+            if (imdbCodeInput) imdbCodeInput.value = imdbCode || '';
+            if (imdbLinkInput) imdbLinkInput.value = imdbLink || '';
+
+            // Parse and fill custom fields
+            if (customFields) {
+                try {
+                    const parsedFields = JSON.parse(customFields);
+                    for (const [key, value] of Object.entries(parsedFields)) {
+                        const customInput = document.querySelector(`[data-field-name="${key}"]`);
+                        if (customInput) customInput.value = value || '';
+                    }
+                } catch (e) {
+                    // Ignore parse errors
+                }
+            }
+
+            // Change submit button to update mode
+            const submitBtn = document.getElementById('submitRequestBtn');
+            if (submitBtn) {
+                submitBtn.textContent = self.t('updateRequest') || 'Update Request';
+                submitBtn.setAttribute('data-edit-mode', 'true');
+                submitBtn.setAttribute('data-request-id', requestId);
+
+                // Remove old listener and add new one
+                const newBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                newBtn.addEventListener('click', () => {
+                    self.updateUserRequest(requestId);
+                });
+            }
+
+            // Scroll to form
+            if (titleInput) {
+                titleInput.focus();
+                titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        },
+
+        /**
+         * Update user's own request
+         */
+        updateUserRequest: function (requestId) {
+            const self = this;
+
+            const title = document.getElementById('requestMediaTitle').value.trim();
+            const typeEl = document.getElementById('requestMediaType');
+            const type = typeEl ? typeEl.value.trim() : '';
+            const notesEl = document.getElementById('requestMediaNotes');
+            const notes = notesEl ? notesEl.value.trim() : '';
+            const imdbCodeEl = document.getElementById('requestImdbCode');
+            const imdbCode = imdbCodeEl ? imdbCodeEl.value.trim() : '';
+            const imdbLinkEl = document.getElementById('requestImdbLink');
+            const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
+
+            if (!title) {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('titleRequired') || 'Title is required');
+                    });
+                }
+                return;
+            }
+
+            // Collect custom fields
+            const customFieldInputs = document.querySelectorAll('[id^="customField_"]');
+            const customFieldsObj = {};
+            customFieldInputs.forEach(input => {
+                const fieldName = input.getAttribute('data-field-name');
+                const value = input.value.trim();
+                if (fieldName && value) {
+                    customFieldsObj[fieldName] = value;
+                }
+            });
+
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const requestData = {
+                Title: title,
+                Type: type,
+                Notes: notes,
+                CustomFields: Object.keys(customFieldsObj).length > 0 ? JSON.stringify(customFieldsObj) : '',
+                ImdbCode: imdbCode,
+                ImdbLink: imdbLink
+            };
+
+            fetch(url, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Failed to update request');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('requestUpdated') || 'Request updated successfully');
+                    });
+                }
+
+                // Reset form to create mode
+                self.resetRequestForm();
+
+                // Reload user requests
+                self.loadUserRequests();
+            })
+            .catch(err => {
+                console.error('Error updating request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(err.message || 'Error updating request');
+                    });
+                }
+            });
+        },
+
+        /**
+         * Delete user's own request
+         */
+        deleteUserRequest: function (requestId) {
+            const self = this;
+
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete request');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('requestDeleted') || 'Request deleted successfully');
+                    });
+                }
+
+                // Reload user requests
+                self.loadUserRequests();
+            })
+            .catch(err => {
+                console.error('Error deleting request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error deleting request');
+                    });
+                }
+            });
+        },
+
+        /**
+         * Reset request form to create mode
+         */
+        resetRequestForm: function () {
+            const self = this;
+
+            // Clear form fields
+            const titleInput = document.getElementById('requestMediaTitle');
+            const typeSelect = document.getElementById('requestMediaType');
+            const notesInput = document.getElementById('requestMediaNotes');
+            const imdbCodeInput = document.getElementById('requestImdbCode');
+            const imdbLinkInput = document.getElementById('requestImdbLink');
+
+            if (titleInput) titleInput.value = '';
+            if (typeSelect) typeSelect.value = '';
+            if (notesInput) notesInput.value = '';
+            if (imdbCodeInput) imdbCodeInput.value = '';
+            if (imdbLinkInput) imdbLinkInput.value = '';
+
+            // Clear custom fields
+            const customFieldInputs = document.querySelectorAll('[id^="customField_"]');
+            customFieldInputs.forEach(input => {
+                input.value = '';
+            });
+
+            // Reset submit button
+            const submitBtn = document.getElementById('submitRequestBtn');
+            if (submitBtn) {
+                submitBtn.textContent = self.t('submitRequest') || 'Submit Request';
+                submitBtn.removeAttribute('data-edit-mode');
+                submitBtn.removeAttribute('data-request-id');
+
+                // Remove old listener and add new one for create
+                const newBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                newBtn.addEventListener('click', () => {
+                    self.submitMediaRequest();
+                });
+            }
         },
 
         /**
