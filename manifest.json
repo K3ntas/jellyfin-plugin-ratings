@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.182.0",
+        "changelog": "Admin request UI: When EnableAdminRequests is ON, admins see tabs to switch between Create Request and Manage Requests views.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.182.0/jellyfin-plugin-ratings_1.0.182.0.zip",
+        "checksum": "0ae6a1f3a3fb3d3f57495cf750108513",
+        "timestamp": "2026-01-16T19:00:00Z"
+      },
+      {
         "version": "1.0.181.0",
         "changelog": "Users can now edit and delete their own pending requests. Edit/Delete buttons appear only on pending requests.",
         "targetAbi": "10.11.0.0",
