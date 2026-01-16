@@ -687,22 +687,17 @@
 
                 /* Search Dropdown Results */
                 #searchDropdown {
-                    position: absolute !important;
-                    top: 100% !important;
-                    left: 0 !important;
-                    right: 0 !important;
+                    position: fixed !important;
                     min-width: 350px !important;
                     max-width: 450px !important;
                     max-height: 70vh !important;
                     overflow-y: auto !important;
                     background: rgba(30, 30, 30, 0.98) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    border-top: none !important;
-                    border-radius: 0 0 12px 12px !important;
+                    border-radius: 12px !important;
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-                    z-index: 999999 !important;
+                    z-index: 9999999 !important;
                     display: none;
-                    margin-top: 4px !important;
                 }
 
                 #searchDropdown.visible {
@@ -3263,9 +3258,10 @@
                                 return;
                             }
 
-                            // Show loading state
+                            // Show loading state and position dropdown
                             searchDropdown.innerHTML = '<div class="dropdown-loading">Searching...</div>';
                             searchDropdown.classList.add('visible');
+                            self.positionSearchDropdown();
 
                             searchTimeout = setTimeout(() => {
                                 // Search entire library and show in dropdown
@@ -3899,6 +3895,19 @@
         },
 
         /**
+         * Position the search dropdown below the search field
+         */
+        positionSearchDropdown: function () {
+            const searchField = document.getElementById('headerSearchField');
+            const dropdown = document.getElementById('searchDropdown');
+            if (!searchField || !dropdown) return;
+
+            const rect = searchField.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+        },
+
+        /**
          * Search library and show results in dropdown
          */
         searchLibraryDropdown: async function (query) {
@@ -3907,8 +3916,12 @@
 
             try {
                 if (!query || !window.ApiClient || !dropdown) {
+                    console.log('RatingsPlugin: Search cancelled', { query, hasApiClient: !!window.ApiClient, hasDropdown: !!dropdown });
                     return;
                 }
+
+                // Position dropdown below search field
+                self.positionSearchDropdown();
 
                 const userId = ApiClient.getCurrentUserId();
                 const baseUrl = ApiClient.serverAddress();
