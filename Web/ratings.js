@@ -1472,6 +1472,39 @@
                     text-decoration: underline !important;
                 }
 
+                .admin-tabs {
+                    display: flex !important;
+                    gap: 0 !important;
+                    margin-bottom: 15px !important;
+                    border-bottom: 2px solid #444 !important;
+                }
+
+                .admin-tab {
+                    padding: 10px 20px !important;
+                    background: transparent !important;
+                    border: none !important;
+                    color: #999 !important;
+                    cursor: pointer !important;
+                    font-size: 14px !important;
+                    font-weight: 500 !important;
+                    transition: all 0.2s ease !important;
+                    border-bottom: 2px solid transparent !important;
+                    margin-bottom: -2px !important;
+                }
+
+                .admin-tab:hover {
+                    color: #fff !important;
+                }
+
+                .admin-tab.active {
+                    color: #00a4dc !important;
+                    border-bottom-color: #00a4dc !important;
+                }
+
+                .admin-tab-content {
+                    min-height: 200px !important;
+                }
+
                 .user-request-actions {
                     display: flex !important;
                     gap: 8px !important;
@@ -3718,21 +3751,487 @@
         loadRequestInterface: function () {
             const self = this;
             try {
-                // Check if user is admin
-                this.checkIfAdmin().then(isAdmin => {
-                    if (isAdmin) {
-                        self.loadAdminInterface();
-                    } else {
-                        self.loadUserInterface();
-                    }
-                }).catch(err => {
-                    console.error('Error checking admin status:', err);
-                    // Default to user interface on error
-                    self.loadUserInterface();
-                });
+                // Fetch config first to check EnableAdminRequests
+                const baseUrl = ApiClient.serverAddress();
+                fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                    .then(response => response.json())
+                    .then(config => {
+                        // Check if user is admin
+                        self.checkIfAdmin().then(isAdmin => {
+                            if (isAdmin) {
+                                if (config.EnableAdminRequests) {
+                                    // Admin can create requests - show tabs
+                                    self.loadAdminWithTabs(config);
+                                } else {
+                                    // Admin cannot create requests - show manage only
+                                    self.loadAdminInterface();
+                                }
+                            } else {
+                                self.loadUserInterface();
+                            }
+                        }).catch(err => {
+                            console.error('Error checking admin status:', err);
+                            self.loadUserInterface();
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error fetching config:', err);
+                        // Fallback: check admin and show appropriate interface
+                        self.checkIfAdmin().then(isAdmin => {
+                            if (isAdmin) {
+                                self.loadAdminInterface();
+                            } else {
+                                self.loadUserInterface();
+                            }
+                        }).catch(() => {
+                            self.loadUserInterface();
+                        });
+                    });
             } catch (err) {
                 console.error('Error loading request interface:', err);
             }
+        },
+
+        /**
+         * Load admin interface with tabs (Create Request / Manage Requests)
+         */
+        loadAdminWithTabs: function (config) {
+            const self = this;
+            const modalBody = document.getElementById('requestMediaModalBody');
+            const modalTitle = document.getElementById('requestMediaModalTitle');
+
+            if (!modalBody || !modalTitle) return;
+
+            modalTitle.textContent = this.t('requestMedia') || 'Request Media';
+
+            // Create tabs
+            const tabsHtml = `
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
+                    <button class="admin-tab" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}</button>
+                </div>
+                <div class="admin-tab-content" id="adminTabContent"></div>
+            `;
+
+            modalBody.innerHTML = tabsHtml;
+
+            // Attach tab handlers
+            const tabs = modalBody.querySelectorAll('.admin-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    // Remove active from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active to clicked tab
+                    e.target.classList.add('active');
+                    // Load appropriate content
+                    const tabName = e.target.getAttribute('data-tab');
+                    if (tabName === 'create') {
+                        self.renderUserInterfaceInTab(config);
+                    } else {
+                        self.renderAdminInterfaceInTab(config);
+                    }
+                });
+            });
+
+            // Load create tab by default
+            this.renderUserInterfaceInTab(config);
+        },
+
+        /**
+         * Render user interface inside tab content
+         */
+        renderUserInterfaceInTab: function (config) {
+            const self = this;
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+
+            // Get custom texts or use defaults
+            const windowDesc = config.RequestWindowDescription;
+            const titleLabel = config.RequestTitleLabel || this.t('mediaTitle');
+            const titlePlaceholder = config.RequestTitlePlaceholder || this.t('mediaTitlePlaceholder');
+            const submitText = config.RequestSubmitButtonText || this.t('submitRequest');
+            const showLangSwitch = config.ShowLanguageSwitch !== false;
+
+            // Field visibility and required settings
+            const typeEnabled = config.RequestTypeEnabled !== false;
+            const typeRequired = config.RequestTypeRequired === true;
+            const typeLabel = config.RequestTypeLabel || this.t('type');
+
+            const notesEnabled = config.RequestNotesEnabled !== false;
+            const notesRequired = config.RequestNotesRequired === true;
+            const notesLabel = config.RequestNotesLabel || this.t('additionalNotes');
+            const notesPlaceholder = config.RequestNotesPlaceholder || this.t('notesPlaceholder');
+
+            const imdbCodeEnabled = config.RequestImdbCodeEnabled !== false;
+            const imdbCodeRequired = config.RequestImdbCodeRequired === true;
+            const imdbCodeLabel = config.RequestImdbCodeLabel || 'IMDB Code';
+            const imdbCodePlaceholder = config.RequestImdbCodePlaceholder || 'tt0448134';
+
+            const imdbLinkEnabled = config.RequestImdbLinkEnabled !== false;
+            const imdbLinkRequired = config.RequestImdbLinkRequired === true;
+            const imdbLinkLabel = config.RequestImdbLinkLabel || 'IMDB Link';
+            const imdbLinkPlaceholder = config.RequestImdbLinkPlaceholder || 'https://www.imdb.com/title/tt0448134/';
+
+            // Parse custom fields
+            let customFields = [];
+            if (config.CustomRequestFields) {
+                try {
+                    customFields = JSON.parse(config.CustomRequestFields);
+                } catch (e) {
+                    console.error('Error parsing custom fields:', e);
+                }
+            }
+
+            // Build custom fields HTML
+            let customFieldsHtml = '';
+            customFields.forEach((field, index) => {
+                const fieldId = `customField_${index}`;
+                const requiredAttr = field.required ? 'required' : '';
+                const requiredMark = field.required ? ' *' : '';
+                customFieldsHtml += `
+                    <div class="request-input-group">
+                        <label for="${fieldId}">${self.escapeHtml(field.name)}${requiredMark}</label>
+                        <input type="text" id="${fieldId}" data-field-name="${self.escapeHtml(field.name)}" placeholder="${self.escapeHtml(field.placeholder || '')}" ${requiredAttr} />
+                    </div>
+                `;
+            });
+
+            // Language switch HTML (only if enabled)
+            const langSwitchHtml = showLangSwitch ? `
+                <div class="language-toggle-container">
+                    <span class="lang-label">EN</span>
+                    <label class="language-switch">
+                        <input type="checkbox" id="languageToggle" ${this.currentLanguage === 'lt' ? 'checked' : ''}>
+                        <span class="lang-slider"></span>
+                    </label>
+                    <span class="lang-label">LT</span>
+                </div>
+            ` : '';
+
+            // Build description HTML (only if configured)
+            const descriptionHtml = windowDesc ? `
+                <div class="request-description">
+                    <strong>${this.t('requestDescription')}</strong><br>
+                    ${windowDesc}
+                </div>
+            ` : '';
+
+            // Build Type field HTML (if enabled)
+            const typeHtml = typeEnabled ? `
+                <div class="request-input-group">
+                    <label for="requestMediaType">${typeLabel}${typeRequired ? ' *' : ''}</label>
+                    <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
+                        <option value="">${this.t('selectType')}</option>
+                        <option value="Movie">${this.t('movie')}</option>
+                        <option value="TV Series">${this.t('tvSeries')}</option>
+                        <option value="Anime">${this.t('anime')}</option>
+                        <option value="Documentary">${this.t('documentary')}</option>
+                        <option value="Other">${this.t('other')}</option>
+                    </select>
+                </div>
+            ` : '';
+
+            // Build IMDB Code field HTML (if enabled)
+            const imdbCodeHtml = imdbCodeEnabled ? `
+                <div class="request-input-group">
+                    <label for="requestImdbCode">${imdbCodeLabel}${imdbCodeRequired ? ' *' : ''}</label>
+                    <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
+                </div>
+            ` : '';
+
+            // Build IMDB Link field HTML (if enabled)
+            const imdbLinkHtml = imdbLinkEnabled ? `
+                <div class="request-input-group">
+                    <label for="requestImdbLink">${imdbLinkLabel}${imdbLinkRequired ? ' *' : ''}</label>
+                    <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
+                </div>
+            ` : '';
+
+            // Build Notes field HTML (if enabled)
+            const notesHtml = notesEnabled ? `
+                <div class="request-input-group">
+                    <label for="requestMediaNotes">${notesLabel}${notesRequired ? ' *' : ''}</label>
+                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
+                </div>
+            ` : '';
+
+            tabContent.innerHTML = `
+                ${langSwitchHtml}
+                ${descriptionHtml}
+                <div class="request-input-group">
+                    <label for="requestMediaTitle">${titleLabel} *</label>
+                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                </div>
+                ${typeHtml}
+                ${imdbCodeHtml}
+                ${imdbLinkHtml}
+                ${customFieldsHtml}
+                ${notesHtml}
+                <button class="request-submit-btn" id="submitRequestBtn">${submitText}</button>
+                <div class="user-requests-title">${this.t('yourRequests') || 'Your Requests'}</div>
+                <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests') || 'Loading...'}</p></div>
+            `;
+
+            // Attach language toggle handler (only if it exists)
+            const langToggle = document.getElementById('languageToggle');
+            if (langToggle) {
+                langToggle.addEventListener('change', () => {
+                    self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                    self.renderUserInterfaceInTab(config);
+                });
+            }
+
+            // Attach submit handler
+            const submitBtn = document.getElementById('submitRequestBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', () => {
+                    this.submitMediaRequest();
+                });
+            }
+
+            // Load user's own requests
+            this.loadUserRequests();
+        },
+
+        /**
+         * Render admin interface inside tab content
+         */
+        renderAdminInterfaceInTab: function (config) {
+            const self = this;
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+
+            tabContent.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
+
+            // Reuse renderAdminInterface logic but target tabContent
+            const showLangSwitch = config.ShowLanguageSwitch !== false;
+
+            this.fetchAllRequests().then(requests => {
+                const langSwitchHtml = showLangSwitch ? `
+                    <div class="language-toggle-container">
+                        <span class="lang-label">EN</span>
+                        <label class="language-switch">
+                            <input type="checkbox" id="languageToggleAdmin" ${self.currentLanguage === 'lt' ? 'checked' : ''}>
+                            <span class="lang-slider"></span>
+                        </label>
+                        <span class="lang-label">LT</span>
+                    </div>
+                ` : '';
+
+                let html = langSwitchHtml;
+
+                if (requests.length === 0) {
+                    tabContent.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
+                    const langToggle = document.getElementById('languageToggleAdmin');
+                    if (langToggle) {
+                        langToggle.addEventListener('change', () => {
+                            self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                            self.renderAdminInterfaceInTab(config);
+                        });
+                    }
+                    return;
+                }
+
+                html += '<ul class="admin-request-list">';
+                requests.forEach(request => {
+                    const details = [];
+                    if (request.Type) details.push(request.Type);
+                    if (request.Notes) details.push(request.Notes);
+                    const detailsText = details.join(' • ');
+
+                    let customFieldsHtml = '';
+                    if (request.CustomFields) {
+                        try {
+                            const customFields = JSON.parse(request.CustomFields);
+                            for (const [key, value] of Object.entries(customFields)) {
+                                customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
+                            }
+                        } catch (e) {}
+                    }
+
+                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
+                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
+                    const hasLink = request.MediaLink && request.Status === 'done';
+                    const isRejected = request.Status === 'rejected';
+                    const statusText = self.t(request.Status);
+
+                    const rejectionDisplay = isRejected && request.RejectionReason
+                        ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
+                        : '';
+
+                    let imdbHtml = '';
+                    if (request.ImdbCode) {
+                        imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+                    }
+                    if (request.ImdbLink) {
+                        imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                    }
+
+                    html += `
+                        <li class="admin-request-item" data-request-id="${request.Id}">
+                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
+                            <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
+                            <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
+                            ${imdbHtml}
+                            ${customFieldsHtml}
+                            <div class="admin-request-time">
+                                <span>📅 ${createdAt}</span>
+                                ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
+                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                            </div>
+                            ${rejectionDisplay}
+                            <span class="admin-request-status-badge ${request.Status}">${statusText}</span>
+                            <div class="admin-request-actions">
+                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
+                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
+                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
+                                <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
+                                <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
+                            </div>
+                            <select class="admin-status-select" data-request-id="${request.Id}">
+                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
+                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
+                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
+                                <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
+                            </select>
+                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                            <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
+                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                tabContent.innerHTML = html;
+
+                // Attach language toggle handler
+                const langToggle = document.getElementById('languageToggleAdmin');
+                if (langToggle) {
+                    langToggle.addEventListener('change', () => {
+                        self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                        self.renderAdminInterfaceInTab(config);
+                    });
+                }
+
+                // Attach status change handlers for buttons
+                const statusBtns = tabContent.querySelectorAll('.admin-status-btn');
+                statusBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const newStatus = e.target.getAttribute('data-status');
+                        const linkInput = tabContent.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
+                        const mediaLink = linkInput ? linkInput.value.trim() : '';
+                        const rejectionInput = tabContent.querySelector(`.admin-rejection-input[data-request-id="${requestId}"]`);
+                        const rejectionReason = rejectionInput ? rejectionInput.value.trim() : '';
+                        self.updateRequestStatusInTab(requestId, newStatus, mediaLink, rejectionReason, config);
+                    });
+                });
+
+                // Attach status change handlers for dropdown
+                const statusSelects = tabContent.querySelectorAll('.admin-status-select');
+                statusSelects.forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const newStatus = e.target.value;
+                        const linkInput = tabContent.querySelector(`.admin-link-input[data-request-id="${requestId}"]`);
+                        const mediaLink = linkInput ? linkInput.value.trim() : '';
+                        const rejectionInput = tabContent.querySelector(`.admin-rejection-input[data-request-id="${requestId}"]`);
+                        const rejectionReason = rejectionInput ? rejectionInput.value.trim() : '';
+                        self.updateRequestStatusInTab(requestId, newStatus, mediaLink, rejectionReason, config);
+                    });
+                });
+
+                // Attach delete handlers
+                const deleteBtns = tabContent.querySelectorAll('.admin-delete-btn');
+                deleteBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        if (confirm(self.t('confirmDelete'))) {
+                            self.deleteRequestInTab(requestId, config);
+                        }
+                    });
+                });
+            }).catch(err => {
+                console.error('Error loading requests:', err);
+                tabContent.innerHTML = '<div class="admin-request-empty">' + self.t('errorLoading') + '</div>';
+            });
+        },
+
+        /**
+         * Update request status (for tab view)
+         */
+        updateRequestStatusInTab: function (requestId, status, mediaLink, rejectionReason, config) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+
+            let url = `${baseUrl}/Ratings/Requests/${requestId}/Status?status=${status}`;
+            if (mediaLink) url += `&mediaLink=${encodeURIComponent(mediaLink)}`;
+            if (rejectionReason) url += `&rejectionReason=${encodeURIComponent(rejectionReason)}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to update status');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('statusUpdated') || 'Status updated');
+                    });
+                }
+                self.renderAdminInterfaceInTab(config);
+                self.updateRequestBadge();
+            })
+            .catch(err => {
+                console.error('Error updating status:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error updating status');
+                    });
+                }
+            });
+        },
+
+        /**
+         * Delete request (for tab view)
+         */
+        deleteRequestInTab: function (requestId, config) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to delete');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('requestDeleted') || 'Request deleted');
+                    });
+                }
+                self.renderAdminInterfaceInTab(config);
+                self.updateRequestBadge();
+            })
+            .catch(err => {
+                console.error('Error deleting request:', err);
+            });
         },
 
         /**
