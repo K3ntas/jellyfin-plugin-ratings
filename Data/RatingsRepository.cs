@@ -154,6 +154,22 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets all ratings by a specific user.
+        /// </summary>
+        /// <param name="userId">User ID.</param>
+        /// <returns>List of all ratings by the user, ordered by most recently updated.</returns>
+        public List<UserRating> GetUserRatings(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.UpdatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
         /// Gets rating statistics for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>

@@ -225,6 +225,112 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets all ratings by a specific user.
+        /// </summary>
+        /// <param name="userId">Optional user ID. If not provided, returns ratings for the authenticated user.</param>
+        /// <returns>List of all ratings by the user.</returns>
+        [HttpGet("Users/{userId}/Ratings")]
+        public ActionResult<List<UserRating>> GetUserRatings([FromRoute] Guid? userId = null)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var authUserId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (authUserId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                authUserId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (authUserId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Use provided userId or fall back to authenticated user
+                var targetUserId = userId ?? authUserId;
+
+                var ratings = _repository.GetUserRatings(targetUserId);
+                _logger.LogInformation("Retrieved {Count} ratings for user {UserId}", ratings.Count, targetUserId);
+
+                return Ok(ratings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ratings for user");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets all ratings for the currently authenticated user.
+        /// </summary>
+        /// <returns>List of all ratings by the current user.</returns>
+        [HttpGet("MyRatings")]
+        public ActionResult<List<UserRating>> GetMyRatings()
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var ratings = _repository.GetUserRatings(userId);
+                _logger.LogInformation("Retrieved {Count} ratings for current user {UserId}", ratings.Count, userId);
+
+                return Ok(ratings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ratings for current user");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Deletes the current user's rating for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
