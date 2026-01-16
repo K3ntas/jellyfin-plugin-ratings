@@ -12,25 +12,59 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// </summary>
         public PluginConfiguration()
         {
+            // Rating settings
             EnableRatings = true;
             MaxRating = 10;
             MinRating = 1;
-            AllowGuestRatings = false;
+
+            // Feature toggles
             EnableNetflixView = false;
             EnableRequestButton = true;
             EnableNewMediaNotifications = true;
             EnableEpisodeGrouping = true;
             ShowLanguageSwitch = true;
             ShowSearchButton = true;
+            ShowNotificationToggle = true;
+
+            // Request system settings
+            EnableAdminRequests = false;
+            AutoDeleteRejectedDays = 0;
+            MaxRequestsPerMonth = 0;
+
+            // Custom fields for request form
             CustomRequestFields = string.Empty;
+
+            // Request window customization
             RequestWindowTitle = string.Empty;
             RequestWindowDescription = string.Empty;
+            RequestSubmitButtonText = string.Empty;
+
+            // Title field (always shown, always required)
             RequestTitleLabel = string.Empty;
             RequestTitlePlaceholder = string.Empty;
+
+            // Type field settings
+            RequestTypeEnabled = true;
+            RequestTypeRequired = false;
             RequestTypeLabel = string.Empty;
+
+            // Notes field settings
+            RequestNotesEnabled = true;
+            RequestNotesRequired = false;
             RequestNotesLabel = string.Empty;
             RequestNotesPlaceholder = string.Empty;
-            RequestSubmitButtonText = string.Empty;
+
+            // IMDB Code field settings
+            RequestImdbCodeEnabled = true;
+            RequestImdbCodeRequired = false;
+            RequestImdbCodeLabel = string.Empty;
+            RequestImdbCodePlaceholder = string.Empty;
+
+            // IMDB Link field settings
+            RequestImdbLinkEnabled = true;
+            RequestImdbLinkRequired = false;
+            RequestImdbLinkLabel = string.Empty;
+            RequestImdbLinkPlaceholder = string.Empty;
         }
 
         /// <summary>
@@ -47,11 +81,6 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the minimum rating value.
         /// </summary>
         public int MinRating { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether guest users can rate items.
-        /// </summary>
-        public bool AllowGuestRatings { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether Netflix-style genre view is enabled.
@@ -85,8 +114,30 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public bool ShowSearchButton { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the notification toggle is shown in the header.
+        /// </summary>
+        public bool ShowNotificationToggle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether admins can create requests like normal users.
+        /// </summary>
+        public bool EnableAdminRequests { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of days after which rejected requests are automatically deleted.
+        /// Set to 0 to disable auto-deletion.
+        /// </summary>
+        public int AutoDeleteRejectedDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of requests a user can make per month.
+        /// Set to 0 for unlimited requests.
+        /// </summary>
+        public int MaxRequestsPerMonth { get; set; }
+
+        /// <summary>
         /// Gets or sets the custom fields for request form as JSON.
-        /// Format: [{"name": "IMDB Link", "placeholder": "https://imdb.com/...", "required": true}]
+        /// Format: [{"name": "Field Name", "placeholder": "placeholder text", "required": true}]
         /// </summary>
         public string CustomRequestFields { get; set; }
 
@@ -96,9 +147,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public string RequestWindowTitle { get; set; }
 
         /// <summary>
-        /// Gets or sets the custom description for the request window. Empty = use default.
+        /// Gets or sets the custom description for the request window. Empty = hide description.
         /// </summary>
         public string RequestWindowDescription { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom text for the submit button. Empty = use default.
+        /// </summary>
+        public string RequestSubmitButtonText { get; set; }
 
         /// <summary>
         /// Gets or sets the custom label for the media title field. Empty = use default.
@@ -110,10 +166,34 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// </summary>
         public string RequestTitlePlaceholder { get; set; }
 
+        // Type field settings
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Type field is shown.
+        /// </summary>
+        public bool RequestTypeEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Type field is required.
+        /// </summary>
+        public bool RequestTypeRequired { get; set; }
+
         /// <summary>
         /// Gets or sets the custom label for the type field. Empty = use default.
         /// </summary>
         public string RequestTypeLabel { get; set; }
+
+        // Notes field settings
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Notes field is shown.
+        /// </summary>
+        public bool RequestNotesEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Notes field is required.
+        /// </summary>
+        public bool RequestNotesRequired { get; set; }
 
         /// <summary>
         /// Gets or sets the custom label for the notes field. Empty = use default.
@@ -125,9 +205,48 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// </summary>
         public string RequestNotesPlaceholder { get; set; }
 
+        // IMDB Code field settings
+
         /// <summary>
-        /// Gets or sets the custom text for the submit button. Empty = use default.
+        /// Gets or sets a value indicating whether the IMDB Code field is shown.
         /// </summary>
-        public string RequestSubmitButtonText { get; set; }
+        public bool RequestImdbCodeEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the IMDB Code field is required.
+        /// </summary>
+        public bool RequestImdbCodeRequired { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom label for the IMDB Code field. Empty = use default.
+        /// </summary>
+        public string RequestImdbCodeLabel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom placeholder for the IMDB Code field. Empty = use default.
+        /// </summary>
+        public string RequestImdbCodePlaceholder { get; set; }
+
+        // IMDB Link field settings
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the IMDB Link field is shown.
+        /// </summary>
+        public bool RequestImdbLinkEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the IMDB Link field is required.
+        /// </summary>
+        public bool RequestImdbLinkRequired { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom label for the IMDB Link field. Empty = use default.
+        /// </summary>
+        public string RequestImdbLinkLabel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom placeholder for the IMDB Link field. Empty = use default.
+        /// </summary>
+        public string RequestImdbLinkPlaceholder { get; set; }
     }
 }
