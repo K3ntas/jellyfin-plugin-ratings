@@ -78,6 +78,12 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string ImdbLink { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the date until which this request is snoozed.
+        /// Null means the request is not snoozed.
+        /// </summary>
+        public DateTime? SnoozedUntil { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MediaRequest"/> class.
         /// </summary>
         public MediaRequest()

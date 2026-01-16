@@ -36,16 +36,6 @@
 
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input id="chkAllowGuestRatings" type="checkbox" is="emby-checkbox" />
-                                <span>Allow Guest Ratings</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Allow guest users to rate items.
-                            </div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
                                 <input id="chkEnableNetflixView" type="checkbox" is="emby-checkbox" />
                                 <span>Enable Netflix-Style View</span>
                             </label>
@@ -53,6 +43,10 @@
                                 Display libraries with horizontal genre rows like Netflix. When enabled, movie and TV show libraries will show content organized by genre in scrollable rows.
                             </div>
                         </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">UI Toggles</h2>
 
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
@@ -104,30 +98,78 @@
                             </div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkShowNotificationToggle" type="checkbox" is="emby-checkbox" />
+                                <span>Show Notification Toggle</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the notification bell icon in the header for toggling notifications.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form Customization</h2>
+                        <h2 class="sectionTitle">Request System Settings</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableAdminRequests" type="checkbox" is="emby-checkbox" />
+                                <span>Allow Admin Requests</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Allow administrators to create media requests like normal users. Useful for testing and personal notes.
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtMaxRequestsPerMonth">Max Requests Per Month</label>
+                            <input id="txtMaxRequestsPerMonth" type="number" is="emby-input" min="0" step="1" />
+                            <div class="fieldDescription">Maximum number of requests a user can make per month. Set to 0 for unlimited.</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtAutoDeleteRejectedDays">Auto-Delete Rejected Requests (Days)</label>
+                            <input id="txtAutoDeleteRejectedDays" type="number" is="emby-input" min="0" step="1" />
+                            <div class="fieldDescription">Automatically delete rejected requests after this many days. Set to 0 to disable auto-deletion.</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - Window Settings</h2>
                         <div class="fieldDescription" style="margin-bottom: 15px;">
-                            Customize the text shown in the request form. Leave empty to use defaults.
+                            Customize the request form window. Leave empty to use defaults.
                         </div>
 
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowTitle">Window Title</label>
                             <input id="txtRequestWindowTitle" type="text" is="emby-input" />
-                            <div class="fieldDescription">Custom title for the request window</div>
+                            <div class="fieldDescription">Custom title for the request window (leave empty for default)</div>
                         </div>
 
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowDescription">Window Description</label>
                             <input id="txtRequestWindowDescription" type="text" is="emby-input" />
-                            <div class="fieldDescription">Custom description text shown in the request form</div>
+                            <div class="fieldDescription">Custom description text. Leave empty to hide the description entirely.</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestSubmitButtonText">Submit Button Text</label>
+                            <input id="txtRequestSubmitButtonText" type="text" is="emby-input" />
+                            <div class="fieldDescription">Text for the submit button (leave empty for default)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - Title Field</h2>
+                        <div class="fieldDescription" style="margin-bottom: 15px;">
+                            The Title field is always shown and required.
                         </div>
 
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtRequestTitleLabel">Title Field Label</label>
                             <input id="txtRequestTitleLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the media title field</div>
+                            <div class="fieldDescription">Label for the title field (leave empty for default)</div>
                         </div>
 
                         <div class="inputContainer">
@@ -135,17 +177,65 @@
                             <input id="txtRequestTitlePlaceholder" type="text" is="emby-input" />
                             <div class="fieldDescription">Placeholder text for the title input</div>
                         </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - Type Field</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestTypeEnabled" type="checkbox" is="emby-checkbox" />
+                                <span>Show Type Field</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the media type dropdown (Movie, TV Series, Anime, etc.)
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestTypeRequired" type="checkbox" is="emby-checkbox" />
+                                <span>Type Field Required</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Make the type field required when submitting a request.
+                            </div>
+                        </div>
 
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtRequestTypeLabel">Type Field Label</label>
                             <input id="txtRequestTypeLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the media type dropdown</div>
+                            <div class="fieldDescription">Label for the type dropdown (leave empty for default)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - Notes Field</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestNotesEnabled" type="checkbox" is="emby-checkbox" />
+                                <span>Show Notes Field</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the notes/comments textarea.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestNotesRequired" type="checkbox" is="emby-checkbox" />
+                                <span>Notes Field Required</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Make the notes field required when submitting a request.
+                            </div>
                         </div>
 
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesLabel">Notes Field Label</label>
                             <input id="txtRequestNotesLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the notes field</div>
+                            <div class="fieldDescription">Label for the notes field (leave empty for default)</div>
                         </div>
 
                         <div class="inputContainer">
@@ -153,18 +243,91 @@
                             <input id="txtRequestNotesPlaceholder" type="text" is="emby-input" />
                             <div class="fieldDescription">Placeholder text for the notes input</div>
                         </div>
+                    </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestSubmitButtonText">Submit Button Text</label>
-                            <input id="txtRequestSubmitButtonText" type="text" is="emby-input" />
-                            <div class="fieldDescription">Text for the submit button</div>
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - IMDB Code Field</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestImdbCodeEnabled" type="checkbox" is="emby-checkbox" />
+                                <span>Show IMDB Code Field</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the IMDB code input field (e.g., tt0448134).
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestImdbCodeRequired" type="checkbox" is="emby-checkbox" />
+                                <span>IMDB Code Field Required</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Make the IMDB code field required when submitting a request.
+                            </div>
                         </div>
 
                         <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodeLabel">IMDB Code Field Label</label>
+                            <input id="txtRequestImdbCodeLabel" type="text" is="emby-input" />
+                            <div class="fieldDescription">Label for the IMDB code field (leave empty for default)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodePlaceholder">IMDB Code Field Placeholder</label>
+                            <input id="txtRequestImdbCodePlaceholder" type="text" is="emby-input" />
+                            <div class="fieldDescription">Placeholder text for the IMDB code input</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Request Form - IMDB Link Field</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestImdbLinkEnabled" type="checkbox" is="emby-checkbox" />
+                                <span>Show IMDB Link Field</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the IMDB link input field.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkRequestImdbLinkRequired" type="checkbox" is="emby-checkbox" />
+                                <span>IMDB Link Field Required</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Make the IMDB link field required when submitting a request.
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkLabel">IMDB Link Field Label</label>
+                            <input id="txtRequestImdbLinkLabel" type="text" is="emby-input" />
+                            <div class="fieldDescription">Label for the IMDB link field (leave empty for default)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkPlaceholder">IMDB Link Field Placeholder</label>
+                            <input id="txtRequestImdbLinkPlaceholder" type="text" is="emby-input" />
+                            <div class="fieldDescription">Placeholder text for the IMDB link input</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Custom Fields</h2>
+
+                        <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtCustomRequestFields">Custom Fields (JSON)</label>
-                            <textarea id="txtCustomRequestFields" is="emby-input" rows="4" style="font-family: monospace;"></textarea>
+                            <textarea id="txtCustomRequestFields" is="emby-input" rows="6" style="font-family: monospace;"></textarea>
                             <div class="fieldDescription">
-                                Add custom fields to the request form. Format: [{"name": "IMDB Link", "placeholder": "https://imdb.com/...", "required": true}]
+                                Add custom fields to the request form. Format as a JSON array:<br>
+                                <code style="background: #333; padding: 2px 6px; border-radius: 3px;">[{"name": "Priority", "placeholder": "High/Medium/Low", "required": false}]</code><br><br>
+                                To add multiple fields, separate them with commas inside the array:<br>
+                                <code style="background: #333; padding: 2px 6px; border-radius: 3px;">[{"name": "Field1", "placeholder": "...", "required": true}, {"name": "Field2", "placeholder": "...", "required": false}]</code>
                             </div>
                         </div>
 
@@ -186,25 +349,60 @@
             document.querySelector('#ratingsConfigPage').addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
+                    // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
                     document.querySelector('#txtMinRating').value = config.MinRating;
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
-                    document.querySelector('#chkAllowGuestRatings').checked = config.AllowGuestRatings;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
+
+                    // UI toggles
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
+                    document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
+
+                    // Request system settings
+                    document.querySelector('#chkEnableAdminRequests').checked = config.EnableAdminRequests;
+                    document.querySelector('#txtMaxRequestsPerMonth').value = config.MaxRequestsPerMonth || 0;
+                    document.querySelector('#txtAutoDeleteRejectedDays').value = config.AutoDeleteRejectedDays || 0;
+
+                    // Window settings
                     document.querySelector('#txtRequestWindowTitle').value = config.RequestWindowTitle || '';
                     document.querySelector('#txtRequestWindowDescription').value = config.RequestWindowDescription || '';
+                    document.querySelector('#txtRequestSubmitButtonText').value = config.RequestSubmitButtonText || '';
+
+                    // Title field
                     document.querySelector('#txtRequestTitleLabel').value = config.RequestTitleLabel || '';
                     document.querySelector('#txtRequestTitlePlaceholder').value = config.RequestTitlePlaceholder || '';
+
+                    // Type field
+                    document.querySelector('#chkRequestTypeEnabled').checked = config.RequestTypeEnabled !== false;
+                    document.querySelector('#chkRequestTypeRequired').checked = config.RequestTypeRequired;
                     document.querySelector('#txtRequestTypeLabel').value = config.RequestTypeLabel || '';
+
+                    // Notes field
+                    document.querySelector('#chkRequestNotesEnabled').checked = config.RequestNotesEnabled !== false;
+                    document.querySelector('#chkRequestNotesRequired').checked = config.RequestNotesRequired;
                     document.querySelector('#txtRequestNotesLabel').value = config.RequestNotesLabel || '';
                     document.querySelector('#txtRequestNotesPlaceholder').value = config.RequestNotesPlaceholder || '';
-                    document.querySelector('#txtRequestSubmitButtonText').value = config.RequestSubmitButtonText || '';
+
+                    // IMDB Code field
+                    document.querySelector('#chkRequestImdbCodeEnabled').checked = config.RequestImdbCodeEnabled !== false;
+                    document.querySelector('#chkRequestImdbCodeRequired').checked = config.RequestImdbCodeRequired;
+                    document.querySelector('#txtRequestImdbCodeLabel').value = config.RequestImdbCodeLabel || '';
+                    document.querySelector('#txtRequestImdbCodePlaceholder').value = config.RequestImdbCodePlaceholder || '';
+
+                    // IMDB Link field
+                    document.querySelector('#chkRequestImdbLinkEnabled').checked = config.RequestImdbLinkEnabled !== false;
+                    document.querySelector('#chkRequestImdbLinkRequired').checked = config.RequestImdbLinkRequired;
+                    document.querySelector('#txtRequestImdbLinkLabel').value = config.RequestImdbLinkLabel || '';
+                    document.querySelector('#txtRequestImdbLinkPlaceholder').value = config.RequestImdbLinkPlaceholder || '';
+
+                    // Custom fields
                     document.querySelector('#txtCustomRequestFields').value = config.CustomRequestFields || '';
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -214,24 +412,58 @@
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
+                    // Core settings
                     config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
                     config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
-                    config.AllowGuestRatings = document.querySelector('#chkAllowGuestRatings').checked;
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
+
+                    // UI toggles
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
+                    config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
+
+                    // Request system settings
+                    config.EnableAdminRequests = document.querySelector('#chkEnableAdminRequests').checked;
+                    config.MaxRequestsPerMonth = parseInt(document.querySelector('#txtMaxRequestsPerMonth').value) || 0;
+                    config.AutoDeleteRejectedDays = parseInt(document.querySelector('#txtAutoDeleteRejectedDays').value) || 0;
+
+                    // Window settings
                     config.RequestWindowTitle = document.querySelector('#txtRequestWindowTitle').value;
                     config.RequestWindowDescription = document.querySelector('#txtRequestWindowDescription').value;
+                    config.RequestSubmitButtonText = document.querySelector('#txtRequestSubmitButtonText').value;
+
+                    // Title field
                     config.RequestTitleLabel = document.querySelector('#txtRequestTitleLabel').value;
                     config.RequestTitlePlaceholder = document.querySelector('#txtRequestTitlePlaceholder').value;
+
+                    // Type field
+                    config.RequestTypeEnabled = document.querySelector('#chkRequestTypeEnabled').checked;
+                    config.RequestTypeRequired = document.querySelector('#chkRequestTypeRequired').checked;
                     config.RequestTypeLabel = document.querySelector('#txtRequestTypeLabel').value;
+
+                    // Notes field
+                    config.RequestNotesEnabled = document.querySelector('#chkRequestNotesEnabled').checked;
+                    config.RequestNotesRequired = document.querySelector('#chkRequestNotesRequired').checked;
                     config.RequestNotesLabel = document.querySelector('#txtRequestNotesLabel').value;
                     config.RequestNotesPlaceholder = document.querySelector('#txtRequestNotesPlaceholder').value;
-                    config.RequestSubmitButtonText = document.querySelector('#txtRequestSubmitButtonText').value;
+
+                    // IMDB Code field
+                    config.RequestImdbCodeEnabled = document.querySelector('#chkRequestImdbCodeEnabled').checked;
+                    config.RequestImdbCodeRequired = document.querySelector('#chkRequestImdbCodeRequired').checked;
+                    config.RequestImdbCodeLabel = document.querySelector('#txtRequestImdbCodeLabel').value;
+                    config.RequestImdbCodePlaceholder = document.querySelector('#txtRequestImdbCodePlaceholder').value;
+
+                    // IMDB Link field
+                    config.RequestImdbLinkEnabled = document.querySelector('#chkRequestImdbLinkEnabled').checked;
+                    config.RequestImdbLinkRequired = document.querySelector('#chkRequestImdbLinkRequired').checked;
+                    config.RequestImdbLinkLabel = document.querySelector('#txtRequestImdbLinkLabel').value;
+                    config.RequestImdbLinkPlaceholder = document.querySelector('#txtRequestImdbLinkPlaceholder').value;
+
+                    // Custom fields
                     config.CustomRequestFields = document.querySelector('#txtCustomRequestFields').value;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {

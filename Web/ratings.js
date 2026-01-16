@@ -2059,6 +2059,7 @@
          * Attach event listeners
          */
         attachEventListeners: function (itemId) {
+            const self = this;
             const stars = document.querySelectorAll('.ratings-plugin-star');
             const popup = document.getElementById('ratingsPluginPopup');
             const starsContainer = document.getElementById('ratingsPluginStars');
@@ -2066,7 +2067,12 @@
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     const rating = parseInt(star.getAttribute('data-rating'));
-                    this.submitRating(itemId, rating);
+                    // Check if clicking the same rating - toggle off
+                    if (self.currentUserRating === rating) {
+                        self.deleteRating(itemId);
+                    } else {
+                        self.submitRating(itemId, rating);
+                    }
                 });
 
                 star.addEventListener('mouseenter', () => {
@@ -2146,13 +2152,15 @@
                     return response.json();
                 })
                 .then(stats => {
+                    // Track user's current rating for toggle-off feature
+                    self.currentUserRating = stats.UserRating || 0;
                     self.updateStarDisplay(stats.UserRating || 0);
 
                     let statsHtml = '';
                     if (stats.TotalRatings > 0) {
                         statsHtml = `<span class="ratings-plugin-average">${stats.AverageRating.toFixed(1)}/10</span> - ${stats.TotalRatings} rating${stats.TotalRatings !== 1 ? 's' : ''}`;
                         if (stats.UserRating) {
-                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10</div>`;
+                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10 <span class="ratings-plugin-remove-hint">(click to remove)</span></div>`;
                         }
                     } else {
                         statsHtml = 'No ratings yet. Be the first to rate!';
@@ -2227,6 +2235,9 @@
                 })
                 .then(function(data) {
 
+                    // Update current rating for toggle-off feature
+                    self.currentUserRating = rating;
+
                     // Immediately update the star display for instant feedback
                     self.updateStarDisplay(rating);
 
@@ -2244,6 +2255,62 @@
                     if (window.require) {
                         require(['toast'], function(toast) {
                             toast('Error submitting rating: ' + err.message);
+                        });
+                    }
+                });
+        },
+
+        /**
+         * Delete rating (toggle off)
+         */
+        deleteRating: function (itemId) {
+            const self = this;
+
+            if (!window.ApiClient) {
+                return;
+            }
+
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Items/${itemId}/Rating`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const requestOptions = {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            };
+
+            fetch(url, requestOptions)
+                .then(function(response) {
+                    if (!response.ok) {
+                        return response.text().then(function(errorText) {
+                            throw new Error('HTTP ' + response.status + ': ' + errorText);
+                        });
+                    }
+                    return response;
+                })
+                .then(function() {
+                    // Clear the current rating
+                    self.currentUserRating = 0;
+                    self.updateStarDisplay(0);
+                    self.loadRatings(itemId);
+
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Rating removed');
+                        });
+                    }
+                })
+                .catch(function(err) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Error removing rating: ' + err.message);
                         });
                     }
                 });
@@ -3715,14 +3782,31 @@
 
             // Get custom texts or use defaults
             const windowTitle = config.RequestWindowTitle || this.t('requestMedia');
-            const windowDesc = config.RequestWindowDescription || this.t('requestDescriptionText');
+            const windowDesc = config.RequestWindowDescription;
             const titleLabel = config.RequestTitleLabel || this.t('mediaTitle');
             const titlePlaceholder = config.RequestTitlePlaceholder || this.t('mediaTitlePlaceholder');
-            const typeLabel = config.RequestTypeLabel || this.t('type');
-            const notesLabel = config.RequestNotesLabel || this.t('additionalNotes');
-            const notesPlaceholder = config.RequestNotesPlaceholder || this.t('notesPlaceholder');
             const submitText = config.RequestSubmitButtonText || this.t('submitRequest');
             const showLangSwitch = config.ShowLanguageSwitch !== false;
+
+            // Field visibility and required settings
+            const typeEnabled = config.RequestTypeEnabled !== false;
+            const typeRequired = config.RequestTypeRequired === true;
+            const typeLabel = config.RequestTypeLabel || this.t('type');
+
+            const notesEnabled = config.RequestNotesEnabled !== false;
+            const notesRequired = config.RequestNotesRequired === true;
+            const notesLabel = config.RequestNotesLabel || this.t('additionalNotes');
+            const notesPlaceholder = config.RequestNotesPlaceholder || this.t('notesPlaceholder');
+
+            const imdbCodeEnabled = config.RequestImdbCodeEnabled !== false;
+            const imdbCodeRequired = config.RequestImdbCodeRequired === true;
+            const imdbCodeLabel = config.RequestImdbCodeLabel || 'IMDB Code';
+            const imdbCodePlaceholder = config.RequestImdbCodePlaceholder || 'tt0448134';
+
+            const imdbLinkEnabled = config.RequestImdbLinkEnabled !== false;
+            const imdbLinkRequired = config.RequestImdbLinkRequired === true;
+            const imdbLinkLabel = config.RequestImdbLinkLabel || 'IMDB Link';
+            const imdbLinkPlaceholder = config.RequestImdbLinkPlaceholder || 'https://www.imdb.com/title/tt0448134/';
 
             // Parse custom fields
             let customFields = [];
@@ -3760,20 +3844,19 @@
                 </div>
             ` : '';
 
-            modalTitle.textContent = windowTitle;
-            modalBody.innerHTML = `
-                ${langSwitchHtml}
+            // Build description HTML (only if configured)
+            const descriptionHtml = windowDesc ? `
                 <div class="request-description">
                     <strong>${this.t('requestDescription')}</strong><br>
                     ${windowDesc}
                 </div>
+            ` : '';
+
+            // Build Type field HTML (if enabled)
+            const typeHtml = typeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaTitle">${titleLabel}</label>
-                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
-                </div>
-                <div class="request-input-group">
-                    <label for="requestMediaType">${typeLabel}</label>
-                    <select id="requestMediaType" required>
+                    <label for="requestMediaType">${typeLabel}${typeRequired ? ' *' : ''}</label>
+                    <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
                         <option value="TV Series">${this.t('tvSeries')}</option>
@@ -3782,19 +3865,45 @@
                         <option value="Other">${this.t('other')}</option>
                     </select>
                 </div>
+            ` : '';
+
+            // Build IMDB Code field HTML (if enabled)
+            const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbCode">IMDB Code (optional)</label>
-                    <input type="text" id="requestImdbCode" placeholder="tt0448134" />
+                    <label for="requestImdbCode">${imdbCodeLabel}${imdbCodeRequired ? ' *' : ''}</label>
+                    <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
+            ` : '';
+
+            // Build IMDB Link field HTML (if enabled)
+            const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbLink">IMDB Link (optional)</label>
-                    <input type="text" id="requestImdbLink" placeholder="https://www.imdb.com/title/tt0448134/" />
+                    <label for="requestImdbLink">${imdbLinkLabel}${imdbLinkRequired ? ' *' : ''}</label>
+                    <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
+            ` : '';
+
+            // Build Notes field HTML (if enabled)
+            const notesHtml = notesEnabled ? `
+                <div class="request-input-group">
+                    <label for="requestMediaNotes">${notesLabel}${notesRequired ? ' *' : ''}</label>
+                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
+                </div>
+            ` : '';
+
+            modalTitle.textContent = windowTitle;
+            modalBody.innerHTML = `
+                ${langSwitchHtml}
+                ${descriptionHtml}
+                <div class="request-input-group">
+                    <label for="requestMediaTitle">${titleLabel} *</label>
+                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                </div>
+                ${typeHtml}
+                ${imdbCodeHtml}
+                ${imdbLinkHtml}
                 ${customFieldsHtml}
-                <div class="request-input-group">
-                    <label for="requestMediaNotes">${notesLabel}</label>
-                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}"></textarea>
-                </div>
+                ${notesHtml}
                 <button class="request-submit-btn" id="submitRequestBtn">${submitText}</button>
                 <div class="user-requests-title">${this.t('yourRequests')}</div>
                 <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests')}</p></div>
@@ -4103,8 +4212,14 @@
             const self = this;
             try {
                 const title = document.getElementById('requestMediaTitle').value.trim();
-                const type = document.getElementById('requestMediaType').value.trim();
-                const notes = document.getElementById('requestMediaNotes').value.trim();
+                const typeEl = document.getElementById('requestMediaType');
+                const type = typeEl ? typeEl.value.trim() : '';
+                const notesEl = document.getElementById('requestMediaNotes');
+                const notes = notesEl ? notesEl.value.trim() : '';
+                const imdbCodeEl = document.getElementById('requestImdbCode');
+                const imdbCode = imdbCodeEl ? imdbCodeEl.value.trim() : '';
+                const imdbLinkEl = document.getElementById('requestImdbLink');
+                const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
 
                 if (!title) {
                     if (window.require) {
@@ -4116,11 +4231,42 @@
                     return;
                 }
 
-                if (!type) {
+                // Type validation - only if element exists and is required
+                if (typeEl && typeEl.hasAttribute('required') && !type) {
                     if (window.require) {
                         const msg = self.t('typeRequired');
                         require(['toast'], function(toast) {
                             toast(msg);
+                        });
+                    }
+                    return;
+                }
+
+                // IMDB Code validation - only if element exists and is required
+                if (imdbCodeEl && imdbCodeEl.hasAttribute('required') && !imdbCode) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Please fill in: IMDB Code');
+                        });
+                    }
+                    return;
+                }
+
+                // IMDB Link validation - only if element exists and is required
+                if (imdbLinkEl && imdbLinkEl.hasAttribute('required') && !imdbLink) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Please fill in: IMDB Link');
+                        });
+                    }
+                    return;
+                }
+
+                // Notes validation - only if element exists and is required
+                if (notesEl && notesEl.hasAttribute('required') && !notes) {
+                    if (window.require) {
+                        require(['toast'], function(toast) {
+                            toast('Please fill in: Notes');
                         });
                     }
                     return;
@@ -4157,12 +4303,6 @@
 
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-                // Get IMDB fields
-                const imdbCodeEl = document.getElementById('requestImdbCode');
-                const imdbLinkEl = document.getElementById('requestImdbLink');
-                const imdbCode = imdbCodeEl ? imdbCodeEl.value.trim() : '';
-                const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
-
                 const requestData = {
                     Title: title,
                     Type: type,
@@ -4197,8 +4337,8 @@
 
                     // Clear form
                     document.getElementById('requestMediaTitle').value = '';
-                    document.getElementById('requestMediaType').value = '';
-                    document.getElementById('requestMediaNotes').value = '';
+                    if (typeEl) typeEl.value = '';
+                    if (notesEl) notesEl.value = '';
                     // Clear IMDB fields
                     if (imdbCodeEl) imdbCodeEl.value = '';
                     if (imdbLinkEl) imdbLinkEl.value = '';

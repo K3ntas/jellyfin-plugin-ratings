@@ -426,23 +426,58 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var config = Plugin.Instance?.Configuration;
                 return Ok(new
                 {
+                    // Core settings
                     EnableRatings = config?.EnableRatings ?? true,
                     EnableNetflixView = config?.EnableNetflixView ?? false,
                     EnableRequestButton = config?.EnableRequestButton ?? true,
                     EnableNewMediaNotifications = config?.EnableNewMediaNotifications ?? true,
                     MinRating = config?.MinRating ?? 1,
                     MaxRating = config?.MaxRating ?? 10,
+
+                    // UI toggles
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
+                    ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
+
+                    // Request system settings
+                    EnableAdminRequests = config?.EnableAdminRequests ?? false,
+                    AutoDeleteRejectedDays = config?.AutoDeleteRejectedDays ?? 0,
+                    MaxRequestsPerMonth = config?.MaxRequestsPerMonth ?? 0,
+
+                    // Custom fields
                     CustomRequestFields = config?.CustomRequestFields ?? string.Empty,
+
+                    // Request window customization
                     RequestWindowTitle = config?.RequestWindowTitle ?? string.Empty,
                     RequestWindowDescription = config?.RequestWindowDescription ?? string.Empty,
+                    RequestSubmitButtonText = config?.RequestSubmitButtonText ?? string.Empty,
+
+                    // Title field
                     RequestTitleLabel = config?.RequestTitleLabel ?? string.Empty,
                     RequestTitlePlaceholder = config?.RequestTitlePlaceholder ?? string.Empty,
+
+                    // Type field
+                    RequestTypeEnabled = config?.RequestTypeEnabled ?? true,
+                    RequestTypeRequired = config?.RequestTypeRequired ?? false,
                     RequestTypeLabel = config?.RequestTypeLabel ?? string.Empty,
+
+                    // Notes field
+                    RequestNotesEnabled = config?.RequestNotesEnabled ?? true,
+                    RequestNotesRequired = config?.RequestNotesRequired ?? false,
                     RequestNotesLabel = config?.RequestNotesLabel ?? string.Empty,
                     RequestNotesPlaceholder = config?.RequestNotesPlaceholder ?? string.Empty,
-                    RequestSubmitButtonText = config?.RequestSubmitButtonText ?? string.Empty
+
+                    // IMDB Code field
+                    RequestImdbCodeEnabled = config?.RequestImdbCodeEnabled ?? true,
+                    RequestImdbCodeRequired = config?.RequestImdbCodeRequired ?? false,
+                    RequestImdbCodeLabel = config?.RequestImdbCodeLabel ?? string.Empty,
+                    RequestImdbCodePlaceholder = config?.RequestImdbCodePlaceholder ?? string.Empty,
+
+                    // IMDB Link field
+                    RequestImdbLinkEnabled = config?.RequestImdbLinkEnabled ?? true,
+                    RequestImdbLinkRequired = config?.RequestImdbLinkRequired ?? false,
+                    RequestImdbLinkLabel = config?.RequestImdbLinkLabel ?? string.Empty,
+                    RequestImdbLinkPlaceholder = config?.RequestImdbLinkPlaceholder ?? string.Empty
                 });
             }
             catch (Exception ex)
@@ -762,6 +797,25 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
+                // Check request limit
+                var config = Plugin.Instance?.Configuration;
+                var maxRequests = config?.MaxRequestsPerMonth ?? 0;
+                if (maxRequests > 0)
+                {
+                    var currentCount = _repository.GetUserRequestCountThisMonth(userId);
+                    if (currentCount >= maxRequests)
+                    {
+                        return BadRequest($"You have reached your monthly request limit of {maxRequests} requests.");
+                    }
+                }
+
+                // Run auto-cleanup of old rejected requests
+                var autoDeleteDays = config?.AutoDeleteRejectedDays ?? 0;
+                if (autoDeleteDays > 0)
+                {
+                    _ = _repository.CleanupOldRejectedRequestsAsync(autoDeleteDays);
+                }
+
                 var mediaRequest = new MediaRequest
                 {
                     Id = Guid.NewGuid(),
@@ -906,7 +960,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Admin-only enforcement can be added later with proper policy checking
 
                 // Validate status
-                var validStatuses = new[] { "pending", "processing", "done", "rejected" };
+                var validStatuses = new[] { "pending", "processing", "done", "rejected", "snoozed" };
                 if (!validStatuses.Contains(status.ToLower()))
                 {
                     return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
@@ -930,7 +984,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Deletes a media request (admin only).
+        /// Deletes a media request. Admins can delete any request, users can only delete their own.
         /// </summary>
         /// <param name="requestId">The request ID to delete.</param>
         /// <returns>Success or failure.</returns>
@@ -976,19 +1030,361 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
+                // Get the request to check ownership (for non-admin users)
+                var existingRequest = _repository.GetMediaRequestAsync(requestId).Result;
+                if (existingRequest == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                // Users can only delete their own requests (admin check done client-side)
+                // If not the owner, we rely on client-side admin check
+                var isOwner = existingRequest.UserId == userId;
+
                 var result = _repository.DeleteMediaRequestAsync(requestId).Result;
                 if (!result)
                 {
                     return NotFound("Request not found");
                 }
 
-                _logger.LogInformation("Admin {UserId} deleted request {RequestId}", userId, requestId);
+                _logger.LogInformation("User {UserId} deleted request {RequestId} (owner: {IsOwner})", userId, requestId, isOwner);
 
                 return Ok(new { success = true });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets the current user's requests.
+        /// </summary>
+        /// <returns>List of requests made by the current user.</returns>
+        [HttpGet("Requests/My")]
+        public ActionResult<List<MediaRequest>> GetMyRequests()
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var requests = _repository.GetUserRequests(userId);
+
+                // Also return request count info
+                var config = Plugin.Instance?.Configuration;
+                var maxRequests = config?.MaxRequestsPerMonth ?? 0;
+                var currentCount = _repository.GetUserRequestCountThisMonth(userId);
+
+                Response.Headers["X-Request-Count"] = currentCount.ToString();
+                Response.Headers["X-Request-Limit"] = maxRequests.ToString();
+
+                return Ok(requests);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user's requests");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Updates a media request. Users can only edit their own pending requests.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="request">The updated request data.</param>
+        /// <returns>The updated request.</returns>
+        [HttpPut("Requests/{requestId}")]
+        public ActionResult<MediaRequest> UpdateMediaRequest(
+            [FromRoute] [Required] Guid requestId,
+            [FromBody] [Required] MediaRequestDto request)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Get the existing request
+                var existingRequest = _repository.GetMediaRequestAsync(requestId).Result;
+                if (existingRequest == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                // Users can only edit their own requests
+                if (existingRequest.UserId != userId)
+                {
+                    return Forbid("You can only edit your own requests");
+                }
+
+                // Users can only edit pending requests
+                if (existingRequest.Status != "pending")
+                {
+                    return BadRequest("You can only edit pending requests");
+                }
+
+                var result = _repository.UpdateMediaRequestAsync(
+                    requestId,
+                    request.Title,
+                    request.Type,
+                    request.Notes,
+                    request.CustomFields,
+                    request.ImdbCode,
+                    request.ImdbLink).Result;
+
+                if (result == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                _logger.LogInformation("User {UserId} updated request {RequestId}", userId, requestId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Snoozes a media request until a specified date (admin only).
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="snoozedUntil">The date until which to snooze (ISO 8601 format).</param>
+        /// <returns>The updated request.</returns>
+        [HttpPost("Requests/{requestId}/Snooze")]
+        public ActionResult<MediaRequest> SnoozeRequest(
+            [FromRoute] [Required] Guid requestId,
+            [FromQuery] [Required] string snoozedUntil)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Parse the snooze date
+                if (!DateTime.TryParse(snoozedUntil, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var snoozeDate))
+                {
+                    return BadRequest("Invalid date format. Use ISO 8601 format (e.g., 2024-12-31).");
+                }
+
+                if (snoozeDate <= DateTime.UtcNow)
+                {
+                    return BadRequest("Snooze date must be in the future.");
+                }
+
+                var result = _repository.SnoozeMediaRequestAsync(requestId, snoozeDate).Result;
+                if (result == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                _logger.LogInformation("Admin {UserId} snoozed request {RequestId} until {SnoozeDate}", userId, requestId, snoozeDate);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error snoozing request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Unsnoozes a media request (admin only).
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <returns>The updated request.</returns>
+        [HttpPost("Requests/{requestId}/Unsnooze")]
+        public ActionResult<MediaRequest> UnsnoozeRequest([FromRoute] [Required] Guid requestId)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var result = _repository.UnsnoozeMediaRequestAsync(requestId).Result;
+                if (result == null)
+                {
+                    return NotFound("Request not found");
+                }
+
+                _logger.LogInformation("Admin {UserId} unsnoozed request {RequestId}", userId, requestId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unsnoozing request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets the current user's request count for this month.
+        /// </summary>
+        /// <returns>Request count info.</returns>
+        [HttpGet("Requests/Count")]
+        public ActionResult GetRequestCount()
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var config = Plugin.Instance?.Configuration;
+                var maxRequests = config?.MaxRequestsPerMonth ?? 0;
+                var currentCount = _repository.GetUserRequestCountThisMonth(userId);
+
+                return Ok(new
+                {
+                    CurrentCount = currentCount,
+                    MaxRequests = maxRequests,
+                    Remaining = maxRequests > 0 ? Math.Max(0, maxRequests - currentCount) : -1,
+                    Unlimited = maxRequests == 0
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting request count");
                 return StatusCode(500, "Internal server error");
             }
         }
