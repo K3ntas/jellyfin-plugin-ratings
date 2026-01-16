@@ -386,6 +386,183 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
+        /// <summary>
+        /// Updates a media request (for user editing their own request).
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="title">New title.</param>
+        /// <param name="type">New type.</param>
+        /// <param name="notes">New notes.</param>
+        /// <param name="customFields">New custom fields JSON.</param>
+        /// <param name="imdbCode">New IMDB code.</param>
+        /// <param name="imdbLink">New IMDB link.</param>
+        /// <returns>The updated request or null if not found.</returns>
+        public async Task<MediaRequest?> UpdateMediaRequestAsync(
+            Guid requestId,
+            string? title = null,
+            string? type = null,
+            string? notes = null,
+            string? customFields = null,
+            string? imdbCode = null,
+            string? imdbLink = null)
+        {
+            lock (_lock)
+            {
+                if (_mediaRequests.ContainsKey(requestId))
+                {
+                    var request = _mediaRequests[requestId];
+
+                    if (title != null)
+                    {
+                        request.Title = title;
+                    }
+
+                    if (type != null)
+                    {
+                        request.Type = type;
+                    }
+
+                    if (notes != null)
+                    {
+                        request.Notes = notes;
+                    }
+
+                    if (customFields != null)
+                    {
+                        request.CustomFields = customFields;
+                    }
+
+                    if (imdbCode != null)
+                    {
+                        request.ImdbCode = imdbCode;
+                    }
+
+                    if (imdbLink != null)
+                    {
+                        request.ImdbLink = imdbLink;
+                    }
+
+                    _ = SaveMediaRequestsAsync();
+                    return request;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Snoozes a media request until a specified date.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="snoozedUntil">The date until which to snooze.</param>
+        /// <returns>The updated request or null if not found.</returns>
+        public async Task<MediaRequest?> SnoozeMediaRequestAsync(Guid requestId, DateTime snoozedUntil)
+        {
+            lock (_lock)
+            {
+                if (_mediaRequests.ContainsKey(requestId))
+                {
+                    var request = _mediaRequests[requestId];
+                    request.SnoozedUntil = snoozedUntil;
+                    request.Status = "snoozed";
+                    _ = SaveMediaRequestsAsync();
+                    return request;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Unsnoozes a media request.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <returns>The updated request or null if not found.</returns>
+        public async Task<MediaRequest?> UnsnoozeMediaRequestAsync(Guid requestId)
+        {
+            lock (_lock)
+            {
+                if (_mediaRequests.ContainsKey(requestId))
+                {
+                    var request = _mediaRequests[requestId];
+                    request.SnoozedUntil = null;
+                    request.Status = "pending";
+                    _ = SaveMediaRequestsAsync();
+                    return request;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the count of requests made by a user in the current month.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Number of requests made this month.</returns>
+        public int GetUserRequestCountThisMonth(Guid userId)
+        {
+            lock (_lock)
+            {
+                var now = DateTime.UtcNow;
+                var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+                return _mediaRequests.Values
+                    .Count(r => r.UserId == userId && r.CreatedAt >= startOfMonth);
+            }
+        }
+
+        /// <summary>
+        /// Cleans up rejected requests older than the specified number of days.
+        /// </summary>
+        /// <param name="daysOld">Number of days after which to delete rejected requests.</param>
+        /// <returns>Number of deleted requests.</returns>
+        public async Task<int> CleanupOldRejectedRequestsAsync(int daysOld)
+        {
+            if (daysOld <= 0)
+            {
+                return 0;
+            }
+
+            lock (_lock)
+            {
+                var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+                var toDelete = _mediaRequests.Values
+                    .Where(r => r.Status == "rejected" && r.CompletedAt.HasValue && r.CompletedAt.Value < cutoffDate)
+                    .Select(r => r.Id)
+                    .ToList();
+
+                foreach (var id in toDelete)
+                {
+                    _mediaRequests.Remove(id);
+                }
+
+                if (toDelete.Count > 0)
+                {
+                    _ = SaveMediaRequestsAsync();
+                    _logger.LogInformation("Cleaned up {Count} old rejected requests", toDelete.Count);
+                }
+
+                return toDelete.Count;
+            }
+        }
+
+        /// <summary>
+        /// Gets requests by user ID.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of requests by the user.</returns>
+        public List<MediaRequest> GetUserRequests(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _mediaRequests.Values
+                    .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList();
+            }
+        }
+
         // Notification Methods
 
         /// <summary>
