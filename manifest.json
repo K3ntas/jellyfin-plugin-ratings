@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.188.0",
+        "changelog": "Fixed rating removal by clicking same star - added session token auth fallback to DELETE endpoint.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.188.0/jellyfin-plugin-ratings_1.0.188.0.zip",
+        "checksum": "d731dc97e7fbd979ad16286bca6409eb",
+        "timestamp": "2026-01-16T19:55:00Z"
+      },
+      {
         "version": "1.0.187.0",
         "changelog": "Fixed dropdown stacking: moved to body element. Fixed search input white background on focus/autocomplete.",
         "targetAbi": "10.11.0.0",
