@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.179.0",
+        "changelog": "New API endpoint: GET /Ratings/Users/{userId}/Ratings returns all items rated by a specific user. Also added GET /Ratings/MyRatings for current user's ratings.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.179.0/jellyfin-plugin-ratings_1.0.179.0.zip",
+        "checksum": "08b8b5e24a6ff35826d85fe2e7257f3c",
+        "timestamp": "2026-01-16T17:00:00Z"
+      },
+      {
         "version": "1.0.178.0",
         "changelog": "Added IMDB Code and IMDB Link optional fields to request form. Both displayed in user and admin views with IMDB yellow styling.",
         "targetAbi": "10.11.0.0",
