@@ -653,6 +653,7 @@
 
                 #headerSearchInput {
                     background: transparent !important;
+                    background-color: transparent !important;
                     border: none !important;
                     outline: none !important;
                     color: #fff !important;
@@ -660,6 +661,25 @@
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
                     width: 200px !important;
                     padding: 4px 0 !important;
+                    -webkit-appearance: none !important;
+                    -moz-appearance: none !important;
+                    appearance: none !important;
+                }
+
+                #headerSearchInput:focus {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                    outline: none !important;
+                }
+
+                #headerSearchInput:-webkit-autofill,
+                #headerSearchInput:-webkit-autofill:hover,
+                #headerSearchInput:-webkit-autofill:focus,
+                #headerSearchInput:-webkit-autofill:active {
+                    -webkit-box-shadow: 0 0 0 30px rgba(60, 60, 60, 0.9) inset !important;
+                    -webkit-text-fill-color: #fff !important;
+                    background-color: transparent !important;
+                    transition: background-color 5000s ease-in-out 0s !important;
                 }
 
                 #headerSearchInput::placeholder {
@@ -3213,20 +3233,25 @@
                         searchInput.type = 'text';
                         searchInput.placeholder = 'Search...';
                         searchInput.id = 'headerSearchInput';
+                        searchInput.autocomplete = 'off';
+                        searchInput.setAttribute('autocomplete', 'off');
+                        searchInput.setAttribute('autocorrect', 'off');
+                        searchInput.setAttribute('autocapitalize', 'off');
+                        searchInput.setAttribute('spellcheck', 'false');
 
                         // Create search icon
                         const searchIcon = document.createElement('span');
                         searchIcon.id = 'headerSearchIcon';
                         searchIcon.innerHTML = '🔍';
 
-                        // Create dropdown container
+                        // Create dropdown container - append to body to avoid stacking context issues
                         const searchDropdown = document.createElement('div');
                         searchDropdown.id = 'searchDropdown';
+                        document.body.appendChild(searchDropdown);
 
-                        // Append elements
+                        // Append elements to search container
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
-                        searchContainer.appendChild(searchDropdown);
 
                         // Append to header container so it scrolls with header
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
@@ -3301,7 +3326,8 @@
 
                         // Close dropdown when clicking outside
                         document.addEventListener('click', function(e) {
-                            if (!searchContainer.contains(e.target)) {
+                            const dropdown = document.getElementById('searchDropdown');
+                            if (!searchContainer.contains(e.target) && (!dropdown || !dropdown.contains(e.target))) {
                                 self.hideSearchDropdown();
                             }
                         });
