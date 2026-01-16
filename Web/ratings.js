@@ -53,7 +53,17 @@
                 confirmDelete: 'Are you sure you want to delete this request?',
                 mediaLinkPlaceholder: 'Media link (paste URL when done)',
                 unknown: 'Unknown',
-                loading: 'Loading...'
+                loading: 'Loading...',
+                snooze: 'Snooze',
+                unsnooze: 'Unsnooze',
+                snoozed: 'SNOOZED',
+                snoozedUntil: 'Snoozed until',
+                snoozeDate: 'Snooze until date',
+                categoryProcessing: '🔄 Processing',
+                categoryPending: '⏳ Pending',
+                categorySnoozed: '💤 Snoozed',
+                categoryDone: '✅ Done',
+                categoryRejected: '❌ Rejected'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -96,7 +106,17 @@
                 confirmDelete: 'Ar tikrai norite ištrinti šią užklausą?',
                 mediaLinkPlaceholder: 'Medijos nuoroda (įklijuokite URL kai baigta)',
                 unknown: 'Nežinoma',
-                loading: 'Kraunama...'
+                loading: 'Kraunama...',
+                snooze: 'Atidėti',
+                unsnooze: 'Atšaukti atidėjimą',
+                snoozed: 'ATIDĖTA',
+                snoozedUntil: 'Atidėta iki',
+                snoozeDate: 'Atidėti iki datos',
+                categoryProcessing: '🔄 Vykdoma',
+                categoryPending: '⏳ Laukiama',
+                categorySnoozed: '💤 Atidėta',
+                categoryDone: '✅ Atlikta',
+                categoryRejected: '❌ Atmesta'
             }
         },
 
@@ -1069,6 +1089,114 @@
                 .admin-request-status-badge.rejected {
                     background: #f44336 !important;
                     color: #fff !important;
+                }
+
+                .admin-request-status-badge.snoozed {
+                    background: #9c27b0 !important;
+                    color: #fff !important;
+                }
+
+                /* Category Sections */
+                .admin-category-section {
+                    margin-bottom: 24px !important;
+                }
+
+                .admin-category-header {
+                    color: #fff !important;
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    margin: 0 0 12px 0 !important;
+                    padding: 10px 15px !important;
+                    background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%) !important;
+                    border-radius: 6px !important;
+                    border-left: 4px solid #00a4dc !important;
+                }
+
+                .admin-category-section[data-category="processing"] .admin-category-header {
+                    border-left-color: #2196F3 !important;
+                }
+
+                .admin-category-section[data-category="pending"] .admin-category-header {
+                    border-left-color: #ff9800 !important;
+                }
+
+                .admin-category-section[data-category="snoozed"] .admin-category-header {
+                    border-left-color: #9c27b0 !important;
+                }
+
+                .admin-category-section[data-category="done"] .admin-category-header {
+                    border-left-color: #4CAF50 !important;
+                }
+
+                .admin-category-section[data-category="rejected"] .admin-category-header {
+                    border-left-color: #f44336 !important;
+                }
+
+                /* Snooze Controls */
+                .admin-snooze-controls {
+                    display: flex !important;
+                    gap: 8px !important;
+                    align-items: center !important;
+                    margin-top: 8px !important;
+                    padding-top: 8px !important;
+                    border-top: 1px dashed #444 !important;
+                }
+
+                .admin-snooze-date {
+                    padding: 6px 10px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #444 !important;
+                    background: #333 !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                }
+
+                .admin-snooze-date::-webkit-calendar-picker-indicator {
+                    filter: invert(1) !important;
+                    cursor: pointer !important;
+                }
+
+                .admin-snooze-btn, .admin-unsnooze-btn {
+                    padding: 6px 12px !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-snooze-btn {
+                    background: rgba(156, 39, 176, 0.2) !important;
+                    color: #ce93d8 !important;
+                    border: 1px solid #9c27b0 !important;
+                }
+
+                .admin-snooze-btn:hover {
+                    background: rgba(156, 39, 176, 0.4) !important;
+                }
+
+                .admin-unsnooze-btn {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                    color: #ffb74d !important;
+                    border: 1px solid #ff9800 !important;
+                }
+
+                .admin-unsnooze-btn:hover {
+                    background: rgba(255, 152, 0, 0.4) !important;
+                }
+
+                .admin-snooze-info {
+                    color: #ce93d8 !important;
+                    font-size: 11px !important;
+                    margin-top: 4px !important;
+                    font-weight: 500 !important;
+                }
+
+                .snoozed-item {
+                    border-color: #9c27b0 !important;
+                    background: rgba(156, 39, 176, 0.1) !important;
                 }
 
                 .admin-rejection-reason {
@@ -4032,75 +4160,53 @@
                     return;
                 }
 
-                html += '<ul class="admin-request-list">';
+                // Group requests by status in order: processing > pending > snoozed > done > rejected
+                const statusOrder = ['processing', 'pending', 'snoozed', 'done', 'rejected'];
+                const categoryLabels = {
+                    processing: self.t('categoryProcessing'),
+                    pending: self.t('categoryPending'),
+                    snoozed: self.t('categorySnoozed'),
+                    done: self.t('categoryDone'),
+                    rejected: self.t('categoryRejected')
+                };
+
+                // Categorize requests
+                const categorized = {
+                    processing: [],
+                    pending: [],
+                    snoozed: [],
+                    done: [],
+                    rejected: []
+                };
+
                 requests.forEach(request => {
-                    const details = [];
-                    if (request.Type) details.push(request.Type);
-                    if (request.Notes) details.push(request.Notes);
-                    const detailsText = details.join(' • ');
-
-                    let customFieldsHtml = '';
-                    if (request.CustomFields) {
-                        try {
-                            const customFields = JSON.parse(request.CustomFields);
-                            for (const [key, value] of Object.entries(customFields)) {
-                                customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
-                            }
-                        } catch (e) {}
+                    // Check if request is snoozed (has SnoozedUntil date in the future)
+                    const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
+                    if (isSnoozed) {
+                        categorized.snoozed.push(request);
+                    } else if (categorized[request.Status]) {
+                        categorized[request.Status].push(request);
+                    } else {
+                        categorized.pending.push(request); // Fallback
                     }
-
-                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
-                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
-                    const hasLink = request.MediaLink && request.Status === 'done';
-                    const isRejected = request.Status === 'rejected';
-                    const statusText = self.t(request.Status);
-
-                    const rejectionDisplay = isRejected && request.RejectionReason
-                        ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
-                        : '';
-
-                    let imdbHtml = '';
-                    if (request.ImdbCode) {
-                        imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
-                    }
-                    if (request.ImdbLink) {
-                        imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
-                    }
-
-                    html += `
-                        <li class="admin-request-item" data-request-id="${request.Id}">
-                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
-                            <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
-                            <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
-                            ${imdbHtml}
-                            ${customFieldsHtml}
-                            <div class="admin-request-time">
-                                <span>📅 ${createdAt}</span>
-                                ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
-                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
-                            </div>
-                            ${rejectionDisplay}
-                            <span class="admin-request-status-badge ${request.Status}">${statusText}</span>
-                            <div class="admin-request-actions">
-                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
-                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
-                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
-                                <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
-                                <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
-                            </div>
-                            <select class="admin-status-select" data-request-id="${request.Id}">
-                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
-                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
-                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
-                                <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
-                            </select>
-                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
-                            <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
-                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
-                        </li>
-                    `;
                 });
-                html += '</ul>';
+
+                // Build HTML for each category
+                statusOrder.forEach(status => {
+                    const categoryRequests = categorized[status];
+                    if (categoryRequests.length === 0) return;
+
+                    html += `<div class="admin-category-section" data-category="${status}">`;
+                    html += `<h3 class="admin-category-header">${categoryLabels[status]} (${categoryRequests.length})</h3>`;
+                    html += '<ul class="admin-request-list">';
+
+                    categoryRequests.forEach(request => {
+                        html += self.renderAdminRequestItem(request, status === 'snoozed');
+                    });
+
+                    html += '</ul></div>';
+                });
+
                 tabContent.innerHTML = html;
 
                 // Attach language toggle handler
@@ -4137,6 +4243,33 @@
                         const rejectionInput = tabContent.querySelector(`.admin-rejection-input[data-request-id="${requestId}"]`);
                         const rejectionReason = rejectionInput ? rejectionInput.value.trim() : '';
                         self.updateRequestStatusInTab(requestId, newStatus, mediaLink, rejectionReason, config);
+                    });
+                });
+
+                // Attach snooze handlers
+                const snoozeBtns = tabContent.querySelectorAll('.admin-snooze-btn');
+                snoozeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const dateInput = tabContent.querySelector(`.admin-snooze-date[data-request-id="${requestId}"]`);
+                        if (dateInput && dateInput.value) {
+                            self.snoozeRequest(requestId, dateInput.value, config);
+                        } else {
+                            if (window.require) {
+                                require(['toast'], function(toast) {
+                                    toast('Please select a snooze date');
+                                });
+                            }
+                        }
+                    });
+                });
+
+                // Attach unsnooze handlers
+                const unsnoozeBtns = tabContent.querySelectorAll('.admin-unsnooze-btn');
+                unsnoozeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        self.unsnoozeRequest(requestId, config);
                     });
                 });
 
@@ -4231,6 +4364,186 @@
             })
             .catch(err => {
                 console.error('Error deleting request:', err);
+            });
+        },
+
+        /**
+         * Render a single admin request item
+         */
+        renderAdminRequestItem: function (request, isSnoozed) {
+            const self = this;
+            const details = [];
+            if (request.Type) details.push(request.Type);
+            if (request.Notes) details.push(request.Notes);
+            const detailsText = details.join(' • ');
+
+            let customFieldsHtml = '';
+            if (request.CustomFields) {
+                try {
+                    const customFields = JSON.parse(request.CustomFields);
+                    for (const [key, value] of Object.entries(customFields)) {
+                        customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
+                    }
+                } catch (e) {}
+            }
+
+            const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
+            const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
+            const hasLink = request.MediaLink && request.Status === 'done';
+            const isRejected = request.Status === 'rejected';
+            const statusText = isSnoozed ? self.t('snoozed') : self.t(request.Status);
+
+            const rejectionDisplay = isRejected && request.RejectionReason
+                ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
+                : '';
+
+            let imdbHtml = '';
+            if (request.ImdbCode) {
+                imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+            }
+            if (request.ImdbLink) {
+                imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+            }
+
+            // Snooze info display
+            let snoozeInfoHtml = '';
+            if (isSnoozed && request.SnoozedUntil) {
+                const snoozedUntilDate = self.formatDateTime(request.SnoozedUntil);
+                snoozeInfoHtml = `<div class="admin-snooze-info">💤 ${self.t('snoozedUntil')}: ${snoozedUntilDate}</div>`;
+            }
+
+            // Snooze controls - show date picker and snooze button for non-snoozed, unsnooze for snoozed
+            let snoozeControlsHtml = '';
+            if (isSnoozed) {
+                snoozeControlsHtml = `
+                    <div class="admin-snooze-controls">
+                        <button class="admin-unsnooze-btn" data-request-id="${request.Id}">⏰ ${self.t('unsnooze')}</button>
+                    </div>
+                `;
+            } else if (request.Status !== 'done' && request.Status !== 'rejected') {
+                // Only show snooze for pending/processing requests
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const minDate = tomorrow.toISOString().split('T')[0];
+                snoozeControlsHtml = `
+                    <div class="admin-snooze-controls">
+                        <input type="date" class="admin-snooze-date" data-request-id="${request.Id}" min="${minDate}" title="${self.t('snoozeDate')}">
+                        <button class="admin-snooze-btn" data-request-id="${request.Id}">💤 ${self.t('snooze')}</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <li class="admin-request-item ${isSnoozed ? 'snoozed-item' : ''}" data-request-id="${request.Id}">
+                    <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
+                    <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
+                    <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
+                    ${imdbHtml}
+                    ${customFieldsHtml}
+                    <div class="admin-request-time">
+                        <span>📅 ${createdAt}</span>
+                        ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
+                        ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                    </div>
+                    ${snoozeInfoHtml}
+                    ${rejectionDisplay}
+                    <span class="admin-request-status-badge ${isSnoozed ? 'snoozed' : request.Status}">${statusText}</span>
+                    <div class="admin-request-actions">
+                        <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
+                        <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
+                        <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
+                        <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
+                        <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
+                    </div>
+                    ${snoozeControlsHtml}
+                    <select class="admin-status-select" data-request-id="${request.Id}">
+                        <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
+                        <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
+                        <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
+                        <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
+                    </select>
+                    <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                    <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
+                    <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
+                </li>
+            `;
+        },
+
+        /**
+         * Snooze a request until a specified date
+         */
+        snoozeRequest: function (requestId, snoozedUntil, config) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}/Snooze?snoozedUntil=${encodeURIComponent(snoozedUntil)}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to snooze');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('statusUpdated') || 'Request snoozed');
+                    });
+                }
+                self.renderAdminInterfaceInTab(config);
+            })
+            .catch(err => {
+                console.error('Error snoozing request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error snoozing request');
+                    });
+                }
+            });
+        },
+
+        /**
+         * Unsnooze a request
+         */
+        unsnoozeRequest: function (requestId, config) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}/Unsnooze`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to unsnooze');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('statusUpdated') || 'Request unsnoozed');
+                    });
+                }
+                self.renderAdminInterfaceInTab(config);
+            })
+            .catch(err => {
+                console.error('Error unsnoozing request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error unsnoozing request');
+                    });
+                }
             });
         },
 
@@ -4874,81 +5187,53 @@
                     return;
                 }
 
-                html += '<ul class="admin-request-list">';
+                // Group requests by status in order: processing > pending > snoozed > done > rejected
+                const statusOrder = ['processing', 'pending', 'snoozed', 'done', 'rejected'];
+                const categoryLabels = {
+                    processing: self.t('categoryProcessing'),
+                    pending: self.t('categoryPending'),
+                    snoozed: self.t('categorySnoozed'),
+                    done: self.t('categoryDone'),
+                    rejected: self.t('categoryRejected')
+                };
+
+                // Categorize requests
+                const categorized = {
+                    processing: [],
+                    pending: [],
+                    snoozed: [],
+                    done: [],
+                    rejected: []
+                };
+
                 requests.forEach(request => {
-                    const details = [];
-                    if (request.Type) details.push(request.Type);
-                    if (request.Notes) details.push(request.Notes);
-                    const detailsText = details.join(' • ');
-
-                    // Parse custom fields for display
-                    let customFieldsHtml = '';
-                    if (request.CustomFields) {
-                        try {
-                            const customFields = JSON.parse(request.CustomFields);
-                            for (const [key, value] of Object.entries(customFields)) {
-                                customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
-                            }
-                        } catch (e) {
-                            // Ignore parse errors
-                        }
+                    // Check if request is snoozed (has SnoozedUntil date in the future)
+                    const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
+                    if (isSnoozed) {
+                        categorized.snoozed.push(request);
+                    } else if (categorized[request.Status]) {
+                        categorized[request.Status].push(request);
+                    } else {
+                        categorized.pending.push(request); // Fallback
                     }
-
-                    // Format timestamps
-                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
-                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
-                    const hasLink = request.MediaLink && request.Status === 'done';
-                    const isRejected = request.Status === 'rejected';
-                    const statusText = self.t(request.Status);
-
-                    // Rejection reason display
-                    const rejectionDisplay = isRejected && request.RejectionReason
-                        ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
-                        : '';
-
-                    // IMDB info for admin
-                    let imdbHtml = '';
-                    if (request.ImdbCode) {
-                        imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
-                    }
-                    if (request.ImdbLink) {
-                        imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
-                    }
-
-                    html += `
-                        <li class="admin-request-item" data-request-id="${request.Id}">
-                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
-                            <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
-                            <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
-                            ${imdbHtml}
-                            ${customFieldsHtml}
-                            <div class="admin-request-time">
-                                <span>📅 ${createdAt}</span>
-                                ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
-                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
-                            </div>
-                            ${rejectionDisplay}
-                            <span class="admin-request-status-badge ${request.Status}">${statusText}</span>
-                            <div class="admin-request-actions">
-                                <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
-                                <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
-                                <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
-                                <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
-                                <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
-                            </div>
-                            <select class="admin-status-select" data-request-id="${request.Id}">
-                                <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
-                                <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
-                                <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
-                                <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
-                            </select>
-                            <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
-                            <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
-                            <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
-                        </li>
-                    `;
                 });
-                html += '</ul>';
+
+                // Build HTML for each category
+                statusOrder.forEach(status => {
+                    const categoryRequests = categorized[status];
+                    if (categoryRequests.length === 0) return;
+
+                    html += `<div class="admin-category-section" data-category="${status}">`;
+                    html += `<h3 class="admin-category-header">${categoryLabels[status]} (${categoryRequests.length})</h3>`;
+                    html += '<ul class="admin-request-list">';
+
+                    categoryRequests.forEach(request => {
+                        html += self.renderAdminRequestItem(request, status === 'snoozed');
+                    });
+
+                    html += '</ul></div>';
+                });
+
                 modalBody.innerHTML = html;
 
                 // Attach language toggle handler (only if it exists)
@@ -4992,6 +5277,33 @@
                     });
                 });
 
+                // Attach snooze handlers
+                const snoozeBtns = modalBody.querySelectorAll('.admin-snooze-btn');
+                snoozeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        const dateInput = modalBody.querySelector(`.admin-snooze-date[data-request-id="${requestId}"]`);
+                        if (dateInput && dateInput.value) {
+                            self.snoozeRequestModal(requestId, dateInput.value);
+                        } else {
+                            if (window.require) {
+                                require(['toast'], function(toast) {
+                                    toast('Please select a snooze date');
+                                });
+                            }
+                        }
+                    });
+                });
+
+                // Attach unsnooze handlers
+                const unsnoozeBtns = modalBody.querySelectorAll('.admin-unsnooze-btn');
+                unsnoozeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const requestId = e.target.getAttribute('data-request-id');
+                        self.unsnoozeRequestModal(requestId);
+                    });
+                });
+
                 // Attach delete handlers
                 const deleteBtns = modalBody.querySelectorAll('.admin-delete-btn');
                 deleteBtns.forEach(btn => {
@@ -5005,6 +5317,84 @@
             }).catch(err => {
                 console.error('Error loading requests:', err);
                 modalBody.innerHTML = '<div class="admin-request-empty">' + self.t('errorLoading') + '</div>';
+            });
+        },
+
+        /**
+         * Snooze a request (modal version)
+         */
+        snoozeRequestModal: function (requestId, snoozedUntil) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}/Snooze?snoozedUntil=${encodeURIComponent(snoozedUntil)}`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to snooze');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('statusUpdated') || 'Request snoozed');
+                    });
+                }
+                self.loadAdminInterface();
+            })
+            .catch(err => {
+                console.error('Error snoozing request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error snoozing request');
+                    });
+                }
+            });
+        },
+
+        /**
+         * Unsnooze a request (modal version)
+         */
+        unsnoozeRequestModal: function (requestId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}/Unsnooze`;
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to unsnooze');
+                return response.json();
+            })
+            .then(() => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast(self.t('statusUpdated') || 'Request unsnoozed');
+                    });
+                }
+                self.loadAdminInterface();
+            })
+            .catch(err => {
+                console.error('Error unsnoozing request:', err);
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error unsnoozing request');
+                    });
+                }
             });
         },
 
