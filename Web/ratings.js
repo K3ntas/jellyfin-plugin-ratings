@@ -63,7 +63,8 @@
                 categoryPending: '⏳ Pending',
                 categorySnoozed: '💤 Snoozed',
                 categoryDone: '✅ Done',
-                categoryRejected: '❌ Rejected'
+                categoryRejected: '❌ Rejected',
+                createRequest: 'Create Request'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -116,7 +117,8 @@
                 categoryPending: '⏳ Laukiama',
                 categorySnoozed: '💤 Atidėta',
                 categoryDone: '✅ Atlikta',
-                categoryRejected: '❌ Atmesta'
+                categoryRejected: '❌ Atmesta',
+                createRequest: 'Sukurti Užklausą'
             }
         },
 
@@ -680,6 +682,126 @@
                     #headerSearchIcon {
                         font-size: 18px !important;
                         margin-right: 8px !important;
+                    }
+                }
+
+                /* Search Dropdown Results */
+                #searchDropdown {
+                    position: absolute !important;
+                    top: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    min-width: 350px !important;
+                    max-width: 450px !important;
+                    max-height: 70vh !important;
+                    overflow-y: auto !important;
+                    background: rgba(30, 30, 30, 0.98) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    border-top: none !important;
+                    border-radius: 0 0 12px 12px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+                    z-index: 999999 !important;
+                    display: none;
+                    margin-top: 4px !important;
+                }
+
+                #searchDropdown.visible {
+                    display: block !important;
+                }
+
+                #searchDropdown .dropdown-loading {
+                    padding: 20px !important;
+                    text-align: center !important;
+                    color: #999 !important;
+                    font-size: 13px !important;
+                }
+
+                #searchDropdown .dropdown-empty {
+                    padding: 20px !important;
+                    text-align: center !important;
+                    color: #888 !important;
+                    font-size: 13px !important;
+                }
+
+                #searchDropdown .dropdown-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 10px 12px !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    text-decoration: none !important;
+                }
+
+                #searchDropdown .dropdown-item:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                }
+
+                #searchDropdown .dropdown-item:last-child {
+                    border-bottom: none !important;
+                }
+
+                #searchDropdown .dropdown-item-image {
+                    width: 45px !important;
+                    height: 65px !important;
+                    object-fit: cover !important;
+                    border-radius: 4px !important;
+                    margin-right: 12px !important;
+                    background: #333 !important;
+                    flex-shrink: 0 !important;
+                }
+
+                #searchDropdown .dropdown-item-info {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    overflow: hidden !important;
+                }
+
+                #searchDropdown .dropdown-item-title {
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-weight: 500 !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    margin-bottom: 4px !important;
+                }
+
+                #searchDropdown .dropdown-item-meta {
+                    color: #888 !important;
+                    font-size: 11px !important;
+                    display: flex !important;
+                    gap: 8px !important;
+                }
+
+                #searchDropdown .dropdown-item-type {
+                    background: rgba(0, 164, 220, 0.3) !important;
+                    color: #00a4dc !important;
+                    padding: 2px 6px !important;
+                    border-radius: 4px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                }
+
+                #searchDropdown .dropdown-item-year {
+                    color: #666 !important;
+                }
+
+                @media screen and (max-width: 925px) {
+                    #searchDropdown {
+                        min-width: 280px !important;
+                        max-width: 320px !important;
+                        left: 0 !important;
+                        right: auto !important;
+                    }
+
+                    #searchDropdown .dropdown-item-image {
+                        width: 40px !important;
+                        height: 58px !important;
+                    }
+
+                    #searchDropdown .dropdown-item-title {
+                        font-size: 13px !important;
                     }
                 }
 
@@ -3102,9 +3224,14 @@
                         searchIcon.id = 'headerSearchIcon';
                         searchIcon.innerHTML = '🔍';
 
+                        // Create dropdown container
+                        const searchDropdown = document.createElement('div');
+                        searchDropdown.id = 'searchDropdown';
+
                         // Append elements
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
+                        searchContainer.appendChild(searchDropdown);
 
                         // Append to header container so it scrolls with header
                         const headerContainer = document.querySelector('.headerTabs, .skinHeader');
@@ -3115,7 +3242,7 @@
                             document.body.appendChild(searchContainer);
                         }
 
-                        // Real-time search filtering
+                        // Real-time search with dropdown
                         let searchTimeout;
                         searchInput.addEventListener('input', function() {
                             // Update icon based on input
@@ -3128,38 +3255,39 @@
                             }
 
                             clearTimeout(searchTimeout);
-                            searchTimeout = setTimeout(() => {
-                                const query = searchInput.value.trim();
-                                const currentUrl = window.location.href;
-                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
+                            const query = searchInput.value.trim();
 
-                                if (isHomePage && query) {
-                                    // Use full library search on homepage
-                                    self.searchFullLibrary(query);
-                                } else if (isHomePage && !query) {
-                                    // Clear full library search and restore homepage
-                                    self.clearFullLibrarySearch();
-                                } else {
-                                    // Use page filtering on other pages
-                                    self.filterCurrentPageContent(query);
-                                }
+                            if (!query) {
+                                // Hide dropdown when empty
+                                self.hideSearchDropdown();
+                                return;
+                            }
+
+                            // Show loading state
+                            searchDropdown.innerHTML = '<div class="dropdown-loading">Searching...</div>';
+                            searchDropdown.classList.add('visible');
+
+                            searchTimeout = setTimeout(() => {
+                                // Search entire library and show in dropdown
+                                self.searchLibraryDropdown(query);
                             }, 300); // Debounce for performance
                         });
 
-                        // Handle enter key - also filter/search
+                        // Handle enter key - select first result
                         searchInput.addEventListener('keypress', function(e) {
                             if (e.key === 'Enter') {
-                                const query = searchInput.value.trim();
-                                const currentUrl = window.location.href;
-                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
-
-                                if (isHomePage && query) {
-                                    self.searchFullLibrary(query);
-                                } else if (isHomePage && !query) {
-                                    self.clearFullLibrarySearch();
-                                } else {
-                                    self.filterCurrentPageContent(query);
+                                const firstItem = searchDropdown.querySelector('.dropdown-item');
+                                if (firstItem) {
+                                    firstItem.click();
                                 }
+                            }
+                        });
+
+                        // Handle escape key - close dropdown
+                        searchInput.addEventListener('keydown', function(e) {
+                            if (e.key === 'Escape') {
+                                self.hideSearchDropdown();
+                                searchInput.blur();
                             }
                         });
 
@@ -3169,17 +3297,16 @@
                                 searchInput.value = '';
                                 searchIcon.innerHTML = '🔍';
                                 searchIcon.style.fontSize = '18px';
-
-                                const currentUrl = window.location.href;
-                                const isHomePage = currentUrl.includes('/home.html') || currentUrl.endsWith('/web/') || currentUrl.endsWith('/web/index.html') || currentUrl.includes('#/home');
-
-                                if (isHomePage) {
-                                    self.clearFullLibrarySearch();
-                                } else {
-                                    self.filterCurrentPageContent('');
-                                }
+                                self.hideSearchDropdown();
                             } else {
                                 searchInput.focus();
+                            }
+                        });
+
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', function(e) {
+                            if (!searchContainer.contains(e.target)) {
+                                self.hideSearchDropdown();
                             }
                         });
 
@@ -3192,6 +3319,7 @@
 
                                 if (isVideoPlaying || isLoginPage) {
                                     searchContainer.classList.add('hidden');
+                                    self.hideSearchDropdown();
                                 } else {
                                     searchContainer.classList.remove('hidden');
                                 }
@@ -3757,6 +3885,106 @@
             homeSections.forEach(section => {
                 section.style.display = '';
             });
+        },
+
+        /**
+         * Hide search dropdown
+         */
+        hideSearchDropdown: function () {
+            const dropdown = document.getElementById('searchDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+                dropdown.innerHTML = '';
+            }
+        },
+
+        /**
+         * Search library and show results in dropdown
+         */
+        searchLibraryDropdown: async function (query) {
+            const self = this;
+            const dropdown = document.getElementById('searchDropdown');
+
+            try {
+                if (!query || !window.ApiClient || !dropdown) {
+                    return;
+                }
+
+                const userId = ApiClient.getCurrentUserId();
+                const baseUrl = ApiClient.serverAddress();
+
+                // Use Jellyfin's search hints API - search entire library
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series&Limit=20`;
+
+                const response = await fetch(searchUrl, {
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
+                    }
+                });
+
+                if (!response.ok) {
+                    dropdown.innerHTML = '<div class="dropdown-empty">Search failed</div>';
+                    return;
+                }
+
+                const data = await response.json();
+                const searchItems = data.SearchHints || [];
+
+                if (searchItems.length === 0) {
+                    dropdown.innerHTML = '<div class="dropdown-empty">No results found</div>';
+                    dropdown.classList.add('visible');
+                    return;
+                }
+
+                // Build dropdown items
+                let html = '';
+                searchItems.forEach(item => {
+                    const itemId = item.Id;
+                    const itemName = item.Name || 'Unknown';
+                    const itemType = item.Type || '';
+                    const itemYear = item.ProductionYear || '';
+
+                    // Build image URL
+                    const imageSrc = `${baseUrl}/Items/${itemId}/Images/Primary?quality=90&maxWidth=100`;
+
+                    html += `
+                        <a href="#!/details?id=${itemId}" class="dropdown-item" data-item-id="${itemId}">
+                            <img src="${imageSrc}" class="dropdown-item-image" alt="" onerror="this.style.display='none'"/>
+                            <div class="dropdown-item-info">
+                                <div class="dropdown-item-title">${self.escapeHtml(itemName)}</div>
+                                <div class="dropdown-item-meta">
+                                    <span class="dropdown-item-type">${itemType}</span>
+                                    ${itemYear ? `<span class="dropdown-item-year">${itemYear}</span>` : ''}
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                dropdown.innerHTML = html;
+                dropdown.classList.add('visible');
+
+                // Add click handlers to close dropdown after selection
+                dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        // Clear search and close dropdown
+                        const searchInput = document.getElementById('headerSearchInput');
+                        const searchIcon = document.getElementById('headerSearchIcon');
+                        if (searchInput) {
+                            searchInput.value = '';
+                        }
+                        if (searchIcon) {
+                            searchIcon.innerHTML = '🔍';
+                            searchIcon.style.fontSize = '18px';
+                        }
+                        self.hideSearchDropdown();
+                    });
+                });
+
+            } catch (error) {
+                console.error('RatingsPlugin: Dropdown search error:', error);
+                dropdown.innerHTML = '<div class="dropdown-empty">Search error</div>';
+            }
         },
 
         /**
