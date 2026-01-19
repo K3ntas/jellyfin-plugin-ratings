@@ -32,6 +32,10 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 ![New media notification popup](images/notification-popup.png)
 *Real-time notifications when new movies or episodes are added to your library*
 
+### Latest Media Button
+![Latest Media dropdown](images/latest-media-dropdown.png)
+*Quick access to your 50 most recently added movies and series with time-ago indicators*
+
 ---
 
 > **Note:** All features are optional and can be enabled/disabled through the plugin settings in the Jellyfin Dashboard.
@@ -98,6 +102,16 @@ The plugin includes a complete media request system that allows users to request
 - **Toggle control** - users can enable/disable notifications via header toggle
 - **Works during playback** - notifications appear even in fullscreen mode
 - **Fire TV/Android TV support** - native app notifications via DisplayMessage
+
+### Latest Media Button
+- **Replaces Sync Play** - button in header shows your 50 most recently added media
+- **Compact dropdown** - scrollable list with thumbnail, title, year, and type badge
+- **Type badges** - Movie (blue), Series (green), Anime (purple), Other (gray)
+- **Time-ago indicator** - shows when media was added (e.g., "5 min ago", "2 d ago")
+- **Clean titles** - automatically removes IMDB IDs from display
+- **Click to navigate** - go directly to media detail page
+- **Responsive design** - inherits Jellyfin's native header button behavior
+- **Configurable** - can be disabled in plugin settings
 
 ### Media Request System
 - **Request Button** - Animated "Request Media" button in the header
