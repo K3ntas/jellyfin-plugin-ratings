@@ -10,7 +10,7 @@
     "versions": [
       {
         "version": "1.0.205.0",
-        "changelog": "TEST: 6 different badge approaches - tell me which numbers you see (1=red, 2=green, 3=blue, 4=orange, 5=purple, 6=cyan)",
+        "changelog": "Improved leaving badge rendering on media cards.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.205.0/jellyfin-plugin-ratings_1.0.205.0.zip",
         "checksum": "2848acfc0437e2d582a3ce8c33337944",
