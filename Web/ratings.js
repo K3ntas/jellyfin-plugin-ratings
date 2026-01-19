@@ -4594,33 +4594,43 @@
          */
         initMediaManagementButtonWithRetry: function () {
             const self = this;
+            console.log('RatingsPlugin: Media Management - initMediaManagementButtonWithRetry called');
             try {
                 // Check if already exists
                 if (document.getElementById('mediaManagementBtn')) {
+                    console.log('RatingsPlugin: Media Management - button already exists');
                     return;
                 }
 
                 // Check config and admin status
                 const checkConfigAndCreate = () => {
+                    console.log('RatingsPlugin: Media Management - checking config...');
                     if (!window.ApiClient) {
+                        console.log('RatingsPlugin: Media Management - no ApiClient, retrying...');
                         setTimeout(checkConfigAndCreate, 1000);
                         return;
                     }
                     const baseUrl = ApiClient.serverAddress();
+                    console.log('RatingsPlugin: Media Management - fetching config from', baseUrl);
                     fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
                         .then(response => response.json())
                         .then(config => {
+                            console.log('RatingsPlugin: Media Management - config:', config);
                             if (config.EnableMediaManagement === false) {
+                                console.log('RatingsPlugin: Media Management - disabled in config');
                                 return; // Don't create button
                             }
                             // Check if admin
+                            console.log('RatingsPlugin: Media Management - checking admin status...');
                             self.isAdmin().then(isAdmin => {
+                                console.log('RatingsPlugin: Media Management - isAdmin:', isAdmin);
                                 if (isAdmin) {
                                     createMediaManagementButton();
                                 }
                             });
                         })
-                        .catch(() => {
+                        .catch((err) => {
+                            console.log('RatingsPlugin: Media Management - config fetch error:', err);
                             // Default to checking admin status
                             self.isAdmin().then(isAdmin => {
                                 if (isAdmin) {
@@ -4631,9 +4641,11 @@
                 };
 
                 const createMediaManagementButton = () => {
+                    console.log('RatingsPlugin: Media Management - createMediaManagementButton called');
                     try {
                         // Check if already exists
                         if (document.getElementById('mediaManagementBtn')) {
+                            console.log('RatingsPlugin: Media Management - button already exists in create');
                             return;
                         }
 
@@ -4642,8 +4654,10 @@
 
                         // Find and hide the original search button
                         const searchBtn = document.querySelector('.headerSearchButton');
+                        console.log('RatingsPlugin: Media Management - searchBtn found:', searchBtn);
                         if (searchBtn) {
                             searchBtn.style.display = 'none';
+                            console.log('RatingsPlugin: Media Management - hiding search button');
                         }
 
                         // Create the media management button
