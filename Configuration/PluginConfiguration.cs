@@ -27,6 +27,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowNotificationToggle = true;
             ShowLatestMediaButton = true;
 
+            // Media management settings
+            EnableMediaManagement = true;
+            DefaultDeletionDelayDays = 7;
+
             // Request system settings
             EnableAdminRequests = false;
             AutoDeleteRejectedDays = 0;
@@ -124,6 +128,16 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Replaces the Sync Play button with a dropdown showing 50 most recently added media items.
         /// </summary>
         public bool ShowLatestMediaButton { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Media Management feature is enabled for admins.
+        /// </summary>
+        public bool EnableMediaManagement { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default delay in days for scheduled deletions.
+        /// </summary>
+        public int DefaultDeletionDelayDays { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether admins can create requests like normal users.
