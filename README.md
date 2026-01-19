@@ -278,10 +278,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.194.0 (Current)
-- **Media button now in header** - replaces Jellyfin's original search button (admin only)
-- Responsive design matches other header buttons
-- Folder icon for easy recognition
+### 1.0.195.0 (Current)
+- **Fixed Media button** - now follows exact same pattern as Latest Media button
+- Reliable injection into header
+
+### 1.0.194.0
+- Media button now in header - replaces Jellyfin's original search button (admin only)
 
 ### 1.0.193.0
 - Fixed Media button injection - now properly finds and injects into Jellyfin's mainDrawer sidebar
