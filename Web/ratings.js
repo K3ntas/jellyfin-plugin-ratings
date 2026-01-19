@@ -2836,31 +2836,22 @@
                 }
 
                 /* Leaving Badge on Cards - uses ::before to not conflict with rating ::after */
-                /* Rating badge is top-left, leaving badge is bottom-right */
-                .cardImageContainer.has-leaving,
-                .cardContent.has-leaving,
-                .card-imageContainer.has-leaving {
-                    position: relative !important;
-                    overflow: visible !important;
-                }
+                /* Rating badge is top-left (::after), leaving badge is top-right (::before) */
                 .cardImageContainer.has-leaving::before,
                 .cardContent.has-leaving::before,
                 .card-imageContainer.has-leaving::before {
-                    content: attr(data-leaving) !important;
-                    display: block !important;
-                    position: absolute !important;
-                    bottom: 5px !important;
-                    right: 5px !important;
-                    background: rgba(231, 76, 60, 0.95) !important;
-                    color: #fff !important;
-                    padding: 4px 8px !important;
-                    border-radius: 4px !important;
-                    font-size: 0.75em !important;
-                    z-index: 1000 !important;
-                    pointer-events: none !important;
-                    font-weight: 600 !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
+                    content: attr(data-leaving);
+                    position: absolute;
+                    top: 5px;
+                    right: 5px;
+                    background: rgba(231, 76, 60, 0.95);
+                    color: #fff;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.75em;
+                    z-index: 1000;
+                    pointer-events: none;
+                    font-weight: 600;
                 }
 
                 .detail-leaving-badge {
@@ -3437,6 +3428,9 @@
                         // Fetch rating for this item (with caching)
                         self.addCardRating(imageContainer, itemId);
 
+                        // Also add leaving badge if applicable (using same imageContainer)
+                        self.addLeavingBadgeToCard(imageContainer, itemId);
+
                         // Stop observing this card once we've processed it
                         intersectionObserver.unobserve(card);
                     }
@@ -3633,6 +3627,42 @@
                     imageContainer.setAttribute('data-leaving', text);
                 }
             }
+        },
+
+        /**
+         * Add leaving badge to a card - uses same CSS approach as rating badges
+         * Called from IntersectionObserver to use exact same card detection
+         */
+        addLeavingBadgeToCard: function (imageContainer, itemId) {
+            const self = this;
+
+            // Skip if no cache or no itemId
+            if (!self.scheduledDeletionsCache || !itemId) {
+                return;
+            }
+
+            // Check if this item has scheduled deletion
+            const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
+            if (!deletion) {
+                return;
+            }
+
+            // Skip if already has leaving badge
+            if (imageContainer.classList.contains('has-leaving')) {
+                return;
+            }
+
+            // Calculate days until deletion
+            const now = new Date();
+            const deleteDate = new Date(deletion.DeleteAt);
+            const diffMs = deleteDate - now;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+
+            // Add class and data attribute - CSS ::before will display it
+            imageContainer.classList.add('has-leaving');
+            imageContainer.setAttribute('data-leaving', text);
+            console.log('RatingsPlugin: Added leaving badge via observer:', itemId, text);
         },
 
         /**
@@ -5250,26 +5280,16 @@
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
 
                 if (deletion) {
-                    // Check if badge already exists
-                    let badge = imageContainer.querySelector('.card-leaving-badge');
-                    const badgeText = formatDaysUntil(deletion.DeleteAt);
-
-                    if (!badge) {
-                        // Create badge element
-                        badge = document.createElement('div');
-                        badge.className = 'card-leaving-badge';
-                        badge.style.cssText = 'position:absolute !important;bottom:5px !important;right:5px !important;background:rgba(231,76,60,0.95) !important;color:#fff !important;padding:4px 8px !important;border-radius:4px !important;font-size:0.75em !important;z-index:1000 !important;font-weight:600 !important;pointer-events:none !important;';
-                        imageContainer.style.position = 'relative';
-                        imageContainer.appendChild(badge);
+                    // Add class and data attribute - CSS ::before will display it
+                    if (!imageContainer.classList.contains('has-leaving')) {
+                        imageContainer.classList.add('has-leaving');
+                        imageContainer.setAttribute('data-leaving', formatDaysUntil(deletion.DeleteAt));
+                        badgesAdded++;
                     }
-                    badge.textContent = badgeText;
-                    badgesAdded++;
                 } else {
-                    // Remove badge if exists
-                    const badge = imageContainer.querySelector('.card-leaving-badge');
-                    if (badge) {
-                        badge.remove();
-                    }
+                    // Remove if no longer scheduled
+                    imageContainer.classList.remove('has-leaving');
+                    imageContainer.removeAttribute('data-leaving');
                 }
             });
 
