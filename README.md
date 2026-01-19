@@ -278,7 +278,11 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.191.0 (Current)
+### 1.0.192.0 (Current)
+- **Media button moved to Dashboard sidebar** - appears in Server section when viewing admin Dashboard
+- More intuitive location for admin features
+
+### 1.0.191.0
 - **Admin Media Management**: New "Media" button in header for admins
 - Full library view with stats (title, year, rating, file size)
 - Search, filter by type, and sort by multiple fields
