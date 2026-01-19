@@ -2841,22 +2841,26 @@
                 .cardContent.has-leaving,
                 .card-imageContainer.has-leaving {
                     position: relative !important;
+                    overflow: visible !important;
                 }
                 .cardImageContainer.has-leaving::before,
                 .cardContent.has-leaving::before,
                 .card-imageContainer.has-leaving::before {
-                    content: attr(data-leaving);
-                    position: absolute;
-                    bottom: 5px;
-                    right: 5px;
-                    background: rgba(231, 76, 60, 0.95);
-                    color: #fff;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 0.75em;
-                    z-index: 1000;
-                    pointer-events: none;
-                    font-weight: 600;
+                    content: attr(data-leaving) !important;
+                    display: block !important;
+                    position: absolute !important;
+                    bottom: 5px !important;
+                    right: 5px !important;
+                    background: rgba(231, 76, 60, 0.95) !important;
+                    color: #fff !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    font-size: 0.75em !important;
+                    z-index: 1000 !important;
+                    pointer-events: none !important;
+                    font-weight: 600 !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                 }
 
                 .detail-leaving-badge {
@@ -5246,14 +5250,26 @@
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
 
                 if (deletion) {
-                    // Add class and data attribute (CSS handles the display)
-                    imageContainer.classList.add('has-leaving');
-                    imageContainer.setAttribute('data-leaving', formatDaysUntil(deletion.DeleteAt));
+                    // Check if badge already exists
+                    let badge = imageContainer.querySelector('.card-leaving-badge');
+                    const badgeText = formatDaysUntil(deletion.DeleteAt);
+
+                    if (!badge) {
+                        // Create badge element
+                        badge = document.createElement('div');
+                        badge.className = 'card-leaving-badge';
+                        badge.style.cssText = 'position:absolute !important;bottom:5px !important;right:5px !important;background:rgba(231,76,60,0.95) !important;color:#fff !important;padding:4px 8px !important;border-radius:4px !important;font-size:0.75em !important;z-index:1000 !important;font-weight:600 !important;pointer-events:none !important;';
+                        imageContainer.style.position = 'relative';
+                        imageContainer.appendChild(badge);
+                    }
+                    badge.textContent = badgeText;
                     badgesAdded++;
                 } else {
-                    // Remove if no longer scheduled
-                    imageContainer.classList.remove('has-leaving');
-                    imageContainer.removeAttribute('data-leaving');
+                    // Remove badge if exists
+                    const badge = imageContainer.querySelector('.card-leaving-badge');
+                    if (badge) {
+                        badge.remove();
+                    }
                 }
             });
 
