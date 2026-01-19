@@ -2835,35 +2835,22 @@
                     background: #666;
                 }
 
-                /* Leaving Badge on Cards - uses real DOM element for reliability */
-                .card-leaving-badge {
-                    position: absolute;
-                    top: 5px;
-                    right: 5px;
-                    background: rgba(231, 76, 60, 0.95);
-                    color: #fff;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 0.75em;
-                    z-index: 1000;
-                    pointer-events: none;
-                    font-weight: 600;
+                /* Leaving Badge on Cards - added to .card element */
+                .card {
+                    position: relative !important;
                 }
-
-                /* TEST 6: CSS ::after like rating badge but different position */
-                .cardImageContainer.has-leaving-test::before,
-                .cardContent.has-leaving-test::before,
-                .card-imageContainer.has-leaving-test::before {
-                    content: attr(data-leaving-test);
-                    position: absolute;
-                    bottom: 5px;
-                    left: 5px;
-                    background: cyan;
-                    color: black;
-                    padding: 2px 6px;
-                    border-radius: 3px;
-                    font-size: 12px;
-                    z-index: 9999;
+                .card-leaving-badge {
+                    position: absolute !important;
+                    top: 5px !important;
+                    right: 5px !important;
+                    background: rgba(231, 76, 60, 0.95) !important;
+                    color: #fff !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    font-size: 0.75em !important;
+                    z-index: 9999 !important;
+                    pointer-events: none !important;
+                    font-weight: 600 !important;
                 }
 
                 .detail-leaving-badge {
@@ -3659,8 +3646,12 @@
                 return;
             }
 
+            // Get the card element
+            const card = imageContainer.closest('.card');
+            if (!card) return;
+
             // Skip if already has leaving badge
-            if (imageContainer.querySelector('.test-badge-1')) {
+            if (card.querySelector('.card-leaving-badge')) {
                 return;
             }
 
@@ -3669,57 +3660,15 @@
             const deleteDate = new Date(deletion.DeleteAt);
             const diffMs = deleteDate - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            const text = diffDays <= 0 ? 'Today' : diffDays + 'd';
+            const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
 
-            // Get the card element (parent of imageContainer)
-            const card = imageContainer.closest('.card');
+            // Create badge and add to card (not imageContainer - that has overflow:hidden)
+            const badge = document.createElement('div');
+            badge.className = 'card-leaving-badge';
+            badge.textContent = text;
+            card.appendChild(badge);
 
-            // TEST 1: Append to imageContainer (what we tried before)
-            const badge1 = document.createElement('div');
-            badge1.className = 'test-badge-1';
-            badge1.textContent = '1';
-            badge1.style.cssText = 'position:absolute;top:5px;right:5px;background:red;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
-            imageContainer.appendChild(badge1);
-
-            // TEST 2: Prepend to imageContainer (as first child)
-            const badge2 = document.createElement('div');
-            badge2.className = 'test-badge-2';
-            badge2.textContent = '2';
-            badge2.style.cssText = 'position:absolute;top:25px;right:5px;background:green;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
-            imageContainer.insertBefore(badge2, imageContainer.firstChild);
-
-            // TEST 3: Append to card element
-            if (card) {
-                const badge3 = document.createElement('div');
-                badge3.className = 'test-badge-3';
-                badge3.textContent = '3';
-                badge3.style.cssText = 'position:absolute;top:5px;right:25px;background:blue;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
-                card.style.position = 'relative';
-                card.appendChild(badge3);
-            }
-
-            // TEST 4: Append to card's parent
-            if (card && card.parentElement) {
-                const badge4 = document.createElement('div');
-                badge4.className = 'test-badge-4';
-                badge4.textContent = '4';
-                badge4.style.cssText = 'position:absolute;top:45px;right:5px;background:orange;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
-                card.parentElement.style.position = 'relative';
-                card.parentElement.appendChild(badge4);
-            }
-
-            // TEST 5: Insert before imageContainer
-            const badge5 = document.createElement('div');
-            badge5.className = 'test-badge-5';
-            badge5.textContent = '5';
-            badge5.style.cssText = 'position:absolute;bottom:5px;right:5px;background:purple;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
-            imageContainer.parentElement.insertBefore(badge5, imageContainer);
-
-            // TEST 6: Use same technique as rating (add class + data attr for ::after)
-            imageContainer.classList.add('has-leaving-test');
-            imageContainer.setAttribute('data-leaving-test', '6');
-
-            console.log('RatingsPlugin: Added 6 test badges for:', itemId);
+            console.log('RatingsPlugin: Added leaving badge to card:', itemId, text);
         },
 
         /**
@@ -5329,26 +5278,22 @@
 
                 if (!itemId) return;
 
-                // Find the image container (same as rating badges)
-                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
-                if (!imageContainer) return;
-
                 // Check if this item has scheduled deletion
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
 
                 if (deletion) {
-                    // Create DOM element if not exists
-                    let badge = imageContainer.querySelector('.card-leaving-badge');
+                    // Create DOM element if not exists - add to CARD element (not imageContainer)
+                    let badge = card.querySelector('.card-leaving-badge');
                     if (!badge) {
                         badge = document.createElement('div');
                         badge.className = 'card-leaving-badge';
-                        imageContainer.appendChild(badge);
+                        card.appendChild(badge);
                         badgesAdded++;
                     }
                     badge.textContent = formatDaysUntil(deletion.DeleteAt);
                 } else {
                     // Remove badge if no longer scheduled
-                    const badge = imageContainer.querySelector('.card-leaving-badge');
+                    const badge = card.querySelector('.card-leaving-badge');
                     if (badge) badge.remove();
                 }
             });
