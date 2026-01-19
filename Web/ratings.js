@@ -64,7 +64,15 @@
                 categorySnoozed: '💤 Snoozed',
                 categoryDone: '✅ Done',
                 categoryRejected: '❌ Rejected',
-                createRequest: 'Create Request'
+                createRequest: 'Create Request',
+                latestMedia: 'Latest Media',
+                latestMediaLoading: 'Loading...',
+                latestMediaEmpty: 'No recent media found',
+                latestMediaError: 'Failed to load',
+                typeMovie: 'Movie',
+                typeSeries: 'Series',
+                typeAnime: 'Anime',
+                typeOther: 'Other'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -118,7 +126,15 @@
                 categorySnoozed: '💤 Atidėta',
                 categoryDone: '✅ Atlikta',
                 categoryRejected: '❌ Atmesta',
-                createRequest: 'Sukurti Užklausą'
+                createRequest: 'Sukurti Užklausą',
+                latestMedia: 'Naujausia Medija',
+                latestMediaLoading: 'Kraunama...',
+                latestMediaEmpty: 'Naujų medijų nerasta',
+                latestMediaError: 'Nepavyko įkelti',
+                typeMovie: 'Filmas',
+                typeSeries: 'Serialas',
+                typeAnime: 'Anime',
+                typeOther: 'Kita'
             }
         },
 
@@ -165,6 +181,9 @@
 
             // Initialize notification toggle in header
             this.initNotificationToggle();
+
+            // Initialize latest media button (replaces sync play)
+            this.initLatestMediaButton();
 
             // Initialize responsive scaling
             this.updateResponsiveScaling();
@@ -2184,6 +2203,204 @@
                         font-size: 14px !important;
                     }
                 }
+
+                /* Latest Media Button - Replaces Sync Play Button */
+                #latestMediaBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    font-size: 24px !important;
+                }
+
+                #latestMediaBtn:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                }
+
+                #latestMediaBtn.hidden {
+                    display: none !important;
+                }
+
+                #latestMediaBtn svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
+                }
+
+                /* Latest Media Dropdown */
+                #latestMediaDropdown {
+                    position: fixed !important;
+                    min-width: 320px !important;
+                    max-width: 400px !important;
+                    max-height: 70vh !important;
+                    overflow-y: auto !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+                    z-index: 2147483647 !important;
+                    display: none;
+                }
+
+                #latestMediaDropdown.visible {
+                    display: block !important;
+                }
+
+                #latestMediaDropdown .latest-header {
+                    padding: 12px 14px !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    background: rgba(0, 0, 0, 0.3) !important;
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 1 !important;
+                }
+
+                #latestMediaDropdown .latest-loading {
+                    padding: 20px !important;
+                    text-align: center !important;
+                    color: #888 !important;
+                    font-size: 13px !important;
+                }
+
+                #latestMediaDropdown .latest-empty {
+                    padding: 20px !important;
+                    text-align: center !important;
+                    color: #666 !important;
+                    font-size: 13px !important;
+                }
+
+                #latestMediaDropdown .latest-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 6px 10px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s ease !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+                    text-decoration: none !important;
+                    gap: 10px !important;
+                }
+
+                #latestMediaDropdown .latest-item:hover {
+                    background: rgba(255, 255, 255, 0.08) !important;
+                }
+
+                #latestMediaDropdown .latest-item:last-child {
+                    border-bottom: none !important;
+                }
+
+                #latestMediaDropdown .latest-item-image {
+                    width: 32px !important;
+                    height: 48px !important;
+                    object-fit: cover !important;
+                    border-radius: 3px !important;
+                    background: #2a2a2a !important;
+                    flex-shrink: 0 !important;
+                }
+
+                #latestMediaDropdown .latest-item-info {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    overflow: hidden !important;
+                }
+
+                #latestMediaDropdown .latest-item-title {
+                    color: #e0e0e0 !important;
+                    font-size: 12px !important;
+                    font-weight: 500 !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    line-height: 1.3 !important;
+                }
+
+                #latestMediaDropdown .latest-item-meta {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    margin-top: 2px !important;
+                }
+
+                #latestMediaDropdown .latest-item-year {
+                    color: #666 !important;
+                    font-size: 10px !important;
+                }
+
+                #latestMediaDropdown .latest-item-type {
+                    padding: 1px 5px !important;
+                    border-radius: 3px !important;
+                    font-size: 9px !important;
+                    font-weight: 600 !important;
+                    text-transform: uppercase !important;
+                }
+
+                #latestMediaDropdown .latest-item-type.movie {
+                    background: rgba(33, 150, 243, 0.25) !important;
+                    color: #64b5f6 !important;
+                }
+
+                #latestMediaDropdown .latest-item-type.series {
+                    background: rgba(76, 175, 80, 0.25) !important;
+                    color: #81c784 !important;
+                }
+
+                #latestMediaDropdown .latest-item-type.anime {
+                    background: rgba(156, 39, 176, 0.25) !important;
+                    color: #ba68c8 !important;
+                }
+
+                #latestMediaDropdown .latest-item-type.other {
+                    background: rgba(158, 158, 158, 0.25) !important;
+                    color: #9e9e9e !important;
+                }
+
+                /* Scrollbar styling for latest media dropdown */
+                #latestMediaDropdown::-webkit-scrollbar {
+                    width: 6px !important;
+                }
+
+                #latestMediaDropdown::-webkit-scrollbar-track {
+                    background: transparent !important;
+                }
+
+                #latestMediaDropdown::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 3px !important;
+                }
+
+                #latestMediaDropdown::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3) !important;
+                }
+
+                @media screen and (max-width: 768px) {
+                    #latestMediaDropdown {
+                        min-width: 280px !important;
+                        max-width: calc(100vw - 20px) !important;
+                        right: 10px !important;
+                        left: auto !important;
+                    }
+
+                    #latestMediaDropdown .latest-item {
+                        padding: 5px 8px !important;
+                    }
+
+                    #latestMediaDropdown .latest-item-image {
+                        width: 28px !important;
+                        height: 42px !important;
+                    }
+
+                    #latestMediaDropdown .latest-item-title {
+                        font-size: 11px !important;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -3587,6 +3804,269 @@
             } catch (err) {
                 console.error('Notification toggle initialization failed:', err);
             }
+        },
+
+        /**
+         * Initialize latest media button (replaces Sync Play button)
+         */
+        initLatestMediaButton: function () {
+            const self = this;
+            try {
+                // Check if already exists
+                if (document.getElementById('latestMediaBtn')) {
+                    return;
+                }
+
+                // Check config if latest media button is enabled
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.ShowLatestMediaButton === false) {
+                                return; // Don't create button
+                            }
+                            createLatestMediaButton();
+                        })
+                        .catch(() => {
+                            // Default to showing if config fails
+                            createLatestMediaButton();
+                        });
+                };
+
+                const createLatestMediaButton = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('latestMediaBtn')) {
+                            return;
+                        }
+
+                        // Find and hide the Sync Play button
+                        const syncPlayBtn = document.querySelector('.headerSyncButton');
+                        if (syncPlayBtn) {
+                            syncPlayBtn.style.display = 'none';
+                        }
+
+                        // Create the latest media button
+                        const btn = document.createElement('button');
+                        btn.id = 'latestMediaBtn';
+                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.setAttribute('type', 'button');
+                        btn.setAttribute('title', self.t('latestMedia'));
+                        // Clock/new icon - represents "latest/recent"
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                        </svg>`;
+
+                        // Create dropdown container
+                        const dropdown = document.createElement('div');
+                        dropdown.id = 'latestMediaDropdown';
+                        document.body.appendChild(dropdown);
+
+                        // Position dropdown below button
+                        const positionDropdown = () => {
+                            const rect = btn.getBoundingClientRect();
+                            dropdown.style.top = (rect.bottom + 4) + 'px';
+                            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                            dropdown.style.left = 'auto';
+                        };
+
+                        // Toggle dropdown on click
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (dropdown.classList.contains('visible')) {
+                                dropdown.classList.remove('visible');
+                            } else {
+                                positionDropdown();
+                                dropdown.classList.add('visible');
+                                self.loadLatestMedia(dropdown);
+                            }
+                        });
+
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', (e) => {
+                            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Close dropdown on escape
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Insert button in header - try to find headerRight or similar container
+                        const headerRight = document.querySelector('.headerRight');
+                        if (headerRight) {
+                            // Insert at the beginning of headerRight
+                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        } else {
+                            // Fallback: find skinHeader and append
+                            const skinHeader = document.querySelector('.skinHeader');
+                            if (skinHeader) {
+                                skinHeader.appendChild(btn);
+                            } else {
+                                document.body.appendChild(btn);
+                            }
+                        }
+
+                        // Observe for Sync Play button appearing later (SPA navigation)
+                        const observer = new MutationObserver(() => {
+                            const syncBtn = document.querySelector('.headerSyncButton');
+                            if (syncBtn && syncBtn.style.display !== 'none') {
+                                syncBtn.style.display = 'none';
+                            }
+                        });
+                        observer.observe(document.body, { childList: true, subtree: true });
+
+                        // Hide during video playback and on login page
+                        setInterval(() => {
+                            try {
+                                const videoPlayer = document.querySelector('.videoPlayerContainer');
+                                const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+                                const isLoginPage = self.isOnLoginPage();
+
+                                if (isVideoPlaying || isLoginPage) {
+                                    btn.classList.add('hidden');
+                                    dropdown.classList.remove('visible');
+                                } else {
+                                    btn.classList.remove('hidden');
+                                }
+                            } catch (err) {
+                                // Silently fail
+                            }
+                        }, 1000);
+
+                    } catch (err) {
+                        console.error('Error creating latest media button:', err);
+                    }
+                };
+
+                // Try to create after a delay
+                setTimeout(checkConfigAndCreate, 1700);
+
+                // Also try on page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && !document.getElementById('latestMediaBtn')) {
+                        setTimeout(checkConfigAndCreate, 500);
+                    }
+                });
+
+            } catch (err) {
+                console.error('Latest media button initialization failed:', err);
+            }
+        },
+
+        /**
+         * Load latest media items into dropdown
+         */
+        loadLatestMedia: function (dropdown) {
+            const self = this;
+
+            // Show loading state
+            dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-loading">${self.t('latestMediaLoading')}</div>`;
+
+            if (!window.ApiClient) {
+                dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                return;
+            }
+
+            const userId = ApiClient.getCurrentUserId();
+            const baseUrl = ApiClient.serverAddress();
+
+            // Fetch latest items using Jellyfin's Items endpoint
+            // Get movies, series sorted by DateCreated descending
+            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=50&Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'X-Emby-Authorization': ApiClient._serverInfo?.AccessToken ?
+                        `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : ''
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch');
+                return response.json();
+            })
+            .then(data => {
+                if (!data.Items || data.Items.length === 0) {
+                    dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaEmpty')}</div>`;
+                    return;
+                }
+
+                let html = `<div class="latest-header">${self.t('latestMedia')}</div>`;
+
+                data.Items.forEach(item => {
+                    const itemId = item.Id;
+                    const itemName = item.Name || 'Unknown';
+                    const itemYear = item.ProductionYear || '';
+                    const itemType = item.Type;
+                    const genres = item.Genres || [];
+
+                    // Determine display type
+                    let displayType = 'other';
+                    let typeLabel = self.t('typeOther');
+
+                    if (itemType === 'Movie') {
+                        // Check if it's anime
+                        if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
+                            displayType = 'anime';
+                            typeLabel = self.t('typeAnime');
+                        } else {
+                            displayType = 'movie';
+                            typeLabel = self.t('typeMovie');
+                        }
+                    } else if (itemType === 'Series') {
+                        // Check if it's anime
+                        if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
+                            displayType = 'anime';
+                            typeLabel = self.t('typeAnime');
+                        } else {
+                            displayType = 'series';
+                            typeLabel = self.t('typeSeries');
+                        }
+                    }
+
+                    // Get image URL
+                    const imageSrc = item.ImageTags && item.ImageTags.Primary
+                        ? `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96&tag=${item.ImageTags.Primary}`
+                        : `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96`;
+
+                    html += `
+                        <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
+                            <img src="${imageSrc}" class="latest-item-image" alt="" onerror="this.style.visibility='hidden'"/>
+                            <div class="latest-item-info">
+                                <div class="latest-item-title">${self.escapeHtml(itemName)}</div>
+                                <div class="latest-item-meta">
+                                    <span class="latest-item-type ${displayType}">${typeLabel}</span>
+                                    ${itemYear ? `<span class="latest-item-year">${itemYear}</span>` : ''}
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                dropdown.innerHTML = html;
+
+                // Add click handlers to close dropdown after navigation
+                dropdown.querySelectorAll('.latest-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        dropdown.classList.remove('visible');
+                    });
+                });
+            })
+            .catch(err => {
+                console.error('Failed to load latest media:', err);
+                dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaError')}</div>`;
+            });
         },
 
         /**
