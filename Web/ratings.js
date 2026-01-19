@@ -2850,6 +2850,22 @@
                     font-weight: 600;
                 }
 
+                /* TEST 6: CSS ::after like rating badge but different position */
+                .cardImageContainer.has-leaving-test::before,
+                .cardContent.has-leaving-test::before,
+                .card-imageContainer.has-leaving-test::before {
+                    content: attr(data-leaving-test);
+                    position: absolute;
+                    bottom: 5px;
+                    left: 5px;
+                    background: cyan;
+                    color: black;
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    z-index: 9999;
+                }
+
                 .detail-leaving-badge {
                     display: inline-block !important;
                     background: #e74c3c !important;
@@ -3644,7 +3660,7 @@
             }
 
             // Skip if already has leaving badge
-            if (imageContainer.querySelector('.card-leaving-badge')) {
+            if (imageContainer.querySelector('.test-badge-1')) {
                 return;
             }
 
@@ -3653,14 +3669,57 @@
             const deleteDate = new Date(deletion.DeleteAt);
             const diffMs = deleteDate - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+            const text = diffDays <= 0 ? 'Today' : diffDays + 'd';
 
-            // Create actual DOM element (more reliable than ::before pseudo-element)
-            const badge = document.createElement('div');
-            badge.className = 'card-leaving-badge';
-            badge.textContent = text;
-            imageContainer.appendChild(badge);
-            console.log('RatingsPlugin: Added leaving badge via observer:', itemId, text);
+            // Get the card element (parent of imageContainer)
+            const card = imageContainer.closest('.card');
+
+            // TEST 1: Append to imageContainer (what we tried before)
+            const badge1 = document.createElement('div');
+            badge1.className = 'test-badge-1';
+            badge1.textContent = '1';
+            badge1.style.cssText = 'position:absolute;top:5px;right:5px;background:red;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
+            imageContainer.appendChild(badge1);
+
+            // TEST 2: Prepend to imageContainer (as first child)
+            const badge2 = document.createElement('div');
+            badge2.className = 'test-badge-2';
+            badge2.textContent = '2';
+            badge2.style.cssText = 'position:absolute;top:25px;right:5px;background:green;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
+            imageContainer.insertBefore(badge2, imageContainer.firstChild);
+
+            // TEST 3: Append to card element
+            if (card) {
+                const badge3 = document.createElement('div');
+                badge3.className = 'test-badge-3';
+                badge3.textContent = '3';
+                badge3.style.cssText = 'position:absolute;top:5px;right:25px;background:blue;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
+                card.style.position = 'relative';
+                card.appendChild(badge3);
+            }
+
+            // TEST 4: Append to card's parent
+            if (card && card.parentElement) {
+                const badge4 = document.createElement('div');
+                badge4.className = 'test-badge-4';
+                badge4.textContent = '4';
+                badge4.style.cssText = 'position:absolute;top:45px;right:5px;background:orange;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
+                card.parentElement.style.position = 'relative';
+                card.parentElement.appendChild(badge4);
+            }
+
+            // TEST 5: Insert before imageContainer
+            const badge5 = document.createElement('div');
+            badge5.className = 'test-badge-5';
+            badge5.textContent = '5';
+            badge5.style.cssText = 'position:absolute;bottom:5px;right:5px;background:purple;color:white;padding:2px 6px;border-radius:3px;font-size:12px;z-index:9999;';
+            imageContainer.parentElement.insertBefore(badge5, imageContainer);
+
+            // TEST 6: Use same technique as rating (add class + data attr for ::after)
+            imageContainer.classList.add('has-leaving-test');
+            imageContainer.setAttribute('data-leaving-test', '6');
+
+            console.log('RatingsPlugin: Added 6 test badges for:', itemId);
         },
 
         /**
