@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.191.0",
+        "changelog": "Admin Media Management: New 'Media' button for admins with full library view, stats, filtering, and scheduled deletion with 'Leaving in X days' badges visible to all users.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.191.0/jellyfin-plugin-ratings_1.0.191.0.zip",
+        "checksum": "edca4bac79b0d12f8833cca716b696d6",
+        "timestamp": "2026-01-19T14:00:00Z"
+      },
+      {
         "version": "1.0.190.0",
         "changelog": "Latest Media improvements: clean titles (no IMDB IDs), time ago indicator, solid header background.",
         "targetAbi": "10.11.0.0",

@@ -22,6 +22,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
+        private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -36,6 +37,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _ratings = new Dictionary<Guid, UserRating>();
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
             _notifications = new List<NewMediaNotification>();
+            _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -44,6 +46,7 @@ namespace Jellyfin.Plugin.Ratings.Data
 
             LoadRatings();
             LoadMediaRequests();
+            LoadScheduledDeletions();
         }
 
         /// <summary>
@@ -622,6 +625,173 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 _notifications.Clear();
+            }
+        }
+
+        // Scheduled Deletion Methods
+
+        /// <summary>
+        /// Loads scheduled deletions from disk.
+        /// </summary>
+        private void LoadScheduledDeletions()
+        {
+            try
+            {
+                var deletionsFile = Path.Combine(_dataPath, "scheduled_deletions.json");
+                if (File.Exists(deletionsFile))
+                {
+                    var json = File.ReadAllText(deletionsFile);
+                    var deletions = JsonSerializer.Deserialize<List<ScheduledDeletion>>(json);
+                    if (deletions != null)
+                    {
+                        _scheduledDeletions = deletions.ToDictionary(d => d.ItemId);
+                        _logger.LogInformation("Loaded {Count} scheduled deletions from disk", _scheduledDeletions.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading scheduled deletions from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves scheduled deletions to disk.
+        /// </summary>
+        private async Task SaveScheduledDeletionsAsync()
+        {
+            try
+            {
+                var deletionsFile = Path.Combine(_dataPath, "scheduled_deletions.json");
+                var json = JsonSerializer.Serialize(_scheduledDeletions.Values.ToList(), new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(deletionsFile, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} scheduled deletions to disk", _scheduledDeletions.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving scheduled deletions to disk");
+            }
+        }
+
+        /// <summary>
+        /// Schedules a media item for deletion.
+        /// </summary>
+        /// <param name="deletion">The scheduled deletion data.</param>
+        /// <returns>The created scheduled deletion.</returns>
+        public async Task<ScheduledDeletion> ScheduleDeletionAsync(ScheduledDeletion deletion)
+        {
+            lock (_lock)
+            {
+                // If item already has a scheduled deletion, update it
+                if (_scheduledDeletions.ContainsKey(deletion.ItemId))
+                {
+                    var existing = _scheduledDeletions[deletion.ItemId];
+                    existing.DeleteAt = deletion.DeleteAt;
+                    existing.ScheduledAt = DateTime.UtcNow;
+                    existing.ScheduledByUserId = deletion.ScheduledByUserId;
+                    existing.ScheduledByUsername = deletion.ScheduledByUsername;
+                    existing.IsCancelled = false;
+                    existing.CancelledAt = null;
+                    _ = SaveScheduledDeletionsAsync();
+                    return existing;
+                }
+
+                _scheduledDeletions[deletion.ItemId] = deletion;
+                _ = SaveScheduledDeletionsAsync();
+                return deletion;
+            }
+        }
+
+        /// <summary>
+        /// Cancels a scheduled deletion.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>True if cancelled, false if not found.</returns>
+        public async Task<bool> CancelDeletionAsync(Guid itemId)
+        {
+            lock (_lock)
+            {
+                if (_scheduledDeletions.ContainsKey(itemId))
+                {
+                    var deletion = _scheduledDeletions[itemId];
+                    deletion.IsCancelled = true;
+                    deletion.CancelledAt = DateTime.UtcNow;
+                    _ = SaveScheduledDeletionsAsync();
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the scheduled deletion for an item.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>The scheduled deletion or null if not found.</returns>
+        public ScheduledDeletion? GetScheduledDeletion(Guid itemId)
+        {
+            lock (_lock)
+            {
+                if (_scheduledDeletions.ContainsKey(itemId) && !_scheduledDeletions[itemId].IsCancelled)
+                {
+                    return _scheduledDeletions[itemId];
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets all active (non-cancelled) scheduled deletions.
+        /// </summary>
+        /// <returns>List of active scheduled deletions.</returns>
+        public List<ScheduledDeletion> GetAllScheduledDeletions()
+        {
+            lock (_lock)
+            {
+                return _scheduledDeletions.Values
+                    .Where(d => !d.IsCancelled)
+                    .OrderBy(d => d.DeleteAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets scheduled deletions that are due for execution.
+        /// </summary>
+        /// <returns>List of due deletions.</returns>
+        public List<ScheduledDeletion> GetPendingDeletions()
+        {
+            lock (_lock)
+            {
+                var now = DateTime.UtcNow;
+                return _scheduledDeletions.Values
+                    .Where(d => !d.IsCancelled && d.DeleteAt <= now)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Removes a scheduled deletion record (after successful deletion or cleanup).
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>True if removed, false if not found.</returns>
+        public async Task<bool> RemoveDeletionAsync(Guid itemId)
+        {
+            lock (_lock)
+            {
+                if (_scheduledDeletions.ContainsKey(itemId))
+                {
+                    _scheduledDeletions.Remove(itemId);
+                    _ = SaveScheduledDeletionsAsync();
+                    return true;
+                }
+
+                return false;
             }
         }
     }

@@ -25,6 +25,9 @@ namespace Jellyfin.Plugin.Ratings
 
             // Register notification service to monitor library for new media
             serviceCollection.AddHostedService<NotificationService>();
+
+            // Register deletion service for scheduled media deletions
+            serviceCollection.AddHostedService<DeletionService>();
         }
     }
 }

@@ -120,6 +120,26 @@
                     </div>
 
                     <div class="verticalSection">
+                        <h2 class="sectionTitle">Media Management (Admin)</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableMediaManagement" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Media Management</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Show the "Media" button in the header for admins to manage library media with stats and scheduled deletions.
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtDefaultDeletionDelayDays">Default Deletion Delay (Days)</label>
+                            <input id="txtDefaultDeletionDelayDays" type="number" is="emby-input" min="1" max="365" step="1" />
+                            <div class="fieldDescription">Default number of days before scheduled deletions are executed (default: 7)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
                         <h2 class="sectionTitle">Request System Settings</h2>
 
                         <div class="checkboxContainer checkboxContainer-withDescription">
@@ -374,6 +394,10 @@
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
 
+                    // Media management settings
+                    document.querySelector('#chkEnableMediaManagement').checked = config.EnableMediaManagement !== false;
+                    document.querySelector('#txtDefaultDeletionDelayDays').value = config.DefaultDeletionDelayDays || 7;
+
                     // Request system settings
                     document.querySelector('#chkEnableAdminRequests').checked = config.EnableAdminRequests;
                     document.querySelector('#txtMaxRequestsPerMonth').value = config.MaxRequestsPerMonth || 0;
@@ -437,6 +461,10 @@
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
+
+                    // Media management settings
+                    config.EnableMediaManagement = document.querySelector('#chkEnableMediaManagement').checked;
+                    config.DefaultDeletionDelayDays = parseInt(document.querySelector('#txtDefaultDeletionDelayDays').value) || 7;
 
                     // Request system settings
                     config.EnableAdminRequests = document.querySelector('#chkEnableAdminRequests').checked;
