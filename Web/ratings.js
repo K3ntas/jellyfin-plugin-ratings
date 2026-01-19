@@ -5235,11 +5235,8 @@
             const itemId = match[1].toLowerCase();
             const deletion = self.scheduledDeletionsCache[itemId];
 
-            // Find the detail header area
-            const detailHeader = document.querySelector('.detailPagePrimaryContainer, .itemDetailPage');
-            if (!detailHeader) return;
-
-            const existingBadge = detailHeader.querySelector('.detail-leaving-badge');
+            // Remove ALL existing badges first to prevent duplicates
+            document.querySelectorAll('.detail-leaving-badge').forEach(b => b.remove());
 
             if (deletion) {
                 const formatDaysUntil = (deleteAt) => {
@@ -5251,18 +5248,14 @@
                     return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
                 };
 
-                if (!existingBadge) {
+                // Find the main buttons area (near play button) - this is the correct location
+                const mainDetailButtons = document.querySelector('.mainDetailButtons, .detailButtons');
+                if (mainDetailButtons) {
                     const badge = document.createElement('div');
                     badge.className = 'detail-leaving-badge';
                     badge.textContent = formatDaysUntil(deletion.DeleteAt);
-                    // Insert at top of detail header
-                    detailHeader.insertBefore(badge, detailHeader.firstChild);
-                } else {
-                    existingBadge.textContent = formatDaysUntil(deletion.DeleteAt);
-                }
-            } else {
-                if (existingBadge) {
-                    existingBadge.remove();
+                    // Insert before the buttons
+                    mainDetailButtons.parentNode.insertBefore(badge, mainDetailButtons);
                 }
             }
         },
