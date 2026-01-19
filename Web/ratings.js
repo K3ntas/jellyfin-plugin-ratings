@@ -5142,9 +5142,11 @@
          */
         initDeletionBadges: function () {
             const self = this;
+            console.log('RatingsPlugin: initDeletionBadges called');
 
             // Load scheduled deletions initially
             setTimeout(() => {
+                console.log('RatingsPlugin: Loading scheduled deletions...');
                 self.loadScheduledDeletions();
             }, 3000);
 
@@ -5165,7 +5167,10 @@
         loadScheduledDeletions: function () {
             const self = this;
 
-            if (!window.ApiClient) return;
+            if (!window.ApiClient) {
+                console.log('RatingsPlugin: loadScheduledDeletions - no ApiClient');
+                return;
+            }
 
             const baseUrl = ApiClient.serverAddress();
 
@@ -5175,6 +5180,7 @@
             })
             .then(response => response.json())
             .then(deletions => {
+                console.log('RatingsPlugin: Loaded scheduled deletions:', deletions.length, deletions);
                 // Build cache by itemId
                 self.scheduledDeletionsCache = {};
                 deletions.forEach(d => {
@@ -5183,7 +5189,9 @@
                 // Update badges immediately
                 self.updateDeletionBadges();
             })
-            .catch(() => {});
+            .catch(err => {
+                console.error('RatingsPlugin: Error loading scheduled deletions:', err);
+            });
         },
 
         /**
@@ -5191,6 +5199,16 @@
          */
         updateDeletionBadges: function () {
             const self = this;
+
+            // Skip if no cache yet
+            if (!self.scheduledDeletionsCache) {
+                return;
+            }
+
+            const cacheSize = Object.keys(self.scheduledDeletionsCache).length;
+            if (cacheSize === 0) {
+                return; // No scheduled deletions, nothing to do
+            }
 
             // Format days until deletion
             const formatDaysUntil = (deleteAt) => {
@@ -5204,6 +5222,7 @@
 
             // Find all media cards
             const cards = document.querySelectorAll('.card:not(.card .card)');
+            let badgesAdded = 0;
 
             cards.forEach(card => {
                 // Try to get item ID from card
@@ -5230,12 +5249,17 @@
                     // Add class and data attribute (CSS handles the display)
                     imageContainer.classList.add('has-leaving');
                     imageContainer.setAttribute('data-leaving', formatDaysUntil(deletion.DeleteAt));
+                    badgesAdded++;
                 } else {
                     // Remove if no longer scheduled
                     imageContainer.classList.remove('has-leaving');
                     imageContainer.removeAttribute('data-leaving');
                 }
             });
+
+            if (badgesAdded > 0) {
+                console.log('RatingsPlugin: Added leaving badges to', badgesAdded, 'cards');
+            }
 
             // Also check detail page
             self.updateDetailPageBadge();
