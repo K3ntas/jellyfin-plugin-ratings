@@ -2836,13 +2836,19 @@
                 }
 
                 /* Leaving Badge on Cards - uses ::before to not conflict with rating ::after */
+                /* Rating badge is top-left, leaving badge is bottom-right */
+                .cardImageContainer.has-leaving,
+                .cardContent.has-leaving,
+                .card-imageContainer.has-leaving {
+                    position: relative !important;
+                }
                 .cardImageContainer.has-leaving::before,
                 .cardContent.has-leaving::before,
                 .card-imageContainer.has-leaving::before {
                     content: attr(data-leaving);
                     position: absolute;
                     bottom: 5px;
-                    left: 5px;
+                    right: 5px;
                     background: rgba(231, 76, 60, 0.95);
                     color: #fff;
                     padding: 4px 8px;
@@ -3548,7 +3554,7 @@
                 // Use cached data
                 if (self.ratingsCache[itemId] !== null) {
                     const stats = self.ratingsCache[itemId];
-                    self.createAndPositionOverlay(card, stats);
+                    self.createAndPositionOverlay(card, stats, itemId);
                 }
                 return;
             }
@@ -3588,7 +3594,7 @@
                     if (stats.TotalRatings > 0) {
                         // Cache the stats
                         self.ratingsCache[itemId] = stats;
-                        self.createAndPositionOverlay(card, stats);
+                        self.createAndPositionOverlay(card, stats, itemId);
                     } else {
                         // Cache as null (no ratings)
                         self.ratingsCache[itemId] = null;
@@ -3603,10 +3609,26 @@
         /**
          * Create and position overlay using CSS ::after pseudo-element
          */
-        createAndPositionOverlay: function (imageContainer, stats) {
+        createAndPositionOverlay: function (imageContainer, stats, itemId) {
+            const self = this;
+
             // Use CSS ::after pseudo-element by adding class and data attribute
             imageContainer.classList.add('has-rating');
             imageContainer.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+
+            // Also check for leaving badge (uses ::before)
+            if (itemId && self.scheduledDeletionsCache) {
+                const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
+                if (deletion) {
+                    const now = new Date();
+                    const deleteDate = new Date(deletion.DeleteAt);
+                    const diffMs = deleteDate - now;
+                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                    const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+                    imageContainer.classList.add('has-leaving');
+                    imageContainer.setAttribute('data-leaving', text);
+                }
+            }
         },
 
         /**
