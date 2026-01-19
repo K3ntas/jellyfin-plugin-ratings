@@ -461,6 +461,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
+                    ShowLatestMediaButton = config?.ShowLatestMediaButton ?? true,
 
                     // Request system settings
                     EnableAdminRequests = config?.EnableAdminRequests ?? false,
