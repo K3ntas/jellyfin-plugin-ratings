@@ -2835,12 +2835,8 @@
                     background: #666;
                 }
 
-                /* Leaving Badge on Cards - uses ::before to not conflict with rating ::after */
-                /* Rating badge is top-left (::after), leaving badge is top-right (::before) */
-                .cardImageContainer.has-leaving::before,
-                .cardContent.has-leaving::before,
-                .card-imageContainer.has-leaving::before {
-                    content: attr(data-leaving);
+                /* Leaving Badge on Cards - uses real DOM element for reliability */
+                .card-leaving-badge {
                     position: absolute;
                     top: 5px;
                     right: 5px;
@@ -3648,7 +3644,7 @@
             }
 
             // Skip if already has leaving badge
-            if (imageContainer.classList.contains('has-leaving')) {
+            if (imageContainer.querySelector('.card-leaving-badge')) {
                 return;
             }
 
@@ -3659,9 +3655,11 @@
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
             const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
 
-            // Add class and data attribute - CSS ::before will display it
-            imageContainer.classList.add('has-leaving');
-            imageContainer.setAttribute('data-leaving', text);
+            // Create actual DOM element (more reliable than ::before pseudo-element)
+            const badge = document.createElement('div');
+            badge.className = 'card-leaving-badge';
+            badge.textContent = text;
+            imageContainer.appendChild(badge);
             console.log('RatingsPlugin: Added leaving badge via observer:', itemId, text);
         },
 
@@ -5280,16 +5278,19 @@
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
 
                 if (deletion) {
-                    // Add class and data attribute - CSS ::before will display it
-                    if (!imageContainer.classList.contains('has-leaving')) {
-                        imageContainer.classList.add('has-leaving');
-                        imageContainer.setAttribute('data-leaving', formatDaysUntil(deletion.DeleteAt));
+                    // Create DOM element if not exists
+                    let badge = imageContainer.querySelector('.card-leaving-badge');
+                    if (!badge) {
+                        badge = document.createElement('div');
+                        badge.className = 'card-leaving-badge';
+                        imageContainer.appendChild(badge);
                         badgesAdded++;
                     }
+                    badge.textContent = formatDaysUntil(deletion.DeleteAt);
                 } else {
-                    // Remove if no longer scheduled
-                    imageContainer.classList.remove('has-leaving');
-                    imageContainer.removeAttribute('data-leaving');
+                    // Remove badge if no longer scheduled
+                    const badge = imageContainer.querySelector('.card-leaving-badge');
+                    if (badge) badge.remove();
                 }
             });
 
