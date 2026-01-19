@@ -72,7 +72,12 @@
                 typeMovie: 'Movie',
                 typeSeries: 'Series',
                 typeAnime: 'Anime',
-                typeOther: 'Other'
+                typeOther: 'Other',
+                timeAgo: 'ago',
+                timeJustNow: 'just now',
+                timeMinutes: 'min',
+                timeHours: 'h',
+                timeDays: 'd'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -134,7 +139,12 @@
                 typeMovie: 'Filmas',
                 typeSeries: 'Serialas',
                 typeAnime: 'Anime',
-                typeOther: 'Kita'
+                typeOther: 'Kita',
+                timeAgo: 'prieš',
+                timeJustNow: 'ką tik',
+                timeMinutes: 'min',
+                timeHours: 'val',
+                timeDays: 'd'
             }
         },
 
@@ -2258,7 +2268,7 @@
                     font-size: 13px !important;
                     font-weight: 600 !important;
                     color: #fff !important;
-                    background: rgba(0, 0, 0, 0.3) !important;
+                    background: #1a1a1a !important;
                     position: sticky !important;
                     top: 0 !important;
                     z-index: 1 !important;
@@ -2332,6 +2342,13 @@
                 #latestMediaDropdown .latest-item-year {
                     color: #666 !important;
                     font-size: 10px !important;
+                }
+
+                #latestMediaDropdown .latest-item-time {
+                    color: #888 !important;
+                    font-size: 9px !important;
+                    margin-left: auto !important;
+                    white-space: nowrap !important;
                 }
 
                 #latestMediaDropdown .latest-item-type {
@@ -3984,7 +4001,7 @@
 
             // Fetch latest items using Jellyfin's Items endpoint
             // Get movies, series sorted by DateCreated descending
-            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=50&Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
+            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=50&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -4004,12 +4021,40 @@
 
                 let html = `<div class="latest-header">${self.t('latestMedia')}</div>`;
 
+                // Helper function to format time ago
+                const formatTimeAgo = (dateString) => {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 1) return self.t('timeJustNow');
+                    if (diffMins < 60) return `${diffMins} ${self.t('timeMinutes')} ${self.t('timeAgo')}`;
+                    if (diffHours < 24) return `${diffHours} ${self.t('timeHours')} ${self.t('timeAgo')}`;
+                    return `${diffDays} ${self.t('timeDays')} ${self.t('timeAgo')}`;
+                };
+
+                // Helper function to clean title (remove IMDB IDs)
+                const cleanTitle = (title) => {
+                    if (!title) return 'Unknown';
+                    // Remove patterns like [imdbid-tt1234567], [tt1234567], (tt1234567), [imdbid:tt1234567]
+                    return title
+                        .replace(/\s*\[imdbid[-:]?tt\d+\]/gi, '')
+                        .replace(/\s*\[tt\d+\]/gi, '')
+                        .replace(/\s*\(tt\d+\)/gi, '')
+                        .trim();
+                };
+
                 data.Items.forEach(item => {
                     const itemId = item.Id;
-                    const itemName = item.Name || 'Unknown';
+                    const itemName = cleanTitle(item.Name);
                     const itemYear = item.ProductionYear || '';
                     const itemType = item.Type;
                     const genres = item.Genres || [];
+                    const timeAgo = formatTimeAgo(item.DateCreated);
 
                     // Determine display type
                     let displayType = 'other';
@@ -4048,6 +4093,7 @@
                                 <div class="latest-item-meta">
                                     <span class="latest-item-type ${displayType}">${typeLabel}</span>
                                     ${itemYear ? `<span class="latest-item-year">${itemYear}</span>` : ''}
+                                    ${timeAgo ? `<span class="latest-item-time">${timeAgo}</span>` : ''}
                                 </div>
                             </div>
                         </a>
