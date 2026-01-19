@@ -4594,12 +4594,12 @@
         initMediaManagementButtonWithRetry: function () {
             const self = this;
             let attempts = 0;
-            const maxAttempts = 10;
+            const maxAttempts = 20;
 
             const tryInit = () => {
                 attempts++;
                 try {
-                    if (document.getElementById('mediaManagementBtn')) {
+                    if (document.getElementById('mediaManagementMenuItem')) {
                         return;
                     }
 
@@ -4632,155 +4632,226 @@
                 }
             };
 
+            // Try on page changes for dashboard
+            setInterval(() => {
+                const isDashboard = window.location.href.includes('#/dashboard') ||
+                                   window.location.href.includes('#!/dashboard');
+                if (isDashboard && !document.getElementById('mediaManagementMenuItem')) {
+                    tryInit();
+                }
+            }, 1000);
+
             setTimeout(tryInit, 2000);
         },
 
         /**
-         * Initialize Media Management Button
+         * Initialize Media Management Button in Dashboard Sidebar
          */
         initMediaManagementButton: function () {
             const self = this;
             try {
-                if (document.getElementById('mediaManagementBtn')) {
+                if (document.getElementById('mediaManagementMenuItem')) {
                     return;
                 }
 
-                // Create button
-                const btn = document.createElement('button');
-                btn.id = 'mediaManagementBtn';
-                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
-                btn.setAttribute('type', 'button');
-                btn.setAttribute('title', self.t('mediaManagement'));
-                // Folder/media icon
-                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+                // Find the dashboard sidebar - look for the Server section
+                const findAndInjectMenuItem = () => {
+                    // Look for sidebar menu items
+                    const sidebarItems = document.querySelectorAll('.mainDrawer-scrollContainer .navMenuOption, .dashboardDocument .listItem, .adminDrawerContent .listItem');
 
-                // Create modal
-                const modal = document.createElement('div');
-                modal.id = 'mediaManagementModal';
-                modal.innerHTML = `
-                    <div id="mediaManagementModalContent">
-                        <button id="mediaManagementModalClose" type="button">&times;</button>
-                        <div id="mediaManagementModalTitle">${self.t('mediaManagementTitle')}</div>
-                        <div id="mediaManagementControls">
-                            <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
-                            <select id="mediaTypeFilter">
-                                <option value="">${self.t('mediaTypeAll')}</option>
-                                <option value="Movie">${self.t('mediaTypeMovie')}</option>
-                                <option value="Series">${self.t('mediaTypeSeries')}</option>
-                            </select>
-                            <select id="mediaSortBy">
-                                <option value="dateAdded">${self.t('mediaSortDateAdded')}</option>
-                                <option value="title">${self.t('mediaSortTitle')}</option>
-                                <option value="year">${self.t('mediaSortYear')}</option>
-                                <option value="rating">${self.t('mediaSortRating')}</option>
-                                <option value="playCount">${self.t('mediaSortPlayCount')}</option>
-                                <option value="size">${self.t('mediaSortSize')}</option>
-                            </select>
-                            <select id="mediaSortOrder">
-                                <option value="desc">↓</option>
-                                <option value="asc">↑</option>
-                            </select>
-                        </div>
-                        <div id="mediaManagementBody">
-                            <p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>
-                        </div>
-                        <div id="mediaManagementPagination"></div>
-                    </div>
-                `;
+                    // Find "Dashboard" menu item to insert after Server section header
+                    let serverSection = null;
+                    let dashboardItem = null;
 
-                // Create deletion dialog
-                const deletionDialog = document.createElement('div');
-                deletionDialog.id = 'deletionDialog';
-                deletionDialog.innerHTML = `
-                    <div id="deletionDialogContent">
-                        <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
-                        <div id="deletionDialogOptions">
-                            <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
-                            <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
-                            <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
-                            <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
-                            <button class="deletion-cancel-btn">${self.t('mediaCancelDelete').replace('Cancel ', '')}</button>
-                        </div>
-                    </div>
-                `;
-
-                // Add to DOM - find header right section
-                const headerRight = document.querySelector('.headerRight');
-                if (headerRight) {
-                    // Insert before the first child or at the start
-                    headerRight.insertBefore(btn, headerRight.firstChild);
-                } else {
-                    const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                    if (headerContainer) {
-                        headerContainer.appendChild(btn);
-                    }
-                }
-                document.body.appendChild(modal);
-                document.body.appendChild(deletionDialog);
-
-                // Button click
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    modal.classList.add('show');
-                    self.loadMediaList();
-                });
-
-                // Close button
-                document.getElementById('mediaManagementModalClose').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    modal.classList.remove('show');
-                });
-
-                // Click outside to close
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('show');
-                    }
-                });
-
-                // Filter/sort change handlers
-                let searchTimeout;
-                document.getElementById('mediaSearchInput').addEventListener('input', () => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => self.loadMediaList(), 500);
-                });
-                document.getElementById('mediaTypeFilter').addEventListener('change', () => self.loadMediaList());
-                document.getElementById('mediaSortBy').addEventListener('change', () => self.loadMediaList());
-                document.getElementById('mediaSortOrder').addEventListener('change', () => self.loadMediaList());
-
-                // Deletion dialog option clicks
-                deletionDialog.querySelectorAll('.deletion-option-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const days = parseInt(btn.getAttribute('data-days'));
-                        const itemId = deletionDialog.getAttribute('data-item-id');
-                        if (itemId && days) {
-                            self.scheduleDeletion(itemId, days);
+                    // Method 1: Find by looking for Dashboard text
+                    document.querySelectorAll('a[href*="dashboard"], .navMenuOption').forEach(item => {
+                        const text = item.textContent || item.innerText;
+                        if (text && text.trim() === 'Dashboard') {
+                            dashboardItem = item;
                         }
+                    });
+
+                    // Method 2: Look for sidebarLinks container in dashboard
+                    const sidebarLinks = document.querySelector('.sidebarLinks, .dashboardDrawer .scrollContainer, .adminDrawerContent');
+
+                    if (!sidebarLinks && !dashboardItem) {
+                        return false;
+                    }
+
+                    // Create the menu item
+                    const menuItem = document.createElement('a');
+                    menuItem.id = 'mediaManagementMenuItem';
+                    menuItem.href = '#';
+                    menuItem.className = 'navMenuOption lnkMediaSegment';
+                    menuItem.style.cssText = 'display: flex; align-items: center; padding: 10px 20px; color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;';
+                    menuItem.innerHTML = `
+                        <span class="material-icons navMenuOptionIcon" style="margin-right: 16px; font-size: 24px;">folder</span>
+                        <span class="navMenuOptionText">${self.t('mediaManagement')}</span>
+                    `;
+
+                    // Try to insert in the right place
+                    if (dashboardItem && dashboardItem.parentNode) {
+                        // Insert after Dashboard item
+                        const parent = dashboardItem.parentNode;
+                        if (dashboardItem.nextSibling) {
+                            parent.insertBefore(menuItem, dashboardItem.nextSibling);
+                        } else {
+                            parent.appendChild(menuItem);
+                        }
+                    } else if (sidebarLinks) {
+                        // Append to sidebar
+                        const firstChild = sidebarLinks.querySelector('a, .navMenuOption');
+                        if (firstChild && firstChild.nextSibling) {
+                            sidebarLinks.insertBefore(menuItem, firstChild.nextSibling);
+                        } else {
+                            sidebarLinks.insertBefore(menuItem, sidebarLinks.firstChild);
+                        }
+                    } else {
+                        return false;
+                    }
+
+                    // Hover effect
+                    menuItem.addEventListener('mouseenter', () => {
+                        menuItem.style.background = 'rgba(255,255,255,0.1)';
+                    });
+                    menuItem.addEventListener('mouseleave', () => {
+                        menuItem.style.background = 'transparent';
+                    });
+
+                    // Click handler
+                    menuItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self.openMediaManagementModal();
+                    });
+
+                    return true;
+                };
+
+                // Create modal if not exists
+                if (!document.getElementById('mediaManagementModal')) {
+                    const modal = document.createElement('div');
+                    modal.id = 'mediaManagementModal';
+                    modal.innerHTML = `
+                        <div id="mediaManagementModalContent">
+                            <button id="mediaManagementModalClose" type="button">&times;</button>
+                            <div id="mediaManagementModalTitle">${self.t('mediaManagementTitle')}</div>
+                            <div id="mediaManagementControls">
+                                <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
+                                <select id="mediaTypeFilter">
+                                    <option value="">${self.t('mediaTypeAll')}</option>
+                                    <option value="Movie">${self.t('mediaTypeMovie')}</option>
+                                    <option value="Series">${self.t('mediaTypeSeries')}</option>
+                                </select>
+                                <select id="mediaSortBy">
+                                    <option value="dateAdded">${self.t('mediaSortDateAdded')}</option>
+                                    <option value="title">${self.t('mediaSortTitle')}</option>
+                                    <option value="year">${self.t('mediaSortYear')}</option>
+                                    <option value="rating">${self.t('mediaSortRating')}</option>
+                                    <option value="playCount">${self.t('mediaSortPlayCount')}</option>
+                                    <option value="size">${self.t('mediaSortSize')}</option>
+                                </select>
+                                <select id="mediaSortOrder">
+                                    <option value="desc">↓</option>
+                                    <option value="asc">↑</option>
+                                </select>
+                            </div>
+                            <div id="mediaManagementBody">
+                                <p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>
+                            </div>
+                            <div id="mediaManagementPagination"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+
+                    // Close button
+                    document.getElementById('mediaManagementModalClose').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        modal.classList.remove('show');
+                    });
+
+                    // Click outside to close
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('show');
+                        }
+                    });
+
+                    // Filter/sort change handlers
+                    let searchTimeout;
+                    document.getElementById('mediaSearchInput').addEventListener('input', () => {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => self.loadMediaList(), 500);
+                    });
+                    document.getElementById('mediaTypeFilter').addEventListener('change', () => self.loadMediaList());
+                    document.getElementById('mediaSortBy').addEventListener('change', () => self.loadMediaList());
+                    document.getElementById('mediaSortOrder').addEventListener('change', () => self.loadMediaList());
+                }
+
+                // Create deletion dialog if not exists
+                if (!document.getElementById('deletionDialog')) {
+                    const deletionDialog = document.createElement('div');
+                    deletionDialog.id = 'deletionDialog';
+                    deletionDialog.innerHTML = `
+                        <div id="deletionDialogContent">
+                            <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
+                            <div id="deletionDialogOptions">
+                                <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
+                                <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
+                                <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
+                                <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
+                                <button class="deletion-cancel-btn">${self.t('mediaCancelDelete').replace('Cancel ', '')}</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(deletionDialog);
+
+                    // Deletion dialog option clicks
+                    deletionDialog.querySelectorAll('.deletion-option-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const days = parseInt(btn.getAttribute('data-days'));
+                            const itemId = deletionDialog.getAttribute('data-item-id');
+                            if (itemId && days) {
+                                self.scheduleDeletion(itemId, days);
+                            }
+                            deletionDialog.classList.remove('show');
+                        });
+                    });
+
+                    deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
                         deletionDialog.classList.remove('show');
                     });
-                });
+                }
 
-                deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
-                    deletionDialog.classList.remove('show');
-                });
-
-                // Hide during video playback
-                setInterval(() => {
-                    try {
-                        const videoPlayer = document.querySelector('.videoPlayerContainer');
-                        const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
-                        const isLoginPage = self.isOnLoginPage();
-                        if (isVideoPlaying || isLoginPage) {
-                            btn.classList.add('hidden');
-                        } else {
-                            btn.classList.remove('hidden');
+                // Try to inject menu item
+                if (!findAndInjectMenuItem()) {
+                    // Retry with observer
+                    const observer = new MutationObserver(() => {
+                        if (!document.getElementById('mediaManagementMenuItem')) {
+                            if (findAndInjectMenuItem()) {
+                                observer.disconnect();
+                            }
                         }
-                    } catch (err) {}
-                }, 1000);
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+
+                    // Stop observing after 30 seconds
+                    setTimeout(() => observer.disconnect(), 30000);
+                }
 
             } catch (err) {
                 console.error('Media management button initialization failed:', err);
+            }
+        },
+
+        /**
+         * Open Media Management Modal
+         */
+        openMediaManagementModal: function () {
+            const modal = document.getElementById('mediaManagementModal');
+            if (modal) {
+                modal.classList.add('show');
+                this.loadMediaList();
             }
         },
 
