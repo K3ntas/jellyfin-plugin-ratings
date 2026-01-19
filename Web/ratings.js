@@ -4590,6 +4590,7 @@
 
         /**
          * Initialize media management button with retry logic for SPA navigation
+         * Replaces Jellyfin's original search button in header (admin only)
          */
         initMediaManagementButtonWithRetry: function () {
             const self = this;
@@ -4614,90 +4615,91 @@
                     .catch(() => false);
             };
 
-            const tryInjectMenuItem = () => {
-                if (document.getElementById('mediaManagementMenuItem')) return;
-                if (!configChecked) return;
-                if (!featureEnabled || !isAdminUser) return;
+            const createMediaButton = () => {
+                if (document.getElementById('mediaManagementBtn')) return;
+                if (!configChecked || !featureEnabled || !isAdminUser) return;
 
-                // Find the main drawer - Jellyfin's sidebar container
-                const mainDrawer = document.querySelector('.mainDrawer');
-                if (!mainDrawer) return;
-
-                const scrollContainer = mainDrawer.querySelector('.scrollContainer') || mainDrawer;
-
-                // Find Dashboard link by class or href - this is in the Server section
-                let dashboardLink = scrollContainer.querySelector('.lnkManageServer');
-                if (!dashboardLink) {
-                    dashboardLink = scrollContainer.querySelector('a[href*="#/dashboard"]');
-                }
-                if (!dashboardLink) {
-                    // Try finding by text content
-                    scrollContainer.querySelectorAll('.navMenuOption').forEach(item => {
-                        const text = (item.textContent || '').trim().toLowerCase();
-                        if (text === 'dashboard') {
-                            dashboardLink = item;
-                        }
-                    });
+                // Find and hide Jellyfin's original search button
+                const originalSearchBtn = document.querySelector('.headerSearchButton');
+                if (originalSearchBtn) {
+                    originalSearchBtn.style.display = 'none';
                 }
 
-                if (!dashboardLink) return;
-
-                // Create the Media menu item using Jellyfin's own structure
-                const menuItem = document.createElement('a');
-                menuItem.id = 'mediaManagementMenuItem';
-                menuItem.href = '#';
-                menuItem.setAttribute('is', 'emby-linkbutton');
-                menuItem.className = 'navMenuOption lnkMediaFolder';
-                menuItem.innerHTML = `
-                    <span class="material-icons navMenuOptionIcon">folder_special</span>
-                    <span class="navMenuOptionText">${self.t('mediaManagement')}</span>
-                `;
-
-                // Insert after Dashboard link
-                if (dashboardLink.nextSibling) {
-                    dashboardLink.parentNode.insertBefore(menuItem, dashboardLink.nextSibling);
-                } else {
-                    dashboardLink.parentNode.appendChild(menuItem);
-                }
+                // Create the Media Management button (same style as other header buttons)
+                const btn = document.createElement('button');
+                btn.id = 'mediaManagementBtn';
+                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                btn.setAttribute('type', 'button');
+                btn.setAttribute('title', self.t('mediaManagement'));
+                // Folder icon for media management
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                    <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+                </svg>`;
 
                 // Click handler to open modal
-                menuItem.addEventListener('click', (e) => {
+                btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     self.openMediaManagementModal();
                 });
+
+                // Insert button in header - try headerRight first
+                const headerRight = document.querySelector('.headerRight');
+                if (headerRight) {
+                    // Insert at the beginning of headerRight (before other buttons)
+                    headerRight.insertBefore(btn, headerRight.firstChild);
+                } else {
+                    // Fallback: find skinHeader and append
+                    const skinHeader = document.querySelector('.skinHeader');
+                    if (skinHeader) {
+                        skinHeader.appendChild(btn);
+                    }
+                }
+
+                // Keep original search button hidden (SPA navigation may recreate it)
+                const observer = new MutationObserver(() => {
+                    const searchBtn = document.querySelector('.headerSearchButton');
+                    if (searchBtn && searchBtn.style.display !== 'none') {
+                        searchBtn.style.display = 'none';
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Hide during video playback and on login page
+                setInterval(() => {
+                    const isLoginPage = window.location.href.includes('#/login') ||
+                                       window.location.href.includes('#!/login') ||
+                                       window.location.href.includes('#/startup') ||
+                                       window.location.href.includes('#!/startup');
+                    const isVideoPlaying = document.querySelector('.videoPlayerContainer:not(.hide)');
+
+                    if (isLoginPage || isVideoPlaying) {
+                        btn.style.display = 'none';
+                    } else {
+                        btn.style.display = '';
+                    }
+                }, 500);
             };
 
-            // Use MutationObserver to watch for drawer content changes
-            const observer = new MutationObserver((mutations) => {
-                tryInjectMenuItem();
-            });
-
             // Initial check
-            const startObserving = () => {
+            const startInit = () => {
                 checkConfigAndAdmin().then(shouldShow => {
                     if (shouldShow) {
                         // Create modal/dialog elements first
                         self.initMediaManagementButton();
-
-                        tryInjectMenuItem();
-
-                        // Observe body for drawer changes
-                        observer.observe(document.body, {
-                            childList: true,
-                            subtree: true
-                        });
+                        // Create header button
+                        createMediaButton();
                     }
                 });
             };
 
             // Start after a delay to let page load
-            setTimeout(startObserving, 2000);
+            setTimeout(startInit, 2000);
 
-            // Also retry on route changes (Jellyfin rebuilds the drawer)
+            // Also retry on route changes
             setInterval(() => {
-                if (configChecked && featureEnabled && isAdminUser) {
-                    tryInjectMenuItem();
+                if (configChecked && featureEnabled && isAdminUser && !document.getElementById('mediaManagementBtn')) {
+                    createMediaButton();
                 }
             }, 2000);
         },
