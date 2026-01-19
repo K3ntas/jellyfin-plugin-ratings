@@ -264,7 +264,14 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.171.0 (Current)
+### 1.0.189.0 (Current)
+- Added Latest Media button that replaces Sync Play button in header
+- Shows dropdown with 50 most recently added movies and series
+- Compact list with thumbnail, title, year, and type badge (Movie/Series/Anime)
+- Configurable via plugin settings (enabled by default)
+- Inherits Jellyfin's native header button responsive behavior
+
+### 1.0.171.0
 - Completely silent logging - no notification polling logs at all
 - Server only logs errors now
 
