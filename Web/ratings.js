@@ -4589,119 +4589,140 @@
         // ===============================================
 
         /**
-         * Initialize media management button with retry logic for SPA navigation
-         * Replaces Jellyfin's original search button in header (admin only)
+         * Initialize media management button (replaces original search button, admin only)
+         * Follows same pattern as initLatestMediaButton
          */
         initMediaManagementButtonWithRetry: function () {
             const self = this;
-            let configChecked = false;
-            let isAdminUser = false;
-            let featureEnabled = false;
-
-            const checkConfigAndAdmin = () => {
-                if (!window.ApiClient) return Promise.resolve(false);
-
-                return fetch(`${ApiClient.serverAddress()}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                    .then(response => response.json())
-                    .then(config => {
-                        featureEnabled = config.EnableMediaManagement === true;
-                        return self.isAdmin();
-                    })
-                    .then(admin => {
-                        isAdminUser = admin;
-                        configChecked = true;
-                        return featureEnabled && isAdminUser;
-                    })
-                    .catch(() => false);
-            };
-
-            const createMediaButton = () => {
-                if (document.getElementById('mediaManagementBtn')) return;
-                if (!configChecked || !featureEnabled || !isAdminUser) return;
-
-                // Find and hide Jellyfin's original search button
-                const originalSearchBtn = document.querySelector('.headerSearchButton');
-                if (originalSearchBtn) {
-                    originalSearchBtn.style.display = 'none';
+            try {
+                // Check if already exists
+                if (document.getElementById('mediaManagementBtn')) {
+                    return;
                 }
 
-                // Create the Media Management button (same style as other header buttons)
-                const btn = document.createElement('button');
-                btn.id = 'mediaManagementBtn';
-                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
-                btn.setAttribute('type', 'button');
-                btn.setAttribute('title', self.t('mediaManagement'));
-                // Folder icon for media management
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
-                    <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
-                </svg>`;
-
-                // Click handler to open modal
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    self.openMediaManagementModal();
-                });
-
-                // Insert button in header - try headerRight first
-                const headerRight = document.querySelector('.headerRight');
-                if (headerRight) {
-                    // Insert at the beginning of headerRight (before other buttons)
-                    headerRight.insertBefore(btn, headerRight.firstChild);
-                } else {
-                    // Fallback: find skinHeader and append
-                    const skinHeader = document.querySelector('.skinHeader');
-                    if (skinHeader) {
-                        skinHeader.appendChild(btn);
+                // Check config and admin status
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
                     }
-                }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.EnableMediaManagement === false) {
+                                return; // Don't create button
+                            }
+                            // Check if admin
+                            self.isAdmin().then(isAdmin => {
+                                if (isAdmin) {
+                                    createMediaManagementButton();
+                                }
+                            });
+                        })
+                        .catch(() => {
+                            // Default to checking admin status
+                            self.isAdmin().then(isAdmin => {
+                                if (isAdmin) {
+                                    createMediaManagementButton();
+                                }
+                            });
+                        });
+                };
 
-                // Keep original search button hidden (SPA navigation may recreate it)
-                const observer = new MutationObserver(() => {
-                    const searchBtn = document.querySelector('.headerSearchButton');
-                    if (searchBtn && searchBtn.style.display !== 'none') {
-                        searchBtn.style.display = 'none';
-                    }
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
+                const createMediaManagementButton = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('mediaManagementBtn')) {
+                            return;
+                        }
 
-                // Hide during video playback and on login page
-                setInterval(() => {
-                    const isLoginPage = window.location.href.includes('#/login') ||
-                                       window.location.href.includes('#!/login') ||
-                                       window.location.href.includes('#/startup') ||
-                                       window.location.href.includes('#!/startup');
-                    const isVideoPlaying = document.querySelector('.videoPlayerContainer:not(.hide)');
-
-                    if (isLoginPage || isVideoPlaying) {
-                        btn.style.display = 'none';
-                    } else {
-                        btn.style.display = '';
-                    }
-                }, 500);
-            };
-
-            // Initial check
-            const startInit = () => {
-                checkConfigAndAdmin().then(shouldShow => {
-                    if (shouldShow) {
                         // Create modal/dialog elements first
                         self.initMediaManagementButton();
-                        // Create header button
-                        createMediaButton();
+
+                        // Find and hide the original search button
+                        const searchBtn = document.querySelector('.headerSearchButton');
+                        if (searchBtn) {
+                            searchBtn.style.display = 'none';
+                        }
+
+                        // Create the media management button
+                        const btn = document.createElement('button');
+                        btn.id = 'mediaManagementBtn';
+                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.setAttribute('type', 'button');
+                        btn.setAttribute('title', self.t('mediaManagement'));
+                        // Folder icon for media management
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+                        </svg>`;
+
+                        // Click handler to open modal
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            self.openMediaManagementModal();
+                        });
+
+                        // Insert button in header - try to find headerRight or similar container
+                        const headerRight = document.querySelector('.headerRight');
+                        if (headerRight) {
+                            // Insert at the beginning of headerRight
+                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        } else {
+                            // Fallback: find skinHeader and append
+                            const skinHeader = document.querySelector('.skinHeader');
+                            if (skinHeader) {
+                                skinHeader.appendChild(btn);
+                            } else {
+                                document.body.appendChild(btn);
+                            }
+                        }
+
+                        // Observe for search button appearing later (SPA navigation)
+                        const observer = new MutationObserver(() => {
+                            const searchButton = document.querySelector('.headerSearchButton');
+                            if (searchButton && searchButton.style.display !== 'none') {
+                                searchButton.style.display = 'none';
+                            }
+                        });
+                        observer.observe(document.body, { childList: true, subtree: true });
+
+                        // Hide during video playback and on login page
+                        setInterval(() => {
+                            try {
+                                const videoPlayer = document.querySelector('.videoPlayerContainer');
+                                const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+                                const isLoginPage = self.isOnLoginPage();
+
+                                if (isVideoPlaying || isLoginPage) {
+                                    btn.classList.add('hidden');
+                                } else {
+                                    btn.classList.remove('hidden');
+                                }
+                            } catch (err) {
+                                // Silently fail
+                            }
+                        }, 1000);
+
+                    } catch (err) {
+                        console.error('Error creating media management button:', err);
+                    }
+                };
+
+                // Try to create after a delay (same timing as Latest Media button)
+                setTimeout(checkConfigAndCreate, 1700);
+
+                // Also try on page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && !document.getElementById('mediaManagementBtn')) {
+                        setTimeout(checkConfigAndCreate, 500);
                     }
                 });
-            };
 
-            // Start after a delay to let page load
-            setTimeout(startInit, 2000);
-
-            // Also retry on route changes
-            setInterval(() => {
-                if (configChecked && featureEnabled && isAdminUser && !document.getElementById('mediaManagementBtn')) {
-                    createMediaButton();
-                }
-            }, 2000);
+            } catch (err) {
+                console.error('Error initializing media management button:', err);
+            }
         },
 
         /**
