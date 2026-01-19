@@ -2835,19 +2835,22 @@
                     background: #666;
                 }
 
-                /* Leaving Badge Styles */
-                .card-leaving-badge {
-                    position: absolute !important;
-                    bottom: 0 !important;
-                    left: 0 !important;
-                    right: 0 !important;
-                    background: linear-gradient(to top, rgba(231, 76, 60, 0.95), rgba(231, 76, 60, 0.8)) !important;
-                    color: #fff !important;
-                    font-size: 11px !important;
-                    font-weight: 600 !important;
-                    text-align: center !important;
-                    padding: 4px 6px !important;
-                    z-index: 10 !important;
+                /* Leaving Badge on Cards - uses ::before to not conflict with rating ::after */
+                .cardImageContainer.has-leaving::before,
+                .cardContent.has-leaving::before,
+                .card-imageContainer.has-leaving::before {
+                    content: attr(data-leaving);
+                    position: absolute;
+                    bottom: 5px;
+                    left: 5px;
+                    background: rgba(231, 76, 60, 0.95);
+                    color: #fff;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.75em;
+                    z-index: 1000;
+                    pointer-events: none;
+                    font-weight: 600;
                 }
 
                 .detail-leaving-badge {
@@ -2858,7 +2861,7 @@
                     font-weight: 600 !important;
                     padding: 4px 10px !important;
                     border-radius: 4px !important;
-                    margin: 10px 0 !important;
+                    margin-right: 10px !important;
                 }
 
                 /* Media Management responsive */
@@ -5162,7 +5165,7 @@
         },
 
         /**
-         * Update deletion badges on cards
+         * Update deletion badges on cards (uses CSS ::before like rating badges)
          */
         updateDeletionBadges: function () {
             const self = this;
@@ -5178,7 +5181,7 @@
             };
 
             // Find all media cards
-            const cards = document.querySelectorAll('.card, [data-id]');
+            const cards = document.querySelectorAll('.card:not(.card .card)');
 
             cards.forEach(card => {
                 // Try to get item ID from card
@@ -5194,27 +5197,21 @@
 
                 if (!itemId) return;
 
+                // Find the image container (same as rating badges)
+                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
+                if (!imageContainer) return;
+
                 // Check if this item has scheduled deletion
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
-                const existingBadge = card.querySelector('.card-leaving-badge');
 
                 if (deletion) {
-                    // Add or update badge
-                    if (!existingBadge) {
-                        const cardBox = card.querySelector('.cardBox, .cardContent') || card;
-                        cardBox.style.position = 'relative';
-                        const badge = document.createElement('div');
-                        badge.className = 'card-leaving-badge';
-                        badge.textContent = formatDaysUntil(deletion.DeleteAt);
-                        cardBox.appendChild(badge);
-                    } else {
-                        existingBadge.textContent = formatDaysUntil(deletion.DeleteAt);
-                    }
+                    // Add class and data attribute (CSS handles the display)
+                    imageContainer.classList.add('has-leaving');
+                    imageContainer.setAttribute('data-leaving', formatDaysUntil(deletion.DeleteAt));
                 } else {
-                    // Remove badge if it exists
-                    if (existingBadge) {
-                        existingBadge.remove();
-                    }
+                    // Remove if no longer scheduled
+                    imageContainer.classList.remove('has-leaving');
+                    imageContainer.removeAttribute('data-leaving');
                 }
             });
 
@@ -5223,7 +5220,7 @@
         },
 
         /**
-         * Update badge on detail page
+         * Update badge on detail page - only ONE badge before play button
          */
         updateDetailPageBadge: function () {
             const self = this;
@@ -5235,8 +5232,14 @@
             const itemId = match[1].toLowerCase();
             const deletion = self.scheduledDeletionsCache[itemId];
 
-            // Remove ALL existing badges first to prevent duplicates
+            // Remove ALL existing detail badges to prevent duplicates
             document.querySelectorAll('.detail-leaving-badge').forEach(b => b.remove());
+
+            // Also remove any card-style leaving badges from detail page elements
+            document.querySelectorAll('.detailPagePrimaryContainer .has-leaving, .itemDetailPage .has-leaving').forEach(el => {
+                el.classList.remove('has-leaving');
+                el.removeAttribute('data-leaving');
+            });
 
             if (deletion) {
                 const formatDaysUntil = (deleteAt) => {
@@ -5248,14 +5251,14 @@
                     return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
                 };
 
-                // Find the main buttons area (near play button) - this is the correct location
-                const mainDetailButtons = document.querySelector('.mainDetailButtons, .detailButtons');
-                if (mainDetailButtons) {
-                    const badge = document.createElement('div');
+                // Find the play button specifically
+                const playButton = document.querySelector('.mainDetailButtons .btnPlay, .detailButtons .btnPlay, button[data-action="resume"], button[data-action="play"]');
+                if (playButton && playButton.parentNode) {
+                    const badge = document.createElement('span');
                     badge.className = 'detail-leaving-badge';
                     badge.textContent = formatDaysUntil(deletion.DeleteAt);
-                    // Insert before the buttons
-                    mainDetailButtons.parentNode.insertBefore(badge, mainDetailButtons);
+                    // Insert before the play button
+                    playButton.parentNode.insertBefore(badge, playButton);
                 }
             }
         },
