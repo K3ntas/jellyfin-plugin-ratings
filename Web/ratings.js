@@ -4622,7 +4622,7 @@
                             }
                             // Check if admin
                             console.log('RatingsPlugin: Media Management - checking admin status...');
-                            self.isAdmin().then(isAdmin => {
+                            self.checkIfAdmin().then(isAdmin => {
                                 console.log('RatingsPlugin: Media Management - isAdmin:', isAdmin);
                                 if (isAdmin) {
                                     createMediaManagementButton();
@@ -4632,7 +4632,7 @@
                         .catch((err) => {
                             console.log('RatingsPlugin: Media Management - config fetch error:', err);
                             // Default to checking admin status
-                            self.isAdmin().then(isAdmin => {
+                            self.checkIfAdmin().then(isAdmin => {
                                 if (isAdmin) {
                                     createMediaManagementButton();
                                 }
