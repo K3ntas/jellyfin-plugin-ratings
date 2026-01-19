@@ -278,7 +278,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.192.0 (Current)
+### 1.0.193.0 (Current)
+- **Fixed Media button injection** - now properly finds and injects into Jellyfin's mainDrawer sidebar
+- Uses correct selectors to find Dashboard link and insert Media button after it
+- Improved MutationObserver for reliable injection on SPA navigation
+
+### 1.0.192.0
 - **Media button moved to Dashboard sidebar** - appears in Server section when viewing admin Dashboard
 - More intuitive location for admin features
 

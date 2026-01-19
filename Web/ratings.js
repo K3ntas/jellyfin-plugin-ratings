@@ -4593,143 +4593,123 @@
          */
         initMediaManagementButtonWithRetry: function () {
             const self = this;
-            let attempts = 0;
-            const maxAttempts = 20;
+            let configChecked = false;
+            let isAdminUser = false;
+            let featureEnabled = false;
 
-            const tryInit = () => {
-                attempts++;
-                try {
-                    if (document.getElementById('mediaManagementMenuItem')) {
-                        return;
-                    }
+            const checkConfigAndAdmin = () => {
+                if (!window.ApiClient) return Promise.resolve(false);
 
-                    if (!window.ApiClient) {
-                        if (attempts < maxAttempts) {
-                            setTimeout(tryInit, 1000);
-                        }
-                        return;
-                    }
-
-                    // Check config and admin status
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.EnableMediaManagement === true) {
-                                // Check if user is admin
-                                self.isAdmin().then(isAdmin => {
-                                    if (isAdmin) {
-                                        self.initMediaManagementButton();
-                                    }
-                                });
-                            }
-                        })
-                        .catch(() => {});
-                } catch (err) {
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryInit, 1000);
-                    }
-                }
+                return fetch(`${ApiClient.serverAddress()}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                    .then(response => response.json())
+                    .then(config => {
+                        featureEnabled = config.EnableMediaManagement === true;
+                        return self.isAdmin();
+                    })
+                    .then(admin => {
+                        isAdminUser = admin;
+                        configChecked = true;
+                        return featureEnabled && isAdminUser;
+                    })
+                    .catch(() => false);
             };
 
-            // Try on page changes for dashboard
-            setInterval(() => {
-                const isDashboard = window.location.href.includes('#/dashboard') ||
-                                   window.location.href.includes('#!/dashboard');
-                if (isDashboard && !document.getElementById('mediaManagementMenuItem')) {
-                    tryInit();
-                }
-            }, 1000);
+            const tryInjectMenuItem = () => {
+                if (document.getElementById('mediaManagementMenuItem')) return;
+                if (!configChecked) return;
+                if (!featureEnabled || !isAdminUser) return;
 
-            setTimeout(tryInit, 2000);
+                // Find the main drawer - Jellyfin's sidebar container
+                const mainDrawer = document.querySelector('.mainDrawer');
+                if (!mainDrawer) return;
+
+                const scrollContainer = mainDrawer.querySelector('.scrollContainer') || mainDrawer;
+
+                // Find Dashboard link by class or href - this is in the Server section
+                let dashboardLink = scrollContainer.querySelector('.lnkManageServer');
+                if (!dashboardLink) {
+                    dashboardLink = scrollContainer.querySelector('a[href*="#/dashboard"]');
+                }
+                if (!dashboardLink) {
+                    // Try finding by text content
+                    scrollContainer.querySelectorAll('.navMenuOption').forEach(item => {
+                        const text = (item.textContent || '').trim().toLowerCase();
+                        if (text === 'dashboard') {
+                            dashboardLink = item;
+                        }
+                    });
+                }
+
+                if (!dashboardLink) return;
+
+                // Create the Media menu item using Jellyfin's own structure
+                const menuItem = document.createElement('a');
+                menuItem.id = 'mediaManagementMenuItem';
+                menuItem.href = '#';
+                menuItem.setAttribute('is', 'emby-linkbutton');
+                menuItem.className = 'navMenuOption lnkMediaFolder';
+                menuItem.innerHTML = `
+                    <span class="material-icons navMenuOptionIcon">folder_special</span>
+                    <span class="navMenuOptionText">${self.t('mediaManagement')}</span>
+                `;
+
+                // Insert after Dashboard link
+                if (dashboardLink.nextSibling) {
+                    dashboardLink.parentNode.insertBefore(menuItem, dashboardLink.nextSibling);
+                } else {
+                    dashboardLink.parentNode.appendChild(menuItem);
+                }
+
+                // Click handler to open modal
+                menuItem.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.openMediaManagementModal();
+                });
+            };
+
+            // Use MutationObserver to watch for drawer content changes
+            const observer = new MutationObserver((mutations) => {
+                tryInjectMenuItem();
+            });
+
+            // Initial check
+            const startObserving = () => {
+                checkConfigAndAdmin().then(shouldShow => {
+                    if (shouldShow) {
+                        // Create modal/dialog elements first
+                        self.initMediaManagementButton();
+
+                        tryInjectMenuItem();
+
+                        // Observe body for drawer changes
+                        observer.observe(document.body, {
+                            childList: true,
+                            subtree: true
+                        });
+                    }
+                });
+            };
+
+            // Start after a delay to let page load
+            setTimeout(startObserving, 2000);
+
+            // Also retry on route changes (Jellyfin rebuilds the drawer)
+            setInterval(() => {
+                if (configChecked && featureEnabled && isAdminUser) {
+                    tryInjectMenuItem();
+                }
+            }, 2000);
         },
 
         /**
-         * Initialize Media Management Button in Dashboard Sidebar
+         * Initialize Media Management Button - creates modal and dialog elements
          */
         initMediaManagementButton: function () {
             const self = this;
-            try {
-                if (document.getElementById('mediaManagementMenuItem')) {
-                    return;
-                }
 
-                // Find the dashboard sidebar - look for the Server section
-                const findAndInjectMenuItem = () => {
-                    // Look for sidebar menu items
-                    const sidebarItems = document.querySelectorAll('.mainDrawer-scrollContainer .navMenuOption, .dashboardDocument .listItem, .adminDrawerContent .listItem');
-
-                    // Find "Dashboard" menu item to insert after Server section header
-                    let serverSection = null;
-                    let dashboardItem = null;
-
-                    // Method 1: Find by looking for Dashboard text
-                    document.querySelectorAll('a[href*="dashboard"], .navMenuOption').forEach(item => {
-                        const text = item.textContent || item.innerText;
-                        if (text && text.trim() === 'Dashboard') {
-                            dashboardItem = item;
-                        }
-                    });
-
-                    // Method 2: Look for sidebarLinks container in dashboard
-                    const sidebarLinks = document.querySelector('.sidebarLinks, .dashboardDrawer .scrollContainer, .adminDrawerContent');
-
-                    if (!sidebarLinks && !dashboardItem) {
-                        return false;
-                    }
-
-                    // Create the menu item
-                    const menuItem = document.createElement('a');
-                    menuItem.id = 'mediaManagementMenuItem';
-                    menuItem.href = '#';
-                    menuItem.className = 'navMenuOption lnkMediaSegment';
-                    menuItem.style.cssText = 'display: flex; align-items: center; padding: 10px 20px; color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;';
-                    menuItem.innerHTML = `
-                        <span class="material-icons navMenuOptionIcon" style="margin-right: 16px; font-size: 24px;">folder</span>
-                        <span class="navMenuOptionText">${self.t('mediaManagement')}</span>
-                    `;
-
-                    // Try to insert in the right place
-                    if (dashboardItem && dashboardItem.parentNode) {
-                        // Insert after Dashboard item
-                        const parent = dashboardItem.parentNode;
-                        if (dashboardItem.nextSibling) {
-                            parent.insertBefore(menuItem, dashboardItem.nextSibling);
-                        } else {
-                            parent.appendChild(menuItem);
-                        }
-                    } else if (sidebarLinks) {
-                        // Append to sidebar
-                        const firstChild = sidebarLinks.querySelector('a, .navMenuOption');
-                        if (firstChild && firstChild.nextSibling) {
-                            sidebarLinks.insertBefore(menuItem, firstChild.nextSibling);
-                        } else {
-                            sidebarLinks.insertBefore(menuItem, sidebarLinks.firstChild);
-                        }
-                    } else {
-                        return false;
-                    }
-
-                    // Hover effect
-                    menuItem.addEventListener('mouseenter', () => {
-                        menuItem.style.background = 'rgba(255,255,255,0.1)';
-                    });
-                    menuItem.addEventListener('mouseleave', () => {
-                        menuItem.style.background = 'transparent';
-                    });
-
-                    // Click handler
-                    menuItem.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        self.openMediaManagementModal();
-                    });
-
-                    return true;
-                };
-
-                // Create modal if not exists
-                if (!document.getElementById('mediaManagementModal')) {
+            // Create modal if not exists
+            if (!document.getElementById('mediaManagementModal')) {
                     const modal = document.createElement('div');
                     modal.id = 'mediaManagementModal';
                     modal.innerHTML = `
@@ -4822,26 +4802,6 @@
                         deletionDialog.classList.remove('show');
                     });
                 }
-
-                // Try to inject menu item
-                if (!findAndInjectMenuItem()) {
-                    // Retry with observer
-                    const observer = new MutationObserver(() => {
-                        if (!document.getElementById('mediaManagementMenuItem')) {
-                            if (findAndInjectMenuItem()) {
-                                observer.disconnect();
-                            }
-                        }
-                    });
-                    observer.observe(document.body, { childList: true, subtree: true });
-
-                    // Stop observing after 30 seconds
-                    setTimeout(() => observer.disconnect(), 30000);
-                }
-
-            } catch (err) {
-                console.error('Media management button initialization failed:', err);
-            }
         },
 
         /**
