@@ -264,7 +264,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.189.0 (Current)
+### 1.0.190.0 (Current)
+- Latest Media: Removed IMDB IDs from titles (e.g., `[imdbid-tt1234567]`)
+- Latest Media: Added "time ago" indicator showing when media was added
+- Latest Media: Fixed header background to be solid (not transparent)
+
+### 1.0.189.0
 - Added Latest Media button that replaces Sync Play button in header
 - Shows dropdown with 50 most recently added movies and series
 - Compact list with thumbnail, title, year, and type badge (Movie/Series/Anime)
