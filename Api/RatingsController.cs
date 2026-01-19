@@ -463,6 +463,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
                     ShowLatestMediaButton = config?.ShowLatestMediaButton ?? true,
 
+                    // Media management settings
+                    EnableMediaManagement = config?.EnableMediaManagement ?? true,
+                    DefaultDeletionDelayDays = config?.DefaultDeletionDelayDays ?? 7,
+
                     // Request system settings
                     EnableAdminRequests = config?.EnableAdminRequests ?? false,
                     AutoDeleteRejectedDays = config?.AutoDeleteRejectedDays ?? 0,
@@ -1409,6 +1413,382 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting request count");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // Media Management Endpoints
+
+        /// <summary>
+        /// Gets all media items with statistics (admin only).
+        /// </summary>
+        /// <param name="search">Optional search term for title.</param>
+        /// <param name="type">Optional filter by type (Movie, Series).</param>
+        /// <param name="sortBy">Sort field (title, year, playCount, watchTime, size, rating, dateAdded).</param>
+        /// <param name="sortOrder">Sort order (asc, desc).</param>
+        /// <param name="page">Page number (1-based).</param>
+        /// <param name="pageSize">Items per page (default 50).</param>
+        /// <returns>Paginated list of media items with stats.</returns>
+        [HttpGet("Media")]
+        public ActionResult<object> GetMediaItems(
+            [FromQuery] string? search = null,
+            [FromQuery] string? type = null,
+            [FromQuery] string sortBy = "dateAdded",
+            [FromQuery] string sortOrder = "desc",
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Admin check - we rely on client-side check like other endpoints
+                // The user ID is already validated above
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // Check if media management is enabled
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableMediaManagement != true)
+                {
+                    return BadRequest("Media management is disabled");
+                }
+
+                // Build query for media items
+                var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                    Recursive = true
+                };
+
+                // Apply type filter
+                if (!string.IsNullOrEmpty(type))
+                {
+                    if (type.Equals("Movie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie };
+                    }
+                    else if (type.Equals("Series", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Series };
+                    }
+                }
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query.SearchTerm = search;
+                }
+
+                var allItems = _libraryManager.GetItemList(query);
+
+                // Get scheduled deletions for badge info
+                var scheduledDeletions = _repository.GetAllScheduledDeletions()
+                    .ToDictionary(d => d.ItemId);
+
+                // Build stats for each item
+                var mediaStats = allItems.Select(item =>
+                {
+                    var ratingStats = _repository.GetRatingStats(item.Id);
+
+                    // Get file size - for movies it's the item size, for series we'd need to sum episodes
+                    long fileSize = 0;
+                    if (item is MediaBrowser.Controller.Entities.Movies.Movie movie)
+                    {
+                        var mediaStreams = movie.GetMediaSources(false);
+                        if (mediaStreams != null && mediaStreams.Count > 0)
+                        {
+                            fileSize = mediaStreams[0].Size ?? 0;
+                        }
+                    }
+
+                    // Build image URL
+                    string? imageUrl = null;
+                    if (item.ImageInfos != null && item.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
+                    {
+                        imageUrl = $"/Items/{item.Id}/Images/Primary";
+                    }
+
+                    // Get scheduled deletion if any
+                    scheduledDeletions.TryGetValue(item.Id, out var deletion);
+
+                    return new MediaItemStats
+                    {
+                        ItemId = item.Id,
+                        Title = item.Name,
+                        Year = item.ProductionYear,
+                        Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series",
+                        ImageUrl = imageUrl ?? string.Empty,
+                        PlayCount = 0, // PlayCount not available on BaseItem, will be retrieved from user data
+                        TotalWatchTimeMinutes = (long)(item.RunTimeTicks.HasValue ? TimeSpan.FromTicks(item.RunTimeTicks.Value).TotalMinutes : 0),
+                        FileSizeBytes = fileSize,
+                        AverageRating = ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
+                        RatingCount = ratingStats.TotalRatings,
+                        DateAdded = item.DateCreated,
+                        ScheduledDeletion = deletion
+                    };
+                }).ToList();
+
+                // Apply sorting
+                mediaStats = sortBy.ToLower() switch
+                {
+                    "title" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.Title).ToList()
+                        : mediaStats.OrderByDescending(m => m.Title).ToList(),
+                    "year" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.Year ?? 0).ToList()
+                        : mediaStats.OrderByDescending(m => m.Year ?? 0).ToList(),
+                    "playcount" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.PlayCount).ToList()
+                        : mediaStats.OrderByDescending(m => m.PlayCount).ToList(),
+                    "watchtime" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.TotalWatchTimeMinutes).ToList()
+                        : mediaStats.OrderByDescending(m => m.TotalWatchTimeMinutes).ToList(),
+                    "size" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.FileSizeBytes).ToList()
+                        : mediaStats.OrderByDescending(m => m.FileSizeBytes).ToList(),
+                    "rating" => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.AverageRating ?? 0).ToList()
+                        : mediaStats.OrderByDescending(m => m.AverageRating ?? 0).ToList(),
+                    _ => sortOrder.ToLower() == "asc"
+                        ? mediaStats.OrderBy(m => m.DateAdded).ToList()
+                        : mediaStats.OrderByDescending(m => m.DateAdded).ToList()
+                };
+
+                // Apply pagination
+                var totalItems = mediaStats.Count;
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var pagedItems = mediaStats.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                return Ok(new
+                {
+                    Items = pagedItems,
+                    TotalItems = totalItems,
+                    TotalPages = totalPages,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting media items");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Schedules a media item for deletion (admin only).
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <param name="delayDays">Number of days until deletion.</param>
+        /// <returns>The scheduled deletion.</returns>
+        [HttpPost("Media/{itemId}/ScheduleDeletion")]
+        public ActionResult<ScheduledDeletion> ScheduleDeletion(
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] int? delayDays = null)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Admin check - we rely on client-side check like other endpoints
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // Check if media management is enabled
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableMediaManagement != true)
+                {
+                    return BadRequest("Media management is disabled");
+                }
+
+                // Verify item exists
+                var item = _libraryManager.GetItemById(itemId);
+                if (item == null)
+                {
+                    return NotFound($"Item {itemId} not found");
+                }
+
+                // Use configured default if not specified
+                var actualDelayDays = delayDays ?? config?.DefaultDeletionDelayDays ?? 7;
+                if (actualDelayDays < 1)
+                {
+                    return BadRequest("Delay must be at least 1 day");
+                }
+
+                var deletion = new ScheduledDeletion
+                {
+                    ItemId = itemId,
+                    ItemTitle = item.Name,
+                    ItemType = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series",
+                    ScheduledByUserId = userId,
+                    ScheduledByUsername = user.Username,
+                    ScheduledAt = DateTime.UtcNow,
+                    DeleteAt = DateTime.UtcNow.AddDays(actualDelayDays)
+                };
+
+                var result = _repository.ScheduleDeletionAsync(deletion).Result;
+                _logger.LogInformation("Admin {UserId} scheduled deletion for item {ItemId} ({Title}) in {Days} days",
+                    userId, itemId, item.Name, actualDelayDays);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error scheduling deletion for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Cancels a scheduled deletion (admin only).
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Media/{itemId}/ScheduleDeletion")]
+        public ActionResult CancelScheduledDeletion([FromRoute] [Required] Guid itemId)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Admin check - we rely on client-side check like other endpoints
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var cancelled = _repository.CancelDeletionAsync(itemId).Result;
+                if (!cancelled)
+                {
+                    return NotFound("No scheduled deletion found for this item");
+                }
+
+                _logger.LogInformation("Admin {UserId} cancelled scheduled deletion for item {ItemId}", userId, itemId);
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling scheduled deletion for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets all active scheduled deletions (for displaying badges to all users).
+        /// </summary>
+        /// <returns>List of scheduled deletions.</returns>
+        [HttpGet("ScheduledDeletions")]
+        [AllowAnonymous]
+        public ActionResult<List<ScheduledDeletion>> GetScheduledDeletions()
+        {
+            try
+            {
+                // Check if media management is enabled
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableMediaManagement != true)
+                {
+                    return Ok(new List<ScheduledDeletion>());
+                }
+
+                var deletions = _repository.GetAllScheduledDeletions();
+                return Ok(deletions);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting scheduled deletions");
                 return StatusCode(500, "Internal server error");
             }
         }

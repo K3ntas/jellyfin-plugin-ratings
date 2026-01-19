@@ -278,7 +278,17 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.190.0 (Current)
+### 1.0.191.0 (Current)
+- **Admin Media Management**: New "Media" button in header for admins
+- Full library view with stats (title, year, rating, file size)
+- Search, filter by type, and sort by multiple fields
+- **Scheduled Deletion**: Schedule media to be deleted after X days
+- **"Leaving in X days" badges**: Visible to ALL users on cards and detail pages
+- Auto-delete via background service (checks hourly)
+- Admin can cancel scheduled deletions
+- Multi-language support (EN/LT)
+
+### 1.0.190.0
 - Latest Media: Removed IMDB IDs from titles (e.g., `[imdbid-tt1234567]`)
 - Latest Media: Added "time ago" indicator showing when media was added
 - Latest Media: Fixed header background to be solid (not transparent)
