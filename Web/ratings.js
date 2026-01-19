@@ -77,7 +77,43 @@
                 timeJustNow: 'just now',
                 timeMinutes: 'min',
                 timeHours: 'h',
-                timeDays: 'd'
+                timeDays: 'd',
+                // Media Management translations
+                mediaManagement: 'Media',
+                mediaManagementTitle: 'Media Management',
+                mediaSearch: 'Search...',
+                mediaTypeAll: 'All Types',
+                mediaTypeMovie: 'Movies',
+                mediaTypeSeries: 'Series',
+                mediaSortBy: 'Sort by',
+                mediaSortTitle: 'Title',
+                mediaSortYear: 'Year',
+                mediaSortRating: 'Rating',
+                mediaSortDateAdded: 'Date Added',
+                mediaSortPlayCount: 'Plays',
+                mediaSortWatchTime: 'Watch Time',
+                mediaSortSize: 'Size',
+                mediaLoading: 'Loading media...',
+                mediaNoResults: 'No media found',
+                mediaError: 'Error loading media',
+                mediaScheduleDelete: 'Schedule Delete',
+                mediaCancelDelete: 'Cancel Deletion',
+                mediaDeleteIn: 'Delete in',
+                mediaLeavingIn: 'Leaving in',
+                media1Day: '1 Day',
+                media3Days: '3 Days',
+                media1Week: '1 Week',
+                media2Weeks: '2 Weeks',
+                mediaCustom: 'Custom...',
+                mediaDays: 'days',
+                mediaPlays: 'plays',
+                mediaMinutes: 'min',
+                mediaGB: 'GB',
+                mediaMB: 'MB',
+                mediaPage: 'Page',
+                mediaOf: 'of',
+                mediaPrev: 'Prev',
+                mediaNext: 'Next'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -144,7 +180,43 @@
                 timeJustNow: 'ką tik',
                 timeMinutes: 'min',
                 timeHours: 'val',
-                timeDays: 'd'
+                timeDays: 'd',
+                // Media Management translations
+                mediaManagement: 'Medija',
+                mediaManagementTitle: 'Medijos Valdymas',
+                mediaSearch: 'Ieškoti...',
+                mediaTypeAll: 'Visi Tipai',
+                mediaTypeMovie: 'Filmai',
+                mediaTypeSeries: 'Serialai',
+                mediaSortBy: 'Rūšiuoti pagal',
+                mediaSortTitle: 'Pavadinimas',
+                mediaSortYear: 'Metai',
+                mediaSortRating: 'Reitingas',
+                mediaSortDateAdded: 'Pridėjimo data',
+                mediaSortPlayCount: 'Peržiūros',
+                mediaSortWatchTime: 'Žiūrėjimo laikas',
+                mediaSortSize: 'Dydis',
+                mediaLoading: 'Kraunama medija...',
+                mediaNoResults: 'Medija nerasta',
+                mediaError: 'Klaida kraunant mediją',
+                mediaScheduleDelete: 'Planuoti Ištrynimą',
+                mediaCancelDelete: 'Atšaukti Ištrynimą',
+                mediaDeleteIn: 'Ištrinti po',
+                mediaLeavingIn: 'Išeina po',
+                media1Day: '1 Diena',
+                media3Days: '3 Dienos',
+                media1Week: '1 Savaitė',
+                media2Weeks: '2 Savaitės',
+                mediaCustom: 'Pasirinkti...',
+                mediaDays: 'dienų',
+                mediaPlays: 'peržiūrų',
+                mediaMinutes: 'min',
+                mediaGB: 'GB',
+                mediaMB: 'MB',
+                mediaPage: 'Puslapis',
+                mediaOf: 'iš',
+                mediaPrev: 'Ankstesnis',
+                mediaNext: 'Kitas'
             }
         },
 
@@ -203,6 +275,12 @@
 
             // Initialize new media notifications
             this.initNotifications();
+
+            // Initialize media management button (admin only)
+            this.initMediaManagementButtonWithRetry();
+
+            // Initialize deletion badges (for all users)
+            this.initDeletionBadges();
         },
 
         /**
@@ -2418,6 +2496,397 @@
                         font-size: 11px !important;
                     }
                 }
+
+                /* Media Management Button Styles */
+                #mediaManagementBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: rgba(255, 255, 255, 0.8) !important;
+                    padding: 0 !important;
+                    margin: 0 4px !important;
+                    width: 42px !important;
+                    height: 42px !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    transition: color 0.2s ease !important;
+                    position: relative !important;
+                }
+
+                #mediaManagementBtn:hover {
+                    color: #fff !important;
+                }
+
+                #mediaManagementBtn.hidden {
+                    display: none !important;
+                }
+
+                #mediaManagementBtn svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
+                }
+
+                /* Media Management Modal Styles */
+                #mediaManagementModal {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.85);
+                    z-index: 999999;
+                    overflow: auto;
+                }
+
+                #mediaManagementModal.show {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: center;
+                    padding: 20px;
+                }
+
+                #mediaManagementModalContent {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    width: 100%;
+                    max-width: 1200px;
+                    max-height: 90vh;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                    margin-top: 20px;
+                }
+
+                #mediaManagementModalClose {
+                    position: absolute;
+                    top: 10px;
+                    right: 15px;
+                    background: transparent;
+                    border: none;
+                    color: #fff;
+                    font-size: 28px;
+                    cursor: pointer;
+                    z-index: 10;
+                    opacity: 0.7;
+                    transition: opacity 0.2s;
+                }
+
+                #mediaManagementModalClose:hover {
+                    opacity: 1;
+                }
+
+                #mediaManagementModalTitle {
+                    font-size: 20px;
+                    font-weight: 600;
+                    padding: 15px 20px;
+                    border-bottom: 1px solid #333;
+                    color: #fff;
+                }
+
+                #mediaManagementControls {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    padding: 15px 20px;
+                    background: #222;
+                    align-items: center;
+                }
+
+                #mediaManagementControls input,
+                #mediaManagementControls select {
+                    padding: 8px 12px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #333;
+                    color: #fff;
+                    font-size: 13px;
+                }
+
+                #mediaManagementControls input:focus,
+                #mediaManagementControls select:focus {
+                    outline: none;
+                    border-color: #52b4e5;
+                }
+
+                #mediaSearchInput {
+                    flex: 1;
+                    min-width: 200px;
+                }
+
+                #mediaManagementBody {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 0;
+                }
+
+                .media-list-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                .media-list-table th {
+                    background: #282828;
+                    color: #aaa;
+                    font-size: 12px;
+                    font-weight: 500;
+                    text-align: left;
+                    padding: 10px 12px;
+                    position: sticky;
+                    top: 0;
+                    z-index: 5;
+                }
+
+                .media-list-table td {
+                    padding: 8px 12px;
+                    border-bottom: 1px solid #333;
+                    color: #ddd;
+                    font-size: 13px;
+                }
+
+                .media-list-table tr:hover td {
+                    background: #282828;
+                }
+
+                .media-item-image {
+                    width: 40px;
+                    height: 60px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    background: #333;
+                }
+
+                .media-item-title {
+                    font-weight: 500;
+                    color: #fff;
+                }
+
+                .media-item-title a {
+                    color: #52b4e5;
+                    text-decoration: none;
+                }
+
+                .media-item-title a:hover {
+                    text-decoration: underline;
+                }
+
+                .media-item-type {
+                    font-size: 10px;
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    background: #2c3e50;
+                    color: #fff;
+                    display: inline-block;
+                    margin-top: 4px;
+                }
+
+                .media-item-type.movie {
+                    background: #2980b9;
+                }
+
+                .media-item-type.series {
+                    background: #27ae60;
+                }
+
+                .media-item-rating {
+                    color: #f1c40f;
+                }
+
+                .media-item-scheduled {
+                    color: #e74c3c;
+                    font-size: 11px;
+                    font-weight: 500;
+                }
+
+                .media-actions {
+                    display: flex;
+                    gap: 6px;
+                }
+
+                .media-action-btn {
+                    padding: 6px 10px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    transition: all 0.2s;
+                }
+
+                .media-action-btn.delete {
+                    background: #e74c3c;
+                    color: #fff;
+                }
+
+                .media-action-btn.delete:hover {
+                    background: #c0392b;
+                }
+
+                .media-action-btn.cancel {
+                    background: #3498db;
+                    color: #fff;
+                }
+
+                .media-action-btn.cancel:hover {
+                    background: #2980b9;
+                }
+
+                #mediaManagementPagination {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 15px;
+                    background: #222;
+                    border-top: 1px solid #333;
+                }
+
+                #mediaManagementPagination button {
+                    padding: 6px 12px;
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                    background: #333;
+                    color: #fff;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+
+                #mediaManagementPagination button:hover:not(:disabled) {
+                    background: #444;
+                }
+
+                #mediaManagementPagination button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                #mediaManagementPagination span {
+                    color: #aaa;
+                    font-size: 13px;
+                }
+
+                /* Deletion Dialog */
+                #deletionDialog {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 9999999;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #deletionDialog.show {
+                    display: flex;
+                }
+
+                #deletionDialogContent {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 20px;
+                    max-width: 400px;
+                    width: 90%;
+                }
+
+                #deletionDialogTitle {
+                    font-size: 16px;
+                    font-weight: 600;
+                    margin-bottom: 15px;
+                    color: #fff;
+                }
+
+                #deletionDialogOptions {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+
+                #deletionDialogOptions button {
+                    flex: 1;
+                    min-width: 80px;
+                    padding: 10px 15px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    transition: all 0.2s;
+                }
+
+                .deletion-option-btn {
+                    background: #e74c3c;
+                    color: #fff;
+                }
+
+                .deletion-option-btn:hover {
+                    background: #c0392b;
+                }
+
+                .deletion-cancel-btn {
+                    background: #555;
+                    color: #fff;
+                }
+
+                .deletion-cancel-btn:hover {
+                    background: #666;
+                }
+
+                /* Leaving Badge Styles */
+                .card-leaving-badge {
+                    position: absolute !important;
+                    bottom: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    background: linear-gradient(to top, rgba(231, 76, 60, 0.95), rgba(231, 76, 60, 0.8)) !important;
+                    color: #fff !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    text-align: center !important;
+                    padding: 4px 6px !important;
+                    z-index: 10 !important;
+                }
+
+                .detail-leaving-badge {
+                    display: inline-block !important;
+                    background: #e74c3c !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    padding: 4px 10px !important;
+                    border-radius: 4px !important;
+                    margin: 10px 0 !important;
+                }
+
+                /* Media Management responsive */
+                @media (max-width: 768px) {
+                    #mediaManagementModalContent {
+                        max-height: 95vh;
+                        margin-top: 10px;
+                    }
+
+                    #mediaManagementControls {
+                        flex-direction: column;
+                    }
+
+                    #mediaSearchInput {
+                        width: 100%;
+                    }
+
+                    .media-list-table th,
+                    .media-list-table td {
+                        padding: 6px 8px;
+                        font-size: 11px;
+                    }
+
+                    .media-item-image {
+                        width: 30px;
+                        height: 45px;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -4113,6 +4582,621 @@
                 console.error('Failed to load latest media:', err);
                 dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaError')}</div>`;
             });
+        },
+
+        // ===============================================
+        // Media Management Functions (Admin Only)
+        // ===============================================
+
+        /**
+         * Initialize media management button with retry logic for SPA navigation
+         */
+        initMediaManagementButtonWithRetry: function () {
+            const self = this;
+            let attempts = 0;
+            const maxAttempts = 10;
+
+            const tryInit = () => {
+                attempts++;
+                try {
+                    if (document.getElementById('mediaManagementBtn')) {
+                        return;
+                    }
+
+                    if (!window.ApiClient) {
+                        if (attempts < maxAttempts) {
+                            setTimeout(tryInit, 1000);
+                        }
+                        return;
+                    }
+
+                    // Check config and admin status
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.EnableMediaManagement === true) {
+                                // Check if user is admin
+                                self.isAdmin().then(isAdmin => {
+                                    if (isAdmin) {
+                                        self.initMediaManagementButton();
+                                    }
+                                });
+                            }
+                        })
+                        .catch(() => {});
+                } catch (err) {
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryInit, 1000);
+                    }
+                }
+            };
+
+            setTimeout(tryInit, 2000);
+        },
+
+        /**
+         * Initialize Media Management Button
+         */
+        initMediaManagementButton: function () {
+            const self = this;
+            try {
+                if (document.getElementById('mediaManagementBtn')) {
+                    return;
+                }
+
+                // Create button
+                const btn = document.createElement('button');
+                btn.id = 'mediaManagementBtn';
+                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                btn.setAttribute('type', 'button');
+                btn.setAttribute('title', self.t('mediaManagement'));
+                // Folder/media icon
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+
+                // Create modal
+                const modal = document.createElement('div');
+                modal.id = 'mediaManagementModal';
+                modal.innerHTML = `
+                    <div id="mediaManagementModalContent">
+                        <button id="mediaManagementModalClose" type="button">&times;</button>
+                        <div id="mediaManagementModalTitle">${self.t('mediaManagementTitle')}</div>
+                        <div id="mediaManagementControls">
+                            <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
+                            <select id="mediaTypeFilter">
+                                <option value="">${self.t('mediaTypeAll')}</option>
+                                <option value="Movie">${self.t('mediaTypeMovie')}</option>
+                                <option value="Series">${self.t('mediaTypeSeries')}</option>
+                            </select>
+                            <select id="mediaSortBy">
+                                <option value="dateAdded">${self.t('mediaSortDateAdded')}</option>
+                                <option value="title">${self.t('mediaSortTitle')}</option>
+                                <option value="year">${self.t('mediaSortYear')}</option>
+                                <option value="rating">${self.t('mediaSortRating')}</option>
+                                <option value="playCount">${self.t('mediaSortPlayCount')}</option>
+                                <option value="size">${self.t('mediaSortSize')}</option>
+                            </select>
+                            <select id="mediaSortOrder">
+                                <option value="desc">↓</option>
+                                <option value="asc">↑</option>
+                            </select>
+                        </div>
+                        <div id="mediaManagementBody">
+                            <p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>
+                        </div>
+                        <div id="mediaManagementPagination"></div>
+                    </div>
+                `;
+
+                // Create deletion dialog
+                const deletionDialog = document.createElement('div');
+                deletionDialog.id = 'deletionDialog';
+                deletionDialog.innerHTML = `
+                    <div id="deletionDialogContent">
+                        <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
+                        <div id="deletionDialogOptions">
+                            <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
+                            <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
+                            <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
+                            <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
+                            <button class="deletion-cancel-btn">${self.t('mediaCancelDelete').replace('Cancel ', '')}</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add to DOM - find header right section
+                const headerRight = document.querySelector('.headerRight');
+                if (headerRight) {
+                    // Insert before the first child or at the start
+                    headerRight.insertBefore(btn, headerRight.firstChild);
+                } else {
+                    const headerContainer = document.querySelector('.headerTabs, .skinHeader');
+                    if (headerContainer) {
+                        headerContainer.appendChild(btn);
+                    }
+                }
+                document.body.appendChild(modal);
+                document.body.appendChild(deletionDialog);
+
+                // Button click
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    modal.classList.add('show');
+                    self.loadMediaList();
+                });
+
+                // Close button
+                document.getElementById('mediaManagementModalClose').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    modal.classList.remove('show');
+                });
+
+                // Click outside to close
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+
+                // Filter/sort change handlers
+                let searchTimeout;
+                document.getElementById('mediaSearchInput').addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => self.loadMediaList(), 500);
+                });
+                document.getElementById('mediaTypeFilter').addEventListener('change', () => self.loadMediaList());
+                document.getElementById('mediaSortBy').addEventListener('change', () => self.loadMediaList());
+                document.getElementById('mediaSortOrder').addEventListener('change', () => self.loadMediaList());
+
+                // Deletion dialog option clicks
+                deletionDialog.querySelectorAll('.deletion-option-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const days = parseInt(btn.getAttribute('data-days'));
+                        const itemId = deletionDialog.getAttribute('data-item-id');
+                        if (itemId && days) {
+                            self.scheduleDeletion(itemId, days);
+                        }
+                        deletionDialog.classList.remove('show');
+                    });
+                });
+
+                deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
+                    deletionDialog.classList.remove('show');
+                });
+
+                // Hide during video playback
+                setInterval(() => {
+                    try {
+                        const videoPlayer = document.querySelector('.videoPlayerContainer');
+                        const isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+                        const isLoginPage = self.isOnLoginPage();
+                        if (isVideoPlaying || isLoginPage) {
+                            btn.classList.add('hidden');
+                        } else {
+                            btn.classList.remove('hidden');
+                        }
+                    } catch (err) {}
+                }, 1000);
+
+            } catch (err) {
+                console.error('Media management button initialization failed:', err);
+            }
+        },
+
+        /**
+         * Current media list state
+         */
+        mediaListState: {
+            page: 1,
+            totalPages: 1
+        },
+
+        /**
+         * Load media list from API
+         */
+        loadMediaList: function (page) {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            const pagination = document.getElementById('mediaManagementPagination');
+
+            if (!body) return;
+
+            const currentPage = page || 1;
+            const search = document.getElementById('mediaSearchInput')?.value || '';
+            const type = document.getElementById('mediaTypeFilter')?.value || '';
+            const sortBy = document.getElementById('mediaSortBy')?.value || 'dateAdded';
+            const sortOrder = document.getElementById('mediaSortOrder')?.value || 'desc';
+
+            body.innerHTML = `<p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>`;
+
+            const baseUrl = ApiClient.serverAddress();
+            const userId = ApiClient.getCurrentUserId();
+            const token = ApiClient.accessToken();
+
+            let url = `${baseUrl}/Ratings/Media?page=${currentPage}&pageSize=50&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (type) url += `&type=${encodeURIComponent(type)}`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load media');
+                return response.json();
+            })
+            .then(data => {
+                self.mediaListState.page = data.CurrentPage;
+                self.mediaListState.totalPages = data.TotalPages;
+                self.renderMediaTable(data.Items, body);
+                self.renderPagination(pagination, data);
+            })
+            .catch(err => {
+                console.error('Error loading media:', err);
+                body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+            });
+        },
+
+        /**
+         * Render media table
+         */
+        renderMediaTable: function (items, container) {
+            const self = this;
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaNoResults')}</p>`;
+                return;
+            }
+
+            const baseUrl = ApiClient.serverAddress();
+
+            // Format file size
+            const formatSize = (bytes) => {
+                if (!bytes || bytes === 0) return '-';
+                const gb = bytes / (1024 * 1024 * 1024);
+                if (gb >= 1) return gb.toFixed(1) + ' ' + self.t('mediaGB');
+                const mb = bytes / (1024 * 1024);
+                return mb.toFixed(0) + ' ' + self.t('mediaMB');
+            };
+
+            // Format days until deletion
+            const formatDaysUntil = (deleteAt) => {
+                const now = new Date();
+                const deleteDate = new Date(deleteAt);
+                const diffMs = deleteDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) return 'Today';
+                return diffDays + ' ' + self.t('mediaDays');
+            };
+
+            let html = `
+                <table class="media-list-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>${self.t('mediaSortTitle')}</th>
+                            <th>${self.t('mediaSortYear')}</th>
+                            <th>${self.t('mediaSortRating')}</th>
+                            <th>${self.t('mediaSortSize')}</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            items.forEach(item => {
+                const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
+                const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
+
+                html += `
+                    <tr>
+                        <td>
+                            ${imageUrl ? `<img src="${imageUrl}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
+                        </td>
+                        <td>
+                            <div class="media-item-title">
+                                <a href="#/details?id=${item.ItemId}">${item.Title}</a>
+                            </div>
+                            <span class="media-item-type ${item.Type.toLowerCase()}">${item.Type}</span>
+                        </td>
+                        <td>${item.Year || '-'}</td>
+                        <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
+                        <td>${formatSize(item.FileSizeBytes)}</td>
+                        <td>
+                            ${hasScheduledDeletion
+                                ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(item.ScheduledDeletion.DeleteAt)}</span>`
+                                : '-'}
+                        </td>
+                        <td class="media-actions">
+                            ${hasScheduledDeletion
+                                ? `<button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                                : `<button class="media-action-btn delete" data-item-id="${item.ItemId}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+
+            // Add action button handlers
+            container.querySelectorAll('.media-action-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const itemId = btn.getAttribute('data-item-id');
+                    const action = btn.getAttribute('data-action');
+                    if (action === 'delete') {
+                        self.showDeletionDialog(itemId);
+                    } else if (action === 'cancel') {
+                        self.cancelDeletion(itemId);
+                    }
+                });
+            });
+        },
+
+        /**
+         * Render pagination controls
+         */
+        renderPagination: function (container, data) {
+            const self = this;
+            if (!container) return;
+
+            const { CurrentPage, TotalPages, TotalItems } = data;
+
+            container.innerHTML = `
+                <button ${CurrentPage <= 1 ? 'disabled' : ''} data-page="${CurrentPage - 1}">${self.t('mediaPrev')}</button>
+                <span>${self.t('mediaPage')} ${CurrentPage} ${self.t('mediaOf')} ${TotalPages} (${TotalItems} items)</span>
+                <button ${CurrentPage >= TotalPages ? 'disabled' : ''} data-page="${CurrentPage + 1}">${self.t('mediaNext')}</button>
+            `;
+
+            container.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = parseInt(btn.getAttribute('data-page'));
+                    if (page >= 1 && page <= TotalPages) {
+                        self.loadMediaList(page);
+                    }
+                });
+            });
+        },
+
+        /**
+         * Show deletion dialog
+         */
+        showDeletionDialog: function (itemId) {
+            const dialog = document.getElementById('deletionDialog');
+            if (dialog) {
+                dialog.setAttribute('data-item-id', itemId);
+                dialog.classList.add('show');
+            }
+        },
+
+        /**
+         * Schedule deletion for an item
+         */
+        scheduleDeletion: function (itemId, delayDays) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion?delayDays=${delayDays}`, {
+                method: 'POST',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to schedule deletion');
+                return response.json();
+            })
+            .then(() => {
+                // Reload list and refresh badges
+                self.loadMediaList(self.mediaListState.page);
+                self.loadScheduledDeletions();
+            })
+            .catch(err => {
+                console.error('Error scheduling deletion:', err);
+                alert('Failed to schedule deletion');
+            });
+        },
+
+        /**
+         * Cancel scheduled deletion for an item
+         */
+        cancelDeletion: function (itemId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to cancel deletion');
+                return response.json();
+            })
+            .then(() => {
+                // Reload list and refresh badges
+                self.loadMediaList(self.mediaListState.page);
+                self.loadScheduledDeletions();
+            })
+            .catch(err => {
+                console.error('Error cancelling deletion:', err);
+                alert('Failed to cancel deletion');
+            });
+        },
+
+        // ===============================================
+        // Deletion Badges Functions (All Users)
+        // ===============================================
+
+        /**
+         * Cached scheduled deletions
+         */
+        scheduledDeletionsCache: {},
+
+        /**
+         * Initialize deletion badges system
+         */
+        initDeletionBadges: function () {
+            const self = this;
+
+            // Load scheduled deletions initially
+            setTimeout(() => {
+                self.loadScheduledDeletions();
+            }, 3000);
+
+            // Refresh every 5 minutes
+            setInterval(() => {
+                self.loadScheduledDeletions();
+            }, 5 * 60 * 1000);
+
+            // Update badges on page changes
+            setInterval(() => {
+                self.updateDeletionBadges();
+            }, 2000);
+        },
+
+        /**
+         * Load scheduled deletions from API
+         */
+        loadScheduledDeletions: function () {
+            const self = this;
+
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(deletions => {
+                // Build cache by itemId
+                self.scheduledDeletionsCache = {};
+                deletions.forEach(d => {
+                    self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                });
+                // Update badges immediately
+                self.updateDeletionBadges();
+            })
+            .catch(() => {});
+        },
+
+        /**
+         * Update deletion badges on cards
+         */
+        updateDeletionBadges: function () {
+            const self = this;
+
+            // Format days until deletion
+            const formatDaysUntil = (deleteAt) => {
+                const now = new Date();
+                const deleteDate = new Date(deleteAt);
+                const diffMs = deleteDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) return self.t('mediaLeavingIn') + ' Today';
+                return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+            };
+
+            // Find all media cards
+            const cards = document.querySelectorAll('.card, [data-id]');
+
+            cards.forEach(card => {
+                // Try to get item ID from card
+                let itemId = card.getAttribute('data-id');
+                if (!itemId) {
+                    // Try finding it in child elements
+                    const link = card.querySelector('a[href*="id="]');
+                    if (link) {
+                        const match = link.href.match(/id=([a-f0-9-]+)/i);
+                        if (match) itemId = match[1];
+                    }
+                }
+
+                if (!itemId) return;
+
+                // Check if this item has scheduled deletion
+                const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
+                const existingBadge = card.querySelector('.card-leaving-badge');
+
+                if (deletion) {
+                    // Add or update badge
+                    if (!existingBadge) {
+                        const cardBox = card.querySelector('.cardBox, .cardContent') || card;
+                        cardBox.style.position = 'relative';
+                        const badge = document.createElement('div');
+                        badge.className = 'card-leaving-badge';
+                        badge.textContent = formatDaysUntil(deletion.DeleteAt);
+                        cardBox.appendChild(badge);
+                    } else {
+                        existingBadge.textContent = formatDaysUntil(deletion.DeleteAt);
+                    }
+                } else {
+                    // Remove badge if it exists
+                    if (existingBadge) {
+                        existingBadge.remove();
+                    }
+                }
+            });
+
+            // Also check detail page
+            self.updateDetailPageBadge();
+        },
+
+        /**
+         * Update badge on detail page
+         */
+        updateDetailPageBadge: function () {
+            const self = this;
+
+            // Get current item ID from URL
+            const match = window.location.href.match(/id=([a-f0-9-]+)/i);
+            if (!match) return;
+
+            const itemId = match[1].toLowerCase();
+            const deletion = self.scheduledDeletionsCache[itemId];
+
+            // Find the detail header area
+            const detailHeader = document.querySelector('.detailPagePrimaryContainer, .itemDetailPage');
+            if (!detailHeader) return;
+
+            const existingBadge = detailHeader.querySelector('.detail-leaving-badge');
+
+            if (deletion) {
+                const formatDaysUntil = (deleteAt) => {
+                    const now = new Date();
+                    const deleteDate = new Date(deleteAt);
+                    const diffMs = deleteDate - now;
+                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 0) return self.t('mediaLeavingIn') + ' Today';
+                    return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+                };
+
+                if (!existingBadge) {
+                    const badge = document.createElement('div');
+                    badge.className = 'detail-leaving-badge';
+                    badge.textContent = formatDaysUntil(deletion.DeleteAt);
+                    // Insert at top of detail header
+                    detailHeader.insertBefore(badge, detailHeader.firstChild);
+                } else {
+                    existingBadge.textContent = formatDaysUntil(deletion.DeleteAt);
+                }
+            } else {
+                if (existingBadge) {
+                    existingBadge.remove();
+                }
+            }
         },
 
         /**
