@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowLanguageSwitch = true;
             ShowSearchButton = true;
             ShowNotificationToggle = true;
+            ShowLatestMediaButton = true;
 
             // Request system settings
             EnableAdminRequests = false;
@@ -117,6 +118,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the notification toggle is shown in the header.
         /// </summary>
         public bool ShowNotificationToggle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Latest Media button is shown in the header.
+        /// Replaces the Sync Play button with a dropdown showing 50 most recently added media items.
+        /// </summary>
+        public bool ShowLatestMediaButton { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether admins can create requests like normal users.

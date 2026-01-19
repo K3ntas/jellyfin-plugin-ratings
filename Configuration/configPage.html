@@ -107,6 +107,16 @@
                                 Show the notification bell icon in the header for toggling notifications.
                             </div>
                         </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="chkShowLatestMediaButton" type="checkbox" is="emby-checkbox" />
+                                <span>Show Latest Media Button</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Replace the Sync Play button with a Latest Media button that shows the 50 most recently added items in a dropdown.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="verticalSection">
@@ -362,6 +372,7 @@
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
+                    document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
 
                     // Request system settings
                     document.querySelector('#chkEnableAdminRequests').checked = config.EnableAdminRequests;
@@ -425,6 +436,7 @@
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
+                    config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
 
                     // Request system settings
                     config.EnableAdminRequests = document.querySelector('#chkEnableAdminRequests').checked;
