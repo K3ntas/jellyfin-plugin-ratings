@@ -2046,6 +2046,22 @@
                     font-weight: 600;
                 }
 
+                /* Leaving badge on Netflix cards - top right */
+                .netflix-card.has-leaving::before {
+                    content: attr(data-leaving);
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: rgba(231, 76, 60, 0.95);
+                    color: #fff;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.75em;
+                    z-index: 10;
+                    pointer-events: none;
+                    font-weight: 600;
+                }
+
                 .netflix-scroll-btn {
                     position: absolute;
                     top: 50%;
@@ -5227,7 +5243,7 @@
         },
 
         /**
-         * Update deletion badges on cards - combines with rating badge in same ::after
+         * Update deletion badges on cards - refreshes Netflix view badges and detail page badge
          */
         updateDeletionBadges: function () {
             const self = this;
@@ -5237,60 +5253,11 @@
                 return;
             }
 
-            // Find all media cards
-            const cards = document.querySelectorAll('.card:not(.card .card)');
-            let badgesUpdated = 0;
-
-            cards.forEach(card => {
-                // Try to get item ID from card
-                let itemId = card.getAttribute('data-id');
-                if (!itemId) {
-                    const link = card.querySelector('a[href*="id="]');
-                    if (link) {
-                        const match = link.href.match(/id=([a-f0-9-]+)/i);
-                        if (match) itemId = match[1];
-                    }
-                }
-                if (!itemId) return;
-
-                // Find imageContainer (same element used by rating badges)
-                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
-                if (!imageContainer) return;
-
-                // Check if this item has scheduled deletion
-                const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
-                const leavingText = deletion ? self.formatLeavingText(deletion.DeleteAt) : null;
-
-                // Get current badge state
-                const hasRating = imageContainer.classList.contains('has-rating');
-                const currentText = imageContainer.getAttribute('data-rating') || '';
-
-                // TEST: Add a simple visible badge to cards with scheduled deletion
-                // Don't touch rating system - add completely separate element
-                if (deletion && !card.querySelector('.leaving-test-badge')) {
-                    const badge = document.createElement('div');
-                    badge.className = 'leaving-test-badge';
-                    badge.textContent = leavingText;
-                    badge.style.cssText = 'position:absolute;top:0;right:0;background:red;color:white;padding:4px 8px;font-size:12px;z-index:99999;pointer-events:none;';
-
-                    // Try adding to card.parentElement since that worked in test 4
-                    // But position relative to this specific card
-                    const rect = card.getBoundingClientRect();
-                    const parentRect = card.parentElement.getBoundingClientRect();
-                    badge.style.top = (rect.top - parentRect.top) + 'px';
-                    badge.style.right = (parentRect.right - rect.right) + 'px';
-
-                    card.parentElement.style.position = 'relative';
-                    card.parentElement.appendChild(badge);
-
-                    console.log('RatingsPlugin: Added test badge to card.parentElement for:', itemId);
-                    badgesUpdated++;
-                }
+            // Update Netflix cards (custom cards created by this plugin)
+            const netflixContainers = document.querySelectorAll('.netflix-view-container, .netflix-row');
+            netflixContainers.forEach(container => {
+                self.applyNetflixLeavingBadges(container);
             });
-
-            if (badgesUpdated > 0) {
-                console.log('RatingsPlugin: Updated leaving badges on', badgesUpdated, 'cards');
-            }
 
             // Also check detail page
             self.updateDetailPageBadge();
@@ -8821,7 +8788,11 @@
                 self.attachScrollHandlers(container);
 
                 // Apply rating badges to Netflix cards
-                self.applyNetflixRatingBadges(container);            })
+                self.applyNetflixRatingBadges(container);
+
+                // Apply leaving badges to Netflix cards
+                self.applyNetflixLeavingBadges(container);
+            })
             .catch(err => {
                 console.error('Error fetching items for Netflix view:', err);
                 container.innerHTML = '<div class="netflix-loading">Error loading content</div>';
@@ -8956,6 +8927,32 @@
                     .catch(() => {
                         self.ratingsCache[itemId] = null;
                     });
+            });
+        },
+
+        /**
+         * Apply leaving badges to Netflix cards
+         */
+        applyNetflixLeavingBadges: function (container) {
+            const self = this;
+
+            // Skip if no cache yet
+            if (!self.scheduledDeletionsCache) {
+                return;
+            }
+
+            const cards = container.querySelectorAll('.netflix-card[data-item-id]');
+            cards.forEach(card => {
+                const itemId = card.getAttribute('data-item-id');
+                if (!itemId) return;
+
+                // Check if this item has scheduled deletion
+                const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
+                if (deletion) {
+                    const leavingText = self.formatLeavingText(deletion.DeleteAt);
+                    card.classList.add('has-leaving');
+                    card.setAttribute('data-leaving', leavingText);
+                }
             });
         }
     };
