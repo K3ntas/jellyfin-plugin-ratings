@@ -5265,27 +5265,26 @@
                 const hasRating = imageContainer.classList.contains('has-rating');
                 const currentText = imageContainer.getAttribute('data-rating') || '';
 
-                if (deletion) {
-                    if (hasRating) {
-                        // Card has rating - check if leaving text is already appended
-                        if (!currentText.includes('|')) {
-                            // Append leaving text to existing rating
-                            imageContainer.setAttribute('data-rating', currentText + ' | ' + leavingText);
-                            badgesUpdated++;
-                        }
-                    } else {
-                        // Card has NO rating - add badge with just leaving text
-                        imageContainer.classList.add('has-rating');
-                        imageContainer.setAttribute('data-rating', leavingText);
-                        badgesUpdated++;
-                    }
-                } else {
-                    // No scheduled deletion - remove leaving text if present
-                    if (hasRating && currentText.includes('|')) {
-                        // Remove the leaving part, keep only rating
-                        const ratingOnly = currentText.split('|')[0].trim();
-                        imageContainer.setAttribute('data-rating', ratingOnly);
-                    }
+                // TEST: Add a simple visible badge to cards with scheduled deletion
+                // Don't touch rating system - add completely separate element
+                if (deletion && !card.querySelector('.leaving-test-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'leaving-test-badge';
+                    badge.textContent = leavingText;
+                    badge.style.cssText = 'position:absolute;top:0;right:0;background:red;color:white;padding:4px 8px;font-size:12px;z-index:99999;pointer-events:none;';
+
+                    // Try adding to card.parentElement since that worked in test 4
+                    // But position relative to this specific card
+                    const rect = card.getBoundingClientRect();
+                    const parentRect = card.parentElement.getBoundingClientRect();
+                    badge.style.top = (rect.top - parentRect.top) + 'px';
+                    badge.style.right = (parentRect.right - rect.right) + 'px';
+
+                    card.parentElement.style.position = 'relative';
+                    card.parentElement.appendChild(badge);
+
+                    console.log('RatingsPlugin: Added test badge to card.parentElement for:', itemId);
+                    badgesUpdated++;
                 }
             });
 
