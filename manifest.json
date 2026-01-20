@@ -10,167 +10,23 @@
     "versions": [
       {
         "version": "1.0.209.0",
-        "changelog": "Fixed leaving badges to display on Netflix-style category views using CSS pseudo-elements.",
+        "changelog": "Added 'Leaving in X days' badges visible on media cards scheduled for deletion.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.209.0/jellyfin-plugin-ratings_1.0.209.0.zip",
         "checksum": "e52171d531ad82587f66dc60e10bec01",
         "timestamp": "2026-01-20T00:00:00Z"
       },
       {
-        "version": "1.0.208.0",
-        "changelog": "Improved leaving badge visibility on media cards.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.208.0/jellyfin-plugin-ratings_1.0.208.0.zip",
-        "checksum": "4768f751816d04dd6bed4ef3b67ac1d9",
-        "timestamp": "2026-01-19T23:30:00Z"
-      },
-      {
-        "version": "1.0.207.0",
-        "changelog": "Leaving badges now combined with rating badges using same display method.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.207.0/jellyfin-plugin-ratings_1.0.207.0.zip",
-        "checksum": "00bc16b696c3994fd5a5a67408426c05",
-        "timestamp": "2026-01-19T23:00:00Z"
-      },
-      {
-        "version": "1.0.206.0",
-        "changelog": "Fixed leaving badge placement on media cards.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.206.0/jellyfin-plugin-ratings_1.0.206.0.zip",
-        "checksum": "1e30c4bcd6756ec7a93e53b30ca3be6f",
-        "timestamp": "2026-01-19T22:30:00Z"
-      },
-      {
-        "version": "1.0.205.0",
-        "changelog": "Improved leaving badge rendering on media cards.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.205.0/jellyfin-plugin-ratings_1.0.205.0.zip",
-        "checksum": "2848acfc0437e2d582a3ce8c33337944",
-        "timestamp": "2026-01-19T22:00:00Z"
-      },
-      {
-        "version": "1.0.204.0",
-        "changelog": "Fixed: Leaving badges now use real DOM elements (like detail page) instead of CSS pseudo-elements.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.204.0/jellyfin-plugin-ratings_1.0.204.0.zip",
-        "checksum": "413b69c5e6f9840161cc50d6ed33b457",
-        "timestamp": "2026-01-19T21:30:00Z"
-      },
-      {
-        "version": "1.0.203.0",
-        "changelog": "Fixed: Leaving badges now use EXACT same approach as rating badges - added via IntersectionObserver, positioned at top-right.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.203.0/jellyfin-plugin-ratings_1.0.203.0.zip",
-        "checksum": "e6a10265637548647bac8e2d69de7534",
-        "timestamp": "2026-01-19T21:00:00Z"
-      },
-      {
-        "version": "1.0.202.0",
-        "changelog": "Fixed: Leaving badges on cards now use DOM elements instead of CSS pseudo-elements for better visibility.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.202.0/jellyfin-plugin-ratings_1.0.202.0.zip",
-        "checksum": "76becdee9d680514dc6865daa8721bd6",
-        "timestamp": "2026-01-19T20:30:00Z"
-      },
-      {
-        "version": "1.0.201.0",
-        "changelog": "DEBUG: Added logging to diagnose leaving badge issues on cards.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.201.0/jellyfin-plugin-ratings_1.0.201.0.zip",
-        "checksum": "9a30b98ff44a2e3889974d9249b4fd93",
-        "timestamp": "2026-01-19T20:00:00Z"
-      },
-      {
-        "version": "1.0.200.0",
-        "changelog": "Fixed: Leaving badges now appear on cards (bottom-right, rating badges at top-left). Pass itemId to createAndPositionOverlay.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.200.0/jellyfin-plugin-ratings_1.0.200.0.zip",
-        "checksum": "b7f6705c43a9c64a0b4debae6452cffb",
-        "timestamp": "2026-01-19T19:30:00Z"
-      },
-      {
-        "version": "1.0.199.0",
-        "changelog": "Fixed: Only ONE leaving badge on detail page, card badges now use CSS like rating badges.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.199.0/jellyfin-plugin-ratings_1.0.199.0.zip",
-        "checksum": "29db1718aeb0b8354685691a1136390f",
-        "timestamp": "2026-01-19T19:00:00Z"
-      },
-      {
-        "version": "1.0.198.0",
-        "changelog": "Fixed double 'Leaving in X days' badge on detail page - now shows only once near play button.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.198.0/jellyfin-plugin-ratings_1.0.198.0.zip",
-        "checksum": "e94be48f75df3de2f76472897d8b24b4",
-        "timestamp": "2026-01-19T18:30:00Z"
-      },
-      {
-        "version": "1.0.197.0",
-        "changelog": "Fixed Media button - was calling wrong function (isAdmin instead of checkIfAdmin).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.197.0/jellyfin-plugin-ratings_1.0.197.0.zip",
-        "checksum": "0c9d873c1f82b4eb88b866159908bb68",
-        "timestamp": "2026-01-19T18:15:00Z"
-      },
-      {
-        "version": "1.0.196.0",
-        "changelog": "DEBUG: Added console logging to diagnose Media button issue.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.196.0/jellyfin-plugin-ratings_1.0.196.0.zip",
-        "checksum": "d74b4e0c599e98d2056b9eeb279810cd",
-        "timestamp": "2026-01-19T18:00:00Z"
-      },
-      {
-        "version": "1.0.195.0",
-        "changelog": "Fixed Media button - now follows exact same pattern as Latest Media button for reliable injection.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.195.0/jellyfin-plugin-ratings_1.0.195.0.zip",
-        "checksum": "e26ac8e59731c70f631159ae83b8ea25",
-        "timestamp": "2026-01-19T17:30:00Z"
-      },
-      {
-        "version": "1.0.194.0",
-        "changelog": "Media button now in header - replaces original search button (admin only). Responsive design matches other header buttons.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.194.0/jellyfin-plugin-ratings_1.0.194.0.zip",
-        "checksum": "3afe16698b6742bf6d5d1929b7b28372",
-        "timestamp": "2026-01-19T17:00:00Z"
-      },
-      {
-        "version": "1.0.193.0",
-        "changelog": "Fixed Media button injection - now properly finds and injects into Jellyfin's mainDrawer sidebar after Dashboard link.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.193.0/jellyfin-plugin-ratings_1.0.193.0.zip",
-        "checksum": "48faeae5b8fa42d63a24cda96fee2e11",
-        "timestamp": "2026-01-19T16:00:00Z"
-      },
-      {
-        "version": "1.0.192.0",
-        "changelog": "Media Management moved to Dashboard sidebar - click 'Media' in Server section when in admin Dashboard.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.192.0/jellyfin-plugin-ratings_1.0.192.0.zip",
-        "checksum": "8a0eeca648446239a7f96c49ff640aa7",
-        "timestamp": "2026-01-19T15:00:00Z"
-      },
-      {
         "version": "1.0.191.0",
-        "changelog": "Admin Media Management: New 'Media' button for admins with full library view, stats, filtering, and scheduled deletion with 'Leaving in X days' badges visible to all users.",
+        "changelog": "Admin Media Management: View all library media with statistics, schedule deletions, and display leaving badges to all users.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.191.0/jellyfin-plugin-ratings_1.0.191.0.zip",
         "checksum": "edca4bac79b0d12f8833cca716b696d6",
         "timestamp": "2026-01-19T14:00:00Z"
       },
       {
-        "version": "1.0.190.0",
-        "changelog": "Latest Media improvements: clean titles (no IMDB IDs), time ago indicator, solid header background.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.190.0/jellyfin-plugin-ratings_1.0.190.0.zip",
-        "checksum": "ee3a4fcbcf96c83962f5f3120e60298f",
-        "timestamp": "2026-01-19T12:30:00Z"
-      },
-      {
         "version": "1.0.189.0",
-        "changelog": "New Latest Media button replaces Sync Play - shows dropdown with 50 most recently added movies/series with type badges.",
+        "changelog": "Latest Media: Quick access button showing recently added movies and series with type indicators.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.189.0/jellyfin-plugin-ratings_1.0.189.0.zip",
         "checksum": "13254243d4a263517c6aa09a7de1e016",
@@ -178,39 +34,15 @@
       },
       {
         "version": "1.0.188.0",
-        "changelog": "Fixed rating removal by clicking same star - added session token auth fallback to DELETE endpoint.",
+        "changelog": "Fixed rating removal when clicking the same star value twice.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.188.0/jellyfin-plugin-ratings_1.0.188.0.zip",
         "checksum": "d731dc97e7fbd979ad16286bca6409eb",
         "timestamp": "2026-01-16T19:55:00Z"
       },
       {
-        "version": "1.0.187.0",
-        "changelog": "Fixed dropdown stacking: moved to body element. Fixed search input white background on focus/autocomplete.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.187.0/jellyfin-plugin-ratings_1.0.187.0.zip",
-        "checksum": "cb46788d20f3726b68eb1962da85fcb3",
-        "timestamp": "2026-01-16T19:45:00Z"
-      },
-      {
-        "version": "1.0.186.0",
-        "changelog": "Fixed dropdown z-index - dropdown now appears above all other elements.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.186.0/jellyfin-plugin-ratings_1.0.186.0.zip",
-        "checksum": "58af18ff7eab5218f0f347623606ba3a",
-        "timestamp": "2026-01-16T19:35:00Z"
-      },
-      {
-        "version": "1.0.185.0",
-        "changelog": "Fixed dropdown search positioning - dropdown now correctly appears below search field using fixed positioning.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.185.0/jellyfin-plugin-ratings_1.0.185.0.zip",
-        "checksum": "35cfdadc0585d704b4b066dbb20f29d1",
-        "timestamp": "2026-01-16T19:30:00Z"
-      },
-      {
         "version": "1.0.184.0",
-        "changelog": "Dropdown search: Search now shows results in a dropdown below the search field without changing the main page. Searches entire media library. Fixed admin tab text grammar.",
+        "changelog": "Dropdown search: Search results now appear in a dropdown below the search field without navigating away.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.184.0/jellyfin-plugin-ratings_1.0.184.0.zip",
         "checksum": "4c2850e4a47cc49bff41ec9fc2bacdaf",
@@ -218,31 +50,15 @@
       },
       {
         "version": "1.0.183.0",
-        "changelog": "Snooze UI: Date picker and snooze/unsnooze buttons in admin view. Requests now grouped by status categories (Processing > Pending > Snoozed > Done > Rejected).",
+        "changelog": "Request snooze feature: Admins can snooze requests until a specific date. Requests grouped by status.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.183.0/jellyfin-plugin-ratings_1.0.183.0.zip",
         "checksum": "9f724e465ec1228bfda6423b714b2929",
         "timestamp": "2026-01-16T19:10:00Z"
       },
       {
-        "version": "1.0.182.0",
-        "changelog": "Admin request UI: When EnableAdminRequests is ON, admins see tabs to switch between Create Request and Manage Requests views.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.182.0/jellyfin-plugin-ratings_1.0.182.0.zip",
-        "checksum": "0ae6a1f3a3fb3d3f57495cf750108513",
-        "timestamp": "2026-01-16T19:00:00Z"
-      },
-      {
-        "version": "1.0.181.0",
-        "changelog": "Users can now edit and delete their own pending requests. Edit/Delete buttons appear only on pending requests.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.181.0/jellyfin-plugin-ratings_1.0.181.0.zip",
-        "checksum": "a9d30f54ef57fb40f032fb977e5a4e41",
-        "timestamp": "2026-01-16T18:30:00Z"
-      },
-      {
         "version": "1.0.180.0",
-        "changelog": "Major request system update: Admin requests option, request limits per month, auto-delete rejected requests, snooze requests, fully customizable form fields (enable/disable/required), click same star to remove rating, API for user request editing.",
+        "changelog": "Major request system update: Admin requests, monthly limits, auto-delete rejected, customizable form fields.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.180.0/jellyfin-plugin-ratings_1.0.180.0.zip",
         "checksum": "d1d2678d0a02447caf4ad1f720ce4544",
@@ -250,7 +66,7 @@
       },
       {
         "version": "1.0.179.0",
-        "changelog": "New API endpoint: GET /Ratings/Users/{userId}/Ratings returns all items rated by a specific user. Also added GET /Ratings/MyRatings for current user's ratings.",
+        "changelog": "User ratings API: New endpoints to retrieve all ratings for a specific user.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.179.0/jellyfin-plugin-ratings_1.0.179.0.zip",
         "checksum": "08b8b5e24a6ff35826d85fe2e7257f3c",
@@ -258,23 +74,15 @@
       },
       {
         "version": "1.0.178.0",
-        "changelog": "Added IMDB Code and IMDB Link optional fields to request form. Both displayed in user and admin views with IMDB yellow styling.",
+        "changelog": "IMDB integration: Optional IMDB code and link fields in request form.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.178.0/jellyfin-plugin-ratings_1.0.178.0.zip",
         "checksum": "2c900e2073d3b6a720f48900359bc899",
         "timestamp": "2026-01-04T20:55:00Z"
       },
       {
-        "version": "1.0.177.0",
-        "changelog": "All customization options now accessible in plugin settings page: search button, language switch, notification icon, custom request fields, and request form texts.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.177.0/jellyfin-plugin-ratings_1.0.177.0.zip",
-        "checksum": "33a90224b35a950cc2fd44caaab4c0d1",
-        "timestamp": "2026-01-04T20:35:00Z"
-      },
-      {
         "version": "1.0.176.0",
-        "changelog": "New customization options: Toggle language switch, search button, and notification icon visibility in plugin settings. Reject requests with reason. Custom request form fields and texts.",
+        "changelog": "Plugin customization: Toggle visibility of language switch, search button, and notification icon.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.176.0/jellyfin-plugin-ratings_1.0.176.0.zip",
         "checksum": "cf55f5efbcfec228ef8b583a78ea27ca",
@@ -282,907 +90,83 @@
       },
       {
         "version": "1.0.175.0",
-        "changelog": "Fixed notification system: Session-based tracking prevents old notifications on page refresh. Only media added after login triggers notifications. Proper logout handling.",
+        "changelog": "Improved notification reliability with session-based tracking and proper logout handling.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.175.0/jellyfin-plugin-ratings_1.0.175.0.zip",
         "checksum": "07c3630437ffcea1077b72c1ed6b9336",
         "timestamp": "2026-01-04T00:30:00Z"
       },
       {
-        "version": "1.0.174.0",
-        "changelog": "Improved middleware - better error handling, strict path matching, proper stream handling.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.174.0/jellyfin-plugin-ratings_1.0.174.0.zip",
-        "checksum": "8e9aaa64891bc35f17a4a4fad45593fc",
-        "timestamp": "2025-12-30T12:00:00Z"
-      },
-      {
         "version": "1.0.173.0",
-        "changelog": "Fixed HTTP middleware - handles compressed responses correctly. Fixes Docker permission issues (issue #1).",
+        "changelog": "Fixed HTTP middleware compatibility with compressed responses and Docker environments.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.173.0/jellyfin-plugin-ratings_1.0.173.0.zip",
         "checksum": "b8912edce6407b37b3eaad11de5c92ab",
         "timestamp": "2025-12-30T10:30:00Z"
       },
       {
-        "version": "1.0.171.0",
-        "changelog": "Completely silent logging - no more notification polling logs at all. Server only logs errors now.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.171.0/jellyfin-plugin-ratings_1.0.171.0.zip",
-        "checksum": "97a2c40bc5e7310ad5a6d2dc96aa13cc",
-        "timestamp": "2025-12-29T23:00:00Z"
-      },
-      {
-        "version": "1.0.170.0",
-        "changelog": "Reduced server logging - notification polling no longer floods logs every 10 seconds. Only logs when notifications are found.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.170.0/jellyfin-plugin-ratings_1.0.170.0.zip",
-        "checksum": "349f3dd60d2001fcd24b42de8f7ca456",
-        "timestamp": "2025-12-29T22:00:00Z"
-      },
-      {
-        "version": "1.0.169.0",
-        "changelog": "Fixed notification toggle hover tooltip - now shows popup on hover.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.169.0/jellyfin-plugin-ratings_1.0.169.0.zip",
-        "checksum": "7d87fbfb8f3a28498510b1c2ac2be501",
-        "timestamp": "2025-12-27T09:00:00Z"
-      },
-      {
         "version": "1.0.168.0",
-        "changelog": "Language translation! EN/LT toggle in request modal. Button, form, status messages, and admin interface all translated.",
+        "changelog": "Multi-language support: Toggle between English and Lithuanian in the request interface.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.168.0/jellyfin-plugin-ratings_1.0.168.0.zip",
         "checksum": "8190bc1131f3be19bff9ccffd4a0f958",
         "timestamp": "2025-12-27T08:00:00Z"
       },
       {
-        "version": "1.0.167.0",
-        "changelog": "Improved notification queue: 2-10 min random delay between notifications, 24h duplicate prevention, better error handling. All queued media will be shown.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.167.0/jellyfin-plugin-ratings_1.0.167.0.zip",
-        "checksum": "970a83108e9a73b8468e419702387985",
-        "timestamp": "2025-12-27T06:00:00Z"
-      },
-      {
-        "version": "1.0.165.0",
-        "changelog": "Added 470px breakpoint: top:10px, right:180px for very small screens.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.165.0/jellyfin-plugin-ratings_1.0.165.0.zip",
-        "checksum": "dfcc3e820db6b86e52cd38d0e12aeca4",
-        "timestamp": "2025-12-27T04:00:00Z"
-      },
-      {
-        "version": "1.0.164.0",
-        "changelog": "Added 590px breakpoint: top:58px, right:130px for smaller screens.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.164.0/jellyfin-plugin-ratings_1.0.164.0.zip",
-        "checksum": "34ccf9510ccc6f74df561a7750891827",
-        "timestamp": "2025-12-27T03:45:00Z"
-      },
-      {
-        "version": "1.0.163.0",
-        "changelog": "Mobile: toggle at top:55px, right:150px - second row left of Request button.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.163.0/jellyfin-plugin-ratings_1.0.163.0.zip",
-        "checksum": "5734a6f7a8c8c2df55b6b84481983385",
-        "timestamp": "2025-12-27T03:30:00Z"
-      },
-      {
-        "version": "1.0.162.0",
-        "changelog": "Mobile: toggle now sticks to LEFT of Request button (right:170px). Desktop: toggle left of search field.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.162.0/jellyfin-plugin-ratings_1.0.162.0.zip",
-        "checksum": "5ca37c5289c4c0db57f3a3457fc3481c",
-        "timestamp": "2025-12-27T03:00:00Z"
-      },
-      {
-        "version": "1.0.161.0",
-        "changelog": "Fixed toggle position: now truly LEFT of search (right:755px). Tooltip now uses fixed positioning to avoid clipping.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.161.0/jellyfin-plugin-ratings_1.0.161.0.zip",
-        "checksum": "7a09459912e66e4ffe44bf54e2b25c25",
-        "timestamp": "2025-12-27T02:30:00Z"
-      },
-      {
-        "version": "1.0.160.0",
-        "changelog": "Notification toggle moved to LEFT of search field. Added hover tooltip explaining the toggle function.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.160.0/jellyfin-plugin-ratings_1.0.160.0.zip",
-        "checksum": "c7db2723983934b55f99feccf9d00e77",
-        "timestamp": "2025-12-27T02:00:00Z"
-      },
-      {
-        "version": "1.0.159.0",
-        "changelog": "Fixed notification toggle position - now correctly placed between search field and request button.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.159.0/jellyfin-plugin-ratings_1.0.159.0.zip",
-        "checksum": "57dd6d537b65feb6822c4c5f8b5b9eb4",
-        "timestamp": "2025-12-27T01:00:00Z"
-      },
-      {
-        "version": "1.0.158.0",
-        "changelog": "Added notification toggle slider in header near search field. Users can enable/disable notifications. Responsive design.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.158.0/jellyfin-plugin-ratings_1.0.158.0.zip",
-        "checksum": "63e15c9f19c167890950d53fbfc8ace6",
-        "timestamp": "2025-12-27T00:30:00Z"
-      },
-      {
-        "version": "1.0.157.0",
-        "changelog": "Fixed season number - now gets from parent folder structure using GetParent(). Debug logging to track data.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.157.0/jellyfin-plugin-ratings_1.0.157.0.zip",
-        "checksum": "fa49a7710f864ed0f0e629fa024cde7a",
-        "timestamp": "2025-12-27T00:00:00Z"
-      },
-      {
-        "version": "1.0.156.0",
-        "changelog": "Fixed season number not showing - now uses fallback to episode.Season.IndexNumber. Added debug logging.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.156.0/jellyfin-plugin-ratings_1.0.156.0.zip",
-        "checksum": "b499b3a244f9389bc684510a9f324c5e",
-        "timestamp": "2025-12-26T23:30:00Z"
-      },
-      {
-        "version": "1.0.155.0",
-        "changelog": "Fixed SeriesName not showing - now uses fallback to episode.Series.Name. Notifications show: SeriesName S01 + Episode X",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.155.0/jellyfin-plugin-ratings_1.0.155.0.zip",
-        "checksum": "5c31641afcc5b994d076851c689ef5aa",
-        "timestamp": "2025-12-26T23:00:00Z"
-      },
-      {
-        "version": "1.0.154.0",
-        "changelog": "Fixed episode number display - no more '?' for episode 0. Proper null/zero handling for season and episode numbers.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.154.0/jellyfin-plugin-ratings_1.0.154.0.zip",
-        "checksum": "10342857a9672c5dd26e36f7a4d712e5",
-        "timestamp": "2025-12-26T22:30:00Z"
-      },
-      {
-        "version": "1.0.153.0",
-        "changelog": "Episode notifications show season (S01). Added settings: Enable Notifications, Group Episodes. Fire TV app updated for grouped episodes.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.153.0/jellyfin-plugin-ratings_1.0.153.0.zip",
-        "checksum": "43af01061d5b1d9b4a757d92d1b5fdb6",
-        "timestamp": "2025-12-26T22:00:00Z"
-      },
-      {
         "version": "1.0.152.0",
-        "changelog": "Episode grouping! Multiple episodes added at once now show as single notification 'New episodes available: 4-8' instead of 5 separate notifications.",
+        "changelog": "Episode grouping: Multiple episodes added together now display as a single consolidated notification.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.152.0/jellyfin-plugin-ratings_1.0.152.0.zip",
         "checksum": "3346aaa5745319f45622009df3b9c88e",
         "timestamp": "2025-12-26T21:00:00Z"
       },
       {
-        "version": "1.0.151.0",
-        "changelog": "Fix browser real-time notifications: CreatedAt timestamp now set when notification is released from queue, not when queued.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.151.0/jellyfin-plugin-ratings_1.0.151.0.zip",
-        "checksum": "e9becf27b6fcbc6d0a944e03d456a67e",
-        "timestamp": "2025-12-26T20:00:00Z"
-      },
-      {
-        "version": "1.0.150.0",
-        "changelog": "Fix notifications not showing: now also listens to ItemUpdated events to catch when metadata/images are added after item creation.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.150.0/jellyfin-plugin-ratings_1.0.150.0.zip",
-        "checksum": "e76213db0c898e22e668c4e2ce7d811d",
-        "timestamp": "2025-12-26T19:50:00Z"
-      },
-      {
-        "version": "1.0.149.0",
-        "changelog": "Fix duplicate notifications: only notify when image is ready, prevent same item from being notified twice.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.149.0/jellyfin-plugin-ratings_1.0.149.0.zip",
-        "checksum": "b92f2d24a05fcc96df8c8f4691b85d48",
-        "timestamp": "2025-12-26T19:30:00Z"
-      },
-      {
-        "version": "1.0.148.0",
-        "changelog": "Clean titles: automatically removes IMDB IDs like [tt14364480] from notification titles.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.148.0/jellyfin-plugin-ratings_1.0.148.0.zip",
-        "checksum": "6feedea8162079091ed1222bd3ee7ef5",
-        "timestamp": "2025-12-26T19:20:00Z"
-      },
-      {
-        "version": "1.0.147.0",
-        "changelog": "Removed test notification button from web UI - use TV app for testing instead.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.147.0/jellyfin-plugin-ratings_1.0.147.0.zip",
-        "checksum": "df48d932d80bd300bbe66aaff799a5cb",
-        "timestamp": "2025-12-26T19:00:00Z"
-      },
-      {
-        "version": "1.0.146.0",
-        "changelog": "Episode notification format: Shows 'Series Name (year)' on first line and 'Episode X is available' on second line.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.146.0/jellyfin-plugin-ratings_1.0.146.0.zip",
-        "checksum": "b82423056f5595d62326ae1e44b2c045",
-        "timestamp": "2025-12-26T18:15:00Z"
-      },
-      {
-        "version": "1.0.145.0",
-        "changelog": "Removed system notifications. Added 1-3 minute random delay between notifications when multiple media items are added.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.145.0/jellyfin-plugin-ratings_1.0.145.0.zip",
-        "checksum": "51c9e89e96e9bfa0ba4d46b3d29ca728",
-        "timestamp": "2025-12-26T18:00:00Z"
-      },
-      {
         "version": "1.0.144.0",
-        "changelog": "Episode notifications! Now get notified when new episodes are added. Shows series name with S01E01 format. Test button can also show random episodes.",
+        "changelog": "Episode notifications: Get notified when new TV episodes are added to the library.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.144.0/jellyfin-plugin-ratings_1.0.144.0.zip",
         "checksum": "1a3e62aeb9698909afdb40d46af672ab",
         "timestamp": "2025-12-26T17:30:00Z"
       },
       {
-        "version": "1.0.142.0",
-        "changelog": "WebSocket diagnostics for test button! Now shows WARNING in logs when Fire TV/Android TV cannot receive notifications due to WebSocket being blocked by reverse proxy.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.142.0/jellyfin-plugin-ratings_1.0.142.0.zip",
-        "checksum": "0fa24944bf4fd83624e23b09b29cefb5",
-        "timestamp": "2025-12-20T22:30:00Z"
-      },
-      {
-        "version": "1.0.141.0",
-        "changelog": "WebSocket diagnostics! Now logs WARNING when sessions lack WebSocket support (SupportsRemoteControl=false). Helps diagnose Fire TV/Android TV notification issues caused by reverse proxy blocking WebSocket.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.141.0/jellyfin-plugin-ratings_1.0.141.0.zip",
-        "checksum": "1abcd8c61cd7d56c6d75bd9c59fa351a",
-        "timestamp": "2025-12-20T22:20:00Z"
-      },
-      {
-        "version": "1.0.140.0",
-        "changelog": "Debug logging with WARNING level to ensure visibility in logs.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.140.0/jellyfin-plugin-ratings_1.0.140.0.zip",
-        "checksum": "8bab4ee88e005529b778f12ed5015f04",
-        "timestamp": "2025-12-18T00:05:00Z"
-      },
-      {
-        "version": "1.0.139.0",
-        "changelog": "Debug logging for native app sessions. Now logs all sessions with device info to diagnose Firestick notification issues.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.139.0/jellyfin-plugin-ratings_1.0.139.0.zip",
-        "checksum": "b05be0f0a0e6ba997f52e5011c7fdab0",
-        "timestamp": "2025-12-18T00:00:00Z"
-      },
-      {
         "version": "1.0.138.0",
-        "changelog": "Native app notifications! Now sends DisplayMessage to all connected clients (Firestick, Android TV, iOS, etc.) when new media is added. Web notifications unchanged.",
+        "changelog": "Native app notifications: Push notifications to Fire TV, Android TV, iOS and other connected devices.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.138.0/jellyfin-plugin-ratings_1.0.138.0.zip",
         "checksum": "2e303596db89274c8ccbfb4077f5071a",
         "timestamp": "2025-12-17T23:30:00Z"
       },
       {
-        "version": "1.0.137.0",
-        "changelog": "Test button hides instantly when non-admin logs in. All buttons hidden on login page. Test notification now shows random movie/series from your library with poster!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.137.0/jellyfin-plugin-ratings_1.0.137.0.zip",
-        "checksum": "277d52545581adb20b1f353fac26938e",
-        "timestamp": "2025-12-17T23:00:00Z"
-      },
-      {
-        "version": "1.0.136.0",
-        "changelog": "Fixed notifications for all users! Added debug logging, improved UTC date handling, and set initial check time to 5 minutes ago so all users receive notifications.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.136.0/jellyfin-plugin-ratings_1.0.136.0.zip",
-        "checksum": "a74e44445e351a19524ed1da4b984b3a",
-        "timestamp": "2025-12-17T22:30:00Z"
-      },
-      {
-        "version": "1.0.135.0",
-        "changelog": "Fixed test notification button positioning - moved left to avoid overlap with search field.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.135.0/jellyfin-plugin-ratings_1.0.135.0.zip",
-        "checksum": "919ba605c5aa3a97ac1eebec988b3ad2",
-        "timestamp": "2025-12-17T22:15:00Z"
-      },
-      {
         "version": "1.0.134.0",
-        "changelog": "New media notifications! Get notified when new movies/series are added to the library. Notifications appear in bottom-left corner even during fullscreen playback. Admins can send test notifications via button in header.",
+        "changelog": "New media notifications: Browser notifications when movies or series are added to the library.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.134.0/jellyfin-plugin-ratings_1.0.134.0.zip",
         "checksum": "73ba3fcb5366105054d26a399cbc94da",
         "timestamp": "2025-12-17T22:00:00Z"
       },
       {
-        "version": "1.0.133.0",
-        "changelog": "Removed double scrollbar issue. Only Netflix container scrolls now, body/html overflow hidden when genre view active.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.133.0/jellyfin-plugin-ratings_1.0.133.0.zip",
-        "checksum": "ef555b712b3fd5d6e4909d6268abe52f",
-        "timestamp": "2025-12-14T12:30:00Z"
-      },
-      {
-        "version": "1.0.132.0",
-        "changelog": "Fixed header scrolling with Netflix genre view. Header now stays fixed at top when scrolling through genre rows.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.132.0/jellyfin-plugin-ratings_1.0.132.0.zip",
-        "checksum": "5eed8f3eba269e8b8b086bbf751994bc",
-        "timestamp": "2025-12-14T12:00:00Z"
-      },
-      {
-        "version": "1.0.131.0",
-        "changelog": "Major fix! Changed results container to fixed position overlay appended to body instead of mainAnimatedPage. Added MutationObserver to detect style modifications. Added delayed visibility checks. Should finally work after navigation!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.131.0/jellyfin-plugin-ratings_1.0.131.0.zip",
-        "checksum": "7938145bad138acfde59f6113e69c72f",
-        "timestamp": "2025-11-23T14:00:00Z"
-      },
-      {
-        "version": "1.0.130.0",
-        "changelog": "Visibility fix! Forced results container to display with explicit CSS: display:block, visibility:visible, opacity:1, z-index:1000. Should now be visible after navigation!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.130.0/jellyfin-plugin-ratings_1.0.130.0.zip",
-        "checksum": "7906bd168fba7a1b99e63ea8c12986e7",
-        "timestamp": "2025-11-23T13:30:00Z"
-      },
-      {
-        "version": "1.0.129.0",
-        "changelog": "Extended debug logging! Logs homepage sections count, HTML building, and results visibility. Check console for detailed diagnostics.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.129.0/jellyfin-plugin-ratings_1.0.129.0.zip",
-        "checksum": "ad445b18c1550f4aa2b6d0ba3e18dd1e",
-        "timestamp": "2025-11-23T13:00:00Z"
-      },
-      {
-        "version": "1.0.128.0",
-        "changelog": "Debug version with logging! Always recreates results container fresh. Added console logs to track search behavior. Please check browser console (F12) for 'RatingsPlugin:' messages.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.128.0/jellyfin-plugin-ratings_1.0.128.0.zip",
-        "checksum": "ade813298896614a6be27480d1d6e6c8",
-        "timestamp": "2025-11-23T12:30:00Z"
-      },
-      {
-        "version": "1.0.127.0",
-        "changelog": "Search fixes! Fixed card images not loading in search results. Auto-clears search results when navigating away from homepage. Search now works correctly after returning to homepage.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.127.0/jellyfin-plugin-ratings_1.0.127.0.zip",
-        "checksum": "e5acea36ea0167459bef97adde4d5ee0",
-        "timestamp": "2025-11-23T12:00:00Z"
-      },
-      {
         "version": "1.0.126.0",
-        "changelog": "Homepage Full Library Search! Search field on homepage now queries entire library using Jellyfin API instead of just filtering visible content. Results display as clickable cards.",
+        "changelog": "Full library search: Search field on homepage queries entire library via API with clickable results.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.126.0/jellyfin-plugin-ratings_1.0.126.0.zip",
         "checksum": "b95a3f40567ab1eb2e3db88acc8befed",
         "timestamp": "2025-11-23T11:30:00Z"
       },
       {
-        "version": "1.0.125.0",
-        "changelog": "Auto-detection! Added MutationObserver to detect when Netflix content loads dynamically. No more manual window resize needed - genre titles appear automatically!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.125.0/jellyfin-plugin-ratings_1.0.125.0.zip",
-        "checksum": "cae411eed0b48627260f74f973c5ebf2",
-        "timestamp": "2025-11-23T11:00:00Z"
-      },
-      {
-        "version": "1.0.124.0",
-        "changelog": "Perfect fix! Back to 50px padding. Added .netflix-genre-title to selectors so genre row titles (Action, Adventure, etc.) are properly visible below header. Cards remain visible!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.124.0/jellyfin-plugin-ratings_1.0.124.0.zip",
-        "checksum": "663bae1d5c431955f5a9d480dd68e521",
-        "timestamp": "2025-11-23T10:30:00Z"
-      },
-      {
-        "version": "1.0.123.0",
-        "changelog": "Increased padding to 80px! Both header and content now use 80px padding to fully show card titles below header on Movies/TV pages. Added .netflix-view-container back.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.123.0/jellyfin-plugin-ratings_1.0.123.0.zip",
-        "checksum": "0bd07d6f43504d4790c7b39436683772",
-        "timestamp": "2025-11-23T10:00:00Z"
-      },
-      {
-        "version": "1.0.122.0",
-        "changelog": "Netflix genre rows fixed! Changed selector from .netflix-view-container to .netflix-genre-row to properly target card parent containers. Cards no longer covered!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.122.0/jellyfin-plugin-ratings_1.0.122.0.zip",
-        "checksum": "b87332b4a03c0a7c7fd78b4da0cb21cd",
-        "timestamp": "2025-11-23T09:30:00Z"
-      },
-      {
-        "version": "1.0.121.0",
-        "changelog": "Netflix cards fixed! Added .netflix-view-container to paddingTop selectors. Custom Netflix-style card view now properly pushed down on Movies/TV pages.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.121.0/jellyfin-plugin-ratings_1.0.121.0.zip",
-        "checksum": "1966a72d8dbde0263dde8db9d80947b5",
-        "timestamp": "2025-11-23T09:00:00Z"
-      },
-      {
-        "version": "1.0.120.0",
-        "changelog": "Fixed content overlap! Changed marginTop to paddingTop on multiple content containers (.mainAnimatedPage, .itemsContainer, .verticalSection). Content now properly pushed down.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.120.0/jellyfin-plugin-ratings_1.0.120.0.zip",
-        "checksum": "d0a05aa5e35c0d8252ad4574d4113d56",
-        "timestamp": "2025-11-23T08:30:00Z"
-      },
-      {
-        "version": "1.0.119.0",
-        "changelog": "SPA navigation detection! Auto-updates on page changes with URL monitoring (300ms), popstate, and hashchange listeners. No more manual refresh needed!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.119.0/jellyfin-plugin-ratings_1.0.119.0.zip",
-        "checksum": "3571262089c71551fc61bda914c2a61b",
-        "timestamp": "2025-11-23T08:00:00Z"
-      },
-      {
-        "version": "1.0.118.0",
-        "changelog": "Fixed content push! Added 50px marginTop to main content area on Movies/TV pages. Header paddingBottom back to 50px. Content now properly pushed down.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.118.0/jellyfin-plugin-ratings_1.0.118.0.zip",
-        "checksum": "0fa164405ad65886a1b74950c84d6147",
-        "timestamp": "2025-11-23T07:30:00Z"
-      },
-      {
-        "version": "1.0.117.0",
-        "changelog": "Minimal header extension! Reduced paddingBottom to 10px (from 50px) on Movies/TV pages. Removed minHeight to prevent covering content.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.117.0/jellyfin-plugin-ratings_1.0.117.0.zip",
-        "checksum": "628e218ec54b8fbe814c58d1b85b1c22",
-        "timestamp": "2025-11-23T07:00:00Z"
-      },
-      {
-        "version": "1.0.116.0",
-        "changelog": "URL-based detection! Now ONLY extends header on Movies/TV pages (#/movies or #/tv URLs). Home unchanged. Reduced extension: 110px minHeight, 50px padding.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.116.0/jellyfin-plugin-ratings_1.0.116.0.zip",
-        "checksum": "2f8a5d1fa8d4629f9c5cb0f0eeaa83d9",
-        "timestamp": "2025-11-23T06:30:00Z"
-      },
-      {
-        "version": "1.0.115.0",
-        "changelog": "Extended header height! .emby-tabs-slider now expands with minHeight: 150px and paddingBottom: 60px at ≤925px to show search/button.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.115.0/jellyfin-plugin-ratings_1.0.115.0.zip",
-        "checksum": "8781ab11dbd1c4160a3954910252d4ea",
-        "timestamp": "2025-11-23T06:00:00Z"
-      },
-      {
-        "version": "1.0.114.0",
-        "changelog": "FIXED positioning! Removed !important from CSS top values so JavaScript can control positioning. Now works correctly on all pages.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.114.0/jellyfin-plugin-ratings_1.0.114.0.zip",
-        "checksum": "b6acc0423ca34628a16a8eda190bb428",
-        "timestamp": "2025-11-23T05:30:00Z"
-      },
-      {
-        "version": "1.0.113.0",
-        "changelog": "Page-aware positioning! Search/button at top: 105px on Movies/TV Shows pages with tabs, top: 55px on Home. Auto-detects .emby-tabs-slider at ≤925px.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.113.0/jellyfin-plugin-ratings_1.0.113.0.zip",
-        "checksum": "964dc0ceb719be24b642894fc331ad3d",
-        "timestamp": "2025-11-23T05:00:00Z"
-      },
-      {
-        "version": "1.0.110.0",
-        "changelog": "Dynamic button width! Request button padding now scales dynamically (8-16px) matching search field behavior. Both elements resize proportionally.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.110.0/jellyfin-plugin-ratings_1.0.110.0.zip",
-        "checksum": "bf0854e916b9514df4326d0364102e9c",
-        "timestamp": "2025-11-23T03:30:00Z"
-      },
-      {
-        "version": "1.0.109.0",
-        "changelog": "Optimized mobile layout! Button padding 8px 16px, search width 100px, both at top: 55px for perfect alignment at 925px breakpoint.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.109.0/jellyfin-plugin-ratings_1.0.109.0.zip",
-        "checksum": "ce1e2fe7818033ffe96bd3ea11e911cb",
-        "timestamp": "2025-11-23T03:00:00Z"
-      },
-      {
-        "version": "1.0.108.0",
-        "changelog": "Header-attached layout! Elements now scroll with header (position: absolute). Extra search width scaling below 500px. Same size/alignment for both elements.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.108.0/jellyfin-plugin-ratings_1.0.108.0.zip",
-        "checksum": "d3401d8fbd544e8c527cf7d71e84af2f",
-        "timestamp": "2025-11-23T02:30:00Z"
-      },
-      {
-        "version": "1.0.107.0",
-        "changelog": "JavaScript-based dynamic scaling! CSS calc() replaced with JS for reliable responsive scaling from 100% (925px) to 50% (300px).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.107.0/jellyfin-plugin-ratings_1.0.107.0.zip",
-        "checksum": "3901dfb4bd7dbfa000ca9d21ca147872",
-        "timestamp": "2025-11-23T02:00:00Z"
-      },
-      {
-        "version": "1.0.106.0",
-        "changelog": "FIXED dynamic scaling! Using clamp() to ensure proper responsive behavior. Elements now smoothly scale from 100% (925px) to 50% (300px).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.106.0/jellyfin-plugin-ratings_1.0.106.0.zip",
-        "checksum": "dadf70a9b03e6cac7a6589691250ca59",
-        "timestamp": "2025-11-23T01:30:00Z"
-      },
-      {
-        "version": "1.0.105.0",
-        "changelog": "Dynamic responsive scaling! Elements scale smoothly from 100% at 925px to 50% at 300px using calc() formula. Perfect fluid layout.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.105.0/jellyfin-plugin-ratings_1.0.105.0.zip",
-        "checksum": "17fefbe404ae275d35fb29bf5d7a11bb",
-        "timestamp": "2025-11-23T01:00:00Z"
-      },
-      {
-        "version": "1.0.104.0",
-        "changelog": "Compact mobile view! Both search field and request button scaled to 50% (transform: scale(0.5)) at 925px breakpoint. Optimized spacing.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.104.0/jellyfin-plugin-ratings_1.0.104.0.zip",
-        "checksum": "7d7cac37869c1e5ec7befd630bc6d238",
-        "timestamp": "2025-11-23T00:30:00Z"
-      },
-      {
-        "version": "1.0.103.0",
-        "changelog": "Responsive layout update! Search field sticks to left (left: 6px), Request button sticks to right (right: 6px). Mobile breakpoint: 925px.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.103.0/jellyfin-plugin-ratings_1.0.103.0.zip",
-        "checksum": "b8284e6b1bcf5a734dd3fa57992a47c4",
-        "timestamp": "2025-11-23T00:00:00Z"
-      },
-      {
-        "version": "1.0.102.0",
-        "changelog": "Fixed mobile CSS! Search field (right: 288px, padding: 6px 1px), Request button (right: 6px, font-size: 16px, border-radius: 55px). Works in mobile view and small windows.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.102.0/jellyfin-plugin-ratings_1.0.102.0.zip",
-        "checksum": "8ffec2c87b384297c172eba829b2d119",
-        "timestamp": "2025-11-22T23:30:00Z"
-      },
-      {
-        "version": "1.0.101.0",
-        "changelog": "Mobile layout update! Search field and Request button repositioned for better mobile viewing (top: 65px, optimized spacing).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.101.0/jellyfin-plugin-ratings_1.0.101.0.zip",
-        "checksum": "178a96bba8de3f6764b41fe069632f54",
-        "timestamp": "2025-11-22T23:00:00Z"
-      },
-      {
-        "version": "1.0.100.0",
-        "changelog": "Removed all debug console.log statements for cleaner browser console. Plugin now runs silently without logging.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.100.0/jellyfin-plugin-ratings_1.0.100.0.zip",
-        "checksum": "9069e8422f2d0d2098c27fc0cf6e51fa",
-        "timestamp": "2025-11-22T22:00:00Z"
-      },
-      {
-        "version": "1.0.99.0",
-        "changelog": "Fixed auto-clear for SPA navigation! Now monitors URL changes every 500ms to detect page changes in single-page app.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.99.0/jellyfin-plugin-ratings_1.0.99.0.zip",
-        "checksum": "d11359c2de33e39bf1c04c41fbf58ed8",
-        "timestamp": "2025-11-22T21:00:00Z"
-      },
-      {
-        "version": "1.0.98.0",
-        "changelog": "Auto-clear search on page navigation! Search field now clears when you navigate to a different page.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.98.0/jellyfin-plugin-ratings_1.0.98.0.zip",
-        "checksum": "0944ae4d38e2c8ebd0a665dcede41f2c",
-        "timestamp": "2025-11-22T20:00:00Z"
-      },
-      {
-        "version": "1.0.97.0",
-        "changelog": "Fixed search on Netflix view pages! Now filters Netflix-style cards correctly. Works on all library pages.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.97.0/jellyfin-plugin-ratings_1.0.97.0.zip",
-        "checksum": "42d06ab547bf92ab8d49ea4b2d8d8cca",
-        "timestamp": "2025-11-22T19:00:00Z"
-      },
-      {
-        "version": "1.0.96.0",
-        "changelog": "Fixed search filtering on Movies/TV Shows library pages. Improved card detection with better selectors and title extraction.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.96.0/jellyfin-plugin-ratings_1.0.96.0.zip",
-        "checksum": "e48fd6a2790e66572d1c14b99b65c9ed",
-        "timestamp": "2025-11-22T18:00:00Z"
-      },
-      {
-        "version": "1.0.95.0",
-        "changelog": "Live search filtering! Type to instantly filter movies/series on current page. Icon changes to X when typing - click to clear.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.95.0/jellyfin-plugin-ratings_1.0.95.0.zip",
-        "checksum": "c7e7db837a8753fb0c2d02f8750994cf",
-        "timestamp": "2025-11-22T17:00:00Z"
-      },
-      {
         "version": "1.0.94.0",
-        "changelog": "Added search field in header! Search directly from homepage and all pages without navigating to search page first.",
+        "changelog": "Header search field: Quick search access from any page without navigating to search.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.94.0/jellyfin-plugin-ratings_1.0.94.0.zip",
         "checksum": "396d3282afe73d2f2a9a752b17f62b5f",
         "timestamp": "2025-11-22T16:00:00Z"
       },
       {
-        "version": "1.0.93.0",
-        "changelog": "Fixed logo aspect ratio to match Jellyfin plugin container (16:9).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.93.0/jellyfin-plugin-ratings_1.0.93.0.zip",
-        "checksum": "bb4583aa8087a8444b872a09610cb6c6",
-        "timestamp": "2025-11-22T15:00:00Z"
-      },
-      {
-        "version": "1.0.92.0",
-        "changelog": "Simplified plugin logo SVG for better compatibility. Fixed plugin logo display.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.92.0/jellyfin-plugin-ratings_1.0.92.0.zip",
-        "checksum": "03e14ded04ca66acf24add5941f6c339",
-        "timestamp": "2025-11-22T14:00:00Z"
-      },
-      {
-        "version": "1.0.91.0",
-        "changelog": "Fixed plugin logo to fit container properly. Added Netflix view screenshot to README. All features are now documented as optional in settings.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.91.0/jellyfin-plugin-ratings_1.0.91.0.zip",
-        "checksum": "45bd942b945dd02bd0a43e82e4aa6efa",
-        "timestamp": "2025-11-22T13:00:00Z"
-      },
-      {
-        "version": "1.0.90.0",
-        "changelog": "Restored card hover animation. Added setting to enable/disable Request Media button in plugin config.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.90.0/jellyfin-plugin-ratings_1.0.90.0.zip",
-        "checksum": "320ddc394769161bbcf512e4b7579830",
-        "timestamp": "2025-11-22T12:00:00Z"
-      },
-      {
-        "version": "1.0.89.0",
-        "changelog": "Fixed scroll behavior - mouse wheel now scrolls page, not genre rows. Removed card hover scaling. Scroll buttons always visible (higher z-index).",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.89.0/jellyfin-plugin-ratings_1.0.89.0.zip",
-        "checksum": "64d9e4724702a66694e5b283ba2d8a96",
-        "timestamp": "2025-11-22T11:00:00Z"
-      },
-      {
         "version": "1.0.88.0",
-        "changelog": "Header visible! Netflix view now starts below header (top: 56px). Added rating badges to Netflix cards showing user ratings on each card.",
+        "changelog": "Netflix-style view: Browse library by genre with horizontal scrolling rows and rating badges on cards.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.88.0/jellyfin-plugin-ratings_1.0.88.0.zip",
         "checksum": "e5e75a060d724136d91959e5b7bc526d",
         "timestamp": "2025-11-22T10:00:00Z"
-      },
-      {
-        "version": "1.0.87.0",
-        "changelog": "Fixed overlay! Netflix view now uses position:fixed fullscreen overlay attached to body. No more dependency on parent container visibility. Works on first navigation!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.87.0/jellyfin-plugin-ratings_1.0.87.0.zip",
-        "checksum": "020638d89402a65fb0dbb3948d2d5f98",
-        "timestamp": "2025-11-21T21:50:00Z"
-      },
-      {
-        "version": "1.0.86.0",
-        "changelog": "Force visibility fix! Inline styles with !important to override Jellyfin CSS that was hiding Netflix container on SPA navigation.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.86.0/jellyfin-plugin-ratings_1.0.86.0.zip",
-        "checksum": "9641b2f3d3b30ec435825ac304c9002b",
-        "timestamp": "2025-11-21T21:35:00Z"
-      },
-      {
-        "version": "1.0.85.0",
-        "changelog": "Netflix View fixes: Random shuffle per genre (no repeats at top), higher z-index, hide all content containers, better parent detection. Should work on SPA navigation!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.85.0/jellyfin-plugin-ratings_1.0.85.0.zip",
-        "checksum": "fe14067cb6d836e78d9eb59ed4017d50",
-        "timestamp": "2025-11-21T21:00:00Z"
-      },
-      {
-        "version": "1.0.84.0",
-        "changelog": "DEBUG: Enhanced Netflix View logging. Multiple container selectors, retry logic, detailed console output to diagnose SPA navigation issues.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.84.0/jellyfin-plugin-ratings_1.0.84.0.zip",
-        "checksum": "679e537e841b1669e205d51f0e791be5",
-        "timestamp": "2025-11-21T20:30:00Z"
-      },
-      {
-        "version": "1.0.83.0",
-        "changelog": "Smooth Netflix View! No more refresh needed - activates instantly on navigation. Hidden default layout prevents flickering. MutationObserver for reliable detection.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.83.0/jellyfin-plugin-ratings_1.0.83.0.zip",
-        "checksum": "92e55a93be4e27f1c45dec90505acfb6",
-        "timestamp": "2025-11-21T20:15:00Z"
-      },
-      {
-        "version": "1.0.82.0",
-        "changelog": "Fixed crash on init! Emby.Page.addEventListener compatibility fix for Jellyfin 10.11. Netflix View should now work.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.82.0/jellyfin-plugin-ratings_1.0.82.0.zip",
-        "checksum": "fa365c5ea9416c1cfa0aab99aaa04215",
-        "timestamp": "2025-11-21T19:45:00Z"
-      },
-      {
-        "version": "1.0.81.0",
-        "changelog": "DEBUG: Netflix View with console logging to diagnose issues.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.81.0/jellyfin-plugin-ratings_1.0.81.0.zip",
-        "checksum": "ce0d2c5fe3a4d30a7207f5bdfc6e6bad",
-        "timestamp": "2025-11-21T19:30:00Z"
-      },
-      {
-        "version": "1.0.80.0",
-        "changelog": "Netflix View fix! Improved URL detection for #/movies and #/tv pages with topParentId parameter.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.80.0/jellyfin-plugin-ratings_1.0.80.0.zip",
-        "checksum": "f20a0876c0710f050075ead6add689e3",
-        "timestamp": "2025-11-21T19:15:00Z"
-      },
-      {
-        "version": "1.0.79.0",
-        "changelog": "Netflix-Style View! Enable in plugin settings to display libraries with horizontal genre rows like Netflix. Movies and TV shows organized by genre with smooth scrolling.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.79.0/jellyfin-plugin-ratings_1.0.79.0.zip",
-        "checksum": "adc65a516c15386bfe5026e1e6e9320e",
-        "timestamp": "2025-11-21T19:00:00Z"
-      },
-      {
-        "version": "1.0.78.0",
-        "changelog": "Watch Now button now shows for admins too! Updated README with full Request Media documentation and screenshots.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.78.0/jellyfin-plugin-ratings_1.0.78.0.zip",
-        "checksum": "6cd69066f613ace95c71879256008098",
-        "timestamp": "2025-11-21T18:30:00Z"
-      },
-      {
-        "version": "1.0.77.0",
-        "changelog": "Fixed button initialization! Retry logic for SPA navigation, smarter login page detection that doesn't block logged-in users. No more Ctrl+Shift+R needed!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.77.0/jellyfin-plugin-ratings_1.0.77.0.zip",
-        "checksum": "7c682a72922f07872193910d6bc75b8e",
-        "timestamp": "2025-11-21T15:30:00Z"
-      },
-      {
-        "version": "1.0.76.0",
-        "changelog": "Login page fix! Button hides on login/startup pages. Cache clears on logout and account switch to prevent stale data between users.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.76.0/jellyfin-plugin-ratings_1.0.76.0.zip",
-        "checksum": "f5b7aefcb4f7241153b02635f0e74082",
-        "timestamp": "2025-11-21T11:50:00Z"
-      },
-      {
-        "version": "1.0.75.0",
-        "changelog": "Full request management! Delete requests, timestamps (requested/completed), media link input for admins. Users see timestamps and 'Watch Now' button when request is fulfilled!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.75.0/jellyfin-plugin-ratings_1.0.75.0.zip",
-        "checksum": "5c8cf750021c80e13cc0d99460fa035c",
-        "timestamp": "2025-11-21T11:15:00Z"
-      },
-      {
-        "version": "1.0.74.0",
-        "changelog": "Mobile-friendly admin table! Card layout on mobile, dropdown select for status changes instead of 3 buttons. Modal now 95% width on mobile for better viewing.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.74.0/jellyfin-plugin-ratings_1.0.74.0.zip",
-        "checksum": "dc3c1457583c48c7102d92e9d6b386b2",
-        "timestamp": "2025-11-21T10:40:00Z"
-      },
-      {
-        "version": "1.0.73.0",
-        "changelog": "Animation fix v2: Removed box-shadow conflict, fixed transition property, added vendor prefixes for webkit/moz/o. Animations should now work properly!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.73.0/jellyfin-plugin-ratings_1.0.73.0.zip",
-        "checksum": "eb0a6ff36763e001bc19ececf3bfd28c",
-        "timestamp": "2025-11-21T10:20:00Z"
-      },
-      {
-        "version": "1.0.72.0",
-        "changelog": "Fixed shine animation! Removed invalid !important from @keyframes. Mobile button repositioned to right: 190px with border-radius: 15px.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.72.0/jellyfin-plugin-ratings_1.0.72.0.zip",
-        "checksum": "8514ef48b5f9d4b95dc62c6436b5884f",
-        "timestamp": "2025-11-21T10:00:00Z"
-      },
-      {
-        "version": "1.0.71.0",
-        "changelog": "Mobile responsive! Request Media button now 70% smaller on mobile devices (screens under 768px), positioned to the right for better fit. Desktop unchanged.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.71.0/jellyfin-plugin-ratings_1.0.71.0.zip",
-        "checksum": "685fb6d9b15a618d84bd874b28bfe5d4",
-        "timestamp": "2025-11-21T09:30:00Z"
-      },
-      {
-        "version": "1.0.70.0",
-        "changelog": "Perfect positioning (top: 8px), working shine animation with gradient sweep, smart badge that disappears when you view completed requests! All polished and working smoothly.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.70.0/jellyfin-plugin-ratings_1.0.70.0.zip",
-        "checksum": "958b783c4ea55af25427e9f8983f1b15",
-        "timestamp": "2025-11-21T01:30:00Z"
-      },
-      {
-        "version": "1.0.69.0",
-        "changelog": "Stunning shine animation! Button aligned with header, no icon, text shines with gradient sweep. Badge updates instantly when admin marks requests as done. Beautiful & functional!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.69.0/jellyfin-plugin-ratings_1.0.69.0.zip",
-        "checksum": "cf47a9c36e79e71e8f58a6d303168579",
-        "timestamp": "2025-11-21T01:08:00Z"
-      },
-      {
-        "version": "1.0.68.0",
-        "changelog": "Premium UX! Grey centered button with pulse animation, notification badges (admins see pending count, users see completed count), super compact tables, wider modal. Professional look!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.68.0/jellyfin-plugin-ratings_1.0.68.0.zip",
-        "checksum": "b0777448b999d635f364643df378a72e",
-        "timestamp": "2025-11-21T00:55:00Z"
-      },
-      {
-        "version": "1.0.67.0",
-        "changelog": "Enhanced Request Media: Button moved left, tooltip on hover, dropdown type selector (Movie/TV Series/Anime/etc), description box, users see their own requests with live status updates!",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.67.0/jellyfin-plugin-ratings_1.0.67.0.zip",
-        "checksum": "eb6e0b4bb227408ae1463208f83f2412",
-        "timestamp": "2025-11-21T00:40:00Z"
-      },
-      {
-        "version": "1.0.66.0",
-        "changelog": "Full Request Media system! User interface for submitting requests, admin interface for managing requests with status updates (pending/processing/done). Button repositioned to avoid blocking UI.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.66.0/jellyfin-plugin-ratings_1.0.66.0.zip",
-        "checksum": "d4fc6b5d262df36d88c79178f68f72d2",
-        "timestamp": "2025-11-20T22:10:00Z"
-      },
-      {
-        "version": "1.0.65.0",
-        "changelog": "SAFE Request Media button! Fully isolated with error handling, won't crash Jellyfin. Top-right corner, hides during video.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.65.0/jellyfin-plugin-ratings_1.0.65.0.zip",
-        "checksum": "e2f3fdf62fc3b139a159556d402346dc",
-        "timestamp": "2025-11-19T20:00:00Z"
-      },
-      {
-        "version": "1.0.63.0",
-        "changelog": "Improved mobile/tablet layout with margin-left: 136px at max-width: 1312px for better positioning.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.63.0/jellyfin-plugin-ratings_1.0.63.0.zip",
-        "checksum": "3942edcd77a3620bc237137fa37d0f75",
-        "timestamp": "2025-11-19T17:10:00Z"
-      },
-      {
-        "version": "1.0.62.0",
-        "changelog": "Fixed mobile layout! Rating stars now display properly on mobile devices with responsive design.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.62.0/jellyfin-plugin-ratings_1.0.62.0.zip",
-        "checksum": "8c3181e51d0d5f9b1f5f80603f39c2b7",
-        "timestamp": "2025-11-19T16:00:00Z"
-      },
-      {
-        "version": "1.0.61.0",
-        "changelog": "Removed all console logging for production. Clean and optimized code.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.61.0/jellyfin-plugin-ratings_1.0.61.0.zip",
-        "checksum": "6dce39f96a33fdde62a7d9e06f0d9282",
-        "timestamp": "2025-11-19T15:05:00Z"
-      },
-      {
-        "version": "1.0.60.0",
-        "changelog": "FIXED: Series rating badges now working! Series items have data-isfolder=true but are valid media items.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.60.0/jellyfin-plugin-ratings_1.0.60.0.zip",
-        "checksum": "7a8b66dad1a2c17bffa1a4631e3dae93",
-        "timestamp": "2025-11-19T14:50:00Z"
-      },
-      {
-        "version": "1.0.59.0",
-        "changelog": "DEBUG VERSION: Added extensive console logging to diagnose series card detection issues.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.59.0/jellyfin-plugin-ratings_1.0.59.0.zip",
-        "checksum": "633fade06045d2686dbf9bd304ec39d9",
-        "timestamp": "2025-11-19T14:35:00Z"
-      },
-      {
-        "version": "1.0.58.0",
-        "changelog": "Enhanced card detection using data-id attributes. More reliable detection of series and movie cards.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.58.0/jellyfin-plugin-ratings_1.0.58.0.zip",
-        "checksum": "4028fa0595aba99edb85a39017f56759",
-        "timestamp": "2025-11-19T14:30:00Z"
-      },
-      {
-        "version": "1.0.57.0",
-        "changelog": "Fixed rating badges not appearing on TV series cards. Improved URL filtering to allow series-specific links.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.57.0/jellyfin-plugin-ratings_1.0.57.0.zip",
-        "checksum": "30607845f75be118832107abd040bb8a",
-        "timestamp": "2025-11-17T12:00:00Z"
       }
     ]
   }
