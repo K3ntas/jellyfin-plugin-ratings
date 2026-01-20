@@ -2835,24 +2835,6 @@
                     background: #666;
                 }
 
-                /* Leaving Badge on Cards - added to .card element */
-                .card {
-                    position: relative !important;
-                }
-                .card-leaving-badge {
-                    position: absolute !important;
-                    top: 5px !important;
-                    right: 5px !important;
-                    background: rgba(231, 76, 60, 0.95) !important;
-                    color: #fff !important;
-                    padding: 4px 8px !important;
-                    border-radius: 4px !important;
-                    font-size: 0.75em !important;
-                    z-index: 9999 !important;
-                    pointer-events: none !important;
-                    font-weight: 600 !important;
-                }
-
                 .detail-leaving-badge {
                     display: inline-block !important;
                     background: #e74c3c !important;
@@ -3427,10 +3409,8 @@
                         // Fetch rating for this item (with caching)
                         self.addCardRating(imageContainer, itemId);
 
-                        // Also add leaving badge if applicable (using same imageContainer)
-                        self.addLeavingBadgeToCard(imageContainer, itemId);
-
                         // Stop observing this card once we've processed it
+                        // Note: Leaving badges are handled by updateDeletionBadges() which runs periodically
                         intersectionObserver.unobserve(card);
                     }
                 });
@@ -3605,27 +3585,39 @@
 
         /**
          * Create and position overlay using CSS ::after pseudo-element
+         * Combines rating AND leaving info in the same badge
          */
         createAndPositionOverlay: function (imageContainer, stats, itemId) {
             const self = this;
 
-            // Use CSS ::after pseudo-element by adding class and data attribute
-            imageContainer.classList.add('has-rating');
-            imageContainer.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+            // Build badge text - start with rating
+            let badgeText = '★ ' + stats.AverageRating.toFixed(1);
 
-            // Also check for leaving badge (uses ::before)
+            // Append leaving info if available
             if (itemId && self.scheduledDeletionsCache) {
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
                 if (deletion) {
-                    const now = new Date();
-                    const deleteDate = new Date(deletion.DeleteAt);
-                    const diffMs = deleteDate - now;
-                    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                    const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
-                    imageContainer.classList.add('has-leaving');
-                    imageContainer.setAttribute('data-leaving', text);
+                    const leavingText = self.formatLeavingText(deletion.DeleteAt);
+                    badgeText += ' | ' + leavingText;
                 }
             }
+
+            // Use CSS ::after pseudo-element
+            imageContainer.classList.add('has-rating');
+            imageContainer.setAttribute('data-rating', badgeText);
+        },
+
+        /**
+         * Format leaving text from deletion date
+         */
+        formatLeavingText: function (deleteAt) {
+            const self = this;
+            const now = new Date();
+            const deleteDate = new Date(deleteAt);
+            const diffMs = deleteDate - now;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays <= 0) return self.t('mediaLeavingIn') + ' Today';
+            return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
         },
 
         /**
@@ -5235,7 +5227,7 @@
         },
 
         /**
-         * Update deletion badges on cards (uses CSS ::before like rating badges)
+         * Update deletion badges on cards - combines with rating badge in same ::after
          */
         updateDeletionBadges: function () {
             const self = this;
@@ -5245,61 +5237,60 @@
                 return;
             }
 
-            const cacheSize = Object.keys(self.scheduledDeletionsCache).length;
-            if (cacheSize === 0) {
-                return; // No scheduled deletions, nothing to do
-            }
-
-            // Format days until deletion
-            const formatDaysUntil = (deleteAt) => {
-                const now = new Date();
-                const deleteDate = new Date(deleteAt);
-                const diffMs = deleteDate - now;
-                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                if (diffDays <= 0) return self.t('mediaLeavingIn') + ' Today';
-                return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
-            };
-
             // Find all media cards
             const cards = document.querySelectorAll('.card:not(.card .card)');
-            let badgesAdded = 0;
+            let badgesUpdated = 0;
 
             cards.forEach(card => {
                 // Try to get item ID from card
                 let itemId = card.getAttribute('data-id');
                 if (!itemId) {
-                    // Try finding it in child elements
                     const link = card.querySelector('a[href*="id="]');
                     if (link) {
                         const match = link.href.match(/id=([a-f0-9-]+)/i);
                         if (match) itemId = match[1];
                     }
                 }
-
                 if (!itemId) return;
+
+                // Find imageContainer (same element used by rating badges)
+                const imageContainer = card.querySelector('.cardImageContainer, .cardContent, .card-imageContainer');
+                if (!imageContainer) return;
 
                 // Check if this item has scheduled deletion
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
+                const leavingText = deletion ? self.formatLeavingText(deletion.DeleteAt) : null;
+
+                // Get current badge state
+                const hasRating = imageContainer.classList.contains('has-rating');
+                const currentText = imageContainer.getAttribute('data-rating') || '';
 
                 if (deletion) {
-                    // Create DOM element if not exists - add to CARD element (not imageContainer)
-                    let badge = card.querySelector('.card-leaving-badge');
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'card-leaving-badge';
-                        card.appendChild(badge);
-                        badgesAdded++;
+                    if (hasRating) {
+                        // Card has rating - check if leaving text is already appended
+                        if (!currentText.includes('|')) {
+                            // Append leaving text to existing rating
+                            imageContainer.setAttribute('data-rating', currentText + ' | ' + leavingText);
+                            badgesUpdated++;
+                        }
+                    } else {
+                        // Card has NO rating - add badge with just leaving text
+                        imageContainer.classList.add('has-rating');
+                        imageContainer.setAttribute('data-rating', leavingText);
+                        badgesUpdated++;
                     }
-                    badge.textContent = formatDaysUntil(deletion.DeleteAt);
                 } else {
-                    // Remove badge if no longer scheduled
-                    const badge = card.querySelector('.card-leaving-badge');
-                    if (badge) badge.remove();
+                    // No scheduled deletion - remove leaving text if present
+                    if (hasRating && currentText.includes('|')) {
+                        // Remove the leaving part, keep only rating
+                        const ratingOnly = currentText.split('|')[0].trim();
+                        imageContainer.setAttribute('data-rating', ratingOnly);
+                    }
                 }
             });
 
-            if (badgesAdded > 0) {
-                console.log('RatingsPlugin: Added leaving badges to', badgesAdded, 'cards');
+            if (badgesUpdated > 0) {
+                console.log('RatingsPlugin: Updated leaving badges on', badgesUpdated, 'cards');
             }
 
             // Also check detail page
