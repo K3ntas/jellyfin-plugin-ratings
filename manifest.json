@@ -9,52 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "1.0.216.0",
-        "changelog": "New requests auto-change to Processing when viewed by admin.",
+        "version": "1.0.217.0",
+        "changelog": "Redesigned admin request management with collapsible categories and auto-processing.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.216.0/jellyfin-plugin-ratings_1.0.216.0.zip",
-        "checksum": "24b44ba2e4dedb1cbe4ff552360732bd",
-        "timestamp": "2026-01-24T22:00:00Z"
-      },
-      {
-        "version": "1.0.215.0",
-        "changelog": "Added New Requests category for unread requests, improved plugin logo.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.215.0/jellyfin-plugin-ratings_1.0.215.0.zip",
-        "checksum": "6fc4bff4c8849c7b45447d452cbe299a",
-        "timestamp": "2026-01-24T21:30:00Z"
-      },
-      {
-        "version": "1.0.214.0",
-        "changelog": "Show all request categories, aligned counts, PNG logo for better compatibility.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.214.0/jellyfin-plugin-ratings_1.0.214.0.zip",
-        "checksum": "b4bb1e17fe832f62662bdfdca0398db0",
-        "timestamp": "2026-01-24T21:00:00Z"
-      },
-      {
-        "version": "1.0.213.0",
-        "changelog": "Collapsible admin categories with expandable request cards and New Request button.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.213.0/jellyfin-plugin-ratings_1.0.213.0.zip",
-        "checksum": "2104b95ec08e8bc9de7ae57cd229769a",
-        "timestamp": "2026-01-24T20:30:00Z"
-      },
-      {
-        "version": "1.0.212.0",
-        "changelog": "Collapsible admin categories with expandable request cards for cleaner interface.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.212.0/jellyfin-plugin-ratings_1.0.212.0.zip",
-        "checksum": "f63ac6e6464cc9f9d68d74a3d7097396",
-        "timestamp": "2026-01-24T20:00:00Z"
-      },
-      {
-        "version": "1.0.211.0",
-        "changelog": "Redesigned admin request management interface with modern card-based layout.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.211.0/jellyfin-plugin-ratings_1.0.211.0.zip",
-        "checksum": "ca6184c4f2513a631762459610092c00",
-        "timestamp": "2026-01-24T19:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.217.0/jellyfin-plugin-ratings_1.0.217.0.zip",
+        "checksum": "76ec3c96fa108e920d751fec576ccf48",
+        "timestamp": "2026-01-24T22:30:00Z"
       },
       {
         "version": "1.0.210.0",

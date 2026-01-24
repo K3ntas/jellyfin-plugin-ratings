@@ -6578,11 +6578,11 @@
 
             modalTitle.textContent = this.t('requestMedia') || 'Request Media';
 
-            // Create tabs
+            // Create tabs - Manage tab is active by default for admins
             const tabsHtml = `
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
-                    <button class="admin-tab" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}</button>
+                    <button class="admin-tab" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
+                    <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}</button>
                 </div>
                 <div class="admin-tab-content" id="adminTabContent"></div>
             `;
@@ -6607,8 +6607,8 @@
                 });
             });
 
-            // Load create tab by default
-            this.renderUserInterfaceInTab(config);
+            // Load manage tab by default for admins
+            this.renderAdminInterfaceInTab(config);
         },
 
         /**
