@@ -15,7 +15,6 @@ namespace Jellyfin.Plugin.Ratings
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ScriptInjectionMiddleware> _logger;
-        private const string ScriptTag = "<script defer src=\"/Ratings/ratings.js\"></script>";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptInjectionMiddleware"/> class.
@@ -98,7 +97,8 @@ namespace Jellyfin.Plugin.Ratings
                 }
 
                 // Inject the script before </body>
-                var modifiedBody = InjectScript(responseBody);
+                var basePath = context.Request.PathBase.Value?.TrimEnd('/') ?? string.Empty;
+                var modifiedBody = InjectScript(responseBody, basePath);
                 if (modifiedBody == responseBody)
                 {
                     // Injection failed (no </body> found), write original
@@ -153,7 +153,7 @@ namespace Jellyfin.Plugin.Ratings
                 || path.Equals("/web/index.html", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string InjectScript(string html)
+        private static string InjectScript(string html, string basePath)
         {
             // Find </body> tag and inject before it
             var bodyCloseIndex = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
@@ -163,7 +163,9 @@ namespace Jellyfin.Plugin.Ratings
                 return html;
             }
 
-            return html.Insert(bodyCloseIndex, ScriptTag + "\n");
+            // Build script tag with dynamic base path for reverse proxy support
+            var scriptTag = $"<script defer src=\"{basePath}/Ratings/ratings.js\"></script>";
+            return html.Insert(bodyCloseIndex, scriptTag + "\n");
         }
     }
 }

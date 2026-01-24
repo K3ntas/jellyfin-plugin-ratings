@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.svg?v=6",
     "versions": [
       {
+        "version": "1.0.210.0",
+        "changelog": "Fixed compatibility with reverse proxy setups using base URL paths.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.210.0/jellyfin-plugin-ratings_1.0.210.0.zip",
+        "checksum": "5d91148b08354673c450339a6880c246",
+        "timestamp": "2026-01-24T18:00:00Z"
+      },
+      {
         "version": "1.0.209.0",
         "changelog": "Added 'Leaving in X days' badges visible on media cards scheduled for deletion.",
         "targetAbi": "10.11.0.0",
