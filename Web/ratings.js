@@ -37,6 +37,7 @@
                 noDetails: 'No details',
                 watchNow: '🎬 Watch Now',
                 noRequestsYet: 'No media requests yet',
+                newRequest: 'New Request',
                 pending: 'PENDING',
                 processing: 'PROCESSING',
                 done: 'DONE',
@@ -140,6 +141,7 @@
                 noDetails: 'Nėra detalių',
                 watchNow: '🎬 Žiūrėti Dabar',
                 noRequestsYet: 'Medijos užklausų dar nėra',
+                newRequest: 'Nauja užklausa',
                 pending: 'LAUKIAMA',
                 processing: 'VYKDOMA',
                 done: 'ATLIKTA',
@@ -1702,48 +1704,495 @@
                     display: none !important;
                 }
 
-                /* Category Sections */
+                /* ============================================
+                   COLLAPSIBLE CATEGORY SECTIONS
+                   ============================================ */
                 .admin-category-section {
-                    margin-bottom: 24px !important;
+                    margin-bottom: 8px !important;
+                    border-radius: 12px !important;
+                    overflow: hidden !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid #333 !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                .admin-category-section:hover {
+                    border-color: #444 !important;
                 }
 
                 .admin-category-header {
                     color: #fff !important;
-                    font-size: 16px !important;
+                    font-size: 14px !important;
                     font-weight: 600 !important;
-                    margin: 0 0 12px 0 !important;
-                    padding: 10px 15px !important;
-                    background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%) !important;
+                    margin: 0 !important;
+                    padding: 14px 20px !important;
+                    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%) !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    user-select: none !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-category-header:hover {
+                    background: rgba(255,255,255,0.08) !important;
+                }
+
+                .admin-category-header-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                }
+
+                .admin-category-icon {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 8px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 14px !important;
+                }
+
+                .admin-category-count {
+                    background: rgba(255,255,255,0.15) !important;
+                    padding: 4px 12px !important;
+                    border-radius: 20px !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                }
+
+                .admin-category-chevron {
+                    font-size: 12px !important;
+                    transition: transform 0.3s ease !important;
+                    color: #666 !important;
+                }
+
+                .admin-category-section.expanded .admin-category-chevron {
+                    transform: rotate(180deg) !important;
+                }
+
+                .admin-category-content {
+                    max-height: 0 !important;
+                    overflow: hidden !important;
+                    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                }
+
+                .admin-category-section.expanded .admin-category-content {
+                    max-height: 2000px !important;
+                }
+
+                .admin-category-list {
+                    padding: 8px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 4px !important;
+                }
+
+                /* Category Colors */
+                .admin-category-section[data-category="processing"] .admin-category-icon {
+                    background: rgba(33, 150, 243, 0.2) !important;
+                    color: #64b5f6 !important;
+                }
+                .admin-category-section[data-category="processing"] .admin-category-count {
+                    background: rgba(33, 150, 243, 0.3) !important;
+                    color: #90caf9 !important;
+                }
+
+                .admin-category-section[data-category="pending"] .admin-category-icon {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                    color: #ffb74d !important;
+                }
+                .admin-category-section[data-category="pending"] .admin-category-count {
+                    background: rgba(255, 152, 0, 0.3) !important;
+                    color: #ffcc80 !important;
+                }
+
+                .admin-category-section[data-category="snoozed"] .admin-category-icon {
+                    background: rgba(156, 39, 176, 0.2) !important;
+                    color: #ce93d8 !important;
+                }
+                .admin-category-section[data-category="snoozed"] .admin-category-count {
+                    background: rgba(156, 39, 176, 0.3) !important;
+                    color: #e1bee7 !important;
+                }
+
+                .admin-category-section[data-category="done"] .admin-category-icon {
+                    background: rgba(76, 175, 80, 0.2) !important;
+                    color: #81c784 !important;
+                }
+                .admin-category-section[data-category="done"] .admin-category-count {
+                    background: rgba(76, 175, 80, 0.3) !important;
+                    color: #a5d6a7 !important;
+                }
+
+                .admin-category-section[data-category="rejected"] .admin-category-icon {
+                    background: rgba(244, 67, 54, 0.2) !important;
+                    color: #e57373 !important;
+                }
+                .admin-category-section[data-category="rejected"] .admin-category-count {
+                    background: rgba(244, 67, 54, 0.3) !important;
+                    color: #ef9a9a !important;
+                }
+
+                /* ============================================
+                   COMPACT REQUEST CARD (default state)
+                   ============================================ */
+                .admin-request-item {
+                    background: #222 !important;
+                    border-radius: 8px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    overflow: hidden !important;
+                }
+
+                .admin-request-item:hover {
+                    background: #2a2a2a !important;
+                }
+
+                .admin-request-item.expanded {
+                    background: #252525 !important;
+                    cursor: default !important;
+                }
+
+                /* Compact View */
+                .admin-request-compact {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 12px 16px !important;
+                    gap: 16px !important;
+                }
+
+                .admin-request-compact-title {
+                    flex: 1 !important;
+                    color: #fff !important;
+                    font-weight: 500 !important;
+                    font-size: 13px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
+                    min-width: 0 !important;
+                }
+
+                .admin-request-compact-meta {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .admin-request-compact-user {
+                    color: #888 !important;
+                    font-size: 11px !important;
+                    background: rgba(255,255,255,0.08) !important;
+                    padding: 3px 8px !important;
+                    border-radius: 12px !important;
+                }
+
+                .admin-request-compact-type {
+                    color: #00a4dc !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    text-transform: uppercase !important;
+                }
+
+                .admin-request-compact-date {
+                    color: #555 !important;
+                    font-size: 10px !important;
+                }
+
+                .admin-request-compact-status {
+                    padding: 4px 10px !important;
+                    border-radius: 12px !important;
+                    font-size: 10px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                }
+
+                .admin-request-compact-status.pending { background: #ff9800 !important; color: #000 !important; }
+                .admin-request-compact-status.processing { background: #2196F3 !important; color: #fff !important; }
+                .admin-request-compact-status.done { background: #4CAF50 !important; color: #fff !important; }
+                .admin-request-compact-status.rejected { background: #f44336 !important; color: #fff !important; }
+                .admin-request-compact-status.snoozed { background: #9c27b0 !important; color: #fff !important; }
+
+                .admin-request-expand-icon {
+                    color: #444 !important;
+                    font-size: 10px !important;
+                    transition: transform 0.2s ease !important;
+                }
+
+                .admin-request-item.expanded .admin-request-expand-icon {
+                    transform: rotate(180deg) !important;
+                }
+
+                /* ============================================
+                   EXPANDED REQUEST DETAILS
+                   ============================================ */
+                .admin-request-details-panel {
+                    max-height: 0 !important;
+                    overflow: hidden !important;
+                    transition: max-height 0.3s ease !important;
+                    border-top: 1px solid transparent !important;
+                }
+
+                .admin-request-item.expanded .admin-request-details-panel {
+                    max-height: 500px !important;
+                    border-top-color: #333 !important;
+                }
+
+                .admin-request-details-content {
+                    padding: 16px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 12px !important;
+                }
+
+                .admin-request-detail-row {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 12px !important;
+                    align-items: center !important;
+                }
+
+                .admin-request-detail-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    font-size: 12px !important;
+                    color: #aaa !important;
+                }
+
+                .admin-request-detail-item.imdb {
+                    background: rgba(245, 197, 24, 0.15) !important;
+                    padding: 4px 10px !important;
                     border-radius: 6px !important;
-                    border-left: 4px solid #00a4dc !important;
                 }
 
-                .admin-category-section[data-category="processing"] .admin-category-header {
-                    border-left-color: #2196F3 !important;
+                .admin-request-detail-item.imdb a {
+                    color: #f5c518 !important;
+                    text-decoration: none !important;
+                    font-weight: 600 !important;
                 }
 
-                .admin-category-section[data-category="pending"] .admin-category-header {
-                    border-left-color: #ff9800 !important;
+                .admin-request-notes {
+                    color: #888 !important;
+                    font-size: 12px !important;
+                    padding: 10px !important;
+                    background: rgba(0,0,0,0.2) !important;
+                    border-radius: 6px !important;
+                    line-height: 1.4 !important;
                 }
 
-                .admin-category-section[data-category="snoozed"] .admin-category-header {
-                    border-left-color: #9c27b0 !important;
+                .admin-request-rejection {
+                    color: #e57373 !important;
+                    font-size: 12px !important;
+                    padding: 10px !important;
+                    background: rgba(244, 67, 54, 0.1) !important;
+                    border-radius: 6px !important;
+                    border-left: 3px solid #f44336 !important;
                 }
 
-                .admin-category-section[data-category="done"] .admin-category-header {
-                    border-left-color: #4CAF50 !important;
+                /* Action Buttons Row */
+                .admin-request-actions-row {
+                    display: flex !important;
+                    gap: 6px !important;
+                    flex-wrap: wrap !important;
+                    padding-top: 8px !important;
+                    border-top: 1px dashed #333 !important;
                 }
 
-                .admin-category-section[data-category="rejected"] .admin-category-header {
-                    border-left-color: #f44336 !important;
+                .admin-action-btn {
+                    padding: 8px 14px !important;
+                    border: 1px solid !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    background: transparent !important;
+                }
+
+                .admin-action-btn.pending {
+                    border-color: rgba(255, 152, 0, 0.4) !important;
+                    color: #ffb74d !important;
+                }
+                .admin-action-btn.pending:hover {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                }
+
+                .admin-action-btn.processing {
+                    border-color: rgba(33, 150, 243, 0.4) !important;
+                    color: #64b5f6 !important;
+                }
+                .admin-action-btn.processing:hover {
+                    background: rgba(33, 150, 243, 0.2) !important;
+                }
+
+                .admin-action-btn.done {
+                    border-color: rgba(76, 175, 80, 0.4) !important;
+                    color: #81c784 !important;
+                }
+                .admin-action-btn.done:hover {
+                    background: rgba(76, 175, 80, 0.2) !important;
+                }
+
+                .admin-action-btn.rejected {
+                    border-color: rgba(244, 67, 54, 0.4) !important;
+                    color: #e57373 !important;
+                }
+                .admin-action-btn.rejected:hover {
+                    background: rgba(244, 67, 54, 0.2) !important;
+                }
+
+                .admin-action-btn.delete {
+                    border-color: rgba(244, 67, 54, 0.3) !important;
+                    color: #e57373 !important;
+                    margin-left: auto !important;
+                }
+                .admin-action-btn.delete:hover {
+                    background: rgba(244, 67, 54, 0.2) !important;
+                }
+
+                /* Input Fields in Expanded View */
+                .admin-request-inputs {
+                    display: flex !important;
+                    gap: 8px !important;
+                    margin-top: 8px !important;
+                }
+
+                .admin-request-input {
+                    flex: 1 !important;
+                    padding: 10px 12px !important;
+                    border: 1px solid #333 !important;
+                    border-radius: 6px !important;
+                    background: #1a1a1a !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                    transition: border-color 0.2s ease !important;
+                }
+
+                .admin-request-input:focus {
+                    border-color: #00a4dc !important;
+                    outline: none !important;
+                }
+
+                .admin-request-input::placeholder {
+                    color: #555 !important;
+                }
+
+                /* Snooze Controls */
+                .admin-snooze-controls {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    margin-top: 8px !important;
+                    padding-top: 8px !important;
+                    border-top: 1px dashed #333 !important;
+                }
+
+                .admin-snooze-date {
+                    padding: 8px 12px !important;
+                    border: 1px solid #333 !important;
+                    border-radius: 6px !important;
+                    background: #1a1a1a !important;
+                    color: #fff !important;
+                    font-size: 12px !important;
+                }
+
+                .admin-snooze-date::-webkit-calendar-picker-indicator {
+                    filter: invert(1) !important;
+                }
+
+                .admin-snooze-btn, .admin-unsnooze-btn {
+                    padding: 8px 14px !important;
+                    border: 1px solid !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    background: transparent !important;
+                }
+
+                .admin-snooze-btn {
+                    border-color: rgba(156, 39, 176, 0.4) !important;
+                    color: #ce93d8 !important;
+                }
+                .admin-snooze-btn:hover {
+                    background: rgba(156, 39, 176, 0.2) !important;
+                }
+
+                .admin-unsnooze-btn {
+                    border-color: rgba(255, 152, 0, 0.4) !important;
+                    color: #ffb74d !important;
+                }
+                .admin-unsnooze-btn:hover {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                }
+
+                /* Watch Button */
+                .admin-watch-btn {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    padding: 8px 14px !important;
+                    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
+                    color: #fff !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    text-decoration: none !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-watch-btn:hover {
+                    transform: scale(1.05) !important;
+                    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+                }
+
+                /* Admin Header Row */
+                .admin-header-row {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    margin-bottom: 16px !important;
+                    padding-bottom: 12px !important;
+                    border-bottom: 1px solid #333 !important;
+                }
+
+                .admin-new-request-btn {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    padding: 10px 20px !important;
+                    background: linear-gradient(135deg, #00a4dc 0%, #0077b5 100%) !important;
+                    color: #fff !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    box-shadow: 0 2px 8px rgba(0, 164, 220, 0.3) !important;
+                }
+
+                .admin-new-request-btn:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 4px 16px rgba(0, 164, 220, 0.4) !important;
                 }
 
                 /* Empty state */
                 .admin-request-empty {
                     text-align: center !important;
-                    color: #666 !important;
-                    padding: 60px 20px !important;
-                    font-size: 14px !important;
+                    color: #555 !important;
+                    padding: 40px 20px !important;
+                    font-size: 13px !important;
+                }
+
+                /* Hide elements */
+                .admin-status-select, .mobile-delete {
+                    display: none !important;
                 }
 
                 .admin-request-time span {
@@ -6301,7 +6750,13 @@
                     </div>
                 ` : '';
 
-                let html = langSwitchHtml;
+                // Build header row with language switch and new request button
+                let html = `
+                    <div class="admin-header-row">
+                        ${langSwitchHtml}
+                        <button class="admin-new-request-btn" id="adminNewRequestBtn">➕ ${self.t('newRequest') || 'New Request'}</button>
+                    </div>
+                `;
 
                 if (requests.length === 0) {
                     tabContent.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
@@ -6310,6 +6765,13 @@
                         langToggle.addEventListener('change', () => {
                             self.setLanguage(langToggle.checked ? 'lt' : 'en');
                             self.renderAdminInterfaceInTab(config);
+                        });
+                    }
+                    // Attach new request button handler
+                    const newReqBtn = document.getElementById('adminNewRequestBtn');
+                    if (newReqBtn) {
+                        newReqBtn.addEventListener('click', () => {
+                            self.openRequestModal();
                         });
                     }
                     return;
@@ -6346,20 +6808,37 @@
                     }
                 });
 
+                // Category icons for each status
+                const categoryIcons = {
+                    processing: '⚙️',
+                    pending: '⏳',
+                    snoozed: '💤',
+                    done: '✅',
+                    rejected: '❌'
+                };
+
                 // Build HTML for each category
                 statusOrder.forEach(status => {
                     const categoryRequests = categorized[status];
                     if (categoryRequests.length === 0) return;
 
+                    const icon = categoryIcons[status] || '📋';
                     html += `<div class="admin-category-section" data-category="${status}">`;
-                    html += `<h3 class="admin-category-header">${categoryLabels[status]} (${categoryRequests.length})</h3>`;
-                    html += '<ul class="admin-request-list">';
+                    html += `<div class="admin-category-header">
+                        <div class="admin-category-header-left">
+                            <span class="admin-category-icon">${icon}</span>
+                            <span>${categoryLabels[status]}</span>
+                        </div>
+                        <span class="admin-category-count">${categoryRequests.length}</span>
+                        <span class="admin-category-chevron">▼</span>
+                    </div>`;
+                    html += `<div class="admin-category-content"><ul class="admin-category-list">`;
 
                     categoryRequests.forEach(request => {
                         html += self.renderAdminRequestItem(request, status === 'snoozed');
                     });
 
-                    html += '</ul></div>';
+                    html += '</ul></div></div>';
                 });
 
                 tabContent.innerHTML = html;
@@ -6372,6 +6851,56 @@
                         self.renderAdminInterfaceInTab(config);
                     });
                 }
+
+                // Attach new request button handler
+                const newReqBtn = document.getElementById('adminNewRequestBtn');
+                if (newReqBtn) {
+                    newReqBtn.addEventListener('click', () => {
+                        self.openRequestModal();
+                    });
+                }
+
+                // Attach category header click handlers (expand/collapse)
+                const categoryHeaders = tabContent.querySelectorAll('.admin-category-header');
+                categoryHeaders.forEach(header => {
+                    header.addEventListener('click', (e) => {
+                        const section = header.closest('.admin-category-section');
+                        if (section) {
+                            section.classList.toggle('expanded');
+                        }
+                    });
+                });
+
+                // Attach request card click handlers (expand/collapse)
+                const requestCompacts = tabContent.querySelectorAll('.admin-request-compact');
+                requestCompacts.forEach(compact => {
+                    compact.addEventListener('click', (e) => {
+                        // Don't toggle if clicking on a button or link
+                        if (e.target.closest('button') || e.target.closest('a')) return;
+
+                        const item = compact.closest('.admin-request-item');
+                        if (item) {
+                            // Close other expanded items in the same category
+                            const category = item.closest('.admin-category-section');
+                            if (category) {
+                                category.querySelectorAll('.admin-request-item.expanded').forEach(other => {
+                                    if (other !== item) {
+                                        other.classList.remove('expanded');
+                                    }
+                                });
+                            }
+                            item.classList.toggle('expanded');
+                        }
+                    });
+                });
+
+                // Prevent clicks inside the expanded panel from collapsing
+                const detailsPanels = tabContent.querySelectorAll('.admin-request-details-panel');
+                detailsPanels.forEach(panel => {
+                    panel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                });
 
                 // Attach status change handlers for buttons
                 const statusBtns = tabContent.querySelectorAll('.admin-status-btn');
@@ -6527,51 +7056,49 @@
          */
         renderAdminRequestItem: function (request, isSnoozed) {
             const self = this;
-            const details = [];
-            if (request.Type) details.push(request.Type);
-            if (request.Notes) details.push(request.Notes);
-            const detailsText = details.join(' • ');
-
-            let customFieldsHtml = '';
-            if (request.CustomFields) {
-                try {
-                    const customFields = JSON.parse(request.CustomFields);
-                    for (const [key, value] of Object.entries(customFields)) {
-                        customFieldsHtml += `<div class="admin-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
-                    }
-                } catch (e) {}
-            }
-
             const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
             const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
             const hasLink = request.MediaLink && request.Status === 'done';
             const isRejected = request.Status === 'rejected';
             const statusText = isSnoozed ? self.t('snoozed') : self.t(request.Status);
+            const statusClass = isSnoozed ? 'snoozed' : request.Status;
 
-            const rejectionDisplay = isRejected && request.RejectionReason
-                ? `<div class="admin-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
-                : '';
-
-            let imdbHtml = '';
-            if (request.ImdbCode) {
-                imdbHtml += `<div class="admin-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+            // Build custom fields HTML
+            let customFieldsHtml = '';
+            if (request.CustomFields) {
+                try {
+                    const customFields = JSON.parse(request.CustomFields);
+                    for (const [key, value] of Object.entries(customFields)) {
+                        customFieldsHtml += `<div class="admin-request-detail-item"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
+                    }
+                } catch (e) {}
             }
-            if (request.ImdbLink) {
-                imdbHtml += `<div class="admin-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+
+            // IMDB display
+            let imdbHtml = '';
+            if (request.ImdbCode || request.ImdbLink) {
+                imdbHtml = `<div class="admin-request-detail-item imdb">`;
+                if (request.ImdbCode) {
+                    imdbHtml += `<span>🎬 ${self.escapeHtml(request.ImdbCode)}</span>`;
+                }
+                if (request.ImdbLink) {
+                    imdbHtml += `<a href="${self.escapeHtml(request.ImdbLink)}" target="_blank">IMDB →</a>`;
+                }
+                imdbHtml += `</div>`;
             }
 
             // Snooze info display
             let snoozeInfoHtml = '';
             if (isSnoozed && request.SnoozedUntil) {
                 const snoozedUntilDate = self.formatDateTime(request.SnoozedUntil);
-                snoozeInfoHtml = `<div class="admin-snooze-info">💤 ${self.t('snoozedUntil')}: ${snoozedUntilDate}</div>`;
+                snoozeInfoHtml = `<div class="admin-request-detail-item">💤 Until: ${snoozedUntilDate}</div>`;
             }
 
             // Build snooze controls HTML
             let snoozeHtml = '';
             if (isSnoozed) {
                 snoozeHtml = `
-                    <div class="admin-snooze-row">
+                    <div class="admin-snooze-controls">
                         <button class="admin-unsnooze-btn" data-request-id="${request.Id}">⏰ ${self.t('unsnooze')}</button>
                     </div>
                 `;
@@ -6580,85 +7107,77 @@
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const minDate = tomorrow.toISOString().split('T')[0];
                 snoozeHtml = `
-                    <div class="admin-snooze-row">
-                        <span class="admin-actions-label">Snooze</span>
+                    <div class="admin-snooze-controls">
                         <input type="date" class="admin-snooze-date" data-request-id="${request.Id}" min="${minDate}">
                         <button class="admin-snooze-btn" data-request-id="${request.Id}">💤 ${self.t('snooze')}</button>
                     </div>
                 `;
             }
 
-            // Build IMDB display
-            let imdbDisplay = '';
-            if (request.ImdbCode || request.ImdbLink) {
-                imdbDisplay = `<div class="admin-request-imdb">`;
-                if (request.ImdbCode) {
-                    imdbDisplay += `<span>🎬 ${self.escapeHtml(request.ImdbCode)}</span>`;
-                }
-                if (request.ImdbLink) {
-                    imdbDisplay += `<a href="${self.escapeHtml(request.ImdbLink)}" target="_blank">View on IMDB →</a>`;
-                }
-                imdbDisplay += `</div>`;
+            // Rejection display
+            let rejectionHtml = '';
+            if (isRejected && request.RejectionReason) {
+                rejectionHtml = `<div class="admin-request-rejection">❌ ${self.escapeHtml(request.RejectionReason)}</div>`;
+            }
+
+            // Watch button for completed requests
+            let watchHtml = '';
+            if (hasLink) {
+                watchHtml = `<a href="${self.escapeHtml(request.MediaLink)}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
             }
 
             return `
-                <li class="admin-request-item ${isSnoozed ? 'snoozed-item' : ''}" data-request-id="${request.Id}">
-                    <!-- Header -->
-                    <div class="admin-request-header">
-                        <div class="admin-request-header-left">
-                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
-                            <div class="admin-request-meta">
-                                <span class="admin-request-user">${self.escapeHtml(request.Username)}</span>
-                                ${request.Type ? `<span class="admin-request-type">${self.escapeHtml(request.Type)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="admin-request-header-right">
-                            <span class="admin-request-date">📅 ${createdAt}</span>
-                            <span class="admin-request-status-badge ${isSnoozed ? 'snoozed' : request.Status}">${statusText}</span>
+                <li class="admin-request-item" data-request-id="${request.Id}">
+                    <!-- Compact View (always visible) -->
+                    <div class="admin-request-compact">
+                        <span class="admin-request-compact-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</span>
+                        <div class="admin-request-compact-meta">
+                            <span class="admin-request-compact-user">${self.escapeHtml(request.Username)}</span>
+                            ${request.Type ? `<span class="admin-request-compact-type">${self.escapeHtml(request.Type)}</span>` : ''}
+                            <span class="admin-request-compact-date">${createdAt}</span>
+                            <span class="admin-request-compact-status ${statusClass}">${statusText}</span>
+                            <span class="admin-request-expand-icon">▼</span>
                         </div>
                     </div>
 
-                    <!-- Body -->
-                    <div class="admin-request-body">
-                        ${request.Notes ? `<div class="admin-request-details">${self.escapeHtml(request.Notes)}</div>` : ''}
-
-                        <div class="admin-request-info-row">
-                            ${imdbDisplay}
-                            ${customFieldsHtml}
-                            ${snoozeInfoHtml}
-                        </div>
-
-                        ${completedAt ? `
-                            <div class="admin-request-completed">
-                                <span>✅ Completed: ${completedAt}</span>
-                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="admin-request-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                    <!-- Expanded Details Panel (hidden by default) -->
+                    <div class="admin-request-details-panel">
+                        <div class="admin-request-details-content">
+                            <!-- Info row -->
+                            <div class="admin-request-detail-row">
+                                ${imdbHtml}
+                                ${snoozeInfoHtml}
+                                ${customFieldsHtml}
+                                ${completedAt ? `<div class="admin-request-detail-item">✅ Completed: ${completedAt}</div>` : ''}
                             </div>
-                        ` : ''}
 
-                        ${rejectionDisplay}
-                    </div>
+                            <!-- Notes -->
+                            ${request.Notes ? `<div class="admin-request-notes">${self.escapeHtml(request.Notes)}</div>` : ''}
 
-                    <!-- Actions -->
-                    <div class="admin-request-actions">
-                        <div class="admin-actions-row">
-                            <span class="admin-actions-label">Status</span>
-                            <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
-                            <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
-                            <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
-                            <button class="admin-status-btn rejected" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
-                            <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
-                        </div>
+                            <!-- Rejection reason -->
+                            ${rejectionHtml}
 
-                        <div class="admin-actions-row">
-                            <div class="admin-input-group">
-                                <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                            <!-- Action buttons -->
+                            <div class="admin-request-actions-row">
+                                <button class="admin-action-btn pending admin-status-btn" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
+                                <button class="admin-action-btn processing admin-status-btn" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
+                                <button class="admin-action-btn done admin-status-btn" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
+                                <button class="admin-action-btn rejected admin-status-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
+                                <button class="admin-action-btn delete admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
                             </div>
-                            <div class="admin-input-group">
-                                <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
-                            </div>
-                        </div>
 
-                        ${snoozeHtml}
+                            <!-- Input fields -->
+                            <div class="admin-request-inputs">
+                                <input type="text" class="admin-request-input admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                                <input type="text" class="admin-request-input admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
+                            </div>
+
+                            <!-- Snooze controls -->
+                            ${snoozeHtml}
+
+                            <!-- Watch button -->
+                            ${watchHtml}
+                        </div>
                     </div>
 
                     <!-- Hidden mobile elements -->
@@ -7375,7 +7894,13 @@
                     </div>
                 ` : '';
 
-                let html = langSwitchHtml;
+                // Build header row with language switch and new request button
+                let html = `
+                    <div class="admin-header-row">
+                        ${langSwitchHtml}
+                        <button class="admin-new-request-btn" id="adminNewRequestBtnModal">➕ ${self.t('newRequest') || 'New Request'}</button>
+                    </div>
+                `;
 
                 if (requests.length === 0) {
                     modalBody.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
@@ -7385,6 +7910,16 @@
                         langToggle.addEventListener('change', () => {
                             self.setLanguage(langToggle.checked ? 'lt' : 'en');
                             self.loadAdminInterface();
+                        });
+                    }
+                    // Attach new request button handler
+                    const newReqBtn = document.getElementById('adminNewRequestBtnModal');
+                    if (newReqBtn) {
+                        newReqBtn.addEventListener('click', () => {
+                            // Close admin modal and open request modal
+                            const adminModal = document.getElementById('ratingsAdminModal');
+                            if (adminModal) adminModal.style.display = 'none';
+                            self.openRequestModal();
                         });
                     }
                     return;
@@ -7421,20 +7956,37 @@
                     }
                 });
 
+                // Category icons for each status
+                const categoryIcons = {
+                    processing: '⚙️',
+                    pending: '⏳',
+                    snoozed: '💤',
+                    done: '✅',
+                    rejected: '❌'
+                };
+
                 // Build HTML for each category
                 statusOrder.forEach(status => {
                     const categoryRequests = categorized[status];
                     if (categoryRequests.length === 0) return;
 
+                    const icon = categoryIcons[status] || '📋';
                     html += `<div class="admin-category-section" data-category="${status}">`;
-                    html += `<h3 class="admin-category-header">${categoryLabels[status]} (${categoryRequests.length})</h3>`;
-                    html += '<ul class="admin-request-list">';
+                    html += `<div class="admin-category-header">
+                        <div class="admin-category-header-left">
+                            <span class="admin-category-icon">${icon}</span>
+                            <span>${categoryLabels[status]}</span>
+                        </div>
+                        <span class="admin-category-count">${categoryRequests.length}</span>
+                        <span class="admin-category-chevron">▼</span>
+                    </div>`;
+                    html += `<div class="admin-category-content"><ul class="admin-category-list">`;
 
                     categoryRequests.forEach(request => {
                         html += self.renderAdminRequestItem(request, status === 'snoozed');
                     });
 
-                    html += '</ul></div>';
+                    html += '</ul></div></div>';
                 });
 
                 modalBody.innerHTML = html;
@@ -7447,6 +7999,59 @@
                         self.loadAdminInterface();
                     });
                 }
+
+                // Attach new request button handler
+                const newReqBtn = document.getElementById('adminNewRequestBtnModal');
+                if (newReqBtn) {
+                    newReqBtn.addEventListener('click', () => {
+                        // Close admin modal and open request modal
+                        const adminModal = document.getElementById('ratingsAdminModal');
+                        if (adminModal) adminModal.style.display = 'none';
+                        self.openRequestModal();
+                    });
+                }
+
+                // Attach category header click handlers (expand/collapse)
+                const categoryHeaders = modalBody.querySelectorAll('.admin-category-header');
+                categoryHeaders.forEach(header => {
+                    header.addEventListener('click', (e) => {
+                        const section = header.closest('.admin-category-section');
+                        if (section) {
+                            section.classList.toggle('expanded');
+                        }
+                    });
+                });
+
+                // Attach request card click handlers (expand/collapse)
+                const requestCompacts = modalBody.querySelectorAll('.admin-request-compact');
+                requestCompacts.forEach(compact => {
+                    compact.addEventListener('click', (e) => {
+                        // Don't toggle if clicking on a button or link
+                        if (e.target.closest('button') || e.target.closest('a')) return;
+
+                        const item = compact.closest('.admin-request-item');
+                        if (item) {
+                            // Close other expanded items in the same category
+                            const category = item.closest('.admin-category-section');
+                            if (category) {
+                                category.querySelectorAll('.admin-request-item.expanded').forEach(other => {
+                                    if (other !== item) {
+                                        other.classList.remove('expanded');
+                                    }
+                                });
+                            }
+                            item.classList.toggle('expanded');
+                        }
+                    });
+                });
+
+                // Prevent clicks inside the expanded panel from collapsing
+                const detailsPanels = modalBody.querySelectorAll('.admin-request-details-panel');
+                detailsPanels.forEach(panel => {
+                    panel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                });
 
                 // Attach status change handlers for buttons (desktop)
                 const statusBtns = modalBody.querySelectorAll('.admin-status-btn');
