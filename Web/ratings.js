@@ -1743,6 +1743,7 @@
                     display: flex !important;
                     align-items: center !important;
                     gap: 12px !important;
+                    flex: 1 !important;
                 }
 
                 .admin-category-icon {
@@ -1761,6 +1762,8 @@
                     border-radius: 20px !important;
                     font-size: 12px !important;
                     font-weight: 700 !important;
+                    min-width: 32px !important;
+                    text-align: center !important;
                 }
 
                 .admin-category-chevron {
@@ -6817,10 +6820,9 @@
                     rejected: '❌'
                 };
 
-                // Build HTML for each category
+                // Build HTML for each category (show all, even empty ones)
                 statusOrder.forEach(status => {
                     const categoryRequests = categorized[status];
-                    if (categoryRequests.length === 0) return;
 
                     const icon = categoryIcons[status] || '📋';
                     html += `<div class="admin-category-section" data-category="${status}">`;
@@ -7965,10 +7967,9 @@
                     rejected: '❌'
                 };
 
-                // Build HTML for each category
+                // Build HTML for each category (show all, even empty ones)
                 statusOrder.forEach(status => {
                     const categoryRequests = categorized[status];
-                    if (categoryRequests.length === 0) return;
 
                     const icon = categoryIcons[status] || '📋';
                     html += `<div class="admin-category-section" data-category="${status}">`;
