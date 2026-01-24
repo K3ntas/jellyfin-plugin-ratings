@@ -60,6 +60,7 @@
                 snoozed: 'SNOOZED',
                 snoozedUntil: 'Snoozed until',
                 snoozeDate: 'Snooze until date',
+                categoryNew: '🆕 New',
                 categoryProcessing: '🔄 Processing',
                 categoryPending: '⏳ Pending',
                 categorySnoozed: '💤 Snoozed',
@@ -164,6 +165,7 @@
                 snoozed: 'ATIDĖTA',
                 snoozedUntil: 'Atidėta iki',
                 snoozeDate: 'Atidėti iki datos',
+                categoryNew: '🆕 Nauji',
                 categoryProcessing: '🔄 Vykdoma',
                 categoryPending: '⏳ Laukiama',
                 categorySnoozed: '💤 Atidėta',
@@ -1839,6 +1841,15 @@
                     color: #ef9a9a !important;
                 }
 
+                .admin-category-section[data-category="new"] .admin-category-icon {
+                    background: rgba(0, 200, 83, 0.2) !important;
+                    color: #69f0ae !important;
+                }
+                .admin-category-section[data-category="new"] .admin-category-count {
+                    background: rgba(0, 200, 83, 0.3) !important;
+                    color: #b9f6ca !important;
+                }
+
                 /* ============================================
                    COMPACT REQUEST CARD (default state)
                    ============================================ */
@@ -1918,6 +1929,7 @@
                 .admin-request-compact-status.done { background: #4CAF50 !important; color: #fff !important; }
                 .admin-request-compact-status.rejected { background: #f44336 !important; color: #fff !important; }
                 .admin-request-compact-status.snoozed { background: #9c27b0 !important; color: #fff !important; }
+                .admin-request-compact-status.new { background: #00c853 !important; color: #000 !important; }
 
                 .admin-request-expand-icon {
                     color: #444 !important;
@@ -4013,6 +4025,25 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+
+        /**
+         * Mark a request as seen by admin
+         */
+        markRequestAsSeen: function (requestId) {
+            const seenRequestsKey = 'ratings_seen_requests';
+            let seenRequests = [];
+            try {
+                seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
+            } catch (e) {
+                seenRequests = [];
+            }
+            if (!seenRequests.includes(requestId)) {
+                seenRequests.push(requestId);
+                localStorage.setItem(seenRequestsKey, JSON.stringify(seenRequests));
+                // Update the request badge count
+                this.updateRequestBadge();
+            }
         },
 
         /**
@@ -6753,13 +6784,8 @@
                     </div>
                 ` : '';
 
-                // Build header row with language switch and new request button
-                let html = `
-                    <div class="admin-header-row">
-                        ${langSwitchHtml}
-                        <button class="admin-new-request-btn" id="adminNewRequestBtn">➕ ${self.t('newRequest') || 'New Request'}</button>
-                    </div>
-                `;
+                // Build header with language switch only
+                let html = langSwitchHtml;
 
                 if (requests.length === 0) {
                     tabContent.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
@@ -6770,19 +6796,22 @@
                             self.renderAdminInterfaceInTab(config);
                         });
                     }
-                    // Attach new request button handler
-                    const newReqBtn = document.getElementById('adminNewRequestBtn');
-                    if (newReqBtn) {
-                        newReqBtn.addEventListener('click', () => {
-                            self.openRequestModal();
-                        });
-                    }
                     return;
                 }
 
-                // Group requests by status in order: processing > pending > snoozed > done > rejected
-                const statusOrder = ['processing', 'pending', 'snoozed', 'done', 'rejected'];
+                // Get seen request IDs from localStorage
+                const seenRequestsKey = 'ratings_seen_requests';
+                let seenRequests = [];
+                try {
+                    seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
+                } catch (e) {
+                    seenRequests = [];
+                }
+
+                // Group requests by status in order: new > processing > pending > snoozed > done > rejected
+                const statusOrder = ['new', 'processing', 'pending', 'snoozed', 'done', 'rejected'];
                 const categoryLabels = {
+                    new: self.t('categoryNew') || 'New',
                     processing: self.t('categoryProcessing'),
                     pending: self.t('categoryPending'),
                     snoozed: self.t('categorySnoozed'),
@@ -6792,6 +6821,7 @@
 
                 // Categorize requests
                 const categorized = {
+                    new: [],
                     processing: [],
                     pending: [],
                     snoozed: [],
@@ -6800,9 +6830,14 @@
                 };
 
                 requests.forEach(request => {
+                    // Check if request is new (not seen by admin)
+                    const isNew = !seenRequests.includes(request.Id);
                     // Check if request is snoozed (has SnoozedUntil date in the future)
                     const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
-                    if (isSnoozed) {
+
+                    if (isNew && request.Status !== 'done' && request.Status !== 'rejected') {
+                        categorized.new.push(request);
+                    } else if (isSnoozed) {
                         categorized.snoozed.push(request);
                     } else if (categorized[request.Status]) {
                         categorized[request.Status].push(request);
@@ -6813,6 +6848,7 @@
 
                 // Category icons for each status
                 const categoryIcons = {
+                    new: '🆕',
                     processing: '⚙️',
                     pending: '⏳',
                     snoozed: '💤',
@@ -6854,14 +6890,6 @@
                     });
                 }
 
-                // Attach new request button handler
-                const newReqBtn = document.getElementById('adminNewRequestBtn');
-                if (newReqBtn) {
-                    newReqBtn.addEventListener('click', () => {
-                        self.openRequestModal();
-                    });
-                }
-
                 // Attach category header click handlers (expand/collapse)
                 const categoryHeaders = tabContent.querySelectorAll('.admin-category-header');
                 categoryHeaders.forEach(header => {
@@ -6892,6 +6920,14 @@
                                 });
                             }
                             item.classList.toggle('expanded');
+
+                            // Mark request as seen when expanded
+                            if (item.classList.contains('expanded')) {
+                                const requestId = item.getAttribute('data-request-id');
+                                if (requestId) {
+                                    self.markRequestAsSeen(requestId);
+                                }
+                            }
                         }
                     });
                 });
@@ -7896,13 +7932,8 @@
                     </div>
                 ` : '';
 
-                // Build header row with language switch and new request button
-                let html = `
-                    <div class="admin-header-row">
-                        ${langSwitchHtml}
-                        <button class="admin-new-request-btn" id="adminNewRequestBtnModal">➕ ${self.t('newRequest') || 'New Request'}</button>
-                    </div>
-                `;
+                // Build header with language switch only
+                let html = langSwitchHtml;
 
                 if (requests.length === 0) {
                     modalBody.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
@@ -7914,22 +7945,22 @@
                             self.loadAdminInterface();
                         });
                     }
-                    // Attach new request button handler
-                    const newReqBtn = document.getElementById('adminNewRequestBtnModal');
-                    if (newReqBtn) {
-                        newReqBtn.addEventListener('click', () => {
-                            // Close admin modal and open request modal
-                            const adminModal = document.getElementById('ratingsAdminModal');
-                            if (adminModal) adminModal.style.display = 'none';
-                            self.openRequestModal();
-                        });
-                    }
                     return;
                 }
 
-                // Group requests by status in order: processing > pending > snoozed > done > rejected
-                const statusOrder = ['processing', 'pending', 'snoozed', 'done', 'rejected'];
+                // Get seen request IDs from localStorage
+                const seenRequestsKey = 'ratings_seen_requests';
+                let seenRequests = [];
+                try {
+                    seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
+                } catch (e) {
+                    seenRequests = [];
+                }
+
+                // Group requests by status in order: new > processing > pending > snoozed > done > rejected
+                const statusOrder = ['new', 'processing', 'pending', 'snoozed', 'done', 'rejected'];
                 const categoryLabels = {
+                    new: self.t('categoryNew') || 'New',
                     processing: self.t('categoryProcessing'),
                     pending: self.t('categoryPending'),
                     snoozed: self.t('categorySnoozed'),
@@ -7939,6 +7970,7 @@
 
                 // Categorize requests
                 const categorized = {
+                    new: [],
                     processing: [],
                     pending: [],
                     snoozed: [],
@@ -7947,9 +7979,14 @@
                 };
 
                 requests.forEach(request => {
+                    // Check if request is new (not seen by admin)
+                    const isNew = !seenRequests.includes(request.Id);
                     // Check if request is snoozed (has SnoozedUntil date in the future)
                     const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
-                    if (isSnoozed) {
+
+                    if (isNew && request.Status !== 'done' && request.Status !== 'rejected') {
+                        categorized.new.push(request);
+                    } else if (isSnoozed) {
                         categorized.snoozed.push(request);
                     } else if (categorized[request.Status]) {
                         categorized[request.Status].push(request);
@@ -7960,6 +7997,7 @@
 
                 // Category icons for each status
                 const categoryIcons = {
+                    new: '🆕',
                     processing: '⚙️',
                     pending: '⏳',
                     snoozed: '💤',
@@ -8001,17 +8039,6 @@
                     });
                 }
 
-                // Attach new request button handler
-                const newReqBtn = document.getElementById('adminNewRequestBtnModal');
-                if (newReqBtn) {
-                    newReqBtn.addEventListener('click', () => {
-                        // Close admin modal and open request modal
-                        const adminModal = document.getElementById('ratingsAdminModal');
-                        if (adminModal) adminModal.style.display = 'none';
-                        self.openRequestModal();
-                    });
-                }
-
                 // Attach category header click handlers (expand/collapse)
                 const categoryHeaders = modalBody.querySelectorAll('.admin-category-header');
                 categoryHeaders.forEach(header => {
@@ -8042,6 +8069,14 @@
                                 });
                             }
                             item.classList.toggle('expanded');
+
+                            // Mark request as seen when expanded
+                            if (item.classList.contains('expanded')) {
+                                const requestId = item.getAttribute('data-request-id');
+                                if (requestId) {
+                                    self.markRequestAsSeen(requestId);
+                                }
+                            }
                         }
                     });
                 });
