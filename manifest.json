@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.215.0",
+        "changelog": "Added New Requests category for unread requests, improved plugin logo.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.215.0/jellyfin-plugin-ratings_1.0.215.0.zip",
+        "checksum": "6fc4bff4c8849c7b45447d452cbe299a",
+        "timestamp": "2026-01-24T21:30:00Z"
+      },
+      {
         "version": "1.0.214.0",
         "changelog": "Show all request categories, aligned counts, PNG logo for better compatibility.",
         "targetAbi": "10.11.0.0",
