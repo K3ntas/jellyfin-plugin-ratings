@@ -4028,22 +4028,30 @@
         },
 
         /**
-         * Mark a request as seen by admin
+         * Auto-change a pending request to processing when admin views it
          */
-        markRequestAsSeen: function (requestId) {
-            const seenRequestsKey = 'ratings_seen_requests';
-            let seenRequests = [];
-            try {
-                seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
-            } catch (e) {
-                seenRequests = [];
-            }
-            if (!seenRequests.includes(requestId)) {
-                seenRequests.push(requestId);
-                localStorage.setItem(seenRequestsKey, JSON.stringify(seenRequests));
-                // Update the request badge count
-                this.updateRequestBadge();
-            }
+        autoProcessRequest: function (requestId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const url = `${baseUrl}/Ratings/Requests/${requestId}/Status?status=processing`;
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Update the badge count
+                    self.updateRequestBadge();
+                }
+            })
+            .catch(err => {
+                console.error('Error auto-processing request:', err);
+            });
         },
 
         /**
@@ -6799,21 +6807,11 @@
                     return;
                 }
 
-                // Get seen request IDs from localStorage
-                const seenRequestsKey = 'ratings_seen_requests';
-                let seenRequests = [];
-                try {
-                    seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
-                } catch (e) {
-                    seenRequests = [];
-                }
-
-                // Group requests by status in order: new > processing > pending > snoozed > done > rejected
-                const statusOrder = ['new', 'processing', 'pending', 'snoozed', 'done', 'rejected'];
+                // Group requests by status: new (pending) > processing > snoozed > done > rejected
+                const statusOrder = ['new', 'processing', 'snoozed', 'done', 'rejected'];
                 const categoryLabels = {
                     new: self.t('categoryNew') || 'New',
                     processing: self.t('categoryProcessing'),
-                    pending: self.t('categoryPending'),
                     snoozed: self.t('categorySnoozed'),
                     done: self.t('categoryDone'),
                     rejected: self.t('categoryRejected')
@@ -6823,26 +6821,28 @@
                 const categorized = {
                     new: [],
                     processing: [],
-                    pending: [],
                     snoozed: [],
                     done: [],
                     rejected: []
                 };
 
                 requests.forEach(request => {
-                    // Check if request is new (not seen by admin)
-                    const isNew = !seenRequests.includes(request.Id);
                     // Check if request is snoozed (has SnoozedUntil date in the future)
                     const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
 
-                    if (isNew && request.Status !== 'done' && request.Status !== 'rejected') {
-                        categorized.new.push(request);
-                    } else if (isSnoozed) {
+                    if (isSnoozed) {
                         categorized.snoozed.push(request);
-                    } else if (categorized[request.Status]) {
-                        categorized[request.Status].push(request);
+                    } else if (request.Status === 'pending') {
+                        // Pending = New (not yet viewed by admin)
+                        categorized.new.push(request);
+                    } else if (request.Status === 'processing') {
+                        categorized.processing.push(request);
+                    } else if (request.Status === 'done') {
+                        categorized.done.push(request);
+                    } else if (request.Status === 'rejected') {
+                        categorized.rejected.push(request);
                     } else {
-                        categorized.pending.push(request); // Fallback
+                        categorized.new.push(request); // Fallback
                     }
                 });
 
@@ -6850,7 +6850,6 @@
                 const categoryIcons = {
                     new: '🆕',
                     processing: '⚙️',
-                    pending: '⏳',
                     snoozed: '💤',
                     done: '✅',
                     rejected: '❌'
@@ -6921,11 +6920,12 @@
                             }
                             item.classList.toggle('expanded');
 
-                            // Mark request as seen when expanded
+                            // Auto-change pending requests to processing when expanded
                             if (item.classList.contains('expanded')) {
                                 const requestId = item.getAttribute('data-request-id');
-                                if (requestId) {
-                                    self.markRequestAsSeen(requestId);
+                                const category = item.closest('.admin-category-section');
+                                if (requestId && category && category.getAttribute('data-category') === 'new') {
+                                    self.autoProcessRequest(requestId);
                                 }
                             }
                         }
@@ -7948,21 +7948,11 @@
                     return;
                 }
 
-                // Get seen request IDs from localStorage
-                const seenRequestsKey = 'ratings_seen_requests';
-                let seenRequests = [];
-                try {
-                    seenRequests = JSON.parse(localStorage.getItem(seenRequestsKey) || '[]');
-                } catch (e) {
-                    seenRequests = [];
-                }
-
-                // Group requests by status in order: new > processing > pending > snoozed > done > rejected
-                const statusOrder = ['new', 'processing', 'pending', 'snoozed', 'done', 'rejected'];
+                // Group requests by status: new (pending) > processing > snoozed > done > rejected
+                const statusOrder = ['new', 'processing', 'snoozed', 'done', 'rejected'];
                 const categoryLabels = {
                     new: self.t('categoryNew') || 'New',
                     processing: self.t('categoryProcessing'),
-                    pending: self.t('categoryPending'),
                     snoozed: self.t('categorySnoozed'),
                     done: self.t('categoryDone'),
                     rejected: self.t('categoryRejected')
@@ -7972,26 +7962,28 @@
                 const categorized = {
                     new: [],
                     processing: [],
-                    pending: [],
                     snoozed: [],
                     done: [],
                     rejected: []
                 };
 
                 requests.forEach(request => {
-                    // Check if request is new (not seen by admin)
-                    const isNew = !seenRequests.includes(request.Id);
                     // Check if request is snoozed (has SnoozedUntil date in the future)
                     const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
 
-                    if (isNew && request.Status !== 'done' && request.Status !== 'rejected') {
-                        categorized.new.push(request);
-                    } else if (isSnoozed) {
+                    if (isSnoozed) {
                         categorized.snoozed.push(request);
-                    } else if (categorized[request.Status]) {
-                        categorized[request.Status].push(request);
+                    } else if (request.Status === 'pending') {
+                        // Pending = New (not yet viewed by admin)
+                        categorized.new.push(request);
+                    } else if (request.Status === 'processing') {
+                        categorized.processing.push(request);
+                    } else if (request.Status === 'done') {
+                        categorized.done.push(request);
+                    } else if (request.Status === 'rejected') {
+                        categorized.rejected.push(request);
                     } else {
-                        categorized.pending.push(request); // Fallback
+                        categorized.new.push(request); // Fallback
                     }
                 });
 
@@ -7999,7 +7991,6 @@
                 const categoryIcons = {
                     new: '🆕',
                     processing: '⚙️',
-                    pending: '⏳',
                     snoozed: '💤',
                     done: '✅',
                     rejected: '❌'
@@ -8070,11 +8061,12 @@
                             }
                             item.classList.toggle('expanded');
 
-                            // Mark request as seen when expanded
+                            // Auto-change pending requests to processing when expanded
                             if (item.classList.contains('expanded')) {
                                 const requestId = item.getAttribute('data-request-id');
-                                if (requestId) {
-                                    self.markRequestAsSeen(requestId);
+                                const category = item.closest('.admin-category-section');
+                                if (requestId && category && category.getAttribute('data-category') === 'new') {
+                                    self.autoProcessRequest(requestId);
                                 }
                             }
                         }
