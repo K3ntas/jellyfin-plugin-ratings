@@ -1262,82 +1262,444 @@
                     transform: translateX(24px) !important;
                 }
 
-                /* Admin Request List - Compact Table Style */
+                /* Admin Request List - Modern Card Style */
                 .admin-request-list {
                     list-style: none !important;
                     padding: 0 !important;
                     margin: 0 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 12px !important;
                 }
 
                 .admin-request-item {
-                    background: #2a2a2a !important;
-                    border: 1px solid #444 !important;
-                    border-radius: 6px !important;
-                    padding: 10px 15px !important;
-                    margin-bottom: 8px !important;
-                    display: grid !important;
-                    grid-template-columns: 2fr 1fr 1.5fr 100px auto !important;
-                    gap: 15px !important;
+                    background: linear-gradient(145deg, #2a2a2a 0%, #1e1e1e 100%) !important;
+                    border: 1px solid #3a3a3a !important;
+                    border-radius: 12px !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+                }
+
+                .admin-request-item:hover {
+                    border-color: #00a4dc !important;
+                    box-shadow: 0 4px 20px rgba(0,164,220,0.15) !important;
+                    transform: translateY(-2px) !important;
+                }
+
+                /* Card Header */
+                .admin-request-header {
+                    display: flex !important;
                     align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 16px 20px !important;
+                    background: rgba(255,255,255,0.03) !important;
+                    border-bottom: 1px solid #333 !important;
+                    gap: 16px !important;
+                }
+
+                .admin-request-header-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 16px !important;
+                    flex: 1 !important;
+                    min-width: 0 !important;
                 }
 
                 .admin-request-title {
                     color: #fff !important;
                     font-weight: 600 !important;
-                    font-size: 14px !important;
+                    font-size: 15px !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
                     white-space: nowrap !important;
+                    max-width: 250px !important;
+                }
+
+                .admin-request-meta {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                    flex-shrink: 0 !important;
                 }
 
                 .admin-request-user {
-                    color: #999 !important;
+                    color: #888 !important;
                     font-size: 12px !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
-                    white-space: nowrap !important;
+                    background: rgba(255,255,255,0.08) !important;
+                    padding: 4px 10px !important;
+                    border-radius: 20px !important;
+                }
+
+                .admin-request-type {
+                    color: #00a4dc !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                }
+
+                .admin-request-header-right {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                }
+
+                .admin-request-date {
+                    color: #666 !important;
+                    font-size: 11px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 4px !important;
+                }
+
+                .admin-request-status-badge {
+                    padding: 6px 14px !important;
+                    border-radius: 20px !important;
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                    text-align: center !important;
+                }
+
+                .admin-request-status-badge.pending {
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
+                    color: #000 !important;
+                    box-shadow: 0 2px 8px rgba(255,152,0,0.3) !important;
+                }
+
+                .admin-request-status-badge.processing {
+                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+                    color: #fff !important;
+                    box-shadow: 0 2px 8px rgba(33,150,243,0.3) !important;
+                }
+
+                .admin-request-status-badge.done {
+                    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
+                    color: #fff !important;
+                    box-shadow: 0 2px 8px rgba(76,175,80,0.3) !important;
+                }
+
+                .admin-request-status-badge.rejected {
+                    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+                    color: #fff !important;
+                    box-shadow: 0 2px 8px rgba(244,67,54,0.3) !important;
+                }
+
+                .admin-request-status-badge.snoozed {
+                    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
+                    color: #fff !important;
+                    box-shadow: 0 2px 8px rgba(156,39,176,0.3) !important;
+                }
+
+                /* Card Body */
+                .admin-request-body {
+                    padding: 16px 20px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 12px !important;
+                }
+
+                .admin-request-info-row {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 16px !important;
+                    align-items: center !important;
                 }
 
                 .admin-request-details {
                     color: #aaa !important;
+                    font-size: 13px !important;
+                    line-height: 1.4 !important;
+                }
+
+                .admin-request-imdb {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    background: rgba(245,197,24,0.15) !important;
+                    padding: 4px 10px !important;
+                    border-radius: 6px !important;
+                    font-size: 12px !important;
+                }
+
+                .admin-request-imdb a {
+                    color: #f5c518 !important;
+                    text-decoration: none !important;
+                    font-weight: 600 !important;
+                }
+
+                .admin-request-imdb a:hover {
+                    text-decoration: underline !important;
+                }
+
+                .admin-request-completed {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    color: #4CAF50 !important;
+                    font-size: 12px !important;
+                }
+
+                .admin-request-watch-btn {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
+                    color: #fff !important;
+                    padding: 8px 16px !important;
+                    border-radius: 8px !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    text-decoration: none !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-request-watch-btn:hover {
+                    transform: scale(1.05) !important;
+                    box-shadow: 0 4px 12px rgba(76,175,80,0.4) !important;
+                }
+
+                /* Card Actions */
+                .admin-request-actions {
+                    padding: 16px 20px !important;
+                    background: rgba(0,0,0,0.2) !important;
+                    border-top: 1px solid #333 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 12px !important;
+                }
+
+                .admin-actions-row {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    flex-wrap: wrap !important;
+                }
+
+                .admin-actions-label {
+                    color: #666 !important;
                     font-size: 11px !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                    min-width: 80px !important;
+                }
+
+                .admin-status-btn {
+                    padding: 8px 16px !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
                     white-space: nowrap !important;
                 }
 
-                .admin-request-status-badge {
-                    padding: 4px 10px !important;
-                    border-radius: 10px !important;
-                    font-size: 11px !important;
+                .admin-status-btn.pending {
+                    background: rgba(255, 152, 0, 0.15) !important;
+                    color: #ffb74d !important;
+                    border: 1px solid rgba(255, 152, 0, 0.3) !important;
+                }
+
+                .admin-status-btn.pending:hover {
+                    background: rgba(255, 152, 0, 0.3) !important;
+                    border-color: #ff9800 !important;
+                    transform: translateY(-2px) !important;
+                }
+
+                .admin-status-btn.processing {
+                    background: rgba(33, 150, 243, 0.15) !important;
+                    color: #64b5f6 !important;
+                    border: 1px solid rgba(33, 150, 243, 0.3) !important;
+                }
+
+                .admin-status-btn.processing:hover {
+                    background: rgba(33, 150, 243, 0.3) !important;
+                    border-color: #2196F3 !important;
+                    transform: translateY(-2px) !important;
+                }
+
+                .admin-status-btn.done {
+                    background: rgba(76, 175, 80, 0.15) !important;
+                    color: #81c784 !important;
+                    border: 1px solid rgba(76, 175, 80, 0.3) !important;
+                }
+
+                .admin-status-btn.done:hover {
+                    background: rgba(76, 175, 80, 0.3) !important;
+                    border-color: #4CAF50 !important;
+                    transform: translateY(-2px) !important;
+                }
+
+                .admin-status-btn.rejected {
+                    background: rgba(244, 67, 54, 0.15) !important;
+                    color: #e57373 !important;
+                    border: 1px solid rgba(244, 67, 54, 0.3) !important;
+                }
+
+                .admin-status-btn.rejected:hover {
+                    background: rgba(244, 67, 54, 0.3) !important;
+                    border-color: #f44336 !important;
+                    transform: translateY(-2px) !important;
+                }
+
+                .admin-delete-btn {
+                    padding: 8px 12px !important;
+                    background: rgba(244, 67, 54, 0.1) !important;
+                    border: 1px solid rgba(244, 67, 54, 0.2) !important;
+                    border-radius: 8px !important;
+                    color: #e57373 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    font-size: 14px !important;
+                }
+
+                .admin-delete-btn:hover {
+                    background: rgba(244, 67, 54, 0.25) !important;
+                    border-color: #f44336 !important;
+                    transform: scale(1.1) !important;
+                }
+
+                /* Input Fields */
+                .admin-input-group {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    flex: 1 !important;
+                }
+
+                .admin-link-input,
+                .admin-rejection-input {
+                    flex: 1 !important;
+                    padding: 10px 14px !important;
+                    border-radius: 8px !important;
+                    border: 1px solid #444 !important;
+                    background: #1a1a1a !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-link-input:focus,
+                .admin-rejection-input:focus {
+                    border-color: #00a4dc !important;
+                    outline: none !important;
+                    box-shadow: 0 0 0 3px rgba(0,164,220,0.15) !important;
+                }
+
+                .admin-link-input::placeholder,
+                .admin-rejection-input::placeholder {
+                    color: #555 !important;
+                }
+
+                /* Snooze Controls */
+                .admin-snooze-row {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    padding-top: 8px !important;
+                    border-top: 1px dashed #333 !important;
+                }
+
+                .admin-snooze-date {
+                    padding: 8px 12px !important;
+                    border-radius: 8px !important;
+                    border: 1px solid #444 !important;
+                    background: #1a1a1a !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .admin-snooze-date:focus {
+                    border-color: #9c27b0 !important;
+                    outline: none !important;
+                }
+
+                .admin-snooze-date::-webkit-calendar-picker-indicator {
+                    filter: invert(1) !important;
+                    cursor: pointer !important;
+                }
+
+                .admin-snooze-btn {
+                    padding: 8px 16px !important;
+                    background: rgba(156, 39, 176, 0.15) !important;
+                    border: 1px solid rgba(156, 39, 176, 0.3) !important;
+                    border-radius: 8px !important;
+                    color: #ce93d8 !important;
+                    font-size: 12px !important;
                     font-weight: 600 !important;
-                    text-align: center !important;
-                    width: fit-content !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
                 }
 
-                .admin-request-status-badge.pending {
-                    background: #ff9800 !important;
-                    color: #000 !important;
+                .admin-snooze-btn:hover {
+                    background: rgba(156, 39, 176, 0.3) !important;
+                    border-color: #9c27b0 !important;
+                    transform: translateY(-2px) !important;
                 }
 
-                .admin-request-status-badge.processing {
-                    background: #2196F3 !important;
-                    color: #fff !important;
+                .admin-unsnooze-btn {
+                    padding: 8px 16px !important;
+                    background: rgba(255, 152, 0, 0.15) !important;
+                    border: 1px solid rgba(255, 152, 0, 0.3) !important;
+                    border-radius: 8px !important;
+                    color: #ffb74d !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
                 }
 
-                .admin-request-status-badge.done {
-                    background: #4CAF50 !important;
-                    color: #fff !important;
+                .admin-unsnooze-btn:hover {
+                    background: rgba(255, 152, 0, 0.3) !important;
+                    border-color: #ff9800 !important;
+                    transform: translateY(-2px) !important;
                 }
 
-                .admin-request-status-badge.rejected {
-                    background: #f44336 !important;
-                    color: #fff !important;
+                .admin-snooze-info {
+                    color: #ce93d8 !important;
+                    font-size: 12px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    background: rgba(156, 39, 176, 0.1) !important;
+                    padding: 6px 12px !important;
+                    border-radius: 6px !important;
                 }
 
-                .admin-request-status-badge.snoozed {
-                    background: #9c27b0 !important;
-                    color: #fff !important;
+                /* Rejection display */
+                .admin-rejection-reason {
+                    color: #e57373 !important;
+                    font-size: 12px !important;
+                    background: rgba(244, 67, 54, 0.1) !important;
+                    padding: 8px 12px !important;
+                    border-radius: 6px !important;
+                    border-left: 3px solid #f44336 !important;
+                }
+
+                .admin-request-custom-field {
+                    color: #9c9 !important;
+                    font-size: 12px !important;
+                    background: rgba(153, 204, 153, 0.1) !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    display: inline-block !important;
+                }
+
+                .snoozed-item {
+                    border-color: #9c27b0 !important;
+                    background: linear-gradient(145deg, rgba(156, 39, 176, 0.1) 0%, #1e1e1e 100%) !important;
+                }
+
+                /* Hide mobile elements on desktop */
+                .admin-status-select,
+                .mobile-delete {
+                    display: none !important;
                 }
 
                 /* Category Sections */
@@ -1376,204 +1738,12 @@
                     border-left-color: #f44336 !important;
                 }
 
-                /* Snooze Controls */
-                .admin-snooze-controls {
-                    display: flex !important;
-                    gap: 8px !important;
-                    align-items: center !important;
-                    margin-top: 8px !important;
-                    padding-top: 8px !important;
-                    border-top: 1px dashed #444 !important;
-                }
-
-                .admin-snooze-date {
-                    padding: 6px 10px !important;
-                    border-radius: 6px !important;
-                    border: 1px solid #444 !important;
-                    background: #333 !important;
-                    color: #fff !important;
-                    font-size: 12px !important;
-                    cursor: pointer !important;
-                }
-
-                .admin-snooze-date::-webkit-calendar-picker-indicator {
-                    filter: invert(1) !important;
-                    cursor: pointer !important;
-                }
-
-                .admin-snooze-btn, .admin-unsnooze-btn {
-                    padding: 6px 12px !important;
-                    border: none !important;
-                    border-radius: 6px !important;
-                    font-size: 11px !important;
-                    font-weight: 600 !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s ease !important;
-                }
-
-                .admin-snooze-btn {
-                    background: rgba(156, 39, 176, 0.2) !important;
-                    color: #ce93d8 !important;
-                    border: 1px solid #9c27b0 !important;
-                }
-
-                .admin-snooze-btn:hover {
-                    background: rgba(156, 39, 176, 0.4) !important;
-                }
-
-                .admin-unsnooze-btn {
-                    background: rgba(255, 152, 0, 0.2) !important;
-                    color: #ffb74d !important;
-                    border: 1px solid #ff9800 !important;
-                }
-
-                .admin-unsnooze-btn:hover {
-                    background: rgba(255, 152, 0, 0.4) !important;
-                }
-
-                .admin-snooze-info {
-                    color: #ce93d8 !important;
-                    font-size: 11px !important;
-                    margin-top: 4px !important;
-                    font-weight: 500 !important;
-                }
-
-                .snoozed-item {
-                    border-color: #9c27b0 !important;
-                    background: rgba(156, 39, 176, 0.1) !important;
-                }
-
-                .admin-rejection-reason {
-                    color: #f44336 !important;
-                    font-size: 11px !important;
-                    margin-top: 4px !important;
-                    font-style: italic !important;
-                }
-
-                .admin-rejection-input {
-                    width: 100% !important;
-                    padding: 8px !important;
-                    border-radius: 6px !important;
-                    border: 1px solid #444 !important;
-                    background: #333 !important;
-                    color: #fff !important;
-                    font-size: 12px !important;
-                    margin-top: 4px !important;
-                }
-
-                .admin-rejection-input::placeholder {
-                    color: #888 !important;
-                }
-
-                .admin-request-custom-field {
-                    color: #9c9 !important;
-                    font-size: 11px !important;
-                    margin-top: 2px !important;
-                }
-
-                .admin-request-actions {
-                    display: flex !important;
-                    gap: 6px !important;
-                }
-
-                .admin-status-btn {
-                    padding: 5px 12px !important;
-                    border: none !important;
-                    border-radius: 12px !important;
-                    font-size: 10px !important;
-                    font-weight: 600 !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s ease !important;
-                    white-space: nowrap !important;
-                }
-
-                .admin-status-btn.pending {
-                    background: rgba(255, 152, 0, 0.2) !important;
-                    color: #ff9800 !important;
-                    border: 1px solid #ff9800 !important;
-                }
-
-                .admin-status-btn.processing {
-                    background: rgba(33, 150, 243, 0.2) !important;
-                    color: #2196F3 !important;
-                    border: 1px solid #2196F3 !important;
-                }
-
-                .admin-status-btn.done {
-                    background: rgba(76, 175, 80, 0.2) !important;
-                    color: #4CAF50 !important;
-                    border: 1px solid #4CAF50 !important;
-                }
-
-                .admin-status-btn:hover {
-                    transform: scale(1.05) !important;
-                    opacity: 1 !important;
-                }
-
-                .admin-status-btn.pending:hover {
-                    background: #ff9800 !important;
-                    color: #000 !important;
-                }
-
-                .admin-status-btn.processing:hover {
-                    background: #2196F3 !important;
-                    color: #fff !important;
-                }
-
-                .admin-status-btn.done:hover {
-                    background: #4CAF50 !important;
-                    color: #fff !important;
-                }
-
-                .admin-status-btn.rejected {
-                    background: rgba(244, 67, 54, 0.2) !important;
-                    color: #f44336 !important;
-                    border: 1px solid #f44336 !important;
-                }
-
-                .admin-status-btn.rejected:hover {
-                    background: #f44336 !important;
-                    color: #fff !important;
-                }
-
+                /* Empty state */
                 .admin-request-empty {
                     text-align: center !important;
-                    color: #999 !important;
-                    padding: 40px 20px !important;
-                    font-style: italic !important;
-                }
-
-                /* Delete Button */
-                .admin-delete-btn {
-                    padding: 5px 10px !important;
-                    border: 1px solid #f44336 !important;
-                    border-radius: 12px !important;
-                    font-size: 10px !important;
-                    font-weight: 600 !important;
-                    cursor: pointer !important;
-                    background: rgba(244, 67, 54, 0.2) !important;
-                    color: #f44336 !important;
-                    transition: all 0.2s ease !important;
-                }
-
-                .admin-delete-btn:hover {
-                    background: #f44336 !important;
-                    color: #fff !important;
-                    transform: scale(1.05) !important;
-                }
-
-                /* Hide mobile delete button on desktop */
-                .admin-delete-btn.mobile-delete {
-                    display: none !important;
-                }
-
-                /* Timestamps */
-                .admin-request-time {
-                    color: #777 !important;
-                    font-size: 10px !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 2px !important;
+                    color: #666 !important;
+                    padding: 60px 20px !important;
+                    font-size: 14px !important;
                 }
 
                 .admin-request-time span {
@@ -6397,59 +6567,107 @@
                 snoozeInfoHtml = `<div class="admin-snooze-info">💤 ${self.t('snoozedUntil')}: ${snoozedUntilDate}</div>`;
             }
 
-            // Snooze controls - show date picker and snooze button for non-snoozed, unsnooze for snoozed
-            let snoozeControlsHtml = '';
+            // Build snooze controls HTML
+            let snoozeHtml = '';
             if (isSnoozed) {
-                snoozeControlsHtml = `
-                    <div class="admin-snooze-controls">
+                snoozeHtml = `
+                    <div class="admin-snooze-row">
                         <button class="admin-unsnooze-btn" data-request-id="${request.Id}">⏰ ${self.t('unsnooze')}</button>
                     </div>
                 `;
             } else if (request.Status !== 'done' && request.Status !== 'rejected') {
-                // Only show snooze for pending/processing requests
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const minDate = tomorrow.toISOString().split('T')[0];
-                snoozeControlsHtml = `
-                    <div class="admin-snooze-controls">
-                        <input type="date" class="admin-snooze-date" data-request-id="${request.Id}" min="${minDate}" title="${self.t('snoozeDate')}">
+                snoozeHtml = `
+                    <div class="admin-snooze-row">
+                        <span class="admin-actions-label">Snooze</span>
+                        <input type="date" class="admin-snooze-date" data-request-id="${request.Id}" min="${minDate}">
                         <button class="admin-snooze-btn" data-request-id="${request.Id}">💤 ${self.t('snooze')}</button>
                     </div>
                 `;
             }
 
+            // Build IMDB display
+            let imdbDisplay = '';
+            if (request.ImdbCode || request.ImdbLink) {
+                imdbDisplay = `<div class="admin-request-imdb">`;
+                if (request.ImdbCode) {
+                    imdbDisplay += `<span>🎬 ${self.escapeHtml(request.ImdbCode)}</span>`;
+                }
+                if (request.ImdbLink) {
+                    imdbDisplay += `<a href="${self.escapeHtml(request.ImdbLink)}" target="_blank">View on IMDB →</a>`;
+                }
+                imdbDisplay += `</div>`;
+            }
+
             return `
                 <li class="admin-request-item ${isSnoozed ? 'snoozed-item' : ''}" data-request-id="${request.Id}">
-                    <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
-                    <div class="admin-request-user" title="${self.escapeHtml(request.Username)}">${self.escapeHtml(request.Username)}</div>
-                    <div class="admin-request-details" title="${self.escapeHtml(detailsText)}">${self.escapeHtml(detailsText) || self.t('noDetails')}</div>
-                    ${imdbHtml}
-                    ${customFieldsHtml}
-                    <div class="admin-request-time">
-                        <span>📅 ${createdAt}</span>
-                        ${completedAt ? `<span>✅ ${completedAt}</span>` : ''}
-                        ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                    <!-- Header -->
+                    <div class="admin-request-header">
+                        <div class="admin-request-header-left">
+                            <div class="admin-request-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</div>
+                            <div class="admin-request-meta">
+                                <span class="admin-request-user">${self.escapeHtml(request.Username)}</span>
+                                ${request.Type ? `<span class="admin-request-type">${self.escapeHtml(request.Type)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="admin-request-header-right">
+                            <span class="admin-request-date">📅 ${createdAt}</span>
+                            <span class="admin-request-status-badge ${isSnoozed ? 'snoozed' : request.Status}">${statusText}</span>
+                        </div>
                     </div>
-                    ${snoozeInfoHtml}
-                    ${rejectionDisplay}
-                    <span class="admin-request-status-badge ${isSnoozed ? 'snoozed' : request.Status}">${statusText}</span>
+
+                    <!-- Body -->
+                    <div class="admin-request-body">
+                        ${request.Notes ? `<div class="admin-request-details">${self.escapeHtml(request.Notes)}</div>` : ''}
+
+                        <div class="admin-request-info-row">
+                            ${imdbDisplay}
+                            ${customFieldsHtml}
+                            ${snoozeInfoHtml}
+                        </div>
+
+                        ${completedAt ? `
+                            <div class="admin-request-completed">
+                                <span>✅ Completed: ${completedAt}</span>
+                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="admin-request-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                            </div>
+                        ` : ''}
+
+                        ${rejectionDisplay}
+                    </div>
+
+                    <!-- Actions -->
                     <div class="admin-request-actions">
-                        <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
-                        <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
-                        <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
-                        <button class="admin-status-btn rejected admin-reject-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
-                        <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
+                        <div class="admin-actions-row">
+                            <span class="admin-actions-label">Status</span>
+                            <button class="admin-status-btn pending" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
+                            <button class="admin-status-btn processing" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
+                            <button class="admin-status-btn done" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
+                            <button class="admin-status-btn rejected" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
+                            <button class="admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
+                        </div>
+
+                        <div class="admin-actions-row">
+                            <div class="admin-input-group">
+                                <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
+                            </div>
+                            <div class="admin-input-group">
+                                <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
+                            </div>
+                        </div>
+
+                        ${snoozeHtml}
                     </div>
-                    ${snoozeControlsHtml}
+
+                    <!-- Hidden mobile elements -->
                     <select class="admin-status-select" data-request-id="${request.Id}">
                         <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
                         <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
                         <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
                         <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
                     </select>
-                    <input type="text" class="admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
-                    <input type="text" class="admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
-                    <button class="admin-delete-btn mobile-delete" data-request-id="${request.Id}">🗑️ ${self.t('delete')}</button>
                 </li>
             `;
         },
