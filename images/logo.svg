@@ -1,11 +1,8 @@
-<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1e3a8a"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
-    </linearGradient>
-  </defs>
-  <rect width="640" height="360" fill="url(#bgGradient)"/>
-  <path d="M320 40 L360 140 L470 140 L380 200 L410 310 L320 250 L230 310 L260 200 L170 140 L280 140 Z" fill="#fbbf24"/>
-  <path d="M320 70 L350 145 L430 145 L368 190 L392 275 L320 230 L248 275 L272 190 L210 145 L290 145 Z" fill="#fef3c7" opacity="0.5"/>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="64" fill="#1a1a2e"/>
+  <g transform="translate(256, 240)">
+    <polygon points="0,-120 34,-38 120,-38 55,14 79,96 0,50 -79,96 -55,14 -120,-38 -34,-38" fill="#fbbf24"/>
+    <polygon points="0,-85 24,-27 85,-27 39,10 56,68 0,35 -56,68 -39,10 -85,-27 -24,-27" fill="#fef3c7" opacity="0.6"/>
+  </g>
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">RATINGS</text>
 </svg>
