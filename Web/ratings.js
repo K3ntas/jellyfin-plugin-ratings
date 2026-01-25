@@ -5896,39 +5896,143 @@
             const baseUrl = ApiClient.serverAddress();
             const userId = ApiClient.getCurrentUserId();
             const token = ApiClient.accessToken();
+            const batchSize = 10; // Load 10 items at a time
 
-            let url = `${baseUrl}/Ratings/Media?page=${currentPage}&pageSize=50&sortBy=${sortBy}&sortOrder=${sortOrder}`;
-            if (search) url += `&search=${encodeURIComponent(search)}`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
+            // Progressive loading - load in batches
+            const loadBatch = async (batchPage, isFirst) => {
+                let url = `${baseUrl}/Ratings/Media?page=${batchPage}&pageSize=${batchSize}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (type) url += `&type=${encodeURIComponent(type)}`;
 
-            fetch(url, {
-                method: 'GET',
-                headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
-                },
-                credentials: 'include'
-            })
-            .then(response => {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
                 if (!response.ok) throw new Error('Failed to load media');
                 return response.json();
-            })
-            .then(data => {
-                self.mediaListState.page = data.CurrentPage;
-                self.mediaListState.totalPages = data.TotalPages;
-                self.renderMediaTable(data.Items, body);
-                self.renderPagination(pagination, data);
-            })
-            .catch(err => {
-                console.error('Error loading media:', err);
-                body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+            };
+
+            // Start loading first batch immediately
+            loadBatch(1, true)
+                .then(async (firstData) => {
+                    self.mediaListState.page = currentPage;
+                    self.mediaListState.totalPages = Math.ceil(firstData.TotalItems / 50); // Actual page count for 50 items/page
+
+                    // Render table with first batch
+                    self.renderMediaTable(firstData.Items, body, 0);
+                    self.renderPagination(pagination, {
+                        CurrentPage: currentPage,
+                        TotalPages: self.mediaListState.totalPages,
+                        TotalItems: firstData.TotalItems
+                    });
+
+                    // Calculate how many more batches we need (up to 50 items total = 5 batches of 10)
+                    const totalBatches = Math.min(5, Math.ceil(firstData.TotalItems / batchSize));
+
+                    // Load remaining batches
+                    for (let batch = 2; batch <= totalBatches; batch++) {
+                        try {
+                            const batchData = await loadBatch(batch, false);
+                            if (batchData.Items && batchData.Items.length > 0) {
+                                self.appendMediaRows(batchData.Items, body, (batch - 1) * batchSize);
+                            }
+                        } catch (err) {
+                            console.error('Error loading batch:', err);
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading media:', err);
+                    body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+                });
+        },
+
+        /**
+         * Append media rows to existing table
+         */
+        appendMediaRows: function (items, container, startIndex) {
+            const self = this;
+            const tbody = container.querySelector('tbody');
+            if (!tbody || !items || items.length === 0) return;
+
+            const baseUrl = ApiClient.serverAddress();
+
+            const formatSize = (bytes) => {
+                if (!bytes || bytes === 0) return '-';
+                const gb = bytes / (1024 * 1024 * 1024);
+                if (gb >= 1) return gb.toFixed(1) + ' ' + self.t('mediaGB');
+                const mb = bytes / (1024 * 1024);
+                return mb.toFixed(0) + ' ' + self.t('mediaMB');
+            };
+
+            const formatDaysUntil = (deleteAt) => {
+                const now = new Date();
+                const deleteDate = new Date(deleteAt);
+                const diffMs = deleteDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) return 'Today';
+                return diffDays + ' ' + self.t('mediaDays');
+            };
+
+            items.forEach((item, index) => {
+                const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
+                const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
+                const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
+                const animDelay = (startIndex + index) * 60;
+
+                const tr = document.createElement('tr');
+                tr.style.animationDelay = `${animDelay}ms`;
+                tr.innerHTML = `
+                    <td>
+                        ${imageUrl ? `<img src="${imageUrl}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
+                    </td>
+                    <td>
+                        <div class="media-item-title">
+                            <a href="#/details?id=${item.ItemId}">${item.Title}</a>
+                        </div>
+                        <span class="media-item-type ${item.Type.toLowerCase()}">${item.Type}</span>
+                    </td>
+                    <td>${item.Year || '-'}</td>
+                    <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
+                    <td class="media-item-plays">${playCountDisplay}</td>
+                    <td>${formatSize(item.FileSizeBytes)}</td>
+                    <td>
+                        ${hasScheduledDeletion
+                            ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(item.ScheduledDeletion.DeleteAt)}</span>`
+                            : ''}
+                    </td>
+                    <td class="media-actions">
+                        ${hasScheduledDeletion
+                            ? `<button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                            : `<button class="media-action-btn delete" data-item-id="${item.ItemId}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Add click handler
+                tr.querySelector('.media-action-btn')?.addEventListener('click', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const action = this.getAttribute('data-action');
+                    if (action === 'delete') {
+                        self.showDeletionDialog(itemId);
+                    } else if (action === 'cancel') {
+                        self.cancelDeletion(itemId);
+                    }
+                });
             });
         },
 
         /**
          * Render media table
          */
-        renderMediaTable: function (items, container) {
+        renderMediaTable: function (items, container, startIndex) {
             const self = this;
+            startIndex = startIndex || 0;
 
             if (!items || items.length === 0) {
                 container.innerHTML = `<p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaNoResults')}</p>`;
@@ -5981,7 +6085,7 @@
                 const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
 
                 // Staggered animation delay for each row
-                const animDelay = index * 60;
+                const animDelay = (startIndex + index) * 60;
 
                 html += `
                     <tr style="animation-delay: ${animDelay}ms">
