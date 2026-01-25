@@ -9,6 +9,7 @@ using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Controller.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserManager _userManager;
         private readonly ILibraryManager _libraryManager;
         private readonly ISessionManager _sessionManager;
+        private readonly IUserDataManager _userDataManager;
         private readonly ILogger<RatingsController> _logger;
 
         /// <summary>
@@ -36,18 +38,21 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userManager">User manager.</param>
         /// <param name="libraryManager">Library manager.</param>
         /// <param name="sessionManager">Session manager.</param>
+        /// <param name="userDataManager">User data manager.</param>
         /// <param name="logger">Logger instance.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
             ILibraryManager libraryManager,
             ISessionManager sessionManager,
+            IUserDataManager userDataManager,
             ILogger<RatingsController> logger)
         {
             _repository = repository;
             _userManager = userManager;
             _libraryManager = libraryManager;
             _sessionManager = sessionManager;
+            _userDataManager = userDataManager;
             _logger = logger;
         }
 
@@ -1517,19 +1522,69 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var scheduledDeletions = _repository.GetAllScheduledDeletions()
                     .ToDictionary(d => d.ItemId);
 
+                // Get all users for play count aggregation
+                var allUsers = _userManager.Users.ToList();
+
                 // Build stats for each item
                 var mediaStats = allItems.Select(item =>
                 {
                     var ratingStats = _repository.GetRatingStats(item.Id);
 
-                    // Get file size - for movies it's the item size, for series we'd need to sum episodes
+                    // Get file size and play count
                     long fileSize = 0;
+                    long totalPlayCount = 0;
+
                     if (item is MediaBrowser.Controller.Entities.Movies.Movie movie)
                     {
+                        // Get file size for movie
                         var mediaStreams = movie.GetMediaSources(false);
                         if (mediaStreams != null && mediaStreams.Count > 0)
                         {
                             fileSize = mediaStreams[0].Size ?? 0;
+                        }
+
+                        // Sum play counts across all users for movie
+                        foreach (var user in allUsers)
+                        {
+                            var userData = _userDataManager.GetUserData(user, item);
+                            if (userData != null)
+                            {
+                                totalPlayCount += userData.PlayCount;
+                            }
+                        }
+                    }
+                    else if (item is MediaBrowser.Controller.Entities.TV.Series series)
+                    {
+                        // Get all episodes for the series to calculate size and play count
+                        var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                        {
+                            IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                            AncestorIds = new[] { series.Id },
+                            Recursive = true
+                        };
+                        var episodes = _libraryManager.GetItemList(episodeQuery);
+
+                        foreach (var episode in episodes)
+                        {
+                            // Sum file sizes
+                            if (episode is MediaBrowser.Controller.Entities.TV.Episode ep)
+                            {
+                                var epMediaStreams = ep.GetMediaSources(false);
+                                if (epMediaStreams != null && epMediaStreams.Count > 0)
+                                {
+                                    fileSize += epMediaStreams[0].Size ?? 0;
+                                }
+                            }
+
+                            // Sum play counts across all users
+                            foreach (var user in allUsers)
+                            {
+                                var userData = _userDataManager.GetUserData(user, episode);
+                                if (userData != null)
+                                {
+                                    totalPlayCount += userData.PlayCount;
+                                }
+                            }
                         }
                     }
 
@@ -1550,7 +1605,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Year = item.ProductionYear,
                         Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series",
                         ImageUrl = imageUrl ?? string.Empty,
-                        PlayCount = 0, // PlayCount not available on BaseItem, will be retrieved from user data
+                        PlayCount = totalPlayCount,
                         TotalWatchTimeMinutes = (long)(item.RunTimeTicks.HasValue ? TimeSpan.FromTicks(item.RunTimeTicks.Value).TotalMinutes : 0),
                         FileSizeBytes = fileSize,
                         AverageRating = ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
