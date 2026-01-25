@@ -2975,6 +2975,26 @@
                     fill: currentColor !important;
                 }
 
+                /* Latest Media Badge */
+                .latest-media-badge {
+                    position: absolute !important;
+                    top: 2px !important;
+                    right: 2px !important;
+                    background: #e91e63 !important;
+                    color: #fff !important;
+                    font-size: 9px !important;
+                    font-weight: 700 !important;
+                    min-width: 16px !important;
+                    height: 16px !important;
+                    border-radius: 8px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 0 4px !important;
+                    line-height: 1 !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                }
+
                 /* Latest Media Dropdown */
                 #latestMediaDropdown {
                     position: fixed !important;
@@ -3125,6 +3145,15 @@
                 #latestMediaDropdown .latest-item-badge.new-episodes {
                     background: rgba(0, 200, 83, 0.25) !important;
                     color: #69f0ae !important;
+                }
+                #latestMediaDropdown .latest-item-badge.is-new {
+                    background: rgba(233, 30, 99, 0.35) !important;
+                    color: #f48fb1 !important;
+                    animation: newBadgePulse 2s ease-in-out infinite !important;
+                }
+                @keyframes newBadgePulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
                 }
 
                 /* Scrollbar styling for latest media dropdown */
@@ -5097,10 +5126,15 @@
                         btn.className = 'headerButton headerButtonRight paper-icon-button-light';
                         btn.setAttribute('type', 'button');
                         btn.setAttribute('title', self.t('latestMedia'));
+                        btn.style.position = 'relative';
                         // Clock/new icon - represents "latest/recent"
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
-                        </svg>`;
+                        </svg><span id="latestMediaBadge" class="latest-media-badge" style="display:none;"></span>`;
+
+                        // Update badge count periodically
+                        self.updateLatestMediaBadge();
+                        setInterval(() => self.updateLatestMediaBadge(), 60000); // Update every minute
 
                         // Create dropdown container
                         const dropdown = document.createElement('div');
@@ -5126,6 +5160,13 @@
                                 positionDropdown();
                                 dropdown.classList.add('visible');
                                 self.loadLatestMedia(dropdown);
+                                // Mark as seen - clear badge
+                                localStorage.setItem('ratings_latest_media_seen', new Date().toISOString());
+                                const badge = document.getElementById('latestMediaBadge');
+                                if (badge) {
+                                    badge.style.display = 'none';
+                                    badge.textContent = '';
+                                }
                             }
                         });
 
@@ -5203,6 +5244,70 @@
             } catch (err) {
                 console.error('Latest media button initialization failed:', err);
             }
+        },
+
+        /**
+         * Update the badge count on Latest Media button
+         */
+        updateLatestMediaBadge: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+
+            const userId = ApiClient.getCurrentUserId();
+            const baseUrl = ApiClient.serverAddress();
+            const authHeader = ApiClient._serverInfo?.AccessToken ?
+                `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
+
+            // Get last seen time
+            const lastSeenStr = localStorage.getItem('ratings_latest_media_seen');
+            const lastSeen = lastSeenStr ? new Date(lastSeenStr) : new Date(0);
+
+            // Fetch latest items
+            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const items = data.Items || [];
+                // Count items newer than last seen, deduplicate series by SeriesId
+                const seenSeries = new Set();
+                let newCount = 0;
+
+                items.forEach(item => {
+                    const itemDate = new Date(item.DateCreated);
+                    if (itemDate > lastSeen) {
+                        if (item.Type === 'Episode') {
+                            // For episodes, count the series once
+                            if (item.SeriesId && !seenSeries.has(item.SeriesId)) {
+                                seenSeries.add(item.SeriesId);
+                                newCount++;
+                            }
+                        } else {
+                            // Movies and Series
+                            if (!seenSeries.has(item.Id)) {
+                                seenSeries.add(item.Id);
+                                newCount++;
+                            }
+                        }
+                    }
+                });
+
+                // Update badge
+                const badge = document.getElementById('latestMediaBadge');
+                if (badge) {
+                    if (newCount > 0) {
+                        badge.textContent = newCount > 99 ? '99+' : newCount;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Failed to update latest media badge:', err);
+            });
         },
 
         /**
@@ -5389,6 +5494,13 @@
                                 ? (self.t('newEpisode') || '+1 episode')
                                 : (self.t('newEpisodes') || `+${item.newEpisodeCount} episodes`).replace('{count}', item.newEpisodeCount);
                             badge = `<span class="latest-item-badge new-episodes">${epText}</span>`;
+                        }
+
+                        // Add "NEW" badge for items less than 2 hours old
+                        const itemAge = Date.now() - new Date(item.DateCreated).getTime();
+                        const twoHoursMs = 2 * 60 * 60 * 1000;
+                        if (itemAge < twoHoursMs) {
+                            badge += `<span class="latest-item-badge is-new">NEW</span>`;
                         }
 
                         // Get image URL
