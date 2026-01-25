@@ -3289,6 +3289,36 @@
                     color: #fff;
                 }
 
+                #mediaManagementTabs {
+                    display: flex;
+                    gap: 0;
+                    padding: 0 20px;
+                    background: #1a1a1a;
+                    border-bottom: 1px solid #333;
+                }
+
+                #mediaManagementTabs .media-tab {
+                    padding: 12px 24px;
+                    background: transparent;
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    color: #888;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                #mediaManagementTabs .media-tab:hover {
+                    color: #fff;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                #mediaManagementTabs .media-tab.active {
+                    color: #52b4e5;
+                    border-bottom-color: #52b4e5;
+                }
+
                 #mediaManagementControls {
                     display: flex;
                     flex-wrap: wrap;
@@ -5715,13 +5745,13 @@
                         <div id="mediaManagementModalContent">
                             <button id="mediaManagementModalClose" type="button">&times;</button>
                             <div id="mediaManagementModalTitle">${self.t('mediaManagementTitle')}</div>
+                            <div id="mediaManagementTabs">
+                                <button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>
+                                <button class="media-tab" data-type="Movie">${self.t('mediaTypeMovie')}</button>
+                                <button class="media-tab" data-type="Series">${self.t('mediaTypeSeries')}</button>
+                            </div>
                             <div id="mediaManagementControls">
                                 <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
-                                <select id="mediaTypeFilter">
-                                    <option value="">${self.t('mediaTypeAll')}</option>
-                                    <option value="Movie">${self.t('mediaTypeMovie')}</option>
-                                    <option value="Series">${self.t('mediaTypeSeries')}</option>
-                                </select>
                                 <select id="mediaSortBy">
                                     <option value="dateAdded">${self.t('mediaSortDateAdded')}</option>
                                     <option value="title">${self.t('mediaSortTitle')}</option>
@@ -5758,13 +5788,21 @@
                         }
                     });
 
+                    // Tab click handlers
+                    document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            self.loadMediaList();
+                        });
+                    });
+
                     // Filter/sort change handlers
                     let searchTimeout;
                     document.getElementById('mediaSearchInput').addEventListener('input', () => {
                         clearTimeout(searchTimeout);
                         searchTimeout = setTimeout(() => self.loadMediaList(), 500);
                     });
-                    document.getElementById('mediaTypeFilter').addEventListener('change', () => self.loadMediaList());
                     document.getElementById('mediaSortBy').addEventListener('change', () => self.loadMediaList());
                     document.getElementById('mediaSortOrder').addEventListener('change', () => self.loadMediaList());
                 }
@@ -5837,7 +5875,8 @@
 
             const currentPage = page || 1;
             const search = document.getElementById('mediaSearchInput')?.value || '';
-            const type = document.getElementById('mediaTypeFilter')?.value || '';
+            const activeTab = document.querySelector('#mediaManagementTabs .media-tab.active');
+            const type = activeTab?.getAttribute('data-type') || '';
             const sortBy = document.getElementById('mediaSortBy')?.value || 'dateAdded';
             const sortOrder = document.getElementById('mediaSortOrder')?.value || 'desc';
 
