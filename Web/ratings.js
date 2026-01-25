@@ -3383,6 +3383,19 @@
                     background: #282828;
                 }
 
+                .media-list-table tbody tr {
+                    opacity: 0;
+                    transform: translateY(10px);
+                    animation: mediaRowFadeIn 0.3s ease forwards;
+                }
+
+                @keyframes mediaRowFadeIn {
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
                 .media-item-image {
                     width: 40px;
                     height: 60px;
@@ -5960,15 +5973,18 @@
                     <tbody>
             `;
 
-            items.forEach(item => {
+            items.forEach((item, index) => {
                 const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
                 const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
 
                 // Format play count
                 const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
 
+                // Staggered animation delay for each row
+                const animDelay = index * 60;
+
                 html += `
-                    <tr>
+                    <tr style="animation-delay: ${animDelay}ms">
                         <td>
                             ${imageUrl ? `<img src="${imageUrl}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
                         </td>
