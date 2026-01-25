@@ -5908,6 +5908,7 @@
                             <th>${self.t('mediaSortTitle')}</th>
                             <th>${self.t('mediaSortYear')}</th>
                             <th>${self.t('mediaSortRating')}</th>
+                            <th>${self.t('mediaSortPlayCount')}</th>
                             <th>${self.t('mediaSortSize')}</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -5919,6 +5920,9 @@
             items.forEach(item => {
                 const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
                 const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
+
+                // Format play count
+                const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
 
                 html += `
                     <tr>
@@ -5933,11 +5937,12 @@
                         </td>
                         <td>${item.Year || '-'}</td>
                         <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
+                        <td class="media-item-plays">${playCountDisplay}</td>
                         <td>${formatSize(item.FileSizeBytes)}</td>
                         <td>
                             ${hasScheduledDeletion
                                 ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(item.ScheduledDeletion.DeleteAt)}</span>`
-                                : '-'}
+                                : ''}
                         </td>
                         <td class="media-actions">
                             ${hasScheduledDeletion
