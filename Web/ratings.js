@@ -4445,6 +4445,7 @@
                         e.preventDefault();
                         e.stopPropagation();
                         modal.classList.add('show');
+                        document.body.style.overflow = 'hidden';
                         self.loadRequestInterface();
                     } catch (err) {
                         console.error('Button click error:', err);
@@ -4459,6 +4460,7 @@
                             e.preventDefault();
                             e.stopPropagation();
                             modal.classList.remove('show');
+                            document.body.style.overflow = '';
                         } catch (err) {
                             console.error('Close button error:', err);
                         }
@@ -4472,6 +4474,7 @@
                             e.preventDefault();
                             e.stopPropagation();
                             modal.classList.remove('show');
+                            document.body.style.overflow = '';
                         }
                     } catch (err) {
                         console.error('Modal click error:', err);
@@ -5744,12 +5747,14 @@
                     document.getElementById('mediaManagementModalClose').addEventListener('click', (e) => {
                         e.preventDefault();
                         modal.classList.remove('show');
+                        document.body.style.overflow = '';
                     });
 
                     // Click outside to close
                     modal.addEventListener('click', (e) => {
                         if (e.target === modal) {
                             modal.classList.remove('show');
+                            document.body.style.overflow = '';
                         }
                     });
 
@@ -5807,6 +5812,7 @@
             const modal = document.getElementById('mediaManagementModal');
             if (modal) {
                 modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
                 this.loadMediaList();
             }
         },
