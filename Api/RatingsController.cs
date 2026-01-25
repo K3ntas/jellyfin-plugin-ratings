@@ -9,6 +9,7 @@ using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Controller.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserManager _userManager;
         private readonly ILibraryManager _libraryManager;
         private readonly ISessionManager _sessionManager;
+        private readonly IUserDataManager _userDataManager;
         private readonly ILogger<RatingsController> _logger;
 
         /// <summary>
@@ -36,18 +38,21 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userManager">User manager.</param>
         /// <param name="libraryManager">Library manager.</param>
         /// <param name="sessionManager">Session manager.</param>
+        /// <param name="userDataManager">User data manager.</param>
         /// <param name="logger">Logger instance.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
             ILibraryManager libraryManager,
             ISessionManager sessionManager,
+            IUserDataManager userDataManager,
             ILogger<RatingsController> logger)
         {
             _repository = repository;
             _userManager = userManager;
             _libraryManager = libraryManager;
             _sessionManager = sessionManager;
+            _userDataManager = userDataManager;
             _logger = logger;
         }
 
@@ -1540,6 +1545,21 @@ namespace Jellyfin.Plugin.Ratings.Api
                         }
                     }
 
+                    // Get play count for current user
+                    long playCount = 0;
+                    try
+                    {
+                        var userData = _userDataManager.GetUserData(user, item);
+                        if (userData != null)
+                        {
+                            playCount = userData.PlayCount;
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore errors getting user data
+                    }
+
                     // Build image URL
                     string? imageUrl = null;
                     if (item.ImageInfos != null && item.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
@@ -1557,7 +1577,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Year = item.ProductionYear,
                         Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series",
                         ImageUrl = imageUrl ?? string.Empty,
-                        PlayCount = 0, // Play count aggregation is too slow - disabled for now
+                        PlayCount = playCount,
                         TotalWatchTimeMinutes = (long)(item.RunTimeTicks.HasValue ? TimeSpan.FromTicks(item.RunTimeTicks.Value).TotalMinutes : 0),
                         FileSizeBytes = fileSize,
                         AverageRating = ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
