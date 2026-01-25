@@ -71,6 +71,8 @@
                 latestMediaLoading: 'Loading...',
                 latestMediaEmpty: 'No recent media found',
                 latestMediaError: 'Failed to load',
+                newEpisode: '+1 episode',
+                newEpisodes: '+{count} episodes',
                 typeMovie: 'Movie',
                 typeSeries: 'Series',
                 typeAnime: 'Anime',
@@ -176,6 +178,8 @@
                 latestMediaLoading: 'Kraunama...',
                 latestMediaEmpty: 'Naujų medijų nerasta',
                 latestMediaError: 'Nepavyko įkelti',
+                newEpisode: '+1 serija',
+                newEpisodes: '+{count} serijos',
                 typeMovie: 'Filmas',
                 typeSeries: 'Serialas',
                 typeAnime: 'Anime',
@@ -3107,6 +3111,22 @@
                     color: #9e9e9e !important;
                 }
 
+                /* New episodes badge */
+                #latestMediaDropdown .latest-item-badge {
+                    display: inline-block !important;
+                    margin-left: 6px !important;
+                    padding: 2px 6px !important;
+                    border-radius: 4px !important;
+                    font-size: 9px !important;
+                    font-weight: 600 !important;
+                    text-transform: uppercase !important;
+                    vertical-align: middle !important;
+                }
+                #latestMediaDropdown .latest-item-badge.new-episodes {
+                    background: rgba(0, 200, 83, 0.25) !important;
+                    color: #69f0ae !important;
+                }
+
                 /* Scrollbar styling for latest media dropdown */
                 #latestMediaDropdown::-webkit-scrollbar {
                     width: 6px !important;
@@ -5201,29 +5221,25 @@
 
             const userId = ApiClient.getCurrentUserId();
             const baseUrl = ApiClient.serverAddress();
+            const authHeader = ApiClient._serverInfo?.AccessToken ?
+                `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Fetch latest items using Jellyfin's Items endpoint
-            // Get movies, series sorted by DateCreated descending
-            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=50&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'X-Emby-Authorization': ApiClient._serverInfo?.AccessToken ?
-                        `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : ''
-                }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch');
-                return response.json();
-            })
-            .then(data => {
-                if (!data.Items || data.Items.length === 0) {
-                    dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaEmpty')}</div>`;
-                    return;
-                }
-
-                let html = `<div class="latest-header">${self.t('latestMedia')}</div>`;
-
+            // Fetch both: 1) new movies/series 2) latest episodes (to detect series with new content)
+            Promise.all([
+                // New movies and series
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()),
+                // Latest episodes (to find series with new episodes)
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json())
+            ])
+            .then(([mediaData, episodeData]) => {
                 // Helper function to format time ago
                 const formatTimeAgo = (dateString) => {
                     if (!dateString) return '';
@@ -5243,7 +5259,6 @@
                 // Helper function to clean title (remove IMDB IDs)
                 const cleanTitle = (title) => {
                     if (!title) return 'Unknown';
-                    // Remove patterns like [imdbid-tt1234567], [tt1234567], (tt1234567), [imdbid:tt1234567]
                     return title
                         .replace(/\s*\[imdbid[-:]?tt\d+\]/gi, '')
                         .replace(/\s*\[tt\d+\]/gi, '')
@@ -5251,64 +5266,158 @@
                         .trim();
                 };
 
-                data.Items.forEach(item => {
-                    const itemId = item.Id;
-                    const itemName = cleanTitle(item.Name);
-                    const itemYear = item.ProductionYear || '';
-                    const itemType = item.Type;
-                    const genres = item.Genres || [];
-                    const timeAgo = formatTimeAgo(item.DateCreated);
-
-                    // Determine display type
-                    let displayType = 'other';
-                    let typeLabel = self.t('typeOther');
-
-                    if (itemType === 'Movie') {
-                        // Check if it's anime
-                        if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
-                            displayType = 'anime';
-                            typeLabel = self.t('typeAnime');
-                        } else {
-                            displayType = 'movie';
-                            typeLabel = self.t('typeMovie');
-                        }
-                    } else if (itemType === 'Series') {
-                        // Check if it's anime
-                        if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
-                            displayType = 'anime';
-                            typeLabel = self.t('typeAnime');
-                        } else {
-                            displayType = 'series';
-                            typeLabel = self.t('typeSeries');
-                        }
+                // Track series IDs from new media (these are completely new series)
+                const newSeriesIds = new Set();
+                const mediaItems = mediaData.Items || [];
+                mediaItems.forEach(item => {
+                    if (item.Type === 'Series') {
+                        newSeriesIds.add(item.Id);
                     }
-
-                    // Get image URL
-                    const imageSrc = item.ImageTags && item.ImageTags.Primary
-                        ? `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96&tag=${item.ImageTags.Primary}`
-                        : `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96`;
-
-                    html += `
-                        <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
-                            <img src="${imageSrc}" class="latest-item-image" alt="" onerror="this.style.visibility='hidden'"/>
-                            <div class="latest-item-info">
-                                <div class="latest-item-title">${self.escapeHtml(itemName)}</div>
-                                <div class="latest-item-meta">
-                                    <span class="latest-item-type ${displayType}">${typeLabel}</span>
-                                    ${itemYear ? `<span class="latest-item-year">${itemYear}</span>` : ''}
-                                    ${timeAgo ? `<span class="latest-item-time">${timeAgo}</span>` : ''}
-                                </div>
-                            </div>
-                        </a>
-                    `;
                 });
 
-                dropdown.innerHTML = html;
+                // Find series with new episodes (that aren't completely new series)
+                const seriesWithNewEpisodes = new Map(); // seriesId -> { count, latestDate, seriesName }
+                const episodes = episodeData.Items || [];
+                episodes.forEach(ep => {
+                    if (ep.SeriesId && !newSeriesIds.has(ep.SeriesId)) {
+                        if (!seriesWithNewEpisodes.has(ep.SeriesId)) {
+                            seriesWithNewEpisodes.set(ep.SeriesId, {
+                                count: 1,
+                                latestDate: ep.DateCreated,
+                                seriesName: ep.SeriesName,
+                                seriesId: ep.SeriesId
+                            });
+                        } else {
+                            const existing = seriesWithNewEpisodes.get(ep.SeriesId);
+                            existing.count++;
+                            if (new Date(ep.DateCreated) > new Date(existing.latestDate)) {
+                                existing.latestDate = ep.DateCreated;
+                            }
+                        }
+                    }
+                });
 
-                // Add click handlers to close dropdown after navigation
-                dropdown.querySelectorAll('.latest-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        dropdown.classList.remove('visible');
+                // Fetch series details for those with new episodes
+                const seriesPromises = Array.from(seriesWithNewEpisodes.keys()).slice(0, 20).map(seriesId =>
+                    fetch(`${baseUrl}/Users/${userId}/Items/${seriesId}?Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: { 'X-Emby-Authorization': authHeader }
+                    }).then(r => r.ok ? r.json() : null).catch(() => null)
+                );
+
+                return Promise.all(seriesPromises).then(seriesDetails => {
+                    // Build combined list
+                    const combinedItems = [];
+
+                    // Add new movies/series
+                    mediaItems.forEach(item => {
+                        combinedItems.push({
+                            ...item,
+                            isNewMedia: true,
+                            newEpisodeCount: 0,
+                            sortDate: new Date(item.DateCreated)
+                        });
+                    });
+
+                    // Add series with new episodes
+                    seriesDetails.forEach(series => {
+                        if (series && seriesWithNewEpisodes.has(series.Id)) {
+                            const epInfo = seriesWithNewEpisodes.get(series.Id);
+                            combinedItems.push({
+                                ...series,
+                                isNewMedia: false,
+                                newEpisodeCount: epInfo.count,
+                                sortDate: new Date(epInfo.latestDate),
+                                DateCreated: epInfo.latestDate
+                            });
+                        }
+                    });
+
+                    // Sort by date descending
+                    combinedItems.sort((a, b) => b.sortDate - a.sortDate);
+
+                    // Deduplicate by ID
+                    const seen = new Set();
+                    const uniqueItems = combinedItems.filter(item => {
+                        if (seen.has(item.Id)) return false;
+                        seen.add(item.Id);
+                        return true;
+                    }).slice(0, 30);
+
+                    if (uniqueItems.length === 0) {
+                        dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaEmpty')}</div>`;
+                        return;
+                    }
+
+                    let html = `<div class="latest-header">${self.t('latestMedia')}</div>`;
+
+                    uniqueItems.forEach(item => {
+                        const itemId = item.Id;
+                        const itemName = cleanTitle(item.Name);
+                        const itemYear = item.ProductionYear || '';
+                        const itemType = item.Type;
+                        const genres = item.Genres || [];
+                        const timeAgo = formatTimeAgo(item.DateCreated);
+
+                        // Determine display type
+                        let displayType = 'other';
+                        let typeLabel = self.t('typeOther');
+
+                        if (itemType === 'Movie') {
+                            if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
+                                displayType = 'anime';
+                                typeLabel = self.t('typeAnime');
+                            } else {
+                                displayType = 'movie';
+                                typeLabel = self.t('typeMovie');
+                            }
+                        } else if (itemType === 'Series') {
+                            if (genres.some(g => g.toLowerCase() === 'anime' || g.toLowerCase() === 'animation')) {
+                                displayType = 'anime';
+                                typeLabel = self.t('typeAnime');
+                            } else {
+                                displayType = 'series';
+                                typeLabel = self.t('typeSeries');
+                            }
+                        }
+
+                        // Badge for new episodes vs new media
+                        let badge = '';
+                        if (!item.isNewMedia && item.newEpisodeCount > 0) {
+                            const epText = item.newEpisodeCount === 1
+                                ? (self.t('newEpisode') || '+1 episode')
+                                : (self.t('newEpisodes') || `+${item.newEpisodeCount} episodes`).replace('{count}', item.newEpisodeCount);
+                            badge = `<span class="latest-item-badge new-episodes">${epText}</span>`;
+                        }
+
+                        // Get image URL
+                        const imageSrc = item.ImageTags && item.ImageTags.Primary
+                            ? `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96&tag=${item.ImageTags.Primary}`
+                            : `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96`;
+
+                        html += `
+                            <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
+                                <img src="${imageSrc}" class="latest-item-image" alt="" onerror="this.style.visibility='hidden'"/>
+                                <div class="latest-item-info">
+                                    <div class="latest-item-title">${self.escapeHtml(itemName)}${badge}</div>
+                                    <div class="latest-item-meta">
+                                        <span class="latest-item-type ${displayType}">${typeLabel}</span>
+                                        ${itemYear ? `<span class="latest-item-year">${itemYear}</span>` : ''}
+                                        ${timeAgo ? `<span class="latest-item-time">${timeAgo}</span>` : ''}
+                                    </div>
+                                </div>
+                            </a>
+                        `;
+                    });
+
+                    dropdown.innerHTML = html;
+
+                    // Add click handlers to close dropdown after navigation
+                    dropdown.querySelectorAll('.latest-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            dropdown.classList.remove('visible');
+                        });
                     });
                 });
             })
