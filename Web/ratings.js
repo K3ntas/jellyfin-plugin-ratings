@@ -5757,8 +5757,6 @@
                                     <option value="title">${self.t('mediaSortTitle')}</option>
                                     <option value="year">${self.t('mediaSortYear')}</option>
                                     <option value="rating">${self.t('mediaSortRating')}</option>
-                                    <option value="playCount">${self.t('mediaSortPlayCount')}</option>
-                                    <option value="size">${self.t('mediaSortSize')}</option>
                                 </select>
                                 <select id="mediaSortOrder">
                                     <option value="desc">↓</option>
