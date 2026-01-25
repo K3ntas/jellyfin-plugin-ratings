@@ -2987,12 +2987,15 @@
                     min-width: 16px !important;
                     height: 16px !important;
                     border-radius: 8px !important;
-                    display: flex !important;
+                    display: none !important;
                     align-items: center !important;
                     justify-content: center !important;
                     padding: 0 4px !important;
                     line-height: 1 !important;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                }
+                .latest-media-badge.visible {
+                    display: flex !important;
                 }
 
                 /* Latest Media Dropdown */
@@ -5130,7 +5133,7 @@
                         // Clock/new icon - represents "latest/recent"
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
-                        </svg><span id="latestMediaBadge" class="latest-media-badge" style="display:none;"></span>`;
+                        </svg><span id="latestMediaBadge" class="latest-media-badge"></span>`;
 
                         // Update badge count periodically
                         self.updateLatestMediaBadge();
@@ -5164,7 +5167,7 @@
                                 localStorage.setItem('ratings_latest_media_seen', new Date().toISOString());
                                 const badge = document.getElementById('latestMediaBadge');
                                 if (badge) {
-                                    badge.style.display = 'none';
+                                    badge.classList.remove('visible');
                                     badge.textContent = '';
                                 }
                             }
@@ -5299,9 +5302,10 @@
                 if (badge) {
                     if (newCount > 0) {
                         badge.textContent = newCount > 99 ? '99+' : newCount;
-                        badge.style.display = 'flex';
+                        badge.classList.add('visible');
                     } else {
-                        badge.style.display = 'none';
+                        badge.classList.remove('visible');
+                        badge.textContent = '';
                     }
                 }
             })
