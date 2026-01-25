@@ -1522,71 +1522,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var scheduledDeletions = _repository.GetAllScheduledDeletions()
                     .ToDictionary(d => d.ItemId);
 
-                // Build stats for each item
+                // STEP 1: Build basic stats quickly (no expensive episode queries)
                 var mediaStats = allItems.Select(item =>
                 {
                     var ratingStats = _repository.GetRatingStats(item.Id);
-
-                    // Get file size and play count
-                    long fileSize = 0;
-                    long playCount = 0;
-
-                    if (item is MediaBrowser.Controller.Entities.Movies.Movie movie)
-                    {
-                        // Movie: get file size and play count directly
-                        try
-                        {
-                            var mediaStreams = movie.GetMediaSources(false);
-                            if (mediaStreams != null && mediaStreams.Count > 0)
-                            {
-                                fileSize = mediaStreams[0].Size ?? 0;
-                            }
-                        }
-                        catch
-                        {
-                            // Ignore errors getting media sources
-                        }
-
-                        try
-                        {
-                            var userData = _userDataManager.GetUserData(user, item);
-                            if (userData != null)
-                            {
-                                playCount = userData.PlayCount;
-                            }
-                        }
-                        catch
-                        {
-                            // Ignore errors getting user data
-                        }
-                    }
-                    else if (item is MediaBrowser.Controller.Entities.TV.Series series)
-                    {
-                        // Series: sum play counts from all episodes
-                        try
-                        {
-                            var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
-                            {
-                                IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
-                                AncestorIds = new[] { series.Id },
-                                Recursive = true
-                            };
-                            var episodes = _libraryManager.GetItemList(episodeQuery);
-
-                            foreach (var episode in episodes)
-                            {
-                                var epUserData = _userDataManager.GetUserData(user, episode);
-                                if (epUserData != null)
-                                {
-                                    playCount += epUserData.PlayCount;
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            // Ignore errors getting episode data
-                        }
-                    }
 
                     // Build image URL
                     string? imageUrl = null;
@@ -1605,9 +1544,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Year = item.ProductionYear,
                         Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series",
                         ImageUrl = imageUrl ?? string.Empty,
-                        PlayCount = playCount,
+                        PlayCount = 0, // Will be calculated for current page only
                         TotalWatchTimeMinutes = (long)(item.RunTimeTicks.HasValue ? TimeSpan.FromTicks(item.RunTimeTicks.Value).TotalMinutes : 0),
-                        FileSizeBytes = fileSize,
+                        FileSizeBytes = 0, // Will be calculated for current page only
                         AverageRating = ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
                         RatingCount = ratingStats.TotalRatings,
                         DateAdded = item.DateCreated,
@@ -1645,6 +1584,61 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var totalItems = mediaStats.Count;
                 var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
                 var pagedItems = mediaStats.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                // STEP 2: Calculate expensive stats only for paginated items
+                foreach (var stat in pagedItems)
+                {
+                    var item = allItems.FirstOrDefault(i => i.Id == stat.ItemId);
+                    if (item == null) continue;
+
+                    if (item is MediaBrowser.Controller.Entities.Movies.Movie movie)
+                    {
+                        // Movie: get file size and play count
+                        try
+                        {
+                            var mediaStreams = movie.GetMediaSources(false);
+                            if (mediaStreams != null && mediaStreams.Count > 0)
+                            {
+                                stat.FileSizeBytes = mediaStreams[0].Size ?? 0;
+                            }
+                        }
+                        catch { }
+
+                        try
+                        {
+                            var userData = _userDataManager.GetUserData(user, item);
+                            if (userData != null)
+                            {
+                                stat.PlayCount = userData.PlayCount;
+                            }
+                        }
+                        catch { }
+                    }
+                    else if (item is MediaBrowser.Controller.Entities.TV.Series series)
+                    {
+                        // Series: sum play counts from all episodes
+                        try
+                        {
+                            var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                            {
+                                IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                                AncestorIds = new[] { series.Id },
+                                Recursive = true
+                            };
+                            var episodes = _libraryManager.GetItemList(episodeQuery);
+
+                            foreach (var episode in episodes)
+                            {
+                                var epUserData = _userDataManager.GetUserData(user, episode);
+                                if (epUserData != null)
+                                {
+                                    stat.PlayCount += epUserData.PlayCount;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
 
                 return Ok(new
                 {
