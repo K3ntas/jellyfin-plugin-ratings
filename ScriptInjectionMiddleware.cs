@@ -35,6 +35,7 @@ namespace Jellyfin.Plugin.Ratings
         public async Task InvokeAsync(HttpContext context)
         {
             var path = context.Request.Path.Value ?? string.Empty;
+            var pathBase = context.Request.PathBase.Value ?? string.Empty;
 
             // Only intercept exact index.html requests (strict matching)
             if (!IsIndexHtmlRequest(path))
@@ -42,6 +43,8 @@ namespace Jellyfin.Plugin.Ratings
                 await _next(context).ConfigureAwait(false);
                 return;
             }
+
+            _logger.LogDebug("ScriptInjection: Intercepting request - Path={Path}, PathBase={PathBase}", path, pathBase);
 
             // Remove Accept-Encoding to prevent compressed response
             context.Request.Headers.Remove("Accept-Encoding");
@@ -60,6 +63,7 @@ namespace Jellyfin.Plugin.Ratings
                 // Only process successful HTML responses
                 if (context.Response.StatusCode != 200)
                 {
+                    _logger.LogDebug("ScriptInjection: Skipping - StatusCode={StatusCode} (not 200)", context.Response.StatusCode);
                     await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
@@ -68,6 +72,7 @@ namespace Jellyfin.Plugin.Ratings
                 var contentEncoding = context.Response.Headers.ContentEncoding.ToString();
                 if (!string.IsNullOrEmpty(contentEncoding))
                 {
+                    _logger.LogDebug("ScriptInjection: Skipping - Response is compressed: {Encoding}", contentEncoding);
                     await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
@@ -76,6 +81,7 @@ namespace Jellyfin.Plugin.Ratings
                 var contentType = context.Response.ContentType ?? string.Empty;
                 if (!contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogDebug("ScriptInjection: Skipping - ContentType={ContentType} (not text/html)", contentType);
                     await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
@@ -89,22 +95,58 @@ namespace Jellyfin.Plugin.Ratings
                 }
 
                 // Check if already injected or empty
-                if (string.IsNullOrEmpty(responseBody) ||
-                    responseBody.Contains("ratings.js", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(responseBody))
                 {
+                    _logger.LogDebug("ScriptInjection: Skipping - Response body is empty");
+                    await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
+                    return;
+                }
+
+                if (responseBody.Contains("ratings.js", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogDebug("ScriptInjection: Skipping - ratings.js already present in response");
                     await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
 
                 // Inject the script before </body>
+                // Try to get base path from PathBase first, then fall back to extracting from Path
                 var basePath = context.Request.PathBase.Value?.TrimEnd('/') ?? string.Empty;
+
+                // If PathBase is empty but path contains /web/, extract the base path
+                // e.g., /jellyfin/web/index.html -> basePath = /jellyfin
+                // We look for "/web/" specifically to avoid matching paths like /webapps/
+                if (string.IsNullOrEmpty(basePath))
+                {
+                    // Try to find /web/ pattern (with trailing slash)
+                    var webIndex = path.IndexOf("/web/", StringComparison.OrdinalIgnoreCase);
+                    if (webIndex < 0)
+                    {
+                        // Also check for /web at the end (without trailing slash)
+                        if (path.EndsWith("/web", StringComparison.OrdinalIgnoreCase))
+                        {
+                            webIndex = path.Length - 4; // "/web" is 4 characters
+                        }
+                    }
+
+                    if (webIndex > 0)
+                    {
+                        basePath = path.Substring(0, webIndex);
+                    }
+                }
+
+                _logger.LogDebug("ScriptInjection: Injecting script with basePath={BasePath}", basePath);
+
                 var modifiedBody = InjectScript(responseBody, basePath);
                 if (modifiedBody == responseBody)
                 {
                     // Injection failed (no </body> found), write original
+                    _logger.LogWarning("ScriptInjection: Failed to inject - no </body> tag found in response");
                     await WriteOriginalResponse(memoryStream, originalBodyStream).ConfigureAwait(false);
                     return;
                 }
+
+                _logger.LogInformation("ScriptInjection: Successfully injected ratings.js script tag");
 
                 // Write modified response
                 var modifiedBytes = Encoding.UTF8.GetBytes(modifiedBody);
@@ -145,12 +187,17 @@ namespace Jellyfin.Plugin.Ratings
 
         private static bool IsIndexHtmlRequest(string path)
         {
-            // Strict matching - only exact paths
+            // Strict matching - only exact paths or paths ending with these patterns
+            // This handles both cases where PathBase is set and where it's not
             return path.Equals("/", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/index.html", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/web", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/web/", StringComparison.OrdinalIgnoreCase)
-                || path.Equals("/web/index.html", StringComparison.OrdinalIgnoreCase);
+                || path.Equals("/web/index.html", StringComparison.OrdinalIgnoreCase)
+                // Handle base URL configurations where PathBase isn't properly stripped
+                || path.EndsWith("/web", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/web/", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/web/index.html", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string InjectScript(string html, string basePath)
