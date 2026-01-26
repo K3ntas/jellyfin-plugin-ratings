@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.229.0",
+        "changelog": "Fixed script injection for native Linux installs with base URL configurations (e.g., /jellyfin).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.229.0/jellyfin-plugin-ratings_1.0.229.0.zip",
+        "checksum": "f2a2a7f0ded59fa410f64dad3db0e328",
+        "timestamp": "2026-01-26T22:00:00Z"
+      },
+      {
         "version": "1.0.228.0",
         "changelog": "Progressive loading: first items appear quickly, more load in background while animation plays.",
         "targetAbi": "10.11.0.0",
