@@ -117,7 +117,12 @@
                 mediaPage: 'Page',
                 mediaOf: 'of',
                 mediaPrev: 'Prev',
-                mediaNext: 'Next'
+                mediaNext: 'Next',
+                mediaGo: 'Go',
+                mediaTypeScheduled: 'Scheduled',
+                mediaSettings: 'Settings',
+                mediaIncludeTypes: 'Include media types:',
+                mediaTypesHint: 'Select which media types to show'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -224,7 +229,12 @@
                 mediaPage: 'Puslapis',
                 mediaOf: 'iš',
                 mediaPrev: 'Ankstesnis',
-                mediaNext: 'Kitas'
+                mediaNext: 'Kitas',
+                mediaGo: 'Eiti',
+                mediaTypeScheduled: 'Suplanuoti',
+                mediaSettings: 'Nustatymai',
+                mediaIncludeTypes: 'Rodyti medijos tipus:',
+                mediaTypesHint: 'Pasirinkite kuriuos medijos tipus rodyti'
             }
         },
 
@@ -3482,34 +3492,168 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 10px;
                     padding: 15px;
                     background: #222;
                     border-top: 1px solid #333;
                 }
 
-                #mediaManagementPagination button {
+                .pagination-wrapper {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+
+                .pagination-nav-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+                    color: #fff;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                }
+
+                .pagination-nav-btn:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+                    transform: translateY(-1px);
+                }
+
+                .pagination-nav-btn:disabled {
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                .pagination-arrow {
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+
+                .pagination-center {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
                     padding: 6px 12px;
+                    background: #2a2a2a;
+                    border-radius: 6px;
+                }
+
+                .pagination-label {
+                    color: #888;
+                    font-size: 13px;
+                }
+
+                #mediaPageInput {
+                    width: 55px;
+                    padding: 6px 8px;
                     border: 1px solid #444;
                     border-radius: 4px;
-                    background: #333;
+                    background: #1a1a1a;
+                    color: #fff;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                #mediaPageInput:focus {
+                    outline: none;
+                    border-color: #00a4dc;
+                }
+
+                .pagination-go-btn {
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    background: #00a4dc;
                     color: #fff;
                     cursor: pointer;
                     font-size: 12px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
                 }
 
-                #mediaManagementPagination button:hover:not(:disabled) {
-                    background: #444;
+                .pagination-go-btn:hover {
+                    background: #0095c8;
                 }
 
-                #mediaManagementPagination button:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-
-                #mediaManagementPagination span {
-                    color: #aaa;
+                .pagination-info {
+                    color: #888;
                     font-size: 13px;
+                }
+
+                .pagination-items {
+                    color: #666;
+                    font-size: 12px;
+                }
+
+                /* Settings Tab */
+                .media-settings-tab {
+                    font-size: 16px !important;
+                    padding: 8px 12px !important;
+                }
+
+                #mediaManagementSettings {
+                    padding: 20px;
+                    background: #1e1e1e;
+                    min-height: 300px;
+                }
+
+                #mediaManagementSettings .settings-section {
+                    background: #252525;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                }
+
+                #mediaManagementSettings h3 {
+                    margin: 0 0 10px 0;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 500;
+                }
+
+                #mediaTypeCheckboxes {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-top: 15px;
+                }
+
+                .media-type-checkbox {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 15px;
+                    background: #333;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .media-type-checkbox:hover {
+                    background: #3a3a3a;
+                }
+
+                .media-type-checkbox input {
+                    width: 18px;
+                    height: 18px;
+                    cursor: pointer;
+                }
+
+                .media-type-checkbox label {
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                }
+
+                .media-type-checkbox.checked {
+                    background: rgba(0, 164, 220, 0.2);
+                    border: 1px solid #00a4dc;
                 }
 
                 /* Deletion Dialog */
@@ -5762,6 +5906,8 @@
                                 <button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>
                                 <button class="media-tab" data-type="Movie">${self.t('mediaTypeMovie')}</button>
                                 <button class="media-tab" data-type="Series">${self.t('mediaTypeSeries')}</button>
+                                <button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>
+                                <button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>
                             </div>
                             <div id="mediaManagementControls">
                                 <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
@@ -5775,6 +5921,13 @@
                                     <option value="desc">↓</option>
                                     <option value="asc">↑</option>
                                 </select>
+                            </div>
+                            <div id="mediaManagementSettings" style="display: none;">
+                                <div class="settings-section">
+                                    <h3>${self.t('mediaIncludeTypes')}</h3>
+                                    <p style="color: #888; font-size: 12px; margin-bottom: 10px;">${self.t('mediaTypesHint')}</p>
+                                    <div id="mediaTypeCheckboxes"></div>
+                                </div>
                             </div>
                             <div id="mediaManagementBody">
                                 <p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>
@@ -5802,9 +5955,34 @@
                     // Tab click handlers
                     document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(tab => {
                         tab.addEventListener('click', () => {
+                            const tabType = tab.getAttribute('data-type');
                             document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
                             tab.classList.add('active');
-                            self.loadMediaList();
+
+                            // Show/hide controls and settings based on tab
+                            const controls = document.getElementById('mediaManagementControls');
+                            const settings = document.getElementById('mediaManagementSettings');
+                            const body = document.getElementById('mediaManagementBody');
+                            const pagination = document.getElementById('mediaManagementPagination');
+
+                            if (tabType === 'settings') {
+                                controls.style.display = 'none';
+                                settings.style.display = 'block';
+                                body.style.display = 'none';
+                                pagination.style.display = 'none';
+                                self.loadMediaTypeSettings();
+                            } else {
+                                controls.style.display = 'flex';
+                                settings.style.display = 'none';
+                                body.style.display = 'block';
+                                pagination.style.display = 'flex';
+
+                                if (tabType === 'scheduled') {
+                                    self.loadScheduledMediaList();
+                                } else {
+                                    self.loadMediaList();
+                                }
+                            }
                         });
                     });
 
@@ -6150,18 +6328,24 @@
             const { CurrentPage, TotalPages, TotalItems } = data;
 
             container.innerHTML = `
-                <button class="pagination-btn" ${CurrentPage <= 1 ? 'disabled' : ''} data-page="${CurrentPage - 1}">${self.t('mediaPrev')}</button>
-                <span style="display: inline-flex; align-items: center; gap: 8px;">
-                    ${self.t('mediaPage')}
-                    <input type="number" id="mediaPageInput" value="${CurrentPage}" min="1" max="${TotalPages}"
-                           style="width: 50px; padding: 4px 6px; border: 1px solid #444; border-radius: 4px; background: #333; color: #fff; text-align: center; font-size: 13px;">
-                    ${self.t('mediaOf')} ${TotalPages} (${TotalItems} items)
-                </span>
-                <button class="pagination-btn" ${CurrentPage >= TotalPages ? 'disabled' : ''} data-page="${CurrentPage + 1}">${self.t('mediaNext')}</button>
+                <div class="pagination-wrapper">
+                    <button class="pagination-nav-btn" ${CurrentPage <= 1 ? 'disabled' : ''} data-page="${CurrentPage - 1}">
+                        <span class="pagination-arrow">‹</span> ${self.t('mediaPrev')}
+                    </button>
+                    <div class="pagination-center">
+                        <span class="pagination-label">${self.t('mediaPage')}</span>
+                        <input type="number" id="mediaPageInput" value="${CurrentPage}" min="1" max="${TotalPages}">
+                        <button class="pagination-go-btn" id="mediaPageGoBtn">${self.t('mediaGo')}</button>
+                        <span class="pagination-info">${self.t('mediaOf')} ${TotalPages} <span class="pagination-items">(${TotalItems})</span></span>
+                    </div>
+                    <button class="pagination-nav-btn" ${CurrentPage >= TotalPages ? 'disabled' : ''} data-page="${CurrentPage + 1}">
+                        ${self.t('mediaNext')} <span class="pagination-arrow">›</span>
+                    </button>
+                </div>
             `;
 
             // Add click handlers for prev/next buttons
-            container.querySelectorAll('button.pagination-btn').forEach(btn => {
+            container.querySelectorAll('button.pagination-nav-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const page = parseInt(btn.getAttribute('data-page'));
                     if (page >= 1 && page <= TotalPages) {
@@ -6170,28 +6354,17 @@
                 });
             });
 
-            // Add handler for page input field
+            // Add handler for Go button
+            const goBtn = document.getElementById('mediaPageGoBtn');
             const pageInput = document.getElementById('mediaPageInput');
-            if (pageInput) {
-                // Handle Enter key
-                pageInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        const page = parseInt(pageInput.value);
-                        if (page >= 1 && page <= TotalPages) {
-                            self.loadMediaList(page);
-                        } else {
-                            pageInput.value = CurrentPage; // Reset to current page if invalid
-                        }
-                    }
-                });
 
-                // Handle blur (when clicking outside)
-                pageInput.addEventListener('blur', () => {
+            if (goBtn && pageInput) {
+                goBtn.addEventListener('click', () => {
                     const page = parseInt(pageInput.value);
-                    if (page >= 1 && page <= TotalPages && page !== CurrentPage) {
+                    if (page >= 1 && page <= TotalPages) {
                         self.loadMediaList(page);
                     } else {
-                        pageInput.value = CurrentPage; // Reset to current page if invalid
+                        pageInput.value = CurrentPage;
                     }
                 });
             }
@@ -6266,6 +6439,261 @@
                 console.error('Error cancelling deletion:', err);
                 alert('Failed to cancel deletion');
             });
+        },
+
+        /**
+         * Load scheduled media list (items scheduled for deletion)
+         */
+        loadScheduledMediaList: function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            const pagination = document.getElementById('mediaManagementPagination');
+
+            if (!body) return;
+
+            body.innerHTML = `<p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>`;
+            pagination.innerHTML = '';
+
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load scheduled deletions');
+                return response.json();
+            })
+            .then(deletions => {
+                if (!deletions || deletions.length === 0) {
+                    body.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">${self.t('mediaNoResults')}</p>`;
+                    return;
+                }
+
+                // Build table for scheduled items
+                let html = `<table class="media-table"><thead><tr>
+                    <th style="width: 40%">Title</th>
+                    <th>Type</th>
+                    <th>Scheduled By</th>
+                    <th>Delete At</th>
+                    <th>Actions</th>
+                </tr></thead><tbody>`;
+
+                deletions.forEach(item => {
+                    const deleteDate = new Date(item.DeleteAt);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((deleteDate - now) / (1000 * 60 * 60 * 24));
+
+                    html += `<tr class="media-row scheduled-row" style="animation: fadeInRow 0.3s ease forwards;">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="color: #fff; font-weight: 500;">${self.escapeHtml(item.ItemTitle)}</span>
+                            </div>
+                        </td>
+                        <td><span class="media-type-badge">${item.ItemType}</span></td>
+                        <td style="color: #888;">${self.escapeHtml(item.ScheduledByUsername)}</td>
+                        <td>
+                            <span style="color: ${daysLeft <= 1 ? '#e74c3c' : daysLeft <= 3 ? '#f39c12' : '#27ae60'};">
+                                ${deleteDate.toLocaleDateString()} (${daysLeft} ${self.t('mediaDays')})
+                            </span>
+                        </td>
+                        <td>
+                            <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">
+                                ${self.t('mediaCancelDelete').replace('Cancel ', '')}
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+                body.innerHTML = html;
+
+                // Add event handlers for cancel buttons
+                body.querySelectorAll('.media-action-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const itemId = btn.getAttribute('data-item-id');
+                        self.cancelDeletion(itemId);
+                        // Reload scheduled list after cancellation
+                        setTimeout(() => self.loadScheduledMediaList(), 500);
+                    });
+                });
+            })
+            .catch(err => {
+                console.error('Error loading scheduled media:', err);
+                body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+            });
+        },
+
+        /**
+         * Available media types from server
+         */
+        availableMediaTypes: null,
+
+        /**
+         * Selected media types for filtering
+         */
+        selectedMediaTypes: ['Movie', 'Series'],
+
+        /**
+         * Load media type settings
+         */
+        loadMediaTypeSettings: function () {
+            const self = this;
+            const container = document.getElementById('mediaTypeCheckboxes');
+            if (!container) return;
+
+            // Load saved settings
+            const saved = localStorage.getItem('ratingsMediaTypes');
+            if (saved) {
+                try {
+                    self.selectedMediaTypes = JSON.parse(saved);
+                } catch (e) {
+                    self.selectedMediaTypes = ['Movie', 'Series'];
+                }
+            }
+
+            // If we haven't loaded available types yet, fetch from server
+            if (!self.availableMediaTypes) {
+                container.innerHTML = '<p style="color: #888;">Loading available types...</p>';
+                self.fetchAvailableMediaTypes().then(() => {
+                    self.renderMediaTypeCheckboxes(container);
+                });
+            } else {
+                self.renderMediaTypeCheckboxes(container);
+            }
+        },
+
+        /**
+         * Fetch available media types from Jellyfin
+         */
+        fetchAvailableMediaTypes: async function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const userId = ApiClient.getCurrentUserId();
+            const token = ApiClient.accessToken();
+
+            try {
+                // Get user's libraries to see what types are available
+                const response = await fetch(`${baseUrl}/Users/${userId}/Views`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load libraries');
+                const data = await response.json();
+
+                // Extract unique collection types and map to item types
+                const typeMap = {
+                    'movies': { type: 'Movie', label: 'Movies' },
+                    'tvshows': { type: 'Series', label: 'Series' },
+                    'music': { type: 'MusicAlbum', label: 'Music' },
+                    'musicvideos': { type: 'MusicVideo', label: 'Music Videos' },
+                    'homevideos': { type: 'Video', label: 'Home Videos' },
+                    'boxsets': { type: 'BoxSet', label: 'Collections' },
+                    'books': { type: 'Book', label: 'Books' },
+                    'photos': { type: 'Photo', label: 'Photos' },
+                    'mixed': { type: 'Mixed', label: 'Mixed Content' }
+                };
+
+                // Build available types from user's libraries
+                self.availableMediaTypes = [];
+                const seenTypes = new Set();
+
+                // Always include Movie and Series as defaults
+                self.availableMediaTypes.push({ type: 'Movie', label: 'Movies' });
+                self.availableMediaTypes.push({ type: 'Series', label: 'Series' });
+                seenTypes.add('Movie');
+                seenTypes.add('Series');
+
+                if (data.Items) {
+                    data.Items.forEach(library => {
+                        const collectionType = library.CollectionType?.toLowerCase();
+                        if (collectionType && typeMap[collectionType] && !seenTypes.has(typeMap[collectionType].type)) {
+                            self.availableMediaTypes.push(typeMap[collectionType]);
+                            seenTypes.add(typeMap[collectionType].type);
+                        }
+
+                        // Check library name for common patterns
+                        const name = library.Name?.toLowerCase() || '';
+                        if (name.includes('anime') && !seenTypes.has('Anime')) {
+                            self.availableMediaTypes.push({ type: 'Series', label: 'Anime', filter: 'anime' });
+                        }
+                    });
+                }
+
+            } catch (err) {
+                console.error('Error fetching media types:', err);
+                // Use defaults
+                self.availableMediaTypes = [
+                    { type: 'Movie', label: 'Movies' },
+                    { type: 'Series', label: 'Series' }
+                ];
+            }
+        },
+
+        /**
+         * Render media type checkboxes
+         */
+        renderMediaTypeCheckboxes: function (container) {
+            const self = this;
+            if (!container || !self.availableMediaTypes) return;
+
+            let html = '';
+            self.availableMediaTypes.forEach(typeInfo => {
+                const isChecked = self.selectedMediaTypes.includes(typeInfo.type);
+                html += `
+                    <div class="media-type-checkbox ${isChecked ? 'checked' : ''}" data-type="${typeInfo.type}">
+                        <input type="checkbox" id="mediaType_${typeInfo.type}" ${isChecked ? 'checked' : ''}>
+                        <label for="mediaType_${typeInfo.type}">${typeInfo.label}</label>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Add event handlers
+            container.querySelectorAll('.media-type-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'INPUT') return; // Let the input handle itself
+
+                    const input = checkbox.querySelector('input');
+                    input.checked = !input.checked;
+                    self.handleMediaTypeChange(checkbox, input.checked);
+                });
+
+                const input = checkbox.querySelector('input');
+                input.addEventListener('change', () => {
+                    self.handleMediaTypeChange(checkbox, input.checked);
+                });
+            });
+        },
+
+        /**
+         * Handle media type checkbox change
+         */
+        handleMediaTypeChange: function (checkbox, isChecked) {
+            const self = this;
+            const type = checkbox.getAttribute('data-type');
+
+            if (isChecked) {
+                checkbox.classList.add('checked');
+                if (!self.selectedMediaTypes.includes(type)) {
+                    self.selectedMediaTypes.push(type);
+                }
+            } else {
+                checkbox.classList.remove('checked');
+                self.selectedMediaTypes = self.selectedMediaTypes.filter(t => t !== type);
+            }
+
+            // Save to localStorage
+            localStorage.setItem('ratingsMediaTypes', JSON.stringify(self.selectedMediaTypes));
         },
 
         // ===============================================
