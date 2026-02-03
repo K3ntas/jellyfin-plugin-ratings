@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.233.0",
+        "changelog": "Fixed header elements (search, request button) overlapping on iPhone initial page load.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.233.0/jellyfin-plugin-ratings_1.0.233.0.zip",
+        "checksum": "1779203393d242e34012183c4f104954",
+        "timestamp": "2026-02-03T22:15:00Z"
+      },
+      {
         "version": "1.0.232.0",
         "changelog": "Dynamic tabs: Settings now creates actual tabs for selected media types (Movies, Series, Anime, etc). Library-specific filtering support.",
         "targetAbi": "10.11.0.0",
