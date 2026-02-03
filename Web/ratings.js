@@ -5902,13 +5902,7 @@
                         <div id="mediaManagementModalContent">
                             <button id="mediaManagementModalClose" type="button">&times;</button>
                             <div id="mediaManagementModalTitle">${self.t('mediaManagementTitle')}</div>
-                            <div id="mediaManagementTabs">
-                                <button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>
-                                <button class="media-tab" data-type="Movie">${self.t('mediaTypeMovie')}</button>
-                                <button class="media-tab" data-type="Series">${self.t('mediaTypeSeries')}</button>
-                                <button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>
-                                <button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>
-                            </div>
+                            <div id="mediaManagementTabs"></div>
                             <div id="mediaManagementControls">
                                 <input type="text" id="mediaSearchInput" placeholder="${self.t('mediaSearch')}" />
                                 <select id="mediaSortBy">
@@ -5952,39 +5946,8 @@
                         }
                     });
 
-                    // Tab click handlers
-                    document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(tab => {
-                        tab.addEventListener('click', () => {
-                            const tabType = tab.getAttribute('data-type');
-                            document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
-                            tab.classList.add('active');
-
-                            // Show/hide controls and settings based on tab
-                            const controls = document.getElementById('mediaManagementControls');
-                            const settings = document.getElementById('mediaManagementSettings');
-                            const body = document.getElementById('mediaManagementBody');
-                            const pagination = document.getElementById('mediaManagementPagination');
-
-                            if (tabType === 'settings') {
-                                controls.style.display = 'none';
-                                settings.style.display = 'block';
-                                body.style.display = 'none';
-                                pagination.style.display = 'none';
-                                self.loadMediaTypeSettings();
-                            } else {
-                                controls.style.display = 'flex';
-                                settings.style.display = 'none';
-                                body.style.display = 'block';
-                                pagination.style.display = 'flex';
-
-                                if (tabType === 'scheduled') {
-                                    self.loadScheduledMediaList();
-                                } else {
-                                    self.loadMediaList();
-                                }
-                            }
-                        });
-                    });
+                    // Build tabs dynamically and bind handlers
+                    self.buildMediaTabs();
 
                     // Filter/sort change handlers
                     let searchTimeout;
@@ -6080,7 +6043,13 @@
             const loadBatch = async (batchPage, isFirst) => {
                 let url = `${baseUrl}/Ratings/Media?page=${batchPage}&pageSize=${batchSize}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
                 if (search) url += `&search=${encodeURIComponent(search)}`;
-                if (type) url += `&type=${encodeURIComponent(type)}`;
+                // Handle library-based types (e.g., library_abc123 for Anime library)
+                if (type && type.startsWith('library_')) {
+                    const libraryId = type.replace('library_', '');
+                    url += `&parentId=${encodeURIComponent(libraryId)}`;
+                } else if (type) {
+                    url += `&type=${encodeURIComponent(type)}`;
+                }
 
                 const response = await fetch(url, {
                     method: 'GET',
@@ -6534,9 +6503,102 @@
         availableMediaTypes: null,
 
         /**
-         * Selected media types for filtering
+         * Selected media types for tabs
          */
         selectedMediaTypes: ['Movie', 'Series'],
+
+        /**
+         * Build media tabs dynamically based on selected types
+         */
+        buildMediaTabs: function () {
+            const self = this;
+            const tabsContainer = document.getElementById('mediaManagementTabs');
+            if (!tabsContainer) return;
+
+            // Load saved settings
+            const saved = localStorage.getItem('ratingsMediaTypes');
+            if (saved) {
+                try {
+                    self.selectedMediaTypes = JSON.parse(saved);
+                } catch (e) {
+                    self.selectedMediaTypes = ['Movie', 'Series'];
+                }
+            }
+
+            // Get labels for types
+            const typeLabels = {
+                'Movie': self.t('mediaTypeMovie'),
+                'Series': self.t('mediaTypeSeries'),
+                'MusicAlbum': 'Music',
+                'MusicVideo': 'Music Videos',
+                'Video': 'Home Videos',
+                'BoxSet': 'Collections',
+                'Book': 'Books',
+                'Photo': 'Photos'
+            };
+
+            // Check availableMediaTypes for custom labels (like Anime)
+            if (self.availableMediaTypes) {
+                self.availableMediaTypes.forEach(mt => {
+                    if (mt.label && mt.type) {
+                        typeLabels[mt.type] = mt.label;
+                    }
+                    // Handle library-based types like Anime
+                    if (mt.libraryId) {
+                        typeLabels['library_' + mt.libraryId] = mt.label;
+                    }
+                });
+            }
+
+            // Build tabs HTML
+            let html = `<button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>`;
+
+            // Add tabs for each selected media type
+            self.selectedMediaTypes.forEach(type => {
+                const label = typeLabels[type] || type;
+                html += `<button class="media-tab" data-type="${type}">${label}</button>`;
+            });
+
+            // Always add Scheduled and Settings tabs at the end
+            html += `<button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>`;
+            html += `<button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>`;
+
+            tabsContainer.innerHTML = html;
+
+            // Bind click handlers
+            tabsContainer.querySelectorAll('.media-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabType = tab.getAttribute('data-type');
+                    tabsContainer.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Show/hide controls and settings based on tab
+                    const controls = document.getElementById('mediaManagementControls');
+                    const settings = document.getElementById('mediaManagementSettings');
+                    const body = document.getElementById('mediaManagementBody');
+                    const pagination = document.getElementById('mediaManagementPagination');
+
+                    if (tabType === 'settings') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'block';
+                        body.style.display = 'none';
+                        pagination.style.display = 'none';
+                        self.loadMediaTypeSettings();
+                    } else {
+                        controls.style.display = 'flex';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'flex';
+
+                        if (tabType === 'scheduled') {
+                            self.loadScheduledMediaList();
+                        } else {
+                            self.loadMediaList();
+                        }
+                    }
+                });
+            });
+        },
 
         /**
          * Load media type settings
@@ -6620,10 +6682,31 @@
                             seenTypes.add(typeMap[collectionType].type);
                         }
 
-                        // Check library name for common patterns
-                        const name = library.Name?.toLowerCase() || '';
-                        if (name.includes('anime') && !seenTypes.has('Anime')) {
-                            self.availableMediaTypes.push({ type: 'Series', label: 'Anime', filter: 'anime' });
+                        // Add library-specific entries for special libraries (Anime, etc.)
+                        const name = library.Name || '';
+                        const nameLower = name.toLowerCase();
+                        const libraryKey = 'library_' + library.Id;
+
+                        // Check for anime library
+                        if ((nameLower.includes('anime') || collectionType === 'tvshows' && nameLower.includes('anime')) && !seenTypes.has(libraryKey)) {
+                            self.availableMediaTypes.push({
+                                type: libraryKey,
+                                label: name,
+                                libraryId: library.Id
+                            });
+                            seenTypes.add(libraryKey);
+                        }
+
+                        // Add any library that isn't already covered by standard types
+                        if (!collectionType || !typeMap[collectionType]) {
+                            if (!seenTypes.has(libraryKey)) {
+                                self.availableMediaTypes.push({
+                                    type: libraryKey,
+                                    label: name,
+                                    libraryId: library.Id
+                                });
+                                seenTypes.add(libraryKey);
+                            }
                         }
                     });
                 }
@@ -6694,6 +6777,15 @@
 
             // Save to localStorage
             localStorage.setItem('ratingsMediaTypes', JSON.stringify(self.selectedMediaTypes));
+
+            // Rebuild tabs to reflect changes (keep settings tab active)
+            self.buildMediaTabs();
+            // Re-activate settings tab since we're still in settings
+            const settingsTab = document.querySelector('#mediaManagementTabs .media-tab[data-type="settings"]');
+            if (settingsTab) {
+                document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
+                settingsTab.classList.add('active');
+            }
         },
 
         // ===============================================
