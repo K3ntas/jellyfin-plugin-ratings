@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.231.0",
+        "changelog": "Redesigned pagination with Go button. Added Scheduled tab to view items pending deletion. Added Settings tab to configure media types.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.231.0/jellyfin-plugin-ratings_1.0.231.0.zip",
+        "checksum": "3341529677316acc799238e9abe7dc4d",
+        "timestamp": "2026-01-26T23:30:00Z"
+      },
+      {
         "version": "1.0.230.0",
         "changelog": "Fixed Media Management pagination - Next/Prev buttons now work correctly. Added page input field for direct navigation.",
         "targetAbi": "10.11.0.0",
