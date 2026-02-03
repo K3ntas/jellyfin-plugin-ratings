@@ -5916,8 +5916,13 @@
                 return response.json();
             };
 
-            // Start loading first batch immediately
-            loadBatch(1, true)
+            // Calculate batch range for requested page (50 items per page = 5 batches of 10)
+            const batchesPerPage = 5;
+            const startBatch = (currentPage - 1) * batchesPerPage + 1;
+            const endBatch = currentPage * batchesPerPage;
+
+            // Start loading first batch of the page immediately
+            loadBatch(startBatch, true)
                 .then(async (firstData) => {
                     self.mediaListState.page = currentPage;
                     self.mediaListState.totalPages = Math.ceil(firstData.TotalItems / 50); // Actual page count for 50 items/page
@@ -5930,15 +5935,16 @@
                         TotalItems: firstData.TotalItems
                     });
 
-                    // Calculate how many more batches we need (up to 50 items total = 5 batches of 10)
-                    const totalBatches = Math.min(5, Math.ceil(firstData.TotalItems / batchSize));
+                    // Calculate how many more batches we need for this page
+                    const totalBatchesNeeded = Math.ceil(firstData.TotalItems / batchSize);
+                    const lastBatchForPage = Math.min(endBatch, totalBatchesNeeded);
 
-                    // Load remaining batches
-                    for (let batch = 2; batch <= totalBatches; batch++) {
+                    // Load remaining batches for this page
+                    for (let batch = startBatch + 1; batch <= lastBatchForPage; batch++) {
                         try {
                             const batchData = await loadBatch(batch, false);
                             if (batchData.Items && batchData.Items.length > 0) {
-                                self.appendMediaRows(batchData.Items, body, (batch - 1) * batchSize);
+                                self.appendMediaRows(batchData.Items, body, (batch - startBatch) * batchSize);
                             }
                         } catch (err) {
                             console.error('Error loading batch:', err);
@@ -6144,12 +6150,18 @@
             const { CurrentPage, TotalPages, TotalItems } = data;
 
             container.innerHTML = `
-                <button ${CurrentPage <= 1 ? 'disabled' : ''} data-page="${CurrentPage - 1}">${self.t('mediaPrev')}</button>
-                <span>${self.t('mediaPage')} ${CurrentPage} ${self.t('mediaOf')} ${TotalPages} (${TotalItems} items)</span>
-                <button ${CurrentPage >= TotalPages ? 'disabled' : ''} data-page="${CurrentPage + 1}">${self.t('mediaNext')}</button>
+                <button class="pagination-btn" ${CurrentPage <= 1 ? 'disabled' : ''} data-page="${CurrentPage - 1}">${self.t('mediaPrev')}</button>
+                <span style="display: inline-flex; align-items: center; gap: 8px;">
+                    ${self.t('mediaPage')}
+                    <input type="number" id="mediaPageInput" value="${CurrentPage}" min="1" max="${TotalPages}"
+                           style="width: 50px; padding: 4px 6px; border: 1px solid #444; border-radius: 4px; background: #333; color: #fff; text-align: center; font-size: 13px;">
+                    ${self.t('mediaOf')} ${TotalPages} (${TotalItems} items)
+                </span>
+                <button class="pagination-btn" ${CurrentPage >= TotalPages ? 'disabled' : ''} data-page="${CurrentPage + 1}">${self.t('mediaNext')}</button>
             `;
 
-            container.querySelectorAll('button').forEach(btn => {
+            // Add click handlers for prev/next buttons
+            container.querySelectorAll('button.pagination-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const page = parseInt(btn.getAttribute('data-page'));
                     if (page >= 1 && page <= TotalPages) {
@@ -6157,6 +6169,32 @@
                     }
                 });
             });
+
+            // Add handler for page input field
+            const pageInput = document.getElementById('mediaPageInput');
+            if (pageInput) {
+                // Handle Enter key
+                pageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const page = parseInt(pageInput.value);
+                        if (page >= 1 && page <= TotalPages) {
+                            self.loadMediaList(page);
+                        } else {
+                            pageInput.value = CurrentPage; // Reset to current page if invalid
+                        }
+                    }
+                });
+
+                // Handle blur (when clicking outside)
+                pageInput.addEventListener('blur', () => {
+                    const page = parseInt(pageInput.value);
+                    if (page >= 1 && page <= TotalPages && page !== CurrentPage) {
+                        self.loadMediaList(page);
+                    } else {
+                        pageInput.value = CurrentPage; // Reset to current page if invalid
+                    }
+                });
+            }
         },
 
         /**
