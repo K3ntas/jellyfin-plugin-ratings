@@ -4941,6 +4941,13 @@
                             document.body.appendChild(searchContainer);
                         }
 
+                        // Trigger responsive scaling after element is added (fixes mobile positioning)
+                        setTimeout(() => {
+                            if (typeof self.triggerResponsiveUpdate === 'function') {
+                                self.triggerResponsiveUpdate();
+                            }
+                        }, 100);
+
                         // Real-time search with dropdown
                         let searchTimeout;
                         searchInput.addEventListener('input', function() {
@@ -5391,6 +5398,13 @@
                                 document.body.appendChild(btn);
                             }
                         }
+
+                        // Trigger responsive scaling after element is added (fixes mobile positioning)
+                        setTimeout(() => {
+                            if (typeof self.triggerResponsiveUpdate === 'function') {
+                                self.triggerResponsiveUpdate();
+                            }
+                        }, 100);
 
                         // Observe for Sync Play button appearing later (SPA navigation)
                         const observer = new MutationObserver(() => {
@@ -7025,8 +7039,17 @@
                 }
             };
 
+            // Store updateScale as a method that can be called externally
+            self.triggerResponsiveUpdate = updateScale;
+
             // Update on load
             updateScale();
+
+            // Additional delayed updates for mobile to catch async-created elements
+            // This ensures elements created after init get proper positioning
+            setTimeout(updateScale, 500);
+            setTimeout(updateScale, 1500);
+            setTimeout(updateScale, 3000);
 
             // Update on resize with debounce
             let resizeTimeout;
