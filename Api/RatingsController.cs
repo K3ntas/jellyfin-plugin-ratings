@@ -1438,6 +1438,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         public ActionResult<object> GetMediaItems(
             [FromQuery] string? search = null,
             [FromQuery] string? type = null,
+            [FromQuery] string? parentId = null,
             [FromQuery] string sortBy = "dateAdded",
             [FromQuery] string sortOrder = "desc",
             [FromQuery] int page = 1,
@@ -1508,6 +1509,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Series };
                     }
+                }
+
+                // Apply parent library filter (for library-specific tabs like Anime)
+                if (!string.IsNullOrEmpty(parentId) && Guid.TryParse(parentId, out var parentGuid))
+                {
+                    query.ParentId = parentGuid;
+                    // When filtering by library, include all types from that library
+                    query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series };
                 }
 
                 // Apply search filter
