@@ -109,6 +109,10 @@
                 media1Week: '1 Week',
                 media2Weeks: '2 Weeks',
                 mediaCustom: 'Custom...',
+                mediaCustomHours: 'Hours',
+                mediaSchedule: 'Schedule',
+                mediaCancel: 'Cancel',
+                mediaNoScheduled: 'No scheduled deletions',
                 mediaDays: 'days',
                 mediaPlays: 'plays',
                 mediaMinutes: 'min',
@@ -221,6 +225,10 @@
                 media1Week: '1 Savaitė',
                 media2Weeks: '2 Savaitės',
                 mediaCustom: 'Pasirinkti...',
+                mediaCustomHours: 'Valandos',
+                mediaSchedule: 'Planuoti',
+                mediaCancel: 'Atšaukti',
+                mediaNoScheduled: 'Nėra suplanuotų ištrynimų',
                 mediaDays: 'dienų',
                 mediaPlays: 'peržiūrų',
                 mediaMinutes: 'min',
@@ -3718,10 +3726,71 @@
                 .deletion-cancel-btn {
                     background: #555;
                     color: #fff;
+                    width: 100%;
+                    margin-top: 10px;
                 }
 
                 .deletion-cancel-btn:hover {
                     background: #666;
+                }
+
+                .deletion-close-btn {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    line-height: 30px;
+                }
+
+                .deletion-close-btn:hover {
+                    color: #fff;
+                }
+
+                #deletionDialogContent {
+                    position: relative;
+                }
+
+                #deletionDialogCustom {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 1px solid #333;
+                }
+
+                #deletionCustomHours {
+                    flex: 1;
+                    padding: 10px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    font-size: 14px;
+                }
+
+                #deletionCustomHours::placeholder {
+                    color: #666;
+                }
+
+                .deletion-custom-btn {
+                    padding: 10px 20px;
+                    background: #00a4dc;
+                    color: #fff;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }
+
+                .deletion-custom-btn:hover {
+                    background: #0095c8;
                 }
 
                 .detail-leaving-badge {
@@ -5979,17 +6048,34 @@
                     deletionDialog.id = 'deletionDialog';
                     deletionDialog.innerHTML = `
                         <div id="deletionDialogContent">
+                            <button class="deletion-close-btn" title="Close">×</button>
                             <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
                             <div id="deletionDialogOptions">
                                 <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
                                 <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
                                 <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
                                 <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
-                                <button class="deletion-cancel-btn">${self.t('mediaCancelDelete').replace('Cancel ', '')}</button>
                             </div>
+                            <div id="deletionDialogCustom">
+                                <input type="number" id="deletionCustomHours" min="1" max="8760" placeholder="${self.t('mediaCustomHours') || 'Hours'}" />
+                                <button class="deletion-custom-btn">${self.t('mediaSchedule') || 'Schedule'}</button>
+                            </div>
+                            <button class="deletion-cancel-btn">${self.t('mediaCancel') || 'Cancel'}</button>
                         </div>
                     `;
                     document.body.appendChild(deletionDialog);
+
+                    // Close button click
+                    deletionDialog.querySelector('.deletion-close-btn').addEventListener('click', () => {
+                        deletionDialog.classList.remove('show');
+                    });
+
+                    // Click outside to close
+                    deletionDialog.addEventListener('click', (e) => {
+                        if (e.target === deletionDialog) {
+                            deletionDialog.classList.remove('show');
+                        }
+                    });
 
                     // Deletion dialog option clicks
                     deletionDialog.querySelectorAll('.deletion-option-btn').forEach(btn => {
@@ -6001,6 +6087,16 @@
                             }
                             deletionDialog.classList.remove('show');
                         });
+                    });
+
+                    // Custom hours button
+                    deletionDialog.querySelector('.deletion-custom-btn').addEventListener('click', () => {
+                        const hours = parseInt(document.getElementById('deletionCustomHours').value);
+                        const itemId = deletionDialog.getAttribute('data-item-id');
+                        if (itemId && hours && hours > 0) {
+                            self.scheduleDeletionHours(itemId, hours);
+                            deletionDialog.classList.remove('show');
+                        }
                     });
 
                     deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
@@ -6385,6 +6481,32 @@
         /**
          * Schedule deletion for an item
          */
+        scheduleDeletionHours: function (itemId, hours) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion?delayHours=${hours}`, {
+                method: 'POST',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to schedule deletion');
+                return response.json();
+            })
+            .then(() => {
+                self.loadMediaList(self.mediaListState.page);
+                self.loadScheduledDeletions();
+            })
+            .catch(err => {
+                console.error('Error scheduling deletion:', err);
+                alert('Failed to schedule deletion');
+            });
+        },
+
         scheduleDeletion: function (itemId, delayDays) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
@@ -6452,7 +6574,11 @@
 
             if (!body) return;
 
+            // Increment request ID to cancel any pending loadMediaList
+            const thisRequestId = ++self.mediaListState.requestId;
+
             body.innerHTML = `<p style="text-align: center; color: #999; padding: 20px;">${self.t('mediaLoading')}</p>`;
+            pagination.style.display = 'none';
             pagination.innerHTML = '';
 
             const baseUrl = ApiClient.serverAddress();
@@ -6470,8 +6596,14 @@
                 return response.json();
             })
             .then(deletions => {
+                // Check if this request is still current
+                if (thisRequestId !== self.mediaListState.requestId) {
+                    console.log('Ignoring stale scheduled list response');
+                    return;
+                }
+
                 if (!deletions || deletions.length === 0) {
-                    body.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">${self.t('mediaNoResults')}</p>`;
+                    body.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">${self.t('mediaNoScheduled') || 'No scheduled deletions'}</p>`;
                     return;
                 }
 
@@ -6524,8 +6656,10 @@
                 });
             })
             .catch(err => {
-                console.error('Error loading scheduled media:', err);
-                body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+                if (thisRequestId === self.mediaListState.requestId) {
+                    console.error('Error loading scheduled media:', err);
+                    body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+                }
             });
         },
 
@@ -6568,6 +6702,10 @@
                 'Book': 'Books',
                 'Photo': 'Photos'
             };
+
+            // Load saved labels from localStorage (for library-based types like Anime)
+            const savedLabels = JSON.parse(localStorage.getItem('ratingsMediaTypeLabels') || '{}');
+            Object.assign(typeLabels, savedLabels);
 
             // Check availableMediaTypes for custom labels (like Anime)
             if (self.availableMediaTypes) {
@@ -6796,6 +6934,7 @@
         handleMediaTypeChange: function (checkbox, isChecked) {
             const self = this;
             const type = checkbox.getAttribute('data-type');
+            const label = checkbox.querySelector('label')?.textContent || type;
 
             if (isChecked) {
                 checkbox.classList.add('checked');
@@ -6809,6 +6948,17 @@
 
             // Save to localStorage
             localStorage.setItem('ratingsMediaTypes', JSON.stringify(self.selectedMediaTypes));
+
+            // Also save labels for library-based types
+            const savedLabels = JSON.parse(localStorage.getItem('ratingsMediaTypeLabels') || '{}');
+            if (type.startsWith('library_')) {
+                if (isChecked) {
+                    savedLabels[type] = label;
+                } else {
+                    delete savedLabels[type];
+                }
+                localStorage.setItem('ratingsMediaTypeLabels', JSON.stringify(savedLabels));
+            }
 
             // Rebuild tabs to reflect changes (keep settings tab active)
             self.buildMediaTabs();
