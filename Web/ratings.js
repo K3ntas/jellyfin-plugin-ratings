@@ -113,6 +113,12 @@
                 mediaSchedule: 'Schedule',
                 mediaCancel: 'Cancel',
                 mediaNoScheduled: 'No scheduled deletions',
+                mediaScheduledBy: 'Scheduled By',
+                mediaDeletesIn: 'Deletes In',
+                mediaActions: 'Actions',
+                mediaChange: 'Change',
+                mediaChangeTime: 'Change deletion time',
+                mediaSoon: 'Soon',
                 mediaDays: 'days',
                 mediaPlays: 'plays',
                 mediaMinutes: 'min',
@@ -229,6 +235,12 @@
                 mediaSchedule: 'Planuoti',
                 mediaCancel: 'Atšaukti',
                 mediaNoScheduled: 'Nėra suplanuotų ištrynimų',
+                mediaScheduledBy: 'Suplanavo',
+                mediaDeletesIn: 'Ištrins po',
+                mediaActions: 'Veiksmai',
+                mediaChange: 'Keisti',
+                mediaChangeTime: 'Keisti ištrynimo laiką',
+                mediaSoon: 'Greitai',
                 mediaDays: 'dienų',
                 mediaPlays: 'peržiūrų',
                 mediaMinutes: 'min',
@@ -3464,6 +3476,28 @@
                     font-weight: 500;
                 }
 
+                .scheduled-time-badge {
+                    display: inline-block;
+                    padding: 4px 10px;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+
+                .scheduled-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                .scheduled-actions .media-action-btn.change {
+                    background: #3498db;
+                }
+
+                .scheduled-actions .media-action-btn.change:hover {
+                    background: #2980b9;
+                }
+
                 .media-actions {
                     display: flex;
                     gap: 6px;
@@ -6607,51 +6641,99 @@
                     return;
                 }
 
-                // Build table for scheduled items
-                let html = `<table class="media-table"><thead><tr>
-                    <th style="width: 40%">Title</th>
-                    <th>Type</th>
-                    <th>Scheduled By</th>
-                    <th>Delete At</th>
-                    <th>Actions</th>
-                </tr></thead><tbody>`;
+                // Format time remaining
+                const formatTimeLeft = (deleteAt) => {
+                    const now = new Date();
+                    const deleteDate = new Date(deleteAt);
+                    const diffMs = deleteDate - now;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffDays = Math.floor(diffHours / 24);
 
-                deletions.forEach(item => {
+                    if (diffDays > 0) {
+                        return `${diffDays} ${self.t('mediaDays')}`;
+                    } else if (diffHours > 0) {
+                        return `${diffHours}h`;
+                    } else {
+                        return self.t('mediaSoon') || 'Soon';
+                    }
+                };
+
+                // Build table matching regular media style
+                let html = `
+                    <table class="media-list-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>${self.t('mediaSortTitle')}</th>
+                                <th>${self.t('mediaScheduledBy') || 'Scheduled By'}</th>
+                                <th>${self.t('mediaDeletesIn') || 'Deletes In'}</th>
+                                <th>${self.t('mediaActions') || 'Actions'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                deletions.forEach((item, index) => {
+                    const imageUrl = `/Items/${item.ItemId}/Images/Primary`;
                     const deleteDate = new Date(item.DeleteAt);
                     const now = new Date();
-                    const daysLeft = Math.ceil((deleteDate - now) / (1000 * 60 * 60 * 24));
+                    const diffMs = deleteDate - now;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffDays = Math.floor(diffHours / 24);
+                    const animDelay = index * 60;
 
-                    html += `<tr class="media-row scheduled-row" style="animation: fadeInRow 0.3s ease forwards;">
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="color: #fff; font-weight: 500;">${self.escapeHtml(item.ItemTitle)}</span>
-                            </div>
-                        </td>
-                        <td><span class="media-type-badge">${item.ItemType}</span></td>
-                        <td style="color: #888;">${self.escapeHtml(item.ScheduledByUsername)}</td>
-                        <td>
-                            <span style="color: ${daysLeft <= 1 ? '#e74c3c' : daysLeft <= 3 ? '#f39c12' : '#27ae60'};">
-                                ${deleteDate.toLocaleDateString()} (${daysLeft} ${self.t('mediaDays')})
-                            </span>
-                        </td>
-                        <td>
-                            <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">
-                                ${self.t('mediaCancelDelete').replace('Cancel ', '')}
-                            </button>
-                        </td>
-                    </tr>`;
+                    // Color based on urgency
+                    let urgencyColor = '#27ae60'; // green
+                    if (diffDays <= 1) urgencyColor = '#e74c3c'; // red
+                    else if (diffDays <= 3) urgencyColor = '#f39c12'; // orange
+
+                    html += `
+                        <tr style="animation-delay: ${animDelay}ms">
+                            <td>
+                                <img src="${baseUrl}${imageUrl}?maxWidth=80" class="media-item-image" alt="" onerror="this.style.display='none'" />
+                            </td>
+                            <td>
+                                <div class="media-item-title">
+                                    <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.ItemTitle)}</a>
+                                </div>
+                                <span class="media-item-type ${item.ItemType.toLowerCase()}">${item.ItemType}</span>
+                            </td>
+                            <td style="color: #888;">${self.escapeHtml(item.ScheduledByUsername)}</td>
+                            <td>
+                                <span class="scheduled-time-badge" style="background: ${urgencyColor};">
+                                    ${formatTimeLeft(item.DeleteAt)}
+                                </span>
+                                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                                    ${deleteDate.toLocaleDateString()} ${deleteDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </div>
+                            </td>
+                            <td class="media-actions scheduled-actions">
+                                <button class="media-action-btn change" data-item-id="${item.ItemId}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
+                                    ${self.t('mediaChange') || 'Change'}
+                                </button>
+                                <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
+                                    ${self.t('mediaCancel') || 'Cancel'}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
                 });
 
                 html += '</tbody></table>';
                 body.innerHTML = html;
 
-                // Add event handlers for cancel buttons
+                // Add event handlers for action buttons
                 body.querySelectorAll('.media-action-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const itemId = btn.getAttribute('data-item-id');
-                        self.cancelDeletion(itemId);
-                        // Reload scheduled list after cancellation
-                        setTimeout(() => self.loadScheduledMediaList(), 500);
+                        const action = btn.getAttribute('data-action');
+
+                        if (action === 'cancel') {
+                            self.cancelDeletion(itemId);
+                            setTimeout(() => self.loadScheduledMediaList(), 500);
+                        } else if (action === 'change') {
+                            self.showDeletionDialog(itemId);
+                        }
                     });
                 });
             })
