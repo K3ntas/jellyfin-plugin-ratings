@@ -1674,7 +1674,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpPost("Media/{itemId}/ScheduleDeletion")]
         public ActionResult<ScheduledDeletion> ScheduleDeletion(
             [FromRoute] [Required] Guid itemId,
-            [FromQuery] int? delayDays = null)
+            [FromQuery] int? delayDays = null,
+            [FromQuery] int? delayHours = null)
         {
             try
             {
@@ -1729,11 +1730,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound($"Item {itemId} not found");
                 }
 
-                // Use configured default if not specified
-                var actualDelayDays = delayDays ?? config?.DefaultDeletionDelayDays ?? 7;
-                if (actualDelayDays < 1)
+                // Calculate deletion time - hours takes precedence over days
+                DateTime deleteAt;
+                string delayDescription;
+                if (delayHours.HasValue && delayHours.Value > 0)
                 {
-                    return BadRequest("Delay must be at least 1 day");
+                    deleteAt = DateTime.UtcNow.AddHours(delayHours.Value);
+                    delayDescription = $"{delayHours.Value} hours";
+                }
+                else
+                {
+                    var actualDelayDays = delayDays ?? config?.DefaultDeletionDelayDays ?? 7;
+                    if (actualDelayDays < 1)
+                    {
+                        return BadRequest("Delay must be at least 1 day");
+                    }
+                    deleteAt = DateTime.UtcNow.AddDays(actualDelayDays);
+                    delayDescription = $"{actualDelayDays} days";
                 }
 
                 var deletion = new ScheduledDeletion
@@ -1744,12 +1757,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ScheduledByUserId = userId,
                     ScheduledByUsername = user.Username,
                     ScheduledAt = DateTime.UtcNow,
-                    DeleteAt = DateTime.UtcNow.AddDays(actualDelayDays)
+                    DeleteAt = deleteAt
                 };
 
                 var result = _repository.ScheduleDeletionAsync(deletion).Result;
-                _logger.LogInformation("Admin {UserId} scheduled deletion for item {ItemId} ({Title}) in {Days} days",
-                    userId, itemId, item.Name, actualDelayDays);
+                _logger.LogInformation("Admin {UserId} scheduled deletion for item {ItemId} ({Title}) in {Delay}",
+                    userId, itemId, item.Name, delayDescription);
 
                 return Ok(result);
             }
