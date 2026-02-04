@@ -6026,7 +6026,8 @@
          */
         mediaListState: {
             page: 1,
-            totalPages: 1
+            totalPages: 1,
+            requestId: 0
         },
 
         /**
@@ -6039,6 +6040,8 @@
 
             if (!body) return;
 
+            // Increment request ID to track this specific request
+            const thisRequestId = ++self.mediaListState.requestId;
             const currentPage = page || 1;
             const search = document.getElementById('mediaSearchInput')?.value || '';
             const activeTab = document.querySelector('#mediaManagementTabs .media-tab.active');
@@ -6086,6 +6089,12 @@
             // Start loading first batch of the page immediately
             loadBatch(startBatch, true)
                 .then(async (firstData) => {
+                    // Check if this request is still current (prevents race conditions)
+                    if (thisRequestId !== self.mediaListState.requestId) {
+                        console.log('Ignoring stale response for page', currentPage);
+                        return;
+                    }
+
                     self.mediaListState.page = currentPage;
                     self.mediaListState.totalPages = Math.ceil(firstData.TotalItems / 50); // Actual page count for 50 items/page
 
@@ -6103,6 +6112,11 @@
 
                     // Load remaining batches for this page
                     for (let batch = startBatch + 1; batch <= lastBatchForPage; batch++) {
+                        // Check again before each batch append
+                        if (thisRequestId !== self.mediaListState.requestId) {
+                            console.log('Stopping batch load - newer request started');
+                            return;
+                        }
                         try {
                             const batchData = await loadBatch(batch, false);
                             if (batchData.Items && batchData.Items.length > 0) {
@@ -6114,8 +6128,11 @@
                     }
                 })
                 .catch(err => {
-                    console.error('Error loading media:', err);
-                    body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+                    // Only show error if this is still the current request
+                    if (thisRequestId === self.mediaListState.requestId) {
+                        console.error('Error loading media:', err);
+                        body.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">${self.t('mediaError')}</p>`;
+                    }
                 });
         },
 
