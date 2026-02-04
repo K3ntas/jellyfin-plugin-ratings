@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.235.0",
+        "changelog": "Fixed Media Management pagination race condition - prevents stale responses from overwriting newer page data.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.235.0/jellyfin-plugin-ratings_1.0.235.0.zip",
+        "checksum": "99e1a3440a6748914958c816d6a05d74",
+        "timestamp": "2026-02-04T19:25:00Z"
+      },
+      {
         "version": "1.0.234.0",
         "changelog": "Fixed Media Management pagination caching issue - clicking next page now correctly loads new results.",
         "targetAbi": "10.11.0.0",
