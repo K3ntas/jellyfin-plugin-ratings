@@ -3407,6 +3407,7 @@
                     border-bottom: 1px solid #333;
                     color: #ddd;
                     font-size: 13px;
+                    vertical-align: middle;
                 }
 
                 .media-list-table tr:hover td {
@@ -6802,6 +6803,18 @@
                 });
             }
 
+            // Check if any library types are missing labels - if so, fetch types
+            const hasUnlabeledLibraryTypes = self.selectedMediaTypes.some(type =>
+                type.startsWith('library_') && !typeLabels[type]
+            );
+            if (hasUnlabeledLibraryTypes && !self.availableMediaTypes) {
+                // Fetch available types to get labels, then rebuild tabs
+                self.fetchAvailableMediaTypes().then(() => {
+                    self.buildMediaTabs();
+                });
+                return; // Exit now, will be called again after fetch
+            }
+
             // Build tabs HTML
             let html = `<button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>`;
 
@@ -6962,6 +6975,15 @@
                         }
                     });
                 }
+
+                // Save all library labels to localStorage for tab building
+                const savedLabels = JSON.parse(localStorage.getItem('ratingsMediaTypeLabels') || '{}');
+                self.availableMediaTypes.forEach(mt => {
+                    if (mt.type.startsWith('library_') && mt.label) {
+                        savedLabels[mt.type] = mt.label;
+                    }
+                });
+                localStorage.setItem('ratingsMediaTypeLabels', JSON.stringify(savedLabels));
 
             } catch (err) {
                 console.error('Error fetching media types:', err);
