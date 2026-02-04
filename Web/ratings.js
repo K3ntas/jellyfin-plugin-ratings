@@ -6070,7 +6070,8 @@
                     headers: {
                         'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
-                    credentials: 'include'
+                    credentials: 'include',
+                    cache: 'no-store'
                 });
 
                 if (!response.ok) throw new Error('Failed to load media');
