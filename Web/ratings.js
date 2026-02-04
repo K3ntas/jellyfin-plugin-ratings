@@ -3403,11 +3403,16 @@
                 }
 
                 .media-list-table td {
-                    padding: 8px 12px;
+                    padding: 12px;
                     border-bottom: 1px solid #333;
                     color: #ddd;
                     font-size: 13px;
                     vertical-align: middle;
+                }
+
+                .media-list-table td.media-actions {
+                    vertical-align: middle;
+                    text-align: center;
                 }
 
                 .media-list-table tr:hover td {
@@ -3489,46 +3494,63 @@
                 .scheduled-actions {
                     display: flex;
                     gap: 8px;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
                 }
 
                 .scheduled-actions .media-action-btn.change {
-                    background: #3498db;
+                    background: linear-gradient(135deg, #3498db, #2980b9);
+                    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
                 }
 
                 .scheduled-actions .media-action-btn.change:hover {
-                    background: #2980b9;
+                    background: linear-gradient(135deg, #2980b9, #1f6dad);
+                    transform: translateY(-1px);
+                    box-shadow: 0 3px 6px rgba(52, 152, 219, 0.4);
                 }
 
                 .media-actions {
                     display: flex;
-                    gap: 6px;
+                    gap: 8px;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
                 }
 
                 .media-action-btn {
-                    padding: 6px 10px;
+                    padding: 8px 14px;
                     border: none;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     cursor: pointer;
-                    font-size: 11px;
-                    transition: all 0.2s;
+                    font-size: 12px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
                 }
 
                 .media-action-btn.delete {
-                    background: #e74c3c;
+                    background: linear-gradient(135deg, #e74c3c, #c0392b);
                     color: #fff;
+                    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
                 }
 
                 .media-action-btn.delete:hover {
-                    background: #c0392b;
+                    background: linear-gradient(135deg, #c0392b, #a93226);
+                    transform: translateY(-1px);
+                    box-shadow: 0 3px 6px rgba(231, 76, 60, 0.4);
                 }
 
                 .media-action-btn.cancel {
-                    background: #3498db;
+                    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
                     color: #fff;
+                    box-shadow: 0 2px 4px rgba(149, 165, 166, 0.3);
                 }
 
                 .media-action-btn.cancel:hover {
-                    background: #2980b9;
+                    background: linear-gradient(135deg, #7f8c8d, #6c7a7b);
+                    transform: translateY(-1px);
+                    box-shadow: 0 3px 6px rgba(149, 165, 166, 0.4);
                 }
 
                 #mediaManagementPagination {
@@ -6148,6 +6170,8 @@
             if (modal) {
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
+                // Set current tab to 'all' (default when opening)
+                this.mediaListState.currentTab = 'all';
                 this.loadMediaList();
             }
         },
@@ -6158,7 +6182,8 @@
         mediaListState: {
             page: 1,
             totalPages: 1,
-            requestId: 0
+            requestId: 0,
+            currentTab: 'all' // 'all', 'scheduled', 'settings', or specific type
         },
 
         /**
@@ -6223,6 +6248,12 @@
                     // Check if this request is still current (prevents race conditions)
                     if (thisRequestId !== self.mediaListState.requestId) {
                         console.log('Ignoring stale response for page', currentPage);
+                        return;
+                    }
+
+                    // Check if user switched to a different tab type
+                    if (self.mediaListState.currentTab === 'scheduled' || self.mediaListState.currentTab === 'settings') {
+                        console.log('Ignoring media load - tab changed to', self.mediaListState.currentTab);
                         return;
                     }
 
@@ -6637,6 +6668,12 @@
                     return;
                 }
 
+                // Check if user switched to a different tab
+                if (self.mediaListState.currentTab !== 'scheduled') {
+                    console.log('Ignoring scheduled load - tab changed to', self.mediaListState.currentTab);
+                    return;
+                }
+
                 if (!deletions || deletions.length === 0) {
                     body.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">${self.t('mediaNoScheduled') || 'No scheduled deletions'}</p>`;
                     return;
@@ -6836,6 +6873,9 @@
                     const tabType = tab.getAttribute('data-type');
                     tabsContainer.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
+
+                    // Track current tab to prevent race conditions
+                    self.mediaListState.currentTab = tabType || 'all';
 
                     // Show/hide controls and settings based on tab
                     const controls = document.getElementById('mediaManagementControls');
