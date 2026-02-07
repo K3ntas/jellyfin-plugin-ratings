@@ -6085,14 +6085,19 @@
                     // Build tabs dynamically and bind handlers
                     self.buildMediaTabs();
 
-                    // Filter/sort change handlers
+                    // Filter/sort change handlers - only trigger for media tabs, not scheduled/settings
                     let searchTimeout;
+                    const triggerMediaLoad = () => {
+                        if (self.mediaListState.currentTab !== 'scheduled' && self.mediaListState.currentTab !== 'settings') {
+                            self.loadMediaList();
+                        }
+                    };
                     document.getElementById('mediaSearchInput').addEventListener('input', () => {
                         clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(() => self.loadMediaList(), 500);
+                        searchTimeout = setTimeout(triggerMediaLoad, 500);
                     });
-                    document.getElementById('mediaSortBy').addEventListener('change', () => self.loadMediaList());
-                    document.getElementById('mediaSortOrder').addEventListener('change', () => self.loadMediaList());
+                    document.getElementById('mediaSortBy').addEventListener('change', triggerMediaLoad);
+                    document.getElementById('mediaSortOrder').addEventListener('change', triggerMediaLoad);
                 }
 
                 // Create deletion dialog if not exists
@@ -6270,13 +6275,18 @@
 
                     // Load remaining batches for this page
                     for (let batch = startBatch + 1; batch <= lastBatchForPage; batch++) {
-                        // Check again before each batch append
+                        // Check again before each batch
                         if (thisRequestId !== self.mediaListState.requestId) {
                             console.log('Stopping batch load - newer request started');
                             return;
                         }
                         try {
                             const batchData = await loadBatch(batch, false);
+                            // Check again after await - tab may have changed during network request
+                            if (thisRequestId !== self.mediaListState.requestId) {
+                                console.log('Stopping batch load - request changed during fetch');
+                                return;
+                            }
                             if (batchData.Items && batchData.Items.length > 0) {
                                 self.appendMediaRows(batchData.Items, body, (batch - startBatch) * batchSize);
                             }
