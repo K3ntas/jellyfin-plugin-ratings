@@ -3491,31 +3491,27 @@
                     font-weight: 600;
                 }
 
-                .scheduled-actions {
-                    display: flex;
+                .scheduled-actions-wrapper {
+                    display: inline-flex;
                     gap: 8px;
                     align-items: center;
                     justify-content: center;
-                    height: 100%;
                 }
 
-                .scheduled-actions .media-action-btn.change {
+                .scheduled-actions-wrapper .media-action-btn.change {
                     background: linear-gradient(135deg, #3498db, #2980b9);
                     box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
                 }
 
-                .scheduled-actions .media-action-btn.change:hover {
+                .scheduled-actions-wrapper .media-action-btn.change:hover {
                     background: linear-gradient(135deg, #2980b9, #1f6dad);
                     transform: translateY(-1px);
                     box-shadow: 0 3px 6px rgba(52, 152, 219, 0.4);
                 }
 
                 .media-actions {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100%;
+                    text-align: center;
+                    vertical-align: middle;
                 }
 
                 .media-action-btn {
@@ -6745,13 +6741,15 @@
                                     ${deleteDate.toLocaleDateString()} ${deleteDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
                             </td>
-                            <td class="media-actions scheduled-actions">
-                                <button class="media-action-btn change" data-item-id="${item.ItemId}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
-                                    ${self.t('mediaChange') || 'Change'}
-                                </button>
-                                <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
-                                    ${self.t('mediaCancel') || 'Cancel'}
-                                </button>
+                            <td class="media-actions">
+                                <div class="scheduled-actions-wrapper">
+                                    <button class="media-action-btn change" data-item-id="${item.ItemId}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
+                                        ${self.t('mediaChange') || 'Change'}
+                                    </button>
+                                    <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
+                                        ${self.t('mediaCancel') || 'Cancel'}
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
