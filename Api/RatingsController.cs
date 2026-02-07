@@ -1563,8 +1563,70 @@ namespace Jellyfin.Plugin.Ratings.Api
                     };
                 }).ToList();
 
+                // When sorting by playcount or size, calculate those stats for ALL items first
+                var sortField = sortBy.ToLower();
+                if (sortField == "playcount" || sortField == "size")
+                {
+                    foreach (var stat in mediaStats)
+                    {
+                        var item = allItems.FirstOrDefault(i => i.Id == stat.ItemId);
+                        if (item == null) continue;
+
+                        if (sortField == "size" && item is MediaBrowser.Controller.Entities.Movies.Movie sizeMovie)
+                        {
+                            try
+                            {
+                                var mediaStreams = sizeMovie.GetMediaSources(false);
+                                if (mediaStreams != null && mediaStreams.Count > 0)
+                                {
+                                    stat.FileSizeBytes = mediaStreams[0].Size ?? 0;
+                                }
+                            }
+                            catch { }
+                        }
+
+                        if (sortField == "playcount")
+                        {
+                            if (item is MediaBrowser.Controller.Entities.Movies.Movie playMovie)
+                            {
+                                try
+                                {
+                                    var userData = _userDataManager.GetUserData(user, item);
+                                    if (userData != null)
+                                    {
+                                        stat.PlayCount = userData.PlayCount;
+                                    }
+                                }
+                                catch { }
+                            }
+                            else if (item is MediaBrowser.Controller.Entities.TV.Series playSeries)
+                            {
+                                try
+                                {
+                                    var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                                    {
+                                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                                        AncestorIds = new[] { playSeries.Id },
+                                        Recursive = true
+                                    };
+                                    var episodes = _libraryManager.GetItemList(episodeQuery);
+                                    foreach (var episode in episodes)
+                                    {
+                                        var epUserData = _userDataManager.GetUserData(user, episode);
+                                        if (epUserData != null)
+                                        {
+                                            stat.PlayCount += epUserData.PlayCount;
+                                        }
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+
                 // Apply sorting
-                mediaStats = sortBy.ToLower() switch
+                mediaStats = sortField switch
                 {
                     "title" => sortOrder.ToLower() == "asc"
                         ? mediaStats.OrderBy(m => m.Title).ToList()
