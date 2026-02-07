@@ -93,6 +93,8 @@
                 mediaSortTitle: 'Title',
                 mediaSortYear: 'Year',
                 mediaSortRating: 'Rating',
+                mediaSortPlays: 'Plays',
+                mediaSortSize: 'Size',
                 mediaSortDateAdded: 'Date Added',
                 mediaSortPlayCount: 'Plays',
                 mediaSortWatchTime: 'Watch Time',
@@ -215,6 +217,8 @@
                 mediaSortTitle: 'Pavadinimas',
                 mediaSortYear: 'Metai',
                 mediaSortRating: 'Reitingas',
+                mediaSortPlays: 'Peržiūros',
+                mediaSortSize: 'Dydis',
                 mediaSortDateAdded: 'Pridėjimo data',
                 mediaSortPlayCount: 'Peržiūros',
                 mediaSortWatchTime: 'Žiūrėjimo laikas',
@@ -6046,6 +6050,8 @@
                                     <option value="title">${self.t('mediaSortTitle')}</option>
                                     <option value="year">${self.t('mediaSortYear')}</option>
                                     <option value="rating">${self.t('mediaSortRating')}</option>
+                                    <option value="playcount">${self.t('mediaSortPlays')}</option>
+                                    <option value="size">${self.t('mediaSortSize')}</option>
                                 </select>
                                 <select id="mediaSortOrder">
                                     <option value="desc">↓</option>

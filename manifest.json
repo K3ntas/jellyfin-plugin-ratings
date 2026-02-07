@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.242.0",
+        "changelog": "Added Plays and Size sort options to Media Management.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.242.0/jellyfin-plugin-ratings_1.0.242.0.zip",
+        "checksum": "0f18087a46850f20cf49223f51ae2672",
+        "timestamp": "2026-02-07T12:30:00Z"
+      },
+      {
         "version": "1.0.241.0",
         "changelog": "Fixed Scheduled tab race condition - regular media no longer loads over scheduled items.",
         "targetAbi": "10.11.0.0",
