@@ -1010,7 +1010,7 @@
                     top: 50% !important;
                     left: 50% !important;
                     width: 2px !important;
-                    height: 18px !important;
+                    height: 28px !important;
                     background: #e53935 !important;
                     border-radius: 1px !important;
                     pointer-events: none !important;
@@ -1077,7 +1077,7 @@
                 @media screen and (max-width: 470px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 15px !important;
+                        top: 12px !important;
                         right: 180px !important;
                     }
 
