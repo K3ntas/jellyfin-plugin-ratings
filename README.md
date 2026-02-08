@@ -278,7 +278,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.195.0 (Current)
+### 1.0.244.0 (Current)
+- **Redesigned notification toggle** - replaced slide on/off switch with clean bell icon
+- Disabled state shown with red cross lines overlay instead of toggle switch
+- Smaller, cleaner look with all responsive positioning preserved
+
+### 1.0.195.0
 - **Fixed Media button** - now follows exact same pattern as Latest Media button
 - Reliable injection into header
 

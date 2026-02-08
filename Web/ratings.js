@@ -979,58 +979,49 @@
                     z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
-                    background: rgba(60, 60, 60, 0.9) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    border-radius: 25px !important;
-                    padding: 8px 14px !important;
-                    transition: all 0.3s ease !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
+                    padding: 4px !important;
                     cursor: pointer !important;
-                    gap: 8px !important;
                     overflow: visible !important;
+                    transition: opacity 0.2s ease !important;
                 }
 
                 #notificationToggle:hover {
-                    background: rgba(70, 70, 70, 0.95) !important;
-                    border-color: rgba(255, 255, 255, 0.4) !important;
+                    opacity: 0.7 !important;
                 }
-
 
                 #notificationToggle.hidden {
                     display: none !important;
                 }
 
                 #notificationToggleIcon {
-                    font-size: 16px !important;
+                    font-size: 14px !important;
                     opacity: 0.9 !important;
-                }
-
-                #notificationToggleSwitch {
                     position: relative !important;
-                    width: 36px !important;
-                    height: 20px !important;
-                    background: rgba(100, 100, 100, 0.8) !important;
-                    border-radius: 10px !important;
-                    transition: background 0.3s ease !important;
                 }
 
-                #notificationToggleSwitch.enabled {
-                    background: rgba(0, 164, 220, 0.9) !important;
-                }
-
-                #notificationToggleSwitch::after {
+                /* Red cross lines when notifications disabled */
+                #notificationToggle.disabled::before,
+                #notificationToggle.disabled::after {
                     content: '' !important;
                     position: absolute !important;
-                    top: 2px !important;
-                    left: 2px !important;
-                    width: 16px !important;
-                    height: 16px !important;
-                    background: #fff !important;
-                    border-radius: 50% !important;
-                    transition: transform 0.3s ease !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    width: 2px !important;
+                    height: 18px !important;
+                    background: #e53935 !important;
+                    border-radius: 1px !important;
+                    pointer-events: none !important;
                 }
 
-                #notificationToggleSwitch.enabled::after {
-                    transform: translateX(16px) !important;
+                #notificationToggle.disabled::before {
+                    transform: translate(-50%, -50%) rotate(45deg) !important;
+                }
+
+                #notificationToggle.disabled::after {
+                    transform: translate(-50%, -50%) rotate(-45deg) !important;
                 }
 
                 /* Tooltip for notification toggle - using fixed positioning to avoid clipping */
@@ -1063,7 +1054,6 @@
                         top: 55px !important;
                         left: auto !important;
                         right: 150px !important;
-                        padding: 8px 10px !important;
                     }
                 }
 
@@ -1072,25 +1062,15 @@
                         position: absolute !important;
                         top: 58px !important;
                         right: 130px !important;
-                        padding: 6px 10px !important;
-                    }
-
-                    #notificationToggleSwitch {
-                        width: 32px !important;
-                        height: 18px !important;
-                    }
-
-                    #notificationToggleSwitch::after {
-                        width: 14px !important;
-                        height: 14px !important;
-                    }
-
-                    #notificationToggleSwitch.enabled::after {
-                        transform: translateX(14px) !important;
                     }
 
                     #notificationToggleIcon {
-                        font-size: 14px !important;
+                        font-size: 12px !important;
+                    }
+
+                    #notificationToggle.disabled::before,
+                    #notificationToggle.disabled::after {
+                        height: 15px !important;
                     }
                 }
 
@@ -1099,7 +1079,6 @@
                         position: absolute !important;
                         top: 10px !important;
                         right: 180px !important;
-                        padding: 6px 10px !important;
                     }
                 }
 
@@ -5296,13 +5275,10 @@
                         const toggleContainer = document.createElement('div');
                         toggleContainer.id = 'notificationToggle';
 
-                        // Create bell icon
+                        // Create bell icon (always shows bell)
                         const bellIcon = document.createElement('span');
                         bellIcon.id = 'notificationToggleIcon';
-
-                        // Create toggle switch
-                        const toggleSwitch = document.createElement('div');
-                        toggleSwitch.id = 'notificationToggleSwitch';
+                        bellIcon.innerHTML = '🔔';
 
                         // Create tooltip
                         const tooltip = document.createElement('div');
@@ -5313,13 +5289,12 @@
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
                         const isEnabled = savedPref === null ? true : savedPref === 'true';
 
-                        // Update visual state
+                        // Update visual state - toggle red cross lines via disabled class
                         const updateToggleState = (enabled) => {
-                            bellIcon.innerHTML = enabled ? '🔔' : '🔕';
                             if (enabled) {
-                                toggleSwitch.classList.add('enabled');
+                                toggleContainer.classList.remove('disabled');
                             } else {
-                                toggleSwitch.classList.remove('enabled');
+                                toggleContainer.classList.add('disabled');
                             }
                             // Store in localStorage for this user
                             localStorage.setItem('ratingsNotificationsEnabled', enabled.toString());
@@ -5339,7 +5314,6 @@
 
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
-                        toggleContainer.appendChild(toggleSwitch);
                         document.body.appendChild(tooltip); // Tooltip in body to avoid clipping
 
                         // Position tooltip on hover
