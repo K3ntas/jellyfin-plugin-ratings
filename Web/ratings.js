@@ -997,8 +997,8 @@
                 }
 
                 #notificationToggleIcon {
-                    font-size: 14px !important;
-                    opacity: 0.9 !important;
+                    font-size: 25px !important;
+                    opacity: 0.8 !important;
                     position: relative !important;
                 }
 
@@ -1065,7 +1065,7 @@
                     }
 
                     #notificationToggleIcon {
-                        font-size: 12px !important;
+                        font-size: 16px !important;
                     }
 
                     #notificationToggle.disabled::before,
@@ -1077,8 +1077,12 @@
                 @media screen and (max-width: 470px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 10px !important;
+                        top: 15px !important;
                         right: 180px !important;
+                    }
+
+                    #notificationToggleIcon {
+                        font-size: 16px !important;
                     }
                 }
 
