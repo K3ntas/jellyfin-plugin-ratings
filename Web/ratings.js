@@ -5310,27 +5310,43 @@
                         updateToggleState(isEnabled);
                         self.userNotificationsEnabled = isEnabled;
 
+                        // Auto-hide tooltip after delay
+                        let tooltipTimer = null;
+                        const showTooltipFor = (text, duration) => {
+                            if (tooltipTimer) clearTimeout(tooltipTimer);
+                            tooltip.textContent = text;
+                            const rect = toggleContainer.getBoundingClientRect();
+                            tooltip.style.top = (rect.bottom + 8) + 'px';
+                            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                            tooltip.style.transform = 'translateX(-50%)';
+                            tooltip.classList.add('show');
+                            tooltipTimer = setTimeout(() => {
+                                tooltip.classList.remove('show');
+                                tooltipTimer = null;
+                            }, duration);
+                        };
+
                         // Handle click
                         toggleContainer.addEventListener('click', () => {
                             const currentState = self.userNotificationsEnabled;
-                            updateToggleState(!currentState);
+                            const newState = !currentState;
+                            updateToggleState(newState);
+                            showTooltipFor(newState ? 'Notifications enabled' : 'Notifications disabled', 2000);
                         });
 
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
                         document.body.appendChild(tooltip); // Tooltip in body to avoid clipping
 
-                        // Position tooltip on hover
+                        // Show tooltip on hover, auto-hide after 2s
                         toggleContainer.addEventListener('mouseenter', () => {
-                            const rect = toggleContainer.getBoundingClientRect();
-                            tooltip.style.top = (rect.bottom + 8) + 'px';
-                            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-                            tooltip.style.transform = 'translateX(-50%)';
-                            tooltip.classList.add('show');
+                            showTooltipFor('Enable/disable new media notifications', 2000);
                         });
 
                         toggleContainer.addEventListener('mouseleave', () => {
+                            if (tooltipTimer) clearTimeout(tooltipTimer);
                             tooltip.classList.remove('show');
+                            tooltipTimer = null;
                         });
 
                         // Append to header container
