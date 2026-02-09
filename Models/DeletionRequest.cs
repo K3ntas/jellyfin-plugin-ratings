@@ -48,6 +48,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string MediaLink { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the deletion type: "request" (delete the request) or "media" (delete the media from library).
+        /// </summary>
+        public string DeletionType { get; set; } = "media";
+
+        /// <summary>
         /// Gets or sets the status of the deletion request (pending, approved, rejected).
         /// </summary>
         public string Status { get; set; } = "pending";

@@ -1980,22 +1980,36 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                // Validate the original media request exists and is "done"
+                // Validate the original media request exists
                 var mediaRequest = _repository.GetMediaRequestAsync(request.MediaRequestId).Result;
                 if (mediaRequest == null)
                 {
                     return NotFound("Original media request not found");
                 }
 
-                if (mediaRequest.Status != "done")
+                // Validate deletion type
+                var deletionType = string.IsNullOrEmpty(request.DeletionType) ? "media" : request.DeletionType.ToLower();
+                if (deletionType != "request" && deletionType != "media")
                 {
-                    return BadRequest("Can only request deletion for fulfilled (done) media requests");
+                    return BadRequest("DeletionType must be 'request' or 'media'");
+                }
+
+                // For "media" type, the request must be "done"
+                if (deletionType == "media" && mediaRequest.Status != "done")
+                {
+                    return BadRequest("Can only request media deletion for fulfilled (done) requests");
+                }
+
+                // For "request" type, the request must NOT be done/rejected
+                if (deletionType == "request" && (mediaRequest.Status == "done" || mediaRequest.Status == "rejected"))
+                {
+                    return BadRequest("Cannot request deletion of a completed or rejected request");
                 }
 
                 // Check for duplicate pending deletion request
                 if (_repository.HasPendingDeletionRequest(request.MediaRequestId))
                 {
-                    return BadRequest("A pending deletion request already exists for this media");
+                    return BadRequest("A pending deletion request already exists for this media request");
                 }
 
                 var deletionRequest = new DeletionRequest
@@ -2008,6 +2022,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Title = request.Title,
                     Type = request.Type,
                     MediaLink = request.MediaLink,
+                    DeletionType = deletionType,
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -2147,51 +2162,69 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (actionLower == "approve")
                 {
-                    // Schedule the deletion using the existing ScheduleDeletion system
-                    DateTime deleteAt;
-                    if (delayDays.HasValue && delayDays.Value > 0)
+                    if (deletionRequest.DeletionType == "request")
                     {
-                        deleteAt = DateTime.UtcNow.AddDays(delayDays.Value);
-                    }
-                    else if (delayHours.HasValue && delayHours.Value > 0)
-                    {
-                        deleteAt = DateTime.UtcNow.AddHours(delayHours.Value);
+                        // Delete the media request itself
+                        var deleted = _repository.DeleteMediaRequestAsync(deletionRequest.MediaRequestId).Result;
+                        if (!deleted)
+                        {
+                            _logger.LogWarning("Media request {MediaRequestId} not found when approving deletion request", deletionRequest.MediaRequestId);
+                        }
+
+                        var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
+                        _logger.LogInformation("Admin {UserId} approved deletion of request {MediaRequestId} via deletion request {RequestId}",
+                            userId, deletionRequest.MediaRequestId, requestId);
+
+                        return Ok(result);
                     }
                     else
                     {
-                        // Default: 1 hour (near-immediate)
-                        deleteAt = DateTime.UtcNow.AddHours(1);
+                        // Schedule the media deletion using the existing ScheduleDeletion system
+                        DateTime deleteAt;
+                        if (delayDays.HasValue && delayDays.Value > 0)
+                        {
+                            deleteAt = DateTime.UtcNow.AddDays(delayDays.Value);
+                        }
+                        else if (delayHours.HasValue && delayHours.Value > 0)
+                        {
+                            deleteAt = DateTime.UtcNow.AddHours(delayHours.Value);
+                        }
+                        else
+                        {
+                            // Default: 1 hour (near-immediate)
+                            deleteAt = DateTime.UtcNow.AddHours(1);
+                        }
+
+                        // Try to get item title from library
+                        var itemTitle = deletionRequest.Title;
+                        var itemType = deletionRequest.Type;
+                        var item = _libraryManager.GetItemById(deletionRequest.ItemId);
+                        if (item != null)
+                        {
+                            itemTitle = item.Name;
+                            itemType = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series";
+                        }
+
+                        var deletion = new ScheduledDeletion
+                        {
+                            ItemId = deletionRequest.ItemId,
+                            ItemTitle = itemTitle,
+                            ItemType = itemType,
+                            ScheduledByUserId = userId,
+                            ScheduledByUsername = user.Username,
+                            ScheduledAt = DateTime.UtcNow,
+                            DeleteAt = deleteAt
+                        };
+
+                        _repository.ScheduleDeletionAsync(deletion).Wait();
+
+                        // Update deletion request status
+                        var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
+                        _logger.LogInformation("Admin {UserId} approved media deletion request {RequestId} for item {ItemId}, scheduled at {DeleteAt}",
+                            userId, requestId, deletionRequest.ItemId, deleteAt);
+
+                        return Ok(result);
                     }
-
-                    // Try to get item title from library
-                    var itemTitle = deletionRequest.Title;
-                    var itemType = deletionRequest.Type;
-                    var item = _libraryManager.GetItemById(deletionRequest.ItemId);
-                    if (item != null)
-                    {
-                        itemTitle = item.Name;
-                        itemType = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series";
-                    }
-
-                    var deletion = new ScheduledDeletion
-                    {
-                        ItemId = deletionRequest.ItemId,
-                        ItemTitle = itemTitle,
-                        ItemType = itemType,
-                        ScheduledByUserId = userId,
-                        ScheduledByUsername = user.Username,
-                        ScheduledAt = DateTime.UtcNow,
-                        DeleteAt = deleteAt
-                    };
-
-                    _repository.ScheduleDeletionAsync(deletion).Wait();
-
-                    // Update deletion request status
-                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
-                    _logger.LogInformation("Admin {UserId} approved deletion request {RequestId} for item {ItemId}, scheduled at {DeleteAt}",
-                        userId, requestId, deletionRequest.ItemId, deleteAt);
-
-                    return Ok(result);
                 }
                 else
                 {
