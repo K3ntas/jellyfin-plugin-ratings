@@ -278,7 +278,14 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.244.0 (Current)
+### 1.0.248.0 (Current)
+- **Ask to Delete feature** - users can request deletion of fulfilled media from their request list
+- New "Deletion Requests" admin tab to approve/reject deletion requests
+- Admin can schedule deletion with ~1h, 1 day, 1 week, or 1 month delay
+- Request badge includes pending deletion request count for admins
+- EN/LT translations for all new strings
+
+### 1.0.244.0
 - **Redesigned notification toggle** - replaced slide on/off switch with clean bell icon
 - Disabled state shown with red cross lines overlay instead of toggle switch
 - Smaller, cleaner look with all responsive positioning preserved

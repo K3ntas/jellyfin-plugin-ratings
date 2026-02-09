@@ -1925,6 +1925,289 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        // Deletion Request Endpoints
+
+        /// <summary>
+        /// Creates a new deletion request for a fulfilled media request.
+        /// </summary>
+        /// <param name="request">The deletion request data.</param>
+        /// <returns>The created deletion request.</returns>
+        [HttpPost("DeletionRequests")]
+        public ActionResult<DeletionRequest> CreateDeletionRequest([FromBody] [Required] DeletionRequestDto request)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(authHeader))
+                    {
+                        return Unauthorized("No authentication header provided");
+                    }
+
+                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (!tokenMatch.Success)
+                    {
+                        return Unauthorized("Invalid authentication header format");
+                    }
+
+                    var token = tokenMatch.Groups[1].Value;
+                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                    var session = sessionTask.Result;
+                    if (session == null)
+                    {
+                        return Unauthorized("Invalid or expired token");
+                    }
+
+                    userId = session.UserId;
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // Validate the original media request exists and is "done"
+                var mediaRequest = _repository.GetMediaRequestAsync(request.MediaRequestId).Result;
+                if (mediaRequest == null)
+                {
+                    return NotFound("Original media request not found");
+                }
+
+                if (mediaRequest.Status != "done")
+                {
+                    return BadRequest("Can only request deletion for fulfilled (done) media requests");
+                }
+
+                // Check for duplicate pending deletion request
+                if (_repository.HasPendingDeletionRequest(request.MediaRequestId))
+                {
+                    return BadRequest("A pending deletion request already exists for this media");
+                }
+
+                var deletionRequest = new DeletionRequest
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Username = user.Username,
+                    MediaRequestId = request.MediaRequestId,
+                    ItemId = request.ItemId,
+                    Title = request.Title,
+                    Type = request.Type,
+                    MediaLink = request.MediaLink,
+                    Status = "pending",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = _repository.AddDeletionRequestAsync(deletionRequest).Result;
+                _logger.LogInformation("User {UserId} created deletion request for '{Title}' (MediaRequest: {MediaRequestId})",
+                    userId, request.Title, request.MediaRequestId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating deletion request");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets all deletion requests.
+        /// </summary>
+        /// <returns>List of all deletion requests.</returns>
+        [HttpGet("DeletionRequests")]
+        public ActionResult<List<DeletionRequest>> GetDeletionRequests()
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var requests = _repository.GetAllDeletionRequests();
+                return Ok(requests);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting deletion requests");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Admin action on a deletion request (approve or reject).
+        /// </summary>
+        /// <param name="requestId">The deletion request ID.</param>
+        /// <param name="action">The action to take (approve or reject).</param>
+        /// <param name="delayDays">Optional delay in days for deletion scheduling.</param>
+        /// <param name="delayHours">Optional delay in hours for deletion scheduling.</param>
+        /// <returns>The updated deletion request.</returns>
+        [HttpPost("DeletionRequests/{requestId}/Action")]
+        public ActionResult<DeletionRequest> ActionDeletionRequest(
+            [FromRoute] [Required] Guid requestId,
+            [FromQuery] [Required] string action,
+            [FromQuery] int? delayDays = null,
+            [FromQuery] int? delayHours = null)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
+                            var session = sessionTask.Result;
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var user = _userManager.GetUserById(userId);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                // Get the deletion request
+                var deletionRequest = _repository.GetDeletionRequestById(requestId);
+                if (deletionRequest == null)
+                {
+                    return NotFound("Deletion request not found");
+                }
+
+                if (deletionRequest.Status != "pending")
+                {
+                    return BadRequest("This deletion request has already been resolved");
+                }
+
+                var actionLower = action.ToLower();
+                if (actionLower != "approve" && actionLower != "reject")
+                {
+                    return BadRequest("Action must be 'approve' or 'reject'");
+                }
+
+                if (actionLower == "approve")
+                {
+                    // Schedule the deletion using the existing ScheduleDeletion system
+                    DateTime deleteAt;
+                    if (delayDays.HasValue && delayDays.Value > 0)
+                    {
+                        deleteAt = DateTime.UtcNow.AddDays(delayDays.Value);
+                    }
+                    else if (delayHours.HasValue && delayHours.Value > 0)
+                    {
+                        deleteAt = DateTime.UtcNow.AddHours(delayHours.Value);
+                    }
+                    else
+                    {
+                        // Default: 1 hour (near-immediate)
+                        deleteAt = DateTime.UtcNow.AddHours(1);
+                    }
+
+                    // Try to get item title from library
+                    var itemTitle = deletionRequest.Title;
+                    var itemType = deletionRequest.Type;
+                    var item = _libraryManager.GetItemById(deletionRequest.ItemId);
+                    if (item != null)
+                    {
+                        itemTitle = item.Name;
+                        itemType = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : "Series";
+                    }
+
+                    var deletion = new ScheduledDeletion
+                    {
+                        ItemId = deletionRequest.ItemId,
+                        ItemTitle = itemTitle,
+                        ItemType = itemType,
+                        ScheduledByUserId = userId,
+                        ScheduledByUsername = user.Username,
+                        ScheduledAt = DateTime.UtcNow,
+                        DeleteAt = deleteAt
+                    };
+
+                    _repository.ScheduleDeletionAsync(deletion).Wait();
+
+                    // Update deletion request status
+                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
+                    _logger.LogInformation("Admin {UserId} approved deletion request {RequestId} for item {ItemId}, scheduled at {DeleteAt}",
+                        userId, requestId, deletionRequest.ItemId, deleteAt);
+
+                    return Ok(result);
+                }
+                else
+                {
+                    // Reject
+                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "rejected", user.Username).Result;
+                    _logger.LogInformation("Admin {UserId} rejected deletion request {RequestId}", userId, requestId);
+
+                    return Ok(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing deletion request action");
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 
     /// <summary>
