@@ -1,6 +1,6 @@
 # Jellyfin Ratings Plugin
 
-A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays, a built-in media request system, and real-time new media notifications.
+A professional, feature-rich rating system for Jellyfin media server with performance-optimized card overlays, a built-in media request system, deletion request workflow, user ban management, and real-time new media notifications.
 
 **Issues & Support**: https://github.com/K3ntas/jellyfin-plugin-ratings/issues
 
@@ -72,6 +72,36 @@ The plugin includes a complete media request system that allows users to request
 
 ---
 
+## Deletion Request System
+
+Users can request deletion of media or cancellation of their pending requests. Admins manage these through a dedicated tab with scheduling options and rejection reasons.
+
+### Deletion Requests Admin Tab
+![Admin deletion requests tab](images/deletion-requests-admin.png)
+*Admins see all deletion requests with type labels, user info, timestamps, rejection reasons, and Watch Now links*
+
+### Rejection Reason Popup
+![Rejection reason popup](images/rejection-reason-popup.png)
+*Custom dark-themed popup displays the admin's rejection reason when users click on rejected deletions*
+
+### Deletion Request Limit
+![Deletion request limit reached](images/deletion-request-limit.png)
+*Users see rejection status, Watch Now button, and a limit notice after 3 deletion requests per media item*
+
+---
+
+## User Ban System
+
+Admins can ban users from submitting media requests or deletion requests. Bans are managed per-tab with configurable durations.
+
+- **Ban durations**: 1 day, 1 week, 1 month, or permanent
+- **Two ban types**: Media request bans and deletion request bans (independent)
+- **Ban management**: User dropdown and duration selector in each admin tab
+- **User notification**: Banned users see a notice with expiry info instead of the request form or deletion buttons
+- **Auto-expiry**: Timed bans expire automatically, permanent bans require manual lift
+
+---
+
 ## Features
 
 ### Star Rating System
@@ -123,14 +153,38 @@ The plugin includes a complete media request system that allows users to request
   - "Watch Now" button when request is fulfilled with link
   - Multi-language support (EN/LT)
 - **Admin Features**:
-  - Notification badge showing pending request count
-  - View all requests with user info and notes
+  - Notification badge showing pending request count (includes deletion requests)
+  - Tabbed interface: Create Request, Manage Media Requests, Deletion Requests
+  - Pending count badges on each admin tab
   - One-click status updates (Pending/Processing/Done)
   - Add media link when marking as Done
   - Delete requests permanently
   - See request and completion timestamps
 - **Mobile Responsive** - Card layout and dropdown selector on mobile devices
 - **Multi-user Support** - Cache clears on logout/account switch
+
+### Deletion Request System
+- **Two deletion types**: "Request to delete request" (cancel pending/processing) and "Request to delete media" (remove fulfilled media)
+- **User Features**:
+  - Request deletion directly from "Your Requests" list
+  - See rejection status with clickable reason popup showing all rejection messages
+  - 3-request limit per media item to prevent spam
+- **Admin Features**:
+  - Dedicated "Deletion Requests" tab with all pending and resolved requests
+  - Schedule deletion: ~1 hour, 1 day, 1 week, or 1 month delay
+  - Reject with custom reason via dark-themed modal
+  - Integrates with existing scheduled deletion service
+- **Rejection Reasons** - Custom dark-themed modal for admin input, popup display for users with admin name and date
+
+### User Ban System
+- **Ban users** from submitting media requests or deletion requests
+- **Ban durations**: 1 day, 1 week, 1 month, or permanent
+- **Independent ban types**: Media request bans and deletion request bans managed separately
+- **Admin UI**: Ban section in each admin tab with user dropdown (populated from request history) and duration selector
+- **Banned users list**: Shows username, expiry date, and who issued the ban with one-click unban
+- **User enforcement**: Banned users see a styled notice with expiry info instead of the request form or deletion buttons
+- **Backend enforcement**: API rejects requests from banned users with clear error messages
+- **Auto-expiry**: Timed bans expire automatically without admin intervention
 
 ### Performance Optimized
 - **IntersectionObserver** loads ratings only for visible cards
@@ -191,11 +245,30 @@ The plugin includes a complete media request system that allows users to request
 
 ### Managing Requests (Admins)
 1. Click the "Request Media" button (shows pending count)
-2. View all user requests with details
-3. Update status: Pending → Processing → Done
-4. When marking as Done, paste the media URL first
-5. Users will see a "Watch Now" button linking to the media
-6. Delete requests using the trash button
+2. Use tabs: **Manage Media Requests** and **Deletion Requests** (with pending badges)
+3. View all user requests with details
+4. Update status: Pending → Processing → Done
+5. When marking as Done, paste the media URL first
+6. Users will see a "Watch Now" button linking to the media
+7. Delete requests using the trash button
+
+### Deletion Requests (Users)
+1. From "Your Requests", click **"Request to delete media"** (for fulfilled) or **"Request to delete request"** (for pending)
+2. Track deletion status - click on "REJECTED" to see all rejection reasons with admin comments
+3. Maximum 3 deletion requests per media item
+
+### Deletion Requests (Admins)
+1. Open the **Deletion Requests** tab (badge shows pending count)
+2. For media deletion: choose schedule (~1h, 1 day, 1 week, 1 month)
+3. For request deletion: approve to remove the original request
+4. Reject with a custom reason using the styled modal
+
+### Banning Users (Admins)
+1. Scroll to the **Banned Users** section in any admin tab
+2. Select a user from the dropdown (shows users who have submitted requests)
+3. Choose duration: 1 day, 1 week, 1 month, or permanent
+4. Click **Ban User** - the user will see a ban notice instead of the request form
+5. Click **Unban** next to any banned user to lift the ban immediately
 
 ---
 
@@ -232,6 +305,17 @@ The plugin includes a complete media request system that allows users to request
 - `POST /Ratings/Requests/{requestId}/Status?status={status}&mediaLink={url}` - Update status
 - `DELETE /Ratings/Requests/{requestId}` - Delete request
 
+#### Deletion Requests
+- `POST /Ratings/DeletionRequests` - Create deletion request
+- `GET /Ratings/DeletionRequests` - Get all deletion requests
+- `POST /Ratings/DeletionRequests/{requestId}/Action?action={approve|reject}` - Admin action with optional delay/reason
+
+#### User Bans
+- `POST /Ratings/Bans?userId={id}&banType={type}&duration={1d|1w|1m|permanent}` - Create ban
+- `GET /Ratings/Bans?banType={type}` - Get active bans by type (admin)
+- `GET /Ratings/Bans/Check?banType={type}` - Check if current user is banned
+- `DELETE /Ratings/Bans/{banId}` - Lift a ban
+
 ### Performance Characteristics
 - **Initial load**: ~1.5 seconds delay for page stability
 - **Per-card overhead**: Single cached API request per unique item
@@ -259,12 +343,16 @@ dotnet build -c Release
 ├── Models/                 # Data models
 │   ├── Rating.cs
 │   ├── MediaRequest.cs
+│   ├── DeletionRequest.cs
+│   ├── DeletionRequestDto.cs
+│   ├── UserBan.cs
 │   └── NewMediaNotification.cs
 ├── Web/                    # Frontend assets
 │   └── ratings.js         # Main client-side script
 ├── Configuration/          # Plugin config pages
 ├── images/                 # README screenshots
 ├── NotificationService.cs  # Library event handler
+├── DeletionService.cs      # Scheduled deletion background service
 └── manifest.json          # Plugin catalog manifest
 ```
 
