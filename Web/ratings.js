@@ -134,7 +134,23 @@
                 mediaTypeScheduled: 'Scheduled',
                 mediaSettings: 'Settings',
                 mediaIncludeTypes: 'Include media types:',
-                mediaTypesHint: 'Select which media types to show'
+                mediaTypesHint: 'Select which media types to show',
+                // Deletion Request translations
+                askToDelete: 'Ask to Delete',
+                deletionRequests: 'Deletion Requests',
+                noDeletionRequests: 'No deletion requests yet',
+                deleteNow: 'Delete ~1h',
+                schedule1Day: '1 Day',
+                schedule1Week: '1 Week',
+                schedule1Month: '1 Month',
+                rejectDeletion: 'Reject',
+                alreadyRequested: 'Deletion Requested',
+                deletionApproved: 'APPROVED',
+                deletionRejected: 'REJECTED',
+                deletionPending: 'PENDING',
+                deletionRequestSent: 'Deletion request sent!',
+                deletionRequestFailed: 'Failed to send deletion request',
+                deletionActionFailed: 'Failed to process deletion action'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -258,7 +274,23 @@
                 mediaTypeScheduled: 'Suplanuoti',
                 mediaSettings: 'Nustatymai',
                 mediaIncludeTypes: 'Rodyti medijos tipus:',
-                mediaTypesHint: 'Pasirinkite kuriuos medijos tipus rodyti'
+                mediaTypesHint: 'Pasirinkite kuriuos medijos tipus rodyti',
+                // Deletion Request translations
+                askToDelete: 'Prašyti Ištrinti',
+                deletionRequests: 'Ištrynimo Užklausos',
+                noDeletionRequests: 'Ištrynimo užklausų dar nėra',
+                deleteNow: 'Ištrinti ~1val',
+                schedule1Day: '1 Diena',
+                schedule1Week: '1 Savaitė',
+                schedule1Month: '1 Mėnuo',
+                rejectDeletion: 'Atmesti',
+                alreadyRequested: 'Ištrynimas Užsakytas',
+                deletionApproved: 'PATVIRTINTA',
+                deletionRejected: 'ATMESTA',
+                deletionPending: 'LAUKIAMA',
+                deletionRequestSent: 'Ištrynimo užklausa išsiųsta!',
+                deletionRequestFailed: 'Nepavyko išsiųsti ištrynimo užklausos',
+                deletionActionFailed: 'Nepavyko apdoroti ištrynimo veiksmo'
             }
         },
 
@@ -2530,6 +2562,154 @@
 
                 .admin-tab-content {
                     min-height: 200px !important;
+                }
+
+                /* Deletion Request Styles */
+                .deletion-request-btn {
+                    display: inline-block !important;
+                    margin-top: 5px !important;
+                    margin-left: 6px !important;
+                    padding: 4px 10px !important;
+                    background: linear-gradient(135deg, #e53935 0%, #c62828 100%) !important;
+                    color: #fff !important;
+                    text-decoration: none !important;
+                    border: none !important;
+                    border-radius: 12px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .deletion-request-btn:hover {
+                    transform: scale(1.05) !important;
+                    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4) !important;
+                }
+
+                .deletion-requested-text {
+                    display: inline-block !important;
+                    margin-top: 5px !important;
+                    margin-left: 6px !important;
+                    padding: 4px 10px !important;
+                    background: #555 !important;
+                    color: #ccc !important;
+                    border-radius: 12px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                }
+
+                .deletion-request-item {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: flex-start !important;
+                    padding: 12px !important;
+                    margin-bottom: 8px !important;
+                    background: #1a1a1a !important;
+                    border-radius: 8px !important;
+                    border-left: 3px solid #e53935 !important;
+                }
+
+                .deletion-request-item.resolved {
+                    border-left-color: #666 !important;
+                    opacity: 0.7 !important;
+                }
+
+                .deletion-request-info {
+                    flex: 1 !important;
+                }
+
+                .deletion-request-title {
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                }
+
+                .deletion-request-meta {
+                    font-size: 11px !important;
+                    color: #999 !important;
+                    margin-top: 4px !important;
+                }
+
+                .deletion-request-user {
+                    color: #00a4dc !important;
+                }
+
+                .deletion-request-actions {
+                    display: flex !important;
+                    gap: 4px !important;
+                    flex-wrap: wrap !important;
+                    margin-top: 8px !important;
+                }
+
+                .deletion-action-btn {
+                    padding: 4px 10px !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .deletion-action-btn.approve {
+                    background: #e53935 !important;
+                    color: #fff !important;
+                }
+
+                .deletion-action-btn.approve:hover {
+                    background: #c62828 !important;
+                }
+
+                .deletion-action-btn.schedule {
+                    background: #ff9800 !important;
+                    color: #fff !important;
+                }
+
+                .deletion-action-btn.schedule:hover {
+                    background: #f57c00 !important;
+                }
+
+                .deletion-action-btn.reject {
+                    background: #444 !important;
+                    color: #ccc !important;
+                }
+
+                .deletion-action-btn.reject:hover {
+                    background: #555 !important;
+                }
+
+                .deletion-status-badge {
+                    display: inline-block !important;
+                    padding: 2px 8px !important;
+                    border-radius: 10px !important;
+                    font-size: 10px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                }
+
+                .deletion-status-badge.pending {
+                    background: #ff9800 !important;
+                    color: #fff !important;
+                }
+
+                .deletion-status-badge.approved {
+                    background: #e53935 !important;
+                    color: #fff !important;
+                }
+
+                .deletion-status-badge.rejected {
+                    background: #666 !important;
+                    color: #ccc !important;
+                }
+
+                .deletion-request-link {
+                    color: #667eea !important;
+                    text-decoration: none !important;
+                    font-size: 11px !important;
+                }
+
+                .deletion-request-link:hover {
+                    text-decoration: underline !important;
                 }
 
                 .user-request-actions {
@@ -7877,6 +8057,7 @@
                 <div class="admin-tabs">
                     <button class="admin-tab" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
                     <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}</button>
+                    <button class="admin-tab" data-tab="deletions">${this.t('deletionRequests') || 'Deletion Requests'}</button>
                 </div>
                 <div class="admin-tab-content" id="adminTabContent"></div>
             `;
@@ -7895,6 +8076,8 @@
                     const tabName = e.target.getAttribute('data-tab');
                     if (tabName === 'create') {
                         self.renderUserInterfaceInTab(config);
+                    } else if (tabName === 'deletions') {
+                        self.renderDeletionRequestsTab(config);
                     } else {
                         self.renderAdminInterfaceInTab(config);
                     }
@@ -8841,7 +9024,11 @@
 
             listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loadingRequests') + '</p>';
 
-            this.fetchAllRequests().then(requests => {
+            // Fetch both media requests and deletion requests
+            Promise.all([
+                this.fetchAllRequests(),
+                this.fetchDeletionRequests()
+            ]).then(([requests, deletionRequests]) => {
                 // Filter to only current user's requests
                 const userId = ApiClient.getCurrentUserId();
                 const userRequests = requests.filter(r => r.UserId === userId);
@@ -8906,6 +9093,16 @@
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${hasLink ? (() => {
+                                    const hasPendingDeletion = deletionRequests.some(dr => dr.MediaRequestId === request.Id && dr.Status === 'pending');
+                                    const itemId = self.extractItemIdFromLink(request.MediaLink);
+                                    if (hasPendingDeletion) {
+                                        return `<span class="deletion-requested-text">${self.t('alreadyRequested')}</span>`;
+                                    } else if (itemId) {
+                                        return `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}">${self.t('askToDelete')}</button>`;
+                                    }
+                                    return '';
+                                })() : ''}
                                 ${actionsHtml}
                             </div>
                             <span class="user-request-status ${request.Status}">${statusText}</span>
@@ -8938,6 +9135,20 @@
                         if (confirm(self.t('confirmDelete') || 'Are you sure you want to delete this request?')) {
                             self.deleteUserRequest(requestId);
                         }
+                    });
+                });
+
+                // Attach "Ask to Delete" button handlers
+                const askDeleteBtns = listContainer.querySelectorAll('.deletion-request-btn');
+                askDeleteBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.target;
+                        const mediaRequestId = target.getAttribute('data-request-id');
+                        const itemId = target.getAttribute('data-item-id');
+                        const title = target.getAttribute('data-title');
+                        const type = target.getAttribute('data-type');
+                        const mediaLink = target.getAttribute('data-media-link');
+                        self.submitDeletionRequest(mediaRequestId, itemId, title, type, mediaLink, target);
                     });
                 });
             }).catch(err => {
@@ -9193,12 +9404,38 @@
             modalTitle.textContent = this.t('manageRequests');
             modalBody.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
 
-            // Fetch config and then requests
+            // Fetch config and then render with tabs
             const baseUrl = ApiClient.serverAddress();
             fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
                 .then(response => response.json())
                 .then(config => {
-                    self.renderAdminInterface(modalBody, config);
+                    // Show tabs: Manage Requests + Deletion Requests
+                    const tabsHtml = `
+                        <div class="admin-tabs">
+                            <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}</button>
+                            <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}</button>
+                        </div>
+                        <div class="admin-tab-content" id="adminTabContent"></div>
+                    `;
+                    modalBody.innerHTML = tabsHtml;
+
+                    // Attach tab handlers
+                    const tabs = modalBody.querySelectorAll('.admin-tab');
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', (e) => {
+                            tabs.forEach(t => t.classList.remove('active'));
+                            e.target.classList.add('active');
+                            const tabName = e.target.getAttribute('data-tab');
+                            if (tabName === 'deletions') {
+                                self.renderDeletionRequestsTab(config);
+                            } else {
+                                self.renderAdminInterfaceInTab(config);
+                            }
+                        });
+                    });
+
+                    // Load manage tab by default
+                    self.renderAdminInterfaceInTab(config);
                 })
                 .catch(() => {
                     self.renderAdminInterface(modalBody, {});
@@ -9729,6 +9966,285 @@
         },
 
         /**
+         * Fetch all deletion requests
+         */
+        fetchDeletionRequests: function () {
+            return new Promise((resolve, reject) => {
+                try {
+                    const baseUrl = ApiClient.serverAddress();
+                    const accessToken = ApiClient.accessToken();
+                    const deviceId = ApiClient.deviceId();
+                    const url = `${baseUrl}/Ratings/DeletionRequests`;
+
+                    const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch deletion requests');
+                        }
+                        return response.json();
+                    })
+                    .then(requests => {
+                        resolve(requests || []);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching deletion requests:', err);
+                        resolve([]); // Don't reject, just return empty
+                    });
+                } catch (err) {
+                    console.error('Error in fetchDeletionRequests:', err);
+                    resolve([]);
+                }
+            });
+        },
+
+        /**
+         * Extract Jellyfin item ID from a media link URL
+         */
+        extractItemIdFromLink: function (mediaLink) {
+            if (!mediaLink) return null;
+            try {
+                // Try ?id=GUID
+                const urlMatch = mediaLink.match(/[?&]id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+                if (urlMatch) return urlMatch[1];
+
+                // Try /Items/GUID
+                const itemsMatch = mediaLink.match(/\/Items\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+                if (itemsMatch) return itemsMatch[1];
+
+                // Try #/details?id=GUID (Jellyfin web UI format)
+                const detailsMatch = mediaLink.match(/details\?id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+                if (detailsMatch) return detailsMatch[1];
+
+                // Try raw GUID anywhere in the URL
+                const rawMatch = mediaLink.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+                if (rawMatch) return rawMatch[1];
+            } catch (e) {
+                console.error('Error extracting item ID from link:', e);
+            }
+            return null;
+        },
+
+        /**
+         * Submit a deletion request
+         */
+        submitDeletionRequest: function (mediaRequestId, itemId, title, type, mediaLink, btnElement) {
+            const self = this;
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                // Disable the button while submitting
+                if (btnElement) {
+                    btnElement.disabled = true;
+                    btnElement.textContent = '...';
+                }
+
+                fetch(`${baseUrl}/Ratings/DeletionRequests`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    },
+                    body: JSON.stringify({
+                        MediaRequestId: mediaRequestId,
+                        ItemId: itemId,
+                        Title: title,
+                        Type: type,
+                        MediaLink: mediaLink
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    if (window.require) {
+                        const msg = self.t('deletionRequestSent');
+                        require(['toast'], function(toast) {
+                            toast(msg);
+                        });
+                    }
+                    // Reload the user requests to show updated state
+                    self.loadUserRequests();
+                    // Update badge
+                    const requestBtn = document.querySelector('.request-media-button');
+                    if (requestBtn) {
+                        self.updateRequestBadge(requestBtn);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error submitting deletion request:', err);
+                    if (window.require) {
+                        const msg = self.t('deletionRequestFailed');
+                        require(['toast'], function(toast) {
+                            toast(msg);
+                        });
+                    }
+                    if (btnElement) {
+                        btnElement.disabled = false;
+                        btnElement.textContent = self.t('askToDelete');
+                    }
+                });
+            } catch (err) {
+                console.error('Error in submitDeletionRequest:', err);
+            }
+        },
+
+        /**
+         * Render deletion requests tab content (admin)
+         */
+        renderDeletionRequestsTab: function (config) {
+            const self = this;
+            const tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+
+            tabContent.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
+
+            this.fetchDeletionRequests().then(requests => {
+                if (requests.length === 0) {
+                    tabContent.innerHTML = '<div class="admin-request-empty">' + self.t('noDeletionRequests') + '</div>';
+                    return;
+                }
+
+                // Sort: pending first, then by date
+                const sorted = requests.sort((a, b) => {
+                    if (a.Status === 'pending' && b.Status !== 'pending') return -1;
+                    if (a.Status !== 'pending' && b.Status === 'pending') return 1;
+                    return new Date(b.CreatedAt) - new Date(a.CreatedAt);
+                });
+
+                let html = '<div class="deletion-requests-list">';
+                sorted.forEach(request => {
+                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : '';
+                    const resolvedAt = request.ResolvedAt ? self.formatDateTime(request.ResolvedAt) : '';
+                    const isPending = request.Status === 'pending';
+
+                    let statusBadgeClass = request.Status;
+                    let statusText = self.t('deletion' + request.Status.charAt(0).toUpperCase() + request.Status.slice(1)) || request.Status.toUpperCase();
+
+                    let actionsHtml = '';
+                    if (isPending) {
+                        actionsHtml = `
+                            <div class="deletion-request-actions">
+                                <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve" data-delay-hours="1">${self.t('deleteNow')}</button>
+                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="1">${self.t('schedule1Day')}</button>
+                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="7">${self.t('schedule1Week')}</button>
+                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="30">${self.t('schedule1Month')}</button>
+                                <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
+                            </div>
+                        `;
+                    }
+
+                    let resolvedHtml = '';
+                    if (!isPending && resolvedAt) {
+                        resolvedHtml = `<span> • ${request.ResolvedByUsername ? self.escapeHtml(request.ResolvedByUsername) : ''} ${resolvedAt}</span>`;
+                    }
+
+                    html += `
+                        <div class="deletion-request-item ${isPending ? '' : 'resolved'}">
+                            <div class="deletion-request-info">
+                                <div class="deletion-request-title">${self.escapeHtml(request.Title)}</div>
+                                <div class="deletion-request-meta">
+                                    <span class="deletion-request-user">${self.escapeHtml(request.Username)}</span>
+                                    <span> • ${request.Type ? self.escapeHtml(request.Type) : ''}</span>
+                                    <span> • ${createdAt}</span>
+                                    ${resolvedHtml}
+                                    ${request.MediaLink ? ` • <a href="${self.escapeHtml(request.MediaLink)}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                                </div>
+                                ${actionsHtml}
+                            </div>
+                            <span class="deletion-status-badge ${statusBadgeClass}">${statusText}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                tabContent.innerHTML = html;
+
+                // Attach action button handlers
+                const actionBtns = tabContent.querySelectorAll('.deletion-action-btn');
+                actionBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.target;
+                        const requestId = target.getAttribute('data-request-id');
+                        const action = target.getAttribute('data-action');
+                        const delayDays = target.getAttribute('data-delay-days');
+                        const delayHours = target.getAttribute('data-delay-hours');
+                        self.processDeletionAction(requestId, action, delayDays, delayHours, config);
+                    });
+                });
+            }).catch(err => {
+                console.error('Error loading deletion requests:', err);
+                tabContent.innerHTML = '<p style="text-align: center; color: #f44336;">Error loading deletion requests</p>';
+            });
+        },
+
+        /**
+         * Process admin action on a deletion request
+         */
+        processDeletionAction: function (requestId, action, delayDays, delayHours, config) {
+            const self = this;
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                let url = `${baseUrl}/Ratings/DeletionRequests/${requestId}/Action?action=${action}`;
+                if (delayDays) url += `&delayDays=${delayDays}`;
+                if (delayHours) url += `&delayHours=${delayHours}`;
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to process action');
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    // Refresh the tab
+                    self.renderDeletionRequestsTab(config);
+                    // Update badge
+                    const requestBtn = document.querySelector('.request-media-button');
+                    if (requestBtn) {
+                        self.updateRequestBadge(requestBtn);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error processing deletion action:', err);
+                    if (window.require) {
+                        const msg = self.t('deletionActionFailed');
+                        require(['toast'], function(toast) {
+                            toast(msg);
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error in processDeletionAction:', err);
+            }
+        },
+
+        /**
          * Format date time for display
          */
         formatDateTime: function (dateString) {
@@ -9870,14 +10386,18 @@
         updateRequestBadge: function (btn) {
             const self = this;
             try {
-                this.fetchAllRequests().then(requests => {
+                Promise.all([
+                    this.fetchAllRequests(),
+                    this.fetchDeletionRequests()
+                ]).then(([requests, deletionRequests]) => {
                     // Check if user is admin
                     this.checkIfAdmin().then(isAdmin => {
                         let count = 0;
 
                         if (isAdmin) {
-                            // For admin: show count of pending requests
+                            // For admin: show count of pending requests + pending deletion requests
                             count = requests.filter(r => r.Status === 'pending').length;
+                            count += deletionRequests.filter(r => r.Status === 'pending').length;
                         } else {
                             // For users: show count of completed (done) requests they haven't seen yet
                             const userId = ApiClient.getCurrentUserId();
