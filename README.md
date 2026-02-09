@@ -278,7 +278,14 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.251.0 (Current)
+### 1.0.252.0 (Current)
+- **User ban system** - admins can ban users from submitting media requests or deletion requests (1 day, 1 week, 1 month, or permanent)
+- **Ban management UI** - ban sections in both "Manage Media Requests" and "Deletion Requests" admin tabs with user dropdown and duration selector
+- **Ban enforcement** - banned users see a notice with expiry info instead of the request form or deletion buttons
+- **Show all rejection messages** - users now see all rejection reasons from admins (not just the latest), clickable with date and admin info
+- **Security audit** - verified no hardcoded server addresses or IP addresses in codebase
+
+### 1.0.251.0
 - **Custom rejection reason modal** - replaced browser prompt/alert with styled dark-themed modals for admin input and user viewing
 - **Notification badges on admin tabs** - "Manage Media Requests" and "Deletion Requests" tabs show pending count badges
 - **Brighter bell cross lines** - disabled notification bell now has more visible, longer red cross lines with glow effect
