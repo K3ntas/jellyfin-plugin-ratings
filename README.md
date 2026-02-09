@@ -278,7 +278,12 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.250.0 (Current)
+### 1.0.251.0 (Current)
+- **Custom rejection reason modal** - replaced browser prompt/alert with styled dark-themed modals for admin input and user viewing
+- **Notification badges on admin tabs** - "Manage Media Requests" and "Deletion Requests" tabs show pending count badges
+- **Brighter bell cross lines** - disabled notification bell now has more visible, longer red cross lines with glow effect
+
+### 1.0.250.0
 - **Rejection reasons for deletion requests** - admins can provide a reason when rejecting, visible to users
 - **3-request limit** per media item for deletion requests (combined total for both types)
 - **Fixed badge vertical alignment** in Deletion Requests admin tab
