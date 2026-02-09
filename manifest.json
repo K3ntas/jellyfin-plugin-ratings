@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.250.0",
+        "changelog": "Rejection reasons for deletion requests, 3-request limit per media, badge alignment fix, console log cleanup.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.250.0/jellyfin-plugin-ratings_1.0.250.0.zip",
+        "checksum": "2e311742232d7165d5db767231fabdf2",
+        "timestamp": "2026-02-09T18:00:00Z"
+      },
+      {
         "version": "1.0.249.0",
         "changelog": "Two deletion request types: 'Request to delete request' (for pending/processing) and 'Request to delete media' (for fulfilled). Fixed button visibility.",
         "targetAbi": "10.11.0.0",

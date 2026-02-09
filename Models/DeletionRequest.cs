@@ -73,6 +73,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string ResolvedByUsername { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the rejection reason provided by admin.
+        /// </summary>
+        public string RejectionReason { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DeletionRequest"/> class.
         /// </summary>
         public DeletionRequest()
