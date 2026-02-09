@@ -278,7 +278,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.249.0 (Current)
+### 1.0.250.0 (Current)
+- **Rejection reasons for deletion requests** - admins can provide a reason when rejecting, visible to users
+- **3-request limit** per media item for deletion requests (combined total for both types)
+- **Fixed badge vertical alignment** in Deletion Requests admin tab
+- **Cleaned up console logging** - removed all debug console.log statements, only errors remain
+
+### 1.0.249.0
 - **Two deletion request types**: "Request to delete request" (for pending/processing requests) and "Request to delete media" (for fulfilled requests)
 - Fixed button always visible - no longer requires GUID extraction from media link
 - Admin sees different actions per type: Approve for request deletion, schedule options for media deletion
