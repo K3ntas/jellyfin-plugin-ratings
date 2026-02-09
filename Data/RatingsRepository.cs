@@ -24,6 +24,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private List<NewMediaNotification> _notifications;
         private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
         private Dictionary<Guid, DeletionRequest> _deletionRequests;
+        private Dictionary<Guid, UserBan> _userBans;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -40,6 +41,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _notifications = new List<NewMediaNotification>();
             _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
             _deletionRequests = new Dictionary<Guid, DeletionRequest>();
+            _userBans = new Dictionary<Guid, UserBan>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -50,6 +52,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadMediaRequests();
             LoadScheduledDeletions();
             LoadDeletionRequests();
+            LoadUserBans();
         }
 
         /// <summary>
@@ -956,6 +959,120 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 return _deletionRequests.Values.Count(r => r.Status == "pending");
+            }
+        }
+
+        // User Ban Methods
+
+        /// <summary>
+        /// Loads user bans from disk.
+        /// </summary>
+        private void LoadUserBans()
+        {
+            try
+            {
+                var bansFile = Path.Combine(_dataPath, "user_bans.json");
+                if (File.Exists(bansFile))
+                {
+                    var json = File.ReadAllText(bansFile);
+                    var bans = JsonSerializer.Deserialize<List<UserBan>>(json);
+                    if (bans != null)
+                    {
+                        _userBans = bans.ToDictionary(b => b.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading user bans from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves user bans to disk.
+        /// </summary>
+        private async Task SaveUserBansAsync()
+        {
+            try
+            {
+                var bansFile = Path.Combine(_dataPath, "user_bans.json");
+                var json = JsonSerializer.Serialize(_userBans.Values.ToList(), new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(bansFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving user bans to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a new user ban.
+        /// </summary>
+        /// <param name="ban">The ban to add.</param>
+        /// <returns>The created ban.</returns>
+        public async Task<UserBan> AddUserBanAsync(UserBan ban)
+        {
+            lock (_lock)
+            {
+                _userBans[ban.Id] = ban;
+                _ = SaveUserBansAsync();
+                return ban;
+            }
+        }
+
+        /// <summary>
+        /// Gets all active bans of a specific type.
+        /// </summary>
+        /// <param name="banType">The ban type.</param>
+        /// <returns>List of active bans.</returns>
+        public List<UserBan> GetActiveBans(string banType)
+        {
+            lock (_lock)
+            {
+                var now = DateTime.UtcNow;
+                return _userBans.Values
+                    .Where(b => b.BanType == banType && !b.IsLifted && (b.ExpiresAt == null || b.ExpiresAt > now))
+                    .OrderByDescending(b => b.CreatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user is currently banned for a specific type.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="banType">The ban type.</param>
+        /// <returns>The active ban or null.</returns>
+        public UserBan? GetActiveBan(Guid userId, string banType)
+        {
+            lock (_lock)
+            {
+                var now = DateTime.UtcNow;
+                return _userBans.Values
+                    .FirstOrDefault(b => b.UserId == userId && b.BanType == banType && !b.IsLifted && (b.ExpiresAt == null || b.ExpiresAt > now));
+            }
+        }
+
+        /// <summary>
+        /// Lifts a user ban.
+        /// </summary>
+        /// <param name="banId">The ban ID.</param>
+        /// <returns>True if lifted, false if not found.</returns>
+        public async Task<bool> LiftBanAsync(Guid banId)
+        {
+            lock (_lock)
+            {
+                if (_userBans.ContainsKey(banId))
+                {
+                    _userBans[banId].IsLifted = true;
+                    _ = SaveUserBansAsync();
+                    return true;
+                }
+
+                return false;
             }
         }
     }

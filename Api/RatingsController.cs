@@ -830,6 +830,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
+                // Check if user is banned from media requests
+                var mediaBan = _repository.GetActiveBan(userId, "media_request");
+                if (mediaBan != null)
+                {
+                    var banMsg = mediaBan.ExpiresAt.HasValue
+                        ? $"You are banned from submitting media requests until {mediaBan.ExpiresAt.Value:yyyy-MM-dd HH:mm} UTC"
+                        : "You are permanently banned from submitting media requests";
+                    return BadRequest(banMsg);
+                }
+
                 // Check request limit
                 var config = Plugin.Instance?.Configuration;
                 var maxRequests = config?.MaxRequestsPerMonth ?? 0;
@@ -1980,6 +1990,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
+                // Check if user is banned from deletion requests
+                var deletionBan = _repository.GetActiveBan(userId, "deletion_request");
+                if (deletionBan != null)
+                {
+                    var banMsg = deletionBan.ExpiresAt.HasValue
+                        ? $"You are banned from submitting deletion requests until {deletionBan.ExpiresAt.Value:yyyy-MM-dd HH:mm} UTC"
+                        : "You are permanently banned from submitting deletion requests";
+                    return BadRequest(banMsg);
+                }
+
                 // Validate the original media request exists
                 var mediaRequest = _repository.GetMediaRequestAsync(request.MediaRequestId).Result;
                 if (mediaRequest == null)
@@ -2248,6 +2268,210 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error processing deletion request action");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        /// <summary>
+        /// Creates a user ban.
+        /// </summary>
+        /// <param name="userId">The user ID to ban.</param>
+        /// <param name="banType">The ban type (media_request or deletion_request).</param>
+        /// <param name="duration">Duration: 1d, 1w, 1m, or permanent.</param>
+        /// <returns>The created ban.</returns>
+        [HttpPost("Bans")]
+        public ActionResult<UserBan> CreateBan(
+            [FromQuery] [Required] Guid userId,
+            [FromQuery] [Required] string banType,
+            [FromQuery] [Required] string duration)
+        {
+            try
+            {
+                var adminId = GetAuthenticatedUserId();
+                if (adminId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var admin = _userManager.GetUserById(adminId);
+                if (admin == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                var banTypeLower = banType.ToLower();
+                if (banTypeLower != "media_request" && banTypeLower != "deletion_request")
+                {
+                    return BadRequest("banType must be 'media_request' or 'deletion_request'");
+                }
+
+                // Check if already banned
+                var existingBan = _repository.GetActiveBan(userId, banTypeLower);
+                if (existingBan != null)
+                {
+                    return BadRequest("User is already banned for this type");
+                }
+
+                var targetUser = _userManager.GetUserById(userId);
+                var username = targetUser?.Username ?? "Unknown";
+
+                DateTime? expiresAt = null;
+                switch (duration.ToLower())
+                {
+                    case "1d":
+                        expiresAt = DateTime.UtcNow.AddDays(1);
+                        break;
+                    case "1w":
+                        expiresAt = DateTime.UtcNow.AddDays(7);
+                        break;
+                    case "1m":
+                        expiresAt = DateTime.UtcNow.AddDays(30);
+                        break;
+                    case "permanent":
+                        expiresAt = null;
+                        break;
+                    default:
+                        return BadRequest("duration must be '1d', '1w', '1m', or 'permanent'");
+                }
+
+                var ban = new UserBan
+                {
+                    UserId = userId,
+                    Username = username,
+                    BanType = banTypeLower,
+                    ExpiresAt = expiresAt,
+                    BannedByUsername = admin.Username
+                };
+
+                var result = _repository.AddUserBanAsync(ban).Result;
+                _logger.LogInformation("Admin {AdminId} banned user {UserId} from {BanType} for {Duration}",
+                    adminId, userId, banTypeLower, duration);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating ban");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets active bans by type.
+        /// </summary>
+        /// <param name="banType">The ban type.</param>
+        /// <returns>List of active bans.</returns>
+        [HttpGet("Bans")]
+        public ActionResult<List<UserBan>> GetBans([FromQuery] [Required] string banType)
+        {
+            try
+            {
+                var adminId = GetAuthenticatedUserId();
+                if (adminId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var bans = _repository.GetActiveBans(banType.ToLower());
+                return Ok(bans);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting bans");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Checks if the current user is banned for a specific type.
+        /// </summary>
+        /// <param name="banType">The ban type.</param>
+        /// <returns>Ban info or null.</returns>
+        [HttpGet("Bans/Check")]
+        public ActionResult CheckBan([FromQuery] [Required] string banType)
+        {
+            try
+            {
+                var userId = GetAuthenticatedUserId();
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var ban = _repository.GetActiveBan(userId, banType.ToLower());
+                if (ban != null)
+                {
+                    return Ok(new { banned = true, expiresAt = ban.ExpiresAt, bannedBy = ban.BannedByUsername });
+                }
+
+                return Ok(new { banned = false });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking ban");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Lifts a user ban.
+        /// </summary>
+        /// <param name="banId">The ban ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Bans/{banId}")]
+        public ActionResult LiftBan([FromRoute] [Required] Guid banId)
+        {
+            try
+            {
+                var adminId = GetAuthenticatedUserId();
+                if (adminId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var lifted = _repository.LiftBanAsync(banId).Result;
+                if (!lifted)
+                {
+                    return NotFound("Ban not found");
+                }
+
+                _logger.LogInformation("Admin {AdminId} lifted ban {BanId}", adminId, banId);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error lifting ban");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Helper to get authenticated user ID from headers.
+        /// </summary>
+        private Guid GetAuthenticatedUserId()
+        {
+            var userId = User.GetUserId();
+            if (userId != Guid.Empty)
+            {
+                return userId;
+            }
+
+            var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                          ?? Request.Headers["Authorization"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                if (tokenMatch.Success)
+                {
+                    var token = tokenMatch.Groups[1].Value;
+                    var session = _sessionManager.GetSessionByAuthenticationToken(token, null, null).Result;
+                    if (session != null)
+                    {
+                        return session.UserId;
+                    }
+                }
+            }
+
+            return Guid.Empty;
         }
     }
 
