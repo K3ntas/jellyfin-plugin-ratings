@@ -1055,11 +1055,12 @@
                     position: absolute !important;
                     top: 50% !important;
                     left: 50% !important;
-                    width: 2px !important;
-                    height: 28px !important;
-                    background: #e53935 !important;
-                    border-radius: 1px !important;
+                    width: 3px !important;
+                    height: 34px !important;
+                    background: #ff1744 !important;
+                    border-radius: 2px !important;
                     pointer-events: none !important;
+                    box-shadow: 0 0 4px rgba(255, 23, 68, 0.6) !important;
                 }
 
                 #notificationToggle.disabled::before {
@@ -1116,7 +1117,7 @@
 
                     #notificationToggle.disabled::before,
                     #notificationToggle.disabled::after {
-                        height: 15px !important;
+                        height: 20px !important;
                     }
                 }
 
@@ -2563,6 +2564,23 @@
                     transition: all 0.2s ease !important;
                     border-bottom: 2px solid transparent !important;
                     margin-bottom: -2px !important;
+                    position: relative !important;
+                }
+
+                .admin-tab-badge {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    min-width: 18px !important;
+                    height: 18px !important;
+                    padding: 0 5px !important;
+                    margin-left: 6px !important;
+                    background: #e53935 !important;
+                    color: #fff !important;
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    border-radius: 9px !important;
+                    line-height: 1 !important;
                 }
 
                 .admin-tab:hover {
@@ -2630,6 +2648,136 @@
                     border-radius: 12px !important;
                     font-size: 11px !important;
                     font-weight: 600 !important;
+                }
+
+                /* Rejection Reason Modal */
+                .rejection-modal-overlay {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: rgba(0, 0, 0, 0.7) !important;
+                    z-index: 999999999 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+
+                .rejection-modal {
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 12px !important;
+                    padding: 24px !important;
+                    width: 400px !important;
+                    max-width: 90vw !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+                }
+
+                .rejection-modal-title {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .rejection-modal textarea {
+                    width: 100% !important;
+                    min-height: 80px !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 8px !important;
+                    color: #fff !important;
+                    padding: 10px !important;
+                    font-size: 13px !important;
+                    resize: vertical !important;
+                    font-family: inherit !important;
+                    box-sizing: border-box !important;
+                }
+
+                .rejection-modal textarea:focus {
+                    outline: none !important;
+                    border-color: #e53935 !important;
+                }
+
+                .rejection-modal-buttons {
+                    display: flex !important;
+                    justify-content: flex-end !important;
+                    gap: 10px !important;
+                    margin-top: 16px !important;
+                }
+
+                .rejection-modal-btn {
+                    padding: 8px 20px !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .rejection-modal-btn.cancel {
+                    background: #333 !important;
+                    color: #ccc !important;
+                }
+
+                .rejection-modal-btn.cancel:hover {
+                    background: #444 !important;
+                }
+
+                .rejection-modal-btn.confirm {
+                    background: #e53935 !important;
+                    color: #fff !important;
+                }
+
+                .rejection-modal-btn.confirm:hover {
+                    background: #c62828 !important;
+                }
+
+                /* Rejection Reason View (user side) */
+                .rejection-reason-popup {
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 12px !important;
+                    padding: 20px 24px !important;
+                    width: 380px !important;
+                    max-width: 90vw !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+                }
+
+                .rejection-reason-popup-title {
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #f44336 !important;
+                    margin-bottom: 12px !important;
+                }
+
+                .rejection-reason-popup-text {
+                    font-size: 13px !important;
+                    color: #ddd !important;
+                    line-height: 1.5 !important;
+                    background: #2a2a2a !important;
+                    padding: 12px !important;
+                    border-radius: 8px !important;
+                    border-left: 3px solid #e53935 !important;
+                }
+
+                .rejection-reason-popup-close {
+                    display: block !important;
+                    margin-top: 14px !important;
+                    margin-left: auto !important;
+                    padding: 6px 18px !important;
+                    background: #333 !important;
+                    color: #ccc !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                }
+
+                .rejection-reason-popup-close:hover {
+                    background: #444 !important;
                 }
 
                 .deletion-request-item {
@@ -8046,13 +8194,16 @@
             const tabsHtml = `
                 <div class="admin-tabs">
                     <button class="admin-tab" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
-                    <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}</button>
-                    <button class="admin-tab" data-tab="deletions">${this.t('deletionRequests') || 'Deletion Requests'}</button>
+                    <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
+                    <button class="admin-tab" data-tab="deletions">${this.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
                 </div>
                 <div class="admin-tab-content" id="adminTabContent"></div>
             `;
 
             modalBody.innerHTML = tabsHtml;
+
+            // Update tab badges with pending counts
+            this.updateAdminTabBadges();
 
             // Attach tab handlers
             const tabs = modalBody.querySelectorAll('.admin-tab');
@@ -8061,9 +8212,9 @@
                     // Remove active from all tabs
                     tabs.forEach(t => t.classList.remove('active'));
                     // Add active to clicked tab
-                    e.target.classList.add('active');
+                    e.target.closest('.admin-tab').classList.add('active');
                     // Load appropriate content
-                    const tabName = e.target.getAttribute('data-tab');
+                    const tabName = e.target.closest('.admin-tab').getAttribute('data-tab');
                     if (tabName === 'create') {
                         self.renderUserInterfaceInTab(config);
                     } else if (tabName === 'deletions') {
@@ -9094,7 +9245,7 @@
                                     if (rejectedDeletions.length > 0) {
                                         const latest = rejectedDeletions.sort((a, b) => new Date(b.ResolvedAt) - new Date(a.ResolvedAt))[0];
                                         const reason = latest.RejectionReason ? self.escapeHtml(latest.RejectionReason) : '';
-                                        rejectedHtml = `<span class="deletion-rejected-text" ${reason ? `title="${reason}" style="cursor:pointer;"` : ''} ${reason ? `onclick="alert('${reason.replace(/'/g, "\\'")}')"` : ''}>${self.t('deletionRejected')}${reason ? ' ℹ️' : ''}</span>`;
+                                        rejectedHtml = `<span class="deletion-rejected-text rejection-reason-trigger" ${reason ? `data-reason="${reason}" style="cursor:pointer;" title="${reason}"` : ''}>${self.t('deletionRejected')}${reason ? ' ℹ️' : ''}</span>`;
                                     }
                                     const isDone = request.Status === 'done';
                                     const isRejectedStatus = request.Status === 'rejected';
@@ -9160,6 +9311,17 @@
                         const mediaLink = target.getAttribute('data-media-link');
                         const deletionType = target.getAttribute('data-deletion-type') || 'media';
                         self.submitDeletionRequest(mediaRequestId, itemId, title, type, mediaLink, deletionType, target);
+                    });
+                });
+
+                // Attach rejection reason popup handlers
+                const rejectionTriggers = listContainer.querySelectorAll('.rejection-reason-trigger[data-reason]');
+                rejectionTriggers.forEach(trigger => {
+                    trigger.addEventListener('click', () => {
+                        const reason = trigger.getAttribute('data-reason');
+                        if (reason) {
+                            self.showRejectionReasonPopup(reason);
+                        }
                     });
                 });
             }).catch(err => {
@@ -9423,20 +9585,23 @@
                     // Show tabs: Manage Requests + Deletion Requests
                     const tabsHtml = `
                         <div class="admin-tabs">
-                            <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}</button>
-                            <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}</button>
+                            <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
+                            <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
                         </div>
                         <div class="admin-tab-content" id="adminTabContent"></div>
                     `;
                     modalBody.innerHTML = tabsHtml;
+
+                    // Update tab badges with pending counts
+                    self.updateAdminTabBadges();
 
                     // Attach tab handlers
                     const tabs = modalBody.querySelectorAll('.admin-tab');
                     tabs.forEach(tab => {
                         tab.addEventListener('click', (e) => {
                             tabs.forEach(t => t.classList.remove('active'));
-                            e.target.classList.add('active');
-                            const tabName = e.target.getAttribute('data-tab');
+                            e.target.closest('.admin-tab').classList.add('active');
+                            const tabName = e.target.closest('.admin-tab').getAttribute('data-tab');
                             if (tabName === 'deletions') {
                                 self.renderDeletionRequestsTab(config);
                             } else {
@@ -10228,17 +10393,24 @@
          */
         processDeletionAction: function (requestId, action, delayDays, delayHours, config) {
             const self = this;
+
+            if (action === 'reject') {
+                // Show custom modal for rejection reason
+                self.showRejectionReasonModal(function (rejectionReason) {
+                    self._executeDeletionAction(requestId, action, delayDays, delayHours, config, rejectionReason);
+                });
+            } else {
+                self._executeDeletionAction(requestId, action, delayDays, delayHours, config, '');
+            }
+        },
+
+        _executeDeletionAction: function (requestId, action, delayDays, delayHours, config, rejectionReason) {
+            const self = this;
             try {
                 const baseUrl = ApiClient.serverAddress();
                 const accessToken = ApiClient.accessToken();
                 const deviceId = ApiClient.deviceId();
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
-
-                // If rejecting, prompt for reason
-                let rejectionReason = '';
-                if (action === 'reject') {
-                    rejectionReason = prompt(self.t('rejectionReasonPrompt')) || '';
-                }
 
                 let url = `${baseUrl}/Ratings/DeletionRequests/${requestId}/Action?action=${action}`;
                 if (delayDays) url += `&delayDays=${delayDays}`;
@@ -10262,7 +10434,8 @@
                 .then(() => {
                     // Refresh the tab
                     self.renderDeletionRequestsTab(config);
-                    // Update badge
+                    // Update badges
+                    self.updateAdminTabBadges();
                     const requestBtn = document.querySelector('.request-media-button');
                     if (requestBtn) {
                         self.updateRequestBadge(requestBtn);
@@ -10278,8 +10451,82 @@
                     }
                 });
             } catch (err) {
-                console.error('Error in processDeletionAction:', err);
+                console.error('Error in _executeDeletionAction:', err);
             }
+        },
+
+        showRejectionReasonModal: function (callback) {
+            const self = this;
+            // Remove any existing modal
+            const existing = document.getElementById('rejectionReasonModal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'rejectionReasonModal';
+            overlay.className = 'rejection-modal-overlay';
+            overlay.innerHTML = `
+                <div class="rejection-modal">
+                    <div class="rejection-modal-title">${self.t('rejectionReasonPrompt')}</div>
+                    <textarea id="rejectionReasonInput" placeholder="${self.t('rejectionReasonLabel')}"></textarea>
+                    <div class="rejection-modal-buttons">
+                        <button class="rejection-modal-btn cancel" id="rejectionCancelBtn">${self.t('cancel') || 'Cancel'}</button>
+                        <button class="rejection-modal-btn confirm" id="rejectionConfirmBtn">${self.t('rejectDeletion')}</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Focus textarea
+            setTimeout(() => {
+                const textarea = document.getElementById('rejectionReasonInput');
+                if (textarea) textarea.focus();
+            }, 100);
+
+            // Cancel button
+            document.getElementById('rejectionCancelBtn').addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            // Click outside to cancel
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+
+            // Confirm button
+            document.getElementById('rejectionConfirmBtn').addEventListener('click', () => {
+                const reason = (document.getElementById('rejectionReasonInput').value || '').trim();
+                overlay.remove();
+                callback(reason);
+            });
+        },
+
+        showRejectionReasonPopup: function (reason) {
+            const self = this;
+            // Remove any existing popup
+            const existing = document.getElementById('rejectionReasonPopup');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'rejectionReasonPopup';
+            overlay.className = 'rejection-modal-overlay';
+            overlay.innerHTML = `
+                <div class="rejection-reason-popup">
+                    <div class="rejection-reason-popup-title">${self.t('deletionRejected')}</div>
+                    <div class="rejection-reason-popup-text">${self.escapeHtml(reason)}</div>
+                    <button class="rejection-reason-popup-close">OK</button>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            overlay.querySelector('.rejection-reason-popup-close').addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
         },
 
         /**
@@ -10398,6 +10645,9 @@
                     // Reload the admin interface
                     self.loadAdminInterface();
 
+                    // Update tab badges
+                    self.updateAdminTabBadges();
+
                     // Update badge to reflect new counts
                     const btn = document.getElementById('requestMediaBtn');
                     if (btn) {
@@ -10471,6 +10721,39 @@
             } catch (err) {
                 console.error('Error in updateRequestBadge:', err);
             }
+        },
+
+        /**
+         * Update badges on admin tabs (Manage / Deletion Requests)
+         */
+        updateAdminTabBadges: function () {
+            Promise.all([
+                this.fetchAllRequests(),
+                this.fetchDeletionRequests()
+            ]).then(([requests, deletionRequests]) => {
+                const pendingRequests = requests.filter(r => r.Status === 'pending').length;
+                const pendingDeletions = deletionRequests.filter(r => r.Status === 'pending').length;
+
+                const manageBadge = document.getElementById('manageTabBadge');
+                if (manageBadge) {
+                    if (pendingRequests > 0) {
+                        manageBadge.textContent = pendingRequests;
+                        manageBadge.style.cssText = 'display:inline-flex !important;';
+                    } else {
+                        manageBadge.style.cssText = 'display:none !important;';
+                    }
+                }
+
+                const deletionsBadge = document.getElementById('deletionsTabBadge');
+                if (deletionsBadge) {
+                    if (pendingDeletions > 0) {
+                        deletionsBadge.textContent = pendingDeletions;
+                        deletionsBadge.style.cssText = 'display:inline-flex !important;';
+                    } else {
+                        deletionsBadge.style.cssText = 'display:none !important;';
+                    }
+                }
+            }).catch(() => {});
         },
 
         /**
