@@ -154,7 +154,10 @@
                 deletionRequestFailed: 'Failed to send deletion request',
                 deletionActionFailed: 'Failed to process deletion action',
                 deleteRequest: 'Delete Request',
-                deleteMedia: 'Delete Media'
+                deleteMedia: 'Delete Media',
+                rejectionReasonPrompt: 'Enter rejection reason (optional):',
+                rejectionReasonLabel: 'Reason:',
+                deletionLimitReached: 'Maximum deletion requests reached for this item'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -298,7 +301,10 @@
                 deletionRequestFailed: 'Nepavyko išsiųsti ištrynimo užklausos',
                 deletionActionFailed: 'Nepavyko apdoroti ištrynimo veiksmo',
                 deleteRequest: 'Ištrinti Užklausą',
-                deleteMedia: 'Ištrinti Mediją'
+                deleteMedia: 'Ištrinti Mediją',
+                rejectionReasonPrompt: 'Įveskite atmetimo priežastį (neprivaloma):',
+                rejectionReasonLabel: 'Priežastis:',
+                deletionLimitReached: 'Pasiektas maksimalus ištrynimo užklausų limitas'
             }
         },
 
@@ -2614,10 +2620,22 @@
                     font-weight: 600 !important;
                 }
 
+                .deletion-rejected-text {
+                    display: inline-block !important;
+                    margin-top: 5px !important;
+                    margin-left: 6px !important;
+                    padding: 4px 10px !important;
+                    background: rgba(244, 67, 54, 0.2) !important;
+                    color: #f44336 !important;
+                    border-radius: 12px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                }
+
                 .deletion-request-item {
                     display: flex !important;
                     justify-content: space-between !important;
-                    align-items: flex-start !important;
+                    align-items: center !important;
                     padding: 12px !important;
                     margin-bottom: 8px !important;
                     background: #1a1a1a !important;
@@ -4881,7 +4899,6 @@
             badge.textContent = text;
             card.appendChild(badge);
 
-            console.log('RatingsPlugin: Added leaving badge to card:', itemId, text);
         },
 
         /**
@@ -5064,7 +5081,6 @@
 
                         // User changed (login/logout/switch account)
                         if (currentUserId !== lastUserId) {
-                            console.log('RatingsPlugin: User changed from', lastUserId, 'to', currentUserId);
 
                             // Clear all cached data
                             self.clearRequestCache();
@@ -5072,12 +5088,10 @@
                             // Handle notification session lifecycle
                             if (lastUserId && !currentUserId) {
                                 // User logged out - clear notification session and stop polling
-                                console.log('RatingsPlugin: User logged out, clearing notification session');
                                 self.clearNotificationSession();
                                 self.stopNotificationPolling();
                             } else if (!lastUserId && currentUserId) {
                                 // User just logged in - start new notification session
-                                console.log('RatingsPlugin: User logged in, starting notification session');
                                 self.startNotificationSession();
                                 // Reinitialize notifications for new user
                                 if (self.notificationsEnabled) {
@@ -5089,7 +5103,6 @@
                                 }
                             } else if (lastUserId && currentUserId && lastUserId !== currentUserId) {
                                 // User switched accounts - clear old session and start new one
-                                console.log('RatingsPlugin: User switched accounts, resetting notification session');
                                 self.clearNotificationSession();
                                 self.stopNotificationPolling();
                                 self.startNotificationSession();
@@ -5127,7 +5140,6 @@
                 // Also listen for Jellyfin events if available
                 if (window.Events) {
                     Events.on(ApiClient, 'authenticated', () => {
-                        console.log('RatingsPlugin: Jellyfin authenticated event received');
                         self.clearRequestCache();
                         const btn = document.getElementById('requestMediaBtn');
                         if (btn) {
@@ -6073,43 +6085,33 @@
          */
         initMediaManagementButtonWithRetry: function () {
             const self = this;
-            console.log('RatingsPlugin: Media Management - initMediaManagementButtonWithRetry called');
             try {
                 // Check if already exists
                 if (document.getElementById('mediaManagementBtn')) {
-                    console.log('RatingsPlugin: Media Management - button already exists');
                     return;
                 }
 
                 // Check config and admin status
                 const checkConfigAndCreate = () => {
-                    console.log('RatingsPlugin: Media Management - checking config...');
                     if (!window.ApiClient) {
-                        console.log('RatingsPlugin: Media Management - no ApiClient, retrying...');
                         setTimeout(checkConfigAndCreate, 1000);
                         return;
                     }
                     const baseUrl = ApiClient.serverAddress();
-                    console.log('RatingsPlugin: Media Management - fetching config from', baseUrl);
                     fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
                         .then(response => response.json())
                         .then(config => {
-                            console.log('RatingsPlugin: Media Management - config:', config);
                             if (config.EnableMediaManagement === false) {
-                                console.log('RatingsPlugin: Media Management - disabled in config');
                                 return; // Don't create button
                             }
                             // Check if admin
-                            console.log('RatingsPlugin: Media Management - checking admin status...');
                             self.checkIfAdmin().then(isAdmin => {
-                                console.log('RatingsPlugin: Media Management - isAdmin:', isAdmin);
                                 if (isAdmin) {
                                     createMediaManagementButton();
                                 }
                             });
                         })
                         .catch((err) => {
-                            console.log('RatingsPlugin: Media Management - config fetch error:', err);
                             // Default to checking admin status
                             self.checkIfAdmin().then(isAdmin => {
                                 if (isAdmin) {
@@ -6120,11 +6122,9 @@
                 };
 
                 const createMediaManagementButton = () => {
-                    console.log('RatingsPlugin: Media Management - createMediaManagementButton called');
                     try {
                         // Check if already exists
                         if (document.getElementById('mediaManagementBtn')) {
-                            console.log('RatingsPlugin: Media Management - button already exists in create');
                             return;
                         }
 
@@ -6133,10 +6133,8 @@
 
                         // Find and hide the original search button
                         const searchBtn = document.querySelector('.headerSearchButton');
-                        console.log('RatingsPlugin: Media Management - searchBtn found:', searchBtn);
                         if (searchBtn) {
                             searchBtn.style.display = 'none';
-                            console.log('RatingsPlugin: Media Management - hiding search button');
                         }
 
                         // Create the media management button
@@ -6444,13 +6442,11 @@
                 .then(async (firstData) => {
                     // Check if this request is still current (prevents race conditions)
                     if (thisRequestId !== self.mediaListState.requestId) {
-                        console.log('Ignoring stale response for page', currentPage);
                         return;
                     }
 
                     // Check if user switched to a different tab type
                     if (self.mediaListState.currentTab === 'scheduled' || self.mediaListState.currentTab === 'settings') {
-                        console.log('Ignoring media load - tab changed to', self.mediaListState.currentTab);
                         return;
                     }
 
@@ -6473,14 +6469,12 @@
                     for (let batch = startBatch + 1; batch <= lastBatchForPage; batch++) {
                         // Check again before each batch
                         if (thisRequestId !== self.mediaListState.requestId) {
-                            console.log('Stopping batch load - newer request started');
                             return;
                         }
                         try {
                             const batchData = await loadBatch(batch, false);
                             // Check again after await - tab may have changed during network request
                             if (thisRequestId !== self.mediaListState.requestId) {
-                                console.log('Stopping batch load - request changed during fetch');
                                 return;
                             }
                             if (batchData.Items && batchData.Items.length > 0) {
@@ -6866,13 +6860,11 @@
             .then(deletions => {
                 // Check if this request is still current
                 if (thisRequestId !== self.mediaListState.requestId) {
-                    console.log('Ignoring stale scheduled list response');
                     return;
                 }
 
                 // Check if user switched to a different tab
                 if (self.mediaListState.currentTab !== 'scheduled') {
-                    console.log('Ignoring scheduled load - tab changed to', self.mediaListState.currentTab);
                     return;
                 }
 
@@ -7332,11 +7324,9 @@
          */
         initDeletionBadges: function () {
             const self = this;
-            console.log('RatingsPlugin: initDeletionBadges called');
 
             // Load scheduled deletions initially
             setTimeout(() => {
-                console.log('RatingsPlugin: Loading scheduled deletions...');
                 self.loadScheduledDeletions();
             }, 3000);
 
@@ -7358,7 +7348,6 @@
             const self = this;
 
             if (!window.ApiClient) {
-                console.log('RatingsPlugin: loadScheduledDeletions - no ApiClient');
                 return;
             }
 
@@ -7370,7 +7359,6 @@
             })
             .then(response => response.json())
             .then(deletions => {
-                console.log('RatingsPlugin: Loaded scheduled deletions:', deletions.length, deletions);
                 // Build cache by itemId
                 self.scheduledDeletionsCache = {};
                 deletions.forEach(d => {
@@ -7634,11 +7622,9 @@
         searchFullLibrary: async function (query) {
             try {
                 if (!query || !window.ApiClient) {
-                    console.log('RatingsPlugin: Search cancelled - no query or ApiClient');
                     return;
                 }
 
-                console.log('RatingsPlugin: Searching full library for:', query);
 
                 const userId = ApiClient.getCurrentUserId();
                 const baseUrl = ApiClient.serverAddress();
@@ -7659,7 +7645,6 @@
 
                 const data = await response.json();
                 const searchItems = data.SearchHints || [];
-                console.log('RatingsPlugin: Found', searchItems.length, 'items');
 
                 // Always remove old results container first
                 const oldContainer = document.getElementById('fullLibrarySearchResults');
@@ -7687,13 +7672,11 @@
 
                 // Insert directly into body to avoid being affected by page transitions
                 document.body.appendChild(resultsContainer);
-                console.log('RatingsPlugin: Results container appended to body');
 
                 // Add MutationObserver to detect if something tries to modify the container
                 const observer = new MutationObserver((mutations) => {
                     mutations.forEach((mutation) => {
                         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                            console.log('RatingsPlugin: Container style was modified!', resultsContainer.style.cssText);
                         }
                     });
                 });
@@ -7701,7 +7684,6 @@
 
                 // Hide original homepage content
                 const homeSections = document.querySelectorAll('.verticalSection, .section, .homePageSection');
-                console.log('RatingsPlugin: Found', homeSections.length, 'homepage sections to hide');
                 homeSections.forEach(section => {
                     section.style.display = 'none';
                 });
@@ -7711,7 +7693,6 @@
                     <h2 style="color: #fff; margin-bottom: 20px;">Search Results for "${query}" (${searchItems.length} found)</h2>
                     <div class="itemsContainer vertical-wrap" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 `;
-                console.log('RatingsPlugin: Building HTML for', searchItems.length, 'items');
 
                 searchItems.forEach(item => {
                     const itemId = item.Id;
@@ -7746,15 +7727,9 @@
 
                 html += '</div>';
                 resultsContainer.innerHTML = html;
-                console.log('RatingsPlugin: HTML set immediately, resultsContainer visible:', resultsContainer.offsetHeight > 0);
-                console.log('RatingsPlugin: resultsContainer HTML length:', resultsContainer.innerHTML.length);
 
                 // Check visibility after a delay to detect if Jellyfin page rendering affects it
                 setTimeout(() => {
-                    console.log('RatingsPlugin: After 100ms delay, resultsContainer visible:', resultsContainer.offsetHeight > 0);
-                    console.log('RatingsPlugin: After 100ms delay, display:', window.getComputedStyle(resultsContainer).display);
-                    console.log('RatingsPlugin: After 100ms delay, visibility:', window.getComputedStyle(resultsContainer).visibility);
-                    console.log('RatingsPlugin: After 100ms delay, opacity:', window.getComputedStyle(resultsContainer).opacity);
                 }, 100);
 
             } catch (error) {
@@ -7811,7 +7786,6 @@
 
             try {
                 if (!query || !window.ApiClient || !dropdown) {
-                    console.log('RatingsPlugin: Search cancelled', { query, hasApiClient: !!window.ApiClient, hasDropdown: !!dropdown });
                     return;
                 }
 
@@ -9114,17 +9088,30 @@
                                     if (hasPendingDeletion) {
                                         return `<span class="deletion-requested-text">${self.t('alreadyRequested')}</span>`;
                                     }
+                                    // Show rejected deletion requests with reason (clickable)
+                                    const rejectedDeletions = deletionRequests.filter(dr => dr.MediaRequestId === request.Id && dr.Status === 'rejected');
+                                    let rejectedHtml = '';
+                                    if (rejectedDeletions.length > 0) {
+                                        const latest = rejectedDeletions.sort((a, b) => new Date(b.ResolvedAt) - new Date(a.ResolvedAt))[0];
+                                        const reason = latest.RejectionReason ? self.escapeHtml(latest.RejectionReason) : '';
+                                        rejectedHtml = `<span class="deletion-rejected-text" ${reason ? `title="${reason}" style="cursor:pointer;"` : ''} ${reason ? `onclick="alert('${reason.replace(/'/g, "\\'")}')"` : ''}>${self.t('deletionRejected')}${reason ? ' ℹ️' : ''}</span>`;
+                                    }
                                     const isDone = request.Status === 'done';
                                     const isRejectedStatus = request.Status === 'rejected';
+                                    // Count total deletion requests for this media request (for limit check)
+                                    const totalDeletionRequests = deletionRequests.filter(dr => dr.MediaRequestId === request.Id).length;
+                                    if (totalDeletionRequests >= 3) {
+                                        return rejectedHtml + `<span class="deletion-requested-text">${self.t('deletionLimitReached')}</span>`;
+                                    }
                                     if (isDone && hasLink) {
                                         // "Request to delete media" for fulfilled requests
                                         const itemId = self.extractItemIdFromLink(request.MediaLink) || '';
-                                        return `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
+                                        return rejectedHtml + `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
                                     } else if (!isDone && !isRejectedStatus) {
                                         // "Request to delete request" for non-done, non-rejected requests
-                                        return `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
+                                        return rejectedHtml + `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
                                     }
-                                    return '';
+                                    return rejectedHtml;
                                 })()}
                                 ${actionsHtml}
                             </div>
@@ -10192,6 +10179,11 @@
                         resolvedHtml = `<span> • ${request.ResolvedByUsername ? self.escapeHtml(request.ResolvedByUsername) : ''} ${resolvedAt}</span>`;
                     }
 
+                    let rejectionReasonHtml = '';
+                    if (request.Status === 'rejected' && request.RejectionReason) {
+                        rejectionReasonHtml = `<div style="margin-top:4px;font-size:11px;color:#f44336;">❌ ${self.t('rejectionReasonLabel')} ${self.escapeHtml(request.RejectionReason)}</div>`;
+                    }
+
                     html += `
                         <div class="deletion-request-item ${isPending ? '' : 'resolved'}">
                             <div class="deletion-request-info">
@@ -10203,6 +10195,7 @@
                                     ${resolvedHtml}
                                     ${request.MediaLink ? ` • <a href="${self.escapeHtml(request.MediaLink)}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
                                 </div>
+                                ${rejectionReasonHtml}
                                 ${actionsHtml}
                             </div>
                             <span class="deletion-status-badge ${statusBadgeClass}">${statusText}</span>
@@ -10241,9 +10234,16 @@
                 const deviceId = ApiClient.deviceId();
                 const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
+                // If rejecting, prompt for reason
+                let rejectionReason = '';
+                if (action === 'reject') {
+                    rejectionReason = prompt(self.t('rejectionReasonPrompt')) || '';
+                }
+
                 let url = `${baseUrl}/Ratings/DeletionRequests/${requestId}/Action?action=${action}`;
                 if (delayDays) url += `&delayDays=${delayDays}`;
                 if (delayHours) url += `&delayHours=${delayHours}`;
+                if (rejectionReason) url += `&rejectionReason=${encodeURIComponent(rejectionReason)}`;
 
                 fetch(url, {
                     method: 'POST',
@@ -10557,7 +10557,6 @@
 
                 // If user changed, clear session data
                 if (currentUserId && storedUserId && currentUserId !== storedUserId) {
-                    console.log('RatingsPlugin: User changed, clearing notification session');
                     this.clearNotificationSession();
                     return null;
                 }
@@ -10632,7 +10631,6 @@
             try {
                 const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
                 if (!currentUserId) {
-                    console.log('RatingsPlugin: Cannot start notification session - no user');
                     return;
                 }
 
@@ -10646,7 +10644,6 @@
                 this.shownNotificationIds = [];
                 this.notificationSessionUserId = currentUserId;
 
-                console.log('RatingsPlugin: Started notification session at:', now, 'for user:', currentUserId);
             } catch (err) {
                 console.error('RatingsPlugin: Error starting notification session:', err);
             }
@@ -10662,14 +10659,12 @@
             // Check if user is logged in
             const currentUserId = window.ApiClient ? ApiClient.getCurrentUserId() : null;
             if (!currentUserId) {
-                console.log('RatingsPlugin: No user logged in, skipping notification init');
                 return;
             }
 
             // Check if notifications are enabled in config
             this.checkNotificationsEnabled().then(enabled => {
                 self.notificationsEnabled = enabled;
-                console.log('RatingsPlugin: Notifications enabled:', enabled);
                 if (enabled) {
                     // Create notification container
                     self.createNotificationContainer();
@@ -10680,12 +10675,10 @@
                     if (sessionStart) {
                         // Existing session - use stored timestamp
                         // lastNotificationCheck was already loaded in loadNotificationSession
-                        console.log('RatingsPlugin: Restored notification session, lastCheck:', self.lastNotificationCheck);
                     } else {
                         // New session - start from NOW (not 5 minutes ago!)
                         // This prevents old notifications from appearing
                         self.startNotificationSession();
-                        console.log('RatingsPlugin: Started new notification session at:', self.lastNotificationCheck);
                     }
 
                     // Start polling for notifications
@@ -10768,21 +10761,18 @@
             }
 
             if (!window.ApiClient) {
-                console.log('RatingsPlugin: No ApiClient available for notifications');
                 return;
             }
 
             // Check if user is logged in
             const currentUserId = ApiClient.getCurrentUserId();
             if (!currentUserId) {
-                console.log('RatingsPlugin: No user logged in, stopping notification poll');
                 this.stopNotificationPolling();
                 return;
             }
 
             // Verify user hasn't changed mid-session
             if (this.notificationSessionUserId && this.notificationSessionUserId !== currentUserId) {
-                console.log('RatingsPlugin: User changed during session, reinitializing notifications');
                 this.clearNotificationSession();
                 this.startNotificationSession();
             }
@@ -10791,7 +10781,6 @@
             // Use session start time as fallback - NEVER use 5 minutes ago
             const since = this.lastNotificationCheck || new Date().toISOString();
 
-            console.log('RatingsPlugin: Checking notifications since:', since);
 
             fetch(`${baseUrl}/Ratings/Notifications?since=${encodeURIComponent(since)}`, {
                 method: 'GET',
@@ -10804,17 +10793,14 @@
                     return response.json();
                 })
                 .then(notifications => {
-                    console.log('RatingsPlugin: Received notifications:', notifications ? notifications.length : 0, notifications);
 
                     if (notifications && notifications.length > 0) {
                         notifications.forEach(notification => {
                             // Don't show duplicates
                             if (!self.shownNotificationIds.includes(notification.Id)) {
-                                console.log('RatingsPlugin: Showing notification:', notification.Title || notification.Message);
                                 self.shownNotificationIds.push(notification.Id);
                                 self.showNotification(notification);
                             } else {
-                                console.log('RatingsPlugin: Skipping duplicate notification:', notification.Id);
                             }
                         });
                     }
@@ -10837,7 +10823,6 @@
             if (this.notificationPollingInterval) {
                 clearInterval(this.notificationPollingInterval);
                 this.notificationPollingInterval = null;
-                console.log('RatingsPlugin: Stopped notification polling');
             }
         },
 
