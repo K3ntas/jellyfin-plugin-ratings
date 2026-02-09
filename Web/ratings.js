@@ -136,7 +136,8 @@
                 mediaIncludeTypes: 'Include media types:',
                 mediaTypesHint: 'Select which media types to show',
                 // Deletion Request translations
-                askToDelete: 'Ask to Delete',
+                requestDeleteRequest: 'Request to delete request',
+                requestDeleteMedia: 'Request to delete media',
                 deletionRequests: 'Deletion Requests',
                 noDeletionRequests: 'No deletion requests yet',
                 deleteNow: 'Delete ~1h',
@@ -144,13 +145,16 @@
                 schedule1Week: '1 Week',
                 schedule1Month: '1 Month',
                 rejectDeletion: 'Reject',
+                approveDeleteRequest: 'Approve',
                 alreadyRequested: 'Deletion Requested',
                 deletionApproved: 'APPROVED',
                 deletionRejected: 'REJECTED',
                 deletionPending: 'PENDING',
                 deletionRequestSent: 'Deletion request sent!',
                 deletionRequestFailed: 'Failed to send deletion request',
-                deletionActionFailed: 'Failed to process deletion action'
+                deletionActionFailed: 'Failed to process deletion action',
+                deleteRequest: 'Delete Request',
+                deleteMedia: 'Delete Media'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -276,7 +280,8 @@
                 mediaIncludeTypes: 'Rodyti medijos tipus:',
                 mediaTypesHint: 'Pasirinkite kuriuos medijos tipus rodyti',
                 // Deletion Request translations
-                askToDelete: 'Prašyti Ištrinti',
+                requestDeleteRequest: 'Prašyti ištrinti užklausą',
+                requestDeleteMedia: 'Prašyti ištrinti mediją',
                 deletionRequests: 'Ištrynimo Užklausos',
                 noDeletionRequests: 'Ištrynimo užklausų dar nėra',
                 deleteNow: 'Ištrinti ~1val',
@@ -284,13 +289,16 @@
                 schedule1Week: '1 Savaitė',
                 schedule1Month: '1 Mėnuo',
                 rejectDeletion: 'Atmesti',
+                approveDeleteRequest: 'Patvirtinti',
                 alreadyRequested: 'Ištrynimas Užsakytas',
                 deletionApproved: 'PATVIRTINTA',
                 deletionRejected: 'ATMESTA',
                 deletionPending: 'LAUKIAMA',
                 deletionRequestSent: 'Ištrynimo užklausa išsiųsta!',
                 deletionRequestFailed: 'Nepavyko išsiųsti ištrynimo užklausos',
-                deletionActionFailed: 'Nepavyko apdoroti ištrynimo veiksmo'
+                deletionActionFailed: 'Nepavyko apdoroti ištrynimo veiksmo',
+                deleteRequest: 'Ištrinti Užklausą',
+                deleteMedia: 'Ištrinti Mediją'
             }
         },
 
@@ -2584,6 +2592,14 @@
                 .deletion-request-btn:hover {
                     transform: scale(1.05) !important;
                     box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4) !important;
+                }
+
+                .deletion-request-btn.delete-request-type {
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
+                }
+
+                .deletion-request-btn.delete-request-type:hover {
+                    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4) !important;
                 }
 
                 .deletion-requested-text {
@@ -9093,16 +9109,23 @@
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
-                                ${hasLink ? (() => {
+                                ${(() => {
                                     const hasPendingDeletion = deletionRequests.some(dr => dr.MediaRequestId === request.Id && dr.Status === 'pending');
-                                    const itemId = self.extractItemIdFromLink(request.MediaLink);
                                     if (hasPendingDeletion) {
                                         return `<span class="deletion-requested-text">${self.t('alreadyRequested')}</span>`;
-                                    } else if (itemId) {
-                                        return `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}">${self.t('askToDelete')}</button>`;
+                                    }
+                                    const isDone = request.Status === 'done';
+                                    const isRejectedStatus = request.Status === 'rejected';
+                                    if (isDone && hasLink) {
+                                        // "Request to delete media" for fulfilled requests
+                                        const itemId = self.extractItemIdFromLink(request.MediaLink) || '';
+                                        return `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
+                                    } else if (!isDone && !isRejectedStatus) {
+                                        // "Request to delete request" for non-done, non-rejected requests
+                                        return `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
                                     }
                                     return '';
-                                })() : ''}
+                                })()}
                                 ${actionsHtml}
                             </div>
                             <span class="user-request-status ${request.Status}">${statusText}</span>
@@ -9138,7 +9161,7 @@
                     });
                 });
 
-                // Attach "Ask to Delete" button handlers
+                // Attach "Request to delete" button handlers
                 const askDeleteBtns = listContainer.querySelectorAll('.deletion-request-btn');
                 askDeleteBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -9148,7 +9171,8 @@
                         const title = target.getAttribute('data-title');
                         const type = target.getAttribute('data-type');
                         const mediaLink = target.getAttribute('data-media-link');
-                        self.submitDeletionRequest(mediaRequestId, itemId, title, type, mediaLink, target);
+                        const deletionType = target.getAttribute('data-deletion-type') || 'media';
+                        self.submitDeletionRequest(mediaRequestId, itemId, title, type, mediaLink, deletionType, target);
                     });
                 });
             }).catch(err => {
@@ -10036,7 +10060,7 @@
         /**
          * Submit a deletion request
          */
-        submitDeletionRequest: function (mediaRequestId, itemId, title, type, mediaLink, btnElement) {
+        submitDeletionRequest: function (mediaRequestId, itemId, title, type, mediaLink, deletionType, btnElement) {
             const self = this;
             try {
                 const baseUrl = ApiClient.serverAddress();
@@ -10059,10 +10083,11 @@
                     },
                     body: JSON.stringify({
                         MediaRequestId: mediaRequestId,
-                        ItemId: itemId,
+                        ItemId: itemId || '00000000-0000-0000-0000-000000000000',
                         Title: title,
                         Type: type,
-                        MediaLink: mediaLink
+                        MediaLink: mediaLink || '',
+                        DeletionType: deletionType || 'media'
                     })
                 })
                 .then(response => {
@@ -10137,16 +10162,29 @@
                     let statusText = self.t('deletion' + request.Status.charAt(0).toUpperCase() + request.Status.slice(1)) || request.Status.toUpperCase();
 
                     let actionsHtml = '';
+                    const isDeleteRequest = request.DeletionType === 'request';
+                    const typeLabel = isDeleteRequest ? (self.t('deleteRequest')) : (self.t('deleteMedia'));
                     if (isPending) {
-                        actionsHtml = `
-                            <div class="deletion-request-actions">
-                                <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve" data-delay-hours="1">${self.t('deleteNow')}</button>
-                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="1">${self.t('schedule1Day')}</button>
-                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="7">${self.t('schedule1Week')}</button>
-                                <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="30">${self.t('schedule1Month')}</button>
-                                <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
-                            </div>
-                        `;
+                        if (isDeleteRequest) {
+                            // For "delete request" type: just Approve (deletes the request) or Reject
+                            actionsHtml = `
+                                <div class="deletion-request-actions">
+                                    <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve">${self.t('approveDeleteRequest')}</button>
+                                    <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
+                                </div>
+                            `;
+                        } else {
+                            // For "delete media" type: schedule options
+                            actionsHtml = `
+                                <div class="deletion-request-actions">
+                                    <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve" data-delay-hours="1">${self.t('deleteNow')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="1">${self.t('schedule1Day')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="7">${self.t('schedule1Week')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="30">${self.t('schedule1Month')}</button>
+                                    <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
+                                </div>
+                            `;
+                        }
                     }
 
                     let resolvedHtml = '';
@@ -10157,7 +10195,7 @@
                     html += `
                         <div class="deletion-request-item ${isPending ? '' : 'resolved'}">
                             <div class="deletion-request-info">
-                                <div class="deletion-request-title">${self.escapeHtml(request.Title)}</div>
+                                <div class="deletion-request-title">${self.escapeHtml(request.Title)} <span style="font-size:10px;color:#999;font-weight:400;">[${typeLabel}]</span></div>
                                 <div class="deletion-request-meta">
                                     <span class="deletion-request-user">${self.escapeHtml(request.Username)}</span>
                                     <span> • ${request.Type ? self.escapeHtml(request.Type) : ''}</span>
