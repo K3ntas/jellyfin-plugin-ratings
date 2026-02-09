@@ -278,7 +278,13 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.248.0 (Current)
+### 1.0.249.0 (Current)
+- **Two deletion request types**: "Request to delete request" (for pending/processing requests) and "Request to delete media" (for fulfilled requests)
+- Fixed button always visible - no longer requires GUID extraction from media link
+- Admin sees different actions per type: Approve for request deletion, schedule options for media deletion
+- Orange button for request deletion, red button for media deletion
+
+### 1.0.248.0
 - **Ask to Delete feature** - users can request deletion of fulfilled media from their request list
 - New "Deletion Requests" admin tab to approve/reject deletion requests
 - Admin can schedule deletion with ~1h, 1 day, 1 week, or 1 month delay
