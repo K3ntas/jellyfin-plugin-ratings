@@ -23,6 +23,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
         private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
+        private Dictionary<Guid, DeletionRequest> _deletionRequests;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -38,6 +39,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
             _notifications = new List<NewMediaNotification>();
             _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
+            _deletionRequests = new Dictionary<Guid, DeletionRequest>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -47,6 +49,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadRatings();
             LoadMediaRequests();
             LoadScheduledDeletions();
+            LoadDeletionRequests();
         }
 
         /// <summary>
@@ -792,6 +795,144 @@ namespace Jellyfin.Plugin.Ratings.Data
                 }
 
                 return false;
+            }
+        }
+
+        // Deletion Request Methods
+
+        /// <summary>
+        /// Loads deletion requests from disk.
+        /// </summary>
+        private void LoadDeletionRequests()
+        {
+            try
+            {
+                var requestsFile = Path.Combine(_dataPath, "deletion_requests.json");
+                if (File.Exists(requestsFile))
+                {
+                    var json = File.ReadAllText(requestsFile);
+                    var requests = JsonSerializer.Deserialize<List<DeletionRequest>>(json);
+                    if (requests != null)
+                    {
+                        _deletionRequests = requests.ToDictionary(r => r.Id);
+                        _logger.LogInformation("Loaded {Count} deletion requests from disk", _deletionRequests.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading deletion requests from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves deletion requests to disk.
+        /// </summary>
+        private async Task SaveDeletionRequestsAsync()
+        {
+            try
+            {
+                var requestsFile = Path.Combine(_dataPath, "deletion_requests.json");
+                var json = JsonSerializer.Serialize(_deletionRequests.Values.ToList(), new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} deletion requests to disk", _deletionRequests.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving deletion requests to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a new deletion request.
+        /// </summary>
+        /// <param name="request">The deletion request to add.</param>
+        /// <returns>The created deletion request.</returns>
+        public async Task<DeletionRequest> AddDeletionRequestAsync(DeletionRequest request)
+        {
+            lock (_lock)
+            {
+                _deletionRequests[request.Id] = request;
+                _ = SaveDeletionRequestsAsync();
+                return request;
+            }
+        }
+
+        /// <summary>
+        /// Gets all deletion requests.
+        /// </summary>
+        /// <returns>List of all deletion requests ordered by creation date.</returns>
+        public List<DeletionRequest> GetAllDeletionRequests()
+        {
+            lock (_lock)
+            {
+                return _deletionRequests.Values.OrderByDescending(r => r.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets a deletion request by ID.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <returns>The deletion request or null if not found.</returns>
+        public DeletionRequest? GetDeletionRequestById(Guid requestId)
+        {
+            lock (_lock)
+            {
+                return _deletionRequests.ContainsKey(requestId) ? _deletionRequests[requestId] : null;
+            }
+        }
+
+        /// <summary>
+        /// Updates the status of a deletion request.
+        /// </summary>
+        /// <param name="requestId">The request ID.</param>
+        /// <param name="status">The new status (approved/rejected).</param>
+        /// <param name="resolvedByUsername">The admin username who resolved it.</param>
+        /// <returns>The updated request or null if not found.</returns>
+        public async Task<DeletionRequest?> UpdateDeletionRequestStatusAsync(Guid requestId, string status, string resolvedByUsername)
+        {
+            lock (_lock)
+            {
+                if (_deletionRequests.ContainsKey(requestId))
+                {
+                    var request = _deletionRequests[requestId];
+                    request.Status = status;
+                    request.ResolvedAt = DateTime.UtcNow;
+                    request.ResolvedByUsername = resolvedByUsername;
+                    _ = SaveDeletionRequestsAsync();
+                    return request;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a pending deletion request exists for a given media request.
+        /// </summary>
+        /// <param name="mediaRequestId">The media request ID.</param>
+        /// <returns>True if a pending deletion request exists.</returns>
+        public bool HasPendingDeletionRequest(Guid mediaRequestId)
+        {
+            lock (_lock)
+            {
+                return _deletionRequests.Values.Any(r => r.MediaRequestId == mediaRequestId && r.Status == "pending");
+            }
+        }
+
+        /// <summary>
+        /// Gets the count of pending deletion requests.
+        /// </summary>
+        /// <returns>Number of pending deletion requests.</returns>
+        public int GetPendingDeletionRequestCount()
+        {
+            lock (_lock)
+            {
+                return _deletionRequests.Values.Count(r => r.Status == "pending");
             }
         }
     }
