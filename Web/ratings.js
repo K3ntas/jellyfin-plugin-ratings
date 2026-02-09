@@ -157,7 +157,21 @@
                 deleteMedia: 'Delete Media',
                 rejectionReasonPrompt: 'Enter rejection reason (optional):',
                 rejectionReasonLabel: 'Reason:',
-                deletionLimitReached: 'Maximum deletion requests reached for this item'
+                deletionLimitReached: 'Maximum deletion requests reached for this item',
+                banUser: 'Ban',
+                unbanUser: 'Unban',
+                bannedUsers: 'Banned Users',
+                ban1Day: '1 Day',
+                ban1Week: '1 Week',
+                ban1Month: '1 Month',
+                banPermanent: 'Permanent',
+                banExpires: 'Expires:',
+                banPermanentLabel: 'Permanent',
+                bannedBy: 'by',
+                noBannedUsers: 'No banned users',
+                youAreBanned: 'You are banned from this action',
+                banSuccess: 'User banned successfully',
+                unbanSuccess: 'User unbanned successfully'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją',
@@ -304,7 +318,21 @@
                 deleteMedia: 'Ištrinti Mediją',
                 rejectionReasonPrompt: 'Įveskite atmetimo priežastį (neprivaloma):',
                 rejectionReasonLabel: 'Priežastis:',
-                deletionLimitReached: 'Pasiektas maksimalus ištrynimo užklausų limitas'
+                deletionLimitReached: 'Pasiektas maksimalus ištrynimo užklausų limitas',
+                banUser: 'Uždrausti',
+                unbanUser: 'Atblokuoti',
+                bannedUsers: 'Uždrausti Vartotojai',
+                ban1Day: '1 Diena',
+                ban1Week: '1 Savaitė',
+                ban1Month: '1 Mėnuo',
+                banPermanent: 'Visam laikui',
+                banExpires: 'Baigiasi:',
+                banPermanentLabel: 'Visam laikui',
+                bannedBy: 'uždraudė',
+                noBannedUsers: 'Nėra uždraustų vartotojų',
+                youAreBanned: 'Jums uždrausta atlikti šį veiksmą',
+                banSuccess: 'Vartotojas uždraustas sėkmingai',
+                unbanSuccess: 'Vartotojas atblokuotas sėkmingai'
             }
         },
 
@@ -2778,6 +2806,97 @@
 
                 .rejection-reason-popup-close:hover {
                     background: #444 !important;
+                }
+
+                /* Ban System Styles */
+                .ban-section {
+                    margin-top: 16px !important;
+                    padding-top: 16px !important;
+                    border-top: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .ban-section-title {
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #999 !important;
+                    margin-bottom: 10px !important;
+                }
+
+                .ban-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 8px 12px !important;
+                    margin-bottom: 6px !important;
+                    background: rgba(229, 57, 53, 0.1) !important;
+                    border-radius: 8px !important;
+                    border-left: 3px solid #e53935 !important;
+                }
+
+                .ban-item-info {
+                    font-size: 12px !important;
+                    color: #ddd !important;
+                }
+
+                .ban-item-meta {
+                    font-size: 10px !important;
+                    color: #999 !important;
+                    margin-top: 2px !important;
+                }
+
+                .ban-btn {
+                    padding: 3px 10px !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .ban-btn.ban {
+                    background: #e53935 !important;
+                    color: #fff !important;
+                }
+
+                .ban-btn.ban:hover {
+                    background: #c62828 !important;
+                }
+
+                .ban-btn.unban {
+                    background: #4caf50 !important;
+                    color: #fff !important;
+                }
+
+                .ban-btn.unban:hover {
+                    background: #388e3c !important;
+                }
+
+                .ban-dropdown {
+                    padding: 3px 6px !important;
+                    background: #333 !important;
+                    color: #fff !important;
+                    border: 1px solid rgba(255,255,255,0.1) !important;
+                    border-radius: 6px !important;
+                    font-size: 11px !important;
+                    margin-right: 6px !important;
+                }
+
+                .ban-actions {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 4px !important;
+                }
+
+                .ban-notice {
+                    padding: 12px !important;
+                    background: rgba(229, 57, 53, 0.15) !important;
+                    border: 1px solid rgba(229, 57, 53, 0.3) !important;
+                    border-radius: 8px !important;
+                    color: #f44336 !important;
+                    font-size: 13px !important;
+                    text-align: center !important;
+                    margin-bottom: 12px !important;
                 }
 
                 .deletion-request-item {
@@ -8623,6 +8742,9 @@
                         }
                     });
                 });
+
+                // Render ban section for media requests
+                self.renderBanSection(tabContent, 'media_request', requests);
             }).catch(err => {
                 console.error('Error loading requests:', err);
                 tabContent.innerHTML = '<div class="admin-request-empty">' + self.t('errorLoading') + '</div>';
@@ -9119,19 +9241,41 @@
             modalBody.innerHTML = `
                 ${langSwitchHtml}
                 ${descriptionHtml}
-                <div class="request-input-group">
-                    <label for="requestMediaTitle">${titleLabel} *</label>
-                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                <div id="mediaRequestBanNotice" style="display:none;"></div>
+                <div id="mediaRequestFormFields">
+                    <div class="request-input-group">
+                        <label for="requestMediaTitle">${titleLabel} *</label>
+                        <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                    </div>
+                    ${typeHtml}
+                    ${imdbCodeHtml}
+                    ${imdbLinkHtml}
+                    ${customFieldsHtml}
+                    ${notesHtml}
+                    <button class="request-submit-btn" id="submitRequestBtn">${submitText}</button>
                 </div>
-                ${typeHtml}
-                ${imdbCodeHtml}
-                ${imdbLinkHtml}
-                ${customFieldsHtml}
-                ${notesHtml}
-                <button class="request-submit-btn" id="submitRequestBtn">${submitText}</button>
                 <div class="user-requests-title">${this.t('yourRequests')}</div>
                 <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests')}</p></div>
             `;
+
+            // Check if user is banned from media requests
+            this.checkBan('media_request').then(banInfo => {
+                if (banInfo && banInfo.banned) {
+                    const formFields = document.getElementById('mediaRequestFormFields');
+                    const banNotice = document.getElementById('mediaRequestBanNotice');
+                    if (formFields) formFields.style.display = 'none';
+                    if (banNotice) {
+                        let expiresText = '';
+                        if (banInfo.expiresAt) {
+                            expiresText = ` (${self.t('banExpires')} ${self.formatDateTime(banInfo.expiresAt)})`;
+                        } else {
+                            expiresText = ` (${self.t('banPermanentLabel')})`;
+                        }
+                        banNotice.innerHTML = `<div class="ban-notice">${self.t('youAreBanned')}${expiresText}</div>`;
+                        banNotice.style.display = 'block';
+                    }
+                }
+            });
 
             // Attach language toggle handler (only if it exists)
             const langToggle = document.getElementById('languageToggle');
@@ -9165,11 +9309,12 @@
 
             listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loadingRequests') + '</p>';
 
-            // Fetch both media requests and deletion requests
+            // Fetch media requests, deletion requests, and ban status
             Promise.all([
                 this.fetchAllRequests(),
-                this.fetchDeletionRequests()
-            ]).then(([requests, deletionRequests]) => {
+                this.fetchDeletionRequests(),
+                this.checkBan('deletion_request')
+            ]).then(([requests, deletionRequests, deletionBanInfo]) => {
                 // Filter to only current user's requests
                 const userId = ApiClient.getCurrentUserId();
                 const userRequests = requests.filter(r => r.UserId === userId);
@@ -9235,17 +9380,23 @@
                                 ${rejectionHtml}
                                 ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                                 ${(() => {
+                                    const isDeletionBanned = deletionBanInfo && deletionBanInfo.banned;
                                     const hasPendingDeletion = deletionRequests.some(dr => dr.MediaRequestId === request.Id && dr.Status === 'pending');
                                     if (hasPendingDeletion) {
                                         return `<span class="deletion-requested-text">${self.t('alreadyRequested')}</span>`;
                                     }
-                                    // Show rejected deletion requests with reason (clickable)
+                                    // Show all rejected deletion requests with reasons (clickable)
                                     const rejectedDeletions = deletionRequests.filter(dr => dr.MediaRequestId === request.Id && dr.Status === 'rejected');
                                     let rejectedHtml = '';
                                     if (rejectedDeletions.length > 0) {
-                                        const latest = rejectedDeletions.sort((a, b) => new Date(b.ResolvedAt) - new Date(a.ResolvedAt))[0];
-                                        const reason = latest.RejectionReason ? self.escapeHtml(latest.RejectionReason) : '';
-                                        rejectedHtml = `<span class="deletion-rejected-text rejection-reason-trigger" ${reason ? `data-reason="${reason}" style="cursor:pointer;" title="${reason}"` : ''}>${self.t('deletionRejected')}${reason ? ' ℹ️' : ''}</span>`;
+                                        const sorted = rejectedDeletions.sort((a, b) => new Date(b.ResolvedAt) - new Date(a.ResolvedAt));
+                                        const hasAnyReason = sorted.some(r => r.RejectionReason);
+                                        const reasonsData = self.escapeHtml(JSON.stringify(sorted.map(r => ({
+                                            reason: r.RejectionReason || '',
+                                            admin: r.ResolvedByUsername || '',
+                                            date: r.ResolvedAt || ''
+                                        }))));
+                                        rejectedHtml = `<span class="deletion-rejected-text rejection-reason-trigger" data-reasons="${reasonsData}" style="cursor:pointer;">${self.t('deletionRejected')} (${sorted.length})${hasAnyReason ? ' ℹ️' : ''}</span>`;
                                     }
                                     const isDone = request.Status === 'done';
                                     const isRejectedStatus = request.Status === 'rejected';
@@ -9253,6 +9404,13 @@
                                     const totalDeletionRequests = deletionRequests.filter(dr => dr.MediaRequestId === request.Id).length;
                                     if (totalDeletionRequests >= 3) {
                                         return rejectedHtml + `<span class="deletion-requested-text">${self.t('deletionLimitReached')}</span>`;
+                                    }
+                                    if (isDeletionBanned) {
+                                        let banExpText = '';
+                                        if (deletionBanInfo.expiresAt) {
+                                            banExpText = ` (${self.t('banExpires')} ${self.formatDateTime(deletionBanInfo.expiresAt)})`;
+                                        }
+                                        return rejectedHtml + `<span class="ban-notice" style="font-size:11px;padding:4px 8px;margin-top:4px;display:inline-block;">${self.t('youAreBanned')}${banExpText}</span>`;
                                     }
                                     if (isDone && hasLink) {
                                         // "Request to delete media" for fulfilled requests
@@ -9315,13 +9473,15 @@
                 });
 
                 // Attach rejection reason popup handlers
-                const rejectionTriggers = listContainer.querySelectorAll('.rejection-reason-trigger[data-reason]');
+                const rejectionTriggers = listContainer.querySelectorAll('.rejection-reason-trigger[data-reasons]');
                 rejectionTriggers.forEach(trigger => {
                     trigger.addEventListener('click', () => {
-                        const reason = trigger.getAttribute('data-reason');
-                        if (reason) {
-                            self.showRejectionReasonPopup(reason);
-                        }
+                        try {
+                            const reasons = JSON.parse(trigger.getAttribute('data-reasons'));
+                            if (reasons && reasons.length > 0) {
+                                self.showRejectionReasonsPopup(reasons);
+                            }
+                        } catch (e) {}
                     });
                 });
             }).catch(err => {
@@ -10382,6 +10542,9 @@
                         self.processDeletionAction(requestId, action, delayDays, delayHours, config);
                     });
                 });
+
+                // Render ban section for deletion requests
+                self.renderBanSection(tabContent, 'deletion_request', requests);
             }).catch(err => {
                 console.error('Error loading deletion requests:', err);
                 tabContent.innerHTML = '<p style="text-align: center; color: #f44336;">Error loading deletion requests</p>';
@@ -10501,19 +10664,31 @@
             });
         },
 
-        showRejectionReasonPopup: function (reason) {
+        showRejectionReasonsPopup: function (reasons) {
             const self = this;
-            // Remove any existing popup
             const existing = document.getElementById('rejectionReasonPopup');
             if (existing) existing.remove();
+
+            let itemsHtml = '';
+            reasons.forEach((r, i) => {
+                const date = r.date ? self.formatDateTime(r.date) : '';
+                const admin = r.admin ? self.escapeHtml(r.admin) : '';
+                const reason = r.reason ? self.escapeHtml(r.reason) : '-';
+                itemsHtml += `
+                    <div style="margin-bottom:${i < reasons.length - 1 ? '12px' : '0'} !important;">
+                        <div style="font-size:11px !important;color:#999 !important;margin-bottom:4px !important;">${admin}${date ? ' • ' + date : ''}</div>
+                        <div class="rejection-reason-popup-text">${reason}</div>
+                    </div>
+                `;
+            });
 
             const overlay = document.createElement('div');
             overlay.id = 'rejectionReasonPopup';
             overlay.className = 'rejection-modal-overlay';
             overlay.innerHTML = `
                 <div class="rejection-reason-popup">
-                    <div class="rejection-reason-popup-title">${self.t('deletionRejected')}</div>
-                    <div class="rejection-reason-popup-text">${self.escapeHtml(reason)}</div>
+                    <div class="rejection-reason-popup-title">${self.t('deletionRejected')} (${reasons.length})</div>
+                    ${itemsHtml}
                     <button class="rejection-reason-popup-close">OK</button>
                 </div>
             `;
@@ -10526,6 +10701,165 @@
 
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.remove();
+            });
+        },
+
+        fetchBans: function (banType) {
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                return fetch(`${baseUrl}/Ratings/Bans?banType=${banType}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.ok ? r.json() : [])
+                .catch(() => []);
+            } catch (e) {
+                return Promise.resolve([]);
+            }
+        },
+
+        checkBan: function (banType) {
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                return fetch(`${baseUrl}/Ratings/Bans/Check?banType=${banType}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.ok ? r.json() : { banned: false })
+                .catch(() => ({ banned: false }));
+            } catch (e) {
+                return Promise.resolve({ banned: false });
+            }
+        },
+
+        createBan: function (userId, banType, duration) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            return fetch(`${baseUrl}/Ratings/Bans?userId=${userId}&banType=${banType}&duration=${duration}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            }).then(r => {
+                if (!r.ok) throw new Error('Ban failed');
+                return r.json();
+            });
+        },
+
+        liftBan: function (banId) {
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            return fetch(`${baseUrl}/Ratings/Bans/${banId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            }).then(r => {
+                if (!r.ok) throw new Error('Unban failed');
+                return r.json();
+            });
+        },
+
+        renderBanSection: function (container, banType, users) {
+            const self = this;
+
+            self.fetchBans(banType).then(bans => {
+                let html = `<div class="ban-section">
+                    <div class="ban-section-title">${self.t('bannedUsers')}</div>`;
+
+                if (bans.length === 0) {
+                    html += `<div style="font-size:11px;color:#666;margin-bottom:8px;">${self.t('noBannedUsers')}</div>`;
+                } else {
+                    bans.forEach(ban => {
+                        const expires = ban.ExpiresAt
+                            ? `${self.t('banExpires')} ${self.formatDateTime(ban.ExpiresAt)}`
+                            : self.t('banPermanentLabel');
+                        html += `
+                            <div class="ban-item">
+                                <div>
+                                    <div class="ban-item-info">${self.escapeHtml(ban.Username)}</div>
+                                    <div class="ban-item-meta">${expires} • ${self.t('bannedBy')} ${self.escapeHtml(ban.BannedByUsername)}</div>
+                                </div>
+                                <button class="ban-btn unban" data-ban-id="${ban.Id}">${self.t('unbanUser')}</button>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Ban new user dropdown - show unique usernames from requests
+                if (users && users.length > 0) {
+                    const bannedIds = new Set(bans.map(b => b.UserId));
+                    const uniqueUsers = [];
+                    const seen = new Set();
+                    users.forEach(u => {
+                        if (!seen.has(u.UserId) && !bannedIds.has(u.UserId)) {
+                            seen.add(u.UserId);
+                            uniqueUsers.push({ id: u.UserId, name: u.Username || u.UserId });
+                        }
+                    });
+
+                    if (uniqueUsers.length > 0) {
+                        html += `
+                            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                <select class="ban-dropdown" id="banUserSelect_${banType}">
+                                    ${uniqueUsers.map(u => `<option value="${u.id}">${self.escapeHtml(u.name)}</option>`).join('')}
+                                </select>
+                                <select class="ban-dropdown" id="banDuration_${banType}">
+                                    <option value="1d">${self.t('ban1Day')}</option>
+                                    <option value="1w">${self.t('ban1Week')}</option>
+                                    <option value="1m">${self.t('ban1Month')}</option>
+                                    <option value="permanent">${self.t('banPermanent')}</option>
+                                </select>
+                                <button class="ban-btn ban" id="banSubmit_${banType}">${self.t('banUser')}</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                html += '</div>';
+
+                const banDiv = document.createElement('div');
+                banDiv.innerHTML = html;
+                container.appendChild(banDiv);
+
+                // Attach unban handlers
+                banDiv.querySelectorAll('.ban-btn.unban').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const banId = btn.getAttribute('data-ban-id');
+                        self.liftBan(banId).then(() => {
+                            banDiv.remove();
+                            self.renderBanSection(container, banType, users);
+                        });
+                    });
+                });
+
+                // Attach ban submit handler
+                const submitBtn = banDiv.querySelector(`#banSubmit_${banType}`);
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', () => {
+                        const userId = banDiv.querySelector(`#banUserSelect_${banType}`).value;
+                        const duration = banDiv.querySelector(`#banDuration_${banType}`).value;
+                        self.createBan(userId, banType, duration).then(() => {
+                            banDiv.remove();
+                            self.renderBanSection(container, banType, users);
+                        });
+                    });
+                }
             });
         },
 
