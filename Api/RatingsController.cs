@@ -2012,6 +2012,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("A pending deletion request already exists for this media request");
                 }
 
+                // Limit to 3 total deletion requests per media request
+                if (_repository.GetDeletionRequestCountForMediaRequest(request.MediaRequestId) >= 3)
+                {
+                    return BadRequest("Maximum of 3 deletion requests per media item has been reached");
+                }
+
                 var deletionRequest = new DeletionRequest
                 {
                     Id = Guid.NewGuid(),
@@ -2096,13 +2102,15 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="action">The action to take (approve or reject).</param>
         /// <param name="delayDays">Optional delay in days for deletion scheduling.</param>
         /// <param name="delayHours">Optional delay in hours for deletion scheduling.</param>
+        /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated deletion request.</returns>
         [HttpPost("DeletionRequests/{requestId}/Action")]
         public ActionResult<DeletionRequest> ActionDeletionRequest(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string action,
             [FromQuery] int? delayDays = null,
-            [FromQuery] int? delayHours = null)
+            [FromQuery] int? delayHours = null,
+            [FromQuery] string? rejectionReason = null)
         {
             try
             {
@@ -2229,7 +2237,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 else
                 {
                     // Reject
-                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "rejected", user.Username).Result;
+                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "rejected", user.Username, rejectionReason).Result;
                     _logger.LogInformation("Admin {UserId} rejected deletion request {RequestId}", userId, requestId);
 
                     return Ok(result);

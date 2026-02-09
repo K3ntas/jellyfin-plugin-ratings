@@ -892,8 +892,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="requestId">The request ID.</param>
         /// <param name="status">The new status (approved/rejected).</param>
         /// <param name="resolvedByUsername">The admin username who resolved it.</param>
+        /// <param name="rejectionReason">Optional rejection reason.</param>
         /// <returns>The updated request or null if not found.</returns>
-        public async Task<DeletionRequest?> UpdateDeletionRequestStatusAsync(Guid requestId, string status, string resolvedByUsername)
+        public async Task<DeletionRequest?> UpdateDeletionRequestStatusAsync(Guid requestId, string status, string resolvedByUsername, string? rejectionReason = null)
         {
             lock (_lock)
             {
@@ -903,6 +904,15 @@ namespace Jellyfin.Plugin.Ratings.Data
                     request.Status = status;
                     request.ResolvedAt = DateTime.UtcNow;
                     request.ResolvedByUsername = resolvedByUsername;
+                    if (status == "rejected" && !string.IsNullOrEmpty(rejectionReason))
+                    {
+                        request.RejectionReason = rejectionReason;
+                    }
+                    else
+                    {
+                        request.RejectionReason = string.Empty;
+                    }
+
                     _ = SaveDeletionRequestsAsync();
                     return request;
                 }
@@ -921,6 +931,19 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 return _deletionRequests.Values.Any(r => r.MediaRequestId == mediaRequestId && r.Status == "pending");
+            }
+        }
+
+        /// <summary>
+        /// Gets the total count of deletion requests for a specific media request.
+        /// </summary>
+        /// <param name="mediaRequestId">The media request ID.</param>
+        /// <returns>Total number of deletion requests.</returns>
+        public int GetDeletionRequestCountForMediaRequest(Guid mediaRequestId)
+        {
+            lock (_lock)
+            {
+                return _deletionRequests.Values.Count(r => r.MediaRequestId == mediaRequestId);
             }
         }
 
