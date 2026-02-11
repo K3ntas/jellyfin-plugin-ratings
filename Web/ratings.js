@@ -371,7 +371,18 @@
                 .then(function (config) {
                     if (config.BadgeDisplayProfiles) {
                         try {
-                            self.badgeDisplayProfiles = JSON.parse(config.BadgeDisplayProfiles);
+                            var raw = JSON.parse(config.BadgeDisplayProfiles);
+                            // Migrate old minWidth/maxWidth format to new minValue/maxValue + axis
+                            self.badgeDisplayProfiles = raw.map(function (p) {
+                                if (p.minWidth !== undefined && p.minValue === undefined) {
+                                    p.minValue = p.minWidth;
+                                }
+                                if (p.maxWidth !== undefined && p.maxValue === undefined) {
+                                    p.maxValue = p.maxWidth;
+                                }
+                                if (!p.axis) p.axis = 'horizontal';
+                                return p;
+                            });
                         } catch (e) {
                             self.badgeDisplayProfiles = [];
                         }
@@ -387,18 +398,38 @@
         },
 
         /**
-         * Find matching badge profile for current screen width
+         * Find matching badge profile for current screen dimensions.
+         * Supports axis: 'horizontal' (matches window.innerWidth) and 'vertical' (matches window.innerHeight).
+         * Backward compat: old profiles with minWidth/maxWidth treated as horizontal.
          */
         getMatchingBadgeProfile: function () {
-            const screenWidth = window.innerWidth;
+            var screenWidth = window.innerWidth;
+            var screenHeight = window.innerHeight;
             var bestMatch = null;
+            var bestRange = Infinity;
 
             for (var i = 0; i < this.badgeDisplayProfiles.length; i++) {
                 var profile = this.badgeDisplayProfiles[i];
-                if (screenWidth >= (profile.minWidth || 0) && screenWidth <= (profile.maxWidth || 9999)) {
-                    // Pick the most specific match (smallest range)
-                    if (!bestMatch || ((profile.maxWidth - profile.minWidth) < (bestMatch.maxWidth - bestMatch.minWidth))) {
+                var axis = profile.axis || 'horizontal';
+
+                // Determine which dimension and range fields to use
+                var dimension, minVal, maxVal;
+                if (axis === 'vertical') {
+                    dimension = screenHeight;
+                    minVal = profile.minValue !== undefined ? profile.minValue : 0;
+                    maxVal = profile.maxValue !== undefined ? profile.maxValue : 9999;
+                } else {
+                    dimension = screenWidth;
+                    // Backward compat: old minWidth/maxWidth fields
+                    minVal = profile.minValue !== undefined ? profile.minValue : (profile.minWidth || 0);
+                    maxVal = profile.maxValue !== undefined ? profile.maxValue : (profile.maxWidth || 9999);
+                }
+
+                if (dimension >= minVal && dimension <= maxVal) {
+                    var range = maxVal - minVal;
+                    if (range < bestRange) {
                         bestMatch = profile;
+                        bestRange = range;
                     }
                 }
             }
@@ -407,39 +438,55 @@
         },
 
         /**
-         * Apply badge display profile to the rating widget
+         * Apply badge display profile to the rating widget.
+         * Uses inline styles to override the hardcoded @media CSS defaults.
          */
         applyBadgeProfile: function () {
-            const container = document.getElementById('ratingsPluginComponent');
+            var container = document.getElementById('ratingsPluginComponent');
             if (!container) return;
 
             var profile = this.getMatchingBadgeProfile();
-
-            // Reset to defaults first
-            container.style.removeProperty('transform');
-            container.style.removeProperty('background');
-
             var statsEl = container.querySelector('.ratings-plugin-stats');
-            if (statsEl) {
-                statsEl.style.removeProperty('display');
+
+            if (!profile) {
+                // No matching profile - remove all inline overrides, let default CSS apply
+                container.classList.remove('badge-profile-active');
+                container.style.removeProperty('transform');
+                container.style.removeProperty('background');
+                container.style.removeProperty('margin');
+                container.style.removeProperty('padding');
+                if (statsEl) {
+                    statsEl.style.removeProperty('display');
+                }
+                return;
             }
 
-            if (!profile) return;
+            // Mark as profile-active
+            container.classList.add('badge-profile-active');
 
-            // Apply horizontal and vertical offset
+            // Build inline styles that override @media defaults
             var translateX = (profile.offsetX || 0) + 'vw';
             var translateY = (profile.offsetY || 0) + 'vh';
             var scale = 1 + ((profile.sizePercent || 0) / 100);
-            container.style.transform = 'translate(' + translateX + ', ' + translateY + ') scale(' + scale + ')';
 
-            // Hide text (show stars only)
-            if (profile.hideText && statsEl) {
-                statsEl.style.display = 'none';
+            // Use cssText to set all overrides at once with !important to beat @media rules
+            var css = 'transform: translate(' + translateX + ', ' + translateY + ') scale(' + scale + ') !important;';
+            css += ' margin: 0 !important;';
+            css += ' padding: 0 !important;';
+
+            if (profile.removeBackground) {
+                css += ' background: transparent !important;';
             }
 
-            // Remove background
-            if (profile.removeBackground) {
-                container.style.background = 'transparent';
+            container.style.cssText = css;
+
+            // Hide text (show stars only)
+            if (statsEl) {
+                if (profile.hideText) {
+                    statsEl.style.display = 'none';
+                } else {
+                    statsEl.style.removeProperty('display');
+                }
             }
         },
 
