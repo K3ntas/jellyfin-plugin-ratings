@@ -70,6 +70,9 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             RequestImdbLinkRequired = false;
             RequestImdbLinkLabel = string.Empty;
             RequestImdbLinkPlaceholder = string.Empty;
+
+            // Badge display profiles (JSON array of resolution-based profiles)
+            BadgeDisplayProfiles = string.Empty;
         }
 
         /// <summary>
@@ -269,5 +272,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the custom placeholder for the IMDB Link field. Empty = use default.
         /// </summary>
         public string RequestImdbLinkPlaceholder { get; set; }
+
+        /// <summary>
+        /// Gets or sets the badge display profiles as JSON.
+        /// Each profile defines display settings for a specific resolution range.
+        /// Format: [{"minWidth":0,"maxWidth":1920,"offsetX":0,"offsetY":0,"hideText":false,"sizePercent":0,"removeBackground":false}]
+        /// </summary>
+        public string BadgeDisplayProfiles { get; set; }
     }
 }
