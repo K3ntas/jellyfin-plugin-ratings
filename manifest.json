@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.256.0",
+        "changelog": "Fix Enable Ratings toggle (gates widget injection and card overlays), fix badge profile dropdown hidden behind elements.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.256.0/jellyfin-plugin-ratings_1.0.256.0.zip",
+        "checksum": "4cfeafdf0fee732d54ab42225e65de20",
+        "timestamp": "2026-02-11T16:00:00Z"
+      },
+      {
         "version": "1.0.255.0",
         "changelog": "Fix Enable Ratings toggle now fully disables ratings when unchecked. Fix badge profile axis dropdown clipping.",
         "targetAbi": "10.11.0.0",
