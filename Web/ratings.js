@@ -653,13 +653,13 @@
             }
 
             const styles = `
-                .ratings-plugin-anchor {
+                .ratings-plugin-ribbon-anchor {
                     position: relative;
                 }
 
                 .ratings-plugin-container {
                     position: absolute;
-                    top: 0;
+                    bottom: 100%;
                     left: 0;
                     z-index: 100;
                     background: rgba(0, 0, 0, 0.6);
@@ -4637,10 +4637,10 @@
             const checkInterval = setInterval(() => {
                 attempts++;
 
-                // Check if the infoWrapper element exists (primary target)
-                const infoWrapper = document.querySelector('.infoWrapper');
+                // Check if the detailRibbon element exists (primary target)
+                const detailRibbon = document.querySelector('.detailRibbon');
 
-                if (infoWrapper) {
+                if (detailRibbon) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
                 } else if (attempts >= maxAttempts) {
@@ -4715,18 +4715,18 @@
                 </div>
             `;
 
-            // Position on top of .infoWrapper using absolute positioning
-            const infoWrapper = document.querySelector('.infoWrapper');
+            // Position above .detailRibbon, horizontally aligned with .infoWrapper
+            const detailRibbon = document.querySelector('.detailRibbon');
 
-            if (infoWrapper) {
-                // Make infoWrapper the positioning anchor
-                infoWrapper.classList.add('ratings-plugin-anchor');
-                infoWrapper.insertBefore(container, infoWrapper.firstChild);
+            if (detailRibbon) {
+                // Make detailRibbon the positioning anchor
+                detailRibbon.classList.add('ratings-plugin-ribbon-anchor');
+                detailRibbon.insertBefore(container, detailRibbon.firstChild);
             } else {
-                // Fallback: try detailLogo or page content
-                const detailLogo = document.querySelector('.detailLogo');
-                if (detailLogo) {
-                    detailLogo.insertAdjacentElement('afterend', container);
+                // Fallback: try infoWrapper or page content
+                const infoWrapper = document.querySelector('.infoWrapper');
+                if (infoWrapper) {
+                    infoWrapper.insertBefore(container, infoWrapper.firstChild);
                 } else {
                     const detailPageContent = document.querySelector('.detailPageContent') ||
                                              document.querySelector('.itemDetailPage') ||
