@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.260.0",
+        "changelog": "Rating widget positioned above .detailRibbon, horizontally aligned with infoWrapper content.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.260.0/jellyfin-plugin-ratings_1.0.260.0.zip",
+        "checksum": "e67555e89d30353177ec6b6bf54a0b30",
+        "timestamp": "2026-02-11T20:00:00Z"
+      },
+      {
         "version": "1.0.259.0",
         "changelog": "Rating widget overlaid on top of .infoWrapper with absolute positioning, responsive star sizing.",
         "targetAbi": "10.11.0.0",
