@@ -361,6 +361,25 @@
                             </div>
                         </div>
 
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Rating Badge Display Profiles</h2>
+                        <div class="fieldDescription" style="margin-bottom: 15px;">
+                            Create resolution-based profiles to customize the rating badge (stars widget) appearance on detail pages.
+                            Each profile applies when the screen width falls within the specified range.
+                        </div>
+
+                        <div id="badgeProfilesContainer"></div>
+
+                        <button type="button" is="emby-button" class="raised" id="btnAddBadgeProfile" style="margin-top: 10px;">
+                            <span>+ Add Profile</span>
+                        </button>
+
+                        <textarea id="txtBadgeDisplayProfiles" style="display: none;"></textarea>
+                    </div>
+
+                    <div class="verticalSection">
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -371,10 +390,172 @@
             </div>
         </div>
 
+        <style>
+            .badge-profile-card {
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 12px;
+                position: relative;
+            }
+            .badge-profile-card h3 {
+                margin: 0 0 12px 0;
+                font-size: 1em;
+                color: #ccc;
+            }
+            .badge-profile-row {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-bottom: 8px;
+            }
+            .badge-profile-field {
+                flex: 1;
+                min-width: 140px;
+            }
+            .badge-profile-field label {
+                display: block;
+                font-size: 0.85em;
+                color: #aaa;
+                margin-bottom: 4px;
+            }
+            .badge-profile-field input[type="number"],
+            .badge-profile-field input[type="text"] {
+                width: 100%;
+                padding: 6px 8px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 4px;
+                color: #fff;
+                font-size: 0.9em;
+                box-sizing: border-box;
+            }
+            .badge-profile-field input[type="checkbox"] {
+                margin-right: 6px;
+            }
+            .badge-profile-checkbox {
+                display: flex;
+                align-items: center;
+                padding-top: 20px;
+                min-width: 140px;
+            }
+            .badge-profile-checkbox label {
+                color: #ccc;
+                font-size: 0.85em;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+            }
+            .btn-remove-profile {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: rgba(255,68,68,0.2);
+                border: 1px solid rgba(255,68,68,0.4);
+                color: #ff6666;
+                border-radius: 4px;
+                padding: 4px 10px;
+                cursor: pointer;
+                font-size: 0.8em;
+            }
+            .btn-remove-profile:hover {
+                background: rgba(255,68,68,0.4);
+            }
+        </style>
+
         <script type="text/javascript">
             var RatingsConfig = {
                 pluginId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
             };
+
+            // Badge profile management
+            var badgeProfiles = [];
+
+            function renderBadgeProfiles() {
+                var container = document.getElementById('badgeProfilesContainer');
+                container.innerHTML = '';
+
+                badgeProfiles.forEach(function (profile, index) {
+                    var card = document.createElement('div');
+                    card.className = 'badge-profile-card';
+                    card.innerHTML =
+                        '<h3>Profile #' + (index + 1) + '</h3>' +
+                        '<button type="button" class="btn-remove-profile" data-index="' + index + '">Remove</button>' +
+                        '<div class="badge-profile-row">' +
+                            '<div class="badge-profile-field">' +
+                                '<label>Min Screen Width (px)</label>' +
+                                '<input type="number" class="bp-minWidth" value="' + (profile.minWidth || 0) + '" min="0" step="1" />' +
+                            '</div>' +
+                            '<div class="badge-profile-field">' +
+                                '<label>Max Screen Width (px)</label>' +
+                                '<input type="number" class="bp-maxWidth" value="' + (profile.maxWidth || 9999) + '" min="0" step="1" />' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="badge-profile-row">' +
+                            '<div class="badge-profile-field">' +
+                                '<label>Horizontal Offset (%)</label>' +
+                                '<input type="number" class="bp-offsetX" value="' + (profile.offsetX || 0) + '" step="0.1" />' +
+                            '</div>' +
+                            '<div class="badge-profile-field">' +
+                                '<label>Vertical Offset (%)</label>' +
+                                '<input type="number" class="bp-offsetY" value="' + (profile.offsetY || 0) + '" step="0.1" />' +
+                            '</div>' +
+                            '<div class="badge-profile-field">' +
+                                '<label>Size Adjustment (%)</label>' +
+                                '<input type="number" class="bp-sizePercent" value="' + (profile.sizePercent || 0) + '" step="0.1" />' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="badge-profile-row">' +
+                            '<div class="badge-profile-checkbox">' +
+                                '<label><input type="checkbox" class="bp-hideText" ' + (profile.hideText ? 'checked' : '') + ' /> Hide rating text (show stars only)</label>' +
+                            '</div>' +
+                            '<div class="badge-profile-checkbox">' +
+                                '<label><input type="checkbox" class="bp-removeBackground" ' + (profile.removeBackground ? 'checked' : '') + ' /> Remove background</label>' +
+                            '</div>' +
+                        '</div>';
+                    container.appendChild(card);
+                });
+
+                // Attach remove handlers
+                container.querySelectorAll('.btn-remove-profile').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var idx = parseInt(this.getAttribute('data-index'));
+                        badgeProfiles.splice(idx, 1);
+                        renderBadgeProfiles();
+                    });
+                });
+            }
+
+            function collectBadgeProfiles() {
+                var cards = document.querySelectorAll('.badge-profile-card');
+                var profiles = [];
+                cards.forEach(function (card) {
+                    profiles.push({
+                        minWidth: parseInt(card.querySelector('.bp-minWidth').value) || 0,
+                        maxWidth: parseInt(card.querySelector('.bp-maxWidth').value) || 9999,
+                        offsetX: parseFloat(card.querySelector('.bp-offsetX').value) || 0,
+                        offsetY: parseFloat(card.querySelector('.bp-offsetY').value) || 0,
+                        sizePercent: parseFloat(card.querySelector('.bp-sizePercent').value) || 0,
+                        hideText: card.querySelector('.bp-hideText').checked,
+                        removeBackground: card.querySelector('.bp-removeBackground').checked
+                    });
+                });
+                return profiles;
+            }
+
+            document.getElementById('btnAddBadgeProfile').addEventListener('click', function () {
+                badgeProfiles.push({
+                    minWidth: 0,
+                    maxWidth: 9999,
+                    offsetX: 0,
+                    offsetY: 0,
+                    sizePercent: 0,
+                    hideText: false,
+                    removeBackground: false
+                });
+                renderBadgeProfiles();
+            });
 
             document.querySelector('#ratingsConfigPage').addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
@@ -437,6 +618,14 @@
 
                     // Custom fields
                     document.querySelector('#txtCustomRequestFields').value = config.CustomRequestFields || '';
+
+                    // Badge display profiles
+                    try {
+                        badgeProfiles = config.BadgeDisplayProfiles ? JSON.parse(config.BadgeDisplayProfiles) : [];
+                    } catch (e) {
+                        badgeProfiles = [];
+                    }
+                    renderBadgeProfiles();
 
                     Dashboard.hideLoadingMsg();
                 });
@@ -505,6 +694,9 @@
 
                     // Custom fields
                     config.CustomRequestFields = document.querySelector('#txtCustomRequestFields').value;
+
+                    // Badge display profiles
+                    config.BadgeDisplayProfiles = JSON.stringify(collectBadgeProfiles());
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
