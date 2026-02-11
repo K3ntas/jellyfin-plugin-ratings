@@ -9,377 +9,432 @@
         <div data-role="content">
             <div class="content-primary">
                 <form id="ratingsConfigForm">
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Ratings Plugin Configuration</h2>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableRatings" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Ratings</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Enable or disable the rating functionality for all users.
+                    <h2 class="sectionTitle" style="margin-bottom: 0.8em;">Ratings Plugin Configuration</h2>
+
+                    <!-- ============ GROUP 1: Rating System ============ -->
+                    <div class="settings-group" id="groupRatingSystem">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupRatingSystem')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Rating System</span>
+                        </div>
+                        <div class="settings-group-content">
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableRatings" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Ratings</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Enable or disable the rating functionality for all users.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
-                            <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
-                            <div class="fieldDescription">Minimum rating value (default: 1)</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtMaxRating">Maximum Rating</label>
-                            <input id="txtMaxRating" type="number" is="emby-input" min="1" max="10" step="1" />
-                            <div class="fieldDescription">Maximum rating value (default: 10)</div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableNetflixView" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Netflix-Style View</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Display libraries with horizontal genre rows like Netflix. When enabled, movie and TV show libraries will show content organized by genre in scrollable rows.
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
+                                <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
+                                <div class="fieldDescription">Minimum rating value (default: 1)</div>
                             </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtMaxRating">Maximum Rating</label>
+                                <input id="txtMaxRating" type="number" is="emby-input" min="1" max="10" step="1" />
+                                <div class="fieldDescription">Maximum rating value (default: 10)</div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableNetflixView" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Netflix-Style View</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Display libraries with horizontal genre rows like Netflix.
+                                </div>
+                            </div>
+
+                            <!-- Badge Display Profiles -->
+                            <div style="margin-top: 1.5em;">
+                                <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">Badge Display Profiles</h3>
+                                <div class="fieldDescription" style="margin-bottom: 10px;">
+                                    Customize the rating badge appearance per resolution range. Choose Horizontal (width) or Vertical (height) axis matching.
+                                </div>
+
+                                <div style="overflow-x: auto;">
+                                    <table class="bp-table" id="badgeProfilesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Axis</th>
+                                                <th>Min (px)</th>
+                                                <th>Max (px)</th>
+                                                <th>Offset X %</th>
+                                                <th>Offset Y %</th>
+                                                <th>Size %</th>
+                                                <th>Hide Text</th>
+                                                <th>No BG</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="badgeProfilesBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <div style="position: relative; display: inline-block; margin-top: 8px;">
+                                    <button type="button" is="emby-button" class="raised" id="btnAddBadgeProfile">
+                                        <span>+ Add Profile</span>
+                                    </button>
+                                    <div id="axisDropdown" class="axis-dropdown" style="display: none;">
+                                        <div class="axis-dropdown-item" data-axis="horizontal">Horizontal (width)</div>
+                                        <div class="axis-dropdown-item" data-axis="vertical">Vertical (height)</div>
+                                    </div>
+                                </div>
+
+                                <textarea id="txtBadgeDisplayProfiles" style="display: none;"></textarea>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">UI Toggles</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableRequestButton" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Request Media Button</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the "Request Media" button in the header for users to request new content.
-                            </div>
+                    <!-- ============ GROUP 2: UI Features ============ -->
+                    <div class="settings-group" id="groupUIFeatures">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupUIFeatures')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>UI Features</span>
                         </div>
+                        <div class="settings-group-content">
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableNewMediaNotifications" type="checkbox" is="emby-checkbox" />
-                                <span>Enable New Media Notifications</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show browser notifications when new movies, series, or episodes are added to the library.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableRequestButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Request Media Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the "Request Media" button in the header for users to request new content.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableEpisodeGrouping" type="checkbox" is="emby-checkbox" />
-                                <span>Group Episode Notifications</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                When multiple episodes are added at once, show a single notification like "Episodes 4-8" instead of individual notifications for each episode.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowSearchButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Search Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the custom search button in the header.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkShowSearchButton" type="checkbox" is="emby-checkbox" />
-                                <span>Show Search Button</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the custom search button in the header. Disable if you prefer using Jellyfin's built-in search.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowLanguageSwitch" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Language Switch (EN/LT)</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the EN/LT language toggle in the request modal.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkShowLanguageSwitch" type="checkbox" is="emby-checkbox" />
-                                <span>Show Language Switch (EN/LT)</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the EN/LT language toggle in the request modal. Disable if not needed.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowNotificationToggle" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Notification Toggle</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the notification bell icon in the header for toggling notifications.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkShowNotificationToggle" type="checkbox" is="emby-checkbox" />
-                                <span>Show Notification Toggle</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the notification bell icon in the header for toggling notifications.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowLatestMediaButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Latest Media Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Replace the Sync Play button with a Latest Media button that shows the 50 most recently added items.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkShowLatestMediaButton" type="checkbox" is="emby-checkbox" />
-                                <span>Show Latest Media Button</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Replace the Sync Play button with a Latest Media button that shows the 50 most recently added items in a dropdown.
-                            </div>
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Media Management (Admin)</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableMediaManagement" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Media Management</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the "Media" button in the header for admins to manage library media with stats and scheduled deletions.
-                            </div>
+                    <!-- ============ GROUP 3: Notifications ============ -->
+                    <div class="settings-group" id="groupNotifications">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupNotifications')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Notifications</span>
                         </div>
+                        <div class="settings-group-content">
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtDefaultDeletionDelayDays">Default Deletion Delay (Days)</label>
-                            <input id="txtDefaultDeletionDelayDays" type="number" is="emby-input" min="1" max="365" step="1" />
-                            <div class="fieldDescription">Default number of days before scheduled deletions are executed (default: 7)</div>
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableNewMediaNotifications" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable New Media Notifications</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show browser notifications when new movies, series, or episodes are added to the library.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableEpisodeGrouping" type="checkbox" is="emby-checkbox" />
+                                    <span>Group Episode Notifications</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When multiple episodes are added at once, show a single notification like "Episodes 4-8" instead of individual notifications.
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request System Settings</h2>
+                    <!-- ============ GROUP 4: Media Management ============ -->
+                    <div class="settings-group" id="groupMediaManagement">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupMediaManagement')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Media Management</span>
+                        </div>
+                        <div class="settings-group-content">
 
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableAdminRequests" type="checkbox" is="emby-checkbox" />
-                                <span>Allow Admin Requests</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Allow administrators to create media requests like normal users. Useful for testing and personal notes.
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableMediaManagement" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Media Management</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the "Media" button in the header for admins to manage library media with stats and scheduled deletions.
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtMaxRequestsPerMonth">Max Requests Per Month</label>
-                            <input id="txtMaxRequestsPerMonth" type="number" is="emby-input" min="0" step="1" />
-                            <div class="fieldDescription">Maximum number of requests a user can make per month. Set to 0 for unlimited.</div>
-                        </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtDefaultDeletionDelayDays">Default Deletion Delay (Days)</label>
+                                <input id="txtDefaultDeletionDelayDays" type="number" is="emby-input" min="1" max="365" step="1" />
+                                <div class="fieldDescription">Default number of days before scheduled deletions are executed (default: 7)</div>
+                            </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtAutoDeleteRejectedDays">Auto-Delete Rejected Requests (Days)</label>
-                            <input id="txtAutoDeleteRejectedDays" type="number" is="emby-input" min="0" step="1" />
-                            <div class="fieldDescription">Automatically delete rejected requests after this many days. Set to 0 to disable auto-deletion.</div>
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - Window Settings</h2>
-                        <div class="fieldDescription" style="margin-bottom: 15px;">
-                            Customize the request form window. Leave empty to use defaults.
+                    <!-- ============ GROUP 5: Request System ============ -->
+                    <div class="settings-group" id="groupRequestSystem">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupRequestSystem')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Request System</span>
                         </div>
+                        <div class="settings-group-content">
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowTitle">Window Title</label>
-                            <input id="txtRequestWindowTitle" type="text" is="emby-input" />
-                            <div class="fieldDescription">Custom title for the request window (leave empty for default)</div>
-                        </div>
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableAdminRequests" type="checkbox" is="emby-checkbox" />
+                                    <span>Allow Admin Requests</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Allow administrators to create media requests like normal users.
+                                </div>
+                            </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowDescription">Window Description</label>
-                            <input id="txtRequestWindowDescription" type="text" is="emby-input" />
-                            <div class="fieldDescription">Custom description text. Leave empty to hide the description entirely.</div>
-                        </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtMaxRequestsPerMonth">Max Requests Per Month</label>
+                                <input id="txtMaxRequestsPerMonth" type="number" is="emby-input" min="0" step="1" />
+                                <div class="fieldDescription">Maximum number of requests a user can make per month. Set to 0 for unlimited.</div>
+                            </div>
 
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestSubmitButtonText">Submit Button Text</label>
-                            <input id="txtRequestSubmitButtonText" type="text" is="emby-input" />
-                            <div class="fieldDescription">Text for the submit button (leave empty for default)</div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtAutoDeleteRejectedDays">Auto-Delete Rejected Requests (Days)</label>
+                                <input id="txtAutoDeleteRejectedDays" type="number" is="emby-input" min="0" step="1" />
+                                <div class="fieldDescription">Automatically delete rejected requests after this many days. Set to 0 to disable.</div>
+                            </div>
+
+                            <!-- Window Settings sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - Window Settings</h3>
+                            <div class="fieldDescription" style="margin-bottom: 10px;">
+                                Customize the request form window. Leave empty to use defaults.
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowTitle">Window Title</label>
+                                <input id="txtRequestWindowTitle" type="text" is="emby-input" />
+                                <div class="fieldDescription">Custom title for the request window (leave empty for default)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestWindowDescription">Window Description</label>
+                                <input id="txtRequestWindowDescription" type="text" is="emby-input" />
+                                <div class="fieldDescription">Custom description text. Leave empty to hide the description entirely.</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestSubmitButtonText">Submit Button Text</label>
+                                <input id="txtRequestSubmitButtonText" type="text" is="emby-input" />
+                                <div class="fieldDescription">Text for the submit button (leave empty for default)</div>
+                            </div>
+
+                            <!-- Title Field sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - Title Field</h3>
+                            <div class="fieldDescription" style="margin-bottom: 10px;">
+                                The Title field is always shown and required.
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestTitleLabel">Title Field Label</label>
+                                <input id="txtRequestTitleLabel" type="text" is="emby-input" />
+                                <div class="fieldDescription">Label for the title field (leave empty for default)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestTitlePlaceholder">Title Field Placeholder</label>
+                                <input id="txtRequestTitlePlaceholder" type="text" is="emby-input" />
+                                <div class="fieldDescription">Placeholder text for the title input</div>
+                            </div>
+
+                            <!-- Type Field sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - Type Field</h3>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestTypeEnabled" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Type Field</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the media type dropdown (Movie, TV Series, Anime, etc.)
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestTypeRequired" type="checkbox" is="emby-checkbox" />
+                                    <span>Type Field Required</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Make the type field required when submitting a request.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestTypeLabel">Type Field Label</label>
+                                <input id="txtRequestTypeLabel" type="text" is="emby-input" />
+                                <div class="fieldDescription">Label for the type dropdown (leave empty for default)</div>
+                            </div>
+
+                            <!-- Notes Field sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - Notes Field</h3>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestNotesEnabled" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Notes Field</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the notes/comments textarea.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestNotesRequired" type="checkbox" is="emby-checkbox" />
+                                    <span>Notes Field Required</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Make the notes field required when submitting a request.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesLabel">Notes Field Label</label>
+                                <input id="txtRequestNotesLabel" type="text" is="emby-input" />
+                                <div class="fieldDescription">Label for the notes field (leave empty for default)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesPlaceholder">Notes Field Placeholder</label>
+                                <input id="txtRequestNotesPlaceholder" type="text" is="emby-input" />
+                                <div class="fieldDescription">Placeholder text for the notes input</div>
+                            </div>
+
+                            <!-- IMDB Code Field sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - IMDB Code Field</h3>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestImdbCodeEnabled" type="checkbox" is="emby-checkbox" />
+                                    <span>Show IMDB Code Field</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the IMDB code input field (e.g., tt0448134).
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestImdbCodeRequired" type="checkbox" is="emby-checkbox" />
+                                    <span>IMDB Code Field Required</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Make the IMDB code field required when submitting a request.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodeLabel">IMDB Code Field Label</label>
+                                <input id="txtRequestImdbCodeLabel" type="text" is="emby-input" />
+                                <div class="fieldDescription">Label for the IMDB code field (leave empty for default)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodePlaceholder">IMDB Code Field Placeholder</label>
+                                <input id="txtRequestImdbCodePlaceholder" type="text" is="emby-input" />
+                                <div class="fieldDescription">Placeholder text for the IMDB code input</div>
+                            </div>
+
+                            <!-- IMDB Link Field sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Request Form - IMDB Link Field</h3>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestImdbLinkEnabled" type="checkbox" is="emby-checkbox" />
+                                    <span>Show IMDB Link Field</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the IMDB link input field.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkRequestImdbLinkRequired" type="checkbox" is="emby-checkbox" />
+                                    <span>IMDB Link Field Required</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Make the IMDB link field required when submitting a request.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkLabel">IMDB Link Field Label</label>
+                                <input id="txtRequestImdbLinkLabel" type="text" is="emby-input" />
+                                <div class="fieldDescription">Label for the IMDB link field (leave empty for default)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkPlaceholder">IMDB Link Field Placeholder</label>
+                                <input id="txtRequestImdbLinkPlaceholder" type="text" is="emby-input" />
+                                <div class="fieldDescription">Placeholder text for the IMDB link input</div>
+                            </div>
+
+                            <!-- Custom Fields sub-section -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Custom Fields</h3>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtCustomRequestFields">Custom Fields (JSON)</label>
+                                <textarea id="txtCustomRequestFields" is="emby-input" rows="6" style="font-family: monospace;"></textarea>
+                                <div class="fieldDescription">
+                                    Add custom fields to the request form. Format as a JSON array:<br>
+                                    <code style="background: #333; padding: 2px 6px; border-radius: 3px;">[{"name": "Priority", "placeholder": "High/Medium/Low", "required": false}]</code>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - Title Field</h2>
-                        <div class="fieldDescription" style="margin-bottom: 15px;">
-                            The Title field is always shown and required.
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTitleLabel">Title Field Label</label>
-                            <input id="txtRequestTitleLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the title field (leave empty for default)</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTitlePlaceholder">Title Field Placeholder</label>
-                            <input id="txtRequestTitlePlaceholder" type="text" is="emby-input" />
-                            <div class="fieldDescription">Placeholder text for the title input</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - Type Field</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestTypeEnabled" type="checkbox" is="emby-checkbox" />
-                                <span>Show Type Field</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the media type dropdown (Movie, TV Series, Anime, etc.)
-                            </div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestTypeRequired" type="checkbox" is="emby-checkbox" />
-                                <span>Type Field Required</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Make the type field required when submitting a request.
-                            </div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestTypeLabel">Type Field Label</label>
-                            <input id="txtRequestTypeLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the type dropdown (leave empty for default)</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - Notes Field</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestNotesEnabled" type="checkbox" is="emby-checkbox" />
-                                <span>Show Notes Field</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the notes/comments textarea.
-                            </div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestNotesRequired" type="checkbox" is="emby-checkbox" />
-                                <span>Notes Field Required</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Make the notes field required when submitting a request.
-                            </div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesLabel">Notes Field Label</label>
-                            <input id="txtRequestNotesLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the notes field (leave empty for default)</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestNotesPlaceholder">Notes Field Placeholder</label>
-                            <input id="txtRequestNotesPlaceholder" type="text" is="emby-input" />
-                            <div class="fieldDescription">Placeholder text for the notes input</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - IMDB Code Field</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestImdbCodeEnabled" type="checkbox" is="emby-checkbox" />
-                                <span>Show IMDB Code Field</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the IMDB code input field (e.g., tt0448134).
-                            </div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestImdbCodeRequired" type="checkbox" is="emby-checkbox" />
-                                <span>IMDB Code Field Required</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Make the IMDB code field required when submitting a request.
-                            </div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodeLabel">IMDB Code Field Label</label>
-                            <input id="txtRequestImdbCodeLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the IMDB code field (leave empty for default)</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbCodePlaceholder">IMDB Code Field Placeholder</label>
-                            <input id="txtRequestImdbCodePlaceholder" type="text" is="emby-input" />
-                            <div class="fieldDescription">Placeholder text for the IMDB code input</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Request Form - IMDB Link Field</h2>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestImdbLinkEnabled" type="checkbox" is="emby-checkbox" />
-                                <span>Show IMDB Link Field</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Show the IMDB link input field.
-                            </div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="chkRequestImdbLinkRequired" type="checkbox" is="emby-checkbox" />
-                                <span>IMDB Link Field Required</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Make the IMDB link field required when submitting a request.
-                            </div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkLabel">IMDB Link Field Label</label>
-                            <input id="txtRequestImdbLinkLabel" type="text" is="emby-input" />
-                            <div class="fieldDescription">Label for the IMDB link field (leave empty for default)</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtRequestImdbLinkPlaceholder">IMDB Link Field Placeholder</label>
-                            <input id="txtRequestImdbLinkPlaceholder" type="text" is="emby-input" />
-                            <div class="fieldDescription">Placeholder text for the IMDB link input</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Custom Fields</h2>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtCustomRequestFields">Custom Fields (JSON)</label>
-                            <textarea id="txtCustomRequestFields" is="emby-input" rows="6" style="font-family: monospace;"></textarea>
-                            <div class="fieldDescription">
-                                Add custom fields to the request form. Format as a JSON array:<br>
-                                <code style="background: #333; padding: 2px 6px; border-radius: 3px;">[{"name": "Priority", "placeholder": "High/Medium/Low", "required": false}]</code><br><br>
-                                To add multiple fields, separate them with commas inside the array:<br>
-                                <code style="background: #333; padding: 2px 6px; border-radius: 3px;">[{"name": "Field1", "placeholder": "...", "required": true}, {"name": "Field2", "placeholder": "...", "required": false}]</code>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="verticalSection">
-                        <h2 class="sectionTitle">Rating Badge Display Profiles</h2>
-                        <div class="fieldDescription" style="margin-bottom: 15px;">
-                            Create resolution-based profiles to customize the rating badge (stars widget) appearance on detail pages.
-                            Each profile applies when the screen width falls within the specified range.
-                        </div>
-
-                        <div id="badgeProfilesContainer"></div>
-
-                        <button type="button" is="emby-button" class="raised" id="btnAddBadgeProfile" style="margin-top: 10px;">
-                            <span>+ Add Profile</span>
-                        </button>
-
-                        <textarea id="txtBadgeDisplayProfiles" style="display: none;"></textarea>
-                    </div>
-
-                    <div class="verticalSection">
+                    <div class="verticalSection" style="margin-top: 1.5em;">
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Save</span>
@@ -391,76 +446,126 @@
         </div>
 
         <style>
-            .badge-profile-card {
-                background: rgba(255,255,255,0.05);
+            /* Collapsible settings groups */
+            .settings-group {
                 border: 1px solid rgba(255,255,255,0.1);
                 border-radius: 8px;
-                padding: 16px;
                 margin-bottom: 12px;
-                position: relative;
+                overflow: hidden;
             }
-            .badge-profile-card h3 {
-                margin: 0 0 12px 0;
-                font-size: 1em;
-                color: #ccc;
-            }
-            .badge-profile-row {
+            .settings-group-header {
                 display: flex;
-                gap: 12px;
-                flex-wrap: wrap;
-                margin-bottom: 8px;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 16px;
+                cursor: pointer;
+                background: rgba(255,255,255,0.04);
+                font-size: 1.15em;
+                font-weight: 600;
+                color: #ddd;
+                user-select: none;
+                transition: background 0.15s;
             }
-            .badge-profile-field {
-                flex: 1;
-                min-width: 140px;
+            .settings-group-header:hover {
+                background: rgba(255,255,255,0.08);
             }
-            .badge-profile-field label {
-                display: block;
-                font-size: 0.85em;
-                color: #aaa;
-                margin-bottom: 4px;
+            .settings-group-arrow {
+                font-size: 0.7em;
+                transition: transform 0.2s ease;
+                display: inline-block;
+                color: #888;
             }
-            .badge-profile-field input[type="number"],
-            .badge-profile-field input[type="text"] {
+            .settings-group.collapsed .settings-group-arrow {
+                transform: rotate(-90deg);
+            }
+            .settings-group-content {
+                padding: 8px 16px 16px;
+                transition: max-height 0.3s ease, padding 0.3s ease;
+                overflow: hidden;
+            }
+            .settings-group.collapsed .settings-group-content {
+                max-height: 0 !important;
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+
+            /* Badge profiles table */
+            .bp-table {
                 width: 100%;
-                padding: 6px 8px;
+                border-collapse: collapse;
+                font-size: 0.85em;
+            }
+            .bp-table th {
+                text-align: left;
+                padding: 6px 6px;
+                color: #999;
+                font-weight: 500;
+                font-size: 0.9em;
+                border-bottom: 1px solid rgba(255,255,255,0.15);
+                white-space: nowrap;
+            }
+            .bp-table td {
+                padding: 4px 4px;
+                vertical-align: middle;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+            .bp-table input[type="number"] {
+                width: 70px;
+                padding: 4px 6px;
                 background: rgba(0,0,0,0.3);
                 border: 1px solid rgba(255,255,255,0.15);
                 border-radius: 4px;
                 color: #fff;
-                font-size: 0.9em;
+                font-size: 0.95em;
                 box-sizing: border-box;
             }
-            .badge-profile-field input[type="checkbox"] {
-                margin-right: 6px;
-            }
-            .badge-profile-checkbox {
-                display: flex;
-                align-items: center;
-                padding-top: 20px;
-                min-width: 140px;
-            }
-            .badge-profile-checkbox label {
-                color: #ccc;
-                font-size: 0.85em;
+            .bp-table input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
                 cursor: pointer;
-                display: flex;
-                align-items: center;
             }
-            .btn-remove-profile {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: rgba(255,68,68,0.2);
-                border: 1px solid rgba(255,68,68,0.4);
+            .bp-table .bp-axis-label {
+                font-weight: 500;
+                color: #ccc;
+                font-size: 0.95em;
+            }
+            .bp-table .btn-remove-row {
+                background: rgba(255,68,68,0.15);
+                border: 1px solid rgba(255,68,68,0.3);
                 color: #ff6666;
                 border-radius: 4px;
-                padding: 4px 10px;
+                padding: 3px 8px;
                 cursor: pointer;
-                font-size: 0.8em;
+                font-size: 0.85em;
+                white-space: nowrap;
             }
-            .btn-remove-profile:hover {
-                background: rgba(255,68,68,0.4);
+            .bp-table .btn-remove-row:hover {
+                background: rgba(255,68,68,0.35);
+            }
+
+            /* Axis dropdown */
+            .axis-dropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: #2a2a2a;
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                z-index: 100;
+                min-width: 180px;
+                overflow: hidden;
+                margin-top: 4px;
+            }
+            .axis-dropdown-item {
+                padding: 8px 14px;
+                cursor: pointer;
+                color: #ddd;
+                font-size: 0.9em;
+                transition: background 0.1s;
+            }
+            .axis-dropdown-item:hover {
+                background: rgba(255,255,255,0.1);
             }
         </style>
 
@@ -469,56 +574,58 @@
                 pluginId: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
             };
 
+            // Collapsible groups
+            function toggleSettingsGroup(groupId) {
+                var group = document.getElementById(groupId);
+                if (!group) return;
+                group.classList.toggle('collapsed');
+            }
+
             // Badge profile management
             var badgeProfiles = [];
 
+            function migrateProfile(profile) {
+                // Backward compat: old minWidth/maxWidth -> new minValue/maxValue + axis
+                if (profile.minWidth !== undefined && profile.minValue === undefined) {
+                    profile.minValue = profile.minWidth;
+                    delete profile.minWidth;
+                }
+                if (profile.maxWidth !== undefined && profile.maxValue === undefined) {
+                    profile.maxValue = profile.maxWidth;
+                    delete profile.maxWidth;
+                }
+                if (!profile.axis) {
+                    profile.axis = 'horizontal';
+                }
+                if (profile.minValue === undefined) profile.minValue = 0;
+                if (profile.maxValue === undefined) profile.maxValue = 9999;
+                return profile;
+            }
+
             function renderBadgeProfiles() {
-                var container = document.getElementById('badgeProfilesContainer');
-                container.innerHTML = '';
+                var tbody = document.getElementById('badgeProfilesBody');
+                tbody.innerHTML = '';
 
                 badgeProfiles.forEach(function (profile, index) {
-                    var card = document.createElement('div');
-                    card.className = 'badge-profile-card';
-                    card.innerHTML =
-                        '<h3>Profile #' + (index + 1) + '</h3>' +
-                        '<button type="button" class="btn-remove-profile" data-index="' + index + '">Remove</button>' +
-                        '<div class="badge-profile-row">' +
-                            '<div class="badge-profile-field">' +
-                                '<label>Min Screen Width (px)</label>' +
-                                '<input type="number" class="bp-minWidth" value="' + (profile.minWidth || 0) + '" min="0" step="1" />' +
-                            '</div>' +
-                            '<div class="badge-profile-field">' +
-                                '<label>Max Screen Width (px)</label>' +
-                                '<input type="number" class="bp-maxWidth" value="' + (profile.maxWidth || 9999) + '" min="0" step="1" />' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="badge-profile-row">' +
-                            '<div class="badge-profile-field">' +
-                                '<label>Horizontal Offset (%)</label>' +
-                                '<input type="number" class="bp-offsetX" value="' + (profile.offsetX || 0) + '" step="0.1" />' +
-                            '</div>' +
-                            '<div class="badge-profile-field">' +
-                                '<label>Vertical Offset (%)</label>' +
-                                '<input type="number" class="bp-offsetY" value="' + (profile.offsetY || 0) + '" step="0.1" />' +
-                            '</div>' +
-                            '<div class="badge-profile-field">' +
-                                '<label>Size Adjustment (%)</label>' +
-                                '<input type="number" class="bp-sizePercent" value="' + (profile.sizePercent || 0) + '" step="0.1" />' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="badge-profile-row">' +
-                            '<div class="badge-profile-checkbox">' +
-                                '<label><input type="checkbox" class="bp-hideText" ' + (profile.hideText ? 'checked' : '') + ' /> Hide rating text (show stars only)</label>' +
-                            '</div>' +
-                            '<div class="badge-profile-checkbox">' +
-                                '<label><input type="checkbox" class="bp-removeBackground" ' + (profile.removeBackground ? 'checked' : '') + ' /> Remove background</label>' +
-                            '</div>' +
-                        '</div>';
-                    container.appendChild(card);
+                    profile = migrateProfile(profile);
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><span class="bp-axis-label">' + (profile.axis === 'vertical' ? 'V' : 'H') + '</span></td>' +
+                        '<td><input type="number" class="bp-minValue" value="' + (profile.minValue || 0) + '" min="0" step="1" /></td>' +
+                        '<td><input type="number" class="bp-maxValue" value="' + (profile.maxValue || 9999) + '" min="0" step="1" /></td>' +
+                        '<td><input type="number" class="bp-offsetX" value="' + (profile.offsetX || 0) + '" step="0.1" /></td>' +
+                        '<td><input type="number" class="bp-offsetY" value="' + (profile.offsetY || 0) + '" step="0.1" /></td>' +
+                        '<td><input type="number" class="bp-sizePercent" value="' + (profile.sizePercent || 0) + '" step="0.1" /></td>' +
+                        '<td style="text-align:center;"><input type="checkbox" class="bp-hideText" ' + (profile.hideText ? 'checked' : '') + ' /></td>' +
+                        '<td style="text-align:center;"><input type="checkbox" class="bp-removeBackground" ' + (profile.removeBackground ? 'checked' : '') + ' /></td>' +
+                        '<td><button type="button" class="btn-remove-row" data-index="' + index + '">Del</button></td>';
+                    // Store axis in a data attribute for collecting
+                    tr.setAttribute('data-axis', profile.axis || 'horizontal');
+                    tbody.appendChild(tr);
                 });
 
                 // Attach remove handlers
-                container.querySelectorAll('.btn-remove-profile').forEach(function (btn) {
+                tbody.querySelectorAll('.btn-remove-row').forEach(function (btn) {
                     btn.addEventListener('click', function () {
                         var idx = parseInt(this.getAttribute('data-index'));
                         badgeProfiles.splice(idx, 1);
@@ -528,33 +635,53 @@
             }
 
             function collectBadgeProfiles() {
-                var cards = document.querySelectorAll('.badge-profile-card');
+                var rows = document.querySelectorAll('#badgeProfilesBody tr');
                 var profiles = [];
-                cards.forEach(function (card) {
+                rows.forEach(function (row) {
                     profiles.push({
-                        minWidth: parseInt(card.querySelector('.bp-minWidth').value) || 0,
-                        maxWidth: parseInt(card.querySelector('.bp-maxWidth').value) || 9999,
-                        offsetX: parseFloat(card.querySelector('.bp-offsetX').value) || 0,
-                        offsetY: parseFloat(card.querySelector('.bp-offsetY').value) || 0,
-                        sizePercent: parseFloat(card.querySelector('.bp-sizePercent').value) || 0,
-                        hideText: card.querySelector('.bp-hideText').checked,
-                        removeBackground: card.querySelector('.bp-removeBackground').checked
+                        axis: row.getAttribute('data-axis') || 'horizontal',
+                        minValue: parseInt(row.querySelector('.bp-minValue').value) || 0,
+                        maxValue: parseInt(row.querySelector('.bp-maxValue').value) || 9999,
+                        offsetX: parseFloat(row.querySelector('.bp-offsetX').value) || 0,
+                        offsetY: parseFloat(row.querySelector('.bp-offsetY').value) || 0,
+                        sizePercent: parseFloat(row.querySelector('.bp-sizePercent').value) || 0,
+                        hideText: row.querySelector('.bp-hideText').checked,
+                        removeBackground: row.querySelector('.bp-removeBackground').checked
                     });
                 });
                 return profiles;
             }
 
-            document.getElementById('btnAddBadgeProfile').addEventListener('click', function () {
-                badgeProfiles.push({
-                    minWidth: 0,
-                    maxWidth: 9999,
-                    offsetX: 0,
-                    offsetY: 0,
-                    sizePercent: 0,
-                    hideText: false,
-                    removeBackground: false
+            // Add profile button with axis dropdown
+            var addBtn = document.getElementById('btnAddBadgeProfile');
+            var axisDropdown = document.getElementById('axisDropdown');
+
+            addBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                axisDropdown.style.display = axisDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            document.addEventListener('click', function () {
+                axisDropdown.style.display = 'none';
+            });
+
+            axisDropdown.querySelectorAll('.axis-dropdown-item').forEach(function (item) {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var axis = this.getAttribute('data-axis');
+                    badgeProfiles.push({
+                        axis: axis,
+                        minValue: 0,
+                        maxValue: 9999,
+                        offsetX: 0,
+                        offsetY: 0,
+                        sizePercent: 0,
+                        hideText: false,
+                        removeBackground: false
+                    });
+                    renderBadgeProfiles();
+                    axisDropdown.style.display = 'none';
                 });
-                renderBadgeProfiles();
             });
 
             document.querySelector('#ratingsConfigPage').addEventListener('pageshow', function () {
@@ -619,9 +746,10 @@
                     // Custom fields
                     document.querySelector('#txtCustomRequestFields').value = config.CustomRequestFields || '';
 
-                    // Badge display profiles
+                    // Badge display profiles (with backward compat migration)
                     try {
-                        badgeProfiles = config.BadgeDisplayProfiles ? JSON.parse(config.BadgeDisplayProfiles) : [];
+                        var raw = config.BadgeDisplayProfiles ? JSON.parse(config.BadgeDisplayProfiles) : [];
+                        badgeProfiles = raw.map(migrateProfile);
                     } catch (e) {
                         badgeProfiles = [];
                     }
