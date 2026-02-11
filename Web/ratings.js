@@ -363,6 +363,7 @@
          * Load badge display profiles from server config
          */
         loadBadgeDisplayProfiles: function () {
+            if (!this.ratingsEnabled) return;
             const self = this;
             if (!window.ApiClient) return;
 
@@ -501,66 +502,77 @@
                 this.currentLanguage = savedLang;
             }
 
-            const self = this;
+            this.injectStyles();
+            this.observeDetailPages();
+            this.observeHomePageCards();
 
-            // Load config to check if ratings are enabled, then init features
-            this.loadConfigAndInit();
+            // Initialize request button with multiple attempts for reliability
+            this.initRequestButtonWithRetry();
+
+            // Initialize search field in header
+            this.initSearchField();
+
+            // Initialize notification toggle in header
+            this.initNotificationToggle();
+
+            // Initialize latest media button (replaces sync play)
+            this.initLatestMediaButton();
+
+            // Initialize responsive scaling
+            this.updateResponsiveScaling();
+
+            // Initialize Netflix view if enabled
+            this.initNetflixView();
+
+            // Initialize new media notifications
+            this.initNotifications();
+
+            // Initialize media management button (admin only)
+            this.initMediaManagementButtonWithRetry();
+
+            // Initialize deletion badges (for all users)
+            this.initDeletionBadges();
+
+            // Load badge display profiles and listen for resize
+            this.loadBadgeDisplayProfiles();
+            const self = this;
+            window.addEventListener('resize', function () {
+                self.applyBadgeProfile();
+            });
+
+            // Load EnableRatings flag from config (with retry for ApiClient)
+            this.loadRatingsEnabledFlag();
         },
 
         /**
-         * Load config from server and initialize features based on EnableRatings flag
+         * Load the EnableRatings flag from server config with retry.
+         * Sets ratingsEnabled to false if disabled, which gates widget injection and card ratings.
          */
-        loadConfigAndInit: function () {
+        loadRatingsEnabledFlag: function () {
             const self = this;
+            var attempts = 0;
 
-            const initNonRatingFeatures = function () {
-                // These features work regardless of EnableRatings
-                self.initRequestButtonWithRetry();
-                self.initSearchField();
-                self.initNotificationToggle();
-                self.initLatestMediaButton();
-                self.updateResponsiveScaling();
-                self.initNetflixView();
-                self.initNotifications();
-                self.initMediaManagementButtonWithRetry();
-                self.initDeletionBadges();
-            };
-
-            const initRatingFeatures = function () {
-                // These only run when ratings are enabled
-                self.injectStyles();
-                self.observeDetailPages();
-                self.observeHomePageCards();
-                self.loadBadgeDisplayProfiles();
-                window.addEventListener('resize', function () {
-                    self.applyBadgeProfile();
-                });
-            };
-
-            if (!window.ApiClient) {
-                // No API client - default to enabled
-                initRatingFeatures();
-                initNonRatingFeatures();
-                return;
-            }
-
-            const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                .then(function (response) { return response.json(); })
-                .then(function (config) {
-                    self.ratingsEnabled = config.EnableRatings !== false;
-
-                    if (self.ratingsEnabled) {
-                        initRatingFeatures();
+            var tryLoad = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryLoad, 1000);
                     }
+                    return;
+                }
+                var baseUrl = ApiClient.serverAddress();
+                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (config) {
+                        self.ratingsEnabled = config.EnableRatings !== false;
+                    })
+                    .catch(function () {
+                        // Default to enabled on error
+                        self.ratingsEnabled = true;
+                    });
+            };
 
-                    initNonRatingFeatures();
-                })
-                .catch(function () {
-                    // On error, default to enabled
-                    initRatingFeatures();
-                    initNonRatingFeatures();
-                });
+            setTimeout(tryLoad, 500);
         },
 
         /**
@@ -4591,6 +4603,7 @@
          * Handle page change
          */
         onPageChange: function () {
+            if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
@@ -5197,6 +5210,7 @@
          * Add rating overlay to a specific card
          */
         addCardRating: function (card, itemId) {
+            if (!this.ratingsEnabled) return;
             const self = this;
 
             // Check cache first
