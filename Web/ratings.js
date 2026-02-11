@@ -9,6 +9,7 @@
         pluginId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
         ratingsCache: {}, // Cache for card ratings to avoid duplicate API calls
         currentLanguage: 'en', // Default language
+        badgeDisplayProfiles: [], // Resolution-based badge display profiles
 
         // Translations for request modal
         translations: {
@@ -358,6 +359,91 @@
         },
 
         /**
+         * Load badge display profiles from server config
+         */
+        loadBadgeDisplayProfiles: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                .then(function (response) { return response.json(); })
+                .then(function (config) {
+                    if (config.BadgeDisplayProfiles) {
+                        try {
+                            self.badgeDisplayProfiles = JSON.parse(config.BadgeDisplayProfiles);
+                        } catch (e) {
+                            self.badgeDisplayProfiles = [];
+                        }
+                    } else {
+                        self.badgeDisplayProfiles = [];
+                    }
+                    // Apply to any existing rating widget
+                    self.applyBadgeProfile();
+                })
+                .catch(function () {
+                    self.badgeDisplayProfiles = [];
+                });
+        },
+
+        /**
+         * Find matching badge profile for current screen width
+         */
+        getMatchingBadgeProfile: function () {
+            const screenWidth = window.innerWidth;
+            var bestMatch = null;
+
+            for (var i = 0; i < this.badgeDisplayProfiles.length; i++) {
+                var profile = this.badgeDisplayProfiles[i];
+                if (screenWidth >= (profile.minWidth || 0) && screenWidth <= (profile.maxWidth || 9999)) {
+                    // Pick the most specific match (smallest range)
+                    if (!bestMatch || ((profile.maxWidth - profile.minWidth) < (bestMatch.maxWidth - bestMatch.minWidth))) {
+                        bestMatch = profile;
+                    }
+                }
+            }
+
+            return bestMatch;
+        },
+
+        /**
+         * Apply badge display profile to the rating widget
+         */
+        applyBadgeProfile: function () {
+            const container = document.getElementById('ratingsPluginComponent');
+            if (!container) return;
+
+            var profile = this.getMatchingBadgeProfile();
+
+            // Reset to defaults first
+            container.style.removeProperty('transform');
+            container.style.removeProperty('background');
+
+            var statsEl = container.querySelector('.ratings-plugin-stats');
+            if (statsEl) {
+                statsEl.style.removeProperty('display');
+            }
+
+            if (!profile) return;
+
+            // Apply horizontal and vertical offset
+            var translateX = (profile.offsetX || 0) + 'vw';
+            var translateY = (profile.offsetY || 0) + 'vh';
+            var scale = 1 + ((profile.sizePercent || 0) / 100);
+            container.style.transform = 'translate(' + translateX + ', ' + translateY + ') scale(' + scale + ')';
+
+            // Hide text (show stars only)
+            if (profile.hideText && statsEl) {
+                statsEl.style.display = 'none';
+            }
+
+            // Remove background
+            if (profile.removeBackground) {
+                container.style.background = 'transparent';
+            }
+        },
+
+        /**
          * Initialize the ratings plugin
          */
         init: function () {
@@ -397,6 +483,13 @@
 
             // Initialize deletion badges (for all users)
             this.initDeletionBadges();
+
+            // Load badge display profiles and listen for resize
+            this.loadBadgeDisplayProfiles();
+            const self = this;
+            window.addEventListener('resize', function () {
+                self.applyBadgeProfile();
+            });
         },
 
         /**
@@ -4541,6 +4634,9 @@
 
             this.attachEventListeners(itemId);
             this.loadRatings(itemId);
+
+            // Apply badge display profile after widget is injected
+            this.applyBadgeProfile();
         },
 
         /**
