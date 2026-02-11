@@ -653,15 +653,23 @@
             }
 
             const styles = `
+                .ratings-plugin-anchor {
+                    position: relative;
+                }
+
                 .ratings-plugin-container {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    z-index: 100;
+                    background: rgba(0, 0, 0, 0.6);
                     border-radius: 6px;
-                    text-align: left;
-                    z-index: 10;
-                    padding: 0.4em 0;
+                    padding: 0.3em 0.6em;
                     display: flex;
                     flex-wrap: wrap;
                     align-items: center;
-                    gap: 0.3em 0.8em;
+                    gap: 0.2em 0.6em;
+                    pointer-events: auto;
                 }
 
                 .ratings-plugin-star {
@@ -684,8 +692,15 @@
                     .ratings-plugin-star {
                         font-size: 1.1em;
                     }
+                    .ratings-plugin-stats {
+                        font-size: 0.8em;
+                    }
                     .ratings-plugin-stars {
-                        gap: 0.15em;
+                        gap: 0.1em;
+                    }
+                    .ratings-plugin-container {
+                        padding: 0.2em 0.4em;
+                        gap: 0.15em 0.4em;
                     }
                 }
 
@@ -4700,20 +4715,13 @@
                 </div>
             `;
 
-            // Insert into .infoWrapper, after .nameContainer (before .itemMiscInfo)
+            // Position on top of .infoWrapper using absolute positioning
             const infoWrapper = document.querySelector('.infoWrapper');
 
             if (infoWrapper) {
-                const nameContainer = infoWrapper.querySelector('.nameContainer');
-                const miscInfo = infoWrapper.querySelector('.itemMiscInfo');
-                if (nameContainer && miscInfo) {
-                    // Insert between title and misc info
-                    infoWrapper.insertBefore(container, miscInfo);
-                } else if (nameContainer) {
-                    nameContainer.insertAdjacentElement('afterend', container);
-                } else {
-                    infoWrapper.insertBefore(container, infoWrapper.firstChild);
-                }
+                // Make infoWrapper the positioning anchor
+                infoWrapper.classList.add('ratings-plugin-anchor');
+                infoWrapper.insertBefore(container, infoWrapper.firstChild);
             } else {
                 // Fallback: try detailLogo or page content
                 const detailLogo = document.querySelector('.detailLogo');
