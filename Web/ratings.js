@@ -654,34 +654,38 @@
 
             const styles = `
                 .ratings-plugin-container {
-                    background: rgba(0, 0, 0, 0.3);
-                    border-radius: 8px;
-                    max-width: 800px;
-                    text-align: center;
-                    z-index: 9999;
+                    border-radius: 6px;
+                    text-align: left;
+                    z-index: 10;
+                    padding: 0.4em 0;
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 0.3em 0.8em;
                 }
 
-                /* Desktop styles */
-                @media (min-width: 1313px) {
-                    .ratings-plugin-container {
-                        margin: -12em 40em 8em;
-                        padding: 0em;
-                    }
+                .ratings-plugin-star {
+                    font-size: 1.6em;
+                }
 
+                @media (min-width: 1200px) {
                     .ratings-plugin-star {
-                        font-size: 2em;
+                        font-size: 1.8em;
                     }
                 }
 
-                /* Mobile styles */
-                @media (max-width: 1312px) {
-                    .ratings-plugin-container {
-                        margin-left: 136px;
-                        padding: 20px;
-                    }
-
+                @media (max-width: 768px) {
                     .ratings-plugin-star {
-                        font-size: 1.5em;
+                        font-size: 1.3em;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .ratings-plugin-star {
+                        font-size: 1.1em;
+                    }
+                    .ratings-plugin-stars {
+                        gap: 0.15em;
                     }
                 }
 
@@ -695,9 +699,7 @@
                 .ratings-plugin-stars {
                     display: flex;
                     align-items: center;
-                    justify-content: center;
-                    gap: 0.3em;
-                    margin-bottom: 0.5em;
+                    gap: 0.25em;
                     position: relative;
                 }
 
@@ -721,7 +723,6 @@
                 .ratings-plugin-stats {
                     font-size: 0.9em;
                     color: #bbb;
-                    margin-top: 0.5em;
                 }
 
                 .ratings-plugin-average {
@@ -4621,11 +4622,10 @@
             const checkInterval = setInterval(() => {
                 attempts++;
 
-                // Check if the detailLogo element exists
-                const detailLogo = document.querySelector('.detailLogo');
+                // Check if the infoWrapper element exists (primary target)
+                const infoWrapper = document.querySelector('.infoWrapper');
 
-                // If we found detailLogo, inject
-                if (detailLogo) {
+                if (infoWrapper) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
                 } else if (attempts >= maxAttempts) {
@@ -4700,19 +4700,32 @@
                 </div>
             `;
 
-            // Search for detailLogo globally (not inside a specific container)
-            const detailLogo = document.querySelector('.detailLogo');
+            // Insert into .infoWrapper, after .nameContainer (before .itemMiscInfo)
+            const infoWrapper = document.querySelector('.infoWrapper');
 
-            if (detailLogo) {
-                // Use insertAdjacentElement to insert immediately after detailLogo
-                detailLogo.insertAdjacentElement('afterend', container);
+            if (infoWrapper) {
+                const nameContainer = infoWrapper.querySelector('.nameContainer');
+                const miscInfo = infoWrapper.querySelector('.itemMiscInfo');
+                if (nameContainer && miscInfo) {
+                    // Insert between title and misc info
+                    infoWrapper.insertBefore(container, miscInfo);
+                } else if (nameContainer) {
+                    nameContainer.insertAdjacentElement('afterend', container);
+                } else {
+                    infoWrapper.insertBefore(container, infoWrapper.firstChild);
+                }
             } else {
-                // Fallback: try to find any suitable container
-                const detailPageContent = document.querySelector('.detailPageContent') ||
-                                         document.querySelector('.itemDetailPage') ||
-                                         document.querySelector('.detailPage-content');
-                if (detailPageContent) {
-                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                // Fallback: try detailLogo or page content
+                const detailLogo = document.querySelector('.detailLogo');
+                if (detailLogo) {
+                    detailLogo.insertAdjacentElement('afterend', container);
+                } else {
+                    const detailPageContent = document.querySelector('.detailPageContent') ||
+                                             document.querySelector('.itemDetailPage') ||
+                                             document.querySelector('.detailPage-content');
+                    if (detailPageContent) {
+                        detailPageContent.insertBefore(container, detailPageContent.firstChild);
+                    }
                 }
             }
 
