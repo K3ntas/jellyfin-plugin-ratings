@@ -10,6 +10,7 @@
         ratingsCache: {}, // Cache for card ratings to avoid duplicate API calls
         currentLanguage: 'en', // Default language
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
+        ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
 
         // Translations for request modal
         translations: {
@@ -500,43 +501,66 @@
                 this.currentLanguage = savedLang;
             }
 
-            this.injectStyles();
-            this.observeDetailPages();
-            this.observeHomePageCards();
-
-            // Initialize request button with multiple attempts for reliability
-            this.initRequestButtonWithRetry();
-
-            // Initialize search field in header
-            this.initSearchField();
-
-            // Initialize notification toggle in header
-            this.initNotificationToggle();
-
-            // Initialize latest media button (replaces sync play)
-            this.initLatestMediaButton();
-
-            // Initialize responsive scaling
-            this.updateResponsiveScaling();
-
-            // Initialize Netflix view if enabled
-            this.initNetflixView();
-
-            // Initialize new media notifications
-            this.initNotifications();
-
-            // Initialize media management button (admin only)
-            this.initMediaManagementButtonWithRetry();
-
-            // Initialize deletion badges (for all users)
-            this.initDeletionBadges();
-
-            // Load badge display profiles and listen for resize
-            this.loadBadgeDisplayProfiles();
             const self = this;
-            window.addEventListener('resize', function () {
-                self.applyBadgeProfile();
-            });
+
+            // Load config to check if ratings are enabled, then init features
+            this.loadConfigAndInit();
+        },
+
+        /**
+         * Load config from server and initialize features based on EnableRatings flag
+         */
+        loadConfigAndInit: function () {
+            const self = this;
+
+            const initNonRatingFeatures = function () {
+                // These features work regardless of EnableRatings
+                self.initRequestButtonWithRetry();
+                self.initSearchField();
+                self.initNotificationToggle();
+                self.initLatestMediaButton();
+                self.updateResponsiveScaling();
+                self.initNetflixView();
+                self.initNotifications();
+                self.initMediaManagementButtonWithRetry();
+                self.initDeletionBadges();
+            };
+
+            const initRatingFeatures = function () {
+                // These only run when ratings are enabled
+                self.injectStyles();
+                self.observeDetailPages();
+                self.observeHomePageCards();
+                self.loadBadgeDisplayProfiles();
+                window.addEventListener('resize', function () {
+                    self.applyBadgeProfile();
+                });
+            };
+
+            if (!window.ApiClient) {
+                // No API client - default to enabled
+                initRatingFeatures();
+                initNonRatingFeatures();
+                return;
+            }
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                .then(function (response) { return response.json(); })
+                .then(function (config) {
+                    self.ratingsEnabled = config.EnableRatings !== false;
+
+                    if (self.ratingsEnabled) {
+                        initRatingFeatures();
+                    }
+
+                    initNonRatingFeatures();
+                })
+                .catch(function () {
+                    // On error, default to enabled
+                    initRatingFeatures();
+                    initNonRatingFeatures();
+                });
         },
 
         /**
