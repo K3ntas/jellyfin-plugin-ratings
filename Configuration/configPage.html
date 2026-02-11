@@ -56,7 +56,8 @@
                             <div style="margin-top: 1.5em;">
                                 <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">Badge Display Profiles</h3>
                                 <div class="fieldDescription" style="margin-bottom: 10px;">
-                                    Customize the rating badge appearance per resolution range. Choose Horizontal (width) or Vertical (height) axis matching.
+                                    Customize the rating badge appearance per resolution range. Choose Horizontal (width) or Vertical (height) axis matching.<br>
+                                    <span style="color:#888; font-size:0.9em;">Horizontal offset: <b>−</b> left, <b>+</b> right. Vertical offset: <b>−</b> up, <b>+</b> down.</span>
                                 </div>
 
                                 <div style="overflow-x: auto;">
@@ -66,8 +67,8 @@
                                                 <th>Axis</th>
                                                 <th>Min (px)</th>
                                                 <th>Max (px)</th>
-                                                <th>Offset X %</th>
-                                                <th>Offset Y %</th>
+                                                <th>Horizontal %</th>
+                                                <th>Vertical %</th>
                                                 <th>Size %</th>
                                                 <th>Hide Text</th>
                                                 <th>No BG</th>
@@ -623,6 +624,8 @@
                 tbody.querySelectorAll('.btn-remove-row').forEach(function (btn) {
                     btn.addEventListener('click', function () {
                         var idx = parseInt(this.getAttribute('data-index'));
+                        // Sync current DOM values before modifying
+                        badgeProfiles = collectBadgeProfiles();
                         badgeProfiles.splice(idx, 1);
                         renderBadgeProfiles();
                     });
@@ -664,6 +667,8 @@
                 item.addEventListener('click', function (e) {
                     e.stopPropagation();
                     var axis = this.getAttribute('data-axis');
+                    // Sync current DOM values before adding new profile
+                    badgeProfiles = collectBadgeProfiles();
                     badgeProfiles.push({
                         axis: axis,
                         minValue: 0,
