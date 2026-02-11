@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.258.0",
+        "changelog": "Relocated rating widget into .infoWrapper between title and metadata. Responsive star sizing following Jellyfin breakpoints.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.258.0/jellyfin-plugin-ratings_1.0.258.0.zip",
+        "checksum": "f8e7f9a63da3870028b6d85a78fceb02",
+        "timestamp": "2026-02-11T18:00:00Z"
+      },
+      {
         "version": "1.0.257.0",
         "changelog": "Fix profile values resetting when adding/removing, rename offsets to Horizontal/Vertical with direction hints.",
         "targetAbi": "10.11.0.0",
