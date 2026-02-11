@@ -366,7 +366,15 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.252.0 (Current)
+### 1.0.253.0 (Current)
+- **Rating badge display profiles** - resolution-based profiles to customize the detail page rating widget appearance
+- **Horizontal/vertical offset** - move the rating badge by screen width/height percentage
+- **Badge size adjustment** - scale the rating widget up or down by percentage
+- **Hide text option** - show stars only, hiding "X/10 - N ratings" and "Your rating" text
+- **Remove background option** - make the rating widget background transparent
+- **Multi-profile system** - create multiple profiles for different screen resolution ranges, auto-switches on resize
+
+### 1.0.252.0
 - **User ban system** - admins can ban users from submitting media requests or deletion requests (1 day, 1 week, 1 month, or permanent)
 - **Ban management UI** - ban sections in both "Manage Media Requests" and "Deletion Requests" admin tabs with user dropdown and duration selector
 - **Ban enforcement** - banned users see a notice with expiry info instead of the request form or deletion buttons

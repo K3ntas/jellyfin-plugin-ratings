@@ -510,7 +510,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     RequestImdbLinkEnabled = config?.RequestImdbLinkEnabled ?? true,
                     RequestImdbLinkRequired = config?.RequestImdbLinkRequired ?? false,
                     RequestImdbLinkLabel = config?.RequestImdbLinkLabel ?? string.Empty,
-                    RequestImdbLinkPlaceholder = config?.RequestImdbLinkPlaceholder ?? string.Empty
+                    RequestImdbLinkPlaceholder = config?.RequestImdbLinkPlaceholder ?? string.Empty,
+
+                    // Badge display profiles
+                    BadgeDisplayProfiles = config?.BadgeDisplayProfiles ?? string.Empty
                 });
             }
             catch (Exception ex)
