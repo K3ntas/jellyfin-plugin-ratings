@@ -4715,25 +4715,44 @@
                 </div>
             `;
 
-            // Position above .detailRibbon, horizontally aligned with .infoWrapper
+            // Position above .detailRibbon vertically, aligned with .detailSection horizontally
             const detailRibbon = document.querySelector('.detailRibbon');
+            const detailSection = document.querySelector('.detailSection');
 
             if (detailRibbon) {
-                // Make detailRibbon the positioning anchor
                 detailRibbon.classList.add('ratings-plugin-ribbon-anchor');
                 detailRibbon.insertBefore(container, detailRibbon.firstChild);
+
+                // Align left position with .detailSection content start
+                if (detailSection) {
+                    var ribbonRect = detailRibbon.getBoundingClientRect();
+                    var sectionRect = detailSection.getBoundingClientRect();
+                    var leftOffset = sectionRect.left - ribbonRect.left;
+                    container.style.left = leftOffset + 'px';
+
+                    // Re-align on resize
+                    var realignTimer = null;
+                    window.addEventListener('resize', function () {
+                        if (realignTimer) clearTimeout(realignTimer);
+                        realignTimer = setTimeout(function () {
+                            var el = document.getElementById('ratingsPluginComponent');
+                            var ribbon = document.querySelector('.detailRibbon');
+                            var section = document.querySelector('.detailSection');
+                            if (el && ribbon && section) {
+                                var rr = ribbon.getBoundingClientRect();
+                                var sr = section.getBoundingClientRect();
+                                el.style.left = (sr.left - rr.left) + 'px';
+                            }
+                        }, 100);
+                    });
+                }
             } else {
-                // Fallback: try infoWrapper or page content
-                const infoWrapper = document.querySelector('.infoWrapper');
-                if (infoWrapper) {
-                    infoWrapper.insertBefore(container, infoWrapper.firstChild);
-                } else {
-                    const detailPageContent = document.querySelector('.detailPageContent') ||
-                                             document.querySelector('.itemDetailPage') ||
-                                             document.querySelector('.detailPage-content');
-                    if (detailPageContent) {
-                        detailPageContent.insertBefore(container, detailPageContent.firstChild);
-                    }
+                // Fallback
+                const detailPageContent = document.querySelector('.detailPageContent') ||
+                                         document.querySelector('.itemDetailPage') ||
+                                         document.querySelector('.detailPage-content');
+                if (detailPageContent) {
+                    detailPageContent.insertBefore(container, detailPageContent.firstChild);
                 }
             }
 
