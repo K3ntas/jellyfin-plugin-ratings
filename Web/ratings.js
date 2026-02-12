@@ -684,7 +684,7 @@
 
                 @media (max-width: 1024px) {
                     .ratings-plugin-container {
-                        left: 60% !important;
+                        left: 55% !important;
                         transform: translateX(-50%);
                     }
                 }
