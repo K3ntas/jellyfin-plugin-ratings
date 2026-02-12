@@ -666,9 +666,9 @@
                     border-radius: 6px;
                     padding: 0.3em 0.6em;
                     display: flex;
-                    flex-wrap: wrap;
-                    align-items: center;
-                    gap: 0.2em 0.6em;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.15em;
                     pointer-events: auto;
                 }
 
@@ -700,7 +700,7 @@
                     }
                     .ratings-plugin-container {
                         padding: 0.2em 0.4em;
-                        gap: 0.15em 0.4em;
+                        gap: 0.1em;
                     }
                 }
 
