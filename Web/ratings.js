@@ -4729,10 +4729,11 @@
                 // Align widget: on mobile avoid poster overlap, on desktop align with detailSection
                 function findPoster() {
                     var selectors = [
+                        '.detailPagePrimaryContainer .cardImageContainer',
                         '.detailPagePrimaryContainer .detailImage',
                         '.detailPagePrimaryContainer',
                         '.detailImageContainer',
-                        '.detailImage'
+                        '.itemDetailPage .cardImageContainer'
                     ];
                     for (var i = 0; i < selectors.length; i++) {
                         var el = document.querySelector(selectors[i]);
