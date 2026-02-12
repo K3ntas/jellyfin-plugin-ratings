@@ -4727,6 +4727,20 @@
                 detailRibbon.insertBefore(container, detailRibbon.firstChild);
 
                 // Align widget: on mobile avoid poster overlap, on desktop align with detailSection
+                function findPoster() {
+                    var selectors = [
+                        '.detailPagePrimaryContainer .detailImage',
+                        '.detailPagePrimaryContainer',
+                        '.detailImageContainer',
+                        '.detailImage'
+                    ];
+                    for (var i = 0; i < selectors.length; i++) {
+                        var el = document.querySelector(selectors[i]);
+                        if (el && el.offsetWidth > 0) return el;
+                    }
+                    return null;
+                }
+
                 function alignWidget() {
                     var el = document.getElementById('ratingsPluginComponent');
                     var ribbon = document.querySelector('.detailRibbon');
@@ -4736,7 +4750,7 @@
                     var leftOffset = 0;
 
                     // On mobile, position to the right of the poster image + 10px gap
-                    var poster = document.querySelector('.detailImageContainer');
+                    var poster = findPoster();
                     if (poster && window.innerWidth <= 768) {
                         var posterRect = poster.getBoundingClientRect();
                         leftOffset = (posterRect.right - rr.left) + 10;
