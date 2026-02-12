@@ -682,11 +682,13 @@
                     }
                 }
 
-                @media (max-width: 768px) {
+                @media (max-width: 1024px) {
                     .ratings-plugin-container {
-                        left: 50% !important;
+                        left: 60% !important;
                         transform: translateX(-50%);
                     }
+                }
+                @media (max-width: 768px) {
                     .ratings-plugin-star {
                         font-size: 1.3em;
                     }
@@ -4736,8 +4738,8 @@
                     var ribbon = document.querySelector('.detailRibbon');
                     if (!el || !ribbon) return;
 
-                    if (window.innerWidth <= 768) {
-                        // Mobile: CSS handles centering via left:50% + translateX(-50%)
+                    if (window.innerWidth <= 1024) {
+                        // Mobile/tablet: CSS handles centering via left:60% + translateX(-50%)
                         el.style.left = '';
                         return;
                     }
