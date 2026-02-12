@@ -683,12 +683,6 @@
                 }
 
                 @media (max-width: 768px) {
-                    .ratings-plugin-container {
-                        position: relative;
-                        bottom: auto;
-                        left: auto !important;
-                        margin: 10px 0;
-                    }
                     .ratings-plugin-star {
                         font-size: 1.3em;
                     }
@@ -4732,29 +4726,38 @@
                 detailRibbon.classList.add('ratings-plugin-ribbon-anchor');
                 detailRibbon.insertBefore(container, detailRibbon.firstChild);
 
-                // Align left position with .detailSection content start
-                if (detailSection) {
-                    var ribbonRect = detailRibbon.getBoundingClientRect();
-                    var sectionRect = detailSection.getBoundingClientRect();
-                    var leftOffset = sectionRect.left - ribbonRect.left;
-                    container.style.left = leftOffset + 'px';
+                // Align widget: on mobile avoid poster overlap, on desktop align with detailSection
+                function alignWidget() {
+                    var el = document.getElementById('ratingsPluginComponent');
+                    var ribbon = document.querySelector('.detailRibbon');
+                    if (!el || !ribbon) return;
 
-                    // Re-align on resize
-                    var realignTimer = null;
-                    window.addEventListener('resize', function () {
-                        if (realignTimer) clearTimeout(realignTimer);
-                        realignTimer = setTimeout(function () {
-                            var el = document.getElementById('ratingsPluginComponent');
-                            var ribbon = document.querySelector('.detailRibbon');
-                            var section = document.querySelector('.detailSection');
-                            if (el && ribbon && section) {
-                                var rr = ribbon.getBoundingClientRect();
-                                var sr = section.getBoundingClientRect();
-                                el.style.left = (sr.left - rr.left) + 'px';
-                            }
-                        }, 100);
-                    });
+                    var rr = ribbon.getBoundingClientRect();
+                    var leftOffset = 0;
+
+                    // On mobile, position to the right of the poster image + 10px gap
+                    var poster = document.querySelector('.detailImageContainer');
+                    if (poster && window.innerWidth <= 768) {
+                        var posterRect = poster.getBoundingClientRect();
+                        leftOffset = (posterRect.right - rr.left) + 10;
+                    } else {
+                        var section = document.querySelector('.detailSection');
+                        if (section) {
+                            var sr = section.getBoundingClientRect();
+                            leftOffset = sr.left - rr.left;
+                        }
+                    }
+                    el.style.left = leftOffset + 'px';
                 }
+
+                alignWidget();
+
+                // Re-align on resize
+                var realignTimer = null;
+                window.addEventListener('resize', function () {
+                    if (realignTimer) clearTimeout(realignTimer);
+                    realignTimer = setTimeout(alignWidget, 100);
+                });
             } else {
                 // Fallback
                 const detailPageContent = document.querySelector('.detailPageContent') ||
