@@ -4754,12 +4754,14 @@
                     if (poster && window.innerWidth <= 768) {
                         var posterRect = poster.getBoundingClientRect();
                         leftOffset = (posterRect.right - rr.left) + 10;
+                        console.log('[RatingsPlugin] Mobile align - poster:', poster.className, 'posterRect.right:', posterRect.right, 'rr.left:', rr.left, 'leftOffset:', leftOffset, 'windowWidth:', window.innerWidth);
                     } else {
                         var section = document.querySelector('.detailSection');
                         if (section) {
                             var sr = section.getBoundingClientRect();
                             leftOffset = sr.left - rr.left;
                         }
+                        console.log('[RatingsPlugin] Desktop align - poster found:', !!poster, 'leftOffset:', leftOffset);
                     }
                     el.style.left = leftOffset + 'px';
                 }
