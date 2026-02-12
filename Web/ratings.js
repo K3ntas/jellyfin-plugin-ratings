@@ -683,6 +683,12 @@
                 }
 
                 @media (max-width: 768px) {
+                    .ratings-plugin-container {
+                        position: relative;
+                        bottom: auto;
+                        left: auto !important;
+                        margin: 10px 0;
+                    }
                     .ratings-plugin-star {
                         font-size: 1.3em;
                     }
