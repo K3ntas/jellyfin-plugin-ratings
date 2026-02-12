@@ -683,6 +683,10 @@
                 }
 
                 @media (max-width: 768px) {
+                    .ratings-plugin-container {
+                        left: 50% !important;
+                        transform: translateX(-50%);
+                    }
                     .ratings-plugin-star {
                         font-size: 1.3em;
                     }
@@ -4726,50 +4730,28 @@
                 detailRibbon.classList.add('ratings-plugin-ribbon-anchor');
                 detailRibbon.insertBefore(container, detailRibbon.firstChild);
 
-                // Align widget: on mobile avoid poster overlap, on desktop align with detailSection
-                function findPoster() {
-                    var selectors = [
-                        '.detailPagePrimaryContainer .cardImageContainer',
-                        '.detailPagePrimaryContainer .detailImage',
-                        '.detailPagePrimaryContainer',
-                        '.detailImageContainer',
-                        '.itemDetailPage .cardImageContainer'
-                    ];
-                    for (var i = 0; i < selectors.length; i++) {
-                        var el = document.querySelector(selectors[i]);
-                        if (el && el.offsetWidth > 0) return el;
-                    }
-                    return null;
-                }
-
+                // Align widget: on desktop align with detailSection, on mobile CSS handles centering
                 function alignWidget() {
                     var el = document.getElementById('ratingsPluginComponent');
                     var ribbon = document.querySelector('.detailRibbon');
                     if (!el || !ribbon) return;
 
-                    var rr = ribbon.getBoundingClientRect();
-                    var leftOffset = 0;
-
-                    // On mobile, position to the right of the poster image + 10px gap
-                    var poster = findPoster();
-                    if (poster && window.innerWidth <= 768) {
-                        var posterRect = poster.getBoundingClientRect();
-                        leftOffset = (posterRect.right - rr.left) + 10;
-                        console.log('[RatingsPlugin] Mobile align - poster:', poster.className, 'posterRect.right:', posterRect.right, 'rr.left:', rr.left, 'leftOffset:', leftOffset, 'windowWidth:', window.innerWidth);
-                    } else {
-                        var section = document.querySelector('.detailSection');
-                        if (section) {
-                            var sr = section.getBoundingClientRect();
-                            leftOffset = sr.left - rr.left;
-                        }
-                        console.log('[RatingsPlugin] Desktop align - poster found:', !!poster, 'leftOffset:', leftOffset);
+                    if (window.innerWidth <= 768) {
+                        // Mobile: CSS handles centering via left:50% + translateX(-50%)
+                        el.style.left = '';
+                        return;
                     }
-                    el.style.left = leftOffset + 'px';
+
+                    var section = document.querySelector('.detailSection');
+                    if (section) {
+                        var rr = ribbon.getBoundingClientRect();
+                        var sr = section.getBoundingClientRect();
+                        el.style.left = (sr.left - rr.left) + 'px';
+                    }
                 }
 
                 alignWidget();
 
-                // Re-align on resize
                 var realignTimer = null;
                 window.addEventListener('resize', function () {
                     if (realignTimer) clearTimeout(realignTimer);
