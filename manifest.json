@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.263.0",
+        "changelog": "Center-align stars and stats text in rating widget.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.263.0/jellyfin-plugin-ratings_1.0.263.0.zip",
+        "checksum": "e66d56039eb67ea3d627c1cffe00b8a9",
+        "timestamp": "2026-02-12T10:30:00Z"
+      },
+      {
         "version": "1.0.262.0",
         "changelog": "Rating widget stacked layout: stars on top, text on bottom. Fixes mobile overflow.",
         "targetAbi": "10.11.0.0",
