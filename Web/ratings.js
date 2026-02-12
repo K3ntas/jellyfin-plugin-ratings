@@ -667,7 +667,7 @@
                     padding: 0.3em 0.6em;
                     display: flex;
                     flex-direction: column;
-                    align-items: flex-start;
+                    align-items: center;
                     gap: 0.15em;
                     pointer-events: auto;
                 }
