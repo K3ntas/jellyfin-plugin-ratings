@@ -740,6 +740,7 @@
                 .ratings-plugin-stats {
                     font-size: 0.9em;
                     color: #bbb;
+                    text-align: center;
                 }
 
                 .ratings-plugin-average {
