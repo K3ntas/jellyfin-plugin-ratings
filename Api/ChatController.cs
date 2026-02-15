@@ -22,6 +22,7 @@ namespace Jellyfin.Plugin.Ratings.Api
     [ApiController]
     [Route("Ratings/Chat")]
     [Produces(MediaTypeNames.Application.Json)]
+    [AllowAnonymous]
     public class ChatController : ControllerBase
     {
         private readonly RatingsRepository _repository;
