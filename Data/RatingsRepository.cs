@@ -25,6 +25,10 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
         private Dictionary<Guid, DeletionRequest> _deletionRequests;
         private Dictionary<Guid, UserBan> _userBans;
+        private List<ChatMessage> _chatMessages;
+        private Dictionary<Guid, ChatUser> _chatUsers;
+        private Dictionary<Guid, ChatModerator> _chatModerators;
+        private Dictionary<Guid, ChatBan> _chatBans;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -42,6 +46,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
             _deletionRequests = new Dictionary<Guid, DeletionRequest>();
             _userBans = new Dictionary<Guid, UserBan>();
+            _chatMessages = new List<ChatMessage>();
+            _chatUsers = new Dictionary<Guid, ChatUser>();
+            _chatModerators = new Dictionary<Guid, ChatModerator>();
+            _chatBans = new Dictionary<Guid, ChatBan>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -53,6 +61,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadScheduledDeletions();
             LoadDeletionRequests();
             LoadUserBans();
+            LoadChatMessages();
+            LoadChatUsers();
+            LoadChatModerators();
+            LoadChatBans();
         }
 
         /// <summary>
@@ -1073,6 +1085,540 @@ namespace Jellyfin.Plugin.Ratings.Data
                 }
 
                 return false;
+            }
+        }
+
+        // Chat Message Methods
+
+        /// <summary>
+        /// Loads chat messages from disk.
+        /// </summary>
+        private void LoadChatMessages()
+        {
+            try
+            {
+                var messagesFile = Path.Combine(_dataPath, "chat_messages.json");
+                if (File.Exists(messagesFile))
+                {
+                    var json = File.ReadAllText(messagesFile);
+                    var messages = JsonSerializer.Deserialize<List<ChatMessage>>(json);
+                    if (messages != null)
+                    {
+                        _chatMessages = messages;
+                        _logger.LogInformation("Loaded {Count} chat messages from disk", _chatMessages.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading chat messages from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves chat messages to disk.
+        /// </summary>
+        private async Task SaveChatMessagesAsync()
+        {
+            try
+            {
+                var messagesFile = Path.Combine(_dataPath, "chat_messages.json");
+                var json = JsonSerializer.Serialize(_chatMessages, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving chat messages to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a new chat message.
+        /// </summary>
+        public async Task<ChatMessage> AddChatMessageAsync(ChatMessage message)
+        {
+            lock (_lock)
+            {
+                _chatMessages.Add(message);
+                // Keep only last 1000 messages in memory
+                while (_chatMessages.Count > 1000)
+                {
+                    _chatMessages.RemoveAt(0);
+                }
+                _ = SaveChatMessagesAsync();
+                return message;
+            }
+        }
+
+        /// <summary>
+        /// Gets recent chat messages.
+        /// </summary>
+        public List<ChatMessage> GetRecentChatMessages(int count = 100, DateTime? since = null)
+        {
+            lock (_lock)
+            {
+                var query = _chatMessages.AsEnumerable();
+                if (since.HasValue)
+                {
+                    query = query.Where(m => m.Timestamp > since.Value);
+                }
+                return query.OrderByDescending(m => m.Timestamp).Take(count).Reverse().ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets a chat message by ID.
+        /// </summary>
+        public ChatMessage? GetChatMessageById(Guid messageId)
+        {
+            lock (_lock)
+            {
+                return _chatMessages.FirstOrDefault(m => m.Id == messageId);
+            }
+        }
+
+        /// <summary>
+        /// Soft deletes a chat message.
+        /// </summary>
+        public async Task<bool> DeleteChatMessageAsync(Guid messageId, Guid deletedBy)
+        {
+            lock (_lock)
+            {
+                var message = _chatMessages.FirstOrDefault(m => m.Id == messageId);
+                if (message != null)
+                {
+                    message.IsDeleted = true;
+                    message.DeletedBy = deletedBy;
+                    message.DeletedAt = DateTime.UtcNow;
+                    _ = SaveChatMessagesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cleans up old chat messages.
+        /// </summary>
+        public async Task<int> CleanupOldChatMessagesAsync(int retentionDays)
+        {
+            if (retentionDays <= 0) return 0;
+            lock (_lock)
+            {
+                var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+                var removed = _chatMessages.RemoveAll(m => m.Timestamp < cutoff);
+                if (removed > 0)
+                {
+                    _ = SaveChatMessagesAsync();
+                    _logger.LogInformation("Cleaned up {Count} old chat messages", removed);
+                }
+                return removed;
+            }
+        }
+
+        /// <summary>
+        /// Clears all chat messages (admin action).
+        /// </summary>
+        public async Task ClearAllChatMessagesAsync()
+        {
+            lock (_lock)
+            {
+                var count = _chatMessages.Count;
+                _chatMessages.Clear();
+                _logger.LogInformation("Cleared all {Count} chat messages", count);
+            }
+            await SaveChatMessagesAsync();
+        }
+
+        /// <summary>
+        /// Gets unread message count for a user.
+        /// </summary>
+        public int GetUnreadChatMessageCount(Guid userId, Guid? lastSeenMessageId)
+        {
+            lock (_lock)
+            {
+                if (!lastSeenMessageId.HasValue)
+                {
+                    return _chatMessages.Count(m => !m.IsDeleted);
+                }
+                var lastSeenMsg = _chatMessages.FirstOrDefault(m => m.Id == lastSeenMessageId.Value);
+                if (lastSeenMsg == null) return _chatMessages.Count(m => !m.IsDeleted);
+                return _chatMessages.Count(m => !m.IsDeleted && m.Timestamp > lastSeenMsg.Timestamp);
+            }
+        }
+
+        // Chat User Methods
+
+        /// <summary>
+        /// Loads chat users from disk.
+        /// </summary>
+        private void LoadChatUsers()
+        {
+            try
+            {
+                var usersFile = Path.Combine(_dataPath, "chat_users.json");
+                if (File.Exists(usersFile))
+                {
+                    var json = File.ReadAllText(usersFile);
+                    var users = JsonSerializer.Deserialize<List<ChatUser>>(json);
+                    if (users != null)
+                    {
+                        _chatUsers = users.ToDictionary(u => u.UserId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading chat users from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves chat users to disk.
+        /// </summary>
+        private async Task SaveChatUsersAsync()
+        {
+            try
+            {
+                var usersFile = Path.Combine(_dataPath, "chat_users.json");
+                var json = JsonSerializer.Serialize(_chatUsers.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(usersFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving chat users to disk");
+            }
+        }
+
+        /// <summary>
+        /// Updates user presence/heartbeat.
+        /// </summary>
+        public async Task UpdateChatUserPresenceAsync(Guid userId, string userName, string? avatar, bool isAdmin)
+        {
+            lock (_lock)
+            {
+                var isModerator = _chatModerators.Values.Any(m => m.UserId == userId);
+                if (_chatUsers.ContainsKey(userId))
+                {
+                    _chatUsers[userId].LastSeen = DateTime.UtcNow;
+                    _chatUsers[userId].UserName = userName;
+                    _chatUsers[userId].Avatar = avatar;
+                    _chatUsers[userId].IsAdmin = isAdmin;
+                    _chatUsers[userId].IsModerator = isModerator;
+                }
+                else
+                {
+                    _chatUsers[userId] = new ChatUser
+                    {
+                        UserId = userId,
+                        UserName = userName,
+                        Avatar = avatar,
+                        LastSeen = DateTime.UtcNow,
+                        IsAdmin = isAdmin,
+                        IsModerator = isModerator
+                    };
+                }
+                _ = SaveChatUsersAsync();
+            }
+        }
+
+        /// <summary>
+        /// Sets typing status for a user.
+        /// </summary>
+        public void SetChatUserTyping(Guid userId, bool isTyping)
+        {
+            lock (_lock)
+            {
+                if (_chatUsers.ContainsKey(userId))
+                {
+                    _chatUsers[userId].IsTyping = isTyping;
+                    _chatUsers[userId].TypingStarted = isTyping ? DateTime.UtcNow : null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if a chat user has admin status.
+        /// </summary>
+        public bool IsChatUserAdmin(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _chatUsers.TryGetValue(userId, out var user) && user.IsAdmin;
+            }
+        }
+
+        /// <summary>
+        /// Updates the last seen message for a user.
+        /// </summary>
+        public async Task UpdateLastSeenMessageAsync(Guid userId, Guid messageId)
+        {
+            lock (_lock)
+            {
+                if (_chatUsers.ContainsKey(userId))
+                {
+                    _chatUsers[userId].LastSeenMessageId = messageId;
+                    _ = SaveChatUsersAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets online users (active in last N minutes).
+        /// </summary>
+        public List<ChatUser> GetOnlineChatUsers(int activeMinutes = 5)
+        {
+            lock (_lock)
+            {
+                var cutoff = DateTime.UtcNow.AddMinutes(-activeMinutes);
+                // Clear stale typing indicators (older than 10 seconds)
+                var typingCutoff = DateTime.UtcNow.AddSeconds(-10);
+                foreach (var user in _chatUsers.Values)
+                {
+                    if (user.IsTyping && user.TypingStarted.HasValue && user.TypingStarted.Value < typingCutoff)
+                    {
+                        user.IsTyping = false;
+                        user.TypingStarted = null;
+                    }
+                }
+                return _chatUsers.Values.Where(u => u.LastSeen > cutoff).OrderBy(u => u.UserName).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets a chat user by ID.
+        /// </summary>
+        public ChatUser? GetChatUser(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _chatUsers.ContainsKey(userId) ? _chatUsers[userId] : null;
+            }
+        }
+
+        // Chat Moderator Methods
+
+        /// <summary>
+        /// Loads chat moderators from disk.
+        /// </summary>
+        private void LoadChatModerators()
+        {
+            try
+            {
+                var modsFile = Path.Combine(_dataPath, "chat_moderators.json");
+                if (File.Exists(modsFile))
+                {
+                    var json = File.ReadAllText(modsFile);
+                    var mods = JsonSerializer.Deserialize<List<ChatModerator>>(json);
+                    if (mods != null)
+                    {
+                        _chatModerators = mods.ToDictionary(m => m.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading chat moderators from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves chat moderators to disk.
+        /// </summary>
+        private async Task SaveChatModeratorsAsync()
+        {
+            try
+            {
+                var modsFile = Path.Combine(_dataPath, "chat_moderators.json");
+                var json = JsonSerializer.Serialize(_chatModerators.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(modsFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving chat moderators to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a chat moderator.
+        /// </summary>
+        public async Task<ChatModerator> AddChatModeratorAsync(ChatModerator moderator)
+        {
+            lock (_lock)
+            {
+                _chatModerators[moderator.Id] = moderator;
+                // Update user's moderator status
+                if (_chatUsers.ContainsKey(moderator.UserId))
+                {
+                    _chatUsers[moderator.UserId].IsModerator = true;
+                }
+                _ = SaveChatModeratorsAsync();
+                return moderator;
+            }
+        }
+
+        /// <summary>
+        /// Removes a chat moderator.
+        /// </summary>
+        public async Task<bool> RemoveChatModeratorAsync(Guid moderatorId)
+        {
+            lock (_lock)
+            {
+                if (_chatModerators.ContainsKey(moderatorId))
+                {
+                    var mod = _chatModerators[moderatorId];
+                    _chatModerators.Remove(moderatorId);
+                    // Update user's moderator status
+                    if (_chatUsers.ContainsKey(mod.UserId))
+                    {
+                        _chatUsers[mod.UserId].IsModerator = false;
+                    }
+                    _ = SaveChatModeratorsAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets all chat moderators.
+        /// </summary>
+        public List<ChatModerator> GetAllChatModerators()
+        {
+            lock (_lock)
+            {
+                return _chatModerators.Values.OrderBy(m => m.UserName).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user is a chat moderator.
+        /// </summary>
+        public bool IsChatModerator(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _chatModerators.Values.Any(m => m.UserId == userId);
+            }
+        }
+
+        /// <summary>
+        /// Gets moderator by user ID.
+        /// </summary>
+        public ChatModerator? GetChatModeratorByUserId(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _chatModerators.Values.FirstOrDefault(m => m.UserId == userId);
+            }
+        }
+
+        // Chat Ban Methods
+
+        /// <summary>
+        /// Loads chat bans from disk.
+        /// </summary>
+        private void LoadChatBans()
+        {
+            try
+            {
+                var bansFile = Path.Combine(_dataPath, "chat_bans.json");
+                if (File.Exists(bansFile))
+                {
+                    var json = File.ReadAllText(bansFile);
+                    var bans = JsonSerializer.Deserialize<List<ChatBan>>(json);
+                    if (bans != null)
+                    {
+                        _chatBans = bans.ToDictionary(b => b.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading chat bans from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves chat bans to disk.
+        /// </summary>
+        private async Task SaveChatBansAsync()
+        {
+            try
+            {
+                var bansFile = Path.Combine(_dataPath, "chat_bans.json");
+                var json = JsonSerializer.Serialize(_chatBans.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(bansFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving chat bans to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a chat ban.
+        /// </summary>
+        public async Task<ChatBan> AddChatBanAsync(ChatBan ban)
+        {
+            lock (_lock)
+            {
+                _chatBans[ban.Id] = ban;
+                _ = SaveChatBansAsync();
+                return ban;
+            }
+        }
+
+        /// <summary>
+        /// Removes a chat ban.
+        /// </summary>
+        public async Task<bool> RemoveChatBanAsync(Guid banId)
+        {
+            lock (_lock)
+            {
+                if (_chatBans.ContainsKey(banId))
+                {
+                    _chatBans.Remove(banId);
+                    _ = SaveChatBansAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets active chat ban for a user by type.
+        /// </summary>
+        public ChatBan? GetActiveChatBan(Guid userId, string banType)
+        {
+            lock (_lock)
+            {
+                return _chatBans.Values.FirstOrDefault(b =>
+                    b.UserId == userId &&
+                    b.BanType == banType &&
+                    b.IsActive);
+            }
+        }
+
+        /// <summary>
+        /// Gets all active chat bans.
+        /// </summary>
+        public List<ChatBan> GetAllActiveChatBans()
+        {
+            lock (_lock)
+            {
+                return _chatBans.Values.Where(b => b.IsActive).OrderByDescending(b => b.BannedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets all chat bans for a user.
+        /// </summary>
+        public List<ChatBan> GetChatBansForUser(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _chatBans.Values.Where(b => b.UserId == userId).OrderByDescending(b => b.BannedAt).ToList();
             }
         }
     }
