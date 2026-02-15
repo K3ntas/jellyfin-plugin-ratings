@@ -73,6 +73,9 @@ namespace Jellyfin.Plugin.Ratings.Configuration
 
             // Badge display profiles (JSON array of resolution-based profiles)
             BadgeDisplayProfiles = string.Empty;
+
+            // Language settings
+            DefaultLanguage = "en";
         }
 
         /// <summary>
@@ -279,5 +282,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Format: [{"minWidth":0,"maxWidth":1920,"offsetX":0,"offsetY":0,"hideText":false,"sizePercent":0,"removeBackground":false}]
         /// </summary>
         public string BadgeDisplayProfiles { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default language for the plugin UI.
+        /// Supported: en, es, zh, pt, ru, ja, de, fr, ko, it, tr, pl, nl, ar, hi, lt
+        /// </summary>
+        public string DefaultLanguage { get; set; }
     }
 }

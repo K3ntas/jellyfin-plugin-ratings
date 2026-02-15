@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.274.0",
+        "changelog": "Multi-language localization system with 16 languages: English, Spanish, Chinese, Portuguese, Russian, Japanese, German, French, Korean, Italian, Turkish, Polish, Dutch, Arabic, Hindi, Lithuanian. Language selector dropdown in UI, admin can set default language.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.274.0/jellyfin-plugin-ratings_1.0.274.0.zip",
+        "checksum": "7bbe9ef9bdf741f7ab29fd67cef31cc3",
+        "timestamp": "2026-02-15T16:15:00Z"
+      },
+      {
         "version": "1.0.273.0",
         "changelog": "Settings redesign, badge display profiles with H/V axis, rating widget repositioned above detail ribbon with responsive mobile layout.",
         "targetAbi": "10.11.0.0",
@@ -79,14 +87,6 @@
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.245.0/jellyfin-plugin-ratings_1.0.245.0.zip",
         "checksum": "53629658871eef9b83d3baef9b6677cd",
         "timestamp": "2026-02-08T23:10:00Z"
-      },
-      {
-        "version": "1.0.244.0",
-        "changelog": "Redesigned notification toggle - replaced slide switch with clean bell icon and red cross overlay when disabled.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.244.0/jellyfin-plugin-ratings_1.0.244.0.zip",
-        "checksum": "314f56a0e411a0cdd75c1b0539470176",
-        "timestamp": "2026-02-08T22:55:00Z"
       }
     ]
   }
