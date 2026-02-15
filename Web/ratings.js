@@ -13703,8 +13703,12 @@
          */
         createChatWindow: function () {
             const self = this;
+            console.log('[Chat] createChatWindow called');
 
-            if (document.getElementById('chatWindow')) return;
+            if (document.getElementById('chatWindow')) {
+                console.log('[Chat] Chat window already exists');
+                return;
+            }
 
             const chatHtml = `
                 <div id="chatWindow">
@@ -13776,6 +13780,9 @@
             const div = document.createElement('div');
             div.innerHTML = chatHtml;
             document.body.appendChild(div.firstElementChild);
+            console.log('[Chat] Chat window created and added to DOM');
+            console.log('[Chat] Verifying elements - chatMessages:', !!document.getElementById('chatMessages'));
+            console.log('[Chat] Verifying elements - chatEmpty:', !!document.getElementById('chatEmpty'));
 
             // Bind events
             this.bindChatEvents();
@@ -14102,7 +14109,10 @@
 
             // Check if chat window exists
             if (!container || !empty) {
-                console.log('[Chat] renderChatMessages: Chat window not found, skipping render');
+                console.log('[Chat] renderChatMessages: Chat window not found');
+                console.log('[Chat] chatWindow exists:', !!document.getElementById('chatWindow'));
+                console.log('[Chat] chatMessages exists:', !!container);
+                console.log('[Chat] chatEmpty exists:', !!empty);
                 return;
             }
 
