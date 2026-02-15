@@ -13,6 +13,26 @@
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
 
+        // Chat state
+        chatEnabled: false, // Whether chat feature is enabled (loaded from config)
+        chatConfig: null, // Chat configuration from server
+        chatOpen: false, // Whether chat window is open
+        chatMessages: [], // Current chat messages
+        chatUsers: [], // Online users
+        chatPollingInterval: null, // Polling timer
+        chatLastMessageId: null, // Last seen message ID
+        chatUnreadCount: 0, // Unread message count
+        chatTypingUsers: [], // Users currently typing
+        chatIsAdmin: false, // Current user is admin
+        chatIsModerator: false, // Current user is moderator
+        chatBanStatus: null, // Current user's ban status
+        emojiCategories: {
+            smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
+            gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
+            hearts: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟'],
+            objects: ['🎉', '🎊', '🎁', '🎈', '🎄', '🎃', '🎂', '🍰', '🧁', '🍪', '🍩', '🍦', '☕', '🍵', '🍺', '🍻', '🥂', '🍾', '🎮', '🎲', '🎯', '🎳', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓', '🏸', '🏒', '🥊', '🛹', '🎿', '⛷️', '🏂', '🏋️', '🤸', '🤼', '🤽', '🧗', '🚴', '🏍️', '🚗', '✈️', '🚀', '🛸']
+        },
+
         // Supported languages: en, es, zh, pt, ru, ja, de, fr, ko, it, tr, pl, nl, ar, hi, lt
         translations: {
             en: {
@@ -49,7 +69,17 @@
                 deleteRequest: 'Delete Request', deleteMedia: 'Delete Media', rejectionReasonPrompt: 'Enter rejection reason (optional):', rejectionReasonLabel: 'Reason:',
                 deletionLimitReached: 'Maximum deletion requests reached for this item', banUser: 'Ban', unbanUser: 'Unban', bannedUsers: 'Banned Users',
                 ban1Day: '1 Day', ban1Week: '1 Week', ban1Month: '1 Month', banPermanent: 'Permanent', banExpires: 'Expires:', banPermanentLabel: 'Permanent',
-                bannedBy: 'by', noBannedUsers: 'No banned users', youAreBanned: 'You are banned from this action', banSuccess: 'User banned successfully', unbanSuccess: 'User unbanned successfully'
+                bannedBy: 'by', noBannedUsers: 'No banned users', youAreBanned: 'You are banned from this action', banSuccess: 'User banned successfully', unbanSuccess: 'User unbanned successfully',
+                // Chat translations
+                liveChat: 'Live Chat', chatOnline: 'online', chatTyping: 'is typing...', chatTypingMultiple: 'are typing...',
+                chatSend: 'Send', chatPlaceholder: 'Type a message...', chatNoMessages: 'No messages yet. Start the conversation!',
+                chatSearchGif: 'Search GIFs...', chatTrending: 'Trending', chatPoweredBy: 'Powered by Tenor',
+                chatDeleted: 'Message deleted', chatYou: 'You', chatJustNow: 'Just now', chatMinutesAgo: 'm ago', chatHoursAgo: 'h ago', chatYesterday: 'Yesterday',
+                chatModerators: 'Moderators', chatAddMod: 'Add Moderator', chatRemoveMod: 'Remove', chatBannedUsers: 'Banned Users',
+                chatBan: 'Ban', chatUnban: 'Unban', chatMute: 'Mute', chatBanFromMedia: 'Ban from Media', chatMinutes: 'minutes',
+                chatBanned: 'You are banned from chat', chatMuted: 'You are temporarily muted', chatRateLimited: 'Slow down! Too many messages.',
+                chatConnecting: 'Connecting...', chatReconnecting: 'Reconnecting...', chatDisconnected: 'Disconnected',
+                chatClearAll: 'Clear All', chatClearConfirm: 'Delete all chat messages? This cannot be undone.', chatCleared: 'Chat cleared'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -85,7 +115,16 @@
                 deleteRequest: 'Eliminar Solicitud', deleteMedia: 'Eliminar Contenido', rejectionReasonPrompt: 'Motivo del rechazo (opcional):', rejectionReasonLabel: 'Motivo:',
                 deletionLimitReached: 'Límite de solicitudes alcanzado', banUser: 'Banear', unbanUser: 'Desbanear', bannedUsers: 'Usuarios Baneados',
                 ban1Day: '1 Día', ban1Week: '1 Semana', ban1Month: '1 Mes', banPermanent: 'Permanente', banExpires: 'Expira:', banPermanentLabel: 'Permanente',
-                bannedBy: 'por', noBannedUsers: 'Sin usuarios baneados', youAreBanned: 'Estás baneado de esta acción', banSuccess: 'Usuario baneado', unbanSuccess: 'Usuario desbaneado'
+                bannedBy: 'por', noBannedUsers: 'Sin usuarios baneados', youAreBanned: 'Estás baneado de esta acción', banSuccess: 'Usuario baneado', unbanSuccess: 'Usuario desbaneado',
+                liveChat: 'Chat en Vivo', chatOnline: 'en línea', chatTyping: 'está escribiendo...', chatTypingMultiple: 'están escribiendo...',
+                chatSend: 'Enviar', chatPlaceholder: 'Escribe un mensaje...', chatNoMessages: 'Sin mensajes. ¡Inicia la conversación!',
+                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendencias', chatPoweredBy: 'Desarrollado por Tenor',
+                chatDeleted: 'Mensaje eliminado', chatYou: 'Tú', chatJustNow: 'Ahora', chatMinutesAgo: 'm', chatHoursAgo: 'h', chatYesterday: 'Ayer',
+                chatModerators: 'Moderadores', chatAddMod: 'Agregar Moderador', chatRemoveMod: 'Quitar', chatBannedUsers: 'Usuarios Baneados',
+                chatBan: 'Banear', chatUnban: 'Desbanear', chatMute: 'Silenciar', chatBanFromMedia: 'Banear de Media', chatMinutes: 'minutos',
+                chatBanned: 'Estás baneado del chat', chatMuted: 'Estás temporalmente silenciado', chatRateLimited: '¡Más despacio! Demasiados mensajes.',
+                chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
+                chatClearAll: 'Limpiar Todo', chatClearConfirm: '¿Eliminar todos los mensajes? Esto no se puede deshacer.', chatCleared: 'Chat limpiado'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -121,7 +160,16 @@
                 deleteRequest: '删除请求', deleteMedia: '删除媒体', rejectionReasonPrompt: '输入拒绝原因（可选）：', rejectionReasonLabel: '原因：',
                 deletionLimitReached: '已达到删除请求上限', banUser: '封禁', unbanUser: '解封', bannedUsers: '已封禁用户',
                 ban1Day: '1天', ban1Week: '1周', ban1Month: '1个月', banPermanent: '永久', banExpires: '到期：', banPermanentLabel: '永久',
-                bannedBy: '由', noBannedUsers: '没有封禁用户', youAreBanned: '您已被禁止此操作', banSuccess: '用户已封禁', unbanSuccess: '用户已解封'
+                bannedBy: '由', noBannedUsers: '没有封禁用户', youAreBanned: '您已被禁止此操作', banSuccess: '用户已封禁', unbanSuccess: '用户已解封',
+                liveChat: '实时聊天', chatOnline: '在线', chatTyping: '正在输入...', chatTypingMultiple: '正在输入...',
+                chatSend: '发送', chatPlaceholder: '输入消息...', chatNoMessages: '暂无消息，开始聊天吧！',
+                chatSearchGif: '搜索GIF...', chatTrending: '热门', chatPoweredBy: '由Tenor提供',
+                chatDeleted: '消息已删除', chatYou: '你', chatJustNow: '刚刚', chatMinutesAgo: '分钟前', chatHoursAgo: '小时前', chatYesterday: '昨天',
+                chatModerators: '管理员', chatAddMod: '添加管理员', chatRemoveMod: '移除', chatBannedUsers: '已封禁用户',
+                chatBan: '封禁', chatUnban: '解封', chatMute: '禁言', chatBanFromMedia: '禁止访问媒体', chatMinutes: '分钟',
+                chatBanned: '您已被禁止聊天', chatMuted: '您已被临时禁言', chatRateLimited: '请慢一点！消息太多了。',
+                chatConnecting: '连接中...', chatReconnecting: '重新连接中...', chatDisconnected: '已断开连接',
+                chatClearAll: '清除全部', chatClearConfirm: '删除所有聊天消息？此操作无法撤销。', chatCleared: '聊天已清除'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -157,7 +205,16 @@
                 deleteRequest: 'Excluir Solicitação', deleteMedia: 'Excluir Mídia', rejectionReasonPrompt: 'Motivo da rejeição (opcional):', rejectionReasonLabel: 'Motivo:',
                 deletionLimitReached: 'Limite de solicitações atingido', banUser: 'Banir', unbanUser: 'Desbanir', bannedUsers: 'Usuários Banidos',
                 ban1Day: '1 Dia', ban1Week: '1 Semana', ban1Month: '1 Mês', banPermanent: 'Permanente', banExpires: 'Expira:', banPermanentLabel: 'Permanente',
-                bannedBy: 'por', noBannedUsers: 'Sem usuários banidos', youAreBanned: 'Você está banido desta ação', banSuccess: 'Usuário banido', unbanSuccess: 'Usuário desbanido'
+                bannedBy: 'por', noBannedUsers: 'Sem usuários banidos', youAreBanned: 'Você está banido desta ação', banSuccess: 'Usuário banido', unbanSuccess: 'Usuário desbanido',
+                liveChat: 'Chat ao Vivo', chatOnline: 'online', chatTyping: 'está digitando...', chatTypingMultiple: 'estão digitando...',
+                chatSend: 'Enviar', chatPlaceholder: 'Digite uma mensagem...', chatNoMessages: 'Sem mensagens. Inicie a conversa!',
+                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendências', chatPoweredBy: 'Desenvolvido por Tenor',
+                chatDeleted: 'Mensagem excluída', chatYou: 'Você', chatJustNow: 'Agora', chatMinutesAgo: 'm', chatHoursAgo: 'h', chatYesterday: 'Ontem',
+                chatModerators: 'Moderadores', chatAddMod: 'Adicionar Moderador', chatRemoveMod: 'Remover', chatBannedUsers: 'Usuários Banidos',
+                chatBan: 'Banir', chatUnban: 'Desbanir', chatMute: 'Silenciar', chatBanFromMedia: 'Banir de Mídia', chatMinutes: 'minutos',
+                chatBanned: 'Você está banido do chat', chatMuted: 'Você está temporariamente silenciado', chatRateLimited: 'Devagar! Muitas mensagens.',
+                chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
+                chatClearAll: 'Limpar Tudo', chatClearConfirm: 'Excluir todas as mensagens? Isso não pode ser desfeito.', chatCleared: 'Chat limpo'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -193,7 +250,16 @@
                 deleteRequest: 'Удалить Запрос', deleteMedia: 'Удалить Медиа', rejectionReasonPrompt: 'Причина отклонения (необязательно):', rejectionReasonLabel: 'Причина:',
                 deletionLimitReached: 'Достигнут лимит запросов', banUser: 'Заблокировать', unbanUser: 'Разблокировать', bannedUsers: 'Заблокированные',
                 ban1Day: '1 День', ban1Week: '1 Неделя', ban1Month: '1 Месяц', banPermanent: 'Навсегда', banExpires: 'Истекает:', banPermanentLabel: 'Навсегда',
-                bannedBy: 'заблокировал', noBannedUsers: 'Нет заблокированных', youAreBanned: 'Вы заблокированы', banSuccess: 'Пользователь заблокирован', unbanSuccess: 'Пользователь разблокирован'
+                bannedBy: 'заблокировал', noBannedUsers: 'Нет заблокированных', youAreBanned: 'Вы заблокированы', banSuccess: 'Пользователь заблокирован', unbanSuccess: 'Пользователь разблокирован',
+                liveChat: 'Чат', chatOnline: 'онлайн', chatTyping: 'печатает...', chatTypingMultiple: 'печатают...',
+                chatSend: 'Отправить', chatPlaceholder: 'Введите сообщение...', chatNoMessages: 'Нет сообщений. Начните разговор!',
+                chatSearchGif: 'Поиск GIF...', chatTrending: 'Популярные', chatPoweredBy: 'При поддержке Tenor',
+                chatDeleted: 'Сообщение удалено', chatYou: 'Вы', chatJustNow: 'Только что', chatMinutesAgo: 'м', chatHoursAgo: 'ч', chatYesterday: 'Вчера',
+                chatModerators: 'Модераторы', chatAddMod: 'Добавить модератора', chatRemoveMod: 'Удалить', chatBannedUsers: 'Заблокированные',
+                chatBan: 'Заблокировать', chatUnban: 'Разблокировать', chatMute: 'Заглушить', chatBanFromMedia: 'Заблокировать медиа', chatMinutes: 'минут',
+                chatBanned: 'Вы заблокированы в чате', chatMuted: 'Вы временно заглушены', chatRateLimited: 'Помедленнее! Слишком много сообщений.',
+                chatConnecting: 'Подключение...', chatReconnecting: 'Переподключение...', chatDisconnected: 'Отключено',
+                chatClearAll: 'Очистить всё', chatClearConfirm: 'Удалить все сообщения? Это действие нельзя отменить.', chatCleared: 'Чат очищен'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -229,7 +295,16 @@
                 deleteRequest: 'リクエスト削除', deleteMedia: 'メディア削除', rejectionReasonPrompt: '却下理由（任意）:', rejectionReasonLabel: '理由:',
                 deletionLimitReached: 'リクエスト上限に達しました', banUser: 'BAN', unbanUser: 'BAN解除', bannedUsers: 'BANユーザー',
                 ban1Day: '1日', ban1Week: '1週間', ban1Month: '1ヶ月', banPermanent: '永久', banExpires: '期限:', banPermanentLabel: '永久',
-                bannedBy: 'by', noBannedUsers: 'BANユーザーなし', youAreBanned: 'この操作は禁止されています', banSuccess: 'ユーザーをBANしました', unbanSuccess: 'BANを解除しました'
+                bannedBy: 'by', noBannedUsers: 'BANユーザーなし', youAreBanned: 'この操作は禁止されています', banSuccess: 'ユーザーをBANしました', unbanSuccess: 'BANを解除しました',
+                liveChat: 'ライブチャット', chatOnline: 'オンライン', chatTyping: '入力中...', chatTypingMultiple: '入力中...',
+                chatSend: '送信', chatPlaceholder: 'メッセージを入力...', chatNoMessages: 'メッセージがありません。会話を始めましょう！',
+                chatSearchGif: 'GIF検索...', chatTrending: 'トレンド', chatPoweredBy: 'Tenor提供',
+                chatDeleted: 'メッセージ削除済み', chatYou: 'あなた', chatJustNow: 'たった今', chatMinutesAgo: '分前', chatHoursAgo: '時間前', chatYesterday: '昨日',
+                chatModerators: 'モデレーター', chatAddMod: 'モデレーター追加', chatRemoveMod: '削除', chatBannedUsers: 'BANユーザー',
+                chatBan: 'BAN', chatUnban: 'BAN解除', chatMute: 'ミュート', chatBanFromMedia: 'メディアBAN', chatMinutes: '分',
+                chatBanned: 'チャットからBANされています', chatMuted: '一時的にミュートされています', chatRateLimited: '少し待ってください！メッセージが多すぎます。',
+                chatConnecting: '接続中...', chatReconnecting: '再接続中...', chatDisconnected: '切断されました',
+                chatClearAll: '全削除', chatClearConfirm: 'すべてのメッセージを削除しますか？この操作は取り消せません。', chatCleared: 'チャットを削除しました'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -265,7 +340,16 @@
                 deleteRequest: 'Anfrage Löschen', deleteMedia: 'Medien Löschen', rejectionReasonPrompt: 'Ablehnungsgrund (optional):', rejectionReasonLabel: 'Grund:',
                 deletionLimitReached: 'Anfragenlimit erreicht', banUser: 'Sperren', unbanUser: 'Entsperren', bannedUsers: 'Gesperrte Benutzer',
                 ban1Day: '1 Tag', ban1Week: '1 Woche', ban1Month: '1 Monat', banPermanent: 'Permanent', banExpires: 'Läuft ab:', banPermanentLabel: 'Permanent',
-                bannedBy: 'von', noBannedUsers: 'Keine gesperrten Benutzer', youAreBanned: 'Du bist für diese Aktion gesperrt', banSuccess: 'Benutzer gesperrt', unbanSuccess: 'Benutzer entsperrt'
+                bannedBy: 'von', noBannedUsers: 'Keine gesperrten Benutzer', youAreBanned: 'Du bist für diese Aktion gesperrt', banSuccess: 'Benutzer gesperrt', unbanSuccess: 'Benutzer entsperrt',
+                liveChat: 'Live-Chat', chatOnline: 'online', chatTyping: 'tippt...', chatTypingMultiple: 'tippen...',
+                chatSend: 'Senden', chatPlaceholder: 'Nachricht eingeben...', chatNoMessages: 'Keine Nachrichten. Starte die Unterhaltung!',
+                chatSearchGif: 'GIFs suchen...', chatTrending: 'Trends', chatPoweredBy: 'Powered by Tenor',
+                chatDeleted: 'Nachricht gelöscht', chatYou: 'Du', chatJustNow: 'Gerade eben', chatMinutesAgo: 'Min', chatHoursAgo: 'Std', chatYesterday: 'Gestern',
+                chatModerators: 'Moderatoren', chatAddMod: 'Moderator hinzufügen', chatRemoveMod: 'Entfernen', chatBannedUsers: 'Gesperrte Benutzer',
+                chatBan: 'Sperren', chatUnban: 'Entsperren', chatMute: 'Stummschalten', chatBanFromMedia: 'Von Medien sperren', chatMinutes: 'Minuten',
+                chatBanned: 'Du bist vom Chat gesperrt', chatMuted: 'Du bist vorübergehend stummgeschaltet', chatRateLimited: 'Langsamer! Zu viele Nachrichten.',
+                chatConnecting: 'Verbinden...', chatReconnecting: 'Neu verbinden...', chatDisconnected: 'Getrennt',
+                chatClearAll: 'Alle löschen', chatClearConfirm: 'Alle Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.', chatCleared: 'Chat gelöscht'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -301,7 +385,16 @@
                 deleteRequest: 'Supprimer Demande', deleteMedia: 'Supprimer Média', rejectionReasonPrompt: 'Raison du refus (optionnel):', rejectionReasonLabel: 'Raison:',
                 deletionLimitReached: 'Limite de demandes atteinte', banUser: 'Bannir', unbanUser: 'Débannir', bannedUsers: 'Utilisateurs Bannis',
                 ban1Day: '1 Jour', ban1Week: '1 Semaine', ban1Month: '1 Mois', banPermanent: 'Permanent', banExpires: 'Expire:', banPermanentLabel: 'Permanent',
-                bannedBy: 'par', noBannedUsers: 'Pas d\'utilisateurs bannis', youAreBanned: 'Vous êtes banni de cette action', banSuccess: 'Utilisateur banni', unbanSuccess: 'Utilisateur débanni'
+                bannedBy: 'par', noBannedUsers: 'Pas d\'utilisateurs bannis', youAreBanned: 'Vous êtes banni de cette action', banSuccess: 'Utilisateur banni', unbanSuccess: 'Utilisateur débanni',
+                liveChat: 'Chat en Direct', chatOnline: 'en ligne', chatTyping: 'écrit...', chatTypingMultiple: 'écrivent...',
+                chatSend: 'Envoyer', chatPlaceholder: 'Tapez un message...', chatNoMessages: 'Pas de messages. Lancez la conversation !',
+                chatSearchGif: 'Rechercher GIFs...', chatTrending: 'Tendances', chatPoweredBy: 'Propulsé par Tenor',
+                chatDeleted: 'Message supprimé', chatYou: 'Vous', chatJustNow: 'À l\'instant', chatMinutesAgo: 'min', chatHoursAgo: 'h', chatYesterday: 'Hier',
+                chatModerators: 'Modérateurs', chatAddMod: 'Ajouter Modérateur', chatRemoveMod: 'Retirer', chatBannedUsers: 'Utilisateurs Bannis',
+                chatBan: 'Bannir', chatUnban: 'Débannir', chatMute: 'Rendre muet', chatBanFromMedia: 'Bannir des Médias', chatMinutes: 'minutes',
+                chatBanned: 'Vous êtes banni du chat', chatMuted: 'Vous êtes temporairement muet', chatRateLimited: 'Doucement ! Trop de messages.',
+                chatConnecting: 'Connexion...', chatReconnecting: 'Reconnexion...', chatDisconnected: 'Déconnecté',
+                chatClearAll: 'Tout effacer', chatClearConfirm: 'Supprimer tous les messages ? Cette action est irréversible.', chatCleared: 'Chat effacé'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -337,7 +430,16 @@
                 deleteRequest: '요청 삭제', deleteMedia: '미디어 삭제', rejectionReasonPrompt: '거부 사유 (선택):', rejectionReasonLabel: '사유:',
                 deletionLimitReached: '요청 한도 도달', banUser: '차단', unbanUser: '차단 해제', bannedUsers: '차단된 사용자',
                 ban1Day: '1일', ban1Week: '1주', ban1Month: '1개월', banPermanent: '영구', banExpires: '만료:', banPermanentLabel: '영구',
-                bannedBy: '차단자', noBannedUsers: '차단된 사용자 없음', youAreBanned: '이 작업이 차단되었습니다', banSuccess: '사용자 차단됨', unbanSuccess: '차단 해제됨'
+                bannedBy: '차단자', noBannedUsers: '차단된 사용자 없음', youAreBanned: '이 작업이 차단되었습니다', banSuccess: '사용자 차단됨', unbanSuccess: '차단 해제됨',
+                liveChat: '실시간 채팅', chatOnline: '온라인', chatTyping: '입력 중...', chatTypingMultiple: '입력 중...',
+                chatSend: '전송', chatPlaceholder: '메시지 입력...', chatNoMessages: '메시지가 없습니다. 대화를 시작하세요!',
+                chatSearchGif: 'GIF 검색...', chatTrending: '인기', chatPoweredBy: 'Tenor 제공',
+                chatDeleted: '메시지 삭제됨', chatYou: '나', chatJustNow: '방금', chatMinutesAgo: '분 전', chatHoursAgo: '시간 전', chatYesterday: '어제',
+                chatModerators: '관리자', chatAddMod: '관리자 추가', chatRemoveMod: '제거', chatBannedUsers: '차단된 사용자',
+                chatBan: '차단', chatUnban: '차단 해제', chatMute: '음소거', chatBanFromMedia: '미디어 차단', chatMinutes: '분',
+                chatBanned: '채팅이 차단되었습니다', chatMuted: '일시적으로 음소거되었습니다', chatRateLimited: '잠시만요! 메시지가 너무 많습니다.',
+                chatConnecting: '연결 중...', chatReconnecting: '재연결 중...', chatDisconnected: '연결 끊김',
+                chatClearAll: '모두 삭제', chatClearConfirm: '모든 메시지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.', chatCleared: '채팅이 삭제됨'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -373,7 +475,16 @@
                 deleteRequest: 'Elimina Richiesta', deleteMedia: 'Elimina Media', rejectionReasonPrompt: 'Motivo del rifiuto (opzionale):', rejectionReasonLabel: 'Motivo:',
                 deletionLimitReached: 'Limite richieste raggiunto', banUser: 'Banna', unbanUser: 'Sbanna', bannedUsers: 'Utenti Bannati',
                 ban1Day: '1 Giorno', ban1Week: '1 Settimana', ban1Month: '1 Mese', banPermanent: 'Permanente', banExpires: 'Scade:', banPermanentLabel: 'Permanente',
-                bannedBy: 'da', noBannedUsers: 'Nessun utente bannato', youAreBanned: 'Sei bannato da questa azione', banSuccess: 'Utente bannato', unbanSuccess: 'Utente sbannato'
+                bannedBy: 'da', noBannedUsers: 'Nessun utente bannato', youAreBanned: 'Sei bannato da questa azione', banSuccess: 'Utente bannato', unbanSuccess: 'Utente sbannato',
+                liveChat: 'Chat dal Vivo', chatOnline: 'online', chatTyping: 'sta scrivendo...', chatTypingMultiple: 'stanno scrivendo...',
+                chatSend: 'Invia', chatPlaceholder: 'Scrivi un messaggio...', chatNoMessages: 'Nessun messaggio. Inizia la conversazione!',
+                chatSearchGif: 'Cerca GIF...', chatTrending: 'Tendenze', chatPoweredBy: 'Powered by Tenor',
+                chatDeleted: 'Messaggio eliminato', chatYou: 'Tu', chatJustNow: 'Adesso', chatMinutesAgo: 'min', chatHoursAgo: 'h', chatYesterday: 'Ieri',
+                chatModerators: 'Moderatori', chatAddMod: 'Aggiungi Moderatore', chatRemoveMod: 'Rimuovi', chatBannedUsers: 'Utenti Bannati',
+                chatBan: 'Banna', chatUnban: 'Sbanna', chatMute: 'Silenzia', chatBanFromMedia: 'Banna dai Media', chatMinutes: 'minuti',
+                chatBanned: 'Sei bannato dalla chat', chatMuted: 'Sei temporaneamente silenziato', chatRateLimited: 'Piano! Troppi messaggi.',
+                chatConnecting: 'Connessione...', chatReconnecting: 'Riconnessione...', chatDisconnected: 'Disconnesso',
+                chatClearAll: 'Cancella tutto', chatClearConfirm: 'Eliminare tutti i messaggi? Non può essere annullato.', chatCleared: 'Chat cancellata'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -409,7 +520,16 @@
                 deleteRequest: 'İsteği Sil', deleteMedia: 'Medyayı Sil', rejectionReasonPrompt: 'Red nedeni (isteğe bağlı):', rejectionReasonLabel: 'Neden:',
                 deletionLimitReached: 'İstek sınırına ulaşıldı', banUser: 'Yasakla', unbanUser: 'Yasağı Kaldır', bannedUsers: 'Yasaklı Kullanıcılar',
                 ban1Day: '1 Gün', ban1Week: '1 Hafta', ban1Month: '1 Ay', banPermanent: 'Kalıcı', banExpires: 'Bitiş:', banPermanentLabel: 'Kalıcı',
-                bannedBy: 'tarafından', noBannedUsers: 'Yasaklı kullanıcı yok', youAreBanned: 'Bu işlem için yasaklısınız', banSuccess: 'Kullanıcı yasaklandı', unbanSuccess: 'Yasak kaldırıldı'
+                bannedBy: 'tarafından', noBannedUsers: 'Yasaklı kullanıcı yok', youAreBanned: 'Bu işlem için yasaklısınız', banSuccess: 'Kullanıcı yasaklandı', unbanSuccess: 'Yasak kaldırıldı',
+                liveChat: 'Canlı Sohbet', chatOnline: 'çevrimiçi', chatTyping: 'yazıyor...', chatTypingMultiple: 'yazıyorlar...',
+                chatSend: 'Gönder', chatPlaceholder: 'Mesaj yazın...', chatNoMessages: 'Mesaj yok. Sohbeti başlatın!',
+                chatSearchGif: 'GIF Ara...', chatTrending: 'Trendler', chatPoweredBy: 'Tenor ile desteklenir',
+                chatDeleted: 'Mesaj silindi', chatYou: 'Sen', chatJustNow: 'Şimdi', chatMinutesAgo: 'dk', chatHoursAgo: 'sa', chatYesterday: 'Dün',
+                chatModerators: 'Moderatörler', chatAddMod: 'Moderatör Ekle', chatRemoveMod: 'Kaldır', chatBannedUsers: 'Yasaklı Kullanıcılar',
+                chatBan: 'Yasakla', chatUnban: 'Yasağı Kaldır', chatMute: 'Sustur', chatBanFromMedia: 'Medyadan Yasakla', chatMinutes: 'dakika',
+                chatBanned: 'Sohbetten yasaklandınız', chatMuted: 'Geçici olarak susturuldunuz', chatRateLimited: 'Yavaş olun! Çok fazla mesaj.',
+                chatConnecting: 'Bağlanıyor...', chatReconnecting: 'Yeniden bağlanıyor...', chatDisconnected: 'Bağlantı kesildi',
+                chatClearAll: 'Tümünü Temizle', chatClearConfirm: 'Tüm mesajları sil? Bu geri alınamaz.', chatCleared: 'Sohbet temizlendi'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -445,7 +565,16 @@
                 deleteRequest: 'Usuń Prośbę', deleteMedia: 'Usuń Media', rejectionReasonPrompt: 'Powód odrzucenia (opcjonalnie):', rejectionReasonLabel: 'Powód:',
                 deletionLimitReached: 'Osiągnięto limit próśb', banUser: 'Zbanuj', unbanUser: 'Odbanuj', bannedUsers: 'Zbanowani Użytkownicy',
                 ban1Day: '1 Dzień', ban1Week: '1 Tydzień', ban1Month: '1 Miesiąc', banPermanent: 'Na stałe', banExpires: 'Wygasa:', banPermanentLabel: 'Na stałe',
-                bannedBy: 'przez', noBannedUsers: 'Brak zbanowanych użytkowników', youAreBanned: 'Jesteś zbanowany z tej akcji', banSuccess: 'Użytkownik zbanowany', unbanSuccess: 'Użytkownik odbanowany'
+                bannedBy: 'przez', noBannedUsers: 'Brak zbanowanych użytkowników', youAreBanned: 'Jesteś zbanowany z tej akcji', banSuccess: 'Użytkownik zbanowany', unbanSuccess: 'Użytkownik odbanowany',
+                liveChat: 'Czat na żywo', chatOnline: 'online', chatTyping: 'pisze...', chatTypingMultiple: 'piszą...',
+                chatSend: 'Wyślij', chatPlaceholder: 'Napisz wiadomość...', chatNoMessages: 'Brak wiadomości. Rozpocznij rozmowę!',
+                chatSearchGif: 'Szukaj GIF...', chatTrending: 'Popularne', chatPoweredBy: 'Obsługiwane przez Tenor',
+                chatDeleted: 'Wiadomość usunięta', chatYou: 'Ty', chatJustNow: 'Teraz', chatMinutesAgo: 'min', chatHoursAgo: 'godz', chatYesterday: 'Wczoraj',
+                chatModerators: 'Moderatorzy', chatAddMod: 'Dodaj Moderatora', chatRemoveMod: 'Usuń', chatBannedUsers: 'Zbanowani Użytkownicy',
+                chatBan: 'Zbanuj', chatUnban: 'Odbanuj', chatMute: 'Wycisz', chatBanFromMedia: 'Zbanuj z Mediów', chatMinutes: 'minut',
+                chatBanned: 'Jesteś zbanowany z czatu', chatMuted: 'Jesteś tymczasowo wyciszony', chatRateLimited: 'Zwolnij! Za dużo wiadomości.',
+                chatConnecting: 'Łączenie...', chatReconnecting: 'Ponowne łączenie...', chatDisconnected: 'Rozłączono',
+                chatClearAll: 'Wyczyść wszystko', chatClearConfirm: 'Usunąć wszystkie wiadomości? Tej operacji nie można cofnąć.', chatCleared: 'Czat wyczyszczony'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -481,7 +610,16 @@
                 deleteRequest: 'Verzoek Verwijderen', deleteMedia: 'Media Verwijderen', rejectionReasonPrompt: 'Reden afwijzing (optioneel):', rejectionReasonLabel: 'Reden:',
                 deletionLimitReached: 'Verzoeklimiet bereikt', banUser: 'Blokkeren', unbanUser: 'Deblokkeren', bannedUsers: 'Geblokkeerde Gebruikers',
                 ban1Day: '1 Dag', ban1Week: '1 Week', ban1Month: '1 Maand', banPermanent: 'Permanent', banExpires: 'Verloopt:', banPermanentLabel: 'Permanent',
-                bannedBy: 'door', noBannedUsers: 'Geen geblokkeerde gebruikers', youAreBanned: 'Je bent geblokkeerd voor deze actie', banSuccess: 'Gebruiker geblokkeerd', unbanSuccess: 'Gebruiker gedeblokkeerd'
+                bannedBy: 'door', noBannedUsers: 'Geen geblokkeerde gebruikers', youAreBanned: 'Je bent geblokkeerd voor deze actie', banSuccess: 'Gebruiker geblokkeerd', unbanSuccess: 'Gebruiker gedeblokkeerd',
+                liveChat: 'Live Chat', chatOnline: 'online', chatTyping: 'typt...', chatTypingMultiple: 'typen...',
+                chatSend: 'Verstuur', chatPlaceholder: 'Typ een bericht...', chatNoMessages: 'Geen berichten. Start het gesprek!',
+                chatSearchGif: 'GIFs zoeken...', chatTrending: 'Trending', chatPoweredBy: 'Mogelijk gemaakt door Tenor',
+                chatDeleted: 'Bericht verwijderd', chatYou: 'Jij', chatJustNow: 'Zojuist', chatMinutesAgo: 'min', chatHoursAgo: 'u', chatYesterday: 'Gisteren',
+                chatModerators: 'Moderators', chatAddMod: 'Moderator Toevoegen', chatRemoveMod: 'Verwijderen', chatBannedUsers: 'Geblokkeerde Gebruikers',
+                chatBan: 'Blokkeren', chatUnban: 'Deblokkeren', chatMute: 'Dempen', chatBanFromMedia: 'Blokkeren van Media', chatMinutes: 'minuten',
+                chatBanned: 'Je bent geblokkeerd van de chat', chatMuted: 'Je bent tijdelijk gedempt', chatRateLimited: 'Rustig aan! Te veel berichten.',
+                chatConnecting: 'Verbinden...', chatReconnecting: 'Opnieuw verbinden...', chatDisconnected: 'Verbinding verbroken',
+                chatClearAll: 'Alles wissen', chatClearConfirm: 'Alle berichten verwijderen? Dit kan niet ongedaan worden gemaakt.', chatCleared: 'Chat gewist'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -517,7 +655,16 @@
                 deleteRequest: 'حذف الطلب', deleteMedia: 'حذف الوسائط', rejectionReasonPrompt: 'سبب الرفض (اختياري):', rejectionReasonLabel: 'السبب:',
                 deletionLimitReached: 'تم الوصول لحد الطلبات', banUser: 'حظر', unbanUser: 'إلغاء الحظر', bannedUsers: 'المستخدمون المحظورون',
                 ban1Day: '1 يوم', ban1Week: '1 أسبوع', ban1Month: '1 شهر', banPermanent: 'دائم', banExpires: 'ينتهي:', banPermanentLabel: 'دائم',
-                bannedBy: 'بواسطة', noBannedUsers: 'لا يوجد مستخدمون محظورون', youAreBanned: 'أنت محظور من هذا الإجراء', banSuccess: 'تم حظر المستخدم', unbanSuccess: 'تم إلغاء حظر المستخدم'
+                bannedBy: 'بواسطة', noBannedUsers: 'لا يوجد مستخدمون محظورون', youAreBanned: 'أنت محظور من هذا الإجراء', banSuccess: 'تم حظر المستخدم', unbanSuccess: 'تم إلغاء حظر المستخدم',
+                liveChat: 'الدردشة المباشرة', chatOnline: 'متصل', chatTyping: 'يكتب...', chatTypingMultiple: 'يكتبون...',
+                chatSend: 'إرسال', chatPlaceholder: 'اكتب رسالة...', chatNoMessages: 'لا توجد رسائل. ابدأ المحادثة!',
+                chatSearchGif: 'بحث GIF...', chatTrending: 'رائج', chatPoweredBy: 'مدعوم من Tenor',
+                chatDeleted: 'تم حذف الرسالة', chatYou: 'أنت', chatJustNow: 'الآن', chatMinutesAgo: 'د', chatHoursAgo: 'س', chatYesterday: 'أمس',
+                chatModerators: 'المشرفون', chatAddMod: 'إضافة مشرف', chatRemoveMod: 'إزالة', chatBannedUsers: 'المستخدمون المحظورون',
+                chatBan: 'حظر', chatUnban: 'إلغاء الحظر', chatMute: 'كتم', chatBanFromMedia: 'حظر من الوسائط', chatMinutes: 'دقائق',
+                chatBanned: 'أنت محظور من الدردشة', chatMuted: 'أنت مكتوم مؤقتاً', chatRateLimited: 'ببطء! رسائل كثيرة جداً.',
+                chatConnecting: 'جاري الاتصال...', chatReconnecting: 'إعادة الاتصال...', chatDisconnected: 'غير متصل',
+                chatClearAll: 'مسح الكل', chatClearConfirm: 'حذف جميع الرسائل؟ لا يمكن التراجع عن هذا.', chatCleared: 'تم مسح الدردشة'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -553,7 +700,16 @@
                 deleteRequest: 'अनुरोध हटाएं', deleteMedia: 'मीडिया हटाएं', rejectionReasonPrompt: 'अस्वीकृति का कारण (वैकल्पिक):', rejectionReasonLabel: 'कारण:',
                 deletionLimitReached: 'अनुरोध सीमा पूरी हुई', banUser: 'प्रतिबंध', unbanUser: 'प्रतिबंध हटाएं', bannedUsers: 'प्रतिबंधित उपयोगकर्ता',
                 ban1Day: '1 दिन', ban1Week: '1 सप्ताह', ban1Month: '1 महीना', banPermanent: 'स्थायी', banExpires: 'समाप्ति:', banPermanentLabel: 'स्थायी',
-                bannedBy: 'द्वारा', noBannedUsers: 'कोई प्रतिबंधित उपयोगकर्ता नहीं', youAreBanned: 'आप इस क्रिया से प्रतिबंधित हैं', banSuccess: 'उपयोगकर्ता प्रतिबंधित', unbanSuccess: 'प्रतिबंध हटाया गया'
+                bannedBy: 'द्वारा', noBannedUsers: 'कोई प्रतिबंधित उपयोगकर्ता नहीं', youAreBanned: 'आप इस क्रिया से प्रतिबंधित हैं', banSuccess: 'उपयोगकर्ता प्रतिबंधित', unbanSuccess: 'प्रतिबंध हटाया गया',
+                liveChat: 'लाइव चैट', chatOnline: 'ऑनलाइन', chatTyping: 'टाइप कर रहा है...', chatTypingMultiple: 'टाइप कर रहे हैं...',
+                chatSend: 'भेजें', chatPlaceholder: 'संदेश लिखें...', chatNoMessages: 'कोई संदेश नहीं। बातचीत शुरू करें!',
+                chatSearchGif: 'GIF खोजें...', chatTrending: 'ट्रेंडिंग', chatPoweredBy: 'Tenor द्वारा संचालित',
+                chatDeleted: 'संदेश हटाया गया', chatYou: 'आप', chatJustNow: 'अभी', chatMinutesAgo: 'मिनट', chatHoursAgo: 'घंटे', chatYesterday: 'कल',
+                chatModerators: 'मॉडरेटर', chatAddMod: 'मॉडरेटर जोड़ें', chatRemoveMod: 'हटाएं', chatBannedUsers: 'प्रतिबंधित उपयोगकर्ता',
+                chatBan: 'प्रतिबंध', chatUnban: 'प्रतिबंध हटाएं', chatMute: 'म्यूट', chatBanFromMedia: 'मीडिया से प्रतिबंध', chatMinutes: 'मिनट',
+                chatBanned: 'आप चैट से प्रतिबंधित हैं', chatMuted: 'आप अस्थायी रूप से म्यूट हैं', chatRateLimited: 'धीरे! बहुत सारे संदेश।',
+                chatConnecting: 'कनेक्ट हो रहा है...', chatReconnecting: 'पुनः कनेक्ट हो रहा है...', chatDisconnected: 'डिस्कनेक्ट',
+                chatClearAll: 'सब साफ करें', chatClearConfirm: 'सभी संदेश हटाएं? यह पूर्ववत नहीं किया जा सकता।', chatCleared: 'चैट साफ़ हो गई'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -589,7 +745,16 @@
                 deleteRequest: 'Ištrinti Užklausą', deleteMedia: 'Ištrinti Mediją', rejectionReasonPrompt: 'Atmetimo priežastis (neprivaloma):', rejectionReasonLabel: 'Priežastis:',
                 deletionLimitReached: 'Pasiektas užklausų limitas', banUser: 'Uždrausti', unbanUser: 'Atblokuoti', bannedUsers: 'Uždrausti Vartotojai',
                 ban1Day: '1 Diena', ban1Week: '1 Savaitė', ban1Month: '1 Mėnuo', banPermanent: 'Visam laikui', banExpires: 'Baigiasi:', banPermanentLabel: 'Visam laikui',
-                bannedBy: 'uždraudė', noBannedUsers: 'Nėra uždraustų vartotojų', youAreBanned: 'Jums uždrausta atlikti šį veiksmą', banSuccess: 'Vartotojas uždraustas', unbanSuccess: 'Vartotojas atblokuotas'
+                bannedBy: 'uždraudė', noBannedUsers: 'Nėra uždraustų vartotojų', youAreBanned: 'Jums uždrausta atlikti šį veiksmą', banSuccess: 'Vartotojas uždraustas', unbanSuccess: 'Vartotojas atblokuotas',
+                liveChat: 'Pokalbiai', chatOnline: 'prisijungę', chatTyping: 'rašo...', chatTypingMultiple: 'rašo...',
+                chatSend: 'Siųsti', chatPlaceholder: 'Rašykite žinutę...', chatNoMessages: 'Žinučių nėra. Pradėkite pokalbį!',
+                chatSearchGif: 'Ieškoti GIF...', chatTrending: 'Populiarūs', chatPoweredBy: 'Veikia su Tenor',
+                chatDeleted: 'Žinutė ištrinta', chatYou: 'Jūs', chatJustNow: 'Ką tik', chatMinutesAgo: 'min', chatHoursAgo: 'val', chatYesterday: 'Vakar',
+                chatModerators: 'Moderatoriai', chatAddMod: 'Pridėti Moderatorių', chatRemoveMod: 'Pašalinti', chatBannedUsers: 'Uždrausti Vartotojai',
+                chatBan: 'Uždrausti', chatUnban: 'Atblokuoti', chatMute: 'Nutildyti', chatBanFromMedia: 'Uždrausti Mediją', chatMinutes: 'minučių',
+                chatBanned: 'Jums uždrausta rašyti', chatMuted: 'Jūs laikinai nutildytas', chatRateLimited: 'Lėčiau! Per daug žinučių.',
+                chatConnecting: 'Jungiamasi...', chatReconnecting: 'Jungiantis iš naujo...', chatDisconnected: 'Atsijungta',
+                chatClearAll: 'Išvalyti viską', chatClearConfirm: 'Ištrinti visas žinutes? Šio veiksmo negalima atšaukti.', chatCleared: 'Pokalbis išvalytas'
             }
         },
 
@@ -824,6 +989,9 @@
 
             // Load EnableRatings flag from config (with retry for ApiClient)
             this.loadRatingsEnabledFlag();
+
+            // Initialize chat feature
+            this.initChatWithRetry();
         },
 
         /**
@@ -4832,6 +5000,664 @@
                     .media-item-image {
                         width: 30px;
                         height: 45px;
+                    }
+                }
+
+                /* ============ LIVE CHAT STYLES ============ */
+
+                /* Chat Button - replaces Cast button position */
+                #chatBtn {
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    position: relative !important;
+                    transition: opacity 0.2s ease !important;
+                }
+
+                #chatBtn:hover {
+                    opacity: 0.7 !important;
+                }
+
+                #chatBtn.hidden {
+                    display: none !important;
+                }
+
+                #chatBtnIcon {
+                    font-size: 24px !important;
+                }
+
+                /* Chat notification badge */
+                .chat-badge {
+                    position: absolute !important;
+                    top: 2px !important;
+                    right: 2px !important;
+                    background: #ff4444 !important;
+                    color: white !important;
+                    border-radius: 50% !important;
+                    min-width: 18px !important;
+                    height: 18px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 10px !important;
+                    font-weight: 700 !important;
+                    border: 2px solid #1e1e1e !important;
+                    animation: badgePulse 1.5s ease-in-out infinite !important;
+                    padding: 0 4px !important;
+                }
+
+                .chat-badge.hidden {
+                    display: none !important;
+                }
+
+                /* Chat Window Container */
+                #chatWindow {
+                    position: fixed !important;
+                    bottom: 80px !important;
+                    right: 20px !important;
+                    width: 380px !important;
+                    height: 550px !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+                    z-index: 999999 !important;
+                    display: none;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                }
+
+                #chatWindow.visible {
+                    display: flex !important;
+                }
+
+                /* Chat Header */
+                .chat-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 12px 16px !important;
+                    background: #252525 !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-header-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                }
+
+                .chat-header-title {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                }
+
+                .chat-online-count {
+                    font-size: 12px !important;
+                    color: #4CAF50 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 4px !important;
+                }
+
+                .chat-online-dot {
+                    width: 8px !important;
+                    height: 8px !important;
+                    border-radius: 50% !important;
+                    background: #4CAF50 !important;
+                }
+
+                .chat-header-right {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .chat-header-btn {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    font-size: 18px !important;
+                    transition: color 0.2s ease !important;
+                }
+
+                .chat-header-btn:hover {
+                    color: #fff !important;
+                }
+
+                /* Chat Messages Container */
+                .chat-messages {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    padding: 12px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                }
+
+                .chat-messages::-webkit-scrollbar {
+                    width: 6px !important;
+                }
+
+                .chat-messages::-webkit-scrollbar-track {
+                    background: transparent !important;
+                }
+
+                .chat-messages::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 3px !important;
+                }
+
+                /* Chat Message */
+                .chat-message {
+                    display: flex !important;
+                    gap: 10px !important;
+                    padding: 8px !important;
+                    border-radius: 8px !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-message:hover {
+                    background: rgba(255, 255, 255, 0.05) !important;
+                }
+
+                .chat-message.own {
+                    flex-direction: row-reverse !important;
+                }
+
+                .chat-avatar {
+                    width: 36px !important;
+                    height: 36px !important;
+                    border-radius: 50% !important;
+                    background: #333 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    flex-shrink: 0 !important;
+                    overflow: hidden !important;
+                }
+
+                .chat-avatar img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+
+                .chat-message-content {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                }
+
+                .chat-message-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    margin-bottom: 4px !important;
+                }
+
+                .chat-message.own .chat-message-header {
+                    flex-direction: row-reverse !important;
+                }
+
+                .chat-username {
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-username.moderator {
+                    color: #4CAF50 !important;
+                }
+
+                .chat-username.admin {
+                    color: #ff9800 !important;
+                }
+
+                .chat-timestamp {
+                    font-size: 11px !important;
+                    color: #666 !important;
+                }
+
+                .chat-message-text {
+                    font-size: 14px !important;
+                    color: #ddd !important;
+                    line-height: 1.4 !important;
+                    word-wrap: break-word !important;
+                }
+
+                .chat-message.own .chat-message-text {
+                    text-align: right !important;
+                }
+
+                .chat-message-gif {
+                    max-width: 200px !important;
+                    border-radius: 8px !important;
+                    margin-top: 4px !important;
+                }
+
+                .chat-message-deleted {
+                    color: #666 !important;
+                    font-style: italic !important;
+                }
+
+                /* Chat Message Actions (for mods/admins) */
+                .chat-message-actions {
+                    display: none;
+                    gap: 4px !important;
+                    margin-top: 4px !important;
+                }
+
+                .chat-message:hover .chat-message-actions {
+                    display: flex !important;
+                }
+
+                .chat-message.own .chat-message-actions {
+                    justify-content: flex-end !important;
+                }
+
+                .chat-action-btn {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #666 !important;
+                    cursor: pointer !important;
+                    padding: 2px 6px !important;
+                    font-size: 11px !important;
+                    border-radius: 4px !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-action-btn:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    color: #fff !important;
+                }
+
+                .chat-action-btn.delete:hover {
+                    background: rgba(255, 68, 68, 0.2) !important;
+                    color: #ff4444 !important;
+                }
+
+                /* Typing indicator */
+                .chat-typing {
+                    padding: 8px 12px !important;
+                    font-size: 12px !important;
+                    color: #888 !important;
+                    font-style: italic !important;
+                    display: none;
+                }
+
+                .chat-typing.visible {
+                    display: block !important;
+                }
+
+                /* Chat Input Area */
+                .chat-input-area {
+                    padding: 12px !important;
+                    background: #252525 !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-input-row {
+                    display: flex !important;
+                    align-items: flex-end !important;
+                    gap: 8px !important;
+                }
+
+                .chat-input-wrapper {
+                    flex: 1 !important;
+                    position: relative !important;
+                }
+
+                .chat-input {
+                    width: 100% !important;
+                    background: #333 !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 20px !important;
+                    padding: 10px 80px 10px 16px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    resize: none !important;
+                    min-height: 40px !important;
+                    max-height: 100px !important;
+                    outline: none !important;
+                }
+
+                .chat-input:focus {
+                    border-color: rgba(0, 164, 220, 0.5) !important;
+                }
+
+                .chat-input::placeholder {
+                    color: #666 !important;
+                }
+
+                .chat-input-btns {
+                    position: absolute !important;
+                    right: 8px !important;
+                    bottom: 6px !important;
+                    display: flex !important;
+                    gap: 4px !important;
+                }
+
+                .chat-emoji-btn,
+                .chat-gif-btn {
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    font-size: 18px !important;
+                    opacity: 0.6 !important;
+                    transition: opacity 0.2s ease !important;
+                }
+
+                .chat-emoji-btn:hover,
+                .chat-gif-btn:hover {
+                    opacity: 1 !important;
+                }
+
+                .chat-send-btn {
+                    background: #00a4dc !important;
+                    border: none !important;
+                    border-radius: 50% !important;
+                    width: 40px !important;
+                    height: 40px !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: #fff !important;
+                    font-size: 18px !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-send-btn:hover {
+                    background: #0095c8 !important;
+                }
+
+                .chat-send-btn:disabled {
+                    background: #333 !important;
+                    cursor: not-allowed !important;
+                }
+
+                /* Emoji Picker */
+                .chat-emoji-picker {
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    right: 0 !important;
+                    width: 320px !important;
+                    max-height: 300px !important;
+                    background: #252525 !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+                    margin-bottom: 8px !important;
+                    display: none;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                }
+
+                .chat-emoji-picker.visible {
+                    display: flex !important;
+                }
+
+                .chat-emoji-categories {
+                    display: flex !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    padding: 4px !important;
+                }
+
+                .chat-emoji-category-btn {
+                    flex: 1 !important;
+                    background: transparent !important;
+                    border: none !important;
+                    padding: 8px !important;
+                    font-size: 16px !important;
+                    cursor: pointer !important;
+                    opacity: 0.5 !important;
+                    transition: opacity 0.2s ease !important;
+                }
+
+                .chat-emoji-category-btn:hover,
+                .chat-emoji-category-btn.active {
+                    opacity: 1 !important;
+                }
+
+                .chat-emoji-list {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    padding: 8px !important;
+                    display: grid !important;
+                    grid-template-columns: repeat(8, 1fr) !important;
+                    gap: 4px !important;
+                }
+
+                .chat-emoji-item {
+                    background: transparent !important;
+                    border: none !important;
+                    padding: 6px !important;
+                    font-size: 20px !important;
+                    cursor: pointer !important;
+                    border-radius: 4px !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-emoji-item:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                }
+
+                /* GIF Picker */
+                .chat-gif-picker {
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    right: 0 !important;
+                    width: 320px !important;
+                    max-height: 350px !important;
+                    background: #252525 !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+                    margin-bottom: 8px !important;
+                    display: none;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                }
+
+                .chat-gif-picker.visible {
+                    display: flex !important;
+                }
+
+                .chat-gif-search {
+                    padding: 8px !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-gif-search input {
+                    width: 100% !important;
+                    background: #333 !important;
+                    border: none !important;
+                    border-radius: 4px !important;
+                    padding: 8px 12px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    outline: none !important;
+                }
+
+                .chat-gif-list {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    padding: 8px !important;
+                    display: grid !important;
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 8px !important;
+                }
+
+                .chat-gif-item {
+                    cursor: pointer !important;
+                    border-radius: 4px !important;
+                    overflow: hidden !important;
+                    aspect-ratio: 16/9 !important;
+                }
+
+                .chat-gif-item img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+
+                .chat-gif-powered {
+                    padding: 6px !important;
+                    text-align: center !important;
+                    font-size: 10px !important;
+                    color: #666 !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                /* Chat Settings/Admin Panel */
+                .chat-admin-panel {
+                    position: absolute !important;
+                    top: 100% !important;
+                    right: 0 !important;
+                    width: 280px !important;
+                    background: #252525 !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+                    margin-top: 4px !important;
+                    display: none;
+                    z-index: 10 !important;
+                }
+
+                .chat-admin-panel.visible {
+                    display: block !important;
+                }
+
+                .chat-admin-section {
+                    padding: 12px !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-admin-section:last-child {
+                    border-bottom: none !important;
+                }
+
+                .chat-admin-title {
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    color: #888 !important;
+                    text-transform: uppercase !important;
+                    margin-bottom: 8px !important;
+                }
+
+                .chat-admin-list {
+                    max-height: 150px !important;
+                    overflow-y: auto !important;
+                }
+
+                .chat-admin-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 6px 0 !important;
+                }
+
+                .chat-admin-user {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    font-size: 13px !important;
+                    color: #fff !important;
+                }
+
+                .chat-admin-btn {
+                    background: transparent !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    color: #888 !important;
+                    padding: 4px 8px !important;
+                    font-size: 11px !important;
+                    border-radius: 4px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-admin-btn:hover {
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                    color: #fff !important;
+                }
+
+                .chat-admin-btn.danger:hover {
+                    border-color: #ff4444 !important;
+                    color: #ff4444 !important;
+                }
+
+                /* Chat Status Messages */
+                .chat-status {
+                    text-align: center !important;
+                    padding: 20px !important;
+                    color: #888 !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-status.error {
+                    color: #ff4444 !important;
+                }
+
+                .chat-status.warning {
+                    color: #ff9800 !important;
+                }
+
+                /* Chat Empty State */
+                .chat-empty {
+                    flex: 1 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: #666 !important;
+                    padding: 20px !important;
+                    text-align: center !important;
+                }
+
+                .chat-empty-icon {
+                    font-size: 48px !important;
+                    margin-bottom: 12px !important;
+                    opacity: 0.5 !important;
+                }
+
+                /* Chat Mobile Responsive */
+                @media (max-width: 480px) {
+                    #chatWindow {
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        bottom: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        border-radius: 0 !important;
+                        z-index: 9999999 !important;
+                    }
+
+                    .chat-emoji-picker,
+                    .chat-gif-picker {
+                        width: 100% !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        border-radius: 0 !important;
+                        max-height: 50vh !important;
+                    }
+
+                    .chat-admin-panel {
+                        width: 100% !important;
+                        left: 0 !important;
+                        right: 0 !important;
                     }
                 }
             `;
@@ -12755,6 +13581,939 @@
                     card.setAttribute('data-leaving', leavingText);
                 }
             });
+        },
+
+        // ============ LIVE CHAT FUNCTIONS ============
+
+        /**
+         * Initialize chat with retry logic
+         */
+        initChatWithRetry: function () {
+            const self = this;
+            let attempts = 0;
+            const maxAttempts = 15;
+
+            const tryInit = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryInit, 1000);
+                    }
+                    return;
+                }
+
+                const baseUrl = ApiClient.serverAddress();
+                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (config) {
+                        self.chatEnabled = config.EnableChat === true;
+                        self.chatConfig = {
+                            tenorApiKey: config.TenorApiKey || '',
+                            allowGifs: config.ChatAllowGifs !== false,
+                            allowEmojis: config.ChatAllowEmojis !== false,
+                            maxMessageLength: config.ChatMaxMessageLength || 500,
+                            rateLimitPerMinute: config.ChatRateLimitPerMinute || 10
+                        };
+                        if (self.chatEnabled) {
+                            self.initChat();
+                        }
+                    })
+                    .catch(function () {
+                        self.chatEnabled = false;
+                    });
+            };
+
+            setTimeout(tryInit, 1000);
+        },
+
+        /**
+         * Initialize chat system
+         */
+        initChat: function () {
+            const self = this;
+
+            // Find and replace cast button
+            this.injectChatButton();
+
+            // Create chat window (hidden by default)
+            this.createChatWindow();
+
+            // Start heartbeat for presence
+            this.startChatHeartbeat();
+
+            // Check ban status
+            this.checkChatBanStatus();
+        },
+
+        /**
+         * Inject chat button in place of cast button
+         */
+        injectChatButton: function () {
+            const self = this;
+            let attempts = 0;
+
+            const tryInject = function () {
+                attempts++;
+                const castBtn = document.querySelector('.headerCastButton');
+
+                if (castBtn && !document.getElementById('chatBtn')) {
+                    // Create chat button
+                    const chatBtn = document.createElement('button');
+                    chatBtn.id = 'chatBtn';
+                    chatBtn.className = castBtn.className.replace('headerCastButton', '').replace('castButton', '');
+                    chatBtn.innerHTML = '<span id="chatBtnIcon">💬</span><span class="chat-badge hidden" id="chatBadge">0</span>';
+                    chatBtn.title = self.t('liveChat');
+                    chatBtn.onclick = function () {
+                        self.toggleChat();
+                    };
+
+                    // Insert before or replace cast button
+                    castBtn.parentNode.insertBefore(chatBtn, castBtn);
+                    castBtn.style.display = 'none';
+
+                    return;
+                }
+
+                if (attempts < 30) {
+                    setTimeout(tryInject, 1000);
+                }
+            };
+
+            setTimeout(tryInject, 2000);
+        },
+
+        /**
+         * Create chat window HTML
+         */
+        createChatWindow: function () {
+            const self = this;
+
+            if (document.getElementById('chatWindow')) return;
+
+            const chatHtml = `
+                <div id="chatWindow">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <span class="chat-header-title">${this.t('liveChat')}</span>
+                            <span class="chat-online-count">
+                                <span class="chat-online-dot"></span>
+                                <span id="chatOnlineCount">0</span> ${this.t('chatOnline')}
+                            </span>
+                        </div>
+                        <div class="chat-header-right">
+                            <button class="chat-header-btn" id="chatSettingsBtn" title="Settings" style="display:none;">⚙️</button>
+                            <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
+                        </div>
+                    </div>
+                    <div class="chat-admin-panel" id="chatAdminPanel">
+                        <div class="chat-admin-section">
+                            <div class="chat-admin-title">${this.t('chatModerators')}</div>
+                            <div class="chat-admin-list" id="chatModeratorList"></div>
+                        </div>
+                        <div class="chat-admin-section">
+                            <div class="chat-admin-title">${this.t('chatBannedUsers')}</div>
+                            <div class="chat-admin-list" id="chatBannedList"></div>
+                        </div>
+                        <div class="chat-admin-section" id="chatClearSection" style="display:none;">
+                            <button class="chat-admin-btn danger" id="chatClearAllBtn" style="width:100%;">${this.t('chatClearAll')}</button>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-empty" id="chatEmpty">
+                            <div class="chat-empty-icon">💬</div>
+                            <div>${this.t('chatNoMessages')}</div>
+                        </div>
+                    </div>
+                    <div class="chat-typing" id="chatTyping"></div>
+                    <div class="chat-status" id="chatStatus" style="display:none;"></div>
+                    <div class="chat-input-area" id="chatInputArea">
+                        <div class="chat-emoji-picker" id="chatEmojiPicker">
+                            <div class="chat-emoji-categories">
+                                <button class="chat-emoji-category-btn active" data-category="smileys">😀</button>
+                                <button class="chat-emoji-category-btn" data-category="gestures">👍</button>
+                                <button class="chat-emoji-category-btn" data-category="hearts">❤️</button>
+                                <button class="chat-emoji-category-btn" data-category="objects">🎉</button>
+                            </div>
+                            <div class="chat-emoji-list" id="chatEmojiList"></div>
+                        </div>
+                        <div class="chat-gif-picker" id="chatGifPicker">
+                            <div class="chat-gif-search">
+                                <input type="text" id="chatGifSearch" placeholder="${this.t('chatSearchGif')}">
+                            </div>
+                            <div class="chat-gif-list" id="chatGifList"></div>
+                            <div class="chat-gif-powered">${this.t('chatPoweredBy')}</div>
+                        </div>
+                        <div class="chat-input-row">
+                            <div class="chat-input-wrapper">
+                                <textarea class="chat-input" id="chatInput" placeholder="${this.t('chatPlaceholder')}" rows="1"></textarea>
+                                <div class="chat-input-btns">
+                                    <button class="chat-emoji-btn" id="chatEmojiBtn" title="Emojis">😊</button>
+                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.tenorApiKey ? '' : 'display:none;'}">GIF</button>
+                                </div>
+                            </div>
+                            <button class="chat-send-btn" id="chatSendBtn" title="${this.t('chatSend')}">➤</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const div = document.createElement('div');
+            div.innerHTML = chatHtml;
+            document.body.appendChild(div.firstElementChild);
+
+            // Bind events
+            this.bindChatEvents();
+
+            // Load initial emojis
+            this.loadEmojiCategory('smileys');
+        },
+
+        /**
+         * Bind chat event handlers
+         */
+        bindChatEvents: function () {
+            const self = this;
+
+            // Close button
+            document.getElementById('chatCloseBtn').onclick = function () {
+                self.toggleChat();
+            };
+
+            // Settings button
+            document.getElementById('chatSettingsBtn').onclick = function () {
+                const panel = document.getElementById('chatAdminPanel');
+                panel.classList.toggle('visible');
+                if (panel.classList.contains('visible')) {
+                    self.loadAdminPanel();
+                }
+            };
+
+            // Send button
+            document.getElementById('chatSendBtn').onclick = function () {
+                self.sendChatMessage();
+            };
+
+            // Input events
+            const input = document.getElementById('chatInput');
+            input.onkeydown = function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    self.sendChatMessage();
+                }
+            };
+            input.oninput = function () {
+                self.notifyTyping();
+                // Auto-resize
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            };
+
+            // Emoji picker toggle
+            document.getElementById('chatEmojiBtn').onclick = function () {
+                const picker = document.getElementById('chatEmojiPicker');
+                const gifPicker = document.getElementById('chatGifPicker');
+                gifPicker.classList.remove('visible');
+                picker.classList.toggle('visible');
+            };
+
+            // Emoji category buttons
+            document.querySelectorAll('.chat-emoji-category-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    document.querySelectorAll('.chat-emoji-category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    self.loadEmojiCategory(this.dataset.category);
+                };
+            });
+
+            // GIF picker toggle
+            if (this.chatConfig.allowGifs && this.chatConfig.tenorApiKey) {
+                document.getElementById('chatGifBtn').onclick = function () {
+                    const picker = document.getElementById('chatGifPicker');
+                    const emojiPicker = document.getElementById('chatEmojiPicker');
+                    emojiPicker.classList.remove('visible');
+                    picker.classList.toggle('visible');
+                    if (picker.classList.contains('visible')) {
+                        self.loadTrendingGifs();
+                    }
+                };
+
+                // GIF search
+                let gifSearchTimeout;
+                document.getElementById('chatGifSearch').oninput = function () {
+                    clearTimeout(gifSearchTimeout);
+                    const query = this.value.trim();
+                    gifSearchTimeout = setTimeout(function () {
+                        if (query) {
+                            self.searchGifs(query);
+                        } else {
+                            self.loadTrendingGifs();
+                        }
+                    }, 500);
+                };
+            }
+
+            // Clear all button (admin only)
+            document.getElementById('chatClearAllBtn').onclick = function () {
+                if (confirm(self.t('chatClearConfirm'))) {
+                    self.clearAllChatMessages();
+                }
+            };
+
+            // Close pickers when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#chatEmojiPicker') && !e.target.closest('#chatEmojiBtn')) {
+                    document.getElementById('chatEmojiPicker').classList.remove('visible');
+                }
+                if (!e.target.closest('#chatGifPicker') && !e.target.closest('#chatGifBtn')) {
+                    document.getElementById('chatGifPicker').classList.remove('visible');
+                }
+                if (!e.target.closest('#chatAdminPanel') && !e.target.closest('#chatSettingsBtn')) {
+                    document.getElementById('chatAdminPanel').classList.remove('visible');
+                }
+            });
+        },
+
+        /**
+         * Toggle chat window
+         */
+        toggleChat: function () {
+            const chatWindow = document.getElementById('chatWindow');
+            this.chatOpen = !this.chatOpen;
+
+            if (this.chatOpen) {
+                chatWindow.classList.add('visible');
+                this.startChatPolling();
+                this.loadChatMessages();
+                // Mark as read
+                this.updateUnreadBadge(0);
+            } else {
+                chatWindow.classList.remove('visible');
+                this.stopChatPolling();
+            }
+        },
+
+        /**
+         * Start chat message polling
+         */
+        startChatPolling: function () {
+            const self = this;
+            this.stopChatPolling();
+            this.chatPollingInterval = setInterval(function () {
+                self.loadChatMessages();
+                self.loadOnlineUsers();
+            }, 2000);
+        },
+
+        /**
+         * Stop chat polling
+         */
+        stopChatPolling: function () {
+            if (this.chatPollingInterval) {
+                clearInterval(this.chatPollingInterval);
+                this.chatPollingInterval = null;
+            }
+        },
+
+        /**
+         * Start heartbeat for presence
+         */
+        startChatHeartbeat: function () {
+            const self = this;
+            const heartbeat = function () {
+                if (!window.ApiClient) return;
+                const baseUrl = ApiClient.serverAddress();
+
+                // Get current user's admin status from client
+                let isAdmin = false;
+                try {
+                    const currentUser = ApiClient.getCurrentUser ? ApiClient.getCurrentUser() : null;
+                    if (currentUser && currentUser.then) {
+                        // It's a promise
+                        currentUser.then(function (user) {
+                            isAdmin = user?.Policy?.IsAdministrator || false;
+                            self.sendHeartbeat(baseUrl, isAdmin);
+                        }).catch(function () {
+                            self.sendHeartbeat(baseUrl, false);
+                        });
+                        return;
+                    } else if (currentUser) {
+                        isAdmin = currentUser.Policy?.IsAdministrator || false;
+                    }
+                } catch (e) {}
+
+                self.sendHeartbeat(baseUrl, isAdmin);
+            };
+            heartbeat();
+            setInterval(heartbeat, 30000);
+        },
+
+        /**
+         * Send heartbeat to server
+         */
+        sendHeartbeat: function (baseUrl, isAdmin) {
+            const self = this;
+            fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isAdmin: isAdmin })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                self.chatIsAdmin = data.isAdmin || false;
+                self.chatIsModerator = data.isModerator || false;
+                // Show settings button for admin/mod
+                const settingsBtn = document.getElementById('chatSettingsBtn');
+                if (settingsBtn) {
+                    settingsBtn.style.display = (self.chatIsAdmin || self.chatIsModerator) ? '' : 'none';
+                }
+                // Show clear all button for admin
+                const clearSection = document.getElementById('chatClearSection');
+                if (clearSection) {
+                    clearSection.style.display = self.chatIsAdmin ? '' : 'none';
+                }
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Check ban status
+         */
+        checkChatBanStatus: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/BanStatus', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                self.chatBanStatus = data;
+                self.updateChatInputState();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Update chat input state based on ban
+         */
+        updateChatInputState: function () {
+            const inputArea = document.getElementById('chatInputArea');
+            const status = document.getElementById('chatStatus');
+            const input = document.getElementById('chatInput');
+
+            if (this.chatBanStatus && this.chatBanStatus.chatBan) {
+                inputArea.style.display = 'none';
+                status.style.display = 'block';
+                status.className = 'chat-status error';
+                status.textContent = this.t('chatBanned');
+            } else if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
+                inputArea.style.display = 'none';
+                status.style.display = 'block';
+                status.className = 'chat-status warning';
+                status.textContent = this.t('chatMuted');
+            } else {
+                inputArea.style.display = '';
+                status.style.display = 'none';
+                input.disabled = false;
+            }
+        },
+
+        /**
+         * Load chat messages
+         */
+        loadChatMessages: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                self.chatMessages = data.messages || [];
+                self.chatTypingUsers = data.typingUsers || [];
+                self.renderChatMessages();
+                self.renderTypingIndicator();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Load online users
+         */
+        loadOnlineUsers: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                self.chatUsers = users || [];
+                const countEl = document.getElementById('chatOnlineCount');
+                if (countEl) {
+                    countEl.textContent = users.length;
+                }
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Render chat messages
+         */
+        renderChatMessages: function () {
+            const container = document.getElementById('chatMessages');
+            const empty = document.getElementById('chatEmpty');
+            const self = this;
+
+            if (this.chatMessages.length === 0) {
+                empty.style.display = '';
+                return;
+            }
+
+            empty.style.display = 'none';
+
+            // Get current user ID for own messages
+            const currentUserId = ApiClient._serverInfo?.UserId || '';
+
+            let html = '';
+            this.chatMessages.forEach(function (msg) {
+                const isOwn = msg.userId === currentUserId;
+                const avatarContent = msg.userAvatar
+                    ? '<img src="' + msg.userAvatar + '" alt="">'
+                    : msg.userName.charAt(0).toUpperCase();
+                const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
+                const timeStr = self.formatChatTime(msg.timestamp);
+
+                if (msg.isDeleted) {
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '">'
+                        + '<div class="chat-avatar">' + avatarContent + '</div>'
+                        + '<div class="chat-message-content">'
+                        + '<div class="chat-message-header">'
+                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
+                        + '<span class="chat-timestamp">' + timeStr + '</span>'
+                        + '</div>'
+                        + '<div class="chat-message-deleted">' + self.t('chatDeleted') + '</div>'
+                        + '</div></div>';
+                } else {
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '">'
+                        + '<div class="chat-avatar">' + avatarContent + '</div>'
+                        + '<div class="chat-message-content">'
+                        + '<div class="chat-message-header">'
+                        + '<span class="chat-username ' + roleClass + '">' + (isOwn ? self.t('chatYou') : self.escapeHtml(msg.userName)) + '</span>'
+                        + '<span class="chat-timestamp">' + timeStr + '</span>'
+                        + '</div>'
+                        + '<div class="chat-message-text">' + self.escapeHtml(msg.content) + '</div>'
+                        + (msg.gifUrl ? '<img class="chat-message-gif" src="' + msg.gifUrl + '" alt="GIF">' : '');
+
+                    // Add delete button for own messages or if moderator/admin
+                    if (isOwn || self.chatIsAdmin || self.chatIsModerator) {
+                        html += '<div class="chat-message-actions">'
+                            + '<button class="chat-action-btn delete" onclick="RatingsPlugin.deleteChatMessage(\'' + msg.id + '\')">' + self.t('delete') + '</button>';
+                        // Add ban option for admin/mod on other users
+                        if (!isOwn && (self.chatIsAdmin || self.chatIsModerator)) {
+                            html += '<button class="chat-action-btn" onclick="RatingsPlugin.showBanUserDialog(\'' + msg.userId + '\', \'' + self.escapeHtml(msg.userName) + '\')">' + self.t('chatBan') + '</button>';
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '</div></div>';
+                }
+            });
+
+            container.innerHTML = html;
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+
+            // Update last seen message
+            if (this.chatMessages.length > 0) {
+                this.chatLastMessageId = this.chatMessages[this.chatMessages.length - 1].id;
+            }
+        },
+
+        /**
+         * Render typing indicator
+         */
+        renderTypingIndicator: function () {
+            const el = document.getElementById('chatTyping');
+            if (this.chatTypingUsers.length === 0) {
+                el.classList.remove('visible');
+                return;
+            }
+
+            const names = this.chatTypingUsers.map(u => u.userName);
+            if (names.length === 1) {
+                el.textContent = names[0] + ' ' + this.t('chatTyping');
+            } else {
+                el.textContent = names.join(', ') + ' ' + this.t('chatTypingMultiple');
+            }
+            el.classList.add('visible');
+        },
+
+        /**
+         * Format chat message time
+         */
+        formatChatTime: function (timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = (now - date) / 1000;
+
+            if (diff < 60) return this.t('chatJustNow');
+            if (diff < 3600) return Math.floor(diff / 60) + this.t('chatMinutesAgo');
+            if (diff < 86400) return Math.floor(diff / 3600) + this.t('chatHoursAgo');
+            if (diff < 172800) return this.t('chatYesterday');
+
+            return date.toLocaleDateString();
+        },
+
+        /**
+         * Send chat message
+         */
+        sendChatMessage: function (gifUrl) {
+            const self = this;
+            const input = document.getElementById('chatInput');
+            const content = gifUrl ? '' : input.value.trim();
+
+            if (!content && !gifUrl) return;
+            if (content.length > this.chatConfig.maxMessageLength) {
+                alert('Message too long. Max ' + this.chatConfig.maxMessageLength + ' characters.');
+                return;
+            }
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Messages', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content, gifUrl: gifUrl || null })
+            })
+            .then(function (r) {
+                if (r.status === 429) {
+                    alert(self.t('chatRateLimited'));
+                    return null;
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                if (data) {
+                    input.value = '';
+                    input.style.height = 'auto';
+                    self.loadChatMessages();
+                    // Close GIF picker
+                    document.getElementById('chatGifPicker').classList.remove('visible');
+                }
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Delete a chat message
+         */
+        deleteChatMessage: function (messageId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Messages/' + messageId, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(function () {
+                self.loadChatMessages();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Notify server of typing
+         */
+        notifyTyping: function () {
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Typing', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isTyping: true })
+            }).catch(function () {});
+        },
+
+        /**
+         * Load emoji category
+         */
+        loadEmojiCategory: function (category) {
+            const self = this;
+            const container = document.getElementById('chatEmojiList');
+            const emojis = this.emojiCategories[category] || [];
+
+            container.innerHTML = emojis.map(function (emoji) {
+                return '<button class="chat-emoji-item">' + emoji + '</button>';
+            }).join('');
+
+            container.querySelectorAll('.chat-emoji-item').forEach(function (btn) {
+                btn.onclick = function () {
+                    const input = document.getElementById('chatInput');
+                    input.value += this.textContent;
+                    input.focus();
+                    document.getElementById('chatEmojiPicker').classList.remove('visible');
+                };
+            });
+        },
+
+        /**
+         * Load trending GIFs from Tenor
+         */
+        loadTrendingGifs: function () {
+            if (!this.chatConfig.tenorApiKey) return;
+            const self = this;
+            const url = 'https://tenor.googleapis.com/v2/featured?key=' + this.chatConfig.tenorApiKey + '&limit=20&media_filter=gif';
+
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    self.renderGifs(data.results || []);
+                })
+                .catch(function () {});
+        },
+
+        /**
+         * Search GIFs from Tenor
+         */
+        searchGifs: function (query) {
+            if (!this.chatConfig.tenorApiKey) return;
+            const self = this;
+            const url = 'https://tenor.googleapis.com/v2/search?key=' + this.chatConfig.tenorApiKey + '&q=' + encodeURIComponent(query) + '&limit=20&media_filter=gif';
+
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    self.renderGifs(data.results || []);
+                })
+                .catch(function () {});
+        },
+
+        /**
+         * Render GIF results
+         */
+        renderGifs: function (gifs) {
+            const self = this;
+            const container = document.getElementById('chatGifList');
+
+            container.innerHTML = gifs.map(function (gif) {
+                const previewUrl = gif.media_formats.tinygif?.url || gif.media_formats.nanogif?.url || '';
+                const fullUrl = gif.media_formats.gif?.url || previewUrl;
+                return '<div class="chat-gif-item" data-url="' + fullUrl + '"><img src="' + previewUrl + '" alt="GIF"></div>';
+            }).join('');
+
+            container.querySelectorAll('.chat-gif-item').forEach(function (item) {
+                item.onclick = function () {
+                    self.sendChatMessage(this.dataset.url);
+                };
+            });
+        },
+
+        /**
+         * Load admin panel data
+         */
+        loadAdminPanel: function () {
+            this.loadModerators();
+            this.loadBannedUsers();
+        },
+
+        /**
+         * Load moderators list
+         */
+        loadModerators: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                const list = document.getElementById('chatModeratorList');
+                if (mods.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                } else {
+                    list.innerHTML = mods.map(function (mod) {
+                        return '<div class="chat-admin-item">'
+                            + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
+                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" onclick="RatingsPlugin.removeModerator(\'' + mod.userId + '\')">' + self.t('chatRemoveMod') + '</button>' : '')
+                            + '</div>';
+                    }).join('');
+                }
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Load banned users list
+         */
+        loadBannedUsers: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Ban/List', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (bans) {
+                const list = document.getElementById('chatBannedList');
+                if (!bans || bans.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+                } else {
+                    list.innerHTML = bans.map(function (ban) {
+                        return '<div class="chat-admin-item">'
+                            + '<span class="chat-admin-user">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
+                            + '<button class="chat-admin-btn" onclick="RatingsPlugin.unbanChatUser(\'' + ban.userId + '\')">' + self.t('chatUnban') + '</button>'
+                            + '</div>';
+                    }).join('');
+                }
+            })
+            .catch(function () {
+                document.getElementById('chatBannedList').innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+            });
+        },
+
+        /**
+         * Show ban user dialog
+         */
+        showBanUserDialog: function (userId, userName) {
+            const self = this;
+            const duration = prompt('Ban duration:\n1 = 10 minutes\n2 = 1 hour\n3 = 1 day\n4 = 1 week\n5 = Permanent', '1');
+            if (!duration) return;
+
+            let minutes = 10;
+            switch (duration) {
+                case '2': minutes = 60; break;
+                case '3': minutes = 60 * 24; break;
+                case '4': minutes = 60 * 24 * 7; break;
+                case '5': minutes = 0; break; // Permanent
+            }
+
+            this.banChatUser(userId, 'chat', minutes);
+        },
+
+        /**
+         * Ban a user from chat
+         */
+        banChatUser: function (userId, banType, durationMinutes) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Ban', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: userId,
+                    banType: banType,
+                    durationMinutes: durationMinutes,
+                    reason: 'Banned by moderator'
+                })
+            })
+            .then(function () {
+                self.loadBannedUsers();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Unban a user
+         */
+        unbanChatUser: function (userId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Ban?userId=' + userId, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(function () {
+                self.loadBannedUsers();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Add moderator
+         */
+        addModerator: function (userId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userId })
+            })
+            .then(function () {
+                self.loadModerators();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Remove moderator
+         */
+        removeModerator: function (userId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/' + userId, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(function () {
+                self.loadModerators();
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Clear all chat messages (admin only)
+         */
+        clearAllChatMessages: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Messages/Clear', {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(function () {
+                self.chatMessages = [];
+                self.renderChatMessages();
+                alert(self.t('chatCleared'));
+            })
+            .catch(function () {});
+        },
+
+        /**
+         * Update unread badge
+         */
+        updateUnreadBadge: function (count) {
+            const badge = document.getElementById('chatBadge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+            this.chatUnreadCount = count;
+        },
+
+        /**
+         * Escape HTML for XSS prevention
+         */
+        escapeHtml: function (text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     };
 
