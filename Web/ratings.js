@@ -5314,20 +5314,23 @@
                 .chat-input-wrapper {
                     flex: 1 !important;
                     position: relative !important;
+                    min-width: 0 !important;
                 }
 
                 .chat-input {
                     width: 100% !important;
+                    box-sizing: border-box !important;
                     background: #333 !important;
                     border: 1px solid rgba(255, 255, 255, 0.1) !important;
                     border-radius: 20px !important;
-                    padding: 10px 80px 10px 16px !important;
+                    padding: 10px 70px 10px 16px !important;
                     color: #fff !important;
                     font-size: 14px !important;
                     resize: none !important;
                     min-height: 40px !important;
                     max-height: 100px !important;
                     outline: none !important;
+                    overflow-y: auto !important;
                 }
 
                 .chat-input:focus {
@@ -13883,6 +13886,7 @@
                 chatWindow.classList.add('visible');
                 this.startChatPolling();
                 this.loadChatMessages();
+                this.loadOnlineUsers();
                 // Mark as read
                 this.updateUnreadBadge(0);
             } else {
@@ -14047,7 +14051,7 @@
             const self = this;
             if (!window.ApiClient) return;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Users', {
+            fetch(baseUrl + '/Ratings/Chat/Users/Online', {
                 method: 'GET',
                 credentials: 'include'
             })
