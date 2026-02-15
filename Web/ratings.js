@@ -13703,10 +13703,8 @@
          */
         createChatWindow: function () {
             const self = this;
-            console.log('[Chat] createChatWindow called');
 
             if (document.getElementById('chatWindow')) {
-                console.log('[Chat] Chat window already exists');
                 return;
             }
 
@@ -13780,9 +13778,6 @@
             const div = document.createElement('div');
             div.innerHTML = chatHtml;
             document.body.appendChild(div.firstElementChild);
-            console.log('[Chat] Chat window created and added to DOM');
-            console.log('[Chat] Verifying elements - chatMessages:', !!document.getElementById('chatMessages'));
-            console.log('[Chat] Verifying elements - chatEmpty:', !!document.getElementById('chatEmpty'));
 
             // Bind events
             this.bindChatEvents();
@@ -14050,12 +14045,8 @@
          */
         loadChatMessages: function () {
             const self = this;
-            if (!window.ApiClient) {
-                console.log('[Chat] loadChatMessages: No ApiClient');
-                return;
-            }
+            if (!window.ApiClient) return;
             const baseUrl = ApiClient.serverAddress();
-            console.log('[Chat] Fetching messages from:', baseUrl + '/Ratings/Chat/Messages?limit=50');
             fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
                 method: 'GET',
                 credentials: 'include',
@@ -14063,17 +14054,13 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                console.log('[Chat] Messages response:', data);
                 // Handle both camelCase and PascalCase from server
                 self.chatMessages = data.messages || data.Messages || [];
                 self.chatTypingUsers = data.typingUsers || data.TypingUsers || [];
-                console.log('[Chat] Loaded', self.chatMessages.length, 'messages');
                 self.renderChatMessages();
                 self.renderTypingIndicator();
             })
-            .catch(function (err) {
-                console.error('[Chat] loadChatMessages error:', err);
-            });
+            .catch(function () {});
         },
 
         /**
@@ -14104,24 +14091,18 @@
          */
         renderChatMessages: function () {
             const container = document.getElementById('chatMessages');
-            const empty = document.getElementById('chatEmpty');
             const self = this;
 
-            // Check if chat window exists
-            if (!container || !empty) {
-                console.log('[Chat] renderChatMessages: Chat window not found');
-                console.log('[Chat] chatWindow exists:', !!document.getElementById('chatWindow'));
-                console.log('[Chat] chatMessages exists:', !!container);
-                console.log('[Chat] chatEmpty exists:', !!empty);
+            // Check if chat container exists
+            if (!container) {
                 return;
             }
 
+            // Show empty state if no messages
             if (this.chatMessages.length === 0) {
-                empty.style.display = '';
+                container.innerHTML = '<div class="chat-empty"><div class="chat-empty-icon">💬</div><div>' + this.t('chatNoMessages') + '</div></div>';
                 return;
             }
-
-            empty.style.display = 'none';
 
             // Get current user ID for own messages
             const currentUserId = ApiClient._serverInfo?.UserId || '';
@@ -14252,7 +14233,7 @@
                 return r.json();
             })
             .then(function (data) {
-                console.log('[Chat] Message sent, response:', data);
+                if (!data) return;
                 // Clear input
                 input.value = '';
                 input.style.height = 'auto';
@@ -14262,12 +14243,9 @@
                 if (gifPicker) gifPicker.classList.remove('visible');
                 if (emojiPicker) emojiPicker.classList.remove('visible');
                 // Reload messages
-                console.log('[Chat] Calling loadChatMessages...');
                 self.loadChatMessages();
             })
-            .catch(function (err) {
-                console.error('[Chat] Send error:', err);
-            });
+            .catch(function () {});
         },
 
         /**
