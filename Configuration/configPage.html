@@ -458,6 +458,74 @@
                         </div>
                     </div>
 
+                    <!-- ============ GROUP 6: Live Chat ============ -->
+                    <div class="settings-group" id="groupLiveChat">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupLiveChat')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Live Chat</span>
+                        </div>
+                        <div class="settings-group-content">
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableChat" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Live Chat</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Enable the live chat feature for connected users. Chat button replaces the Cast button in the header.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtChatMessageRetentionDays">Message Retention (Days)</label>
+                                <input id="txtChatMessageRetentionDays" type="number" is="emby-input" min="1" max="365" step="1" />
+                                <div class="fieldDescription">Number of days to keep chat messages (default: 7)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtChatRateLimitPerMinute">Rate Limit (Messages/Minute)</label>
+                                <input id="txtChatRateLimitPerMinute" type="number" is="emby-input" min="1" max="60" step="1" />
+                                <div class="fieldDescription">Maximum messages a user can send per minute (default: 10)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtChatMaxMessageLength">Max Message Length</label>
+                                <input id="txtChatMaxMessageLength" type="number" is="emby-input" min="50" max="2000" step="50" />
+                                <div class="fieldDescription">Maximum characters per message (default: 500)</div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkChatAllowGifs" type="checkbox" is="emby-checkbox" />
+                                    <span>Allow GIFs</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Allow users to send GIFs from Tenor in chat messages.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkChatAllowEmojis" type="checkbox" is="emby-checkbox" />
+                                    <span>Allow Emojis</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show emoji picker in chat interface.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtTenorApiKey">Tenor API Key</label>
+                                <input id="txtTenorApiKey" type="text" is="emby-input" />
+                                <div class="fieldDescription">
+                                    API key for GIF search. Get a free key at
+                                    <a href="https://developers.google.com/tenor/guides/quickstart" target="_blank" style="color: #00a4dc;">Tenor Developer Portal</a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                     <div class="verticalSection" style="margin-top: 1.5em;">
                         <div>
                             <button is="emby-button" type="submit" class="raised button-submit block">
@@ -779,6 +847,15 @@
                     }
                     renderBadgeProfiles();
 
+                    // Chat settings
+                    document.querySelector('#chkEnableChat').checked = config.EnableChat;
+                    document.querySelector('#txtChatMessageRetentionDays').value = config.ChatMessageRetentionDays || 7;
+                    document.querySelector('#txtChatRateLimitPerMinute').value = config.ChatRateLimitPerMinute || 10;
+                    document.querySelector('#txtChatMaxMessageLength').value = config.ChatMaxMessageLength || 500;
+                    document.querySelector('#chkChatAllowGifs').checked = config.ChatAllowGifs !== false;
+                    document.querySelector('#chkChatAllowEmojis').checked = config.ChatAllowEmojis !== false;
+                    document.querySelector('#txtTenorApiKey').value = config.TenorApiKey || '';
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -850,6 +927,15 @@
 
                     // Badge display profiles
                     config.BadgeDisplayProfiles = JSON.stringify(collectBadgeProfiles());
+
+                    // Chat settings
+                    config.EnableChat = document.querySelector('#chkEnableChat').checked;
+                    config.ChatMessageRetentionDays = parseInt(document.querySelector('#txtChatMessageRetentionDays').value) || 7;
+                    config.ChatRateLimitPerMinute = parseInt(document.querySelector('#txtChatRateLimitPerMinute').value) || 10;
+                    config.ChatMaxMessageLength = parseInt(document.querySelector('#txtChatMaxMessageLength').value) || 500;
+                    config.ChatAllowGifs = document.querySelector('#chkChatAllowGifs').checked;
+                    config.ChatAllowEmojis = document.querySelector('#chkChatAllowEmojis').checked;
+                    config.TenorApiKey = document.querySelector('#txtTenorApiKey').value;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

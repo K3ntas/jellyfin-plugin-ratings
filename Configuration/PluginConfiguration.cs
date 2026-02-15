@@ -76,6 +76,15 @@ namespace Jellyfin.Plugin.Ratings.Configuration
 
             // Language settings
             DefaultLanguage = "en";
+
+            // Chat settings
+            EnableChat = false;
+            ChatMessageRetentionDays = 7;
+            ChatRateLimitPerMinute = 10;
+            ChatMaxMessageLength = 500;
+            ChatAllowGifs = true;
+            ChatAllowEmojis = true;
+            TenorApiKey = string.Empty;
         }
 
         /// <summary>
@@ -288,5 +297,43 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Supported: en, es, zh, pt, ru, ja, de, fr, ko, it, tr, pl, nl, ar, hi, lt
         /// </summary>
         public string DefaultLanguage { get; set; }
+
+        // Chat settings
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the live chat feature is enabled.
+        /// </summary>
+        public bool EnableChat { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of days to retain chat messages.
+        /// </summary>
+        public int ChatMessageRetentionDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum messages per minute per user (rate limiting).
+        /// </summary>
+        public int ChatRateLimitPerMinute { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum message length in characters.
+        /// </summary>
+        public int ChatMaxMessageLength { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether GIFs are allowed in chat.
+        /// </summary>
+        public bool ChatAllowGifs { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether emojis are allowed in chat.
+        /// </summary>
+        public bool ChatAllowEmojis { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Tenor API key for GIF search.
+        /// Get a free key at https://developers.google.com/tenor/guides/quickstart
+        /// </summary>
+        public string TenorApiKey { get; set; }
     }
 }

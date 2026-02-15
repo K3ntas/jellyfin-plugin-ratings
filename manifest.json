@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.275.0",
+        "changelog": "Live Chat: Real-time chat for connected users with emoji picker, GIF support (Tenor), moderator system, user banning, admin clear all. Chat replaces Cast button in header.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.275.0/jellyfin-plugin-ratings_1.0.275.0.zip",
+        "checksum": "483dbf98060c8e7b05b9790738d74482",
+        "timestamp": "2026-02-15T17:00:00Z"
+      },
+      {
         "version": "1.0.274.0",
         "changelog": "Multi-language localization system with 16 languages: English, Spanish, Chinese, Portuguese, Russian, Japanese, German, French, Korean, Italian, Turkish, Polish, Dutch, Arabic, Hindi, Lithuanian. Language selector dropdown in UI, admin can set default language.",
         "targetAbi": "10.11.0.0",
