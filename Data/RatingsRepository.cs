@@ -1338,6 +1338,20 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets users who are currently typing.
+        /// </summary>
+        public List<ChatUser> GetTypingUsers()
+        {
+            lock (_lock)
+            {
+                var cutoff = DateTime.UtcNow.AddSeconds(-10);
+                return _chatUsers.Values
+                    .Where(u => u.IsTyping && u.TypingStarted.HasValue && u.TypingStarted.Value > cutoff)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
         /// Checks if a chat user has admin status.
         /// </summary>
         public bool IsChatUserAdmin(Guid userId)
