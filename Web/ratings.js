@@ -982,7 +982,6 @@
 
             // Load badge display profiles and listen for resize
             this.loadBadgeDisplayProfiles();
-            const self = this;
             window.addEventListener('resize', function () {
                 self.applyBadgeProfile();
             });
