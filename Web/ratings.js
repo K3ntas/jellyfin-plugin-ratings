@@ -13588,6 +13588,20 @@
         // ============ LIVE CHAT FUNCTIONS ============
 
         /**
+         * Get authentication headers for API calls
+         */
+        getChatAuthHeaders: function () {
+            const headers = { 'Content-Type': 'application/json' };
+            if (window.ApiClient && ApiClient._serverInfo) {
+                const token = ApiClient._serverInfo.AccessToken;
+                if (token) {
+                    headers['X-Emby-Authorization'] = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + (ApiClient._deviceId || 'unknown') + '", Version="10.11.0", Token="' + token + '"';
+                }
+            }
+            return headers;
+        },
+
+        /**
          * Initialize chat with retry logic
          */
         initChatWithRetry: function () {
@@ -13958,7 +13972,7 @@
             fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: self.getChatAuthHeaders(),
                 body: JSON.stringify({ isAdmin: isAdmin })
             })
             .then(function (r) { return r.json(); })
@@ -13988,7 +14002,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/BanStatus', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -14032,7 +14047,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -14053,7 +14069,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Users/Online', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (users) {
@@ -14193,7 +14210,7 @@
             fetch(baseUrl + '/Ratings/Chat/Messages', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: self.getChatAuthHeaders(),
                 body: JSON.stringify({ content: content, gifUrl: gifUrl || null })
             })
             .then(function (r) {
@@ -14223,7 +14240,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Messages/' + messageId, {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function () {
                 self.loadChatMessages();
@@ -14236,11 +14254,12 @@
          */
         notifyTyping: function () {
             if (!window.ApiClient) return;
+            const self = this;
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Typing', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: self.getChatAuthHeaders(),
                 body: JSON.stringify({ isTyping: true })
             }).catch(function () {});
         },
@@ -14335,7 +14354,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Moderators', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (mods) {
@@ -14362,7 +14382,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Ban/List', {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (bans) {
@@ -14411,7 +14432,7 @@
             fetch(baseUrl + '/Ratings/Chat/Ban', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: self.getChatAuthHeaders(),
                 body: JSON.stringify({
                     userId: userId,
                     banType: banType,
@@ -14433,7 +14454,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Ban?userId=' + userId, {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function () {
                 self.loadBannedUsers();
@@ -14450,7 +14472,7 @@
             fetch(baseUrl + '/Ratings/Chat/Moderators', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: self.getChatAuthHeaders(),
                 body: JSON.stringify({ userId: userId })
             })
             .then(function () {
@@ -14467,7 +14489,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Moderators/' + userId, {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function () {
                 self.loadModerators();
@@ -14483,7 +14506,8 @@
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Messages/Clear', {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
             })
             .then(function () {
                 self.chatMessages = [];
