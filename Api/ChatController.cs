@@ -221,7 +221,24 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (limit > 500) limit = 500;
             var messages = _repository.GetRecentChatMessages(limit, since);
             var typingUsers = _repository.GetTypingUsers();
-            return Ok(new { messages, typingUsers });
+
+            // Enrich messages with admin/moderator status
+            var enrichedMessages = messages.Select(m => new
+            {
+                id = m.Id,
+                userId = m.UserId,
+                userName = m.UserName,
+                userAvatar = m.UserAvatar,
+                content = m.Content,
+                gifUrl = m.GifUrl,
+                timestamp = m.Timestamp,
+                isDeleted = m.IsDeleted,
+                replyToId = m.ReplyToId,
+                isAdmin = _repository.IsChatUserAdmin(m.UserId),
+                isModerator = _repository.IsChatModerator(m.UserId)
+            }).ToList();
+
+            return Ok(new { messages = enrichedMessages, typingUsers });
         }
 
         /// <summary>
