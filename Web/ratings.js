@@ -14043,8 +14043,12 @@
          */
         loadChatMessages: function () {
             const self = this;
-            if (!window.ApiClient) return;
+            if (!window.ApiClient) {
+                console.log('[Chat] loadChatMessages: No ApiClient');
+                return;
+            }
             const baseUrl = ApiClient.serverAddress();
+            console.log('[Chat] Fetching messages from:', baseUrl + '/Ratings/Chat/Messages?limit=50');
             fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
                 method: 'GET',
                 credentials: 'include',
@@ -14052,13 +14056,17 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                console.log('[Chat] Messages response:', data);
                 // Handle both camelCase and PascalCase from server
                 self.chatMessages = data.messages || data.Messages || [];
                 self.chatTypingUsers = data.typingUsers || data.TypingUsers || [];
+                console.log('[Chat] Loaded', self.chatMessages.length, 'messages');
                 self.renderChatMessages();
                 self.renderTypingIndicator();
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.error('[Chat] loadChatMessages error:', err);
+            });
         },
 
         /**
@@ -14226,7 +14234,8 @@
                 return r.json();
             })
             .then(function (data) {
-                // Clear input regardless of response
+                console.log('[Chat] Message sent, response:', data);
+                // Clear input
                 input.value = '';
                 input.style.height = 'auto';
                 // Close pickers
@@ -14234,13 +14243,12 @@
                 var emojiPicker = document.getElementById('chatEmojiPicker');
                 if (gifPicker) gifPicker.classList.remove('visible');
                 if (emojiPicker) emojiPicker.classList.remove('visible');
-                // Reload messages after short delay to ensure server has saved
-                setTimeout(function() {
-                    self.loadChatMessages();
-                }, 100);
+                // Reload messages
+                console.log('[Chat] Calling loadChatMessages...');
+                self.loadChatMessages();
             })
             .catch(function (err) {
-                console.error('Chat send error:', err);
+                console.error('[Chat] Send error:', err);
             });
         },
 
