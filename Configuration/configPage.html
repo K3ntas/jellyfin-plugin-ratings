@@ -103,6 +103,29 @@
                         </div>
                         <div class="settings-group-content">
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="selectDefaultLanguage">Default Language</label>
+                                <select id="selectDefaultLanguage" is="emby-select" class="emby-select-withcolor">
+                                    <option value="en">English</option>
+                                    <option value="es">Español (Spanish)</option>
+                                    <option value="zh">中文 (Chinese)</option>
+                                    <option value="pt">Português (Portuguese)</option>
+                                    <option value="ru">Русский (Russian)</option>
+                                    <option value="ja">日本語 (Japanese)</option>
+                                    <option value="de">Deutsch (German)</option>
+                                    <option value="fr">Français (French)</option>
+                                    <option value="ko">한국어 (Korean)</option>
+                                    <option value="it">Italiano (Italian)</option>
+                                    <option value="tr">Türkçe (Turkish)</option>
+                                    <option value="pl">Polski (Polish)</option>
+                                    <option value="nl">Nederlands (Dutch)</option>
+                                    <option value="ar">العربية (Arabic)</option>
+                                    <option value="hi">हिन्दी (Hindi)</option>
+                                    <option value="lt">Lietuvių (Lithuanian)</option>
+                                </select>
+                                <div class="fieldDescription">Select the default language for all users. Users can override this in their browser.</div>
+                            </div>
+
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="chkEnableRequestButton" type="checkbox" is="emby-checkbox" />
@@ -694,6 +717,7 @@
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
 
                     // UI toggles
+                    document.querySelector('#selectDefaultLanguage').value = config.DefaultLanguage || 'en';
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
@@ -771,6 +795,7 @@
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
 
                     // UI toggles
+                    config.DefaultLanguage = document.querySelector('#selectDefaultLanguage').value;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;

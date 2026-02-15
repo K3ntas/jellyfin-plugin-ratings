@@ -9,332 +9,587 @@
         pluginId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
         ratingsCache: {}, // Cache for card ratings to avoid duplicate API calls
         currentLanguage: 'en', // Default language
+        validLanguages: ['en', 'es', 'zh', 'pt', 'ru', 'ja', 'de', 'fr', 'ko', 'it', 'tr', 'pl', 'nl', 'ar', 'hi', 'lt'], // Supported languages
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
 
-        // Translations for request modal
+        // Supported languages: en, es, zh, pt, ru, ja, de, fr, ko, it, tr, pl, nl, ar, hi, lt
         translations: {
             en: {
-                requestMedia: 'Request Media',
-                manageRequests: 'Manage Media Requests',
-                requestDescription: '📬 Request Your Favorite Media!',
-                requestDescriptionText: 'Use this form to request movies or TV series that you\'d like to watch. The admin will review your request and add it to the library as soon as possible. You can track the status of all your requests below.',
-                mediaTitle: 'Media Title *',
-                mediaTitlePlaceholder: 'e.g., Breaking Bad, The Godfather',
-                type: 'Type *',
-                selectType: '-- Select Type --',
-                movie: 'Movie',
-                tvSeries: 'TV Series',
-                anime: 'Anime',
-                documentary: 'Documentary',
-                other: 'Other',
-                additionalNotes: 'Additional Notes',
-                notesPlaceholder: 'Season number, year, specific details, etc.',
-                submitRequest: 'Submit Request',
-                yourRequests: 'Your Requests',
-                loadingRequests: 'Loading your requests...',
-                noRequests: 'You haven\'t requested any media yet',
-                errorLoading: 'Error loading your requests',
-                notSpecified: 'Not specified',
-                noDetails: 'No details',
-                watchNow: '🎬 Watch Now',
-                noRequestsYet: 'No media requests yet',
-                newRequest: 'New Request',
-                pending: 'PENDING',
-                processing: 'PROCESSING',
-                done: 'DONE',
-                rejected: 'REJECTED',
-                titleRequired: 'Please enter a media title',
-                typeRequired: 'Please select a media type',
-                requestSubmitted: 'Request submitted successfully!',
-                requestFailed: 'Failed to submit request',
-                statusUpdated: 'Status updated',
-                statusUpdateFailed: 'Failed to update status',
-                addLink: '+ Link',
-                enterMediaLink: 'Enter media link:',
-                delete: 'Delete',
-                confirmDelete: 'Are you sure you want to delete this request?',
-                mediaLinkPlaceholder: 'Media link (paste URL when done)',
-                unknown: 'Unknown',
-                loading: 'Loading...',
-                snooze: 'Snooze',
-                unsnooze: 'Unsnooze',
-                snoozed: 'SNOOZED',
-                snoozedUntil: 'Snoozed until',
-                snoozeDate: 'Snooze until date',
-                categoryNew: '🆕 New',
-                categoryProcessing: '🔄 Processing',
-                categoryPending: '⏳ Pending',
-                categorySnoozed: '💤 Snoozed',
-                categoryDone: '✅ Done',
-                categoryRejected: '❌ Rejected',
-                createRequest: 'Create Request',
-                latestMedia: 'Latest Media',
-                latestMediaLoading: 'Loading...',
-                latestMediaEmpty: 'No recent media found',
-                latestMediaError: 'Failed to load',
-                newEpisode: '+1 episode',
-                newEpisodes: '+{count} episodes',
-                typeMovie: 'Movie',
-                typeSeries: 'Series',
-                typeAnime: 'Anime',
-                typeOther: 'Other',
-                timeAgo: 'ago',
-                timeJustNow: 'just now',
-                timeMinutes: 'min',
-                timeHours: 'h',
-                timeDays: 'd',
-                // Media Management translations
-                mediaManagement: 'Media',
-                mediaManagementTitle: 'Media Management',
-                mediaSearch: 'Search...',
-                mediaTypeAll: 'All Types',
-                mediaTypeMovie: 'Movies',
-                mediaTypeSeries: 'Series',
-                mediaSortBy: 'Sort by',
-                mediaSortTitle: 'Title',
-                mediaSortYear: 'Year',
-                mediaSortRating: 'Rating',
-                mediaSortPlays: 'Plays',
-                mediaSortSize: 'Size',
-                mediaSortDateAdded: 'Date Added',
-                mediaSortPlayCount: 'Plays',
-                mediaSortWatchTime: 'Watch Time',
-                mediaSortSize: 'Size',
-                mediaLoading: 'Loading media...',
-                mediaNoResults: 'No media found',
-                mediaError: 'Error loading media',
-                mediaScheduleDelete: 'Schedule Delete',
-                mediaCancelDelete: 'Cancel Deletion',
-                mediaDeleteIn: 'Delete in',
-                mediaLeavingIn: 'Leaving in',
-                media1Day: '1 Day',
-                media3Days: '3 Days',
-                media1Week: '1 Week',
-                media2Weeks: '2 Weeks',
-                mediaCustom: 'Custom...',
-                mediaCustomHours: 'Hours',
-                mediaSchedule: 'Schedule',
-                mediaCancel: 'Cancel',
-                mediaNoScheduled: 'No scheduled deletions',
-                mediaScheduledBy: 'Scheduled By',
-                mediaDeletesIn: 'Deletes In',
-                mediaActions: 'Actions',
-                mediaChange: 'Change',
-                mediaChangeTime: 'Change deletion time',
-                mediaSoon: 'Soon',
-                mediaDays: 'days',
-                mediaPlays: 'plays',
-                mediaMinutes: 'min',
-                mediaGB: 'GB',
-                mediaMB: 'MB',
-                mediaPage: 'Page',
-                mediaOf: 'of',
-                mediaPrev: 'Prev',
-                mediaNext: 'Next',
-                mediaGo: 'Go',
-                mediaTypeScheduled: 'Scheduled',
-                mediaSettings: 'Settings',
-                mediaIncludeTypes: 'Include media types:',
-                mediaTypesHint: 'Select which media types to show',
-                // Deletion Request translations
-                requestDeleteRequest: 'Request to delete request',
-                requestDeleteMedia: 'Request to delete media',
-                deletionRequests: 'Deletion Requests',
-                noDeletionRequests: 'No deletion requests yet',
-                deleteNow: 'Delete ~1h',
-                schedule1Day: '1 Day',
-                schedule1Week: '1 Week',
-                schedule1Month: '1 Month',
-                rejectDeletion: 'Reject',
-                approveDeleteRequest: 'Approve',
-                alreadyRequested: 'Deletion Requested',
-                deletionApproved: 'APPROVED',
-                deletionRejected: 'REJECTED',
-                deletionPending: 'PENDING',
-                deletionRequestSent: 'Deletion request sent!',
-                deletionRequestFailed: 'Failed to send deletion request',
-                deletionActionFailed: 'Failed to process deletion action',
-                deleteRequest: 'Delete Request',
-                deleteMedia: 'Delete Media',
-                rejectionReasonPrompt: 'Enter rejection reason (optional):',
-                rejectionReasonLabel: 'Reason:',
-                deletionLimitReached: 'Maximum deletion requests reached for this item',
-                banUser: 'Ban',
-                unbanUser: 'Unban',
-                bannedUsers: 'Banned Users',
-                ban1Day: '1 Day',
-                ban1Week: '1 Week',
-                ban1Month: '1 Month',
-                banPermanent: 'Permanent',
-                banExpires: 'Expires:',
-                banPermanentLabel: 'Permanent',
-                bannedBy: 'by',
-                noBannedUsers: 'No banned users',
-                youAreBanned: 'You are banned from this action',
-                banSuccess: 'User banned successfully',
-                unbanSuccess: 'User unbanned successfully'
+                requestMedia: 'Request Media', manageRequests: 'Manage Media Requests', requestDescription: '📬 Request Your Favorite Media!',
+                requestDescriptionText: 'Use this form to request movies or TV series that you\'d like to watch. The admin will review your request and add it to the library as soon as possible.',
+                mediaTitle: 'Media Title *', mediaTitlePlaceholder: 'e.g., Breaking Bad, The Godfather', type: 'Type *', selectType: '-- Select Type --',
+                movie: 'Movie', tvSeries: 'TV Series', anime: 'Anime', documentary: 'Documentary', other: 'Other',
+                additionalNotes: 'Additional Notes', notesPlaceholder: 'Season number, year, specific details, etc.', submitRequest: 'Submit Request',
+                yourRequests: 'Your Requests', loadingRequests: 'Loading your requests...', noRequests: 'You haven\'t requested any media yet',
+                errorLoading: 'Error loading your requests', notSpecified: 'Not specified', noDetails: 'No details', watchNow: '🎬 Watch Now',
+                noRequestsYet: 'No media requests yet', newRequest: 'New Request', pending: 'PENDING', processing: 'PROCESSING', done: 'DONE', rejected: 'REJECTED',
+                titleRequired: 'Please enter a media title', typeRequired: 'Please select a media type', requestSubmitted: 'Request submitted successfully!',
+                requestFailed: 'Failed to submit request', statusUpdated: 'Status updated', statusUpdateFailed: 'Failed to update status',
+                addLink: '+ Link', enterMediaLink: 'Enter media link:', delete: 'Delete', confirmDelete: 'Are you sure you want to delete this request?',
+                mediaLinkPlaceholder: 'Media link (paste URL when done)', unknown: 'Unknown', loading: 'Loading...',
+                snooze: 'Snooze', unsnooze: 'Unsnooze', snoozed: 'SNOOZED', snoozedUntil: 'Snoozed until', snoozeDate: 'Snooze until date',
+                categoryNew: '🆕 New', categoryProcessing: '🔄 Processing', categoryPending: '⏳ Pending', categorySnoozed: '💤 Snoozed', categoryDone: '✅ Done', categoryRejected: '❌ Rejected',
+                createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
+                newEpisode: '+1 episode', newEpisodes: '+{count} episodes', typeMovie: 'Movie', typeSeries: 'Series', typeAnime: 'Anime', typeOther: 'Other',
+                timeAgo: 'ago', timeJustNow: 'just now', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
+                mediaManagement: 'Media', mediaManagementTitle: 'Media Management', mediaSearch: 'Search...', mediaTypeAll: 'All Types', mediaTypeMovie: 'Movies', mediaTypeSeries: 'Series',
+                mediaSortBy: 'Sort by', mediaSortTitle: 'Title', mediaSortYear: 'Year', mediaSortRating: 'Rating', mediaSortPlays: 'Plays', mediaSortSize: 'Size',
+                mediaSortDateAdded: 'Date Added', mediaSortPlayCount: 'Plays', mediaSortWatchTime: 'Watch Time', mediaLoading: 'Loading media...', mediaNoResults: 'No media found', mediaError: 'Error loading media',
+                mediaScheduleDelete: 'Schedule Delete', mediaCancelDelete: 'Cancel Deletion', mediaDeleteIn: 'Delete in', mediaLeavingIn: 'Leaving in',
+                media1Day: '1 Day', media3Days: '3 Days', media1Week: '1 Week', media2Weeks: '2 Weeks', mediaCustom: 'Custom...', mediaCustomHours: 'Hours',
+                mediaSchedule: 'Schedule', mediaCancel: 'Cancel', mediaNoScheduled: 'No scheduled deletions', mediaScheduledBy: 'Scheduled By', mediaDeletesIn: 'Deletes In',
+                mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
+                mediaTypeScheduled: 'Scheduled', mediaSettings: 'Settings', mediaIncludeTypes: 'Include media types:', mediaTypesHint: 'Select which media types to show',
+                requestDeleteRequest: 'Request to delete request', requestDeleteMedia: 'Request to delete media', deletionRequests: 'Deletion Requests', noDeletionRequests: 'No deletion requests yet',
+                deleteNow: 'Delete ~1h', schedule1Day: '1 Day', schedule1Week: '1 Week', schedule1Month: '1 Month', rejectDeletion: 'Reject', approveDeleteRequest: 'Approve',
+                alreadyRequested: 'Deletion Requested', deletionApproved: 'APPROVED', deletionRejected: 'REJECTED', deletionPending: 'PENDING',
+                deletionRequestSent: 'Deletion request sent!', deletionRequestFailed: 'Failed to send deletion request', deletionActionFailed: 'Failed to process deletion action',
+                deleteRequest: 'Delete Request', deleteMedia: 'Delete Media', rejectionReasonPrompt: 'Enter rejection reason (optional):', rejectionReasonLabel: 'Reason:',
+                deletionLimitReached: 'Maximum deletion requests reached for this item', banUser: 'Ban', unbanUser: 'Unban', bannedUsers: 'Banned Users',
+                ban1Day: '1 Day', ban1Week: '1 Week', ban1Month: '1 Month', banPermanent: 'Permanent', banExpires: 'Expires:', banPermanentLabel: 'Permanent',
+                bannedBy: 'by', noBannedUsers: 'No banned users', youAreBanned: 'You are banned from this action', banSuccess: 'User banned successfully', unbanSuccess: 'User unbanned successfully'
+            },
+            es: {
+                requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
+                requestDescriptionText: 'Usa este formulario para solicitar películas o series que te gustaría ver. El administrador revisará tu solicitud.',
+                mediaTitle: 'Título *', mediaTitlePlaceholder: 'ej., Breaking Bad, El Padrino', type: 'Tipo *', selectType: '-- Seleccionar Tipo --',
+                movie: 'Película', tvSeries: 'Serie de TV', anime: 'Anime', documentary: 'Documental', other: 'Otro',
+                additionalNotes: 'Notas Adicionales', notesPlaceholder: 'Número de temporada, año, detalles específicos, etc.', submitRequest: 'Enviar Solicitud',
+                yourRequests: 'Tus Solicitudes', loadingRequests: 'Cargando tus solicitudes...', noRequests: 'No has solicitado ningún contenido aún',
+                errorLoading: 'Error al cargar tus solicitudes', notSpecified: 'No especificado', noDetails: 'Sin detalles', watchNow: '🎬 Ver Ahora',
+                noRequestsYet: 'No hay solicitudes aún', newRequest: 'Nueva Solicitud', pending: 'PENDIENTE', processing: 'PROCESANDO', done: 'COMPLETADO', rejected: 'RECHAZADO',
+                titleRequired: 'Por favor ingresa un título', typeRequired: 'Por favor selecciona un tipo', requestSubmitted: '¡Solicitud enviada exitosamente!',
+                requestFailed: 'Error al enviar solicitud', statusUpdated: 'Estado actualizado', statusUpdateFailed: 'Error al actualizar estado',
+                addLink: '+ Enlace', enterMediaLink: 'Ingresa el enlace:', delete: 'Eliminar', confirmDelete: '¿Estás seguro de eliminar esta solicitud?',
+                mediaLinkPlaceholder: 'Enlace del contenido', unknown: 'Desconocido', loading: 'Cargando...',
+                snooze: 'Posponer', unsnooze: 'Reactivar', snoozed: 'POSPUESTO', snoozedUntil: 'Pospuesto hasta', snoozeDate: 'Posponer hasta fecha',
+                categoryNew: '🆕 Nuevo', categoryProcessing: '🔄 Procesando', categoryPending: '⏳ Pendiente', categorySnoozed: '💤 Pospuesto', categoryDone: '✅ Completado', categoryRejected: '❌ Rechazado',
+                createRequest: 'Crear Solicitud', latestMedia: 'Contenido Reciente', latestMediaLoading: 'Cargando...', latestMediaEmpty: 'No hay contenido reciente', latestMediaError: 'Error al cargar',
+                newEpisode: '+1 episodio', newEpisodes: '+{count} episodios', typeMovie: 'Película', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Otro',
+                timeAgo: 'hace', timeJustNow: 'ahora mismo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
+                mediaManagement: 'Contenido', mediaManagementTitle: 'Gestión de Contenido', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Películas', mediaTypeSeries: 'Series',
+                mediaSortBy: 'Ordenar por', mediaSortTitle: 'Título', mediaSortYear: 'Año', mediaSortRating: 'Calificación', mediaSortPlays: 'Reproducciones', mediaSortSize: 'Tamaño',
+                mediaSortDateAdded: 'Fecha Agregado', mediaSortPlayCount: 'Reproducciones', mediaSortWatchTime: 'Tiempo Visto', mediaLoading: 'Cargando...', mediaNoResults: 'Sin resultados', mediaError: 'Error al cargar',
+                mediaScheduleDelete: 'Programar Eliminación', mediaCancelDelete: 'Cancelar Eliminación', mediaDeleteIn: 'Eliminar en', mediaLeavingIn: 'Se elimina en',
+                media1Day: '1 Día', media3Days: '3 Días', media1Week: '1 Semana', media2Weeks: '2 Semanas', mediaCustom: 'Personalizado...', mediaCustomHours: 'Horas',
+                mediaSchedule: 'Programar', mediaCancel: 'Cancelar', mediaNoScheduled: 'Sin eliminaciones programadas', mediaScheduledBy: 'Programado por', mediaDeletesIn: 'Se elimina en',
+                mediaActions: 'Acciones', mediaChange: 'Cambiar', mediaChangeTime: 'Cambiar tiempo', mediaSoon: 'Pronto', mediaDays: 'días', mediaPlays: 'reproducciones',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Siguiente', mediaGo: 'Ir',
+                mediaTypeScheduled: 'Programados', mediaSettings: 'Ajustes', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecciona los tipos a mostrar',
+                requestDeleteRequest: 'Solicitar eliminar', requestDeleteMedia: 'Solicitar eliminar contenido', deletionRequests: 'Solicitudes de Eliminación', noDeletionRequests: 'Sin solicitudes de eliminación',
+                deleteNow: 'Eliminar ~1h', schedule1Day: '1 Día', schedule1Week: '1 Semana', schedule1Month: '1 Mes', rejectDeletion: 'Rechazar', approveDeleteRequest: 'Aprobar',
+                alreadyRequested: 'Eliminación Solicitada', deletionApproved: 'APROBADO', deletionRejected: 'RECHAZADO', deletionPending: 'PENDIENTE',
+                deletionRequestSent: '¡Solicitud de eliminación enviada!', deletionRequestFailed: 'Error al enviar solicitud', deletionActionFailed: 'Error al procesar',
+                deleteRequest: 'Eliminar Solicitud', deleteMedia: 'Eliminar Contenido', rejectionReasonPrompt: 'Motivo del rechazo (opcional):', rejectionReasonLabel: 'Motivo:',
+                deletionLimitReached: 'Límite de solicitudes alcanzado', banUser: 'Banear', unbanUser: 'Desbanear', bannedUsers: 'Usuarios Baneados',
+                ban1Day: '1 Día', ban1Week: '1 Semana', ban1Month: '1 Mes', banPermanent: 'Permanente', banExpires: 'Expira:', banPermanentLabel: 'Permanente',
+                bannedBy: 'por', noBannedUsers: 'Sin usuarios baneados', youAreBanned: 'Estás baneado de esta acción', banSuccess: 'Usuario baneado', unbanSuccess: 'Usuario desbaneado'
+            },
+            zh: {
+                requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
+                requestDescriptionText: '使用此表单请求您想观看的电影或电视剧。管理员将审核您的请求。',
+                mediaTitle: '媒体标题 *', mediaTitlePlaceholder: '例如：绝命毒师、教父', type: '类型 *', selectType: '-- 选择类型 --',
+                movie: '电影', tvSeries: '电视剧', anime: '动漫', documentary: '纪录片', other: '其他',
+                additionalNotes: '附加说明', notesPlaceholder: '季数、年份、具体细节等', submitRequest: '提交请求',
+                yourRequests: '您的请求', loadingRequests: '正在加载您的请求...', noRequests: '您还没有请求任何媒体',
+                errorLoading: '加载请求时出错', notSpecified: '未指定', noDetails: '无详情', watchNow: '🎬 立即观看',
+                noRequestsYet: '暂无媒体请求', newRequest: '新请求', pending: '待处理', processing: '处理中', done: '已完成', rejected: '已拒绝',
+                titleRequired: '请输入媒体标题', typeRequired: '请选择媒体类型', requestSubmitted: '请求提交成功！',
+                requestFailed: '提交请求失败', statusUpdated: '状态已更新', statusUpdateFailed: '更新状态失败',
+                addLink: '+ 链接', enterMediaLink: '输入媒体链接：', delete: '删除', confirmDelete: '确定要删除此请求吗？',
+                mediaLinkPlaceholder: '媒体链接', unknown: '未知', loading: '加载中...',
+                snooze: '暂停', unsnooze: '取消暂停', snoozed: '已暂停', snoozedUntil: '暂停至', snoozeDate: '暂停至日期',
+                categoryNew: '🆕 新', categoryProcessing: '🔄 处理中', categoryPending: '⏳ 待处理', categorySnoozed: '💤 已暂停', categoryDone: '✅ 已完成', categoryRejected: '❌ 已拒绝',
+                createRequest: '创建请求', latestMedia: '最新媒体', latestMediaLoading: '加载中...', latestMediaEmpty: '没有最近的媒体', latestMediaError: '加载失败',
+                newEpisode: '+1 集', newEpisodes: '+{count} 集', typeMovie: '电影', typeSeries: '剧集', typeAnime: '动漫', typeOther: '其他',
+                timeAgo: '前', timeJustNow: '刚刚', timeMinutes: '分钟', timeHours: '小时', timeDays: '天',
+                mediaManagement: '媒体', mediaManagementTitle: '媒体管理', mediaSearch: '搜索...', mediaTypeAll: '全部类型', mediaTypeMovie: '电影', mediaTypeSeries: '剧集',
+                mediaSortBy: '排序', mediaSortTitle: '标题', mediaSortYear: '年份', mediaSortRating: '评分', mediaSortPlays: '播放次数', mediaSortSize: '大小',
+                mediaSortDateAdded: '添加日期', mediaSortPlayCount: '播放次数', mediaSortWatchTime: '观看时长', mediaLoading: '加载中...', mediaNoResults: '未找到媒体', mediaError: '加载出错',
+                mediaScheduleDelete: '计划删除', mediaCancelDelete: '取消删除', mediaDeleteIn: '删除于', mediaLeavingIn: '将于',
+                media1Day: '1天', media3Days: '3天', media1Week: '1周', media2Weeks: '2周', mediaCustom: '自定义...', mediaCustomHours: '小时',
+                mediaSchedule: '计划', mediaCancel: '取消', mediaNoScheduled: '没有计划删除', mediaScheduledBy: '计划者', mediaDeletesIn: '删除于',
+                mediaActions: '操作', mediaChange: '更改', mediaChangeTime: '更改时间', mediaSoon: '即将', mediaDays: '天', mediaPlays: '次播放',
+                mediaMinutes: '分钟', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '页', mediaOf: '/', mediaPrev: '上一页', mediaNext: '下一页', mediaGo: '前往',
+                mediaTypeScheduled: '已计划', mediaSettings: '设置', mediaIncludeTypes: '包含类型:', mediaTypesHint: '选择要显示的媒体类型',
+                requestDeleteRequest: '请求删除', requestDeleteMedia: '请求删除媒体', deletionRequests: '删除请求', noDeletionRequests: '暂无删除请求',
+                deleteNow: '立即删除', schedule1Day: '1天', schedule1Week: '1周', schedule1Month: '1个月', rejectDeletion: '拒绝', approveDeleteRequest: '批准',
+                alreadyRequested: '已请求删除', deletionApproved: '已批准', deletionRejected: '已拒绝', deletionPending: '待处理',
+                deletionRequestSent: '删除请求已发送！', deletionRequestFailed: '发送删除请求失败', deletionActionFailed: '处理失败',
+                deleteRequest: '删除请求', deleteMedia: '删除媒体', rejectionReasonPrompt: '输入拒绝原因（可选）：', rejectionReasonLabel: '原因：',
+                deletionLimitReached: '已达到删除请求上限', banUser: '封禁', unbanUser: '解封', bannedUsers: '已封禁用户',
+                ban1Day: '1天', ban1Week: '1周', ban1Month: '1个月', banPermanent: '永久', banExpires: '到期：', banPermanentLabel: '永久',
+                bannedBy: '由', noBannedUsers: '没有封禁用户', youAreBanned: '您已被禁止此操作', banSuccess: '用户已封禁', unbanSuccess: '用户已解封'
+            },
+            pt: {
+                requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
+                requestDescriptionText: 'Use este formulário para solicitar filmes ou séries que você gostaria de assistir.',
+                mediaTitle: 'Título *', mediaTitlePlaceholder: 'ex., Breaking Bad, O Poderoso Chefão', type: 'Tipo *', selectType: '-- Selecionar Tipo --',
+                movie: 'Filme', tvSeries: 'Série de TV', anime: 'Anime', documentary: 'Documentário', other: 'Outro',
+                additionalNotes: 'Notas Adicionais', notesPlaceholder: 'Número da temporada, ano, detalhes específicos, etc.', submitRequest: 'Enviar Solicitação',
+                yourRequests: 'Suas Solicitações', loadingRequests: 'Carregando suas solicitações...', noRequests: 'Você ainda não solicitou nenhuma mídia',
+                errorLoading: 'Erro ao carregar suas solicitações', notSpecified: 'Não especificado', noDetails: 'Sem detalhes', watchNow: '🎬 Assistir Agora',
+                noRequestsYet: 'Nenhuma solicitação ainda', newRequest: 'Nova Solicitação', pending: 'PENDENTE', processing: 'PROCESSANDO', done: 'CONCLUÍDO', rejected: 'REJEITADO',
+                titleRequired: 'Por favor insira um título', typeRequired: 'Por favor selecione um tipo', requestSubmitted: 'Solicitação enviada com sucesso!',
+                requestFailed: 'Falha ao enviar solicitação', statusUpdated: 'Status atualizado', statusUpdateFailed: 'Falha ao atualizar status',
+                addLink: '+ Link', enterMediaLink: 'Insira o link:', delete: 'Excluir', confirmDelete: 'Tem certeza que deseja excluir esta solicitação?',
+                mediaLinkPlaceholder: 'Link da mídia', unknown: 'Desconhecido', loading: 'Carregando...',
+                snooze: 'Adiar', unsnooze: 'Reativar', snoozed: 'ADIADO', snoozedUntil: 'Adiado até', snoozeDate: 'Adiar até data',
+                categoryNew: '🆕 Novo', categoryProcessing: '🔄 Processando', categoryPending: '⏳ Pendente', categorySnoozed: '💤 Adiado', categoryDone: '✅ Concluído', categoryRejected: '❌ Rejeitado',
+                createRequest: 'Criar Solicitação', latestMedia: 'Mídia Recente', latestMediaLoading: 'Carregando...', latestMediaEmpty: 'Nenhuma mídia recente', latestMediaError: 'Falha ao carregar',
+                newEpisode: '+1 episódio', newEpisodes: '+{count} episódios', typeMovie: 'Filme', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Outro',
+                timeAgo: 'atrás', timeJustNow: 'agora mesmo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
+                mediaManagement: 'Mídia', mediaManagementTitle: 'Gerenciamento de Mídia', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Filmes', mediaTypeSeries: 'Séries',
+                mediaSortBy: 'Ordenar por', mediaSortTitle: 'Título', mediaSortYear: 'Ano', mediaSortRating: 'Avaliação', mediaSortPlays: 'Reproduções', mediaSortSize: 'Tamanho',
+                mediaSortDateAdded: 'Data Adicionado', mediaSortPlayCount: 'Reproduções', mediaSortWatchTime: 'Tempo Assistido', mediaLoading: 'Carregando...', mediaNoResults: 'Nenhuma mídia', mediaError: 'Erro ao carregar',
+                mediaScheduleDelete: 'Agendar Exclusão', mediaCancelDelete: 'Cancelar Exclusão', mediaDeleteIn: 'Excluir em', mediaLeavingIn: 'Sai em',
+                media1Day: '1 Dia', media3Days: '3 Dias', media1Week: '1 Semana', media2Weeks: '2 Semanas', mediaCustom: 'Personalizado...', mediaCustomHours: 'Horas',
+                mediaSchedule: 'Agendar', mediaCancel: 'Cancelar', mediaNoScheduled: 'Sem exclusões agendadas', mediaScheduledBy: 'Agendado por', mediaDeletesIn: 'Exclui em',
+                mediaActions: 'Ações', mediaChange: 'Alterar', mediaChangeTime: 'Alterar tempo', mediaSoon: 'Em breve', mediaDays: 'dias', mediaPlays: 'reproduções',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Próximo', mediaGo: 'Ir',
+                mediaTypeScheduled: 'Agendados', mediaSettings: 'Configurações', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecione os tipos a mostrar',
+                requestDeleteRequest: 'Solicitar exclusão', requestDeleteMedia: 'Solicitar excluir mídia', deletionRequests: 'Solicitações de Exclusão', noDeletionRequests: 'Sem solicitações de exclusão',
+                deleteNow: 'Excluir ~1h', schedule1Day: '1 Dia', schedule1Week: '1 Semana', schedule1Month: '1 Mês', rejectDeletion: 'Rejeitar', approveDeleteRequest: 'Aprovar',
+                alreadyRequested: 'Exclusão Solicitada', deletionApproved: 'APROVADO', deletionRejected: 'REJEITADO', deletionPending: 'PENDENTE',
+                deletionRequestSent: 'Solicitação de exclusão enviada!', deletionRequestFailed: 'Falha ao enviar', deletionActionFailed: 'Falha ao processar',
+                deleteRequest: 'Excluir Solicitação', deleteMedia: 'Excluir Mídia', rejectionReasonPrompt: 'Motivo da rejeição (opcional):', rejectionReasonLabel: 'Motivo:',
+                deletionLimitReached: 'Limite de solicitações atingido', banUser: 'Banir', unbanUser: 'Desbanir', bannedUsers: 'Usuários Banidos',
+                ban1Day: '1 Dia', ban1Week: '1 Semana', ban1Month: '1 Mês', banPermanent: 'Permanente', banExpires: 'Expira:', banPermanentLabel: 'Permanente',
+                bannedBy: 'por', noBannedUsers: 'Sem usuários banidos', youAreBanned: 'Você está banido desta ação', banSuccess: 'Usuário banido', unbanSuccess: 'Usuário desbanido'
+            },
+            ru: {
+                requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
+                requestDescriptionText: 'Используйте эту форму для запроса фильмов или сериалов, которые вы хотели бы посмотреть.',
+                mediaTitle: 'Название *', mediaTitlePlaceholder: 'напр., Во все тяжкие, Крёстный отец', type: 'Тип *', selectType: '-- Выберите Тип --',
+                movie: 'Фильм', tvSeries: 'Сериал', anime: 'Аниме', documentary: 'Документальный', other: 'Другое',
+                additionalNotes: 'Дополнительные Заметки', notesPlaceholder: 'Номер сезона, год, конкретные детали и т.д.', submitRequest: 'Отправить Запрос',
+                yourRequests: 'Ваши Запросы', loadingRequests: 'Загрузка ваших запросов...', noRequests: 'Вы ещё не запрашивали медиа',
+                errorLoading: 'Ошибка загрузки запросов', notSpecified: 'Не указано', noDetails: 'Нет деталей', watchNow: '🎬 Смотреть',
+                noRequestsYet: 'Запросов пока нет', newRequest: 'Новый Запрос', pending: 'ОЖИДАНИЕ', processing: 'В ОБРАБОТКЕ', done: 'ГОТОВО', rejected: 'ОТКЛОНЕНО',
+                titleRequired: 'Пожалуйста, введите название', typeRequired: 'Пожалуйста, выберите тип', requestSubmitted: 'Запрос успешно отправлен!',
+                requestFailed: 'Не удалось отправить запрос', statusUpdated: 'Статус обновлён', statusUpdateFailed: 'Не удалось обновить статус',
+                addLink: '+ Ссылка', enterMediaLink: 'Введите ссылку:', delete: 'Удалить', confirmDelete: 'Вы уверены, что хотите удалить этот запрос?',
+                mediaLinkPlaceholder: 'Ссылка на медиа', unknown: 'Неизвестно', loading: 'Загрузка...',
+                snooze: 'Отложить', unsnooze: 'Возобновить', snoozed: 'ОТЛОЖЕНО', snoozedUntil: 'Отложено до', snoozeDate: 'Отложить до даты',
+                categoryNew: '🆕 Новые', categoryProcessing: '🔄 В обработке', categoryPending: '⏳ Ожидание', categorySnoozed: '💤 Отложено', categoryDone: '✅ Готово', categoryRejected: '❌ Отклонено',
+                createRequest: 'Создать Запрос', latestMedia: 'Последние Добавления', latestMediaLoading: 'Загрузка...', latestMediaEmpty: 'Нет недавних медиа', latestMediaError: 'Ошибка загрузки',
+                newEpisode: '+1 эпизод', newEpisodes: '+{count} эпизодов', typeMovie: 'Фильм', typeSeries: 'Сериал', typeAnime: 'Аниме', typeOther: 'Другое',
+                timeAgo: 'назад', timeJustNow: 'только что', timeMinutes: 'мин', timeHours: 'ч', timeDays: 'д',
+                mediaManagement: 'Медиа', mediaManagementTitle: 'Управление Медиа', mediaSearch: 'Поиск...', mediaTypeAll: 'Все Типы', mediaTypeMovie: 'Фильмы', mediaTypeSeries: 'Сериалы',
+                mediaSortBy: 'Сортировать', mediaSortTitle: 'Название', mediaSortYear: 'Год', mediaSortRating: 'Рейтинг', mediaSortPlays: 'Просмотры', mediaSortSize: 'Размер',
+                mediaSortDateAdded: 'Дата Добавления', mediaSortPlayCount: 'Просмотры', mediaSortWatchTime: 'Время Просмотра', mediaLoading: 'Загрузка...', mediaNoResults: 'Медиа не найдено', mediaError: 'Ошибка загрузки',
+                mediaScheduleDelete: 'Запланировать Удаление', mediaCancelDelete: 'Отменить Удаление', mediaDeleteIn: 'Удалить через', mediaLeavingIn: 'Удаление через',
+                media1Day: '1 День', media3Days: '3 Дня', media1Week: '1 Неделю', media2Weeks: '2 Недели', mediaCustom: 'Другое...', mediaCustomHours: 'Часов',
+                mediaSchedule: 'Запланировать', mediaCancel: 'Отмена', mediaNoScheduled: 'Нет запланированных удалений', mediaScheduledBy: 'Запланировал', mediaDeletesIn: 'Удаление через',
+                mediaActions: 'Действия', mediaChange: 'Изменить', mediaChangeTime: 'Изменить время', mediaSoon: 'Скоро', mediaDays: 'дней', mediaPlays: 'просмотров',
+                mediaMinutes: 'мин', mediaGB: 'ГБ', mediaMB: 'МБ', mediaPage: 'Страница', mediaOf: 'из', mediaPrev: 'Назад', mediaNext: 'Вперёд', mediaGo: 'Перейти',
+                mediaTypeScheduled: 'Запланировано', mediaSettings: 'Настройки', mediaIncludeTypes: 'Включить типы:', mediaTypesHint: 'Выберите типы для отображения',
+                requestDeleteRequest: 'Запросить удаление', requestDeleteMedia: 'Запросить удаление медиа', deletionRequests: 'Запросы на Удаление', noDeletionRequests: 'Нет запросов на удаление',
+                deleteNow: 'Удалить ~1ч', schedule1Day: '1 День', schedule1Week: '1 Неделя', schedule1Month: '1 Месяц', rejectDeletion: 'Отклонить', approveDeleteRequest: 'Одобрить',
+                alreadyRequested: 'Удаление Запрошено', deletionApproved: 'ОДОБРЕНО', deletionRejected: 'ОТКЛОНЕНО', deletionPending: 'ОЖИДАНИЕ',
+                deletionRequestSent: 'Запрос на удаление отправлен!', deletionRequestFailed: 'Не удалось отправить', deletionActionFailed: 'Ошибка обработки',
+                deleteRequest: 'Удалить Запрос', deleteMedia: 'Удалить Медиа', rejectionReasonPrompt: 'Причина отклонения (необязательно):', rejectionReasonLabel: 'Причина:',
+                deletionLimitReached: 'Достигнут лимит запросов', banUser: 'Заблокировать', unbanUser: 'Разблокировать', bannedUsers: 'Заблокированные',
+                ban1Day: '1 День', ban1Week: '1 Неделя', ban1Month: '1 Месяц', banPermanent: 'Навсегда', banExpires: 'Истекает:', banPermanentLabel: 'Навсегда',
+                bannedBy: 'заблокировал', noBannedUsers: 'Нет заблокированных', youAreBanned: 'Вы заблокированы', banSuccess: 'Пользователь заблокирован', unbanSuccess: 'Пользователь разблокирован'
+            },
+            ja: {
+                requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
+                requestDescriptionText: 'このフォームを使用して、視聴したい映画やテレビシリーズをリクエストしてください。',
+                mediaTitle: 'メディアタイトル *', mediaTitlePlaceholder: '例：ブレイキング・バッド、ゴッドファーザー', type: 'タイプ *', selectType: '-- タイプを選択 --',
+                movie: '映画', tvSeries: 'テレビシリーズ', anime: 'アニメ', documentary: 'ドキュメンタリー', other: 'その他',
+                additionalNotes: '追加メモ', notesPlaceholder: 'シーズン番号、年、詳細など', submitRequest: 'リクエストを送信',
+                yourRequests: 'あなたのリクエスト', loadingRequests: 'リクエストを読み込み中...', noRequests: 'まだリクエストがありません',
+                errorLoading: 'リクエストの読み込みエラー', notSpecified: '未指定', noDetails: '詳細なし', watchNow: '🎬 今すぐ視聴',
+                noRequestsYet: 'リクエストはまだありません', newRequest: '新しいリクエスト', pending: '保留中', processing: '処理中', done: '完了', rejected: '却下',
+                titleRequired: 'タイトルを入力してください', typeRequired: 'タイプを選択してください', requestSubmitted: 'リクエストが送信されました！',
+                requestFailed: 'リクエストの送信に失敗', statusUpdated: 'ステータス更新済み', statusUpdateFailed: 'ステータス更新に失敗',
+                addLink: '+ リンク', enterMediaLink: 'リンクを入力:', delete: '削除', confirmDelete: 'このリクエストを削除しますか？',
+                mediaLinkPlaceholder: 'メディアリンク', unknown: '不明', loading: '読み込み中...',
+                snooze: 'スヌーズ', unsnooze: '再開', snoozed: 'スヌーズ中', snoozedUntil: 'スヌーズ期限', snoozeDate: 'スヌーズ日付',
+                categoryNew: '🆕 新規', categoryProcessing: '🔄 処理中', categoryPending: '⏳ 保留中', categorySnoozed: '💤 スヌーズ', categoryDone: '✅ 完了', categoryRejected: '❌ 却下',
+                createRequest: 'リクエスト作成', latestMedia: '最新メディア', latestMediaLoading: '読み込み中...', latestMediaEmpty: '最近のメディアなし', latestMediaError: '読み込み失敗',
+                newEpisode: '+1 エピソード', newEpisodes: '+{count} エピソード', typeMovie: '映画', typeSeries: 'シリーズ', typeAnime: 'アニメ', typeOther: 'その他',
+                timeAgo: '前', timeJustNow: 'たった今', timeMinutes: '分', timeHours: '時間', timeDays: '日',
+                mediaManagement: 'メディア', mediaManagementTitle: 'メディア管理', mediaSearch: '検索...', mediaTypeAll: 'すべて', mediaTypeMovie: '映画', mediaTypeSeries: 'シリーズ',
+                mediaSortBy: '並べ替え', mediaSortTitle: 'タイトル', mediaSortYear: '年', mediaSortRating: '評価', mediaSortPlays: '再生回数', mediaSortSize: 'サイズ',
+                mediaSortDateAdded: '追加日', mediaSortPlayCount: '再生回数', mediaSortWatchTime: '視聴時間', mediaLoading: '読み込み中...', mediaNoResults: 'メディアなし', mediaError: '読み込みエラー',
+                mediaScheduleDelete: '削除予約', mediaCancelDelete: '削除キャンセル', mediaDeleteIn: '削除まで', mediaLeavingIn: '削除予定',
+                media1Day: '1日', media3Days: '3日', media1Week: '1週間', media2Weeks: '2週間', mediaCustom: 'カスタム...', mediaCustomHours: '時間',
+                mediaSchedule: '予約', mediaCancel: 'キャンセル', mediaNoScheduled: '予約済み削除なし', mediaScheduledBy: '予約者', mediaDeletesIn: '削除まで',
+                mediaActions: 'アクション', mediaChange: '変更', mediaChangeTime: '時間変更', mediaSoon: 'もうすぐ', mediaDays: '日', mediaPlays: '回再生',
+                mediaMinutes: '分', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'ページ', mediaOf: '/', mediaPrev: '前へ', mediaNext: '次へ', mediaGo: '移動',
+                mediaTypeScheduled: '予約済み', mediaSettings: '設定', mediaIncludeTypes: '含めるタイプ:', mediaTypesHint: '表示するタイプを選択',
+                requestDeleteRequest: '削除リクエスト', requestDeleteMedia: 'メディア削除リクエスト', deletionRequests: '削除リクエスト', noDeletionRequests: '削除リクエストなし',
+                deleteNow: '即削除', schedule1Day: '1日', schedule1Week: '1週間', schedule1Month: '1ヶ月', rejectDeletion: '却下', approveDeleteRequest: '承認',
+                alreadyRequested: '削除リクエスト済み', deletionApproved: '承認済み', deletionRejected: '却下済み', deletionPending: '保留中',
+                deletionRequestSent: '削除リクエスト送信済み！', deletionRequestFailed: '送信失敗', deletionActionFailed: '処理失敗',
+                deleteRequest: 'リクエスト削除', deleteMedia: 'メディア削除', rejectionReasonPrompt: '却下理由（任意）:', rejectionReasonLabel: '理由:',
+                deletionLimitReached: 'リクエスト上限に達しました', banUser: 'BAN', unbanUser: 'BAN解除', bannedUsers: 'BANユーザー',
+                ban1Day: '1日', ban1Week: '1週間', ban1Month: '1ヶ月', banPermanent: '永久', banExpires: '期限:', banPermanentLabel: '永久',
+                bannedBy: 'by', noBannedUsers: 'BANユーザーなし', youAreBanned: 'この操作は禁止されています', banSuccess: 'ユーザーをBANしました', unbanSuccess: 'BANを解除しました'
+            },
+            de: {
+                requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
+                requestDescriptionText: 'Verwende dieses Formular, um Filme oder Serien anzufordern, die du sehen möchtest.',
+                mediaTitle: 'Medientitel *', mediaTitlePlaceholder: 'z.B., Breaking Bad, Der Pate', type: 'Typ *', selectType: '-- Typ auswählen --',
+                movie: 'Film', tvSeries: 'TV-Serie', anime: 'Anime', documentary: 'Dokumentation', other: 'Sonstiges',
+                additionalNotes: 'Zusätzliche Notizen', notesPlaceholder: 'Staffelnummer, Jahr, spezifische Details, etc.', submitRequest: 'Anfrage Senden',
+                yourRequests: 'Deine Anfragen', loadingRequests: 'Lade deine Anfragen...', noRequests: 'Du hast noch keine Medien angefordert',
+                errorLoading: 'Fehler beim Laden', notSpecified: 'Nicht angegeben', noDetails: 'Keine Details', watchNow: '🎬 Jetzt Ansehen',
+                noRequestsYet: 'Noch keine Anfragen', newRequest: 'Neue Anfrage', pending: 'AUSSTEHEND', processing: 'IN BEARBEITUNG', done: 'ERLEDIGT', rejected: 'ABGELEHNT',
+                titleRequired: 'Bitte Titel eingeben', typeRequired: 'Bitte Typ auswählen', requestSubmitted: 'Anfrage erfolgreich gesendet!',
+                requestFailed: 'Anfrage fehlgeschlagen', statusUpdated: 'Status aktualisiert', statusUpdateFailed: 'Status-Update fehlgeschlagen',
+                addLink: '+ Link', enterMediaLink: 'Link eingeben:', delete: 'Löschen', confirmDelete: 'Diese Anfrage wirklich löschen?',
+                mediaLinkPlaceholder: 'Medien-Link', unknown: 'Unbekannt', loading: 'Laden...',
+                snooze: 'Zurückstellen', unsnooze: 'Reaktivieren', snoozed: 'ZURÜCKGESTELLT', snoozedUntil: 'Zurückgestellt bis', snoozeDate: 'Zurückstellen bis',
+                categoryNew: '🆕 Neu', categoryProcessing: '🔄 In Bearbeitung', categoryPending: '⏳ Ausstehend', categorySnoozed: '💤 Zurückgestellt', categoryDone: '✅ Erledigt', categoryRejected: '❌ Abgelehnt',
+                createRequest: 'Anfrage Erstellen', latestMedia: 'Neueste Medien', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Keine neuen Medien', latestMediaError: 'Laden fehlgeschlagen',
+                newEpisode: '+1 Episode', newEpisodes: '+{count} Episoden', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Sonstiges',
+                timeAgo: 'vor', timeJustNow: 'gerade eben', timeMinutes: 'Min', timeHours: 'Std', timeDays: 'T',
+                mediaManagement: 'Medien', mediaManagementTitle: 'Medienverwaltung', mediaSearch: 'Suchen...', mediaTypeAll: 'Alle Typen', mediaTypeMovie: 'Filme', mediaTypeSeries: 'Serien',
+                mediaSortBy: 'Sortieren nach', mediaSortTitle: 'Titel', mediaSortYear: 'Jahr', mediaSortRating: 'Bewertung', mediaSortPlays: 'Wiedergaben', mediaSortSize: 'Größe',
+                mediaSortDateAdded: 'Hinzugefügt', mediaSortPlayCount: 'Wiedergaben', mediaSortWatchTime: 'Wiedergabezeit', mediaLoading: 'Laden...', mediaNoResults: 'Keine Medien', mediaError: 'Ladefehler',
+                mediaScheduleDelete: 'Löschung Planen', mediaCancelDelete: 'Löschung Abbrechen', mediaDeleteIn: 'Löschen in', mediaLeavingIn: 'Wird gelöscht in',
+                media1Day: '1 Tag', media3Days: '3 Tage', media1Week: '1 Woche', media2Weeks: '2 Wochen', mediaCustom: 'Benutzerdefiniert...', mediaCustomHours: 'Stunden',
+                mediaSchedule: 'Planen', mediaCancel: 'Abbrechen', mediaNoScheduled: 'Keine geplanten Löschungen', mediaScheduledBy: 'Geplant von', mediaDeletesIn: 'Löschung in',
+                mediaActions: 'Aktionen', mediaChange: 'Ändern', mediaChangeTime: 'Zeit ändern', mediaSoon: 'Bald', mediaDays: 'Tage', mediaPlays: 'Wiedergaben',
+                mediaMinutes: 'Min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Seite', mediaOf: 'von', mediaPrev: 'Zurück', mediaNext: 'Weiter', mediaGo: 'Los',
+                mediaTypeScheduled: 'Geplant', mediaSettings: 'Einstellungen', mediaIncludeTypes: 'Medientypen:', mediaTypesHint: 'Anzuzeigende Typen auswählen',
+                requestDeleteRequest: 'Löschung anfordern', requestDeleteMedia: 'Medienlöschung anfordern', deletionRequests: 'Löschanfragen', noDeletionRequests: 'Keine Löschanfragen',
+                deleteNow: 'Jetzt löschen', schedule1Day: '1 Tag', schedule1Week: '1 Woche', schedule1Month: '1 Monat', rejectDeletion: 'Ablehnen', approveDeleteRequest: 'Genehmigen',
+                alreadyRequested: 'Löschung Angefordert', deletionApproved: 'GENEHMIGT', deletionRejected: 'ABGELEHNT', deletionPending: 'AUSSTEHEND',
+                deletionRequestSent: 'Löschanfrage gesendet!', deletionRequestFailed: 'Senden fehlgeschlagen', deletionActionFailed: 'Verarbeitung fehlgeschlagen',
+                deleteRequest: 'Anfrage Löschen', deleteMedia: 'Medien Löschen', rejectionReasonPrompt: 'Ablehnungsgrund (optional):', rejectionReasonLabel: 'Grund:',
+                deletionLimitReached: 'Anfragenlimit erreicht', banUser: 'Sperren', unbanUser: 'Entsperren', bannedUsers: 'Gesperrte Benutzer',
+                ban1Day: '1 Tag', ban1Week: '1 Woche', ban1Month: '1 Monat', banPermanent: 'Permanent', banExpires: 'Läuft ab:', banPermanentLabel: 'Permanent',
+                bannedBy: 'von', noBannedUsers: 'Keine gesperrten Benutzer', youAreBanned: 'Du bist für diese Aktion gesperrt', banSuccess: 'Benutzer gesperrt', unbanSuccess: 'Benutzer entsperrt'
+            },
+            fr: {
+                requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
+                requestDescriptionText: 'Utilisez ce formulaire pour demander des films ou séries que vous aimeriez regarder.',
+                mediaTitle: 'Titre *', mediaTitlePlaceholder: 'ex., Breaking Bad, Le Parrain', type: 'Type *', selectType: '-- Sélectionner Type --',
+                movie: 'Film', tvSeries: 'Série TV', anime: 'Anime', documentary: 'Documentaire', other: 'Autre',
+                additionalNotes: 'Notes Supplémentaires', notesPlaceholder: 'Numéro de saison, année, détails spécifiques, etc.', submitRequest: 'Envoyer la Demande',
+                yourRequests: 'Vos Demandes', loadingRequests: 'Chargement de vos demandes...', noRequests: 'Vous n\'avez pas encore demandé de média',
+                errorLoading: 'Erreur de chargement', notSpecified: 'Non spécifié', noDetails: 'Pas de détails', watchNow: '🎬 Regarder',
+                noRequestsYet: 'Pas encore de demandes', newRequest: 'Nouvelle Demande', pending: 'EN ATTENTE', processing: 'EN COURS', done: 'TERMINÉ', rejected: 'REFUSÉ',
+                titleRequired: 'Veuillez entrer un titre', typeRequired: 'Veuillez sélectionner un type', requestSubmitted: 'Demande envoyée avec succès!',
+                requestFailed: 'Échec de l\'envoi', statusUpdated: 'Statut mis à jour', statusUpdateFailed: 'Échec de mise à jour',
+                addLink: '+ Lien', enterMediaLink: 'Entrer le lien:', delete: 'Supprimer', confirmDelete: 'Êtes-vous sûr de vouloir supprimer cette demande?',
+                mediaLinkPlaceholder: 'Lien du média', unknown: 'Inconnu', loading: 'Chargement...',
+                snooze: 'Reporter', unsnooze: 'Réactiver', snoozed: 'REPORTÉ', snoozedUntil: 'Reporté jusqu\'à', snoozeDate: 'Reporter jusqu\'à',
+                categoryNew: '🆕 Nouveau', categoryProcessing: '🔄 En cours', categoryPending: '⏳ En attente', categorySnoozed: '💤 Reporté', categoryDone: '✅ Terminé', categoryRejected: '❌ Refusé',
+                createRequest: 'Créer Demande', latestMedia: 'Derniers Médias', latestMediaLoading: 'Chargement...', latestMediaEmpty: 'Pas de médias récents', latestMediaError: 'Échec du chargement',
+                newEpisode: '+1 épisode', newEpisodes: '+{count} épisodes', typeMovie: 'Film', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Autre',
+                timeAgo: 'il y a', timeJustNow: 'à l\'instant', timeMinutes: 'min', timeHours: 'h', timeDays: 'j',
+                mediaManagement: 'Médias', mediaManagementTitle: 'Gestion des Médias', mediaSearch: 'Rechercher...', mediaTypeAll: 'Tous Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Séries',
+                mediaSortBy: 'Trier par', mediaSortTitle: 'Titre', mediaSortYear: 'Année', mediaSortRating: 'Note', mediaSortPlays: 'Lectures', mediaSortSize: 'Taille',
+                mediaSortDateAdded: 'Date Ajout', mediaSortPlayCount: 'Lectures', mediaSortWatchTime: 'Temps Regardé', mediaLoading: 'Chargement...', mediaNoResults: 'Aucun média', mediaError: 'Erreur de chargement',
+                mediaScheduleDelete: 'Planifier Suppression', mediaCancelDelete: 'Annuler Suppression', mediaDeleteIn: 'Supprimer dans', mediaLeavingIn: 'Part dans',
+                media1Day: '1 Jour', media3Days: '3 Jours', media1Week: '1 Semaine', media2Weeks: '2 Semaines', mediaCustom: 'Personnalisé...', mediaCustomHours: 'Heures',
+                mediaSchedule: 'Planifier', mediaCancel: 'Annuler', mediaNoScheduled: 'Aucune suppression planifiée', mediaScheduledBy: 'Planifié par', mediaDeletesIn: 'Suppression dans',
+                mediaActions: 'Actions', mediaChange: 'Modifier', mediaChangeTime: 'Modifier temps', mediaSoon: 'Bientôt', mediaDays: 'jours', mediaPlays: 'lectures',
+                mediaMinutes: 'min', mediaGB: 'Go', mediaMB: 'Mo', mediaPage: 'Page', mediaOf: 'sur', mediaPrev: 'Précédent', mediaNext: 'Suivant', mediaGo: 'Aller',
+                mediaTypeScheduled: 'Planifiés', mediaSettings: 'Paramètres', mediaIncludeTypes: 'Inclure types:', mediaTypesHint: 'Sélectionner les types à afficher',
+                requestDeleteRequest: 'Demander suppression', requestDeleteMedia: 'Demander suppression média', deletionRequests: 'Demandes de Suppression', noDeletionRequests: 'Pas de demandes de suppression',
+                deleteNow: 'Supprimer ~1h', schedule1Day: '1 Jour', schedule1Week: '1 Semaine', schedule1Month: '1 Mois', rejectDeletion: 'Refuser', approveDeleteRequest: 'Approuver',
+                alreadyRequested: 'Suppression Demandée', deletionApproved: 'APPROUVÉ', deletionRejected: 'REFUSÉ', deletionPending: 'EN ATTENTE',
+                deletionRequestSent: 'Demande de suppression envoyée!', deletionRequestFailed: 'Échec de l\'envoi', deletionActionFailed: 'Échec du traitement',
+                deleteRequest: 'Supprimer Demande', deleteMedia: 'Supprimer Média', rejectionReasonPrompt: 'Raison du refus (optionnel):', rejectionReasonLabel: 'Raison:',
+                deletionLimitReached: 'Limite de demandes atteinte', banUser: 'Bannir', unbanUser: 'Débannir', bannedUsers: 'Utilisateurs Bannis',
+                ban1Day: '1 Jour', ban1Week: '1 Semaine', ban1Month: '1 Mois', banPermanent: 'Permanent', banExpires: 'Expire:', banPermanentLabel: 'Permanent',
+                bannedBy: 'par', noBannedUsers: 'Pas d\'utilisateurs bannis', youAreBanned: 'Vous êtes banni de cette action', banSuccess: 'Utilisateur banni', unbanSuccess: 'Utilisateur débanni'
+            },
+            ko: {
+                requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
+                requestDescriptionText: '이 양식을 사용하여 시청하고 싶은 영화나 TV 시리즈를 요청하세요.',
+                mediaTitle: '미디어 제목 *', mediaTitlePlaceholder: '예: 브레이킹 배드, 대부', type: '유형 *', selectType: '-- 유형 선택 --',
+                movie: '영화', tvSeries: 'TV 시리즈', anime: '애니메이션', documentary: '다큐멘터리', other: '기타',
+                additionalNotes: '추가 메모', notesPlaceholder: '시즌 번호, 연도, 세부 정보 등', submitRequest: '요청 제출',
+                yourRequests: '내 요청', loadingRequests: '요청 로딩 중...', noRequests: '아직 요청한 미디어가 없습니다',
+                errorLoading: '요청 로딩 오류', notSpecified: '미지정', noDetails: '세부 정보 없음', watchNow: '🎬 지금 보기',
+                noRequestsYet: '아직 요청이 없습니다', newRequest: '새 요청', pending: '대기 중', processing: '처리 중', done: '완료', rejected: '거부됨',
+                titleRequired: '제목을 입력하세요', typeRequired: '유형을 선택하세요', requestSubmitted: '요청이 제출되었습니다!',
+                requestFailed: '요청 제출 실패', statusUpdated: '상태 업데이트됨', statusUpdateFailed: '상태 업데이트 실패',
+                addLink: '+ 링크', enterMediaLink: '링크 입력:', delete: '삭제', confirmDelete: '이 요청을 삭제하시겠습니까?',
+                mediaLinkPlaceholder: '미디어 링크', unknown: '알 수 없음', loading: '로딩 중...',
+                snooze: '일시 중지', unsnooze: '재개', snoozed: '일시 중지됨', snoozedUntil: '일시 중지 기한', snoozeDate: '일시 중지 날짜',
+                categoryNew: '🆕 신규', categoryProcessing: '🔄 처리 중', categoryPending: '⏳ 대기 중', categorySnoozed: '💤 일시 중지', categoryDone: '✅ 완료', categoryRejected: '❌ 거부됨',
+                createRequest: '요청 생성', latestMedia: '최신 미디어', latestMediaLoading: '로딩 중...', latestMediaEmpty: '최근 미디어 없음', latestMediaError: '로딩 실패',
+                newEpisode: '+1 에피소드', newEpisodes: '+{count} 에피소드', typeMovie: '영화', typeSeries: '시리즈', typeAnime: '애니메이션', typeOther: '기타',
+                timeAgo: '전', timeJustNow: '방금', timeMinutes: '분', timeHours: '시간', timeDays: '일',
+                mediaManagement: '미디어', mediaManagementTitle: '미디어 관리', mediaSearch: '검색...', mediaTypeAll: '모든 유형', mediaTypeMovie: '영화', mediaTypeSeries: '시리즈',
+                mediaSortBy: '정렬', mediaSortTitle: '제목', mediaSortYear: '연도', mediaSortRating: '평점', mediaSortPlays: '재생 수', mediaSortSize: '크기',
+                mediaSortDateAdded: '추가 날짜', mediaSortPlayCount: '재생 수', mediaSortWatchTime: '시청 시간', mediaLoading: '로딩 중...', mediaNoResults: '미디어 없음', mediaError: '로딩 오류',
+                mediaScheduleDelete: '삭제 예약', mediaCancelDelete: '삭제 취소', mediaDeleteIn: '삭제 예정', mediaLeavingIn: '삭제까지',
+                media1Day: '1일', media3Days: '3일', media1Week: '1주', media2Weeks: '2주', mediaCustom: '사용자 지정...', mediaCustomHours: '시간',
+                mediaSchedule: '예약', mediaCancel: '취소', mediaNoScheduled: '예약된 삭제 없음', mediaScheduledBy: '예약자', mediaDeletesIn: '삭제까지',
+                mediaActions: '작업', mediaChange: '변경', mediaChangeTime: '시간 변경', mediaSoon: '곧', mediaDays: '일', mediaPlays: '재생',
+                mediaMinutes: '분', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '페이지', mediaOf: '/', mediaPrev: '이전', mediaNext: '다음', mediaGo: '이동',
+                mediaTypeScheduled: '예약됨', mediaSettings: '설정', mediaIncludeTypes: '포함 유형:', mediaTypesHint: '표시할 유형 선택',
+                requestDeleteRequest: '삭제 요청', requestDeleteMedia: '미디어 삭제 요청', deletionRequests: '삭제 요청', noDeletionRequests: '삭제 요청 없음',
+                deleteNow: '즉시 삭제', schedule1Day: '1일', schedule1Week: '1주', schedule1Month: '1개월', rejectDeletion: '거부', approveDeleteRequest: '승인',
+                alreadyRequested: '삭제 요청됨', deletionApproved: '승인됨', deletionRejected: '거부됨', deletionPending: '대기 중',
+                deletionRequestSent: '삭제 요청 전송됨!', deletionRequestFailed: '전송 실패', deletionActionFailed: '처리 실패',
+                deleteRequest: '요청 삭제', deleteMedia: '미디어 삭제', rejectionReasonPrompt: '거부 사유 (선택):', rejectionReasonLabel: '사유:',
+                deletionLimitReached: '요청 한도 도달', banUser: '차단', unbanUser: '차단 해제', bannedUsers: '차단된 사용자',
+                ban1Day: '1일', ban1Week: '1주', ban1Month: '1개월', banPermanent: '영구', banExpires: '만료:', banPermanentLabel: '영구',
+                bannedBy: '차단자', noBannedUsers: '차단된 사용자 없음', youAreBanned: '이 작업이 차단되었습니다', banSuccess: '사용자 차단됨', unbanSuccess: '차단 해제됨'
+            },
+            it: {
+                requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
+                requestDescriptionText: 'Usa questo modulo per richiedere film o serie TV che vorresti guardare.',
+                mediaTitle: 'Titolo *', mediaTitlePlaceholder: 'es., Breaking Bad, Il Padrino', type: 'Tipo *', selectType: '-- Seleziona Tipo --',
+                movie: 'Film', tvSeries: 'Serie TV', anime: 'Anime', documentary: 'Documentario', other: 'Altro',
+                additionalNotes: 'Note Aggiuntive', notesPlaceholder: 'Numero stagione, anno, dettagli specifici, ecc.', submitRequest: 'Invia Richiesta',
+                yourRequests: 'Le Tue Richieste', loadingRequests: 'Caricamento richieste...', noRequests: 'Non hai ancora richiesto nessun media',
+                errorLoading: 'Errore di caricamento', notSpecified: 'Non specificato', noDetails: 'Nessun dettaglio', watchNow: '🎬 Guarda Ora',
+                noRequestsYet: 'Nessuna richiesta ancora', newRequest: 'Nuova Richiesta', pending: 'IN ATTESA', processing: 'IN ELABORAZIONE', done: 'COMPLETATO', rejected: 'RIFIUTATO',
+                titleRequired: 'Inserisci un titolo', typeRequired: 'Seleziona un tipo', requestSubmitted: 'Richiesta inviata con successo!',
+                requestFailed: 'Invio fallito', statusUpdated: 'Stato aggiornato', statusUpdateFailed: 'Aggiornamento stato fallito',
+                addLink: '+ Link', enterMediaLink: 'Inserisci link:', delete: 'Elimina', confirmDelete: 'Sei sicuro di voler eliminare questa richiesta?',
+                mediaLinkPlaceholder: 'Link del media', unknown: 'Sconosciuto', loading: 'Caricamento...',
+                snooze: 'Posticipa', unsnooze: 'Riattiva', snoozed: 'POSTICIPATO', snoozedUntil: 'Posticipato fino a', snoozeDate: 'Posticipa fino a',
+                categoryNew: '🆕 Nuovo', categoryProcessing: '🔄 In elaborazione', categoryPending: '⏳ In attesa', categorySnoozed: '💤 Posticipato', categoryDone: '✅ Completato', categoryRejected: '❌ Rifiutato',
+                createRequest: 'Crea Richiesta', latestMedia: 'Ultimi Media', latestMediaLoading: 'Caricamento...', latestMediaEmpty: 'Nessun media recente', latestMediaError: 'Caricamento fallito',
+                newEpisode: '+1 episodio', newEpisodes: '+{count} episodi', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Altro',
+                timeAgo: 'fa', timeJustNow: 'adesso', timeMinutes: 'min', timeHours: 'h', timeDays: 'g',
+                mediaManagement: 'Media', mediaManagementTitle: 'Gestione Media', mediaSearch: 'Cerca...', mediaTypeAll: 'Tutti i Tipi', mediaTypeMovie: 'Film', mediaTypeSeries: 'Serie',
+                mediaSortBy: 'Ordina per', mediaSortTitle: 'Titolo', mediaSortYear: 'Anno', mediaSortRating: 'Valutazione', mediaSortPlays: 'Riproduzioni', mediaSortSize: 'Dimensione',
+                mediaSortDateAdded: 'Data Aggiunta', mediaSortPlayCount: 'Riproduzioni', mediaSortWatchTime: 'Tempo Guardato', mediaLoading: 'Caricamento...', mediaNoResults: 'Nessun media', mediaError: 'Errore caricamento',
+                mediaScheduleDelete: 'Pianifica Eliminazione', mediaCancelDelete: 'Annulla Eliminazione', mediaDeleteIn: 'Elimina tra', mediaLeavingIn: 'Rimozione tra',
+                media1Day: '1 Giorno', media3Days: '3 Giorni', media1Week: '1 Settimana', media2Weeks: '2 Settimane', mediaCustom: 'Personalizzato...', mediaCustomHours: 'Ore',
+                mediaSchedule: 'Pianifica', mediaCancel: 'Annulla', mediaNoScheduled: 'Nessuna eliminazione pianificata', mediaScheduledBy: 'Pianificato da', mediaDeletesIn: 'Eliminazione tra',
+                mediaActions: 'Azioni', mediaChange: 'Modifica', mediaChangeTime: 'Modifica tempo', mediaSoon: 'Presto', mediaDays: 'giorni', mediaPlays: 'riproduzioni',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'di', mediaPrev: 'Prec', mediaNext: 'Succ', mediaGo: 'Vai',
+                mediaTypeScheduled: 'Pianificati', mediaSettings: 'Impostazioni', mediaIncludeTypes: 'Includi tipi:', mediaTypesHint: 'Seleziona i tipi da mostrare',
+                requestDeleteRequest: 'Richiedi eliminazione', requestDeleteMedia: 'Richiedi eliminazione media', deletionRequests: 'Richieste di Eliminazione', noDeletionRequests: 'Nessuna richiesta di eliminazione',
+                deleteNow: 'Elimina ~1h', schedule1Day: '1 Giorno', schedule1Week: '1 Settimana', schedule1Month: '1 Mese', rejectDeletion: 'Rifiuta', approveDeleteRequest: 'Approva',
+                alreadyRequested: 'Eliminazione Richiesta', deletionApproved: 'APPROVATO', deletionRejected: 'RIFIUTATO', deletionPending: 'IN ATTESA',
+                deletionRequestSent: 'Richiesta eliminazione inviata!', deletionRequestFailed: 'Invio fallito', deletionActionFailed: 'Elaborazione fallita',
+                deleteRequest: 'Elimina Richiesta', deleteMedia: 'Elimina Media', rejectionReasonPrompt: 'Motivo del rifiuto (opzionale):', rejectionReasonLabel: 'Motivo:',
+                deletionLimitReached: 'Limite richieste raggiunto', banUser: 'Banna', unbanUser: 'Sbanna', bannedUsers: 'Utenti Bannati',
+                ban1Day: '1 Giorno', ban1Week: '1 Settimana', ban1Month: '1 Mese', banPermanent: 'Permanente', banExpires: 'Scade:', banPermanentLabel: 'Permanente',
+                bannedBy: 'da', noBannedUsers: 'Nessun utente bannato', youAreBanned: 'Sei bannato da questa azione', banSuccess: 'Utente bannato', unbanSuccess: 'Utente sbannato'
+            },
+            tr: {
+                requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
+                requestDescriptionText: 'İzlemek istediğiniz film veya dizileri istemek için bu formu kullanın.',
+                mediaTitle: 'Medya Başlığı *', mediaTitlePlaceholder: 'ör., Breaking Bad, Baba', type: 'Tür *', selectType: '-- Tür Seçin --',
+                movie: 'Film', tvSeries: 'TV Dizisi', anime: 'Anime', documentary: 'Belgesel', other: 'Diğer',
+                additionalNotes: 'Ek Notlar', notesPlaceholder: 'Sezon numarası, yıl, özel detaylar, vb.', submitRequest: 'İsteği Gönder',
+                yourRequests: 'İstekleriniz', loadingRequests: 'İstekleriniz yükleniyor...', noRequests: 'Henüz medya istemediniz',
+                errorLoading: 'Yükleme hatası', notSpecified: 'Belirtilmemiş', noDetails: 'Detay yok', watchNow: '🎬 Şimdi İzle',
+                noRequestsYet: 'Henüz istek yok', newRequest: 'Yeni İstek', pending: 'BEKLİYOR', processing: 'İŞLENİYOR', done: 'TAMAMLANDI', rejected: 'REDDEDİLDİ',
+                titleRequired: 'Lütfen başlık girin', typeRequired: 'Lütfen tür seçin', requestSubmitted: 'İstek başarıyla gönderildi!',
+                requestFailed: 'İstek gönderilemedi', statusUpdated: 'Durum güncellendi', statusUpdateFailed: 'Durum güncellenemedi',
+                addLink: '+ Link', enterMediaLink: 'Link girin:', delete: 'Sil', confirmDelete: 'Bu isteği silmek istediğinizden emin misiniz?',
+                mediaLinkPlaceholder: 'Medya linki', unknown: 'Bilinmiyor', loading: 'Yükleniyor...',
+                snooze: 'Ertele', unsnooze: 'Yeniden Etkinleştir', snoozed: 'ERTELENDİ', snoozedUntil: 'Ertelendi', snoozeDate: 'Erteleme tarihi',
+                categoryNew: '🆕 Yeni', categoryProcessing: '🔄 İşleniyor', categoryPending: '⏳ Bekliyor', categorySnoozed: '💤 Ertelendi', categoryDone: '✅ Tamamlandı', categoryRejected: '❌ Reddedildi',
+                createRequest: 'İstek Oluştur', latestMedia: 'Son Medya', latestMediaLoading: 'Yükleniyor...', latestMediaEmpty: 'Son medya yok', latestMediaError: 'Yükleme başarısız',
+                newEpisode: '+1 bölüm', newEpisodes: '+{count} bölüm', typeMovie: 'Film', typeSeries: 'Dizi', typeAnime: 'Anime', typeOther: 'Diğer',
+                timeAgo: 'önce', timeJustNow: 'şimdi', timeMinutes: 'dk', timeHours: 'sa', timeDays: 'g',
+                mediaManagement: 'Medya', mediaManagementTitle: 'Medya Yönetimi', mediaSearch: 'Ara...', mediaTypeAll: 'Tüm Türler', mediaTypeMovie: 'Filmler', mediaTypeSeries: 'Diziler',
+                mediaSortBy: 'Sırala', mediaSortTitle: 'Başlık', mediaSortYear: 'Yıl', mediaSortRating: 'Puan', mediaSortPlays: 'Oynatma', mediaSortSize: 'Boyut',
+                mediaSortDateAdded: 'Eklenme Tarihi', mediaSortPlayCount: 'Oynatma', mediaSortWatchTime: 'İzleme Süresi', mediaLoading: 'Yükleniyor...', mediaNoResults: 'Medya bulunamadı', mediaError: 'Yükleme hatası',
+                mediaScheduleDelete: 'Silme Planla', mediaCancelDelete: 'Silmeyi İptal', mediaDeleteIn: 'Silinecek', mediaLeavingIn: 'Kaldırılacak',
+                media1Day: '1 Gün', media3Days: '3 Gün', media1Week: '1 Hafta', media2Weeks: '2 Hafta', mediaCustom: 'Özel...', mediaCustomHours: 'Saat',
+                mediaSchedule: 'Planla', mediaCancel: 'İptal', mediaNoScheduled: 'Planlanan silme yok', mediaScheduledBy: 'Planlayan', mediaDeletesIn: 'Silinecek',
+                mediaActions: 'İşlemler', mediaChange: 'Değiştir', mediaChangeTime: 'Zamanı değiştir', mediaSoon: 'Yakında', mediaDays: 'gün', mediaPlays: 'oynatma',
+                mediaMinutes: 'dk', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Sayfa', mediaOf: '/', mediaPrev: 'Önceki', mediaNext: 'Sonraki', mediaGo: 'Git',
+                mediaTypeScheduled: 'Planlanmış', mediaSettings: 'Ayarlar', mediaIncludeTypes: 'Türleri dahil et:', mediaTypesHint: 'Gösterilecek türleri seçin',
+                requestDeleteRequest: 'Silme iste', requestDeleteMedia: 'Medya silme iste', deletionRequests: 'Silme İstekleri', noDeletionRequests: 'Silme isteği yok',
+                deleteNow: 'Şimdi sil', schedule1Day: '1 Gün', schedule1Week: '1 Hafta', schedule1Month: '1 Ay', rejectDeletion: 'Reddet', approveDeleteRequest: 'Onayla',
+                alreadyRequested: 'Silme İstendi', deletionApproved: 'ONAYLANDI', deletionRejected: 'REDDEDİLDİ', deletionPending: 'BEKLİYOR',
+                deletionRequestSent: 'Silme isteği gönderildi!', deletionRequestFailed: 'Gönderme başarısız', deletionActionFailed: 'İşlem başarısız',
+                deleteRequest: 'İsteği Sil', deleteMedia: 'Medyayı Sil', rejectionReasonPrompt: 'Red nedeni (isteğe bağlı):', rejectionReasonLabel: 'Neden:',
+                deletionLimitReached: 'İstek sınırına ulaşıldı', banUser: 'Yasakla', unbanUser: 'Yasağı Kaldır', bannedUsers: 'Yasaklı Kullanıcılar',
+                ban1Day: '1 Gün', ban1Week: '1 Hafta', ban1Month: '1 Ay', banPermanent: 'Kalıcı', banExpires: 'Bitiş:', banPermanentLabel: 'Kalıcı',
+                bannedBy: 'tarafından', noBannedUsers: 'Yasaklı kullanıcı yok', youAreBanned: 'Bu işlem için yasaklısınız', banSuccess: 'Kullanıcı yasaklandı', unbanSuccess: 'Yasak kaldırıldı'
+            },
+            pl: {
+                requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
+                requestDescriptionText: 'Użyj tego formularza, aby poprosić o filmy lub seriale, które chciałbyś obejrzeć.',
+                mediaTitle: 'Tytuł *', mediaTitlePlaceholder: 'np., Breaking Bad, Ojciec Chrzestny', type: 'Typ *', selectType: '-- Wybierz Typ --',
+                movie: 'Film', tvSeries: 'Serial TV', anime: 'Anime', documentary: 'Dokument', other: 'Inne',
+                additionalNotes: 'Dodatkowe Uwagi', notesPlaceholder: 'Numer sezonu, rok, szczegóły, itp.', submitRequest: 'Wyślij Prośbę',
+                yourRequests: 'Twoje Prośby', loadingRequests: 'Ładowanie próśb...', noRequests: 'Nie masz jeszcze żadnych próśb',
+                errorLoading: 'Błąd ładowania', notSpecified: 'Nieokreślone', noDetails: 'Brak szczegółów', watchNow: '🎬 Oglądaj Teraz',
+                noRequestsYet: 'Brak próśb', newRequest: 'Nowa Prośba', pending: 'OCZEKUJE', processing: 'PRZETWARZANIE', done: 'GOTOWE', rejected: 'ODRZUCONE',
+                titleRequired: 'Proszę podać tytuł', typeRequired: 'Proszę wybrać typ', requestSubmitted: 'Prośba wysłana pomyślnie!',
+                requestFailed: 'Nie udało się wysłać', statusUpdated: 'Status zaktualizowany', statusUpdateFailed: 'Nie udało się zaktualizować statusu',
+                addLink: '+ Link', enterMediaLink: 'Wprowadź link:', delete: 'Usuń', confirmDelete: 'Czy na pewno chcesz usunąć tę prośbę?',
+                mediaLinkPlaceholder: 'Link do mediów', unknown: 'Nieznane', loading: 'Ładowanie...',
+                snooze: 'Odłóż', unsnooze: 'Wznów', snoozed: 'ODŁOŻONE', snoozedUntil: 'Odłożone do', snoozeDate: 'Odłóż do daty',
+                categoryNew: '🆕 Nowe', categoryProcessing: '🔄 Przetwarzanie', categoryPending: '⏳ Oczekujące', categorySnoozed: '💤 Odłożone', categoryDone: '✅ Gotowe', categoryRejected: '❌ Odrzucone',
+                createRequest: 'Utwórz Prośbę', latestMedia: 'Najnowsze Media', latestMediaLoading: 'Ładowanie...', latestMediaEmpty: 'Brak nowych mediów', latestMediaError: 'Błąd ładowania',
+                newEpisode: '+1 odcinek', newEpisodes: '+{count} odcinków', typeMovie: 'Film', typeSeries: 'Serial', typeAnime: 'Anime', typeOther: 'Inne',
+                timeAgo: 'temu', timeJustNow: 'przed chwilą', timeMinutes: 'min', timeHours: 'godz', timeDays: 'dni',
+                mediaManagement: 'Media', mediaManagementTitle: 'Zarządzanie Mediami', mediaSearch: 'Szukaj...', mediaTypeAll: 'Wszystkie Typy', mediaTypeMovie: 'Filmy', mediaTypeSeries: 'Seriale',
+                mediaSortBy: 'Sortuj wg', mediaSortTitle: 'Tytuł', mediaSortYear: 'Rok', mediaSortRating: 'Ocena', mediaSortPlays: 'Odtworzenia', mediaSortSize: 'Rozmiar',
+                mediaSortDateAdded: 'Data Dodania', mediaSortPlayCount: 'Odtworzenia', mediaSortWatchTime: 'Czas Oglądania', mediaLoading: 'Ładowanie...', mediaNoResults: 'Brak mediów', mediaError: 'Błąd ładowania',
+                mediaScheduleDelete: 'Zaplanuj Usunięcie', mediaCancelDelete: 'Anuluj Usunięcie', mediaDeleteIn: 'Usuń za', mediaLeavingIn: 'Usunięcie za',
+                media1Day: '1 Dzień', media3Days: '3 Dni', media1Week: '1 Tydzień', media2Weeks: '2 Tygodnie', mediaCustom: 'Własne...', mediaCustomHours: 'Godziny',
+                mediaSchedule: 'Zaplanuj', mediaCancel: 'Anuluj', mediaNoScheduled: 'Brak zaplanowanych usunięć', mediaScheduledBy: 'Zaplanowane przez', mediaDeletesIn: 'Usunięcie za',
+                mediaActions: 'Akcje', mediaChange: 'Zmień', mediaChangeTime: 'Zmień czas', mediaSoon: 'Wkrótce', mediaDays: 'dni', mediaPlays: 'odtworzeń',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Strona', mediaOf: 'z', mediaPrev: 'Poprz', mediaNext: 'Nast', mediaGo: 'Idź',
+                mediaTypeScheduled: 'Zaplanowane', mediaSettings: 'Ustawienia', mediaIncludeTypes: 'Uwzględnij typy:', mediaTypesHint: 'Wybierz typy do wyświetlenia',
+                requestDeleteRequest: 'Poproś o usunięcie', requestDeleteMedia: 'Poproś o usunięcie mediów', deletionRequests: 'Prośby o Usunięcie', noDeletionRequests: 'Brak próśb o usunięcie',
+                deleteNow: 'Usuń ~1h', schedule1Day: '1 Dzień', schedule1Week: '1 Tydzień', schedule1Month: '1 Miesiąc', rejectDeletion: 'Odrzuć', approveDeleteRequest: 'Zatwierdź',
+                alreadyRequested: 'Usunięcie Zgłoszone', deletionApproved: 'ZATWIERDZONE', deletionRejected: 'ODRZUCONE', deletionPending: 'OCZEKUJE',
+                deletionRequestSent: 'Prośba o usunięcie wysłana!', deletionRequestFailed: 'Nie udało się wysłać', deletionActionFailed: 'Nie udało się przetworzyć',
+                deleteRequest: 'Usuń Prośbę', deleteMedia: 'Usuń Media', rejectionReasonPrompt: 'Powód odrzucenia (opcjonalnie):', rejectionReasonLabel: 'Powód:',
+                deletionLimitReached: 'Osiągnięto limit próśb', banUser: 'Zbanuj', unbanUser: 'Odbanuj', bannedUsers: 'Zbanowani Użytkownicy',
+                ban1Day: '1 Dzień', ban1Week: '1 Tydzień', ban1Month: '1 Miesiąc', banPermanent: 'Na stałe', banExpires: 'Wygasa:', banPermanentLabel: 'Na stałe',
+                bannedBy: 'przez', noBannedUsers: 'Brak zbanowanych użytkowników', youAreBanned: 'Jesteś zbanowany z tej akcji', banSuccess: 'Użytkownik zbanowany', unbanSuccess: 'Użytkownik odbanowany'
+            },
+            nl: {
+                requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
+                requestDescriptionText: 'Gebruik dit formulier om films of series aan te vragen die je wilt bekijken.',
+                mediaTitle: 'Titel *', mediaTitlePlaceholder: 'bijv., Breaking Bad, The Godfather', type: 'Type *', selectType: '-- Selecteer Type --',
+                movie: 'Film', tvSeries: 'TV Serie', anime: 'Anime', documentary: 'Documentaire', other: 'Anders',
+                additionalNotes: 'Extra Opmerkingen', notesPlaceholder: 'Seizoensnummer, jaar, specifieke details, etc.', submitRequest: 'Verzoek Indienen',
+                yourRequests: 'Jouw Verzoeken', loadingRequests: 'Verzoeken laden...', noRequests: 'Je hebt nog geen media aangevraagd',
+                errorLoading: 'Fout bij laden', notSpecified: 'Niet opgegeven', noDetails: 'Geen details', watchNow: '🎬 Nu Bekijken',
+                noRequestsYet: 'Nog geen verzoeken', newRequest: 'Nieuw Verzoek', pending: 'WACHTEND', processing: 'BEZIG', done: 'KLAAR', rejected: 'AFGEWEZEN',
+                titleRequired: 'Voer een titel in', typeRequired: 'Selecteer een type', requestSubmitted: 'Verzoek succesvol ingediend!',
+                requestFailed: 'Verzoek mislukt', statusUpdated: 'Status bijgewerkt', statusUpdateFailed: 'Status update mislukt',
+                addLink: '+ Link', enterMediaLink: 'Voer link in:', delete: 'Verwijderen', confirmDelete: 'Weet je zeker dat je dit verzoek wilt verwijderen?',
+                mediaLinkPlaceholder: 'Media link', unknown: 'Onbekend', loading: 'Laden...',
+                snooze: 'Uitstellen', unsnooze: 'Heractiveren', snoozed: 'UITGESTELD', snoozedUntil: 'Uitgesteld tot', snoozeDate: 'Uitstellen tot',
+                categoryNew: '🆕 Nieuw', categoryProcessing: '🔄 Bezig', categoryPending: '⏳ Wachtend', categorySnoozed: '💤 Uitgesteld', categoryDone: '✅ Klaar', categoryRejected: '❌ Afgewezen',
+                createRequest: 'Verzoek Maken', latestMedia: 'Laatste Media', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Geen recente media', latestMediaError: 'Laden mislukt',
+                newEpisode: '+1 aflevering', newEpisodes: '+{count} afleveringen', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Anders',
+                timeAgo: 'geleden', timeJustNow: 'zojuist', timeMinutes: 'min', timeHours: 'u', timeDays: 'd',
+                mediaManagement: 'Media', mediaManagementTitle: 'Mediabeheer', mediaSearch: 'Zoeken...', mediaTypeAll: 'Alle Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Series',
+                mediaSortBy: 'Sorteren op', mediaSortTitle: 'Titel', mediaSortYear: 'Jaar', mediaSortRating: 'Beoordeling', mediaSortPlays: 'Afgespeeld', mediaSortSize: 'Grootte',
+                mediaSortDateAdded: 'Toegevoegd', mediaSortPlayCount: 'Afgespeeld', mediaSortWatchTime: 'Kijktijd', mediaLoading: 'Laden...', mediaNoResults: 'Geen media', mediaError: 'Laadfout',
+                mediaScheduleDelete: 'Verwijdering Plannen', mediaCancelDelete: 'Verwijdering Annuleren', mediaDeleteIn: 'Verwijderen over', mediaLeavingIn: 'Verdwijnt over',
+                media1Day: '1 Dag', media3Days: '3 Dagen', media1Week: '1 Week', media2Weeks: '2 Weken', mediaCustom: 'Aangepast...', mediaCustomHours: 'Uren',
+                mediaSchedule: 'Plannen', mediaCancel: 'Annuleren', mediaNoScheduled: 'Geen geplande verwijderingen', mediaScheduledBy: 'Gepland door', mediaDeletesIn: 'Verwijderd over',
+                mediaActions: 'Acties', mediaChange: 'Wijzigen', mediaChangeTime: 'Tijd wijzigen', mediaSoon: 'Binnenkort', mediaDays: 'dagen', mediaPlays: 'keer afgespeeld',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'van', mediaPrev: 'Vorige', mediaNext: 'Volgende', mediaGo: 'Ga',
+                mediaTypeScheduled: 'Gepland', mediaSettings: 'Instellingen', mediaIncludeTypes: 'Inclusief types:', mediaTypesHint: 'Selecteer te tonen types',
+                requestDeleteRequest: 'Verwijdering aanvragen', requestDeleteMedia: 'Media verwijdering aanvragen', deletionRequests: 'Verwijderverzoeken', noDeletionRequests: 'Geen verwijderverzoeken',
+                deleteNow: 'Nu verwijderen', schedule1Day: '1 Dag', schedule1Week: '1 Week', schedule1Month: '1 Maand', rejectDeletion: 'Afwijzen', approveDeleteRequest: 'Goedkeuren',
+                alreadyRequested: 'Verwijdering Aangevraagd', deletionApproved: 'GOEDGEKEURD', deletionRejected: 'AFGEWEZEN', deletionPending: 'WACHTEND',
+                deletionRequestSent: 'Verwijderverzoek verzonden!', deletionRequestFailed: 'Verzenden mislukt', deletionActionFailed: 'Verwerking mislukt',
+                deleteRequest: 'Verzoek Verwijderen', deleteMedia: 'Media Verwijderen', rejectionReasonPrompt: 'Reden afwijzing (optioneel):', rejectionReasonLabel: 'Reden:',
+                deletionLimitReached: 'Verzoeklimiet bereikt', banUser: 'Blokkeren', unbanUser: 'Deblokkeren', bannedUsers: 'Geblokkeerde Gebruikers',
+                ban1Day: '1 Dag', ban1Week: '1 Week', ban1Month: '1 Maand', banPermanent: 'Permanent', banExpires: 'Verloopt:', banPermanentLabel: 'Permanent',
+                bannedBy: 'door', noBannedUsers: 'Geen geblokkeerde gebruikers', youAreBanned: 'Je bent geblokkeerd voor deze actie', banSuccess: 'Gebruiker geblokkeerd', unbanSuccess: 'Gebruiker gedeblokkeerd'
+            },
+            ar: {
+                requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
+                requestDescriptionText: 'استخدم هذا النموذج لطلب الأفلام أو المسلسلات التي ترغب في مشاهدتها.',
+                mediaTitle: 'العنوان *', mediaTitlePlaceholder: 'مثال: بريكنج باد، العراب', type: 'النوع *', selectType: '-- اختر النوع --',
+                movie: 'فيلم', tvSeries: 'مسلسل', anime: 'أنمي', documentary: 'وثائقي', other: 'أخرى',
+                additionalNotes: 'ملاحظات إضافية', notesPlaceholder: 'رقم الموسم، السنة، تفاصيل محددة، إلخ.', submitRequest: 'إرسال الطلب',
+                yourRequests: 'طلباتك', loadingRequests: 'جاري تحميل طلباتك...', noRequests: 'لم تطلب أي وسائط بعد',
+                errorLoading: 'خطأ في التحميل', notSpecified: 'غير محدد', noDetails: 'لا توجد تفاصيل', watchNow: '🎬 شاهد الآن',
+                noRequestsYet: 'لا توجد طلبات بعد', newRequest: 'طلب جديد', pending: 'قيد الانتظار', processing: 'قيد المعالجة', done: 'مكتمل', rejected: 'مرفوض',
+                titleRequired: 'الرجاء إدخال العنوان', typeRequired: 'الرجاء اختيار النوع', requestSubmitted: 'تم إرسال الطلب بنجاح!',
+                requestFailed: 'فشل إرسال الطلب', statusUpdated: 'تم تحديث الحالة', statusUpdateFailed: 'فشل تحديث الحالة',
+                addLink: '+ رابط', enterMediaLink: 'أدخل الرابط:', delete: 'حذف', confirmDelete: 'هل أنت متأكد من حذف هذا الطلب؟',
+                mediaLinkPlaceholder: 'رابط الوسائط', unknown: 'غير معروف', loading: 'جاري التحميل...',
+                snooze: 'تأجيل', unsnooze: 'إلغاء التأجيل', snoozed: 'مؤجل', snoozedUntil: 'مؤجل حتى', snoozeDate: 'تأجيل حتى',
+                categoryNew: '🆕 جديد', categoryProcessing: '🔄 قيد المعالجة', categoryPending: '⏳ قيد الانتظار', categorySnoozed: '💤 مؤجل', categoryDone: '✅ مكتمل', categoryRejected: '❌ مرفوض',
+                createRequest: 'إنشاء طلب', latestMedia: 'أحدث الوسائط', latestMediaLoading: 'جاري التحميل...', latestMediaEmpty: 'لا توجد وسائط حديثة', latestMediaError: 'فشل التحميل',
+                newEpisode: '+1 حلقة', newEpisodes: '+{count} حلقات', typeMovie: 'فيلم', typeSeries: 'مسلسل', typeAnime: 'أنمي', typeOther: 'أخرى',
+                timeAgo: 'مضت', timeJustNow: 'الآن', timeMinutes: 'دقيقة', timeHours: 'ساعة', timeDays: 'يوم',
+                mediaManagement: 'الوسائط', mediaManagementTitle: 'إدارة الوسائط', mediaSearch: 'بحث...', mediaTypeAll: 'جميع الأنواع', mediaTypeMovie: 'أفلام', mediaTypeSeries: 'مسلسلات',
+                mediaSortBy: 'ترتيب حسب', mediaSortTitle: 'العنوان', mediaSortYear: 'السنة', mediaSortRating: 'التقييم', mediaSortPlays: 'المشاهدات', mediaSortSize: 'الحجم',
+                mediaSortDateAdded: 'تاريخ الإضافة', mediaSortPlayCount: 'المشاهدات', mediaSortWatchTime: 'وقت المشاهدة', mediaLoading: 'جاري التحميل...', mediaNoResults: 'لا توجد وسائط', mediaError: 'خطأ في التحميل',
+                mediaScheduleDelete: 'جدولة الحذف', mediaCancelDelete: 'إلغاء الحذف', mediaDeleteIn: 'حذف خلال', mediaLeavingIn: 'سيُحذف خلال',
+                media1Day: '1 يوم', media3Days: '3 أيام', media1Week: '1 أسبوع', media2Weeks: '2 أسابيع', mediaCustom: 'مخصص...', mediaCustomHours: 'ساعات',
+                mediaSchedule: 'جدولة', mediaCancel: 'إلغاء', mediaNoScheduled: 'لا يوجد حذف مجدول', mediaScheduledBy: 'مجدول بواسطة', mediaDeletesIn: 'يُحذف خلال',
+                mediaActions: 'إجراءات', mediaChange: 'تغيير', mediaChangeTime: 'تغيير الوقت', mediaSoon: 'قريباً', mediaDays: 'أيام', mediaPlays: 'مشاهدات',
+                mediaMinutes: 'دقيقة', mediaGB: 'جيجا', mediaMB: 'ميجا', mediaPage: 'صفحة', mediaOf: 'من', mediaPrev: 'السابق', mediaNext: 'التالي', mediaGo: 'انتقل',
+                mediaTypeScheduled: 'مجدول', mediaSettings: 'الإعدادات', mediaIncludeTypes: 'تضمين الأنواع:', mediaTypesHint: 'اختر الأنواع للعرض',
+                requestDeleteRequest: 'طلب حذف', requestDeleteMedia: 'طلب حذف الوسائط', deletionRequests: 'طلبات الحذف', noDeletionRequests: 'لا توجد طلبات حذف',
+                deleteNow: 'حذف الآن', schedule1Day: '1 يوم', schedule1Week: '1 أسبوع', schedule1Month: '1 شهر', rejectDeletion: 'رفض', approveDeleteRequest: 'موافقة',
+                alreadyRequested: 'تم طلب الحذف', deletionApproved: 'موافق عليه', deletionRejected: 'مرفوض', deletionPending: 'قيد الانتظار',
+                deletionRequestSent: 'تم إرسال طلب الحذف!', deletionRequestFailed: 'فشل الإرسال', deletionActionFailed: 'فشلت المعالجة',
+                deleteRequest: 'حذف الطلب', deleteMedia: 'حذف الوسائط', rejectionReasonPrompt: 'سبب الرفض (اختياري):', rejectionReasonLabel: 'السبب:',
+                deletionLimitReached: 'تم الوصول لحد الطلبات', banUser: 'حظر', unbanUser: 'إلغاء الحظر', bannedUsers: 'المستخدمون المحظورون',
+                ban1Day: '1 يوم', ban1Week: '1 أسبوع', ban1Month: '1 شهر', banPermanent: 'دائم', banExpires: 'ينتهي:', banPermanentLabel: 'دائم',
+                bannedBy: 'بواسطة', noBannedUsers: 'لا يوجد مستخدمون محظورون', youAreBanned: 'أنت محظور من هذا الإجراء', banSuccess: 'تم حظر المستخدم', unbanSuccess: 'تم إلغاء حظر المستخدم'
+            },
+            hi: {
+                requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
+                requestDescriptionText: 'जो फिल्में या टीवी श्रृंखला आप देखना चाहते हैं उनका अनुरोध करने के लिए इस फॉर्म का उपयोग करें।',
+                mediaTitle: 'शीर्षक *', mediaTitlePlaceholder: 'उदा., ब्रेकिंग बैड, द गॉडफादर', type: 'प्रकार *', selectType: '-- प्रकार चुनें --',
+                movie: 'फिल्म', tvSeries: 'टीवी श्रृंखला', anime: 'एनीमे', documentary: 'वृत्तचित्र', other: 'अन्य',
+                additionalNotes: 'अतिरिक्त टिप्पणियाँ', notesPlaceholder: 'सीजन नंबर, वर्ष, विशिष्ट विवरण, आदि।', submitRequest: 'अनुरोध भेजें',
+                yourRequests: 'आपके अनुरोध', loadingRequests: 'आपके अनुरोध लोड हो रहे हैं...', noRequests: 'आपने अभी तक कोई मीडिया अनुरोध नहीं किया',
+                errorLoading: 'लोडिंग त्रुटि', notSpecified: 'निर्दिष्ट नहीं', noDetails: 'कोई विवरण नहीं', watchNow: '🎬 अभी देखें',
+                noRequestsYet: 'अभी तक कोई अनुरोध नहीं', newRequest: 'नया अनुरोध', pending: 'लंबित', processing: 'प्रगति में', done: 'पूर्ण', rejected: 'अस्वीकृत',
+                titleRequired: 'कृपया शीर्षक दर्ज करें', typeRequired: 'कृपया प्रकार चुनें', requestSubmitted: 'अनुरोध सफलतापूर्वक भेजा गया!',
+                requestFailed: 'अनुरोध भेजने में विफल', statusUpdated: 'स्थिति अपडेट की गई', statusUpdateFailed: 'स्थिति अपडेट विफल',
+                addLink: '+ लिंक', enterMediaLink: 'लिंक दर्ज करें:', delete: 'हटाएं', confirmDelete: 'क्या आप वाकई इस अनुरोध को हटाना चाहते हैं?',
+                mediaLinkPlaceholder: 'मीडिया लिंक', unknown: 'अज्ञात', loading: 'लोड हो रहा है...',
+                snooze: 'स्नूज़', unsnooze: 'अनस्नूज़', snoozed: 'स्नूज़्ड', snoozedUntil: 'तक स्नूज़्ड', snoozeDate: 'स्नूज़ तिथि',
+                categoryNew: '🆕 नया', categoryProcessing: '🔄 प्रगति में', categoryPending: '⏳ लंबित', categorySnoozed: '💤 स्नूज़्ड', categoryDone: '✅ पूर्ण', categoryRejected: '❌ अस्वीकृत',
+                createRequest: 'अनुरोध बनाएं', latestMedia: 'नवीनतम मीडिया', latestMediaLoading: 'लोड हो रहा है...', latestMediaEmpty: 'कोई हालिया मीडिया नहीं', latestMediaError: 'लोड विफल',
+                newEpisode: '+1 एपिसोड', newEpisodes: '+{count} एपिसोड', typeMovie: 'फिल्म', typeSeries: 'श्रृंखला', typeAnime: 'एनीमे', typeOther: 'अन्य',
+                timeAgo: 'पहले', timeJustNow: 'अभी', timeMinutes: 'मिनट', timeHours: 'घंटे', timeDays: 'दिन',
+                mediaManagement: 'मीडिया', mediaManagementTitle: 'मीडिया प्रबंधन', mediaSearch: 'खोजें...', mediaTypeAll: 'सभी प्रकार', mediaTypeMovie: 'फिल्में', mediaTypeSeries: 'श्रृंखला',
+                mediaSortBy: 'क्रमबद्ध करें', mediaSortTitle: 'शीर्षक', mediaSortYear: 'वर्ष', mediaSortRating: 'रेटिंग', mediaSortPlays: 'चलाए गए', mediaSortSize: 'आकार',
+                mediaSortDateAdded: 'जोड़ने की तिथि', mediaSortPlayCount: 'चलाए गए', mediaSortWatchTime: 'देखने का समय', mediaLoading: 'लोड हो रहा है...', mediaNoResults: 'कोई मीडिया नहीं', mediaError: 'लोडिंग त्रुटि',
+                mediaScheduleDelete: 'हटाने का शेड्यूल', mediaCancelDelete: 'हटाना रद्द करें', mediaDeleteIn: 'में हटाएं', mediaLeavingIn: 'में हट जाएगा',
+                media1Day: '1 दिन', media3Days: '3 दिन', media1Week: '1 सप्ताह', media2Weeks: '2 सप्ताह', mediaCustom: 'कस्टम...', mediaCustomHours: 'घंटे',
+                mediaSchedule: 'शेड्यूल', mediaCancel: 'रद्द करें', mediaNoScheduled: 'कोई शेड्यूल्ड हटाना नहीं', mediaScheduledBy: 'द्वारा शेड्यूल्ड', mediaDeletesIn: 'में हटेगा',
+                mediaActions: 'कार्रवाई', mediaChange: 'बदलें', mediaChangeTime: 'समय बदलें', mediaSoon: 'जल्द', mediaDays: 'दिन', mediaPlays: 'बार चला',
+                mediaMinutes: 'मिनट', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'पृष्ठ', mediaOf: 'का', mediaPrev: 'पिछला', mediaNext: 'अगला', mediaGo: 'जाएं',
+                mediaTypeScheduled: 'शेड्यूल्ड', mediaSettings: 'सेटिंग्स', mediaIncludeTypes: 'प्रकार शामिल करें:', mediaTypesHint: 'दिखाने के लिए प्रकार चुनें',
+                requestDeleteRequest: 'हटाने का अनुरोध', requestDeleteMedia: 'मीडिया हटाने का अनुरोध', deletionRequests: 'हटाने के अनुरोध', noDeletionRequests: 'कोई हटाने के अनुरोध नहीं',
+                deleteNow: 'अभी हटाएं', schedule1Day: '1 दिन', schedule1Week: '1 सप्ताह', schedule1Month: '1 महीना', rejectDeletion: 'अस्वीकार', approveDeleteRequest: 'स्वीकार',
+                alreadyRequested: 'हटाने का अनुरोध किया', deletionApproved: 'स्वीकृत', deletionRejected: 'अस्वीकृत', deletionPending: 'लंबित',
+                deletionRequestSent: 'हटाने का अनुरोध भेजा गया!', deletionRequestFailed: 'भेजने में विफल', deletionActionFailed: 'प्रसंस्करण विफल',
+                deleteRequest: 'अनुरोध हटाएं', deleteMedia: 'मीडिया हटाएं', rejectionReasonPrompt: 'अस्वीकृति का कारण (वैकल्पिक):', rejectionReasonLabel: 'कारण:',
+                deletionLimitReached: 'अनुरोध सीमा पूरी हुई', banUser: 'प्रतिबंध', unbanUser: 'प्रतिबंध हटाएं', bannedUsers: 'प्रतिबंधित उपयोगकर्ता',
+                ban1Day: '1 दिन', ban1Week: '1 सप्ताह', ban1Month: '1 महीना', banPermanent: 'स्थायी', banExpires: 'समाप्ति:', banPermanentLabel: 'स्थायी',
+                bannedBy: 'द्वारा', noBannedUsers: 'कोई प्रतिबंधित उपयोगकर्ता नहीं', youAreBanned: 'आप इस क्रिया से प्रतिबंधित हैं', banSuccess: 'उपयोगकर्ता प्रतिबंधित', unbanSuccess: 'प्रतिबंध हटाया गया'
             },
             lt: {
-                requestMedia: 'Užsakyti Mediją',
-                manageRequests: 'Tvarkyti Medijos Užklausas',
-                requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
-                requestDescriptionText: 'Naudokite šią formą, kad užsakytumėte filmus ar TV serialus, kuriuos norėtumėte žiūrėti. Administratorius peržiūrės jūsų užklausą ir pridės ją į biblioteką kuo greičiau. Žemiau galite sekti visų savo užklausų būseną.',
-                mediaTitle: 'Medijos Pavadinimas *',
-                mediaTitlePlaceholder: 'pvz., Breaking Bad, Krikštatėvis',
-                type: 'Tipas *',
-                selectType: '-- Pasirinkite Tipą --',
-                movie: 'Filmas',
-                tvSeries: 'TV Serialas',
-                anime: 'Anime',
-                documentary: 'Dokumentika',
-                other: 'Kita',
-                additionalNotes: 'Papildomos Pastabos',
-                notesPlaceholder: 'Sezono numeris, metai, specifinė informacija ir t.t.',
-                submitRequest: 'Pateikti Užklausą',
-                yourRequests: 'Jūsų Užklausos',
-                loadingRequests: 'Kraunamos jūsų užklausos...',
-                noRequests: 'Jūs dar neužsakėte jokios medijos',
-                errorLoading: 'Klaida kraunant jūsų užklausas',
-                notSpecified: 'Nenurodyta',
-                noDetails: 'Nėra detalių',
-                watchNow: '🎬 Žiūrėti Dabar',
-                noRequestsYet: 'Medijos užklausų dar nėra',
-                newRequest: 'Nauja užklausa',
-                pending: 'LAUKIAMA',
-                processing: 'VYKDOMA',
-                done: 'ATLIKTA',
-                rejected: 'ATMESTA',
-                titleRequired: 'Įveskite medijos pavadinimą',
-                typeRequired: 'Pasirinkite medijos tipą',
-                requestSubmitted: 'Užklausa sėkmingai pateikta!',
-                requestFailed: 'Nepavyko pateikti užklausos',
-                statusUpdated: 'Būsena atnaujinta',
-                statusUpdateFailed: 'Nepavyko atnaujinti būsenos',
-                addLink: '+ Nuoroda',
-                enterMediaLink: 'Įveskite medijos nuorodą:',
-                delete: 'Ištrinti',
-                confirmDelete: 'Ar tikrai norite ištrinti šią užklausą?',
-                mediaLinkPlaceholder: 'Medijos nuoroda (įklijuokite URL kai baigta)',
-                unknown: 'Nežinoma',
-                loading: 'Kraunama...',
-                snooze: 'Atidėti',
-                unsnooze: 'Atšaukti atidėjimą',
-                snoozed: 'ATIDĖTA',
-                snoozedUntil: 'Atidėta iki',
-                snoozeDate: 'Atidėti iki datos',
-                categoryNew: '🆕 Nauji',
-                categoryProcessing: '🔄 Vykdoma',
-                categoryPending: '⏳ Laukiama',
-                categorySnoozed: '💤 Atidėta',
-                categoryDone: '✅ Atlikta',
-                categoryRejected: '❌ Atmesta',
-                createRequest: 'Sukurti Užklausą',
-                latestMedia: 'Naujausia Medija',
-                latestMediaLoading: 'Kraunama...',
-                latestMediaEmpty: 'Naujų medijų nerasta',
-                latestMediaError: 'Nepavyko įkelti',
-                newEpisode: '+1 serija',
-                newEpisodes: '+{count} serijos',
-                typeMovie: 'Filmas',
-                typeSeries: 'Serialas',
-                typeAnime: 'Anime',
-                typeOther: 'Kita',
-                timeAgo: 'prieš',
-                timeJustNow: 'ką tik',
-                timeMinutes: 'min',
-                timeHours: 'val',
-                timeDays: 'd',
-                // Media Management translations
-                mediaManagement: 'Medija',
-                mediaManagementTitle: 'Medijos Valdymas',
-                mediaSearch: 'Ieškoti...',
-                mediaTypeAll: 'Visi Tipai',
-                mediaTypeMovie: 'Filmai',
-                mediaTypeSeries: 'Serialai',
-                mediaSortBy: 'Rūšiuoti pagal',
-                mediaSortTitle: 'Pavadinimas',
-                mediaSortYear: 'Metai',
-                mediaSortRating: 'Reitingas',
-                mediaSortPlays: 'Peržiūros',
-                mediaSortSize: 'Dydis',
-                mediaSortDateAdded: 'Pridėjimo data',
-                mediaSortPlayCount: 'Peržiūros',
-                mediaSortWatchTime: 'Žiūrėjimo laikas',
-                mediaSortSize: 'Dydis',
-                mediaLoading: 'Kraunama medija...',
-                mediaNoResults: 'Medija nerasta',
-                mediaError: 'Klaida kraunant mediją',
-                mediaScheduleDelete: 'Planuoti Ištrynimą',
-                mediaCancelDelete: 'Atšaukti Ištrynimą',
-                mediaDeleteIn: 'Ištrinti po',
-                mediaLeavingIn: 'Išeina po',
-                media1Day: '1 Diena',
-                media3Days: '3 Dienos',
-                media1Week: '1 Savaitė',
-                media2Weeks: '2 Savaitės',
-                mediaCustom: 'Pasirinkti...',
-                mediaCustomHours: 'Valandos',
-                mediaSchedule: 'Planuoti',
-                mediaCancel: 'Atšaukti',
-                mediaNoScheduled: 'Nėra suplanuotų ištrynimų',
-                mediaScheduledBy: 'Suplanavo',
-                mediaDeletesIn: 'Ištrins po',
-                mediaActions: 'Veiksmai',
-                mediaChange: 'Keisti',
-                mediaChangeTime: 'Keisti ištrynimo laiką',
-                mediaSoon: 'Greitai',
-                mediaDays: 'dienų',
-                mediaPlays: 'peržiūrų',
-                mediaMinutes: 'min',
-                mediaGB: 'GB',
-                mediaMB: 'MB',
-                mediaPage: 'Puslapis',
-                mediaOf: 'iš',
-                mediaPrev: 'Ankstesnis',
-                mediaNext: 'Kitas',
-                mediaGo: 'Eiti',
-                mediaTypeScheduled: 'Suplanuoti',
-                mediaSettings: 'Nustatymai',
-                mediaIncludeTypes: 'Rodyti medijos tipus:',
-                mediaTypesHint: 'Pasirinkite kuriuos medijos tipus rodyti',
-                // Deletion Request translations
-                requestDeleteRequest: 'Prašyti ištrinti užklausą',
-                requestDeleteMedia: 'Prašyti ištrinti mediją',
-                deletionRequests: 'Ištrynimo Užklausos',
-                noDeletionRequests: 'Ištrynimo užklausų dar nėra',
-                deleteNow: 'Ištrinti ~1val',
-                schedule1Day: '1 Diena',
-                schedule1Week: '1 Savaitė',
-                schedule1Month: '1 Mėnuo',
-                rejectDeletion: 'Atmesti',
-                approveDeleteRequest: 'Patvirtinti',
-                alreadyRequested: 'Ištrynimas Užsakytas',
-                deletionApproved: 'PATVIRTINTA',
-                deletionRejected: 'ATMESTA',
-                deletionPending: 'LAUKIAMA',
-                deletionRequestSent: 'Ištrynimo užklausa išsiųsta!',
-                deletionRequestFailed: 'Nepavyko išsiųsti ištrynimo užklausos',
-                deletionActionFailed: 'Nepavyko apdoroti ištrynimo veiksmo',
-                deleteRequest: 'Ištrinti Užklausą',
-                deleteMedia: 'Ištrinti Mediją',
-                rejectionReasonPrompt: 'Įveskite atmetimo priežastį (neprivaloma):',
-                rejectionReasonLabel: 'Priežastis:',
-                deletionLimitReached: 'Pasiektas maksimalus ištrynimo užklausų limitas',
-                banUser: 'Uždrausti',
-                unbanUser: 'Atblokuoti',
-                bannedUsers: 'Uždrausti Vartotojai',
-                ban1Day: '1 Diena',
-                ban1Week: '1 Savaitė',
-                ban1Month: '1 Mėnuo',
-                banPermanent: 'Visam laikui',
-                banExpires: 'Baigiasi:',
-                banPermanentLabel: 'Visam laikui',
-                bannedBy: 'uždraudė',
-                noBannedUsers: 'Nėra uždraustų vartotojų',
-                youAreBanned: 'Jums uždrausta atlikti šį veiksmą',
-                banSuccess: 'Vartotojas uždraustas sėkmingai',
-                unbanSuccess: 'Vartotojas atblokuotas sėkmingai'
+                requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
+                requestDescriptionText: 'Naudokite šią formą, kad užsakytumėte filmus ar TV serialus, kuriuos norėtumėte žiūrėti.',
+                mediaTitle: 'Medijos Pavadinimas *', mediaTitlePlaceholder: 'pvz., Breaking Bad, Krikštatėvis', type: 'Tipas *', selectType: '-- Pasirinkite Tipą --',
+                movie: 'Filmas', tvSeries: 'TV Serialas', anime: 'Anime', documentary: 'Dokumentika', other: 'Kita',
+                additionalNotes: 'Papildomos Pastabos', notesPlaceholder: 'Sezono numeris, metai, specifinė informacija ir t.t.', submitRequest: 'Pateikti Užklausą',
+                yourRequests: 'Jūsų Užklausos', loadingRequests: 'Kraunamos jūsų užklausos...', noRequests: 'Jūs dar neužsakėte jokios medijos',
+                errorLoading: 'Klaida kraunant jūsų užklausas', notSpecified: 'Nenurodyta', noDetails: 'Nėra detalių', watchNow: '🎬 Žiūrėti Dabar',
+                noRequestsYet: 'Medijos užklausų dar nėra', newRequest: 'Nauja užklausa', pending: 'LAUKIAMA', processing: 'VYKDOMA', done: 'ATLIKTA', rejected: 'ATMESTA',
+                titleRequired: 'Įveskite medijos pavadinimą', typeRequired: 'Pasirinkite medijos tipą', requestSubmitted: 'Užklausa sėkmingai pateikta!',
+                requestFailed: 'Nepavyko pateikti užklausos', statusUpdated: 'Būsena atnaujinta', statusUpdateFailed: 'Nepavyko atnaujinti būsenos',
+                addLink: '+ Nuoroda', enterMediaLink: 'Įveskite medijos nuorodą:', delete: 'Ištrinti', confirmDelete: 'Ar tikrai norite ištrinti šią užklausą?',
+                mediaLinkPlaceholder: 'Medijos nuoroda', unknown: 'Nežinoma', loading: 'Kraunama...',
+                snooze: 'Atidėti', unsnooze: 'Atšaukti atidėjimą', snoozed: 'ATIDĖTA', snoozedUntil: 'Atidėta iki', snoozeDate: 'Atidėti iki datos',
+                categoryNew: '🆕 Nauji', categoryProcessing: '🔄 Vykdoma', categoryPending: '⏳ Laukiama', categorySnoozed: '💤 Atidėta', categoryDone: '✅ Atlikta', categoryRejected: '❌ Atmesta',
+                createRequest: 'Sukurti Užklausą', latestMedia: 'Naujausia Medija', latestMediaLoading: 'Kraunama...', latestMediaEmpty: 'Naujų medijų nerasta', latestMediaError: 'Nepavyko įkelti',
+                newEpisode: '+1 serija', newEpisodes: '+{count} serijos', typeMovie: 'Filmas', typeSeries: 'Serialas', typeAnime: 'Anime', typeOther: 'Kita',
+                timeAgo: 'prieš', timeJustNow: 'ką tik', timeMinutes: 'min', timeHours: 'val', timeDays: 'd',
+                mediaManagement: 'Medija', mediaManagementTitle: 'Medijos Valdymas', mediaSearch: 'Ieškoti...', mediaTypeAll: 'Visi Tipai', mediaTypeMovie: 'Filmai', mediaTypeSeries: 'Serialai',
+                mediaSortBy: 'Rūšiuoti pagal', mediaSortTitle: 'Pavadinimas', mediaSortYear: 'Metai', mediaSortRating: 'Reitingas', mediaSortPlays: 'Peržiūros', mediaSortSize: 'Dydis',
+                mediaSortDateAdded: 'Pridėjimo data', mediaSortPlayCount: 'Peržiūros', mediaSortWatchTime: 'Žiūrėjimo laikas', mediaLoading: 'Kraunama...', mediaNoResults: 'Medija nerasta', mediaError: 'Klaida kraunant',
+                mediaScheduleDelete: 'Planuoti Ištrynimą', mediaCancelDelete: 'Atšaukti Ištrynimą', mediaDeleteIn: 'Ištrinti po', mediaLeavingIn: 'Išeina po',
+                media1Day: '1 Diena', media3Days: '3 Dienos', media1Week: '1 Savaitė', media2Weeks: '2 Savaitės', mediaCustom: 'Pasirinkti...', mediaCustomHours: 'Valandos',
+                mediaSchedule: 'Planuoti', mediaCancel: 'Atšaukti', mediaNoScheduled: 'Nėra suplanuotų ištrynimų', mediaScheduledBy: 'Suplanavo', mediaDeletesIn: 'Ištrins po',
+                mediaActions: 'Veiksmai', mediaChange: 'Keisti', mediaChangeTime: 'Keisti laiką', mediaSoon: 'Greitai', mediaDays: 'dienų', mediaPlays: 'peržiūrų',
+                mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Puslapis', mediaOf: 'iš', mediaPrev: 'Ankstesnis', mediaNext: 'Kitas', mediaGo: 'Eiti',
+                mediaTypeScheduled: 'Suplanuoti', mediaSettings: 'Nustatymai', mediaIncludeTypes: 'Rodyti tipus:', mediaTypesHint: 'Pasirinkite rodytinus tipus',
+                requestDeleteRequest: 'Prašyti ištrinti', requestDeleteMedia: 'Prašyti ištrinti mediją', deletionRequests: 'Ištrynimo Užklausos', noDeletionRequests: 'Ištrynimo užklausų nėra',
+                deleteNow: 'Ištrinti ~1val', schedule1Day: '1 Diena', schedule1Week: '1 Savaitė', schedule1Month: '1 Mėnuo', rejectDeletion: 'Atmesti', approveDeleteRequest: 'Patvirtinti',
+                alreadyRequested: 'Ištrynimas Užsakytas', deletionApproved: 'PATVIRTINTA', deletionRejected: 'ATMESTA', deletionPending: 'LAUKIAMA',
+                deletionRequestSent: 'Ištrynimo užklausa išsiųsta!', deletionRequestFailed: 'Nepavyko išsiųsti', deletionActionFailed: 'Nepavyko apdoroti',
+                deleteRequest: 'Ištrinti Užklausą', deleteMedia: 'Ištrinti Mediją', rejectionReasonPrompt: 'Atmetimo priežastis (neprivaloma):', rejectionReasonLabel: 'Priežastis:',
+                deletionLimitReached: 'Pasiektas užklausų limitas', banUser: 'Uždrausti', unbanUser: 'Atblokuoti', bannedUsers: 'Uždrausti Vartotojai',
+                ban1Day: '1 Diena', ban1Week: '1 Savaitė', ban1Month: '1 Mėnuo', banPermanent: 'Visam laikui', banExpires: 'Baigiasi:', banPermanentLabel: 'Visam laikui',
+                bannedBy: 'uždraudė', noBannedUsers: 'Nėra uždraustų vartotojų', youAreBanned: 'Jums uždrausta atlikti šį veiksmą', banSuccess: 'Vartotojas uždraustas', unbanSuccess: 'Vartotojas atblokuotas'
             }
         },
 
@@ -345,18 +600,32 @@
 
         // Set language and refresh modal if open
         setLanguage: function(lang) {
+            if (!this.validLanguages.includes(lang)) lang = 'en';
             this.currentLanguage = lang;
             localStorage.setItem('ratingsPluginLanguage', lang);
-            // Update language toggle visual state
-            const toggle = document.getElementById('languageToggle');
-            if (toggle) {
-                toggle.checked = lang === 'lt';
-            }
+            // Update language selector visual state
+            const selectors = document.querySelectorAll('.language-selector');
+            selectors.forEach(function(sel) { sel.value = lang; });
             // Update button text
             const btnText = document.querySelector('#requestMediaBtn .btn-text');
             if (btnText) {
                 btnText.textContent = this.t('requestMedia');
             }
+        },
+
+        // Generate language selector dropdown HTML
+        getLanguageSelectorHtml: function(id) {
+            var self = this;
+            var langNames = {
+                en: 'English', es: 'Español', zh: '中文', pt: 'Português', ru: 'Русский',
+                ja: '日本語', de: 'Deutsch', fr: 'Français', ko: '한국어', it: 'Italiano',
+                tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands', ar: 'العربية', hi: 'हिन्दी', lt: 'Lietuvių'
+            };
+            var options = this.validLanguages.map(function(code) {
+                var selected = code === self.currentLanguage ? ' selected' : '';
+                return '<option value="' + code + '"' + selected + '>' + langNames[code] + '</option>';
+            }).join('');
+            return '<select id="' + id + '" class="language-selector" style="padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:#1a1a1a;color:#fff;font-size:12px;cursor:pointer;">' + options + '</select>';
         },
 
         /**
@@ -496,10 +765,23 @@
          * Initialize the ratings plugin
          */
         init: function () {
-            // Load saved language preference
+            var self = this;
+
+            // Load saved language preference or fetch from server config
             const savedLang = localStorage.getItem('ratingsPluginLanguage');
-            if (savedLang && (savedLang === 'en' || savedLang === 'lt')) {
+            if (savedLang && this.validLanguages.includes(savedLang)) {
                 this.currentLanguage = savedLang;
+            } else if (window.ApiClient) {
+                // No valid saved preference, try to load default from server
+                const baseUrl = ApiClient.serverAddress();
+                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                    .then(function (response) { return response.json(); })
+                    .then(function (config) {
+                        if (config.DefaultLanguage && self.validLanguages.includes(config.DefaultLanguage)) {
+                            self.currentLanguage = config.DefaultLanguage;
+                        }
+                    })
+                    .catch(function () { /* Use default 'en' */ });
             }
 
             this.injectStyles();
@@ -8643,13 +8925,8 @@
 
             // Language switch HTML (only if enabled)
             const langSwitchHtml = showLangSwitch ? `
-                <div class="language-toggle-container">
-                    <span class="lang-label">EN</span>
-                    <label class="language-switch">
-                        <input type="checkbox" id="languageToggle" ${this.currentLanguage === 'lt' ? 'checked' : ''}>
-                        <span class="lang-slider"></span>
-                    </label>
-                    <span class="lang-label">LT</span>
+                <div class="language-toggle-container" style="text-align:right;margin-bottom:10px;">
+                    ${this.getLanguageSelectorHtml('languageToggle')}
                 </div>
             ` : '';
 
@@ -8717,11 +8994,11 @@
                 <div id="userRequestsList"><p style="text-align: center; color: #999;">${this.t('loadingRequests') || 'Loading...'}</p></div>
             `;
 
-            // Attach language toggle handler (only if it exists)
+            // Attach language selector handler (only if it exists)
             const langToggle = document.getElementById('languageToggle');
             if (langToggle) {
                 langToggle.addEventListener('change', () => {
-                    self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                    self.setLanguage(langToggle.value);
                     self.renderUserInterfaceInTab(config);
                 });
             }
@@ -8753,13 +9030,8 @@
 
             this.fetchAllRequests().then(requests => {
                 const langSwitchHtml = showLangSwitch ? `
-                    <div class="language-toggle-container">
-                        <span class="lang-label">EN</span>
-                        <label class="language-switch">
-                            <input type="checkbox" id="languageToggleAdmin" ${self.currentLanguage === 'lt' ? 'checked' : ''}>
-                            <span class="lang-slider"></span>
-                        </label>
-                        <span class="lang-label">LT</span>
+                    <div class="language-toggle-container" style="text-align:right;margin-bottom:10px;">
+                        ${self.getLanguageSelectorHtml('languageToggleAdmin')}
                     </div>
                 ` : '';
 
@@ -8771,7 +9043,7 @@
                     const langToggle = document.getElementById('languageToggleAdmin');
                     if (langToggle) {
                         langToggle.addEventListener('change', () => {
-                            self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                            self.setLanguage(langToggle.value);
                             self.renderAdminInterfaceInTab(config);
                         });
                     }
@@ -8851,11 +9123,11 @@
 
                 tabContent.innerHTML = html;
 
-                // Attach language toggle handler
+                // Attach language selector handler
                 const langToggle = document.getElementById('languageToggleAdmin');
                 if (langToggle) {
                     langToggle.addEventListener('change', () => {
-                        self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                        self.setLanguage(langToggle.value);
                         self.renderAdminInterfaceInTab(config);
                     });
                 }
@@ -9414,13 +9686,8 @@
 
             // Language switch HTML (only if enabled)
             const langSwitchHtml = showLangSwitch ? `
-                <div class="language-toggle-container">
-                    <span class="lang-label">EN</span>
-                    <label class="language-switch">
-                        <input type="checkbox" id="languageToggle" ${this.currentLanguage === 'lt' ? 'checked' : ''}>
-                        <span class="lang-slider"></span>
-                    </label>
-                    <span class="lang-label">LT</span>
+                <div class="language-toggle-container" style="text-align:right;margin-bottom:10px;">
+                    ${this.getLanguageSelectorHtml('languageToggle')}
                 </div>
             ` : '';
 
@@ -9511,11 +9778,11 @@
                 }
             });
 
-            // Attach language toggle handler (only if it exists)
+            // Attach language selector handler (only if it exists)
             const langToggle = document.getElementById('languageToggle');
             if (langToggle) {
                 langToggle.addEventListener('change', () => {
-                    self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                    self.setLanguage(langToggle.value);
                     self.loadUserInterface(); // Reload interface with new language
                 });
             }
@@ -10023,13 +10290,8 @@
             this.fetchAllRequests().then(requests => {
                 // Language switch HTML (only if enabled)
                 const langSwitchHtml = showLangSwitch ? `
-                    <div class="language-toggle-container">
-                        <span class="lang-label">EN</span>
-                        <label class="language-switch">
-                            <input type="checkbox" id="languageToggle" ${self.currentLanguage === 'lt' ? 'checked' : ''}>
-                            <span class="lang-slider"></span>
-                        </label>
-                        <span class="lang-label">LT</span>
+                    <div class="language-toggle-container" style="text-align:right;margin-bottom:10px;">
+                        ${self.getLanguageSelectorHtml('languageToggle')}
                     </div>
                 ` : '';
 
@@ -10038,11 +10300,11 @@
 
                 if (requests.length === 0) {
                     modalBody.innerHTML = html + '<div class="admin-request-empty">' + self.t('noRequestsYet') + '</div>';
-                    // Attach language toggle handler
+                    // Attach language selector handler
                     const langToggle = document.getElementById('languageToggle');
                     if (langToggle) {
                         langToggle.addEventListener('change', () => {
-                            self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                            self.setLanguage(langToggle.value);
                             self.loadAdminInterface();
                         });
                     }
@@ -10126,7 +10388,7 @@
                 const langToggle = document.getElementById('languageToggle');
                 if (langToggle) {
                     langToggle.addEventListener('change', () => {
-                        self.setLanguage(langToggle.checked ? 'lt' : 'en');
+                        self.setLanguage(langToggle.value);
                         self.loadAdminInterface();
                     });
                 }

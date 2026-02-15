@@ -463,6 +463,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     MaxRating = config?.MaxRating ?? 10,
 
                     // UI toggles
+                    DefaultLanguage = config?.DefaultLanguage ?? "en",
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
