@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.282.0",
+        "changelog": "Fix chat 401: Pass X-Emby-Authorization header with token in all chat API calls.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.282.0/jellyfin-plugin-ratings_1.0.282.0.zip",
+        "checksum": "7c713f1c1254eb3fc735cd855325d639",
+        "timestamp": "2026-02-15T20:30:00Z"
+      },
+      {
         "version": "1.0.281.0",
         "changelog": "Fix chat 401: Add [AllowAnonymous] at controller class level.",
         "targetAbi": "10.11.0.0",
@@ -79,14 +87,6 @@
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.273.0/jellyfin-plugin-ratings_1.0.273.0.zip",
         "checksum": "143f35dddba6a711057a9099904bd24d",
         "timestamp": "2026-02-12T15:30:00Z"
-      },
-      {
-        "version": "1.0.252.0",
-        "changelog": "User ban system for media and deletion requests, show all rejection messages, codebase security audit.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.252.0/jellyfin-plugin-ratings_1.0.252.0.zip",
-        "checksum": "27587e022b745f6a17f8a2d427d65ca0",
-        "timestamp": "2026-02-09T22:00:00Z"
       }
     ]
   }
