@@ -198,7 +198,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets recent chat messages.
         /// </summary>
         [HttpGet("Messages")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<List<ChatMessage>> GetMessages([FromQuery] DateTime? since, [FromQuery] int limit = 100)
         {
             var config = Plugin.Instance?.Configuration;
@@ -226,7 +226,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sends a chat message.
         /// </summary>
         [HttpPost("Messages")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<ChatMessage> SendMessage([FromBody] ChatMessageDto dto)
         {
             var config = Plugin.Instance?.Configuration;
@@ -303,7 +303,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Deletes a chat message (admin/moderator only).
         /// </summary>
         [HttpDelete("Messages/{messageId}")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult DeleteMessage([FromRoute] Guid messageId)
         {
             var userId = GetCurrentUserId();
@@ -324,7 +324,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets online users.
         /// </summary>
         [HttpGet("Users/Online")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<List<ChatUser>> GetOnlineUsers()
         {
             var config = Plugin.Instance?.Configuration;
@@ -342,7 +342,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Admin status is passed from client (client can determine from user policy).
         /// </summary>
         [HttpPost("Heartbeat")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult> Heartbeat([FromBody] HeartbeatRequest? request = null)
         {
             var userId = GetCurrentUserId();
@@ -376,7 +376,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sets typing status.
         /// </summary>
         [HttpPost("Typing")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult SetTyping([FromQuery] bool isTyping)
         {
             var userId = GetCurrentUserId();
@@ -390,7 +390,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Marks messages as read.
         /// </summary>
         [HttpPost("MarkRead")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult MarkRead([FromQuery] Guid messageId)
         {
             var userId = GetCurrentUserId();
@@ -404,7 +404,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets unread message count.
         /// </summary>
         [HttpGet("UnreadCount")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult GetUnreadCount()
         {
             var userId = GetCurrentUserId();
@@ -421,7 +421,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all moderators (admin only).
         /// </summary>
         [HttpGet("Moderators")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<List<ChatModerator>> GetModerators()
         {
             if (!IsCurrentUserAdmin()) return Forbid();
@@ -434,7 +434,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Adds a moderator (admin only).
         /// </summary>
         [HttpPost("Moderators")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<ChatModerator> AddModerator([FromQuery] Guid targetUserId)
         {
             var userId = GetCurrentUserId();
@@ -469,7 +469,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Removes a moderator (admin only).
         /// </summary>
         [HttpDelete("Moderators/{moderatorId}")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult RemoveModerator([FromRoute] Guid moderatorId)
         {
             if (!IsCurrentUserAdmin()) return Forbid();
@@ -486,7 +486,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Bans a user from chat.
         /// </summary>
         [HttpPost("Ban")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<ChatBan> BanUser(
             [FromQuery] [Required] Guid targetUserId,
             [FromQuery] [Required] string banType,
@@ -548,7 +548,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Unbans a user.
         /// </summary>
         [HttpDelete("Ban/{banId}")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult UnbanUser([FromRoute] Guid banId)
         {
             var userId = GetCurrentUserId();
@@ -564,7 +564,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all active bans.
         /// </summary>
         [HttpGet("Bans")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<List<ChatBan>> GetBans()
         {
             var userId = GetCurrentUserId();
@@ -578,7 +578,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Checks if current user is banned.
         /// </summary>
         [HttpGet("BanStatus")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult GetBanStatus()
         {
             var userId = GetCurrentUserId();
@@ -600,7 +600,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all users for moderator selection (admin only).
         /// </summary>
         [HttpGet("Users/All")]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult GetAllUsers()
         {
             if (!IsCurrentUserAdmin()) return Forbid();
@@ -623,7 +623,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Clears all chat messages (admin only).
         /// </summary>
         [HttpDelete("Messages/Clear")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult> ClearAllMessages()
         {
             if (!IsCurrentUserAdmin())
