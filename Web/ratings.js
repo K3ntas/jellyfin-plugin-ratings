@@ -14219,18 +14219,29 @@
                     alert(self.t('chatRateLimited'));
                     return null;
                 }
+                if (!r.ok) {
+                    console.error('Chat send failed:', r.status);
+                    return null;
+                }
                 return r.json();
             })
             .then(function (data) {
-                if (data) {
-                    input.value = '';
-                    input.style.height = 'auto';
+                // Clear input regardless of response
+                input.value = '';
+                input.style.height = 'auto';
+                // Close pickers
+                var gifPicker = document.getElementById('chatGifPicker');
+                var emojiPicker = document.getElementById('chatEmojiPicker');
+                if (gifPicker) gifPicker.classList.remove('visible');
+                if (emojiPicker) emojiPicker.classList.remove('visible');
+                // Reload messages after short delay to ensure server has saved
+                setTimeout(function() {
                     self.loadChatMessages();
-                    // Close GIF picker
-                    document.getElementById('chatGifPicker').classList.remove('visible');
-                }
+                }, 100);
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.error('Chat send error:', err);
+            });
         },
 
         /**
