@@ -14100,6 +14100,12 @@
             const empty = document.getElementById('chatEmpty');
             const self = this;
 
+            // Check if chat window exists
+            if (!container || !empty) {
+                console.log('[Chat] renderChatMessages: Chat window not found, skipping render');
+                return;
+            }
+
             if (this.chatMessages.length === 0) {
                 empty.style.display = '';
                 return;
@@ -14171,6 +14177,8 @@
          */
         renderTypingIndicator: function () {
             const el = document.getElementById('chatTyping');
+            if (!el) return;
+
             if (this.chatTypingUsers.length === 0) {
                 el.classList.remove('visible');
                 return;
