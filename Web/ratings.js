@@ -14052,8 +14052,9 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                self.chatMessages = data.messages || [];
-                self.chatTypingUsers = data.typingUsers || [];
+                // Handle both camelCase and PascalCase from server
+                self.chatMessages = data.messages || data.Messages || [];
+                self.chatTypingUsers = data.typingUsers || data.TypingUsers || [];
                 self.renderChatMessages();
                 self.renderTypingIndicator();
             })
