@@ -514,7 +514,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                     RequestImdbLinkPlaceholder = config?.RequestImdbLinkPlaceholder ?? string.Empty,
 
                     // Badge display profiles
-                    BadgeDisplayProfiles = config?.BadgeDisplayProfiles ?? string.Empty
+                    BadgeDisplayProfiles = config?.BadgeDisplayProfiles ?? string.Empty,
+
+                    // Chat settings
+                    EnableChat = config?.EnableChat ?? false,
+                    TenorApiKey = config?.TenorApiKey ?? string.Empty,
+                    ChatAllowGifs = config?.ChatAllowGifs ?? true,
+                    ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
+                    ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
+                    ChatRateLimitPerMinute = config?.ChatRateLimitPerMinute ?? 10
                 });
             }
             catch (Exception ex)
