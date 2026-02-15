@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.281.0",
+        "changelog": "Fix chat 401: Add [AllowAnonymous] at controller class level.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.281.0/jellyfin-plugin-ratings_1.0.281.0.zip",
+        "checksum": "d19d9da233178d0d8bd5e8adcd683cde",
+        "timestamp": "2026-02-15T20:15:00Z"
+      },
+      {
         "version": "1.0.280.0",
         "changelog": "Fix chat messages not appearing: API now returns {messages, typingUsers} format expected by JS. Added GetTypingUsers method.",
         "targetAbi": "10.11.0.0",
@@ -79,14 +87,6 @@
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.252.0/jellyfin-plugin-ratings_1.0.252.0.zip",
         "checksum": "27587e022b745f6a17f8a2d427d65ca0",
         "timestamp": "2026-02-09T22:00:00Z"
-      },
-      {
-        "version": "1.0.251.0",
-        "changelog": "Custom rejection reason modal, notification badges on admin tabs, brighter bell cross lines.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.251.0/jellyfin-plugin-ratings_1.0.251.0.zip",
-        "checksum": "09c6264f84b713fc7e707b3029c03f3f",
-        "timestamp": "2026-02-09T19:00:00Z"
       }
     ]
   }
