@@ -219,7 +219,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (limit > 500) limit = 500;
             var messages = _repository.GetRecentChatMessages(limit, since);
-            return Ok(messages);
+            var typingUsers = _repository.GetTypingUsers();
+            return Ok(new { messages, typingUsers });
         }
 
         /// <summary>
