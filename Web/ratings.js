@@ -5510,13 +5510,14 @@
                     cursor: pointer !important;
                     border-radius: 4px !important;
                     overflow: hidden !important;
-                    aspect-ratio: 16/9 !important;
+                    height: 100px !important;
                 }
 
                 .chat-gif-item img {
                     width: 100% !important;
                     height: 100% !important;
                     object-fit: cover !important;
+                    display: block !important;
                 }
 
                 .chat-gif-powered {
@@ -6199,9 +6200,12 @@
 
         sanitizeUrl: function (url) {
             if (!url) return '';
-            var trimmed = url.trim().toLowerCase();
-            if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) return '';
-            return url;
+            var cleaned = url.replace(/[\x00-\x1f\x7f]/g, '').trim();
+            var lower = cleaned.toLowerCase();
+            if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/') || lower.startsWith('#')) {
+                return cleaned;
+            }
+            return '';
         },
 
         /**
@@ -8147,7 +8151,7 @@
                 tr.style.animationDelay = `${animDelay}ms`;
                 tr.innerHTML = `
                     <td>
-                        ${imageUrl ? `<img src="${imageUrl}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
+                        ${imageUrl ? `<img src="${self.escapeHtml(imageUrl)}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
                     </td>
                     <td>
                         <div class="media-item-title">
@@ -8249,7 +8253,7 @@
                 html += `
                     <tr style="animation-delay: ${animDelay}ms">
                         <td>
-                            ${imageUrl ? `<img src="${imageUrl}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
+                            ${imageUrl ? `<img src="${self.escapeHtml(imageUrl)}?maxWidth=80" class="media-item-image" alt="" />` : '<div class="media-item-image"></div>'}
                         </td>
                         <td>
                             <div class="media-item-title">
@@ -8538,7 +8542,7 @@
                     html += `
                         <tr style="animation-delay: ${animDelay}ms">
                             <td>
-                                <img src="${baseUrl}${imageUrl}?maxWidth=80" class="media-item-image" alt="" onerror="this.style.display='none'" />
+                                <img src="${self.escapeHtml(baseUrl + imageUrl)}?maxWidth=80" class="media-item-image" alt="" onerror="this.style.display='none'" />
                             </td>
                             <td>
                                 <div class="media-item-title">
@@ -9790,7 +9794,7 @@
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
                     <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
-                    <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
+                    <input type="text" id="requestImdbCode" placeholder="${this.escapeHtml(imdbCodePlaceholder)}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
 
@@ -9798,7 +9802,7 @@
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
                     <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
-                    <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
+                    <input type="text" id="requestImdbLink" placeholder="${this.escapeHtml(imdbLinkPlaceholder)}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
 
@@ -9806,7 +9810,7 @@
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
                     <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
-                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
+                    <textarea id="requestMediaNotes" placeholder="${this.escapeHtml(notesPlaceholder)}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
 
@@ -9815,7 +9819,7 @@
                 ${descriptionHtml}
                 <div class="request-input-group">
                     <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
-                    <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                    <input type="text" id="requestMediaTitle" placeholder="${this.escapeHtml(titlePlaceholder)}" required />
                 </div>
                 ${typeHtml}
                 ${imdbCodeHtml}
@@ -10551,7 +10555,7 @@
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
                     <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
-                    <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
+                    <input type="text" id="requestImdbCode" placeholder="${this.escapeHtml(imdbCodePlaceholder)}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
 
@@ -10559,7 +10563,7 @@
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
                     <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
-                    <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
+                    <input type="text" id="requestImdbLink" placeholder="${this.escapeHtml(imdbLinkPlaceholder)}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
 
@@ -10567,7 +10571,7 @@
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
                     <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
-                    <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
+                    <textarea id="requestMediaNotes" placeholder="${this.escapeHtml(notesPlaceholder)}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
 
@@ -10579,7 +10583,7 @@
                 <div id="mediaRequestFormFields">
                     <div class="request-input-group">
                         <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
-                        <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
+                        <input type="text" id="requestMediaTitle" placeholder="${this.escapeHtml(titlePlaceholder)}" required />
                     </div>
                     ${typeHtml}
                     ${imdbCodeHtml}
@@ -12789,7 +12793,7 @@
             // Build image URL
             let imageHtml = '';
             if (notification.ImageUrl && !notification.IsTest) {
-                imageHtml = `<img class="ratings-notification-image" src="${baseUrl}${notification.ImageUrl}" alt="" onerror="this.style.display='none'">`;
+                imageHtml = `<img class="ratings-notification-image" src="${this.escapeHtml(baseUrl + notification.ImageUrl)}" alt="" onerror="this.style.display='none'">`;
             }
 
             // Build content based on notification type
@@ -14371,9 +14375,12 @@
                     list.innerHTML = mods.map(function (mod) {
                         return '<div class="chat-admin-item">'
                             + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
-                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" onclick="RatingsPlugin.removeModerator(\'' + self.escapeHtml(mod.userId) + '\')">' + self.t('chatRemoveMod') + '</button>' : '')
+                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" data-action="remove-mod" data-user-id="' + self.escapeHtml(mod.userId) + '">' + self.t('chatRemoveMod') + '</button>' : '')
                             + '</div>';
                     }).join('');
+                    list.querySelectorAll('[data-action="remove-mod"]').forEach(function (btn) {
+                        btn.onclick = function () { RatingsPlugin.removeModerator(this.dataset.userId); };
+                    });
                 }
             })
             .catch(function () {});
@@ -14399,9 +14406,12 @@
                     list.innerHTML = bans.map(function (ban) {
                         return '<div class="chat-admin-item">'
                             + '<span class="chat-admin-user">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
-                            + '<button class="chat-admin-btn" onclick="RatingsPlugin.unbanChatUser(\'' + self.escapeHtml(ban.userId) + '\')">' + self.t('chatUnban') + '</button>'
+                            + '<button class="chat-admin-btn" data-action="unban" data-ban-id="' + self.escapeHtml(ban.id) + '">' + self.t('chatUnban') + '</button>'
                             + '</div>';
                     }).join('');
+                    list.querySelectorAll('[data-action="unban"]').forEach(function (btn) {
+                        btn.onclick = function () { RatingsPlugin.unbanChatUser(this.dataset.banId); };
+                    });
                 }
             })
             .catch(function () {

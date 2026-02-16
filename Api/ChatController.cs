@@ -637,6 +637,15 @@ namespace Jellyfin.Plugin.Ratings.Api
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
+            // Check if this ban was placed by an admin - only admins can lift admin-placed bans
+            var ban = _repository.GetChatBanById(banId);
+            if (ban == null) return NotFound("Ban not found");
+
+            if (IsJellyfinAdmin(ban.BannedBy) && !IsJellyfinAdmin(userId))
+            {
+                return BadRequest("Only administrators can lift bans placed by administrators");
+            }
+
             var removed = await _repository.RemoveChatBanAsync(banId).ConfigureAwait(false);
             if (!removed) return NotFound("Ban not found");
 

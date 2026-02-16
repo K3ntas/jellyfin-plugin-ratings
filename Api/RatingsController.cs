@@ -541,8 +541,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Chat settings
                     EnableChat = config?.EnableChat ?? false,
-                    TenorApiKey = userId != Guid.Empty ? (config?.TenorApiKey ?? string.Empty) : string.Empty,
-                    KlipyApiKey = userId != Guid.Empty ? (config?.KlipyApiKey ?? config?.TenorApiKey ?? string.Empty) : string.Empty,
+                    TenorApiKey = (userId != Guid.Empty && config?.EnableChat == true && config?.ChatAllowGifs == true) ? (config?.TenorApiKey ?? string.Empty) : string.Empty,
+                    KlipyApiKey = (userId != Guid.Empty && config?.EnableChat == true && config?.ChatAllowGifs == true) ? (config?.KlipyApiKey ?? config?.TenorApiKey ?? string.Empty) : string.Empty,
                     ChatAllowGifs = config?.ChatAllowGifs ?? true,
                     ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
                     ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
@@ -2107,6 +2107,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("Cannot request deletion of a completed or rejected request");
                 }
 
+                // For media deletions, validate the ItemId exists in the library
+                if (deletionType == "media" && request.ItemId != Guid.Empty)
+                {
+                    var libraryItem = _libraryManager.GetItemById(request.ItemId);
+                    if (libraryItem == null)
+                    {
+                        return BadRequest("The specified media item does not exist in the library");
+                    }
+                }
+
                 // Check for duplicate pending deletion request
                 if (_repository.HasPendingDeletionRequest(request.MediaRequestId))
                 {
@@ -2184,6 +2194,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
+                }
+
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can view all deletion requests");
                 }
 
                 var requests = _repository.GetAllDeletionRequests();
