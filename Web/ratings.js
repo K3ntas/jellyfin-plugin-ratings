@@ -13939,58 +13939,30 @@
             const heartbeat = function () {
                 if (!window.ApiClient) return;
                 const baseUrl = ApiClient.serverAddress();
-
-                // Get current user's admin status from client
-                let isAdmin = false;
-                try {
-                    const currentUser = ApiClient.getCurrentUser ? ApiClient.getCurrentUser() : null;
-                    if (currentUser && currentUser.then) {
-                        // It's a promise
-                        currentUser.then(function (user) {
-                            isAdmin = user?.Policy?.IsAdministrator || false;
-                            self.sendHeartbeat(baseUrl, isAdmin);
-                        }).catch(function () {
-                            self.sendHeartbeat(baseUrl, false);
-                        });
-                        return;
-                    } else if (currentUser) {
-                        isAdmin = currentUser.Policy?.IsAdministrator || false;
+                // Server determines admin status - no need to send from client
+                fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: self.getChatAuthHeaders(),
+                    body: '{}'
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
+                    self.chatIsModerator = data.isModerator || data.IsModerator || false;
+                    var settingsBtn = document.getElementById('chatSettingsBtn');
+                    if (settingsBtn) {
+                        settingsBtn.style.display = (self.chatIsAdmin || self.chatIsModerator) ? '' : 'none';
                     }
-                } catch (e) {}
-
-                self.sendHeartbeat(baseUrl, isAdmin);
+                    var clearSection = document.getElementById('chatClearSection');
+                    if (clearSection) {
+                        clearSection.style.display = self.chatIsAdmin ? '' : 'none';
+                    }
+                })
+                .catch(function () {});
             };
             heartbeat();
             setInterval(heartbeat, 30000);
-        },
-
-        /**
-         * Send heartbeat to server
-         */
-        sendHeartbeat: function (baseUrl, isAdmin) {
-            const self = this;
-            fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
-                method: 'POST',
-                credentials: 'include',
-                headers: self.getChatAuthHeaders(),
-                body: JSON.stringify({ isAdmin: isAdmin })
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
-                self.chatIsModerator = data.isModerator || data.IsModerator || false;
-                // Show settings button for admin/mod
-                const settingsBtn = document.getElementById('chatSettingsBtn');
-                if (settingsBtn) {
-                    settingsBtn.style.display = (self.chatIsAdmin || self.chatIsModerator) ? '' : 'none';
-                }
-                // Show clear all button for admin
-                const clearSection = document.getElementById('chatClearSection');
-                if (clearSection) {
-                    clearSection.style.display = self.chatIsAdmin ? '' : 'none';
-                }
-            })
-            .catch(function () {});
         },
 
         /**
@@ -14133,15 +14105,15 @@
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
                         + '<div class="chat-message-text">' + self.escapeHtml(msg.content) + '</div>'
-                        + (msg.gifUrl ? '<img class="chat-message-gif" src="' + msg.gifUrl + '" alt="GIF">' : '');
+                        + (msg.gifUrl ? '<img class="chat-message-gif" src="' + self.escapeHtml(msg.gifUrl) + '" alt="GIF">' : '');
 
                     // Add delete button for own messages or if moderator/admin
                     if (isOwn || self.chatIsAdmin || self.chatIsModerator) {
                         html += '<div class="chat-message-actions">'
-                            + '<button class="chat-action-btn delete" onclick="RatingsPlugin.deleteChatMessage(\'' + msg.id + '\')">' + self.t('delete') + '</button>';
+                            + '<button class="chat-action-btn delete" data-delete-id="' + self.escapeHtml(String(msg.id)) + '">' + self.t('delete') + '</button>';
                         // Add ban option for admin/mod on other users
                         if (!isOwn && (self.chatIsAdmin || self.chatIsModerator)) {
-                            html += '<button class="chat-action-btn" onclick="RatingsPlugin.showBanUserDialog(\'' + msg.userId + '\', \'' + self.escapeHtml(msg.userName) + '\')">' + self.t('chatBan') + '</button>';
+                            html += '<button class="chat-action-btn" data-ban-userid="' + self.escapeHtml(String(msg.userId)) + '" data-ban-username="' + self.escapeHtml(msg.userName) + '">' + self.t('chatBan') + '</button>';
                         }
                         html += '</div>';
                     }
@@ -14151,6 +14123,14 @@
             });
 
             container.innerHTML = html;
+
+            // Bind action buttons via event delegation (no inline onclick)
+            container.querySelectorAll('[data-delete-id]').forEach(function (btn) {
+                btn.onclick = function () { self.deleteChatMessage(this.getAttribute('data-delete-id')); };
+            });
+            container.querySelectorAll('[data-ban-userid]').forEach(function (btn) {
+                btn.onclick = function () { self.showBanUserDialog(this.getAttribute('data-ban-userid'), this.getAttribute('data-ban-username')); };
+            });
 
             // Scroll to bottom
             container.scrollTop = container.scrollHeight;
@@ -14346,7 +14326,7 @@
                     || (gif.file && gif.file.sm && gif.file.sm.gif && gif.file.sm.gif.url) || '';
                 var fullUrl = (gif.file && gif.file.md && gif.file.md.gif && gif.file.md.gif.url)
                     || (gif.file && gif.file.hd && gif.file.hd.gif && gif.file.hd.gif.url) || previewUrl;
-                return '<div class="chat-gif-item" data-url="' + fullUrl + '"><img src="' + previewUrl + '" alt="GIF" loading="lazy"></div>';
+                return '<div class="chat-gif-item" data-url="' + self.escapeHtml(fullUrl) + '"><img src="' + self.escapeHtml(previewUrl) + '" alt="GIF" loading="lazy"></div>';
             }).join('');
 
             container.querySelectorAll('.chat-gif-item').forEach(function (item) {
