@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.289.0",
+        "changelog": "Fix emoji picker and settings gear: add z-index/positioning for pickers, fix admin panel overflow, fix heartbeat response casing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.289.0/jellyfin-plugin-ratings_1.0.289.0.zip",
+        "checksum": "db600f768e77a1a01b65044683178cf7",
+        "timestamp": "2026-02-16T00:00:00Z"
+      },
+      {
         "version": "1.0.288.0",
         "changelog": "Fix chat messages not appearing live: Generate empty state dynamically to avoid innerHTML destroying elements.",
         "targetAbi": "10.11.0.0",
