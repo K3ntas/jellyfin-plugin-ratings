@@ -377,7 +377,12 @@ namespace Jellyfin.Plugin.Ratings.Api
             await _repository.UpdateChatUserPresenceAsync(userId, user.Username, avatar, isAdmin);
 
             var isModerator = _repository.IsChatModerator(userId);
-            return Ok(new { isAdmin, isModerator });
+
+            return Ok(new Dictionary<string, object>
+            {
+                { "isAdmin", isAdmin },
+                { "isModerator", isModerator }
+            });
         }
 
         /// <summary>
