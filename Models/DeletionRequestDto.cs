@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -20,21 +21,25 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the title of the media.
         /// </summary>
+        [MaxLength(500)]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the type of media.
         /// </summary>
+        [MaxLength(100)]
         public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the media link.
         /// </summary>
+        [MaxLength(500)]
         public string MediaLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the deletion type: "request" (delete the request) or "media" (delete the media from library).
         /// </summary>
+        [MaxLength(20)]
         public string DeletionType { get; set; } = "media";
     }
 }

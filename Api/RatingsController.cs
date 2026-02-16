@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data;
+using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
@@ -54,6 +56,23 @@ namespace Jellyfin.Plugin.Ratings.Api
             _sessionManager = sessionManager;
             _userDataManager = userDataManager;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Checks if a user is a Jellyfin administrator (server-side check).
+        /// </summary>
+        private bool IsJellyfinAdmin(Guid userId)
+        {
+            if (userId == Guid.Empty) return false;
+            try
+            {
+                var user = _userManager.GetUserById(userId);
+                return user != null && user.HasPermission(PermissionKind.IsAdministrator);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -452,6 +471,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var config = Plugin.Instance?.Configuration;
+
+                // Resolve user ID to hide sensitive data from anonymous users
+                var userId = GetAuthenticatedUserId();
+
                 return Ok(new
                 {
                     // Core settings
@@ -518,8 +541,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Chat settings
                     EnableChat = config?.EnableChat ?? false,
-                    TenorApiKey = config?.TenorApiKey ?? string.Empty,
-                    KlipyApiKey = config?.KlipyApiKey ?? config?.TenorApiKey ?? string.Empty,
+                    TenorApiKey = userId != Guid.Empty ? (config?.TenorApiKey ?? string.Empty) : string.Empty,
+                    KlipyApiKey = userId != Guid.Empty ? (config?.KlipyApiKey ?? config?.TenorApiKey ?? string.Empty) : string.Empty,
                     ChatAllowGifs = config?.ChatAllowGifs ?? true,
                     ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
                     ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
@@ -544,6 +567,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                var userId = GetAuthenticatedUserId();
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
                 DateTime sinceTime;
                 if (string.IsNullOrEmpty(since))
                 {
@@ -613,8 +642,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
-                // Note: Admin check is done client-side - only admins see the test button
-                // Server trusts authenticated requests for test notifications
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can send test notifications");
+                }
+
                 var user = _userManager.GetUserById(userId);
                 if (user == null)
                 {
@@ -781,7 +813,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to serve ratings.js");
-                return Content($"// ERROR: {ex.Message}\n// Stack: {ex.StackTrace}", "application/javascript");
+                return Content("// ERROR: Failed to load ratings.js", "application/javascript");
             }
         }
 
@@ -945,8 +977,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                // For now, allow all authenticated users to see requests
-                // Admin-only enforcement can be added later with proper policy checking
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can view all requests");
+                }
 
                 var requests = _repository.GetAllMediaRequestsAsync().Result;
                 return Ok(requests);
@@ -1012,8 +1046,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                // For now, allow all authenticated users to update requests
-                // Admin-only enforcement can be added later with proper policy checking
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can update request status");
+                }
 
                 // Validate status
                 var validStatuses = new[] { "pending", "processing", "done", "rejected", "snoozed" };
@@ -1093,9 +1129,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound("Request not found");
                 }
 
-                // Users can only delete their own requests (admin check done client-side)
-                // If not the owner, we rely on client-side admin check
                 var isOwner = existingRequest.UserId == userId;
+                if (!isOwner && !IsJellyfinAdmin(userId))
+                {
+                    return Forbid("You can only delete your own requests");
+                }
 
                 var result = _repository.DeleteMediaRequestAsync(requestId).Result;
                 if (!result)
@@ -1302,6 +1340,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can snooze requests");
+                }
+
                 // Parse the snooze date
                 if (!DateTime.TryParse(snoozedUntil, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var snoozeDate))
                 {
@@ -1368,6 +1411,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
+                }
+
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can unsnooze requests");
                 }
 
                 var result = _repository.UnsnoozeMediaRequestAsync(requestId).Result;
@@ -1499,13 +1547,19 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
-                // Admin check - we rely on client-side check like other endpoints
-                // The user ID is already validated above
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can access media management");
+                }
+
                 var user = _userManager.GetUserById(userId);
                 if (user == null)
                 {
                     return Unauthorized("User not found");
                 }
+
+                // Cap pageSize to prevent abuse
+                pageSize = Math.Clamp(pageSize, 1, 200);
 
                 // Check if media management is enabled
                 var config = Plugin.Instance?.Configuration;
@@ -1794,7 +1848,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
-                // Admin check - we rely on client-side check like other endpoints
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can schedule deletions");
+                }
+
                 var user = _userManager.GetUserById(userId);
                 if (user == null)
                 {
@@ -1898,7 +1956,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
-                // Admin check - we rely on client-side check like other endpoints
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can cancel scheduled deletions");
+                }
+
                 var user = _userManager.GetUserById(userId);
                 if (user == null)
                 {
@@ -1932,6 +1994,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                var userId = GetAuthenticatedUserId();
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
                 // Check if media management is enabled
                 var config = Plugin.Instance?.Configuration;
                 if (config?.EnableMediaManagement != true)
@@ -2177,6 +2245,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Only administrators can action deletion requests");
+                }
+
                 var user = _userManager.GetUserById(userId);
                 if (user == null)
                 {
@@ -2304,6 +2377,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                if (!IsJellyfinAdmin(adminId))
+                {
+                    return Forbid("Only administrators can create bans");
+                }
+
                 var admin = _userManager.GetUserById(adminId);
                 if (admin == null)
                 {
@@ -2383,6 +2461,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                if (!IsJellyfinAdmin(adminId))
+                {
+                    return Forbid("Only administrators can view bans");
+                }
+
                 var bans = _repository.GetActiveBans(banType.ToLower());
                 return Ok(bans);
             }
@@ -2438,6 +2521,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (adminId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
+                }
+
+                if (!IsJellyfinAdmin(adminId))
+                {
+                    return Forbid("Only administrators can lift bans");
                 }
 
                 var lifted = _repository.LiftBanAsync(banId).Result;

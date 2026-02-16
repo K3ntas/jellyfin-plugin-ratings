@@ -6197,6 +6197,13 @@
             return div.innerHTML;
         },
 
+        sanitizeUrl: function (url) {
+            if (!url) return '';
+            var trimmed = url.trim().toLowerCase();
+            if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) return '';
+            return url;
+        },
+
         /**
          * Auto-change a pending request to processing when admin views it
          */
@@ -8144,9 +8151,9 @@
                     </td>
                     <td>
                         <div class="media-item-title">
-                            <a href="#/details?id=${item.ItemId}">${item.Title}</a>
+                            <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.Title)}</a>
                         </div>
-                        <span class="media-item-type ${item.Type.toLowerCase()}">${item.Type}</span>
+                        <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
                     </td>
                     <td>${item.Year || '-'}</td>
                     <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
@@ -8246,9 +8253,9 @@
                         </td>
                         <td>
                             <div class="media-item-title">
-                                <a href="#/details?id=${item.ItemId}">${item.Title}</a>
+                                <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.Title)}</a>
                             </div>
-                            <span class="media-item-type ${item.Type.toLowerCase()}">${item.Type}</span>
+                            <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
                         </td>
                         <td>${item.Year || '-'}</td>
                         <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
@@ -8537,7 +8544,7 @@
                                 <div class="media-item-title">
                                     <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.ItemTitle)}</a>
                                 </div>
-                                <span class="media-item-type ${item.ItemType.toLowerCase()}">${item.ItemType}</span>
+                                <span class="media-item-type ${self.escapeHtml(item.ItemType).toLowerCase()}">${self.escapeHtml(item.ItemType)}</span>
                             </td>
                             <td style="color: #888;">${self.escapeHtml(item.ScheduledByUsername)}</td>
                             <td>
@@ -8663,7 +8670,7 @@
             // Add tabs for each selected media type
             self.selectedMediaTypes.forEach(type => {
                 const label = typeLabels[type] || type;
-                html += `<button class="media-tab" data-type="${type}">${label}</button>`;
+                html += `<button class="media-tab" data-type="${self.escapeHtml(type)}">${self.escapeHtml(label)}</button>`;
             });
 
             // Always add Scheduled and Settings tabs at the end
@@ -9299,7 +9306,7 @@
 
                 // Build results HTML
                 let html = `
-                    <h2 style="color: #fff; margin-bottom: 20px;">Search Results for "${query}" (${searchItems.length} found)</h2>
+                    <h2 style="color: #fff; margin-bottom: 20px;">Search Results for "${self.escapeHtml(query)}" (${searchItems.length} found)</h2>
                     <div class="itemsContainer vertical-wrap" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 `;
 
@@ -9320,14 +9327,14 @@
                                         <div class="cardImageContainer coveredImage">
                                             <div class="cardPadder-portrait"></div>
                                             <div class="cardImageContainerInner">
-                                                <img src="${imageSrc}" class="cardImage itemAction" alt="${itemName}" loading="lazy"/>
+                                                <img src="${imageSrc}" class="cardImage itemAction" alt="${self.escapeHtml(itemName)}" loading="lazy"/>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="cardFooter">
-                                    <div class="cardText cardText-first">${itemName}</div>
-                                    <div class="cardText cardText-secondary">${itemType}</div>
+                                    <div class="cardText cardText-first">${self.escapeHtml(itemName)}</div>
+                                    <div class="cardText cardText-secondary">${self.escapeHtml(itemType)}</div>
                                 </div>
                             </div>
                         </a>
@@ -9444,8 +9451,8 @@
                             <div class="dropdown-item-info">
                                 <div class="dropdown-item-title">${self.escapeHtml(itemName)}</div>
                                 <div class="dropdown-item-meta">
-                                    <span class="dropdown-item-type">${itemType}</span>
-                                    ${itemYear ? `<span class="dropdown-item-year">${itemYear}</span>` : ''}
+                                    <span class="dropdown-item-type">${self.escapeHtml(itemType)}</span>
+                                    ${itemYear ? `<span class="dropdown-item-year">${self.escapeHtml(String(itemYear))}</span>` : ''}
                                 </div>
                             </div>
                         </a>
@@ -9760,14 +9767,14 @@
             const descriptionHtml = windowDesc ? `
                 <div class="request-description">
                     <strong>${this.t('requestDescription')}</strong><br>
-                    ${windowDesc}
+                    ${this.escapeHtml(windowDesc)}
                 </div>
             ` : '';
 
             // Build Type field HTML (if enabled)
             const typeHtml = typeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaType">${typeLabel}${typeRequired ? ' *' : ''}</label>
+                    <label for="requestMediaType">${this.escapeHtml(typeLabel)}${typeRequired ? ' *' : ''}</label>
                     <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
@@ -9782,7 +9789,7 @@
             // Build IMDB Code field HTML (if enabled)
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbCode">${imdbCodeLabel}${imdbCodeRequired ? ' *' : ''}</label>
+                    <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -9790,7 +9797,7 @@
             // Build IMDB Link field HTML (if enabled)
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbLink">${imdbLinkLabel}${imdbLinkRequired ? ' *' : ''}</label>
+                    <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -9798,7 +9805,7 @@
             // Build Notes field HTML (if enabled)
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">${notesLabel}${notesRequired ? ' *' : ''}</label>
+                    <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
                     <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
@@ -9807,7 +9814,7 @@
                 ${langSwitchHtml}
                 ${descriptionHtml}
                 <div class="request-input-group">
-                    <label for="requestMediaTitle">${titleLabel} *</label>
+                    <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
                     <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
                 </div>
                 ${typeHtml}
@@ -10192,7 +10199,7 @@
                     imdbHtml += `<span>🎬 ${self.escapeHtml(request.ImdbCode)}</span>`;
                 }
                 if (request.ImdbLink) {
-                    imdbHtml += `<a href="${self.escapeHtml(request.ImdbLink)}" target="_blank">IMDB →</a>`;
+                    imdbHtml += `<a href="${self.sanitizeUrl(self.escapeHtml(request.ImdbLink))}" target="_blank">IMDB →</a>`;
                 }
                 imdbHtml += `</div>`;
             }
@@ -10233,7 +10240,7 @@
             // Watch button for completed requests
             let watchHtml = '';
             if (hasLink) {
-                watchHtml = `<a href="${self.escapeHtml(request.MediaLink)}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
+                watchHtml = `<a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
             }
 
             return `
@@ -10521,14 +10528,14 @@
             const descriptionHtml = windowDesc ? `
                 <div class="request-description">
                     <strong>${this.t('requestDescription')}</strong><br>
-                    ${windowDesc}
+                    ${this.escapeHtml(windowDesc)}
                 </div>
             ` : '';
 
             // Build Type field HTML (if enabled)
             const typeHtml = typeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaType">${typeLabel}${typeRequired ? ' *' : ''}</label>
+                    <label for="requestMediaType">${this.escapeHtml(typeLabel)}${typeRequired ? ' *' : ''}</label>
                     <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
@@ -10543,7 +10550,7 @@
             // Build IMDB Code field HTML (if enabled)
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbCode">${imdbCodeLabel}${imdbCodeRequired ? ' *' : ''}</label>
+                    <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbCode" placeholder="${imdbCodePlaceholder}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -10551,7 +10558,7 @@
             // Build IMDB Link field HTML (if enabled)
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbLink">${imdbLinkLabel}${imdbLinkRequired ? ' *' : ''}</label>
+                    <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbLink" placeholder="${imdbLinkPlaceholder}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -10559,7 +10566,7 @@
             // Build Notes field HTML (if enabled)
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">${notesLabel}${notesRequired ? ' *' : ''}</label>
+                    <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
                     <textarea id="requestMediaNotes" placeholder="${notesPlaceholder}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
@@ -10571,7 +10578,7 @@
                 <div id="mediaRequestBanNotice" style="display:none;"></div>
                 <div id="mediaRequestFormFields">
                     <div class="request-input-group">
-                        <label for="requestMediaTitle">${titleLabel} *</label>
+                        <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
                         <input type="text" id="requestMediaTitle" placeholder="${titlePlaceholder}" required />
                     </div>
                     ${typeHtml}
@@ -10684,7 +10691,7 @@
                         imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
                     }
                     if (request.ImdbLink) {
-                        imdbHtml += `<div class="user-request-imdb"><a href="${self.escapeHtml(request.ImdbLink)}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                        imdbHtml += `<div class="user-request-imdb"><a href="${self.sanitizeUrl(self.escapeHtml(request.ImdbLink))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
                     }
 
                     // Edit/Delete buttons only for pending requests
@@ -10705,7 +10712,7 @@
                                 ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
-                                ${hasLink ? `<a href="${self.escapeHtml(request.MediaLink)}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${hasLink ? `<a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                                 ${(() => {
                                     const isDeletionBanned = deletionBanInfo && deletionBanInfo.banned;
                                     const hasPendingDeletion = deletionRequests.some(dr => dr.MediaRequestId === request.Id && dr.Status === 'pending');
@@ -11840,7 +11847,7 @@
                                     <span> • ${request.Type ? self.escapeHtml(request.Type) : ''}</span>
                                     <span> • ${createdAt}</span>
                                     ${resolvedHtml}
-                                    ${request.MediaLink ? ` • <a href="${self.escapeHtml(request.MediaLink)}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                                    ${request.MediaLink ? ` • <a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
                                 </div>
                                 ${rejectionReasonHtml}
                                 ${actionsHtml}
@@ -14081,7 +14088,7 @@
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
                 const avatarContent = msg.userAvatar
-                    ? '<img src="' + msg.userAvatar + '" alt="">'
+                    ? '<img src="' + self.escapeHtml(msg.userAvatar) + '" alt="">'
                     : msg.userName.charAt(0).toUpperCase();
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
@@ -14364,7 +14371,7 @@
                     list.innerHTML = mods.map(function (mod) {
                         return '<div class="chat-admin-item">'
                             + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
-                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" onclick="RatingsPlugin.removeModerator(\'' + mod.userId + '\')">' + self.t('chatRemoveMod') + '</button>' : '')
+                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" onclick="RatingsPlugin.removeModerator(\'' + self.escapeHtml(mod.userId) + '\')">' + self.t('chatRemoveMod') + '</button>' : '')
                             + '</div>';
                     }).join('');
                 }
@@ -14392,7 +14399,7 @@
                     list.innerHTML = bans.map(function (ban) {
                         return '<div class="chat-admin-item">'
                             + '<span class="chat-admin-user">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
-                            + '<button class="chat-admin-btn" onclick="RatingsPlugin.unbanChatUser(\'' + ban.userId + '\')">' + self.t('chatUnban') + '</button>'
+                            + '<button class="chat-admin-btn" onclick="RatingsPlugin.unbanChatUser(\'' + self.escapeHtml(ban.userId) + '\')">' + self.t('chatUnban') + '</button>'
                             + '</div>';
                     }).join('');
                 }

@@ -360,13 +360,19 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> DeleteMessage([FromRoute] Guid messageId)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
-            // Own message deletion or moderator
-            if (!CanModerate(userId))
+            // Check if user owns the message or is a moderator
+            var message = _repository.GetChatMessageById(messageId);
+            if (message == null) return NotFound("Message not found");
+
+            if (message.UserId != userId && !CanModerate(userId))
             {
-                return Forbid("Only admins and moderators can delete messages");
+                return Forbid("You can only delete your own messages");
             }
 
             var deleted = await _repository.DeleteChatMessageAsync(messageId, userId).ConfigureAwait(false);
@@ -553,6 +559,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromQuery] string? reason,
             [FromQuery] int? durationMinutes)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -584,6 +593,17 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Cannot ban administrators");
             }
 
+            // Only admins can ban moderators
+            if (_repository.IsChatModerator(targetUserId) && !IsJellyfinAdmin(userId))
+            {
+                return BadRequest("Only administrators can ban moderators");
+            }
+
+            if (durationMinutes.HasValue && durationMinutes.Value <= 0)
+            {
+                return BadRequest("Duration must be positive");
+            }
+
             var banningUser = _userManager.GetUserById(userId);
 
             var ban = new ChatBan
@@ -592,7 +612,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 UserId = targetUserId,
                 UserName = targetUser.Username,
                 BanType = banType,
-                Reason = reason,
+                Reason = SanitizeMessage(reason, 500),
                 BannedBy = userId,
                 BannedByName = banningUser?.Username ?? "Unknown",
                 BannedAt = DateTime.UtcNow,
@@ -611,6 +631,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> UnbanUser([FromRoute] Guid banId)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
@@ -627,6 +650,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetBans()
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
