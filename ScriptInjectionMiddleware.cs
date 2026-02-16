@@ -211,7 +211,8 @@ namespace Jellyfin.Plugin.Ratings
             }
 
             // Build script tag with dynamic base path for reverse proxy support
-            var scriptTag = $"<script defer src=\"{basePath}/Ratings/ratings.js\"></script>";
+            var safeBasePath = System.Net.WebUtility.HtmlEncode(basePath);
+            var scriptTag = $"<script defer src=\"{safeBasePath}/Ratings/ratings.js\"></script>";
             return html.Insert(bodyCloseIndex, scriptTag + "\n");
         }
     }
