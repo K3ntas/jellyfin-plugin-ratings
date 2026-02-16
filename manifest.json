@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.291.0",
+        "changelog": "Security hardening: server-side admin verification, XSS prevention for GIF URLs and chat messages, API key protection for unauthenticated users, improved input sanitization, async fixes, rate limiting improvements.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.291.0/jellyfin-plugin-ratings_1.0.291.0.zip",
+        "checksum": "07c2f43f11cbbcc0284e13bca0503930",
+        "timestamp": "2026-02-16T01:00:00Z"
+      },
+      {
         "version": "1.0.290.0",
         "changelog": "Fix emoji rendering (HTML entity issue), replace Tenor GIF API with Klipy, fix emoji picker positioning and settings gear.",
         "targetAbi": "10.11.0.0",
