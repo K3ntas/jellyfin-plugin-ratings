@@ -1584,6 +1584,17 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets a chat ban by ID.
+        /// </summary>
+        public ChatBan? GetChatBanById(Guid banId)
+        {
+            lock (_lock)
+            {
+                return _chatBans.TryGetValue(banId, out var ban) ? ban : null;
+            }
+        }
+
+        /// <summary>
         /// Removes a chat ban.
         /// </summary>
         public async Task<bool> RemoveChatBanAsync(Guid banId)
