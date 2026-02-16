@@ -515,11 +515,11 @@
                             </div>
 
                             <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="txtTenorApiKey">Tenor API Key</label>
-                                <input id="txtTenorApiKey" type="text" is="emby-input" />
+                                <label class="inputLabel inputLabelUnfocused" for="txtKlipyApiKey">Klipy API Key</label>
+                                <input id="txtKlipyApiKey" type="text" is="emby-input" />
                                 <div class="fieldDescription">
                                     API key for GIF search. Get a free key at
-                                    <a href="https://developers.google.com/tenor/guides/quickstart" target="_blank" style="color: #00a4dc;">Tenor Developer Portal</a>
+                                    <a href="https://klipy.com" target="_blank" style="color: #00a4dc;">Klipy</a>
                                 </div>
                             </div>
 
@@ -854,7 +854,7 @@
                     document.querySelector('#txtChatMaxMessageLength').value = config.ChatMaxMessageLength || 500;
                     document.querySelector('#chkChatAllowGifs').checked = config.ChatAllowGifs !== false;
                     document.querySelector('#chkChatAllowEmojis').checked = config.ChatAllowEmojis !== false;
-                    document.querySelector('#txtTenorApiKey').value = config.TenorApiKey || '';
+                    document.querySelector('#txtKlipyApiKey').value = config.KlipyApiKey || config.TenorApiKey || '';
 
                     Dashboard.hideLoadingMsg();
                 });
@@ -935,7 +935,8 @@
                     config.ChatMaxMessageLength = parseInt(document.querySelector('#txtChatMaxMessageLength').value) || 500;
                     config.ChatAllowGifs = document.querySelector('#chkChatAllowGifs').checked;
                     config.ChatAllowEmojis = document.querySelector('#chkChatAllowEmojis').checked;
-                    config.TenorApiKey = document.querySelector('#txtTenorApiKey').value;
+                    config.KlipyApiKey = document.querySelector('#txtKlipyApiKey').value;
+                    config.TenorApiKey = '';
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

@@ -73,7 +73,7 @@
                 // Chat translations
                 liveChat: 'Live Chat', chatOnline: 'online', chatTyping: 'is typing...', chatTypingMultiple: 'are typing...',
                 chatSend: 'Send', chatPlaceholder: 'Type a message...', chatNoMessages: 'No messages yet. Start the conversation!',
-                chatSearchGif: 'Search GIFs...', chatTrending: 'Trending', chatPoweredBy: 'Powered by Tenor',
+                chatSearchGif: 'Search GIFs...', chatTrending: 'Trending', chatPoweredBy: 'Powered by Klipy',
                 chatDeleted: 'Message deleted', chatYou: 'You', chatJustNow: 'Just now', chatMinutesAgo: 'm ago', chatHoursAgo: 'h ago', chatYesterday: 'Yesterday',
                 chatModerators: 'Moderators', chatAddMod: 'Add Moderator', chatRemoveMod: 'Remove', chatBannedUsers: 'Banned Users',
                 chatBan: 'Ban', chatUnban: 'Unban', chatMute: 'Mute', chatBanFromMedia: 'Ban from Media', chatMinutes: 'minutes',
@@ -118,7 +118,7 @@
                 bannedBy: 'por', noBannedUsers: 'Sin usuarios baneados', youAreBanned: 'Estás baneado de esta acción', banSuccess: 'Usuario baneado', unbanSuccess: 'Usuario desbaneado',
                 liveChat: 'Chat en Vivo', chatOnline: 'en línea', chatTyping: 'está escribiendo...', chatTypingMultiple: 'están escribiendo...',
                 chatSend: 'Enviar', chatPlaceholder: 'Escribe un mensaje...', chatNoMessages: 'Sin mensajes. ¡Inicia la conversación!',
-                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendencias', chatPoweredBy: 'Desarrollado por Tenor',
+                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendencias', chatPoweredBy: 'Desarrollado por Klipy',
                 chatDeleted: 'Mensaje eliminado', chatYou: 'Tú', chatJustNow: 'Ahora', chatMinutesAgo: 'm', chatHoursAgo: 'h', chatYesterday: 'Ayer',
                 chatModerators: 'Moderadores', chatAddMod: 'Agregar Moderador', chatRemoveMod: 'Quitar', chatBannedUsers: 'Usuarios Baneados',
                 chatBan: 'Banear', chatUnban: 'Desbanear', chatMute: 'Silenciar', chatBanFromMedia: 'Banear de Media', chatMinutes: 'minutos',
@@ -163,7 +163,7 @@
                 bannedBy: '由', noBannedUsers: '没有封禁用户', youAreBanned: '您已被禁止此操作', banSuccess: '用户已封禁', unbanSuccess: '用户已解封',
                 liveChat: '实时聊天', chatOnline: '在线', chatTyping: '正在输入...', chatTypingMultiple: '正在输入...',
                 chatSend: '发送', chatPlaceholder: '输入消息...', chatNoMessages: '暂无消息，开始聊天吧！',
-                chatSearchGif: '搜索GIF...', chatTrending: '热门', chatPoweredBy: '由Tenor提供',
+                chatSearchGif: '搜索GIF...', chatTrending: '热门', chatPoweredBy: '由Klipy提供',
                 chatDeleted: '消息已删除', chatYou: '你', chatJustNow: '刚刚', chatMinutesAgo: '分钟前', chatHoursAgo: '小时前', chatYesterday: '昨天',
                 chatModerators: '管理员', chatAddMod: '添加管理员', chatRemoveMod: '移除', chatBannedUsers: '已封禁用户',
                 chatBan: '封禁', chatUnban: '解封', chatMute: '禁言', chatBanFromMedia: '禁止访问媒体', chatMinutes: '分钟',
@@ -208,7 +208,7 @@
                 bannedBy: 'por', noBannedUsers: 'Sem usuários banidos', youAreBanned: 'Você está banido desta ação', banSuccess: 'Usuário banido', unbanSuccess: 'Usuário desbanido',
                 liveChat: 'Chat ao Vivo', chatOnline: 'online', chatTyping: 'está digitando...', chatTypingMultiple: 'estão digitando...',
                 chatSend: 'Enviar', chatPlaceholder: 'Digite uma mensagem...', chatNoMessages: 'Sem mensagens. Inicie a conversa!',
-                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendências', chatPoweredBy: 'Desenvolvido por Tenor',
+                chatSearchGif: 'Buscar GIFs...', chatTrending: 'Tendências', chatPoweredBy: 'Desenvolvido por Klipy',
                 chatDeleted: 'Mensagem excluída', chatYou: 'Você', chatJustNow: 'Agora', chatMinutesAgo: 'm', chatHoursAgo: 'h', chatYesterday: 'Ontem',
                 chatModerators: 'Moderadores', chatAddMod: 'Adicionar Moderador', chatRemoveMod: 'Remover', chatBannedUsers: 'Usuários Banidos',
                 chatBan: 'Banir', chatUnban: 'Desbanir', chatMute: 'Silenciar', chatBanFromMedia: 'Banir de Mídia', chatMinutes: 'minutos',
@@ -253,7 +253,7 @@
                 bannedBy: 'заблокировал', noBannedUsers: 'Нет заблокированных', youAreBanned: 'Вы заблокированы', banSuccess: 'Пользователь заблокирован', unbanSuccess: 'Пользователь разблокирован',
                 liveChat: 'Чат', chatOnline: 'онлайн', chatTyping: 'печатает...', chatTypingMultiple: 'печатают...',
                 chatSend: 'Отправить', chatPlaceholder: 'Введите сообщение...', chatNoMessages: 'Нет сообщений. Начните разговор!',
-                chatSearchGif: 'Поиск GIF...', chatTrending: 'Популярные', chatPoweredBy: 'При поддержке Tenor',
+                chatSearchGif: 'Поиск GIF...', chatTrending: 'Популярные', chatPoweredBy: 'При поддержке Klipy',
                 chatDeleted: 'Сообщение удалено', chatYou: 'Вы', chatJustNow: 'Только что', chatMinutesAgo: 'м', chatHoursAgo: 'ч', chatYesterday: 'Вчера',
                 chatModerators: 'Модераторы', chatAddMod: 'Добавить модератора', chatRemoveMod: 'Удалить', chatBannedUsers: 'Заблокированные',
                 chatBan: 'Заблокировать', chatUnban: 'Разблокировать', chatMute: 'Заглушить', chatBanFromMedia: 'Заблокировать медиа', chatMinutes: 'минут',
@@ -298,7 +298,7 @@
                 bannedBy: 'by', noBannedUsers: 'BANユーザーなし', youAreBanned: 'この操作は禁止されています', banSuccess: 'ユーザーをBANしました', unbanSuccess: 'BANを解除しました',
                 liveChat: 'ライブチャット', chatOnline: 'オンライン', chatTyping: '入力中...', chatTypingMultiple: '入力中...',
                 chatSend: '送信', chatPlaceholder: 'メッセージを入力...', chatNoMessages: 'メッセージがありません。会話を始めましょう！',
-                chatSearchGif: 'GIF検索...', chatTrending: 'トレンド', chatPoweredBy: 'Tenor提供',
+                chatSearchGif: 'GIF検索...', chatTrending: 'トレンド', chatPoweredBy: 'Klipy提供',
                 chatDeleted: 'メッセージ削除済み', chatYou: 'あなた', chatJustNow: 'たった今', chatMinutesAgo: '分前', chatHoursAgo: '時間前', chatYesterday: '昨日',
                 chatModerators: 'モデレーター', chatAddMod: 'モデレーター追加', chatRemoveMod: '削除', chatBannedUsers: 'BANユーザー',
                 chatBan: 'BAN', chatUnban: 'BAN解除', chatMute: 'ミュート', chatBanFromMedia: 'メディアBAN', chatMinutes: '分',
@@ -343,7 +343,7 @@
                 bannedBy: 'von', noBannedUsers: 'Keine gesperrten Benutzer', youAreBanned: 'Du bist für diese Aktion gesperrt', banSuccess: 'Benutzer gesperrt', unbanSuccess: 'Benutzer entsperrt',
                 liveChat: 'Live-Chat', chatOnline: 'online', chatTyping: 'tippt...', chatTypingMultiple: 'tippen...',
                 chatSend: 'Senden', chatPlaceholder: 'Nachricht eingeben...', chatNoMessages: 'Keine Nachrichten. Starte die Unterhaltung!',
-                chatSearchGif: 'GIFs suchen...', chatTrending: 'Trends', chatPoweredBy: 'Powered by Tenor',
+                chatSearchGif: 'GIFs suchen...', chatTrending: 'Trends', chatPoweredBy: 'Powered by Klipy',
                 chatDeleted: 'Nachricht gelöscht', chatYou: 'Du', chatJustNow: 'Gerade eben', chatMinutesAgo: 'Min', chatHoursAgo: 'Std', chatYesterday: 'Gestern',
                 chatModerators: 'Moderatoren', chatAddMod: 'Moderator hinzufügen', chatRemoveMod: 'Entfernen', chatBannedUsers: 'Gesperrte Benutzer',
                 chatBan: 'Sperren', chatUnban: 'Entsperren', chatMute: 'Stummschalten', chatBanFromMedia: 'Von Medien sperren', chatMinutes: 'Minuten',
@@ -388,7 +388,7 @@
                 bannedBy: 'par', noBannedUsers: 'Pas d\'utilisateurs bannis', youAreBanned: 'Vous êtes banni de cette action', banSuccess: 'Utilisateur banni', unbanSuccess: 'Utilisateur débanni',
                 liveChat: 'Chat en Direct', chatOnline: 'en ligne', chatTyping: 'écrit...', chatTypingMultiple: 'écrivent...',
                 chatSend: 'Envoyer', chatPlaceholder: 'Tapez un message...', chatNoMessages: 'Pas de messages. Lancez la conversation !',
-                chatSearchGif: 'Rechercher GIFs...', chatTrending: 'Tendances', chatPoweredBy: 'Propulsé par Tenor',
+                chatSearchGif: 'Rechercher GIFs...', chatTrending: 'Tendances', chatPoweredBy: 'Propulsé par Klipy',
                 chatDeleted: 'Message supprimé', chatYou: 'Vous', chatJustNow: 'À l\'instant', chatMinutesAgo: 'min', chatHoursAgo: 'h', chatYesterday: 'Hier',
                 chatModerators: 'Modérateurs', chatAddMod: 'Ajouter Modérateur', chatRemoveMod: 'Retirer', chatBannedUsers: 'Utilisateurs Bannis',
                 chatBan: 'Bannir', chatUnban: 'Débannir', chatMute: 'Rendre muet', chatBanFromMedia: 'Bannir des Médias', chatMinutes: 'minutes',
@@ -433,7 +433,7 @@
                 bannedBy: '차단자', noBannedUsers: '차단된 사용자 없음', youAreBanned: '이 작업이 차단되었습니다', banSuccess: '사용자 차단됨', unbanSuccess: '차단 해제됨',
                 liveChat: '실시간 채팅', chatOnline: '온라인', chatTyping: '입력 중...', chatTypingMultiple: '입력 중...',
                 chatSend: '전송', chatPlaceholder: '메시지 입력...', chatNoMessages: '메시지가 없습니다. 대화를 시작하세요!',
-                chatSearchGif: 'GIF 검색...', chatTrending: '인기', chatPoweredBy: 'Tenor 제공',
+                chatSearchGif: 'GIF 검색...', chatTrending: '인기', chatPoweredBy: 'Klipy 제공',
                 chatDeleted: '메시지 삭제됨', chatYou: '나', chatJustNow: '방금', chatMinutesAgo: '분 전', chatHoursAgo: '시간 전', chatYesterday: '어제',
                 chatModerators: '관리자', chatAddMod: '관리자 추가', chatRemoveMod: '제거', chatBannedUsers: '차단된 사용자',
                 chatBan: '차단', chatUnban: '차단 해제', chatMute: '음소거', chatBanFromMedia: '미디어 차단', chatMinutes: '분',
@@ -478,7 +478,7 @@
                 bannedBy: 'da', noBannedUsers: 'Nessun utente bannato', youAreBanned: 'Sei bannato da questa azione', banSuccess: 'Utente bannato', unbanSuccess: 'Utente sbannato',
                 liveChat: 'Chat dal Vivo', chatOnline: 'online', chatTyping: 'sta scrivendo...', chatTypingMultiple: 'stanno scrivendo...',
                 chatSend: 'Invia', chatPlaceholder: 'Scrivi un messaggio...', chatNoMessages: 'Nessun messaggio. Inizia la conversazione!',
-                chatSearchGif: 'Cerca GIF...', chatTrending: 'Tendenze', chatPoweredBy: 'Powered by Tenor',
+                chatSearchGif: 'Cerca GIF...', chatTrending: 'Tendenze', chatPoweredBy: 'Powered by Klipy',
                 chatDeleted: 'Messaggio eliminato', chatYou: 'Tu', chatJustNow: 'Adesso', chatMinutesAgo: 'min', chatHoursAgo: 'h', chatYesterday: 'Ieri',
                 chatModerators: 'Moderatori', chatAddMod: 'Aggiungi Moderatore', chatRemoveMod: 'Rimuovi', chatBannedUsers: 'Utenti Bannati',
                 chatBan: 'Banna', chatUnban: 'Sbanna', chatMute: 'Silenzia', chatBanFromMedia: 'Banna dai Media', chatMinutes: 'minuti',
@@ -523,7 +523,7 @@
                 bannedBy: 'tarafından', noBannedUsers: 'Yasaklı kullanıcı yok', youAreBanned: 'Bu işlem için yasaklısınız', banSuccess: 'Kullanıcı yasaklandı', unbanSuccess: 'Yasak kaldırıldı',
                 liveChat: 'Canlı Sohbet', chatOnline: 'çevrimiçi', chatTyping: 'yazıyor...', chatTypingMultiple: 'yazıyorlar...',
                 chatSend: 'Gönder', chatPlaceholder: 'Mesaj yazın...', chatNoMessages: 'Mesaj yok. Sohbeti başlatın!',
-                chatSearchGif: 'GIF Ara...', chatTrending: 'Trendler', chatPoweredBy: 'Tenor ile desteklenir',
+                chatSearchGif: 'GIF Ara...', chatTrending: 'Trendler', chatPoweredBy: 'Klipy ile desteklenir',
                 chatDeleted: 'Mesaj silindi', chatYou: 'Sen', chatJustNow: 'Şimdi', chatMinutesAgo: 'dk', chatHoursAgo: 'sa', chatYesterday: 'Dün',
                 chatModerators: 'Moderatörler', chatAddMod: 'Moderatör Ekle', chatRemoveMod: 'Kaldır', chatBannedUsers: 'Yasaklı Kullanıcılar',
                 chatBan: 'Yasakla', chatUnban: 'Yasağı Kaldır', chatMute: 'Sustur', chatBanFromMedia: 'Medyadan Yasakla', chatMinutes: 'dakika',
@@ -568,7 +568,7 @@
                 bannedBy: 'przez', noBannedUsers: 'Brak zbanowanych użytkowników', youAreBanned: 'Jesteś zbanowany z tej akcji', banSuccess: 'Użytkownik zbanowany', unbanSuccess: 'Użytkownik odbanowany',
                 liveChat: 'Czat na żywo', chatOnline: 'online', chatTyping: 'pisze...', chatTypingMultiple: 'piszą...',
                 chatSend: 'Wyślij', chatPlaceholder: 'Napisz wiadomość...', chatNoMessages: 'Brak wiadomości. Rozpocznij rozmowę!',
-                chatSearchGif: 'Szukaj GIF...', chatTrending: 'Popularne', chatPoweredBy: 'Obsługiwane przez Tenor',
+                chatSearchGif: 'Szukaj GIF...', chatTrending: 'Popularne', chatPoweredBy: 'Obsługiwane przez Klipy',
                 chatDeleted: 'Wiadomość usunięta', chatYou: 'Ty', chatJustNow: 'Teraz', chatMinutesAgo: 'min', chatHoursAgo: 'godz', chatYesterday: 'Wczoraj',
                 chatModerators: 'Moderatorzy', chatAddMod: 'Dodaj Moderatora', chatRemoveMod: 'Usuń', chatBannedUsers: 'Zbanowani Użytkownicy',
                 chatBan: 'Zbanuj', chatUnban: 'Odbanuj', chatMute: 'Wycisz', chatBanFromMedia: 'Zbanuj z Mediów', chatMinutes: 'minut',
@@ -613,7 +613,7 @@
                 bannedBy: 'door', noBannedUsers: 'Geen geblokkeerde gebruikers', youAreBanned: 'Je bent geblokkeerd voor deze actie', banSuccess: 'Gebruiker geblokkeerd', unbanSuccess: 'Gebruiker gedeblokkeerd',
                 liveChat: 'Live Chat', chatOnline: 'online', chatTyping: 'typt...', chatTypingMultiple: 'typen...',
                 chatSend: 'Verstuur', chatPlaceholder: 'Typ een bericht...', chatNoMessages: 'Geen berichten. Start het gesprek!',
-                chatSearchGif: 'GIFs zoeken...', chatTrending: 'Trending', chatPoweredBy: 'Mogelijk gemaakt door Tenor',
+                chatSearchGif: 'GIFs zoeken...', chatTrending: 'Trending', chatPoweredBy: 'Mogelijk gemaakt door Klipy',
                 chatDeleted: 'Bericht verwijderd', chatYou: 'Jij', chatJustNow: 'Zojuist', chatMinutesAgo: 'min', chatHoursAgo: 'u', chatYesterday: 'Gisteren',
                 chatModerators: 'Moderators', chatAddMod: 'Moderator Toevoegen', chatRemoveMod: 'Verwijderen', chatBannedUsers: 'Geblokkeerde Gebruikers',
                 chatBan: 'Blokkeren', chatUnban: 'Deblokkeren', chatMute: 'Dempen', chatBanFromMedia: 'Blokkeren van Media', chatMinutes: 'minuten',
@@ -658,7 +658,7 @@
                 bannedBy: 'بواسطة', noBannedUsers: 'لا يوجد مستخدمون محظورون', youAreBanned: 'أنت محظور من هذا الإجراء', banSuccess: 'تم حظر المستخدم', unbanSuccess: 'تم إلغاء حظر المستخدم',
                 liveChat: 'الدردشة المباشرة', chatOnline: 'متصل', chatTyping: 'يكتب...', chatTypingMultiple: 'يكتبون...',
                 chatSend: 'إرسال', chatPlaceholder: 'اكتب رسالة...', chatNoMessages: 'لا توجد رسائل. ابدأ المحادثة!',
-                chatSearchGif: 'بحث GIF...', chatTrending: 'رائج', chatPoweredBy: 'مدعوم من Tenor',
+                chatSearchGif: 'بحث GIF...', chatTrending: 'رائج', chatPoweredBy: 'مدعوم من Klipy',
                 chatDeleted: 'تم حذف الرسالة', chatYou: 'أنت', chatJustNow: 'الآن', chatMinutesAgo: 'د', chatHoursAgo: 'س', chatYesterday: 'أمس',
                 chatModerators: 'المشرفون', chatAddMod: 'إضافة مشرف', chatRemoveMod: 'إزالة', chatBannedUsers: 'المستخدمون المحظورون',
                 chatBan: 'حظر', chatUnban: 'إلغاء الحظر', chatMute: 'كتم', chatBanFromMedia: 'حظر من الوسائط', chatMinutes: 'دقائق',
@@ -703,7 +703,7 @@
                 bannedBy: 'द्वारा', noBannedUsers: 'कोई प्रतिबंधित उपयोगकर्ता नहीं', youAreBanned: 'आप इस क्रिया से प्रतिबंधित हैं', banSuccess: 'उपयोगकर्ता प्रतिबंधित', unbanSuccess: 'प्रतिबंध हटाया गया',
                 liveChat: 'लाइव चैट', chatOnline: 'ऑनलाइन', chatTyping: 'टाइप कर रहा है...', chatTypingMultiple: 'टाइप कर रहे हैं...',
                 chatSend: 'भेजें', chatPlaceholder: 'संदेश लिखें...', chatNoMessages: 'कोई संदेश नहीं। बातचीत शुरू करें!',
-                chatSearchGif: 'GIF खोजें...', chatTrending: 'ट्रेंडिंग', chatPoweredBy: 'Tenor द्वारा संचालित',
+                chatSearchGif: 'GIF खोजें...', chatTrending: 'ट्रेंडिंग', chatPoweredBy: 'Klipy द्वारा संचालित',
                 chatDeleted: 'संदेश हटाया गया', chatYou: 'आप', chatJustNow: 'अभी', chatMinutesAgo: 'मिनट', chatHoursAgo: 'घंटे', chatYesterday: 'कल',
                 chatModerators: 'मॉडरेटर', chatAddMod: 'मॉडरेटर जोड़ें', chatRemoveMod: 'हटाएं', chatBannedUsers: 'प्रतिबंधित उपयोगकर्ता',
                 chatBan: 'प्रतिबंध', chatUnban: 'प्रतिबंध हटाएं', chatMute: 'म्यूट', chatBanFromMedia: 'मीडिया से प्रतिबंध', chatMinutes: 'मिनट',
@@ -748,7 +748,7 @@
                 bannedBy: 'uždraudė', noBannedUsers: 'Nėra uždraustų vartotojų', youAreBanned: 'Jums uždrausta atlikti šį veiksmą', banSuccess: 'Vartotojas uždraustas', unbanSuccess: 'Vartotojas atblokuotas',
                 liveChat: 'Pokalbiai', chatOnline: 'prisijungę', chatTyping: 'rašo...', chatTypingMultiple: 'rašo...',
                 chatSend: 'Siųsti', chatPlaceholder: 'Rašykite žinutę...', chatNoMessages: 'Žinučių nėra. Pradėkite pokalbį!',
-                chatSearchGif: 'Ieškoti GIF...', chatTrending: 'Populiarūs', chatPoweredBy: 'Veikia su Tenor',
+                chatSearchGif: 'Ieškoti GIF...', chatTrending: 'Populiarūs', chatPoweredBy: 'Veikia su Klipy',
                 chatDeleted: 'Žinutė ištrinta', chatYou: 'Jūs', chatJustNow: 'Ką tik', chatMinutesAgo: 'min', chatHoursAgo: 'val', chatYesterday: 'Vakar',
                 chatModerators: 'Moderatoriai', chatAddMod: 'Pridėti Moderatorių', chatRemoveMod: 'Pašalinti', chatBannedUsers: 'Uždrausti Vartotojai',
                 chatBan: 'Uždrausti', chatUnban: 'Atblokuoti', chatMute: 'Nutildyti', chatBanFromMedia: 'Uždrausti Mediją', chatMinutes: 'minučių',
@@ -13622,7 +13622,7 @@
                     .then(function (config) {
                         self.chatEnabled = config.EnableChat === true;
                         self.chatConfig = {
-                            tenorApiKey: config.TenorApiKey || '',
+                            klipyApiKey: config.KlipyApiKey || config.TenorApiKey || '',
                             allowGifs: config.ChatAllowGifs !== false,
                             allowEmojis: config.ChatAllowEmojis !== false,
                             maxMessageLength: config.ChatMaxMessageLength || 500,
@@ -13764,7 +13764,7 @@
                                 <textarea class="chat-input" id="chatInput" placeholder="${this.t('chatPlaceholder')}" rows="1"></textarea>
                                 <div class="chat-input-btns">
                                     <button class="chat-emoji-btn" id="chatEmojiBtn" title="Emojis">😊</button>
-                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.tenorApiKey ? '' : 'display:none;'}">GIF</button>
+                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.klipyApiKey ? '' : 'display:none;'}">GIF</button>
                                 </div>
                             </div>
                             <button class="chat-send-btn" id="chatSendBtn" title="${this.t('chatSend')}">➤</button>
@@ -13842,7 +13842,7 @@
             });
 
             // GIF picker toggle
-            if (this.chatConfig.allowGifs && this.chatConfig.tenorApiKey) {
+            if (this.chatConfig.allowGifs && this.chatConfig.klipyApiKey) {
                 document.getElementById('chatGifBtn').onclick = function () {
                     const picker = document.getElementById('chatGifPicker');
                     const emojiPicker = document.getElementById('chatEmojiPicker');
@@ -14301,33 +14301,35 @@
         },
 
         /**
-         * Load trending GIFs from Tenor
+         * Load trending GIFs from Klipy
          */
         loadTrendingGifs: function () {
-            if (!this.chatConfig.tenorApiKey) return;
+            if (!this.chatConfig.klipyApiKey) return;
             const self = this;
-            const url = 'https://tenor.googleapis.com/v2/featured?key=' + this.chatConfig.tenorApiKey + '&limit=20&media_filter=gif';
+            const url = 'https://api.klipy.com/api/v1/' + this.chatConfig.klipyApiKey + '/gifs/trending?per_page=20&customer_id=jellyfin';
 
             fetch(url)
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    self.renderGifs(data.results || []);
+                    var gifs = (data.data && data.data.data) || [];
+                    self.renderGifs(gifs);
                 })
                 .catch(function () {});
         },
 
         /**
-         * Search GIFs from Tenor
+         * Search GIFs from Klipy
          */
         searchGifs: function (query) {
-            if (!this.chatConfig.tenorApiKey) return;
+            if (!this.chatConfig.klipyApiKey) return;
             const self = this;
-            const url = 'https://tenor.googleapis.com/v2/search?key=' + this.chatConfig.tenorApiKey + '&q=' + encodeURIComponent(query) + '&limit=20&media_filter=gif';
+            const url = 'https://api.klipy.com/api/v1/' + this.chatConfig.klipyApiKey + '/gifs/search?q=' + encodeURIComponent(query) + '&per_page=20&customer_id=jellyfin';
 
             fetch(url)
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    self.renderGifs(data.results || []);
+                    var gifs = (data.data && data.data.data) || [];
+                    self.renderGifs(gifs);
                 })
                 .catch(function () {});
         },
@@ -14340,9 +14342,11 @@
             const container = document.getElementById('chatGifList');
 
             container.innerHTML = gifs.map(function (gif) {
-                const previewUrl = gif.media_formats.tinygif?.url || gif.media_formats.nanogif?.url || '';
-                const fullUrl = gif.media_formats.gif?.url || previewUrl;
-                return '<div class="chat-gif-item" data-url="' + fullUrl + '"><img src="' + previewUrl + '" alt="GIF"></div>';
+                var previewUrl = (gif.file && gif.file.xs && gif.file.xs.gif && gif.file.xs.gif.url)
+                    || (gif.file && gif.file.sm && gif.file.sm.gif && gif.file.sm.gif.url) || '';
+                var fullUrl = (gif.file && gif.file.md && gif.file.md.gif && gif.file.md.gif.url)
+                    || (gif.file && gif.file.hd && gif.file.hd.gif && gif.file.hd.gif.url) || previewUrl;
+                return '<div class="chat-gif-item" data-url="' + fullUrl + '"><img src="' + previewUrl + '" alt="GIF" loading="lazy"></div>';
             }).join('');
 
             container.querySelectorAll('.chat-gif-item').forEach(function (item) {
