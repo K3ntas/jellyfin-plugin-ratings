@@ -40,7 +40,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             "tenor.com", "media.tenor.com", "c.tenor.com",
             "giphy.com", "media.giphy.com", "media0.giphy.com",
-            "media1.giphy.com", "media2.giphy.com", "media3.giphy.com", "media4.giphy.com"
+            "media1.giphy.com", "media2.giphy.com", "media3.giphy.com", "media4.giphy.com",
+            "klipy.com", "api.klipy.com", "cdn.klipy.com", "media.klipy.com"
         };
 
         /// <summary>
@@ -114,13 +115,12 @@ namespace Jellyfin.Plugin.Ratings.Api
             input = input.Trim();
             if (input.Length > maxLength) input = input.Substring(0, maxLength);
 
-            // HTML encode to prevent XSS
-            input = HttpUtility.HtmlEncode(input);
+            // Strip HTML tags to prevent XSS (client-side escapeHtml handles display)
+            input = Regex.Replace(input, @"<[^>]*>", "", RegexOptions.None);
 
             // Remove potential script patterns
             input = Regex.Replace(input, @"javascript:", "", RegexOptions.IgnoreCase);
             input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
-            input = Regex.Replace(input, @"<script", "", RegexOptions.IgnoreCase);
 
             return input;
         }
@@ -191,7 +191,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 ChatAllowGifs = config?.ChatAllowGifs ?? true,
                 ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
                 ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
-                TenorApiKey = config?.TenorApiKey ?? ""
+                TenorApiKey = config?.TenorApiKey ?? "",
+                KlipyApiKey = config?.KlipyApiKey ?? config?.TenorApiKey ?? ""
             });
         }
 
@@ -292,7 +293,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
                 if (!IsValidGifUrl(dto.GifUrl))
                 {
-                    return BadRequest("Invalid GIF URL. Only Tenor and Giphy are allowed.");
+                    return BadRequest("Invalid GIF URL. Only Klipy, Tenor, and Giphy are allowed.");
                 }
             }
 

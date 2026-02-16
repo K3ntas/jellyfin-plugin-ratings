@@ -85,6 +85,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ChatAllowGifs = true;
             ChatAllowEmojis = true;
             TenorApiKey = string.Empty;
+            KlipyApiKey = string.Empty;
         }
 
         /// <summary>
@@ -331,9 +332,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public bool ChatAllowEmojis { get; set; }
 
         /// <summary>
-        /// Gets or sets the Tenor API key for GIF search.
-        /// Get a free key at https://developers.google.com/tenor/guides/quickstart
+        /// Gets or sets the Tenor API key for GIF search (deprecated, use KlipyApiKey).
         /// </summary>
         public string TenorApiKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Klipy API key for GIF search.
+        /// Get a free key at https://klipy.com
+        /// </summary>
+        public string KlipyApiKey { get; set; }
     }
 }
