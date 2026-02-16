@@ -1,11 +1,13 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mime;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
+using Jellyfin.Data;
+using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
@@ -22,26 +24,25 @@ namespace Jellyfin.Plugin.Ratings.Api
     [ApiController]
     [Route("Ratings/Chat")]
     [Produces(MediaTypeNames.Application.Json)]
-    [AllowAnonymous]
     public class ChatController : ControllerBase
     {
         private readonly RatingsRepository _repository;
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<ChatController> _logger;
-        private static readonly Dictionary<Guid, DateTime> _rateLimitTracker = new();
-        private static readonly Dictionary<Guid, int> _messageCountTracker = new();
-        private static readonly object _rateLock = new();
+
+        // Rate limiting with ConcurrentDictionary for thread safety
+        private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _rateLimits = new();
+        private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
 
         /// <summary>
-        /// Allowed GIF domains for security.
+        /// Allowed GIF domains for security (exact match or subdomain).
         /// </summary>
         private static readonly string[] AllowedGifDomains = new[]
         {
-            "tenor.com", "media.tenor.com", "c.tenor.com",
-            "giphy.com", "media.giphy.com", "media0.giphy.com",
-            "media1.giphy.com", "media2.giphy.com", "media3.giphy.com", "media4.giphy.com",
-            "klipy.com", "api.klipy.com", "cdn.klipy.com", "media.klipy.com"
+            "tenor.com",
+            "giphy.com",
+            "klipy.com"
         };
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Gets the current user ID from the request.
         /// </summary>
-        private Guid GetCurrentUserId()
+        private async Task<Guid> GetCurrentUserIdAsync()
         {
             var userId = User.GetUserId();
             if (userId != Guid.Empty) return userId;
@@ -76,65 +77,27 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (!tokenMatch.Success) return Guid.Empty;
 
             var token = tokenMatch.Groups[1].Value;
-            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-            var session = sessionTask.Result;
-            return session?.UserId ?? Guid.Empty;
-        }
-
-        /// <summary>
-        /// Checks if the current user is an admin.
-        /// Admin status is determined by the client passing it in heartbeat and stored in ChatUser.
-        /// This follows the same pattern as RatingsController which relies on client-side admin checks.
-        /// </summary>
-        private bool IsCurrentUserAdmin()
-        {
-            var userId = GetCurrentUserId();
-            if (userId == Guid.Empty) return false;
-            // Check stored admin status from last heartbeat
-            return _repository.IsChatUserAdmin(userId);
-        }
-
-        /// <summary>
-        /// Checks if user can moderate (admin or moderator).
-        /// </summary>
-        private bool CanModerate(Guid userId)
-        {
-            // Check stored admin status or moderator list
-            if (_repository.IsChatUserAdmin(userId)) return true;
-            return _repository.IsChatModerator(userId);
-        }
-
-        /// <summary>
-        /// Sanitizes message content to prevent XSS.
-        /// </summary>
-        private string SanitizeMessage(string input, int maxLength = 500)
-        {
-            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-
-            // Trim and limit length
-            input = input.Trim();
-            if (input.Length > maxLength) input = input.Substring(0, maxLength);
-
-            // Strip HTML tags to prevent XSS (client-side escapeHtml handles display)
-            input = Regex.Replace(input, @"<[^>]*>", "", RegexOptions.None);
-
-            // Remove potential script patterns
-            input = Regex.Replace(input, @"javascript:", "", RegexOptions.IgnoreCase);
-            input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
-
-            return input;
-        }
-
-        /// <summary>
-        /// Validates GIF URL is from allowed domains.
-        /// </summary>
-        private bool IsValidGifUrl(string? url)
-        {
-            if (string.IsNullOrEmpty(url)) return true; // null is OK (no GIF)
             try
             {
-                var uri = new Uri(url);
-                return AllowedGifDomains.Any(d => uri.Host.EndsWith(d, StringComparison.OrdinalIgnoreCase));
+                var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                return session?.UserId ?? Guid.Empty;
+            }
+            catch
+            {
+                return Guid.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user is a Jellyfin administrator (server-side check).
+        /// </summary>
+        private bool IsJellyfinAdmin(Guid userId)
+        {
+            if (userId == Guid.Empty) return false;
+            try
+            {
+                var user = _userManager.GetUserById(userId);
+                return user != null && user.HasPermission(PermissionKind.IsAdministrator);
             }
             catch
             {
@@ -143,56 +106,126 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Checks rate limit for a user.
+        /// Checks if user can moderate (Jellyfin admin or chat moderator).
         /// </summary>
-        private bool IsRateLimited(Guid userId)
+        private bool CanModerate(Guid userId)
         {
-            var config = Plugin.Instance?.Configuration;
-            var maxPerMinute = config?.ChatRateLimitPerMinute ?? 10;
+            if (IsJellyfinAdmin(userId)) return true;
+            return _repository.IsChatModerator(userId);
+        }
 
-            lock (_rateLock)
+        /// <summary>
+        /// Sanitizes message content to prevent XSS.
+        /// </summary>
+        private static string SanitizeMessage(string? input, int maxLength = 500)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+            // Trim and limit length
+            input = input.Trim();
+            if (input.Length > maxLength) input = input.Substring(0, maxLength);
+
+            // Strip all HTML tags (handles malformed tags too)
+            input = Regex.Replace(input, @"<[^>]*?>", "", RegexOptions.None);
+            // Also strip incomplete tags at end
+            input = Regex.Replace(input, @"<[^>]*$", "", RegexOptions.None);
+
+            // Recursively remove javascript: protocol until stable
+            string previous;
+            do
             {
-                var now = DateTime.UtcNow;
+                previous = input;
+                input = Regex.Replace(input, @"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", "", RegexOptions.IgnoreCase);
+            } while (input != previous);
 
-                // Reset counter if minute has passed
-                if (_rateLimitTracker.TryGetValue(userId, out var lastReset))
-                {
-                    if ((now - lastReset).TotalMinutes >= 1)
-                    {
-                        _rateLimitTracker[userId] = now;
-                        _messageCountTracker[userId] = 0;
-                    }
-                }
-                else
-                {
-                    _rateLimitTracker[userId] = now;
-                    _messageCountTracker[userId] = 0;
-                }
+            // Remove event handler attributes
+            input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
 
-                var count = _messageCountTracker.GetValueOrDefault(userId, 0);
-                if (count >= maxPerMinute) return true;
+            return input;
+        }
 
-                _messageCountTracker[userId] = count + 1;
+        /// <summary>
+        /// Validates GIF URL is from allowed domains (exact or subdomain match).
+        /// Also rejects URLs containing characters that could break HTML attributes.
+        /// </summary>
+        private static bool IsValidGifUrl(string? url)
+        {
+            if (string.IsNullOrEmpty(url)) return true;
+            try
+            {
+                var uri = new Uri(url);
+
+                // Must be HTTPS
+                if (uri.Scheme != "https") return false;
+
+                // Reject URLs with characters that could break HTML attributes
+                if (url.Contains('"') || url.Contains('\'') || url.Contains('<') || url.Contains('>'))
+                    return false;
+
+                // Exact domain or subdomain match (not EndsWith which allows evil-tenor.com)
+                return AllowedGifDomains.Any(d =>
+                    uri.Host.Equals(d, StringComparison.OrdinalIgnoreCase) ||
+                    uri.Host.EndsWith("." + d, StringComparison.OrdinalIgnoreCase));
+            }
+            catch
+            {
                 return false;
             }
         }
 
         /// <summary>
-        /// Gets chat configuration.
+        /// Checks rate limit for a user. Cleans up stale entries periodically.
+        /// </summary>
+        private static bool IsRateLimited(Guid userId, int maxPerMinute)
+        {
+            var now = DateTime.UtcNow;
+
+            // Periodic cleanup of stale entries (every 5 minutes)
+            if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
+            {
+                _lastRateLimitCleanup = now;
+                foreach (var key in _rateLimits.Keys.ToList())
+                {
+                    if (_rateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                    {
+                        _rateLimits.TryRemove(key, out _);
+                    }
+                }
+            }
+
+            var entry = _rateLimits.AddOrUpdate(
+                userId,
+                _ => (now, 1),
+                (_, existing) =>
+                {
+                    if ((now - existing.ResetTime).TotalMinutes >= 1)
+                        return (now, 1);
+                    return (existing.ResetTime, existing.Count + 1);
+                });
+
+            return entry.Count > maxPerMinute;
+        }
+
+        /// <summary>
+        /// Gets chat configuration. API keys only returned to authenticated users.
         /// </summary>
         [HttpGet("Config")]
         [AllowAnonymous]
-        public ActionResult GetChatConfig()
+        public async Task<ActionResult> GetChatConfig()
         {
             var config = Plugin.Instance?.Configuration;
-            return Ok(new
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+
+            // Only return API keys to authenticated users
+            var klipyKey = userId != Guid.Empty ? (config?.KlipyApiKey ?? config?.TenorApiKey ?? "") : "";
+
+            return Ok(new Dictionary<string, object>
             {
-                EnableChat = config?.EnableChat ?? false,
-                ChatAllowGifs = config?.ChatAllowGifs ?? true,
-                ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
-                ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
-                TenorApiKey = config?.TenorApiKey ?? "",
-                KlipyApiKey = config?.KlipyApiKey ?? config?.TenorApiKey ?? ""
+                { "EnableChat", config?.EnableChat ?? false },
+                { "ChatAllowGifs", config?.ChatAllowGifs ?? true },
+                { "ChatAllowEmojis", config?.ChatAllowEmojis ?? true },
+                { "ChatMaxMessageLength", config?.ChatMaxMessageLength ?? 500 },
+                { "KlipyApiKey", klipyKey }
             });
         }
 
@@ -201,7 +234,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("Messages")]
         [AllowAnonymous]
-        public ActionResult<List<ChatMessage>> GetMessages([FromQuery] DateTime? since, [FromQuery] int limit = 100)
+        public async Task<ActionResult> GetMessages([FromQuery] DateTime? since, [FromQuery] int limit = 100)
         {
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true)
@@ -209,7 +242,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             // Check if user is banned from chat
@@ -223,20 +256,20 @@ namespace Jellyfin.Plugin.Ratings.Api
             var messages = _repository.GetRecentChatMessages(limit, since);
             var typingUsers = _repository.GetTypingUsers();
 
-            // Enrich messages with admin/moderator status
-            var enrichedMessages = messages.Select(m => new
+            // Enrich messages - null out content for deleted messages (#13)
+            var enrichedMessages = messages.Select(m => new Dictionary<string, object?>
             {
-                id = m.Id,
-                userId = m.UserId,
-                userName = m.UserName,
-                userAvatar = m.UserAvatar,
-                content = m.Content,
-                gifUrl = m.GifUrl,
-                timestamp = m.Timestamp,
-                isDeleted = m.IsDeleted,
-                replyToId = m.ReplyToId,
-                isAdmin = _repository.IsChatUserAdmin(m.UserId),
-                isModerator = _repository.IsChatModerator(m.UserId)
+                { "id", m.Id },
+                { "userId", m.UserId },
+                { "userName", m.UserName },
+                { "userAvatar", m.UserAvatar },
+                { "content", m.IsDeleted ? null : m.Content },
+                { "gifUrl", m.IsDeleted ? null : m.GifUrl },
+                { "timestamp", m.Timestamp },
+                { "isDeleted", m.IsDeleted },
+                { "replyToId", m.ReplyToId },
+                { "isAdmin", IsJellyfinAdmin(m.UserId) },
+                { "isModerator", _repository.IsChatModerator(m.UserId) }
             }).ToList();
 
             return Ok(new { messages = enrichedMessages, typingUsers });
@@ -247,7 +280,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpPost("Messages")]
         [AllowAnonymous]
-        public ActionResult<ChatMessage> SendMessage([FromBody] ChatMessageDto dto)
+        public async Task<ActionResult> SendMessage([FromBody] ChatMessageDto dto)
         {
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true)
@@ -255,7 +288,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             // Check if user is banned
@@ -273,7 +306,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             // Rate limiting
-            if (IsRateLimited(userId))
+            var maxPerMinute = config?.ChatRateLimitPerMinute ?? 10;
+            if (IsRateLimited(userId, maxPerMinute))
             {
                 return StatusCode(429, "Rate limit exceeded. Please wait before sending more messages.");
             }
@@ -293,7 +327,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
                 if (!IsValidGifUrl(dto.GifUrl))
                 {
-                    return BadRequest("Invalid GIF URL. Only Klipy, Tenor, and Giphy are allowed.");
+                    return BadRequest("Invalid GIF URL");
                 }
             }
 
@@ -315,7 +349,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 ReplyToId = dto.ReplyToId
             };
 
-            var result = _repository.AddChatMessageAsync(message).Result;
+            var result = await _repository.AddChatMessageAsync(message).ConfigureAwait(false);
             return Ok(result);
         }
 
@@ -324,28 +358,29 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpDelete("Messages/{messageId}")]
         [AllowAnonymous]
-        public ActionResult DeleteMessage([FromRoute] Guid messageId)
+        public async Task<ActionResult> DeleteMessage([FromRoute] Guid messageId)
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
+            // Own message deletion or moderator
             if (!CanModerate(userId))
             {
                 return Forbid("Only admins and moderators can delete messages");
             }
 
-            var deleted = _repository.DeleteChatMessageAsync(messageId, userId).Result;
+            var deleted = await _repository.DeleteChatMessageAsync(messageId, userId).ConfigureAwait(false);
             if (!deleted) return NotFound("Message not found");
 
             return Ok(new { success = true });
         }
 
         /// <summary>
-        /// Gets online users.
+        /// Gets online users. Requires authentication.
         /// </summary>
         [HttpGet("Users/Online")]
         [AllowAnonymous]
-        public ActionResult<List<ChatUser>> GetOnlineUsers()
+        public async Task<ActionResult> GetOnlineUsers()
         {
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true)
@@ -353,29 +388,39 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
             var users = _repository.GetOnlineChatUsers(5);
-            return Ok(users);
+            // Return only display info, not raw user IDs
+            var safeUsers = users.Select(u => new Dictionary<string, object?>
+            {
+                { "userName", u.UserName },
+                { "userAvatar", u.Avatar },
+                { "isTyping", u.IsTyping }
+            }).ToList();
+            return Ok(safeUsers);
         }
 
         /// <summary>
         /// Sends heartbeat to maintain online status.
-        /// Admin status is passed from client (client can determine from user policy).
+        /// Admin status is determined SERVER-SIDE from Jellyfin permissions.
         /// </summary>
         [HttpPost("Heartbeat")]
         [AllowAnonymous]
-        public async Task<ActionResult> Heartbeat([FromBody] HeartbeatRequest? request = null)
+        public async Task<ActionResult> Heartbeat()
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             var user = _userManager.GetUserById(userId);
             if (user == null) return Unauthorized();
 
-            // Admin status comes from client (they check ApiClient.getCurrentUser().Policy.IsAdministrator)
-            var isAdmin = request?.IsAdmin ?? false;
+            // Server-side admin check - never trust client
+            var isAdmin = IsJellyfinAdmin(userId);
             var avatar = $"/Users/{userId}/Images/Primary";
 
-            await _repository.UpdateChatUserPresenceAsync(userId, user.Username, avatar, isAdmin);
+            await _repository.UpdateChatUserPresenceAsync(userId, user.Username, avatar, isAdmin).ConfigureAwait(false);
 
             var isModerator = _repository.IsChatModerator(userId);
 
@@ -387,24 +432,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Heartbeat request model.
-        /// </summary>
-        public class HeartbeatRequest
-        {
-            /// <summary>
-            /// Gets or sets whether the user is an admin (determined client-side).
-            /// </summary>
-            public bool IsAdmin { get; set; }
-        }
-
-        /// <summary>
         /// Sets typing status.
         /// </summary>
         [HttpPost("Typing")]
         [AllowAnonymous]
-        public ActionResult SetTyping([FromQuery] bool isTyping)
+        public async Task<ActionResult> SetTyping([FromQuery] bool isTyping)
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             _repository.SetChatUserTyping(userId, isTyping);
@@ -416,12 +450,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpPost("MarkRead")]
         [AllowAnonymous]
-        public ActionResult MarkRead([FromQuery] Guid messageId)
+        public async Task<ActionResult> MarkRead([FromQuery] Guid messageId)
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
-            _repository.UpdateLastSeenMessageAsync(userId, messageId).Wait();
+            await _repository.UpdateLastSeenMessageAsync(userId, messageId).ConfigureAwait(false);
             return Ok();
         }
 
@@ -430,9 +464,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("UnreadCount")]
         [AllowAnonymous]
-        public ActionResult GetUnreadCount()
+        public async Task<ActionResult> GetUnreadCount()
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             var chatUser = _repository.GetChatUser(userId);
@@ -447,9 +481,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("Moderators")]
         [AllowAnonymous]
-        public ActionResult<List<ChatModerator>> GetModerators()
+        public async Task<ActionResult> GetModerators()
         {
-            if (!IsCurrentUserAdmin()) return Forbid();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var moderators = _repository.GetAllChatModerators();
             return Ok(moderators);
@@ -460,15 +495,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpPost("Moderators")]
         [AllowAnonymous]
-        public ActionResult<ChatModerator> AddModerator([FromQuery] Guid targetUserId)
+        public async Task<ActionResult> AddModerator([FromQuery] Guid targetUserId)
         {
-            var userId = GetCurrentUserId();
-            if (!IsCurrentUserAdmin()) return Forbid();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var targetUser = _userManager.GetUserById(targetUserId);
             if (targetUser == null) return NotFound("User not found");
 
-            // Check if already a moderator
             if (_repository.IsChatModerator(targetUserId))
             {
                 return BadRequest("User is already a moderator");
@@ -486,7 +520,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 CanTempBan = true
             };
 
-            var result = _repository.AddChatModeratorAsync(moderator).Result;
+            var result = await _repository.AddChatModeratorAsync(moderator).ConfigureAwait(false);
             return Ok(result);
         }
 
@@ -495,11 +529,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpDelete("Moderators/{moderatorId}")]
         [AllowAnonymous]
-        public ActionResult RemoveModerator([FromRoute] Guid moderatorId)
+        public async Task<ActionResult> RemoveModerator([FromRoute] Guid moderatorId)
         {
-            if (!IsCurrentUserAdmin()) return Forbid();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (!IsJellyfinAdmin(userId)) return Forbid();
 
-            var removed = _repository.RemoveChatModeratorAsync(moderatorId).Result;
+            var removed = await _repository.RemoveChatModeratorAsync(moderatorId).ConfigureAwait(false);
             if (!removed) return NotFound("Moderator not found");
 
             return Ok(new { success = true });
@@ -512,13 +547,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpPost("Ban")]
         [AllowAnonymous]
-        public ActionResult<ChatBan> BanUser(
+        public async Task<ActionResult> BanUser(
             [FromQuery] [Required] Guid targetUserId,
             [FromQuery] [Required] string banType,
             [FromQuery] string? reason,
             [FromQuery] int? durationMinutes)
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             // Validate ban type
@@ -529,7 +564,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             // Media bans are admin only
-            if (banType == "media" && !IsCurrentUserAdmin())
+            if (banType == "media" && !IsJellyfinAdmin(userId))
             {
                 return Forbid("Only admins can ban users from watching media");
             }
@@ -543,8 +578,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             var targetUser = _userManager.GetUserById(targetUserId);
             if (targetUser == null) return NotFound("User not found");
 
-            // Check if target is admin (can't ban admins)
-            if (_repository.IsChatUserAdmin(targetUserId))
+            // Can't ban Jellyfin admins
+            if (IsJellyfinAdmin(targetUserId))
             {
                 return BadRequest("Cannot ban administrators");
             }
@@ -565,7 +600,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 IsPermanent = !durationMinutes.HasValue
             };
 
-            var result = _repository.AddChatBanAsync(ban).Result;
+            var result = await _repository.AddChatBanAsync(ban).ConfigureAwait(false);
             return Ok(result);
         }
 
@@ -574,12 +609,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpDelete("Ban/{banId}")]
         [AllowAnonymous]
-        public ActionResult UnbanUser([FromRoute] Guid banId)
+        public async Task<ActionResult> UnbanUser([FromRoute] Guid banId)
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
-            var removed = _repository.RemoveChatBanAsync(banId).Result;
+            var removed = await _repository.RemoveChatBanAsync(banId).ConfigureAwait(false);
             if (!removed) return NotFound("Ban not found");
 
             return Ok(new { success = true });
@@ -590,9 +625,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("Bans")]
         [AllowAnonymous]
-        public ActionResult<List<ChatBan>> GetBans()
+        public async Task<ActionResult> GetBans()
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             var bans = _repository.GetAllActiveChatBans();
@@ -604,9 +639,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("BanStatus")]
         [AllowAnonymous]
-        public ActionResult GetBanStatus()
+        public async Task<ActionResult> GetBanStatus()
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
             var chatBan = _repository.GetActiveChatBan(userId, "chat");
@@ -626,16 +661,17 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         [HttpGet("Users/All")]
         [AllowAnonymous]
-        public ActionResult GetAllUsers()
+        public async Task<ActionResult> GetAllUsers()
         {
-            if (!IsCurrentUserAdmin()) return Forbid();
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var users = _userManager.Users
                 .Select(u => new
                 {
                     Id = u.Id,
                     Name = u.Username,
-                    IsAdmin = _repository.IsChatUserAdmin(u.Id),
+                    IsAdmin = IsJellyfinAdmin(u.Id),
                     IsModerator = _repository.IsChatModerator(u.Id)
                 })
                 .OrderBy(u => u.Name)
@@ -651,16 +687,16 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> ClearAllMessages()
         {
-            if (!IsCurrentUserAdmin())
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (!IsJellyfinAdmin(userId))
             {
                 return Forbid();
             }
 
-            var adminId = GetCurrentUserId();
-            var adminUser = _userManager.GetUserById(adminId);
+            var adminUser = _userManager.GetUserById(userId);
             _logger.LogInformation("Admin {AdminName} clearing all chat messages", adminUser?.Username ?? "Unknown");
 
-            await _repository.ClearAllChatMessagesAsync();
+            await _repository.ClearAllChatMessagesAsync().ConfigureAwait(false);
 
             return Ok(new { message = "All chat messages cleared" });
         }
