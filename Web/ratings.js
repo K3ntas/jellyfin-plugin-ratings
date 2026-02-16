@@ -5303,6 +5303,7 @@
                     padding: 12px !important;
                     background: #252525 !important;
                     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    position: relative !important;
                 }
 
                 .chat-input-row {
@@ -5393,9 +5394,10 @@
                 .chat-emoji-picker {
                     position: absolute !important;
                     bottom: 100% !important;
+                    left: 0 !important;
                     right: 0 !important;
-                    width: 320px !important;
-                    max-height: 300px !important;
+                    width: auto !important;
+                    max-height: 280px !important;
                     background: #252525 !important;
                     border: 1px solid rgba(255, 255, 255, 0.15) !important;
                     border-radius: 8px !important;
@@ -5404,6 +5406,7 @@
                     display: none;
                     flex-direction: column !important;
                     overflow: hidden !important;
+                    z-index: 10 !important;
                 }
 
                 .chat-emoji-picker.visible {
@@ -5459,14 +5462,16 @@
                 .chat-gif-picker {
                     position: absolute !important;
                     bottom: 100% !important;
+                    left: 0 !important;
                     right: 0 !important;
-                    width: 320px !important;
-                    max-height: 350px !important;
+                    width: auto !important;
+                    max-height: 300px !important;
                     background: #252525 !important;
                     border: 1px solid rgba(255, 255, 255, 0.15) !important;
                     border-radius: 8px !important;
                     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
                     margin-bottom: 8px !important;
+                    z-index: 10 !important;
                     display: none;
                     flex-direction: column !important;
                     overflow: hidden !important;
@@ -5524,21 +5529,16 @@
 
                 /* Chat Settings/Admin Panel */
                 .chat-admin-panel {
-                    position: absolute !important;
-                    top: 100% !important;
-                    right: 0 !important;
-                    width: 280px !important;
-                    background: #252525 !important;
-                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                    border-radius: 8px !important;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-                    margin-top: 4px !important;
-                    display: none;
-                    z-index: 10 !important;
+                    background: #1e1e1e !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    max-height: 0 !important;
+                    overflow: hidden !important;
+                    transition: max-height 0.3s ease !important;
                 }
 
                 .chat-admin-panel.visible {
-                    display: block !important;
+                    max-height: 300px !important;
+                    overflow-y: auto !important;
                 }
 
                 .chat-admin-section {
@@ -5656,10 +5656,8 @@
                         max-height: 50vh !important;
                     }
 
-                    .chat-admin-panel {
-                        width: 100% !important;
-                        left: 0 !important;
-                        right: 0 !important;
+                    .chat-admin-panel.visible {
+                        max-height: 50vh !important;
                     }
                 }
             `;
@@ -13979,8 +13977,8 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                self.chatIsAdmin = data.isAdmin || false;
-                self.chatIsModerator = data.isModerator || false;
+                self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
+                self.chatIsModerator = data.isModerator || data.IsModerator || false;
                 // Show settings button for admin/mod
                 const settingsBtn = document.getElementById('chatSettingsBtn');
                 if (settingsBtn) {
