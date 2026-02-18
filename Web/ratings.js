@@ -14650,28 +14650,20 @@
 
         /**
          * Route message to public chat or DM based on active tab
-         * If text exists and GIF is selected, send text first then GIF
+         * If GIF is selected, only send GIF and keep text in input
          */
         sendCurrentMessage: async function (gifUrl) {
             // Hide autocomplete if visible
             this.hideDMAutocomplete();
 
-            const input = document.getElementById('chatInput');
-            const textContent = input ? input.value.trim() : '';
-
-            // If we have both text and GIF, send text first
-            if (gifUrl && textContent) {
+            // If GIF is selected, only send the GIF (don't touch input text)
+            if (gifUrl) {
                 if (this.chatActiveTab === 'public') {
-                    await this.sendChatMessageAsync(null, textContent);
                     await this.sendChatMessageAsync(gifUrl, '');
                 } else if (this.dmActiveConversation) {
-                    await this.sendDMMessageAsync(this.dmActiveConversation.userId, null, textContent);
                     await this.sendDMMessageAsync(this.dmActiveConversation.userId, gifUrl, '');
                 }
-                if (input) {
-                    input.value = '';
-                    input.style.height = 'auto';
-                }
+                // Don't clear input - let user keep their text
             } else {
                 // Normal send (text only or GIF only)
                 if (this.chatActiveTab === 'public') {
