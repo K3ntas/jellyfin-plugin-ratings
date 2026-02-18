@@ -5022,35 +5022,34 @@
 
                 /* ============ LIVE CHAT STYLES ============ */
 
-                /* Chat Button - replaces Cast button position */
+                /* Chat Button - matches Latest Media button style */
                 #chatBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
                     cursor: pointer !important;
                     padding: 8px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    font-size: 24px !important;
                     position: relative !important;
-                    transition: opacity 0.2s ease !important;
                 }
 
                 #chatBtn:hover {
-                    opacity: 0.7 !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 #chatBtn.hidden {
                     display: none !important;
                 }
 
-                #chatBtnIcon {
-                    font-size: 24px !important;
-                }
-
-                /* Chat button container - allow badge overflow */
-                #chatBtn {
-                    position: relative !important;
-                    overflow: visible !important;
+                #chatBtn svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
                 }
 
                 /* Chat notification badge */
@@ -5362,27 +5361,27 @@
                     color: #fff !important;
                 }
 
-                /* DM Badge on Chat Button - matches notification bell badge style */
+                /* DM Badge on Chat Button - matches Latest Media badge exactly */
                 .chat-dm-badge {
                     position: absolute !important;
-                    top: -5px !important;
-                    right: -5px !important;
-                    background: #cc3333 !important;
+                    top: 2px !important;
+                    right: 2px !important;
+                    background: #e91e63 !important;
                     color: #fff !important;
-                    font-size: 10px !important;
-                    font-weight: 600 !important;
-                    padding: 2px 5px !important;
-                    border-radius: 10px !important;
+                    font-size: 9px !important;
+                    font-weight: 700 !important;
                     min-width: 16px !important;
                     height: 16px !important;
-                    line-height: 12px !important;
-                    text-align: center !important;
-                    z-index: 999999 !important;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
-                    pointer-events: none !important;
-                    display: flex !important;
+                    border-radius: 8px !important;
+                    display: none !important;
                     align-items: center !important;
                     justify-content: center !important;
+                    padding: 0 4px !important;
+                    line-height: 1 !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                }
+                .chat-dm-badge.visible {
+                    display: flex !important;
                 }
 
                 /* DM Message Styles - improved text colors */
@@ -13990,15 +13989,17 @@
                 const castBtn = document.querySelector('.headerCastButton');
 
                 if (castBtn && !document.getElementById('chatBtn')) {
-                    // Create chat button
+                    // Create chat button - same structure as Latest Media button
                     const chatBtn = document.createElement('button');
                     chatBtn.id = 'chatBtn';
-                    chatBtn.className = castBtn.className.replace('headerCastButton', '').replace('castButton', '');
-                    chatBtn.innerHTML = '<span id="chatBtnIcon">💬</span><span class="chat-badge hidden" id="chatBadge">0</span>';
-                    chatBtn.title = self.t('liveChat');
-                    // Ensure badge can overflow
+                    chatBtn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                    chatBtn.setAttribute('type', 'button');
+                    chatBtn.setAttribute('title', self.t('liveChat'));
                     chatBtn.style.position = 'relative';
-                    chatBtn.style.overflow = 'visible';
+                    // SVG chat bubble icon + badge inside (like Latest Media)
+                    chatBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                    </svg><span id="chatDMBadge" class="chat-dm-badge"></span>`;
                     chatBtn.onclick = function () {
                         self.toggleChat();
                     };
@@ -15182,25 +15183,17 @@
         },
 
         /**
-         * Update DM badge on chat button
+         * Update DM badge on chat button (badge is inline like Latest Media)
          */
         updateDMBadge: function () {
-            let badge = document.getElementById('chatDMBadge');
-            const chatBtn = document.getElementById('chatBtn');
-            if (!chatBtn) return;
+            const badge = document.getElementById('chatDMBadge');
+            if (!badge) return;
 
             if (this.dmUnreadCount > 0) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.id = 'chatDMBadge';
-                    badge.className = 'chat-dm-badge';
-                    chatBtn.style.position = 'relative';
-                    chatBtn.appendChild(badge);
-                }
                 badge.textContent = this.dmUnreadCount > 99 ? '99+' : this.dmUnreadCount;
-                badge.style.display = 'block';
-            } else if (badge) {
-                badge.style.display = 'none';
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
             }
         },
 
