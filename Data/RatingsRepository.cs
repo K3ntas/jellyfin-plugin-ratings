@@ -29,6 +29,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, ChatUser> _chatUsers;
         private Dictionary<Guid, ChatModerator> _chatModerators;
         private Dictionary<Guid, ChatBan> _chatBans;
+        private List<PrivateMessage> _privateMessages;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -50,6 +51,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _chatUsers = new Dictionary<Guid, ChatUser>();
             _chatModerators = new Dictionary<Guid, ChatModerator>();
             _chatBans = new Dictionary<Guid, ChatBan>();
+            _privateMessages = new List<PrivateMessage>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -65,6 +67,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadChatUsers();
             LoadChatModerators();
             LoadChatBans();
+            LoadPrivateMessages();
         }
 
         /// <summary>
@@ -1644,6 +1647,199 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 return _chatBans.Values.Where(b => b.UserId == userId).OrderByDescending(b => b.BannedAt).ToList();
+            }
+        }
+
+        // ============ PRIVATE MESSAGES (DM) ============
+
+        /// <summary>
+        /// Loads private messages from disk.
+        /// </summary>
+        private void LoadPrivateMessages()
+        {
+            try
+            {
+                var messagesFile = Path.Combine(_dataPath, "private_messages.json");
+                if (File.Exists(messagesFile))
+                {
+                    var json = File.ReadAllText(messagesFile);
+                    var messages = JsonSerializer.Deserialize<List<PrivateMessage>>(json);
+                    if (messages != null)
+                    {
+                        _privateMessages = messages;
+                        _logger.LogInformation("Loaded {Count} private messages from disk", _privateMessages.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading private messages from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves private messages to disk.
+        /// </summary>
+        private async Task SavePrivateMessagesAsync()
+        {
+            try
+            {
+                var messagesFile = Path.Combine(_dataPath, "private_messages.json");
+                var json = JsonSerializer.Serialize(_privateMessages, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving private messages to disk");
+            }
+        }
+
+        /// <summary>
+        /// Adds a new private message.
+        /// </summary>
+        public async Task<PrivateMessage> AddPrivateMessageAsync(PrivateMessage message)
+        {
+            lock (_lock)
+            {
+                _privateMessages.Add(message);
+                // Keep only last 5000 private messages in memory
+                while (_privateMessages.Count > 5000)
+                {
+                    _privateMessages.RemoveAt(0);
+                }
+                _ = SavePrivateMessagesAsync();
+                return message;
+            }
+        }
+
+        /// <summary>
+        /// Gets private messages between two users (bidirectional).
+        /// SECURITY: Only call after verifying userId is one of the participants.
+        /// </summary>
+        public List<PrivateMessage> GetPrivateMessages(Guid userId1, Guid userId2, int limit = 50, DateTime? since = null)
+        {
+            lock (_lock)
+            {
+                var query = _privateMessages.AsEnumerable()
+                    .Where(m => !m.IsDeleted &&
+                        ((m.SenderId == userId1 && m.RecipientId == userId2) ||
+                         (m.SenderId == userId2 && m.RecipientId == userId1)));
+
+                if (since.HasValue)
+                {
+                    query = query.Where(m => m.Timestamp > since.Value);
+                }
+
+                return query.OrderByDescending(m => m.Timestamp)
+                    .Take(limit)
+                    .Reverse()
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets all DM conversations for a user with last message preview and unread count.
+        /// </summary>
+        public List<(Guid OtherUserId, string OtherUserName, string? OtherUserAvatar, PrivateMessage LastMessage, int UnreadCount)> GetConversations(Guid userId)
+        {
+            lock (_lock)
+            {
+                var conversations = new Dictionary<Guid, (string Name, string? Avatar, PrivateMessage Last, int Unread)>();
+
+                foreach (var msg in _privateMessages.Where(m => !m.IsDeleted && (m.SenderId == userId || m.RecipientId == userId)))
+                {
+                    Guid otherUserId;
+                    string otherName;
+                    string? otherAvatar;
+
+                    if (msg.SenderId == userId)
+                    {
+                        otherUserId = msg.RecipientId;
+                        otherName = msg.RecipientName;
+                        otherAvatar = null;
+                    }
+                    else
+                    {
+                        otherUserId = msg.SenderId;
+                        otherName = msg.SenderName;
+                        otherAvatar = msg.SenderAvatar;
+                    }
+
+                    if (!conversations.ContainsKey(otherUserId))
+                    {
+                        conversations[otherUserId] = (otherName, otherAvatar, msg, 0);
+                    }
+
+                    // Update last message if newer
+                    if (msg.Timestamp > conversations[otherUserId].Last.Timestamp)
+                    {
+                        var existing = conversations[otherUserId];
+                        conversations[otherUserId] = (otherName, otherAvatar ?? existing.Avatar, msg, existing.Unread);
+                    }
+
+                    // Count unread (messages TO this user that are unread)
+                    if (msg.RecipientId == userId && !msg.IsRead)
+                    {
+                        var existing = conversations[otherUserId];
+                        conversations[otherUserId] = (existing.Name, existing.Avatar, existing.Last, existing.Unread + 1);
+                    }
+                }
+
+                return conversations
+                    .Select(kvp => (kvp.Key, kvp.Value.Name, kvp.Value.Avatar, kvp.Value.Last, kvp.Value.Unread))
+                    .OrderByDescending(c => c.Last.Timestamp)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets total unread DM count for a user.
+        /// </summary>
+        public int GetUnreadDMCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _privateMessages.Count(m => !m.IsDeleted && m.RecipientId == userId && !m.IsRead);
+            }
+        }
+
+        /// <summary>
+        /// Marks all DMs in a conversation as read for a user.
+        /// </summary>
+        public async Task<int> MarkConversationReadAsync(Guid userId, Guid otherUserId)
+        {
+            lock (_lock)
+            {
+                int count = 0;
+                foreach (var msg in _privateMessages.Where(m => m.RecipientId == userId && m.SenderId == otherUserId && !m.IsRead))
+                {
+                    msg.IsRead = true;
+                    count++;
+                }
+                if (count > 0)
+                {
+                    _ = SavePrivateMessagesAsync();
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a private message. SECURITY: Only sender can delete their own messages.
+        /// </summary>
+        public async Task<bool> DeletePrivateMessageAsync(Guid messageId, Guid userId)
+        {
+            lock (_lock)
+            {
+                var message = _privateMessages.FirstOrDefault(m => m.Id == messageId && m.SenderId == userId);
+                if (message != null && !message.IsDeleted)
+                {
+                    message.IsDeleted = true;
+                    message.DeletedAt = DateTime.UtcNow;
+                    _ = SavePrivateMessagesAsync();
+                    return true;
+                }
+                return false;
             }
         }
     }
