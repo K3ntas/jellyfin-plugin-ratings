@@ -5365,18 +5365,20 @@
                 /* DM Badge on Chat Button */
                 .chat-dm-badge {
                     position: absolute !important;
-                    top: -8px !important;
-                    right: -8px !important;
+                    top: 2px !important;
+                    right: 2px !important;
                     background: #f44336 !important;
                     color: #fff !important;
-                    font-size: 10px !important;
-                    font-weight: 600 !important;
-                    padding: 2px 6px !important;
-                    border-radius: 10px !important;
-                    min-width: 16px !important;
+                    font-size: 8px !important;
+                    font-weight: 700 !important;
+                    padding: 1px 4px !important;
+                    border-radius: 8px !important;
+                    min-width: 12px !important;
+                    height: 12px !important;
+                    line-height: 12px !important;
                     text-align: center !important;
-                    z-index: 9999 !important;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+                    z-index: 999999 !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
                     pointer-events: none !important;
                 }
 
@@ -13950,6 +13952,9 @@
 
             // Start background polling for unread badge (runs even when chat closed)
             this.startBackgroundPolling();
+
+            // Start polling for DM unread count (runs even when chat closed)
+            this.pollDMUnread();
         },
 
         /**
@@ -15105,39 +15110,50 @@
         // ========== DM (Private Messages) Functions ==========
 
         /**
-         * Initialize DM system
+         * Initialize DM system (called when chat opens)
          */
         initDMSystem: function () {
             this.loadDMConversations();
-            this.pollDMUnread();
+            // Don't call pollDMUnread here - it's started in initChat
         },
 
         /**
-         * Poll for unread DM count
+         * Poll for unread DM count (runs even when chat is closed)
          */
         pollDMUnread: function () {
+            // Prevent duplicate intervals
+            if (this.dmPollingStarted) return;
+            this.dmPollingStarted = true;
+
             const self = this;
+            // Initial load
+            this.loadDMUnreadCount();
+            // Poll every 5 seconds
             setInterval(function () {
-                if (self.chatOpen) {
-                    self.loadDMUnreadCount();
-                }
+                self.loadDMUnreadCount();
             }, 5000);
         },
 
         /**
-         * Load unread DM count
+         * Load unread DM count - counts unique senders, not messages
          */
         loadDMUnreadCount: async function () {
             try {
-                const response = await this.apiRequest('/Ratings/Chat/DM/Unread');
-                if (response) {
-                    // Handle both 'count' and 'Count' (PascalCase from server)
-                    const count = response.count ?? response.Count ?? response.unreadCount ?? 0;
-                    this.dmUnreadCount = count;
+                const response = await this.apiRequest('/Ratings/Chat/DM/Conversations');
+                if (response && Array.isArray(response)) {
+                    // Count conversations with unread messages (unique senders)
+                    let unreadConversations = 0;
+                    response.forEach(function (c) {
+                        const unread = c.UnreadCount || c.unreadCount || 0;
+                        if (unread > 0) {
+                            unreadConversations++;
+                        }
+                    });
+                    this.dmUnreadCount = unreadConversations;
                     this.updateDMBadge();
                 }
             } catch (e) {
-                console.error('Failed to load DM unread count:', e);
+                // Silently fail - don't spam console
             }
         },
 
