@@ -42,7 +42,7 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 
 ### Private Messages & Notifications
 ![Chat notification badge](images/chat-notification.png)
-*Private messaging with notification badges showing unread conversation count*
+*Private messaging - type `/username` to start a DM. Badge shows unread conversation count.*
 
 ---
 
