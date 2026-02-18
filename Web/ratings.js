@@ -5362,37 +5362,49 @@
                     color: #fff !important;
                 }
 
-                /* DM Badge on Chat Button */
+                /* DM Badge on Chat Button - matches notification bell badge style */
                 .chat-dm-badge {
                     position: absolute !important;
-                    top: 2px !important;
-                    right: 2px !important;
-                    background: #f44336 !important;
+                    top: -5px !important;
+                    right: -5px !important;
+                    background: #cc3333 !important;
                     color: #fff !important;
-                    font-size: 8px !important;
-                    font-weight: 700 !important;
-                    padding: 1px 4px !important;
-                    border-radius: 8px !important;
-                    min-width: 12px !important;
-                    height: 12px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    padding: 2px 5px !important;
+                    border-radius: 10px !important;
+                    min-width: 16px !important;
+                    height: 16px !important;
                     line-height: 12px !important;
                     text-align: center !important;
                     z-index: 999999 !important;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
                     pointer-events: none !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
                 }
 
-                /* DM Message Styles */
+                /* DM Message Styles - improved text colors */
                 .chat-message-name {
                     font-size: 13px !important;
                     font-weight: 600 !important;
-                    color: #00a4dc !important;
+                    color: #52b4e5 !important;
                 }
 
                 .chat-message-time {
                     font-size: 10px !important;
-                    color: #888 !important;
+                    color: #999 !important;
                     font-weight: 400 !important;
+                }
+
+                /* DM message text - brighter color */
+                .chat-message .chat-message-text {
+                    color: #e0e0e0 !important;
+                }
+
+                .chat-message-own .chat-message-text {
+                    color: #fff !important;
                 }
 
                 .chat-delete-btn {
@@ -5431,8 +5443,17 @@
                     position: relative !important;
                 }
 
+                /* Alternating backgrounds for public chat - different users get different backgrounds */
+                .chat-message.chat-bg-dark {
+                    background: rgba(40, 40, 45, 0.8) !important;
+                }
+
+                .chat-message.chat-bg-light {
+                    background: rgba(55, 55, 60, 0.8) !important;
+                }
+
                 .chat-message:hover {
-                    background: rgba(255, 255, 255, 0.05) !important;
+                    background: rgba(255, 255, 255, 0.08) !important;
                 }
 
                 .chat-message.own {
@@ -14538,7 +14559,11 @@
             // Get current user ID for own messages
             const currentUserId = ApiClient._serverInfo?.UserId || '';
 
+            // Track alternating backgrounds by user changes
             let html = '';
+            let lastUserId = null;
+            let bgToggle = false;
+
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
                 const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
@@ -14547,8 +14572,15 @@
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
 
+                // Toggle background when user changes
+                if (lastUserId !== null && lastUserId !== msg.userId) {
+                    bgToggle = !bgToggle;
+                }
+                lastUserId = msg.userId;
+                const bgClass = bgToggle ? ' chat-bg-light' : ' chat-bg-dark';
+
                 if (msg.isDeleted) {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + bgClass + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
@@ -14558,7 +14590,7 @@
                         + '<div class="chat-message-deleted">' + self.t('chatDeleted') + '</div>'
                         + '</div></div>';
                 } else {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + bgClass + '" data-message-id="' + msg.id + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
