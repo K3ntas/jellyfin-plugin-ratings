@@ -36,6 +36,14 @@ A professional, feature-rich rating system for Jellyfin media server with perfor
 ![Latest Media dropdown](images/latest-media-dropdown.png)
 *Quick access to your 50 most recently added movies and series with time-ago indicators*
 
+### Live Chat System
+![Live chat interface](images/chat-interface.png)
+*Real-time public chat with Messenger-style bubbles, emoji support, and GIF integration*
+
+### Private Messages & Notifications
+![Chat notification badge](images/chat-notification.png)
+*Private messaging with notification badges showing unread conversation count*
+
 ---
 
 > **Note:** All features are optional and can be enabled/disabled through the plugin settings in the Jellyfin Dashboard.
@@ -186,6 +194,21 @@ Admins can ban users from submitting media requests or deletion requests. Bans a
 - **Backend enforcement**: API rejects requests from banned users with clear error messages
 - **Auto-expiry**: Timed bans expire automatically without admin intervention
 
+### Live Chat System
+- **Public chat** - real-time messaging for all authenticated users
+- **Private messages (DMs)** - secure direct messaging between users
+- **Messenger-style bubbles** - own messages on right (blue), others on left (grey with avatar)
+- **Emoji picker** - full emoji support with categorized picker
+- **GIF integration** - Klipy-powered GIF search and sharing
+- **Smart auto-scroll** - doesn't interrupt reading; shows jump-to-bottom button
+- **Tab system** - switch between public chat and DM conversations
+- **User autocomplete** - type `/` to search users for DM
+- **Notification badges** - shows unread DM conversation count on chat button
+- **Background polling** - notifications work even when chat is closed
+- **Online users** - see who's currently active in chat
+- **Admin moderation** - admins can delete any message
+- **Multi-language** - 16 languages supported
+
 ### Performance Optimized
 - **IntersectionObserver** loads ratings only for visible cards
 - **Request caching** eliminates duplicate API calls
@@ -270,6 +293,22 @@ Admins can ban users from submitting media requests or deletion requests. Bans a
 4. Click **Ban User** - the user will see a ban notice instead of the request form
 5. Click **Unban** next to any banned user to lift the ban immediately
 
+### Using Live Chat
+1. Click the **chat icon** in the header (shows notification badge if you have unread DMs)
+2. **Public chat**: Type a message and press Enter or click Send
+3. **Send GIF**: Click the GIF button, search, and click a GIF to send
+4. **Send emoji**: Click the emoji button and select an emoji
+5. **Private message**: Type `/` to search for a user, or click their avatar in chat
+6. **Switch conversations**: Use tabs at the top to switch between public chat and DMs
+7. **Close chat**: Click the X button or click outside the chat panel
+
+### Private Messages
+1. **Start a DM**: Type `/username` in the message box to search users
+2. **Select user**: Click on a user from the dropdown to open a DM tab
+3. **Send message**: Your message goes only to that user
+4. **Notification badge**: Shows count of conversations with unread messages
+5. **Close tab**: Click the X on a DM tab to close that conversation
+
 ---
 
 ## Technical Details
@@ -316,6 +355,20 @@ Admins can ban users from submitting media requests or deletion requests. Bans a
 - `GET /Ratings/Bans/Check?banType={type}` - Check if current user is banned
 - `DELETE /Ratings/Bans/{banId}` - Lift a ban
 
+#### Live Chat
+- `GET /Ratings/Chat/Messages?since={ISO8601}` - Get public chat messages
+- `POST /Ratings/Chat/Messages` - Send public chat message
+- `DELETE /Ratings/Chat/Messages/{id}` - Delete message (admin or sender)
+- `GET /Ratings/Chat/Users/Online` - Get online users
+- `POST /Ratings/Chat/Heartbeat` - Update online presence
+
+#### Private Messages (DMs)
+- `GET /Ratings/Chat/DM/Users?query={search}` - Search users for DM autocomplete
+- `GET /Ratings/Chat/DM/Conversations` - Get user's DM threads with unread counts
+- `GET /Ratings/Chat/DM/{userId}/Messages` - Get messages with specific user
+- `POST /Ratings/Chat/DM/{userId}/Messages` - Send DM to user
+- `DELETE /Ratings/Chat/DM/Messages/{id}` - Delete own DM
+
 ### Performance Characteristics
 - **Initial load**: ~1.5 seconds delay for page stability
 - **Per-card overhead**: Single cached API request per unique item
@@ -337,7 +390,8 @@ dotnet build -c Release
 ### Project Structure
 ```
 ├── Api/                    # API controllers
-│   └── RatingsController.cs
+│   ├── RatingsController.cs
+│   └── ChatController.cs   # Chat and DM endpoints
 ├── Data/                   # Data layer
 │   └── RatingsRepository.cs
 ├── Models/                 # Data models
@@ -346,9 +400,13 @@ dotnet build -c Release
 │   ├── DeletionRequest.cs
 │   ├── DeletionRequestDto.cs
 │   ├── UserBan.cs
-│   └── NewMediaNotification.cs
+│   ├── NewMediaNotification.cs
+│   ├── ChatMessage.cs
+│   ├── ChatMessageDto.cs
+│   ├── PrivateMessage.cs
+│   └── PrivateMessageDto.cs
 ├── Web/                    # Frontend assets
-│   └── ratings.js         # Main client-side script
+│   └── ratings.js         # Main client-side script (~15k lines)
 ├── Configuration/          # Plugin config pages
 ├── images/                 # README screenshots
 ├── NotificationService.cs  # Library event handler
@@ -366,7 +424,39 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ## Version History
 
-### 1.0.253.0 (Current)
+### 1.0.306.0 (Current)
+- **Messenger-style chat bubbles** - own messages on right with blue bubble, others on left with grey bubble and avatar
+- **Chat UI improvements** - polished design matching modern chat apps
+
+### 1.0.294.0 - 1.0.305.0
+- **Private messaging (DM) system** - secure direct messaging between users
+- **Tab-based chat UI** - switch between public chat and DM conversations
+- **User autocomplete** - type `/` to search and start DM with any user
+- **Smart auto-scroll** - doesn't interrupt reading history, shows jump-to-bottom button
+- **Notification badges** - shows unread DM conversation count (not message count)
+- **Background polling** - notifications work even when chat is closed
+- **GIF picker improvements** - closes after selection, better sizing
+- **Chat reliability fixes** - avatar loading, scroll behavior, badge visibility
+
+### 1.0.288.0 - 1.0.293.0
+- **Live chat system** - real-time public chat for all authenticated users
+- **Emoji picker** - full emoji support with categorized selection
+- **GIF integration** - Klipy-powered GIF search and sharing
+- **Online users** - see who's currently active in chat
+- **Admin moderation** - admins can delete any message
+- **Chat button in header** - easy access to chat from anywhere
+
+### 1.0.274.0
+- **Multi-language localization** - 16 languages: English, Spanish, Chinese, Portuguese, Russian, Japanese, German, French, Korean, Italian, Turkish, Polish, Dutch, Arabic, Hindi, Lithuanian
+- **Language selector** - dropdown in UI for users to choose their language
+- **Admin default language** - admin can set default language for all users
+
+### 1.0.273.0
+- **Settings redesign** - cleaner admin configuration interface
+- **Rating widget repositioning** - above detail ribbon with responsive mobile layout
+- **Badge display profiles** - resolution-based profiles for customizing rating widget appearance
+
+### 1.0.253.0
 - **Rating badge display profiles** - resolution-based profiles to customize the detail page rating widget appearance
 - **Horizontal/vertical offset** - move the rating badge by screen width/height percentage
 - **Badge size adjustment** - scale the rating widget up or down by percentage
