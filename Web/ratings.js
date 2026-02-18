@@ -5326,24 +5326,68 @@
                 /* DM Badge on Chat Button */
                 .chat-dm-badge {
                     position: absolute !important;
-                    top: -5px !important;
-                    right: -5px !important;
+                    top: -8px !important;
+                    right: -8px !important;
                     background: #f44336 !important;
                     color: #fff !important;
                     font-size: 10px !important;
-                    padding: 2px 5px !important;
+                    font-weight: 600 !important;
+                    padding: 2px 6px !important;
                     border-radius: 10px !important;
-                    min-width: 14px !important;
+                    min-width: 16px !important;
                     text-align: center !important;
+                    z-index: 9999 !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+                    pointer-events: none !important;
+                }
+
+                /* DM Message Styles */
+                .chat-message-name {
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-message-time {
+                    font-size: 10px !important;
+                    color: #888 !important;
+                    font-weight: 400 !important;
+                }
+
+                .chat-delete-btn {
+                    position: absolute !important;
+                    top: 50% !important;
+                    right: 8px !important;
+                    transform: translateY(-50%) !important;
+                    background: transparent !important;
+                    border: none !important;
+                    color: #666 !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    font-size: 12px !important;
+                    border-radius: 4px !important;
+                    opacity: 0 !important;
+                    transition: all 0.2s ease !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-message:hover .chat-delete-btn {
+                    opacity: 1 !important;
+                }
+
+                .chat-delete-btn:hover {
+                    background: rgba(244, 67, 54, 0.2) !important;
+                    color: #f44336 !important;
                 }
 
                 /* Chat Message */
                 .chat-message {
                     display: flex !important;
                     gap: 10px !important;
-                    padding: 8px !important;
+                    padding: 8px 40px 8px 8px !important;
                     border-radius: 8px !important;
                     transition: background 0.2s ease !important;
+                    position: relative !important;
                 }
 
                 .chat-message:hover {
@@ -15274,13 +15318,17 @@
             }
 
             dropdown.innerHTML = this.dmAutocompleteUsers.map((user, index) => {
-                const avatarHtml = user.avatar
-                    ? '<img src="' + this.escapeHtml(user.avatar) + '" alt="">'
-                    : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;">' + this.escapeHtml(user.name.charAt(0).toUpperCase()) + '</div>';
+                const userName = user.name || user.Name || 'Unknown';
+                const odtherUserId = user.id || user.Id || '';
+                const userAvatar = user.avatar || user.Avatar || '';
+                const initial = userName.charAt(0).toUpperCase();
+                const avatarHtml = userAvatar
+                    ? '<img src="' + this.escapeHtml(userAvatar) + '" alt="">'
+                    : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;">' + this.escapeHtml(initial) + '</div>';
                 return `
-                    <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(user.id)}" data-user-name="${this.escapeHtml(user.name)}" data-user-avatar="${this.escapeHtml(user.avatar || '')}">
+                    <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(String(odtherUserId))}" data-user-name="${this.escapeHtml(userName)}" data-user-avatar="${this.escapeHtml(userAvatar)}">
                         <div class="chat-user-autocomplete-avatar">${avatarHtml}</div>
-                        <span class="chat-user-autocomplete-name">${this.escapeHtml(user.name)}</span>
+                        <span class="chat-user-autocomplete-name">${this.escapeHtml(userName)}</span>
                     </div>
                 `;
             }).join('');
@@ -15346,7 +15394,10 @@
                 e.preventDefault();
                 const user = this.dmAutocompleteUsers[this.dmAutocompleteIndex];
                 if (user) {
-                    this.selectAutocompleteUser(user.id, user.name, user.avatar);
+                    const odtherUserId = user.id || user.Id || '';
+                    const userName = user.name || user.Name || 'Unknown';
+                    const userAvatar = user.avatar || user.Avatar || '';
+                    this.selectAutocompleteUser(odtherUserId, userName, userAvatar);
                 }
                 return true;
             } else if (e.key === 'Escape') {
