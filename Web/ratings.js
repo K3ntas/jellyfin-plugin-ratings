@@ -5047,8 +5047,8 @@
                 /* Chat notification badge */
                 .chat-badge {
                     position: absolute !important;
-                    top: 2px !important;
-                    right: 2px !important;
+                    top: -5px !important;
+                    right: -5px !important;
                     background: #ff4444 !important;
                     color: white !important;
                     border-radius: 50% !important;
@@ -5062,6 +5062,8 @@
                     border: 2px solid #1e1e1e !important;
                     animation: badgePulse 1.5s ease-in-out infinite !important;
                     padding: 0 4px !important;
+                    z-index: 99999 !important;
+                    pointer-events: none !important;
                 }
 
                 .chat-badge.hidden {
@@ -14181,6 +14183,7 @@
 
             if (this.chatOpen) {
                 chatWindow.classList.add('visible');
+                this.chatInitialLoad = true; // Flag for initial scroll to bottom
                 this.startChatPolling();
                 this.loadChatMessages();
                 this.loadOnlineUsers();
@@ -14463,9 +14466,10 @@
                 btn.onclick = function () { self.showBanUserDialog(this.getAttribute('data-ban-userid'), this.getAttribute('data-ban-username')); };
             });
 
-            // Only scroll to bottom if user was already at bottom
-            if (wasAtBottom) {
+            // Scroll to bottom if user was at bottom OR this is initial load
+            if (wasAtBottom || this.chatInitialLoad) {
                 container.scrollTop = container.scrollHeight;
+                this.chatInitialLoad = false; // Reset flag
             }
 
             // Update scroll button visibility
@@ -14682,6 +14686,9 @@
             container.querySelectorAll('.chat-gif-item').forEach(function (item) {
                 item.onclick = function () {
                     self.sendCurrentMessage(this.dataset.url);
+                    // Close GIF picker after selection
+                    var gifPicker = document.getElementById('chatGifPicker');
+                    if (gifPicker) gifPicker.classList.remove('visible');
                 };
             });
         },
@@ -15191,9 +15198,10 @@
                     contentHtml = '<span class="chat-message-text">' + this.escapeHtml(msg.content) + '</span>';
                 }
 
+                const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
                 div.innerHTML = `
                     <div class="chat-avatar">
-                        ${msg.senderAvatar ? '<img src="' + this.escapeHtml(msg.senderAvatar) + '" alt="">' : '<div class="chat-avatar-placeholder">' + this.escapeHtml(msg.senderName.charAt(0).toUpperCase()) + '</div>'}
+                        ${msg.senderAvatar ? '<img src="' + this.escapeHtml(msg.senderAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="chat-avatar-placeholder" style="display:none;">' + this.escapeHtml(senderInitial) + '</div>' : '<div class="chat-avatar-placeholder">' + this.escapeHtml(senderInitial) + '</div>'}
                     </div>
                     <div class="chat-message-body">
                         <div class="chat-message-header">
@@ -15335,9 +15343,10 @@
                 const odtherUserId = user.id || user.Id || '';
                 const userAvatar = user.avatar || user.Avatar || '';
                 const initial = userName.charAt(0).toUpperCase();
+                const placeholderStyle = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;';
                 const avatarHtml = userAvatar
-                    ? '<img src="' + this.escapeHtml(userAvatar) + '" alt="">'
-                    : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;">' + this.escapeHtml(initial) + '</div>';
+                    ? '<img src="' + this.escapeHtml(userAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div style="' + placeholderStyle + 'display:none;">' + this.escapeHtml(initial) + '</div>'
+                    : '<div style="' + placeholderStyle + '">' + this.escapeHtml(initial) + '</div>';
                 return `
                     <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(String(odtherUserId))}" data-user-name="${this.escapeHtml(userName)}" data-user-avatar="${this.escapeHtml(userAvatar)}">
                         <div class="chat-user-autocomplete-avatar">${avatarHtml}</div>
