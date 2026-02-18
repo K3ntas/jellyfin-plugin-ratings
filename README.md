@@ -196,13 +196,13 @@ Admins can ban users from submitting media requests or deletion requests. Bans a
 
 ### Live Chat System
 - **Public chat** - real-time messaging for all authenticated users
-- **Private messages (DMs)** - secure direct messaging between users
+- **Private messages (DMs)** - secure direct messaging between users (type `/username` to start)
 - **Messenger-style bubbles** - own messages on right (blue), others on left (grey with avatar)
 - **Emoji picker** - full emoji support with categorized picker
 - **GIF integration** - Klipy-powered GIF search and sharing
 - **Smart auto-scroll** - doesn't interrupt reading; shows jump-to-bottom button
 - **Tab system** - switch between public chat and DM conversations
-- **User autocomplete** - type `/` to search users for DM
+- **User autocomplete** - type `/` followed by username to search and start DM
 - **Notification badges** - shows unread DM conversation count on chat button
 - **Background polling** - notifications work even when chat is closed
 - **Online users** - see who's currently active in chat
@@ -298,16 +298,19 @@ Admins can ban users from submitting media requests or deletion requests. Bans a
 2. **Public chat**: Type a message and press Enter or click Send
 3. **Send GIF**: Click the GIF button, search, and click a GIF to send
 4. **Send emoji**: Click the emoji button and select an emoji
-5. **Private message**: Type `/` to search for a user, or click their avatar in chat
-6. **Switch conversations**: Use tabs at the top to switch between public chat and DMs
-7. **Close chat**: Click the X button or click outside the chat panel
+5. **Switch conversations**: Use tabs at the top to switch between public chat and DMs
+6. **Close chat**: Click the X button or click outside the chat panel
 
-### Private Messages
-1. **Start a DM**: Type `/username` in the message box to search users
-2. **Select user**: Click on a user from the dropdown to open a DM tab
-3. **Send message**: Your message goes only to that user
-4. **Notification badge**: Shows count of conversations with unread messages
-5. **Close tab**: Click the X on a DM tab to close that conversation
+### Private Messages (DMs)
+To start a private conversation with another user:
+1. **Type `/` followed by username** - e.g., `/john` or `/admin` in the message box
+2. **Select from dropdown** - A list of matching users appears as you type
+3. **Click on user** - Opens a new DM tab for that conversation
+4. **Send your message** - Messages in DM tabs go only to that user
+5. **Notification badge** - Shows count of conversations with unread messages (not total messages)
+6. **Close tab** - Click the X on any DM tab to close that conversation
+
+You can also click on a user's avatar in the public chat to start a DM with them.
 
 ---
 
