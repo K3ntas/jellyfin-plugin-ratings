@@ -5044,30 +5044,64 @@
                     font-size: 24px !important;
                 }
 
+                /* Chat button container - allow badge overflow */
+                #chatBtn {
+                    position: relative !important;
+                    overflow: visible !important;
+                }
+
                 /* Chat notification badge */
                 .chat-badge {
                     position: absolute !important;
-                    top: -5px !important;
-                    right: -5px !important;
+                    top: -8px !important;
+                    right: -8px !important;
                     background: #ff4444 !important;
                     color: white !important;
                     border-radius: 50% !important;
-                    min-width: 18px !important;
-                    height: 18px !important;
+                    min-width: 20px !important;
+                    height: 20px !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    font-size: 10px !important;
+                    font-size: 11px !important;
                     font-weight: 700 !important;
                     border: 2px solid #1e1e1e !important;
                     animation: badgePulse 1.5s ease-in-out infinite !important;
                     padding: 0 4px !important;
-                    z-index: 99999 !important;
+                    z-index: 999999 !important;
                     pointer-events: none !important;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important;
                 }
 
                 .chat-badge.hidden {
                     display: none !important;
+                }
+
+                /* Avatar initials */
+                .chat-avatar-initial {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: #444 !important;
+                    color: #fff !important;
+                    font-weight: bold !important;
+                    font-size: 14px !important;
+                    border-radius: 50% !important;
+                }
+
+                .chat-avatar-placeholder {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: #444 !important;
+                    color: #fff !important;
+                    font-weight: bold !important;
+                    font-size: 14px !important;
+                    border-radius: 50% !important;
                 }
 
                 /* Chat Window Container */
@@ -13930,6 +13964,9 @@
                     chatBtn.className = castBtn.className.replace('headerCastButton', '').replace('castButton', '');
                     chatBtn.innerHTML = '<span id="chatBtnIcon">💬</span><span class="chat-badge hidden" id="chatBadge">0</span>';
                     chatBtn.title = self.t('liveChat');
+                    // Ensure badge can overflow
+                    chatBtn.style.position = 'relative';
+                    chatBtn.style.overflow = 'visible';
                     chatBtn.onclick = function () {
                         self.toggleChat();
                     };
@@ -14414,9 +14451,9 @@
             let html = '';
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
-                const avatarContent = msg.userAvatar
-                    ? '<img src="' + self.escapeHtml(msg.userAvatar) + '" alt="">'
-                    : msg.userName.charAt(0).toUpperCase();
+                const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
+                // Don't try to load avatar images - they cause 404 spam. Just use initials.
+                const avatarContent = '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
 
@@ -14468,7 +14505,10 @@
 
             // Scroll to bottom if user was at bottom OR this is initial load
             if (wasAtBottom || this.chatInitialLoad) {
-                container.scrollTop = container.scrollHeight;
+                // Use setTimeout to ensure DOM is rendered before scrolling
+                setTimeout(function() {
+                    container.scrollTop = container.scrollHeight;
+                }, 10);
                 this.chatInitialLoad = false; // Reset flag
             }
 
@@ -15199,9 +15239,10 @@
                 }
 
                 const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
+                // Use initials only - don't try to load avatar images (causes 404 spam)
                 div.innerHTML = `
                     <div class="chat-avatar">
-                        ${msg.senderAvatar ? '<img src="' + this.escapeHtml(msg.senderAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="chat-avatar-placeholder" style="display:none;">' + this.escapeHtml(senderInitial) + '</div>' : '<div class="chat-avatar-placeholder">' + this.escapeHtml(senderInitial) + '</div>'}
+                        <div class="chat-avatar-placeholder">${this.escapeHtml(senderInitial)}</div>
                     </div>
                     <div class="chat-message-body">
                         <div class="chat-message-header">
@@ -15223,8 +15264,11 @@
                 };
             });
 
-            if (wasAtBottom) {
-                container.scrollTop = container.scrollHeight;
+            // Always scroll to bottom on initial load or if user was at bottom
+            if (wasAtBottom || this.chatInitialLoad) {
+                setTimeout(function() {
+                    container.scrollTop = container.scrollHeight;
+                }, 10);
             }
             this.updateScrollButtonVisibility();
         },
@@ -15341,14 +15385,11 @@
             dropdown.innerHTML = this.dmAutocompleteUsers.map((user, index) => {
                 const userName = user.name || user.Name || 'Unknown';
                 const odtherUserId = user.id || user.Id || '';
-                const userAvatar = user.avatar || user.Avatar || '';
                 const initial = userName.charAt(0).toUpperCase();
-                const placeholderStyle = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;';
-                const avatarHtml = userAvatar
-                    ? '<img src="' + this.escapeHtml(userAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div style="' + placeholderStyle + 'display:none;">' + this.escapeHtml(initial) + '</div>'
-                    : '<div style="' + placeholderStyle + '">' + this.escapeHtml(initial) + '</div>';
+                // Use initials only - don't try to load avatar images (causes 404 spam)
+                const avatarHtml = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;">' + this.escapeHtml(initial) + '</div>';
                 return `
-                    <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(String(odtherUserId))}" data-user-name="${this.escapeHtml(userName)}" data-user-avatar="${this.escapeHtml(userAvatar)}">
+                    <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(String(odtherUserId))}" data-user-name="${this.escapeHtml(userName)}" data-user-avatar="">
                         <div class="chat-user-autocomplete-avatar">${avatarHtml}</div>
                         <span class="chat-user-autocomplete-name">${this.escapeHtml(userName)}</span>
                     </div>

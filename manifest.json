@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.299.0",
+        "changelog": "Fixed avatar 404 spam, fixed scroll to bottom, fixed badge visibility.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.299.0/jellyfin-plugin-ratings_1.0.299.0.zip",
+        "checksum": "78f2bb723a91de3dc5decb31345dad8b",
+        "timestamp": "2026-02-18T18:15:00Z"
+      },
+      {
         "version": "1.0.298.0",
         "changelog": "GIF picker closes after selection, chat scrolls to bottom on open, fixed badge z-index, fixed avatar 404 errors.",
         "targetAbi": "10.11.0.0",
