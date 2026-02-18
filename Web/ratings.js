@@ -26,6 +26,17 @@
         chatIsAdmin: false, // Current user is admin
         chatIsModerator: false, // Current user is moderator
         chatBanStatus: null, // Current user's ban status
+
+        // DM (Private Message) state
+        chatActiveTab: 'public', // 'public' or recipientId
+        dmConversations: [], // List of DM threads
+        dmActiveConversation: null, // {userId, userName, avatar}
+        dmMessages: {}, // {recipientId: [messages]}
+        dmUnreadCount: 0, // Total unread DMs
+        dmAutocompleteUsers: [], // Users for autocomplete
+        dmAutocompleteVisible: false, // Whether autocomplete dropdown is visible
+        dmAutocompleteIndex: 0, // Selected index in autocomplete
+
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
             gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -79,7 +90,11 @@
                 chatBan: 'Ban', chatUnban: 'Unban', chatMute: 'Mute', chatBanFromMedia: 'Ban from Media', chatMinutes: 'minutes',
                 chatBanned: 'You are banned from chat', chatMuted: 'You are temporarily muted', chatRateLimited: 'Slow down! Too many messages.',
                 chatConnecting: 'Connecting...', chatReconnecting: 'Reconnecting...', chatDisconnected: 'Disconnected',
-                chatClearAll: 'Clear All', chatClearConfirm: 'Delete all chat messages? This cannot be undone.', chatCleared: 'Chat cleared'
+                chatClearAll: 'Clear All', chatClearConfirm: 'Delete all chat messages? This cannot be undone.', chatCleared: 'Chat cleared',
+                // DM translations
+                chatPublic: 'Public', chatDM: 'Direct Messages', chatStartDM: 'Start a private conversation',
+                chatSearchUsers: 'Search users...', chatNoUsers: 'No users found', chatNewMessage: 'New message from',
+                chatNoDMs: 'No private messages yet', chatTypeSlash: 'Type / to start a DM'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -5152,6 +5167,174 @@
                 .chat-messages::-webkit-scrollbar-thumb {
                     background: rgba(255, 255, 255, 0.2) !important;
                     border-radius: 3px !important;
+                }
+
+                /* Scroll to Bottom Button */
+                .chat-scroll-to-bottom {
+                    position: absolute !important;
+                    bottom: 130px !important;
+                    right: 20px !important;
+                    width: 36px !important;
+                    height: 36px !important;
+                    border-radius: 50% !important;
+                    background: #00a4dc !important;
+                    border: none !important;
+                    color: #fff !important;
+                    font-size: 18px !important;
+                    cursor: pointer !important;
+                    display: none;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+                    transition: transform 0.2s ease, opacity 0.2s ease !important;
+                    z-index: 15 !important;
+                }
+
+                .chat-scroll-to-bottom:hover {
+                    transform: scale(1.1) !important;
+                    background: #00b8f5 !important;
+                }
+
+                .chat-scroll-to-bottom.visible {
+                    display: flex !important;
+                }
+
+                /* Chat Tabs */
+                .chat-tabs {
+                    display: flex !important;
+                    overflow-x: auto !important;
+                    background: rgba(0, 0, 0, 0.3) !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    flex-shrink: 0 !important;
+                    scrollbar-width: thin !important;
+                }
+
+                .chat-tabs::-webkit-scrollbar {
+                    height: 4px !important;
+                }
+
+                .chat-tabs::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                }
+
+                .chat-tab {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    padding: 8px 12px !important;
+                    cursor: pointer !important;
+                    white-space: nowrap !important;
+                    border-bottom: 2px solid transparent !important;
+                    transition: all 0.2s ease !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-tab:hover {
+                    background: rgba(255, 255, 255, 0.05) !important;
+                }
+
+                .chat-tab.active {
+                    border-bottom-color: #00a4dc !important;
+                    background: rgba(0, 164, 220, 0.1) !important;
+                }
+
+                .chat-tab-name {
+                    font-size: 13px !important;
+                    color: #aaa !important;
+                }
+
+                .chat-tab.active .chat-tab-name {
+                    color: #00a4dc !important;
+                }
+
+                .chat-tab-unread {
+                    background: #f44336 !important;
+                    color: #fff !important;
+                    font-size: 10px !important;
+                    padding: 2px 6px !important;
+                    border-radius: 10px !important;
+                    min-width: 16px !important;
+                    text-align: center !important;
+                }
+
+                .chat-tab-close {
+                    font-size: 14px !important;
+                    color: #666 !important;
+                    margin-left: 4px !important;
+                    cursor: pointer !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-tab-close:hover {
+                    color: #f44336 !important;
+                }
+
+                /* User Autocomplete */
+                .chat-user-autocomplete {
+                    position: absolute !important;
+                    bottom: 100% !important;
+                    left: 10px !important;
+                    right: 10px !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 8px !important;
+                    max-height: 200px !important;
+                    overflow-y: auto !important;
+                    z-index: 100 !important;
+                    margin-bottom: 5px !important;
+                    display: none;
+                }
+
+                .chat-user-autocomplete.visible {
+                    display: block !important;
+                }
+
+                .chat-user-autocomplete-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 10px !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-user-autocomplete-item:hover,
+                .chat-user-autocomplete-item.selected {
+                    background: rgba(0, 164, 220, 0.2) !important;
+                }
+
+                .chat-user-autocomplete-avatar {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 50% !important;
+                    background: #333 !important;
+                    overflow: hidden !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-user-autocomplete-avatar img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+
+                .chat-user-autocomplete-name {
+                    font-size: 14px !important;
+                    color: #fff !important;
+                }
+
+                /* DM Badge on Chat Button */
+                .chat-dm-badge {
+                    position: absolute !important;
+                    top: -5px !important;
+                    right: -5px !important;
+                    background: #f44336 !important;
+                    color: #fff !important;
+                    font-size: 10px !important;
+                    padding: 2px 5px !important;
+                    border-radius: 10px !important;
+                    min-width: 14px !important;
+                    text-align: center !important;
                 }
 
                 /* Chat Message */
@@ -13745,6 +13928,12 @@
                             <button class="chat-admin-btn danger" id="chatClearAllBtn" style="width:100%;">${this.t('chatClearAll')}</button>
                         </div>
                     </div>
+                    <div class="chat-tabs" id="chatTabs">
+                        <div class="chat-tab active" data-tab="public">
+                            <span class="chat-tab-name">${this.t('chatPublic') || 'Public'}</span>
+                            <span class="chat-tab-unread" id="chatPublicUnread" style="display:none;"></span>
+                        </div>
+                    </div>
                     <div class="chat-messages" id="chatMessages">
                         <div class="chat-empty" id="chatEmpty">
                             <div class="chat-empty-icon">💬</div>
@@ -13752,6 +13941,7 @@
                         </div>
                     </div>
                     <div class="chat-typing" id="chatTyping"></div>
+                    <button class="chat-scroll-to-bottom" id="chatScrollToBottom" title="Jump to latest">↓</button>
                     <div class="chat-status" id="chatStatus" style="display:none;"></div>
                     <div class="chat-input-area" id="chatInputArea">
                         <div class="chat-emoji-picker" id="chatEmojiPicker">
@@ -13770,6 +13960,7 @@
                             <div class="chat-gif-list" id="chatGifList"></div>
                             <div class="chat-gif-powered">${this.t('chatPoweredBy')}</div>
                         </div>
+                        <div class="chat-user-autocomplete" id="chatUserAutocomplete"></div>
                         <div class="chat-input-row">
                             <div class="chat-input-wrapper">
                                 <textarea class="chat-input" id="chatInput" placeholder="${this.t('chatPlaceholder')}" rows="1"></textarea>
@@ -13815,21 +14006,31 @@
                 }
             };
 
-            // Send button
+            // Send button - routes to DM or public based on active tab
             document.getElementById('chatSendBtn').onclick = function () {
-                self.sendChatMessage();
+                self.sendCurrentMessage();
             };
 
             // Input events
             const input = document.getElementById('chatInput');
             input.onkeydown = function (e) {
+                // Handle autocomplete keyboard navigation
+                if (self.handleAutocompleteKeydown(e)) {
+                    return;
+                }
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    self.sendChatMessage();
+                    self.sendCurrentMessage();
                 }
             };
             input.oninput = function () {
-                self.notifyTyping();
+                // Check for DM autocomplete trigger (/)
+                self.handleDMAutocomplete(this.value);
+
+                // Only notify typing for public chat
+                if (self.chatActiveTab === 'public') {
+                    self.notifyTyping();
+                }
                 // Auto-resize
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
@@ -13886,6 +14087,16 @@
                 }
             };
 
+            // Scroll-to-bottom button
+            document.getElementById('chatScrollToBottom').onclick = function () {
+                self.scrollChatToBottom();
+            };
+
+            // Track scroll position for auto-scroll behavior
+            document.getElementById('chatMessages').addEventListener('scroll', function () {
+                self.updateScrollButtonVisibility();
+            });
+
             // Close pickers when clicking outside
             document.addEventListener('click', function (e) {
                 if (!e.target.closest('#chatEmojiPicker') && !e.target.closest('#chatEmojiBtn')) {
@@ -13896,6 +14107,10 @@
                 }
                 if (!e.target.closest('#chatAdminPanel') && !e.target.closest('#chatSettingsBtn')) {
                     document.getElementById('chatAdminPanel').classList.remove('visible');
+                }
+                // Close user autocomplete when clicking outside
+                if (!e.target.closest('#chatUserAutocomplete') && !e.target.closest('#chatInput')) {
+                    self.hideDMAutocomplete();
                 }
             });
         },
@@ -13912,6 +14127,8 @@
                 this.startChatPolling();
                 this.loadChatMessages();
                 this.loadOnlineUsers();
+                // Initialize DM system
+                this.initDMSystem();
                 // Mark as read
                 this.updateUnreadBadge(0);
             } else {
@@ -14068,6 +14285,42 @@
         },
 
         /**
+         * Check if chat is scrolled to bottom (within threshold)
+         */
+        isAtChatBottom: function (container) {
+            if (!container) container = document.getElementById('chatMessages');
+            if (!container) return true;
+            const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+            return scrollBottom <= 50; // 50px threshold
+        },
+
+        /**
+         * Update scroll-to-bottom button visibility
+         */
+        updateScrollButtonVisibility: function () {
+            const container = document.getElementById('chatMessages');
+            const button = document.getElementById('chatScrollToBottom');
+            if (!container || !button) return;
+
+            if (this.isAtChatBottom(container)) {
+                button.classList.remove('visible');
+            } else {
+                button.classList.add('visible');
+            }
+        },
+
+        /**
+         * Scroll chat to bottom
+         */
+        scrollChatToBottom: function () {
+            const container = document.getElementById('chatMessages');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+                this.updateScrollButtonVisibility();
+            }
+        },
+
+        /**
          * Render chat messages
          */
         renderChatMessages: function () {
@@ -14079,9 +14332,19 @@
                 return;
             }
 
+            // If on a DM tab, render DM messages instead
+            if (this.chatActiveTab !== 'public' && this.dmActiveConversation) {
+                this.renderDMMessages(this.dmActiveConversation.userId);
+                return;
+            }
+
+            // Check if user is at bottom BEFORE modifying DOM
+            const wasAtBottom = this.isAtChatBottom(container);
+
             // Show empty state if no messages
             if (this.chatMessages.length === 0) {
                 container.innerHTML = '<div class="chat-empty"><div class="chat-empty-icon">💬</div><div>' + this.t('chatNoMessages') + '</div></div>';
+                this.updateScrollButtonVisibility();
                 return;
             }
 
@@ -14143,8 +14406,13 @@
                 btn.onclick = function () { self.showBanUserDialog(this.getAttribute('data-ban-userid'), this.getAttribute('data-ban-username')); };
             });
 
-            // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
+            // Only scroll to bottom if user was already at bottom
+            if (wasAtBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+
+            // Update scroll button visibility
+            this.updateScrollButtonVisibility();
 
             // Update last seen message
             if (this.chatMessages.length > 0) {
@@ -14187,6 +14455,20 @@
             if (diff < 172800) return this.t('chatYesterday');
 
             return date.toLocaleDateString();
+        },
+
+        /**
+         * Route message to public chat or DM based on active tab
+         */
+        sendCurrentMessage: function (gifUrl) {
+            // Hide autocomplete if visible
+            this.hideDMAutocomplete();
+
+            if (this.chatActiveTab === 'public') {
+                this.sendChatMessage(gifUrl);
+            } else if (this.dmActiveConversation) {
+                this.sendDMMessage(this.dmActiveConversation.userId, gifUrl);
+            }
         },
 
         /**
@@ -14342,7 +14624,7 @@
 
             container.querySelectorAll('.chat-gif-item').forEach(function (item) {
                 item.onclick = function () {
-                    self.sendChatMessage(this.dataset.url);
+                    self.sendCurrentMessage(this.dataset.url);
                 };
             });
         },
@@ -14556,6 +14838,524 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+
+        /**
+         * Helper for API requests
+         */
+        apiRequest: async function (endpoint, method, body) {
+            method = method || 'GET';
+            const baseUrl = ApiClient.serverAddress();
+            const options = {
+                method: method,
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            };
+            if (body && method !== 'GET') {
+                options.body = JSON.stringify(body);
+            }
+            const response = await fetch(baseUrl + endpoint, options);
+            if (!response.ok) {
+                throw new Error('API request failed: ' + response.status);
+            }
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
+        },
+
+        // ========== DM (Private Messages) Functions ==========
+
+        /**
+         * Initialize DM system
+         */
+        initDMSystem: function () {
+            this.loadDMConversations();
+            this.pollDMUnread();
+        },
+
+        /**
+         * Poll for unread DM count
+         */
+        pollDMUnread: function () {
+            const self = this;
+            setInterval(function () {
+                if (self.chatOpen) {
+                    self.loadDMUnreadCount();
+                }
+            }, 5000);
+        },
+
+        /**
+         * Load unread DM count
+         */
+        loadDMUnreadCount: async function () {
+            try {
+                const response = await this.apiRequest('/Ratings/Chat/DM/Unread');
+                if (response && typeof response.unreadCount === 'number') {
+                    this.dmUnreadCount = response.unreadCount;
+                    this.updateDMBadge();
+                }
+            } catch (e) {
+                console.error('Failed to load DM unread count:', e);
+            }
+        },
+
+        /**
+         * Update DM badge on chat button
+         */
+        updateDMBadge: function () {
+            let badge = document.getElementById('chatDMBadge');
+            const chatBtn = document.getElementById('chatBtn');
+            if (!chatBtn) return;
+
+            if (this.dmUnreadCount > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.id = 'chatDMBadge';
+                    badge.className = 'chat-dm-badge';
+                    chatBtn.style.position = 'relative';
+                    chatBtn.appendChild(badge);
+                }
+                badge.textContent = this.dmUnreadCount > 99 ? '99+' : this.dmUnreadCount;
+                badge.style.display = 'block';
+            } else if (badge) {
+                badge.style.display = 'none';
+            }
+        },
+
+        /**
+         * Load DM conversations list
+         */
+        loadDMConversations: async function () {
+            try {
+                const response = await this.apiRequest('/Ratings/Chat/DM/Conversations');
+                if (response && Array.isArray(response)) {
+                    this.dmConversations = response;
+                    this.renderDMTabs();
+                }
+            } catch (e) {
+                console.error('Failed to load DM conversations:', e);
+            }
+        },
+
+        /**
+         * Render DM tabs
+         */
+        renderDMTabs: function () {
+            const tabsContainer = document.getElementById('chatTabs');
+            if (!tabsContainer) return;
+
+            // Keep public tab
+            const publicTab = tabsContainer.querySelector('[data-tab="public"]');
+
+            // Remove existing DM tabs
+            tabsContainer.querySelectorAll('[data-tab]:not([data-tab="public"])').forEach(tab => tab.remove());
+
+            // Add DM tabs for each conversation
+            this.dmConversations.forEach(conv => {
+                const tab = document.createElement('div');
+                tab.className = 'chat-tab' + (this.chatActiveTab === conv.otherUserId ? ' active' : '');
+                tab.setAttribute('data-tab', conv.otherUserId);
+                tab.innerHTML = `
+                    <span class="chat-tab-name">${this.escapeHtml(conv.otherUserName)}</span>
+                    <span class="chat-tab-unread" style="${conv.unreadCount > 0 ? '' : 'display:none;'}">${conv.unreadCount}</span>
+                    <span class="chat-tab-close" data-close-tab="${this.escapeHtml(conv.otherUserId)}">×</span>
+                `;
+                tabsContainer.appendChild(tab);
+            });
+
+            // Update public tab active state
+            if (publicTab) {
+                publicTab.classList.toggle('active', this.chatActiveTab === 'public');
+            }
+
+            // Bind tab events
+            this.bindTabEvents();
+        },
+
+        /**
+         * Bind tab click events
+         */
+        bindTabEvents: function () {
+            const self = this;
+            const tabsContainer = document.getElementById('chatTabs');
+            if (!tabsContainer) return;
+
+            tabsContainer.querySelectorAll('.chat-tab').forEach(tab => {
+                tab.onclick = function (e) {
+                    // Check if close button was clicked
+                    if (e.target.classList.contains('chat-tab-close')) {
+                        const closeTabId = e.target.getAttribute('data-close-tab');
+                        self.closeDMTab(closeTabId);
+                        e.stopPropagation();
+                        return;
+                    }
+                    const tabId = this.getAttribute('data-tab');
+                    self.switchToTab(tabId);
+                };
+            });
+        },
+
+        /**
+         * Close a DM tab
+         */
+        closeDMTab: function (userId) {
+            this.dmConversations = this.dmConversations.filter(c => c.otherUserId !== userId);
+            delete this.dmMessages[userId];
+            if (this.chatActiveTab === userId) {
+                this.switchToTab('public');
+            }
+            this.renderDMTabs();
+        },
+
+        /**
+         * Switch to a tab
+         */
+        switchToTab: function (tabId) {
+            this.chatActiveTab = tabId;
+
+            // Update tab active states
+            document.querySelectorAll('.chat-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
+            });
+
+            if (tabId === 'public') {
+                this.dmActiveConversation = null;
+                this.renderChatMessages();
+            } else {
+                const conv = this.dmConversations.find(c => c.otherUserId === tabId);
+                if (conv) {
+                    this.dmActiveConversation = {
+                        userId: conv.otherUserId,
+                        userName: conv.otherUserName,
+                        avatar: conv.otherUserAvatar
+                    };
+                    this.loadDMMessages(tabId);
+                    this.markDMRead(tabId);
+                }
+            }
+        },
+
+        /**
+         * Open a DM conversation (or create new tab)
+         */
+        openDMConversation: function (userId, userName, avatar) {
+            // Check if conversation exists
+            let conv = this.dmConversations.find(c => c.otherUserId === userId);
+            if (!conv) {
+                // Create new conversation tab
+                conv = {
+                    otherUserId: userId,
+                    otherUserName: userName,
+                    otherUserAvatar: avatar,
+                    unreadCount: 0
+                };
+                this.dmConversations.unshift(conv);
+                this.renderDMTabs();
+            }
+
+            this.switchToTab(userId);
+        },
+
+        /**
+         * Load DM messages for a conversation
+         */
+        loadDMMessages: async function (otherUserId) {
+            try {
+                const response = await this.apiRequest('/Ratings/Chat/DM/' + encodeURIComponent(otherUserId) + '/Messages');
+                if (response && Array.isArray(response)) {
+                    this.dmMessages[otherUserId] = response;
+                    this.renderDMMessages(otherUserId);
+                }
+            } catch (e) {
+                console.error('Failed to load DM messages:', e);
+            }
+        },
+
+        /**
+         * Render DM messages
+         */
+        renderDMMessages: function (otherUserId) {
+            const container = document.getElementById('chatMessages');
+            const emptyMsg = document.getElementById('chatEmpty');
+            if (!container) return;
+
+            const messages = this.dmMessages[otherUserId] || [];
+            const wasAtBottom = this.isAtChatBottom(container);
+
+            if (messages.length === 0) {
+                if (emptyMsg) {
+                    emptyMsg.style.display = 'block';
+                    emptyMsg.querySelector('div:last-child').textContent = this.t('chatNoDMs') || 'No messages yet';
+                }
+                container.querySelectorAll('.chat-message').forEach(m => m.remove());
+                return;
+            }
+
+            if (emptyMsg) emptyMsg.style.display = 'none';
+
+            // Clear existing messages
+            container.querySelectorAll('.chat-message').forEach(m => m.remove());
+
+            // Get current user ID
+            const currentUserId = this.getCurrentUserId();
+
+            // Render DM messages
+            messages.forEach(msg => {
+                const isOwn = msg.senderId === currentUserId;
+                const div = document.createElement('div');
+                div.className = 'chat-message' + (isOwn ? ' chat-message-own' : '');
+                div.setAttribute('data-dm-id', msg.id);
+
+                let contentHtml = '';
+                if (msg.gifUrl) {
+                    contentHtml = '<img src="' + this.escapeHtml(msg.gifUrl) + '" class="chat-gif" alt="GIF" loading="lazy">';
+                } else {
+                    contentHtml = '<span class="chat-message-text">' + this.escapeHtml(msg.content) + '</span>';
+                }
+
+                div.innerHTML = `
+                    <div class="chat-avatar">
+                        ${msg.senderAvatar ? '<img src="' + this.escapeHtml(msg.senderAvatar) + '" alt="">' : '<div class="chat-avatar-placeholder">' + this.escapeHtml(msg.senderName.charAt(0).toUpperCase()) + '</div>'}
+                    </div>
+                    <div class="chat-message-body">
+                        <div class="chat-message-header">
+                            <span class="chat-message-name">${isOwn ? (this.t('chatYou') || 'You') : this.escapeHtml(msg.senderName)}</span>
+                            <span class="chat-message-time">${this.formatChatTime(msg.timestamp)}</span>
+                        </div>
+                        <div class="chat-message-content">${contentHtml}</div>
+                    </div>
+                    ${isOwn ? '<button class="chat-delete-btn" data-delete-dm="' + this.escapeHtml(msg.id) + '" title="Delete">🗑️</button>' : ''}
+                `;
+                container.appendChild(div);
+            });
+
+            // Bind delete buttons
+            container.querySelectorAll('[data-delete-dm]').forEach(btn => {
+                const self = this;
+                btn.onclick = function () {
+                    self.deleteDMMessage(this.getAttribute('data-delete-dm'));
+                };
+            });
+
+            if (wasAtBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+            this.updateScrollButtonVisibility();
+        },
+
+        /**
+         * Send a DM message
+         */
+        sendDMMessage: async function (otherUserId, gifUrl) {
+            const input = document.getElementById('chatInput');
+            const content = input ? input.value.trim() : '';
+
+            if (!content && !gifUrl) return;
+
+            try {
+                const body = { content: content || '', gifUrl: gifUrl || null };
+                await this.apiRequest('/Ratings/Chat/DM/' + encodeURIComponent(otherUserId) + '/Messages', 'POST', body);
+
+                if (input) input.value = '';
+
+                // Reload messages
+                this.loadDMMessages(otherUserId);
+            } catch (e) {
+                console.error('Failed to send DM:', e);
+            }
+        },
+
+        /**
+         * Delete a DM message
+         */
+        deleteDMMessage: async function (messageId) {
+            try {
+                await this.apiRequest('/Ratings/Chat/DM/Messages/' + encodeURIComponent(messageId), 'DELETE');
+                // Remove from local state
+                if (this.dmActiveConversation) {
+                    const msgs = this.dmMessages[this.dmActiveConversation.userId];
+                    if (msgs) {
+                        this.dmMessages[this.dmActiveConversation.userId] = msgs.filter(m => m.id !== messageId);
+                        this.renderDMMessages(this.dmActiveConversation.userId);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to delete DM:', e);
+            }
+        },
+
+        /**
+         * Mark DM conversation as read
+         */
+        markDMRead: function (otherUserId) {
+            // Note: Server marks messages as read when fetching them via loadDMMessages
+            // This function just updates local state
+            const conv = this.dmConversations.find(c => c.otherUserId === otherUserId);
+            if (conv) {
+                conv.unreadCount = 0;
+                this.renderDMTabs();
+            }
+            this.loadDMUnreadCount();
+        },
+
+        /**
+         * Handle user autocomplete for DM
+         */
+        handleDMAutocomplete: function (inputValue) {
+            // Check if input starts with /
+            if (!inputValue.startsWith('/')) {
+                this.hideDMAutocomplete();
+                return;
+            }
+
+            const query = inputValue.substring(1); // Remove the /
+            if (query.length < 1) {
+                this.hideDMAutocomplete();
+                return;
+            }
+
+            this.searchUsersForDM(query);
+        },
+
+        /**
+         * Search users for DM autocomplete
+         */
+        searchUsersForDM: async function (query) {
+            try {
+                const response = await this.apiRequest('/Ratings/Chat/DM/Users?query=' + encodeURIComponent(query));
+                if (response && Array.isArray(response)) {
+                    this.dmAutocompleteUsers = response;
+                    this.dmAutocompleteIndex = 0;
+                    this.renderUserAutocomplete();
+                }
+            } catch (e) {
+                console.error('Failed to search users:', e);
+                this.hideDMAutocomplete();
+            }
+        },
+
+        /**
+         * Render user autocomplete dropdown
+         */
+        renderUserAutocomplete: function () {
+            const dropdown = document.getElementById('chatUserAutocomplete');
+            if (!dropdown) return;
+
+            if (this.dmAutocompleteUsers.length === 0) {
+                dropdown.innerHTML = '<div class="chat-user-autocomplete-item"><span class="chat-user-autocomplete-name">' + (this.t('chatNoUsers') || 'No users found') + '</span></div>';
+                dropdown.classList.add('visible');
+                return;
+            }
+
+            dropdown.innerHTML = this.dmAutocompleteUsers.map((user, index) => {
+                const avatarHtml = user.avatar
+                    ? '<img src="' + this.escapeHtml(user.avatar) + '" alt="">'
+                    : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#444;color:#fff;font-weight:bold;">' + this.escapeHtml(user.name.charAt(0).toUpperCase()) + '</div>';
+                return `
+                    <div class="chat-user-autocomplete-item${index === this.dmAutocompleteIndex ? ' selected' : ''}" data-user-id="${this.escapeHtml(user.id)}" data-user-name="${this.escapeHtml(user.name)}" data-user-avatar="${this.escapeHtml(user.avatar || '')}">
+                        <div class="chat-user-autocomplete-avatar">${avatarHtml}</div>
+                        <span class="chat-user-autocomplete-name">${this.escapeHtml(user.name)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            dropdown.classList.add('visible');
+            this.dmAutocompleteVisible = true;
+
+            // Bind click events
+            const self = this;
+            dropdown.querySelectorAll('.chat-user-autocomplete-item[data-user-id]').forEach(item => {
+                item.onclick = function () {
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    const userAvatar = this.getAttribute('data-user-avatar');
+                    self.selectAutocompleteUser(userId, userName, userAvatar);
+                };
+            });
+        },
+
+        /**
+         * Hide user autocomplete dropdown
+         */
+        hideDMAutocomplete: function () {
+            const dropdown = document.getElementById('chatUserAutocomplete');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+            }
+            this.dmAutocompleteVisible = false;
+            this.dmAutocompleteUsers = [];
+            this.dmAutocompleteIndex = 0;
+        },
+
+        /**
+         * Select user from autocomplete
+         */
+        selectAutocompleteUser: function (userId, userName, userAvatar) {
+            // Clear input and hide autocomplete
+            const input = document.getElementById('chatInput');
+            if (input) input.value = '';
+            this.hideDMAutocomplete();
+
+            // Open DM conversation with selected user
+            this.openDMConversation(userId, userName, userAvatar);
+        },
+
+        /**
+         * Handle keyboard navigation in autocomplete
+         */
+        handleAutocompleteKeydown: function (e) {
+            if (!this.dmAutocompleteVisible) return false;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.dmAutocompleteIndex = Math.min(this.dmAutocompleteIndex + 1, this.dmAutocompleteUsers.length - 1);
+                this.updateAutocompleteSelection();
+                return true;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.dmAutocompleteIndex = Math.max(this.dmAutocompleteIndex - 1, 0);
+                this.updateAutocompleteSelection();
+                return true;
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                const user = this.dmAutocompleteUsers[this.dmAutocompleteIndex];
+                if (user) {
+                    this.selectAutocompleteUser(user.id, user.name, user.avatar);
+                }
+                return true;
+            } else if (e.key === 'Escape') {
+                this.hideDMAutocomplete();
+                return true;
+            }
+            return false;
+        },
+
+        /**
+         * Update autocomplete selection highlight
+         */
+        updateAutocompleteSelection: function () {
+            const dropdown = document.getElementById('chatUserAutocomplete');
+            if (!dropdown) return;
+
+            dropdown.querySelectorAll('.chat-user-autocomplete-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === this.dmAutocompleteIndex);
+            });
+        },
+
+        /**
+         * Get current user ID
+         */
+        getCurrentUserId: function () {
+            try {
+                const user = ApiClient.getCurrentUser ? ApiClient.getCurrentUser() : null;
+                if (user && user.Id) return user.Id;
+                // Fallback: try to get from credentials
+                const creds = ApiClient.serverInfo ? ApiClient.serverInfo() : null;
+                if (creds && creds.UserId) return creds.UserId;
+            } catch (e) {
+                console.error('Failed to get current user ID:', e);
+            }
+            return null;
         }
     };
 

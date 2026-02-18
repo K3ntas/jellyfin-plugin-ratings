@@ -735,5 +735,213 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             return Ok(new { message = "All chat messages cleared" });
         }
+
+        // ============ PRIVATE MESSAGE (DM) ENDPOINTS ============
+
+        /// <summary>
+        /// Gets users for DM autocomplete.
+        /// </summary>
+        [HttpGet("DM/Users")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetDMUsers([FromQuery] string? query)
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            var users = _userManager.Users
+                .Where(u => u.Id != userId) // Exclude self
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    Name = u.Username,
+                    Avatar = $"/Users/{u.Id}/Images/Primary"
+                });
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var lowerQuery = query.ToLowerInvariant();
+                users = users.Where(u => u.Name.ToLowerInvariant().Contains(lowerQuery));
+            }
+
+            return Ok(users.OrderBy(u => u.Name).Take(20).ToList());
+        }
+
+        /// <summary>
+        /// Gets DM conversation list for current user.
+        /// </summary>
+        [HttpGet("DM/Conversations")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetConversations()
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            var conversations = _repository.GetConversations(userId);
+
+            return Ok(conversations.Select(c => new
+            {
+                OtherUserId = c.OtherUserId,
+                OtherUserName = c.OtherUserName,
+                OtherUserAvatar = c.OtherUserAvatar ?? $"/Users/{c.OtherUserId}/Images/Primary",
+                LastMessage = new
+                {
+                    Content = c.LastMessage.IsDeleted ? null : (c.LastMessage.Content?.Length > 50 ? c.LastMessage.Content.Substring(0, 50) + "..." : c.LastMessage.Content),
+                    GifUrl = c.LastMessage.IsDeleted ? null : c.LastMessage.GifUrl,
+                    Timestamp = c.LastMessage.Timestamp,
+                    IsFromMe = c.LastMessage.SenderId == userId
+                },
+                UnreadCount = c.UnreadCount
+            }).ToList());
+        }
+
+        /// <summary>
+        /// Gets messages in a DM thread. SECURITY: Verifies user is participant.
+        /// </summary>
+        [HttpGet("DM/{otherUserId}/Messages")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetDMMessages(
+            [FromRoute] Guid otherUserId,
+            [FromQuery] DateTime? since,
+            [FromQuery] int limit = 50)
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            // SECURITY: GetPrivateMessages only returns messages where userId is sender or recipient
+            var messages = _repository.GetPrivateMessages(userId, otherUserId, Math.Min(limit, 100), since);
+
+            // Mark messages as read
+            await _repository.MarkConversationReadAsync(userId, otherUserId).ConfigureAwait(false);
+
+            return Ok(messages.Select(m => new
+            {
+                Id = m.Id,
+                SenderId = m.SenderId,
+                SenderName = m.SenderName,
+                SenderAvatar = m.SenderAvatar,
+                Content = m.IsDeleted ? null : m.Content,
+                GifUrl = m.IsDeleted ? null : m.GifUrl,
+                Timestamp = m.Timestamp,
+                IsRead = m.IsRead,
+                IsDeleted = m.IsDeleted,
+                IsFromMe = m.SenderId == userId
+            }).ToList());
+        }
+
+        /// <summary>
+        /// Sends a DM to another user. SECURITY: Rate limited, sanitized.
+        /// </summary>
+        [HttpPost("DM/{otherUserId}/Messages")]
+        [AllowAnonymous]
+        public async Task<ActionResult> SendDM(
+            [FromRoute] Guid otherUserId,
+            [FromBody] PrivateMessageDto dto)
+        {
+            var config = Plugin.Instance?.Configuration;
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            // Cannot DM yourself
+            if (userId == otherUserId)
+            {
+                return BadRequest("Cannot send DM to yourself");
+            }
+
+            // Verify recipient exists
+            var recipient = _userManager.GetUserById(otherUserId);
+            if (recipient == null) return NotFound("User not found");
+
+            // Check if sender is banned from chat
+            var chatBan = _repository.GetActiveChatBan(userId, "chat");
+            if (chatBan != null)
+            {
+                return StatusCode(403, new { message = "You are banned from chat" });
+            }
+
+            // Rate limiting (share with public chat)
+            var maxPerMinute = config?.ChatRateLimitPerMinute ?? 10;
+            if (IsRateLimited(userId, maxPerMinute))
+            {
+                return StatusCode(429, "Rate limit exceeded");
+            }
+
+            // Validate content
+            if (string.IsNullOrWhiteSpace(dto.Content) && string.IsNullOrWhiteSpace(dto.GifUrl))
+            {
+                return BadRequest("Message content or GIF is required");
+            }
+
+            // Validate GIF URL
+            if (!string.IsNullOrEmpty(dto.GifUrl))
+            {
+                if (config?.ChatAllowGifs != true)
+                {
+                    return BadRequest("GIFs are disabled");
+                }
+                if (!IsValidGifUrl(dto.GifUrl))
+                {
+                    return BadRequest("Invalid GIF URL");
+                }
+            }
+
+            var sender = _userManager.GetUserById(userId);
+            if (sender == null) return Unauthorized();
+
+            var maxLength = config?.ChatMaxMessageLength ?? 500;
+            var sanitizedContent = SanitizeMessage(dto.Content, maxLength);
+
+            var message = new PrivateMessage
+            {
+                Id = Guid.NewGuid(),
+                SenderId = userId,
+                SenderName = sender.Username,
+                SenderAvatar = $"/Users/{userId}/Images/Primary",
+                RecipientId = otherUserId,
+                RecipientName = recipient.Username,
+                Content = sanitizedContent,
+                GifUrl = dto.GifUrl,
+                Timestamp = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            var result = await _repository.AddPrivateMessageAsync(message).ConfigureAwait(false);
+            return Ok(new
+            {
+                Id = result.Id,
+                Timestamp = result.Timestamp
+            });
+        }
+
+        /// <summary>
+        /// Gets total unread DM count.
+        /// </summary>
+        [HttpGet("DM/Unread")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetUnreadDMCount()
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            var count = _repository.GetUnreadDMCount(userId);
+            return Ok(new { count });
+        }
+
+        /// <summary>
+        /// Deletes own DM message.
+        /// </summary>
+        [HttpDelete("DM/Messages/{messageId}")]
+        [AllowAnonymous]
+        public async Task<ActionResult> DeleteDM([FromRoute] Guid messageId)
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            // SECURITY: DeletePrivateMessageAsync verifies userId is the sender
+            var deleted = await _repository.DeletePrivateMessageAsync(messageId, userId).ConfigureAwait(false);
+            if (!deleted) return NotFound("Message not found or not yours");
+
+            return Ok(new { success = true });
+        }
     }
 }
