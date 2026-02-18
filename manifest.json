@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.297.0",
+        "changelog": "Fixed GIF sizing in DM, fixed 401 errors for notifications/deletions.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.297.0/jellyfin-plugin-ratings_1.0.297.0.zip",
+        "checksum": "4d0c4cd1042507699d049048998ef241",
+        "timestamp": "2026-02-18T17:45:00Z"
+      },
+      {
         "version": "1.0.296.0",
         "changelog": "Fixed DM user search error, improved chat UI with modern design.",
         "targetAbi": "10.11.0.0",

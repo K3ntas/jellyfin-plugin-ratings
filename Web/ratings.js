@@ -5465,10 +5465,15 @@
                     text-align: right !important;
                 }
 
-                .chat-message-gif {
+                .chat-message-gif,
+                .chat-gif {
                     max-width: 200px !important;
+                    max-height: 200px !important;
+                    width: auto !important;
+                    height: auto !important;
                     border-radius: 8px !important;
                     margin-top: 4px !important;
+                    object-fit: contain !important;
                 }
 
                 .chat-message-deleted {
@@ -9202,20 +9207,27 @@
 
             fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) return null;
+                return response.json();
+            })
             .then(deletions => {
+                if (!deletions || !Array.isArray(deletions)) return;
                 // Build cache by itemId
                 self.scheduledDeletionsCache = {};
                 deletions.forEach(d => {
-                    self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                    if (d && d.ItemId) {
+                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                    }
                 });
                 // Update badges immediately
                 self.updateDeletionBadges();
             })
             .catch(err => {
-                console.error('RatingsPlugin: Error loading scheduled deletions:', err);
+                // Silent fail - don't spam console
             });
         },
 
@@ -12961,7 +12973,8 @@
 
             fetch(`${baseUrl}/Ratings/Notifications?since=${encodeURIComponent(since)}`, {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
             })
                 .then(response => {
                     if (!response.ok) {
