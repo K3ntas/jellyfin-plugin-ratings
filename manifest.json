@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.298.0",
+        "changelog": "GIF picker closes after selection, chat scrolls to bottom on open, fixed badge z-index, fixed avatar 404 errors.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.298.0/jellyfin-plugin-ratings_1.0.298.0.zip",
+        "checksum": "c97111ec6a6847597b6ca9c5546bd73e",
+        "timestamp": "2026-02-18T18:00:00Z"
+      },
+      {
         "version": "1.0.297.0",
         "changelog": "Fixed GIF sizing in DM, fixed 401 errors for notifications/deletions.",
         "targetAbi": "10.11.0.0",
