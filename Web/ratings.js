@@ -20,8 +20,11 @@
         chatMessages: [], // Current chat messages
         chatUsers: [], // Online users
         chatPollingInterval: null, // Polling timer
+        chatBackgroundPollingInterval: null, // Background polling for badge (when chat closed)
+        chatLastSeenTimestamp: null, // Last time chat was opened (for unread tracking)
+        chatUnreadSenders: new Set(), // Unique senders of unread messages
         chatLastMessageId: null, // Last seen message ID
-        chatUnreadCount: 0, // Unread message count
+        chatUnreadCount: 0, // Unread message count (unique senders)
         chatTypingUsers: [], // Users currently typing
         chatIsAdmin: false, // Current user is admin
         chatIsModerator: false, // Current user is moderator
@@ -5053,24 +5056,24 @@
                 /* Chat notification badge */
                 .chat-badge {
                     position: absolute !important;
-                    top: -4px !important;
-                    right: -4px !important;
+                    top: 0px !important;
+                    right: 0px !important;
                     background: #ff4444 !important;
                     color: white !important;
                     border-radius: 50% !important;
-                    min-width: 16px !important;
-                    height: 16px !important;
+                    min-width: 14px !important;
+                    height: 14px !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    font-size: 9px !important;
+                    font-size: 8px !important;
                     font-weight: 700 !important;
-                    border: 1px solid #1e1e1e !important;
+                    border: none !important;
                     animation: badgePulse 1.5s ease-in-out infinite !important;
-                    padding: 0 3px !important;
+                    padding: 0 2px !important;
                     z-index: 999999 !important;
                     pointer-events: none !important;
-                    box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
                 }
 
                 .chat-badge.hidden {
@@ -13944,6 +13947,9 @@
 
             // Check ban status
             this.checkChatBanStatus();
+
+            // Start background polling for unread badge (runs even when chat closed)
+            this.startBackgroundPolling();
         },
 
         /**
@@ -14226,11 +14232,15 @@
                 this.loadOnlineUsers();
                 // Initialize DM system
                 this.initDMSystem();
-                // Mark as read
+                // Mark as read - update timestamp and clear senders
+                this.chatLastSeenTimestamp = new Date().toISOString();
+                this.chatUnreadSenders = new Set();
                 this.updateUnreadBadge(0);
             } else {
                 chatWindow.classList.remove('visible');
                 this.stopChatPolling();
+                // Update last seen when closing chat
+                this.chatLastSeenTimestamp = new Date().toISOString();
             }
         },
 
@@ -14254,6 +14264,81 @@
                 clearInterval(this.chatPollingInterval);
                 this.chatPollingInterval = null;
             }
+        },
+
+        /**
+         * Start background polling for unread badge (runs even when chat is closed)
+         */
+        startBackgroundPolling: function () {
+            const self = this;
+            // Stop any existing background polling
+            this.stopBackgroundPolling();
+
+            // Initial check
+            this.checkUnreadMessages();
+
+            // Poll every 10 seconds for new messages (when chat is closed)
+            this.chatBackgroundPollingInterval = setInterval(function () {
+                if (!self.chatOpen) {
+                    self.checkUnreadMessages();
+                }
+            }, 10000);
+        },
+
+        /**
+         * Stop background polling
+         */
+        stopBackgroundPolling: function () {
+            if (this.chatBackgroundPollingInterval) {
+                clearInterval(this.chatBackgroundPollingInterval);
+                this.chatBackgroundPollingInterval = null;
+            }
+        },
+
+        /**
+         * Check for unread messages and update badge with unique sender count
+         */
+        checkUnreadMessages: function () {
+            const self = this;
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
+                method: 'GET',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (data) {
+                if (!Array.isArray(data)) return;
+
+                // Get current user ID
+                const currentUserId = ApiClient.getCurrentUserId ? ApiClient.getCurrentUserId() : null;
+
+                // If no last seen timestamp, set it to now (first load)
+                if (!self.chatLastSeenTimestamp) {
+                    self.chatLastSeenTimestamp = new Date().toISOString();
+                    return;
+                }
+
+                // Find messages newer than last seen, from other users
+                const lastSeen = new Date(self.chatLastSeenTimestamp);
+                const unreadSenders = new Set();
+
+                data.forEach(function (msg) {
+                    const msgTime = new Date(msg.timestamp || msg.Timestamp);
+                    const senderId = msg.userId || msg.UserId;
+
+                    // Count if: message is newer than last seen AND not from current user
+                    if (msgTime > lastSeen && senderId !== currentUserId) {
+                        unreadSenders.add(senderId);
+                    }
+                });
+
+                self.chatUnreadSenders = unreadSenders;
+                self.updateUnreadBadge(unreadSenders.size);
+            })
+            .catch(function () {});
         },
 
         /**
