@@ -14890,8 +14890,10 @@
         loadDMUnreadCount: async function () {
             try {
                 const response = await this.apiRequest('/Ratings/Chat/DM/Unread');
-                if (response && typeof response.unreadCount === 'number') {
-                    this.dmUnreadCount = response.unreadCount;
+                if (response) {
+                    // Handle both 'count' and 'Count' (PascalCase from server)
+                    const count = response.count ?? response.Count ?? response.unreadCount ?? 0;
+                    this.dmUnreadCount = count;
                     this.updateDMBadge();
                 }
             } catch (e) {
@@ -14929,7 +14931,14 @@
             try {
                 const response = await this.apiRequest('/Ratings/Chat/DM/Conversations');
                 if (response && Array.isArray(response)) {
-                    this.dmConversations = response;
+                    // Normalize PascalCase from server to camelCase
+                    this.dmConversations = response.map(c => ({
+                        otherUserId: c.OtherUserId || c.otherUserId,
+                        otherUserName: c.OtherUserName || c.otherUserName || 'Unknown',
+                        otherUserAvatar: c.OtherUserAvatar || c.otherUserAvatar,
+                        unreadCount: c.UnreadCount || c.unreadCount || 0,
+                        lastMessage: c.LastMessage || c.lastMessage
+                    }));
                     this.renderDMTabs();
                 }
             } catch (e) {
@@ -15063,7 +15072,19 @@
             try {
                 const response = await this.apiRequest('/Ratings/Chat/DM/' + encodeURIComponent(otherUserId) + '/Messages');
                 if (response && Array.isArray(response)) {
-                    this.dmMessages[otherUserId] = response;
+                    // Normalize PascalCase from server to camelCase
+                    this.dmMessages[otherUserId] = response.map(m => ({
+                        id: m.Id || m.id,
+                        senderId: m.SenderId || m.senderId,
+                        senderName: m.SenderName || m.senderName || 'Unknown',
+                        senderAvatar: m.SenderAvatar || m.senderAvatar,
+                        content: m.Content || m.content || '',
+                        gifUrl: m.GifUrl || m.gifUrl,
+                        timestamp: m.Timestamp || m.timestamp,
+                        isRead: m.IsRead || m.isRead,
+                        isDeleted: m.IsDeleted || m.isDeleted,
+                        isFromMe: m.IsFromMe || m.isFromMe
+                    }));
                     this.renderDMMessages(otherUserId);
                 }
             } catch (e) {
@@ -15101,7 +15122,7 @@
 
             // Render DM messages
             messages.forEach(msg => {
-                const isOwn = msg.senderId === currentUserId;
+                const isOwn = msg.isFromMe || (msg.senderId === currentUserId);
                 const div = document.createElement('div');
                 div.className = 'chat-message' + (isOwn ? ' chat-message-own' : '');
                 div.setAttribute('data-dm-id', msg.id);
@@ -15224,7 +15245,12 @@
             try {
                 const response = await this.apiRequest('/Ratings/Chat/DM/Users?query=' + encodeURIComponent(query));
                 if (response && Array.isArray(response)) {
-                    this.dmAutocompleteUsers = response;
+                    // Normalize PascalCase from server to camelCase
+                    this.dmAutocompleteUsers = response.map(u => ({
+                        id: u.Id || u.id,
+                        name: u.Name || u.name || 'Unknown',
+                        avatar: u.Avatar || u.avatar
+                    }));
                     this.dmAutocompleteIndex = 0;
                     this.renderUserAutocomplete();
                 }
