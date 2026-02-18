@@ -5433,41 +5433,35 @@
                 }
 
                 /* Chat Message */
+                /* Messenger-style chat messages */
                 .chat-message {
                     display: flex !important;
-                    gap: 10px !important;
-                    padding: 8px 40px 8px 8px !important;
-                    border-radius: 8px !important;
-                    transition: background 0.2s ease !important;
+                    gap: 8px !important;
+                    padding: 4px 8px !important;
                     position: relative !important;
+                    align-items: flex-end !important;
                 }
 
-                /* Alternating backgrounds for public chat - different users get different backgrounds */
-                .chat-message.chat-bg-dark {
-                    background: rgba(40, 40, 45, 0.8) !important;
+                /* Others' messages - LEFT aligned */
+                .chat-message {
+                    justify-content: flex-start !important;
                 }
 
-                .chat-message.chat-bg-light {
-                    background: rgba(55, 55, 60, 0.8) !important;
-                }
-
-                .chat-message:hover {
-                    background: rgba(255, 255, 255, 0.08) !important;
-                }
-
+                /* Own messages - RIGHT aligned */
                 .chat-message.own {
                     flex-direction: row-reverse !important;
+                    justify-content: flex-start !important;
                 }
 
                 .chat-avatar {
-                    width: 36px !important;
-                    height: 36px !important;
+                    width: 32px !important;
+                    height: 32px !important;
                     border-radius: 50% !important;
-                    background: #333 !important;
+                    background: #444 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    font-size: 14px !important;
+                    font-size: 13px !important;
                     font-weight: 600 !important;
                     color: #fff !important;
                     flex-shrink: 0 !important;
@@ -5481,15 +5475,36 @@
                 }
 
                 .chat-message-content {
-                    flex: 1 !important;
+                    max-width: 70% !important;
                     min-width: 0 !important;
+                }
+
+                /* Message bubble */
+                .chat-bubble {
+                    padding: 8px 12px !important;
+                    border-radius: 18px !important;
+                    word-wrap: break-word !important;
+                    position: relative !important;
+                }
+
+                /* Others' bubble - grey */
+                .chat-message:not(.own) .chat-bubble {
+                    background: #3a3a3d !important;
+                    border-bottom-left-radius: 4px !important;
+                }
+
+                /* Own bubble - purple/blue */
+                .chat-message.own .chat-bubble {
+                    background: linear-gradient(135deg, #0084ff 0%, #0066cc 100%) !important;
+                    border-bottom-right-radius: 4px !important;
                 }
 
                 .chat-message-header {
                     display: flex !important;
                     align-items: center !important;
-                    gap: 8px !important;
-                    margin-bottom: 4px !important;
+                    gap: 6px !important;
+                    margin-bottom: 2px !important;
+                    padding: 0 4px !important;
                 }
 
                 .chat-message.own .chat-message-header {
@@ -5497,9 +5512,9 @@
                 }
 
                 .chat-username {
-                    font-size: 13px !important;
+                    font-size: 11px !important;
                     font-weight: 600 !important;
-                    color: #00a4dc !important;
+                    color: #aaa !important;
                 }
 
                 .chat-username.moderator {
@@ -5511,19 +5526,19 @@
                 }
 
                 .chat-timestamp {
-                    font-size: 11px !important;
+                    font-size: 10px !important;
                     color: #666 !important;
                 }
 
                 .chat-message-text {
                     font-size: 14px !important;
-                    color: #ddd !important;
+                    color: #fff !important;
                     line-height: 1.4 !important;
                     word-wrap: break-word !important;
                 }
 
-                .chat-message.own .chat-message-text {
-                    text-align: right !important;
+                .chat-message:not(.own) .chat-message-text {
+                    color: #e0e0e0 !important;
                 }
 
                 .chat-message-gif,
@@ -14560,46 +14575,37 @@
             // Get current user ID for own messages
             const currentUserId = ApiClient._serverInfo?.UserId || '';
 
-            // Track alternating backgrounds by user changes
             let html = '';
-            let lastUserId = null;
-            let bgToggle = false;
 
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
                 const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
-                // Don't try to load avatar images - they cause 404 spam. Just use initials.
                 const avatarContent = '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
 
-                // Toggle background when user changes
-                if (lastUserId !== null && lastUserId !== msg.userId) {
-                    bgToggle = !bgToggle;
-                }
-                lastUserId = msg.userId;
-                const bgClass = bgToggle ? ' chat-bg-light' : ' chat-bg-dark';
-
                 if (msg.isDeleted) {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + bgClass + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
                         + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
-                        + '<div class="chat-message-deleted">' + self.t('chatDeleted') + '</div>'
+                        + '<div class="chat-bubble"><span class="chat-message-text" style="opacity:0.5;font-style:italic;">' + self.t('chatDeleted') + '</span></div>'
                         + '</div></div>';
                 } else {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + bgClass + '" data-message-id="' + msg.id + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
-                        + '<span class="chat-username ' + roleClass + '">' + (isOwn ? self.t('chatYou') : self.escapeHtml(msg.userName)) + '</span>'
+                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
-                        + '<div class="chat-message-text">' + self.escapeHtml(msg.content) + '</div>'
-                        + (msg.gifUrl ? '<img class="chat-message-gif" src="' + self.escapeHtml(msg.gifUrl) + '" alt="GIF">' : '');
+                        + '<div class="chat-bubble">'
+                        + (msg.content ? '<span class="chat-message-text">' + self.escapeHtml(msg.content) + '</span>' : '')
+                        + (msg.gifUrl ? '<img class="chat-message-gif" src="' + self.escapeHtml(msg.gifUrl) + '" alt="GIF">' : '')
+                        + '</div>';
 
                     // Add delete button for own messages or if moderator/admin
                     if (isOwn || self.chatIsAdmin || self.chatIsModerator) {
@@ -15393,32 +15399,32 @@
             // Get current user ID
             const currentUserId = this.getCurrentUserId();
 
-            // Render DM messages
+            // Render DM messages - messenger style
             messages.forEach(msg => {
                 const isOwn = msg.isFromMe || (msg.senderId === currentUserId);
                 const div = document.createElement('div');
-                div.className = 'chat-message' + (isOwn ? ' chat-message-own' : '');
+                div.className = 'chat-message' + (isOwn ? ' own' : '');
                 div.setAttribute('data-dm-id', msg.id);
 
-                let contentHtml = '';
+                let bubbleContent = '';
+                if (msg.content) {
+                    bubbleContent += '<span class="chat-message-text">' + this.escapeHtml(msg.content) + '</span>';
+                }
                 if (msg.gifUrl) {
-                    contentHtml = '<img src="' + this.escapeHtml(msg.gifUrl) + '" class="chat-gif" alt="GIF" loading="lazy">';
-                } else {
-                    contentHtml = '<span class="chat-message-text">' + this.escapeHtml(msg.content) + '</span>';
+                    bubbleContent += '<img src="' + this.escapeHtml(msg.gifUrl) + '" class="chat-gif" alt="GIF" loading="lazy">';
                 }
 
                 const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
-                // Use initials only - don't try to load avatar images (causes 404 spam)
                 div.innerHTML = `
                     <div class="chat-avatar">
-                        <div class="chat-avatar-placeholder">${this.escapeHtml(senderInitial)}</div>
+                        <span class="chat-avatar-initial">${this.escapeHtml(senderInitial)}</span>
                     </div>
-                    <div class="chat-message-body">
+                    <div class="chat-message-content">
                         <div class="chat-message-header">
-                            <span class="chat-message-name">${isOwn ? (this.t('chatYou') || 'You') : this.escapeHtml(msg.senderName)}</span>
-                            <span class="chat-message-time">${this.formatChatTime(msg.timestamp)}</span>
+                            <span class="chat-username">${this.escapeHtml(msg.senderName)}</span>
+                            <span class="chat-timestamp">${this.formatChatTime(msg.timestamp)}</span>
                         </div>
-                        <div class="chat-message-content">${contentHtml}</div>
+                        <div class="chat-bubble">${bubbleContent}</div>
                     </div>
                     ${isOwn ? '<button class="chat-delete-btn" data-delete-dm="' + this.escapeHtml(msg.id) + '" title="Delete">🗑️</button>' : ''}
                 `;
