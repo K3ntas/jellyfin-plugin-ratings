@@ -5053,24 +5053,24 @@
                 /* Chat notification badge */
                 .chat-badge {
                     position: absolute !important;
-                    top: -8px !important;
-                    right: -8px !important;
+                    top: -4px !important;
+                    right: -4px !important;
                     background: #ff4444 !important;
                     color: white !important;
                     border-radius: 50% !important;
-                    min-width: 20px !important;
-                    height: 20px !important;
+                    min-width: 16px !important;
+                    height: 16px !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    font-size: 11px !important;
+                    font-size: 9px !important;
                     font-weight: 700 !important;
-                    border: 2px solid #1e1e1e !important;
+                    border: 1px solid #1e1e1e !important;
                     animation: badgePulse 1.5s ease-in-out infinite !important;
-                    padding: 0 4px !important;
+                    padding: 0 3px !important;
                     z-index: 999999 !important;
                     pointer-events: none !important;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
                 }
 
                 .chat-badge.hidden {
@@ -14560,16 +14560,67 @@
 
         /**
          * Route message to public chat or DM based on active tab
+         * If text exists and GIF is selected, send text first then GIF
          */
-        sendCurrentMessage: function (gifUrl) {
+        sendCurrentMessage: async function (gifUrl) {
             // Hide autocomplete if visible
             this.hideDMAutocomplete();
 
-            if (this.chatActiveTab === 'public') {
-                this.sendChatMessage(gifUrl);
-            } else if (this.dmActiveConversation) {
-                this.sendDMMessage(this.dmActiveConversation.userId, gifUrl);
+            const input = document.getElementById('chatInput');
+            const textContent = input ? input.value.trim() : '';
+
+            // If we have both text and GIF, send text first
+            if (gifUrl && textContent) {
+                if (this.chatActiveTab === 'public') {
+                    await this.sendChatMessageAsync(null, textContent);
+                    await this.sendChatMessageAsync(gifUrl, '');
+                } else if (this.dmActiveConversation) {
+                    await this.sendDMMessageAsync(this.dmActiveConversation.userId, null, textContent);
+                    await this.sendDMMessageAsync(this.dmActiveConversation.userId, gifUrl, '');
+                }
+                if (input) {
+                    input.value = '';
+                    input.style.height = 'auto';
+                }
+            } else {
+                // Normal send (text only or GIF only)
+                if (this.chatActiveTab === 'public') {
+                    this.sendChatMessage(gifUrl);
+                } else if (this.dmActiveConversation) {
+                    this.sendDMMessage(this.dmActiveConversation.userId, gifUrl);
+                }
             }
+        },
+
+        /**
+         * Send chat message (async version for chaining)
+         */
+        sendChatMessageAsync: function (gifUrl, content) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            return fetch(baseUrl + '/Ratings/Chat/Messages', {
+                method: 'POST',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders(),
+                body: JSON.stringify({ content: content || '', gifUrl: gifUrl || null })
+            }).then(function (r) {
+                if (!r.ok) return null;
+                return r.json();
+            }).then(function () {
+                self.loadChatMessages();
+            }).catch(function () {});
+        },
+
+        /**
+         * Send DM message (async version for chaining)
+         */
+        sendDMMessageAsync: function (otherUserId, gifUrl, content) {
+            const self = this;
+            const body = { content: content || '', gifUrl: gifUrl || null };
+            return this.apiRequest('/Ratings/Chat/DM/' + encodeURIComponent(otherUserId) + '/Messages', 'POST', body)
+                .then(function () {
+                    self.loadDMMessages(otherUserId);
+                }).catch(function () {});
         },
 
         /**
