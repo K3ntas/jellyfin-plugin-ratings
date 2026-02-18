@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # NuGet packages (.NET)
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
