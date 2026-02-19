@@ -234,6 +234,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         /// <summary>
         /// Server-side GIF search proxy. API key is never exposed to clients.
+        /// Supports both Tenor and Klipy APIs.
         /// </summary>
         [HttpGet("GifSearch")]
         [AllowAnonymous]
@@ -264,79 +265,66 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (query.Length > 100) query = query.Substring(0, 100);
             limit = Math.Clamp(limit, 1, 50);
 
-            var apiKey = config?.KlipyApiKey ?? config?.TenorApiKey;
-            if (string.IsNullOrEmpty(apiKey))
+            // Determine which API to use
+            var klipyKey = config?.KlipyApiKey;
+            var tenorKey = config?.TenorApiKey;
+
+            if (string.IsNullOrEmpty(klipyKey) && string.IsNullOrEmpty(tenorKey))
             {
                 return BadRequest("GIF API not configured");
             }
 
             try
             {
-                // Klipy API search
                 var encodedQuery = Uri.EscapeDataString(query);
-                var url = $"https://klipy.com/api/gifs/search?query={encodedQuery}&limit={limit}&key={apiKey}";
-
-                var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogWarning("GIF search failed with status {Status}", response.StatusCode);
-                    return StatusCode(502, "GIF search failed");
-                }
-
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                // Parse and return only necessary data (no API key leakage)
-                using var doc = JsonDocument.Parse(content);
                 var results = new List<object>();
 
-                if (doc.RootElement.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
+                // Try Tenor API first if key is available (more reliable)
+                if (!string.IsNullOrEmpty(tenorKey))
                 {
-                    foreach (var item in dataElement.EnumerateArray())
+                    var tenorUrl = $"https://tenor.googleapis.com/v2/search?q={encodedQuery}&key={tenorKey}&limit={limit}&media_filter=gif,tinygif";
+                    _logger.LogDebug("Calling Tenor API: {Url}", tenorUrl.Replace(tenorKey, "***"));
+
+                    var response = await _httpClient.GetAsync(tenorUrl).ConfigureAwait(false);
+                    if (response.IsSuccessStatusCode)
                     {
-                        var gifUrl = "";
-                        var previewUrl = "";
-                        var title = "";
-
-                        // Try to extract GIF URL from various formats
-                        if (item.TryGetProperty("url", out var urlProp))
+                        var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        results = ParseTenorResponse(content);
+                        if (results.Count > 0)
                         {
-                            gifUrl = urlProp.GetString() ?? "";
+                            return Ok(new { results });
                         }
-                        else if (item.TryGetProperty("media_formats", out var mediaFormats))
-                        {
-                            if (mediaFormats.TryGetProperty("gif", out var gif) && gif.TryGetProperty("url", out var gifUrlProp))
-                            {
-                                gifUrl = gifUrlProp.GetString() ?? "";
-                            }
-                            if (mediaFormats.TryGetProperty("tinygif", out var tinyGif) && tinyGif.TryGetProperty("url", out var tinyUrlProp))
-                            {
-                                previewUrl = tinyUrlProp.GetString() ?? "";
-                            }
-                        }
-
-                        if (item.TryGetProperty("title", out var titleProp))
-                        {
-                            title = titleProp.GetString() ?? "";
-                        }
-
-                        if (item.TryGetProperty("preview", out var previewProp))
-                        {
-                            previewUrl = previewProp.GetString() ?? previewUrl;
-                        }
-
-                        if (!string.IsNullOrEmpty(gifUrl))
-                        {
-                            results.Add(new
-                            {
-                                url = gifUrl,
-                                preview = string.IsNullOrEmpty(previewUrl) ? gifUrl : previewUrl,
-                                title = title
-                            });
-                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Tenor API failed with status {Status}", response.StatusCode);
                     }
                 }
 
-                return Ok(new { results });
+                // Try Klipy API as fallback
+                if (!string.IsNullOrEmpty(klipyKey))
+                {
+                    var klipyUrl = $"https://klipy.com/api/gifs/search?query={encodedQuery}&limit={limit}&key={klipyKey}";
+                    _logger.LogDebug("Calling Klipy API");
+
+                    var response = await _httpClient.GetAsync(klipyUrl).ConfigureAwait(false);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        results = ParseKlipyResponse(content);
+                        if (results.Count > 0)
+                        {
+                            return Ok(new { results });
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Klipy API failed with status {Status}", response.StatusCode);
+                    }
+                }
+
+                // Both APIs failed or returned no results
+                return Ok(new { results = new List<object>() });
             }
             catch (HttpRequestException ex)
             {
@@ -348,6 +336,101 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "GIF search JSON parse error");
                 return StatusCode(502, "GIF search failed");
             }
+        }
+
+        /// <summary>
+        /// Parse Tenor API v2 response.
+        /// </summary>
+        private List<object> ParseTenorResponse(string content)
+        {
+            var results = new List<object>();
+            using var doc = JsonDocument.Parse(content);
+
+            if (doc.RootElement.TryGetProperty("results", out var resultsElement) && resultsElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in resultsElement.EnumerateArray())
+                {
+                    var gifUrl = "";
+                    var previewUrl = "";
+                    var title = "";
+
+                    // Tenor v2 format: media_formats.gif.url and media_formats.tinygif.url
+                    if (item.TryGetProperty("media_formats", out var mediaFormats))
+                    {
+                        if (mediaFormats.TryGetProperty("gif", out var gif) && gif.TryGetProperty("url", out var gifUrlProp))
+                        {
+                            gifUrl = gifUrlProp.GetString() ?? "";
+                        }
+                        if (mediaFormats.TryGetProperty("tinygif", out var tinyGif) && tinyGif.TryGetProperty("url", out var tinyUrlProp))
+                        {
+                            previewUrl = tinyUrlProp.GetString() ?? "";
+                        }
+                    }
+
+                    if (item.TryGetProperty("title", out var titleProp))
+                    {
+                        title = titleProp.GetString() ?? "";
+                    }
+
+                    if (!string.IsNullOrEmpty(gifUrl))
+                    {
+                        results.Add(new
+                        {
+                            url = gifUrl,
+                            preview = string.IsNullOrEmpty(previewUrl) ? gifUrl : previewUrl,
+                            title = title
+                        });
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Parse Klipy API response.
+        /// </summary>
+        private List<object> ParseKlipyResponse(string content)
+        {
+            var results = new List<object>();
+            using var doc = JsonDocument.Parse(content);
+
+            if (doc.RootElement.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in dataElement.EnumerateArray())
+                {
+                    var gifUrl = "";
+                    var previewUrl = "";
+                    var title = "";
+
+                    if (item.TryGetProperty("url", out var urlProp))
+                    {
+                        gifUrl = urlProp.GetString() ?? "";
+                    }
+
+                    if (item.TryGetProperty("preview", out var previewProp))
+                    {
+                        previewUrl = previewProp.GetString() ?? "";
+                    }
+
+                    if (item.TryGetProperty("title", out var titleProp))
+                    {
+                        title = titleProp.GetString() ?? "";
+                    }
+
+                    if (!string.IsNullOrEmpty(gifUrl))
+                    {
+                        results.Add(new
+                        {
+                            url = gifUrl,
+                            preview = string.IsNullOrEmpty(previewUrl) ? gifUrl : previewUrl,
+                            title = title
+                        });
+                    }
+                }
+            }
+
+            return results;
         }
 
         /// <summary>
