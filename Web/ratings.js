@@ -13949,7 +13949,7 @@
                     .then(function (config) {
                         self.chatEnabled = config.EnableChat === true;
                         self.chatConfig = {
-                            klipyApiKey: config.KlipyApiKey || config.TenorApiKey || '',
+                            hasGifSupport: config.HasGifSupport === true,
                             allowGifs: config.ChatAllowGifs !== false,
                             allowEmojis: config.ChatAllowEmojis !== false,
                             maxMessageLength: config.ChatMaxMessageLength || 500,
@@ -14110,7 +14110,7 @@
                                 <textarea class="chat-input" id="chatInput" placeholder="${this.t('chatPlaceholder')}" rows="1"></textarea>
                                 <div class="chat-input-btns">
                                     <button class="chat-emoji-btn" id="chatEmojiBtn" title="Emojis">😊</button>
-                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.klipyApiKey ? '' : 'display:none;'}">GIF</button>
+                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.hasGifSupport ? '' : 'display:none;'}">GIF</button>
                                 </div>
                             </div>
                             <button class="chat-send-btn" id="chatSendBtn" title="${this.t('chatSend')}">➤</button>
@@ -14198,7 +14198,7 @@
             });
 
             // GIF picker toggle
-            if (this.chatConfig.allowGifs && this.chatConfig.klipyApiKey) {
+            if (this.chatConfig.allowGifs && this.chatConfig.hasGifSupport) {
                 document.getElementById('chatGifBtn').onclick = function () {
                     const picker = document.getElementById('chatGifPicker');
                     const emojiPicker = document.getElementById('chatEmojiPicker');
@@ -14847,37 +14847,32 @@
         },
 
         /**
-         * Load trending GIFs from Klipy
+         * Load trending GIFs via server-side proxy (API key never exposed to client)
          */
         loadTrendingGifs: function () {
-            if (!this.chatConfig.klipyApiKey) return;
-            const self = this;
-            const url = 'https://api.klipy.com/api/v1/' + this.chatConfig.klipyApiKey + '/gifs/trending?per_page=20&customer_id=jellyfin';
-
-            fetch(url)
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    var gifs = (data.data && data.data.data) || [];
-                    self.renderGifs(gifs);
-                })
-                .catch(function () {});
+            if (!this.chatConfig.hasGifSupport) return;
+            // Load trending by searching for popular term
+            this.searchGifs('trending');
         },
 
         /**
-         * Search GIFs from Klipy
+         * Search GIFs via server-side proxy (API key never exposed to client)
          */
         searchGifs: function (query) {
-            if (!this.chatConfig.klipyApiKey) return;
+            if (!this.chatConfig.hasGifSupport) return;
             const self = this;
-            const url = 'https://api.klipy.com/api/v1/' + this.chatConfig.klipyApiKey + '/gifs/search?q=' + encodeURIComponent(query) + '&per_page=20&customer_id=jellyfin';
+            const baseUrl = ApiClient.serverAddress();
+            const url = baseUrl + '/Ratings/Chat/GifSearch?query=' + encodeURIComponent(query) + '&limit=20';
 
-            fetch(url)
+            fetch(url, { method: 'GET', credentials: 'include' })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    var gifs = (data.data && data.data.data) || [];
+                    var gifs = data.results || [];
                     self.renderGifs(gifs);
                 })
-                .catch(function () {});
+                .catch(function () {
+                    document.getElementById('chatGifList').innerHTML = '<div style="color:#888;padding:10px;">Failed to load GIFs</div>';
+                });
         },
 
         /**
@@ -14887,11 +14882,14 @@
             const self = this;
             const container = document.getElementById('chatGifList');
 
+            if (!gifs || gifs.length === 0) {
+                container.innerHTML = '<div style="color:#888;padding:10px;">No GIFs found</div>';
+                return;
+            }
+
             container.innerHTML = gifs.map(function (gif) {
-                var previewUrl = (gif.file && gif.file.xs && gif.file.xs.gif && gif.file.xs.gif.url)
-                    || (gif.file && gif.file.sm && gif.file.sm.gif && gif.file.sm.gif.url) || '';
-                var fullUrl = (gif.file && gif.file.md && gif.file.md.gif && gif.file.md.gif.url)
-                    || (gif.file && gif.file.hd && gif.file.hd.gif && gif.file.hd.gif.url) || previewUrl;
+                var previewUrl = gif.preview || gif.url || '';
+                var fullUrl = gif.url || previewUrl;
                 return '<div class="chat-gif-item" data-url="' + self.escapeHtml(fullUrl) + '"><img src="' + self.escapeHtml(previewUrl) + '" alt="GIF" loading="lazy"></div>';
             }).join('');
 

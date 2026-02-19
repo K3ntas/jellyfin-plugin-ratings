@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Mime;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Jellyfin.Data;
@@ -30,6 +32,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<ChatController> _logger;
+        private static readonly HttpClient _httpClient = new HttpClient();
 
         // Rate limiting with ConcurrentDictionary for thread safety
         private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _rateLimits = new();
@@ -207,7 +210,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Gets chat configuration. API keys only returned to authenticated users.
+        /// Gets chat configuration. API keys are NOT exposed to clients.
         /// </summary>
         [HttpGet("Config")]
         [AllowAnonymous]
@@ -216,8 +219,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
 
-            // Only return API keys to authenticated users
-            var klipyKey = userId != Guid.Empty ? (config?.KlipyApiKey ?? config?.TenorApiKey ?? "") : "";
+            // Check if GIF search is available (API key configured server-side)
+            var hasGifSupport = !string.IsNullOrEmpty(config?.KlipyApiKey) || !string.IsNullOrEmpty(config?.TenorApiKey);
 
             return Ok(new Dictionary<string, object>
             {
@@ -225,8 +228,126 @@ namespace Jellyfin.Plugin.Ratings.Api
                 { "ChatAllowGifs", config?.ChatAllowGifs ?? true },
                 { "ChatAllowEmojis", config?.ChatAllowEmojis ?? true },
                 { "ChatMaxMessageLength", config?.ChatMaxMessageLength ?? 500 },
-                { "KlipyApiKey", klipyKey }
+                { "HasGifSupport", hasGifSupport }
             });
+        }
+
+        /// <summary>
+        /// Server-side GIF search proxy. API key is never exposed to clients.
+        /// </summary>
+        [HttpGet("GifSearch")]
+        [AllowAnonymous]
+        public async Task<ActionResult> SearchGifs([FromQuery] string query, [FromQuery] int limit = 20)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true || config?.ChatAllowGifs != true)
+            {
+                return BadRequest("GIFs are disabled");
+            }
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            // Rate limit GIF searches
+            if (IsRateLimited(userId, 30)) // 30 searches per minute
+            {
+                return StatusCode(429, "Rate limit exceeded");
+            }
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query is required");
+            }
+
+            // Sanitize query
+            query = query.Trim();
+            if (query.Length > 100) query = query.Substring(0, 100);
+            limit = Math.Clamp(limit, 1, 50);
+
+            var apiKey = config?.KlipyApiKey ?? config?.TenorApiKey;
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                return BadRequest("GIF API not configured");
+            }
+
+            try
+            {
+                // Klipy API search
+                var encodedQuery = Uri.EscapeDataString(query);
+                var url = $"https://klipy.com/api/gifs/search?query={encodedQuery}&limit={limit}&key={apiKey}";
+
+                var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("GIF search failed with status {Status}", response.StatusCode);
+                    return StatusCode(502, "GIF search failed");
+                }
+
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                // Parse and return only necessary data (no API key leakage)
+                using var doc = JsonDocument.Parse(content);
+                var results = new List<object>();
+
+                if (doc.RootElement.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in dataElement.EnumerateArray())
+                    {
+                        var gifUrl = "";
+                        var previewUrl = "";
+                        var title = "";
+
+                        // Try to extract GIF URL from various formats
+                        if (item.TryGetProperty("url", out var urlProp))
+                        {
+                            gifUrl = urlProp.GetString() ?? "";
+                        }
+                        else if (item.TryGetProperty("media_formats", out var mediaFormats))
+                        {
+                            if (mediaFormats.TryGetProperty("gif", out var gif) && gif.TryGetProperty("url", out var gifUrlProp))
+                            {
+                                gifUrl = gifUrlProp.GetString() ?? "";
+                            }
+                            if (mediaFormats.TryGetProperty("tinygif", out var tinyGif) && tinyGif.TryGetProperty("url", out var tinyUrlProp))
+                            {
+                                previewUrl = tinyUrlProp.GetString() ?? "";
+                            }
+                        }
+
+                        if (item.TryGetProperty("title", out var titleProp))
+                        {
+                            title = titleProp.GetString() ?? "";
+                        }
+
+                        if (item.TryGetProperty("preview", out var previewProp))
+                        {
+                            previewUrl = previewProp.GetString() ?? previewUrl;
+                        }
+
+                        if (!string.IsNullOrEmpty(gifUrl))
+                        {
+                            results.Add(new
+                            {
+                                url = gifUrl,
+                                preview = string.IsNullOrEmpty(previewUrl) ? gifUrl : previewUrl,
+                                title = title
+                            });
+                        }
+                    }
+                }
+
+                return Ok(new { results });
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "GIF search HTTP error");
+                return StatusCode(502, "GIF search failed");
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "GIF search JSON parse error");
+                return StatusCode(502, "GIF search failed");
+            }
         }
 
         /// <summary>
