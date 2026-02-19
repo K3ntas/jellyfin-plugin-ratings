@@ -536,8 +536,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Chat settings
                     EnableChat = config?.EnableChat ?? false,
-                    TenorApiKey = config?.TenorApiKey ?? string.Empty,
-                    KlipyApiKey = config?.KlipyApiKey ?? config?.TenorApiKey ?? string.Empty,
+                    // HasGifSupport indicates API key is configured (key is never exposed to client)
+                    HasGifSupport = !string.IsNullOrEmpty(config?.KlipyApiKey) || !string.IsNullOrEmpty(config?.TenorApiKey),
                     ChatAllowGifs = config?.ChatAllowGifs ?? true,
                     ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
                     ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
