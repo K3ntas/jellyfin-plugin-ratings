@@ -82,7 +82,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rating">Rating value (1-10).</param>
         /// <returns>The created or updated rating.</returns>
         [HttpPost("Items/{itemId}/Rating")]
-        public ActionResult<UserRating> SetRating(
+        public async Task<ActionResult<UserRating>> SetRating(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] [Range(1, 10)] int rating)
         {
@@ -113,8 +113,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     var token = tokenMatch.Groups[1].Value;
 
                     // Get session by authentication token
-                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                    var session = sessionTask.Result;
+                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                     if (session == null)
                     {
                         return Unauthorized("Invalid or expired token");
@@ -148,7 +147,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
                 }
 
-                var result = _repository.SetRatingAsync(userId, itemId, rating).Result;
+                var result = await _repository.SetRatingAsync(userId, itemId, rating).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
 
                 return Ok(result);
@@ -166,7 +165,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>Rating statistics.</returns>
         [HttpGet("Items/{itemId}/Stats")]
-        public ActionResult<RatingStats> GetRatingStats([FromRoute] [Required] Guid itemId)
+        public async Task<ActionResult<RatingStats>> GetRatingStats([FromRoute] [Required] Guid itemId)
         {
             try
             {
@@ -195,8 +194,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                             var token = tokenMatch.Groups[1].Value;
 
                             // Get session by authentication token
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -254,7 +252,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userId">Optional user ID. If not provided, returns ratings for the authenticated user.</param>
         /// <returns>List of all ratings by the user.</returns>
         [HttpGet("Users/{userId}/Ratings")]
-        public ActionResult<List<UserRating>> GetUserRatings([FromRoute] Guid? userId = null)
+        public async Task<ActionResult<List<UserRating>>> GetUserRatings([FromRoute] Guid? userId = null)
         {
             try
             {
@@ -273,8 +271,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 authUserId = session.UserId;
@@ -308,7 +305,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all ratings by the current user.</returns>
         [HttpGet("MyRatings")]
-        public ActionResult<List<UserRating>> GetMyRatings()
+        public async Task<ActionResult<List<UserRating>>> GetMyRatings()
         {
             try
             {
@@ -327,8 +324,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -360,7 +356,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Items/{itemId}/Rating")]
-        public ActionResult DeleteRating([FromRoute] [Required] Guid itemId)
+        public async Task<ActionResult> DeleteRating([FromRoute] [Required] Guid itemId)
         {
             try
             {
@@ -379,8 +375,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -394,7 +389,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
-                var deleted = _repository.DeleteRatingAsync(userId, itemId).Result;
+                var deleted = await _repository.DeleteRatingAsync(userId, itemId).ConfigureAwait(false);
                 if (!deleted)
                 {
                     return NotFound("No rating found to delete");
@@ -466,14 +461,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>Plugin configuration settings.</returns>
         [HttpGet("Config")]
         [AllowAnonymous]
-        public ActionResult GetConfig()
+        public async Task<ActionResult> GetConfig()
         {
             try
             {
                 var config = Plugin.Instance?.Configuration;
 
                 // Resolve user ID to hide sensitive data from anonymous users
-                var userId = GetAuthenticatedUserId();
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 return Ok(new
                 {
@@ -563,11 +558,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>List of notifications.</returns>
         [HttpGet("Notifications")]
         [AllowAnonymous]
-        public ActionResult<List<Models.NewMediaNotification>> GetNotifications([FromQuery] string? since = null)
+        public async Task<ActionResult<List<Models.NewMediaNotification>>> GetNotifications([FromQuery] string? since = null)
         {
             try
             {
-                var userId = GetAuthenticatedUserId();
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -608,7 +603,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="message">Optional custom message for the notification.</param>
         /// <returns>The created test notification.</returns>
         [HttpPost("Notifications/Test")]
-        public ActionResult<Models.NewMediaNotification> SendTestNotification([FromQuery] string? message = null)
+        public async Task<ActionResult<Models.NewMediaNotification>> SendTestNotification([FromQuery] string? message = null)
         {
             try
             {
@@ -627,8 +622,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -823,7 +817,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The media request data.</param>
         /// <returns>The created request.</returns>
         [HttpPost("Requests")]
-        public ActionResult<MediaRequest> CreateMediaRequest([FromBody] [Required] MediaRequestDto request)
+        public async Task<ActionResult<MediaRequest>> CreateMediaRequest([FromBody] [Required] MediaRequestDto request)
         {
             try
             {
@@ -853,8 +847,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     var token = tokenMatch.Groups[1].Value;
 
                     // Get session by authentication token
-                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                    var session = sessionTask.Result;
+                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                     if (session == null)
                     {
                         _logger.LogError("No active session found for token");
@@ -919,7 +912,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var result = _repository.AddMediaRequestAsync(mediaRequest).Result;
+                var result = await _repository.AddMediaRequestAsync(mediaRequest).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} created media request for '{Title}'", userId, request.Title);
 
                 return Ok(result);
@@ -936,7 +929,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all media requests.</returns>
         [HttpGet("Requests")]
-        public ActionResult<List<MediaRequest>> GetMediaRequests()
+        public async Task<ActionResult<List<MediaRequest>>> GetMediaRequests()
         {
             try
             {
@@ -955,8 +948,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -982,7 +974,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Only administrators can view all requests");
                 }
 
-                var requests = _repository.GetAllMediaRequestsAsync().Result;
+                var requests = await _repository.GetAllMediaRequestsAsync().ConfigureAwait(false);
                 return Ok(requests);
             }
             catch (Exception ex)
@@ -1001,7 +993,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Status")]
-        public ActionResult<MediaRequest> UpdateRequestStatus(
+        public async Task<ActionResult<MediaRequest>> UpdateRequestStatus(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string status,
             [FromQuery] string? mediaLink = null,
@@ -1024,8 +1016,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1058,7 +1049,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest($"Invalid status. Must be one of: {string.Join(", ", validStatuses)}");
                 }
 
-                var result = _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower(), mediaLink, rejectionReason).Result;
+                var result = await _repository.UpdateMediaRequestStatusAsync(requestId, status.ToLower(), mediaLink, rejectionReason).ConfigureAwait(false);
                 if (result == null)
                 {
                     return NotFound("Request not found");
@@ -1081,7 +1072,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="requestId">The request ID to delete.</param>
         /// <returns>Success or failure.</returns>
         [HttpDelete("Requests/{requestId}")]
-        public ActionResult DeleteRequest([FromRoute] [Required] Guid requestId)
+        public async Task<ActionResult> DeleteRequest([FromRoute] [Required] Guid requestId)
         {
             try
             {
@@ -1100,8 +1091,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1123,7 +1113,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Get the request to check ownership (for non-admin users)
-                var existingRequest = _repository.GetMediaRequestAsync(requestId).Result;
+                var existingRequest = await _repository.GetMediaRequestAsync(requestId).ConfigureAwait(false);
                 if (existingRequest == null)
                 {
                     return NotFound("Request not found");
@@ -1135,7 +1125,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("You can only delete your own requests");
                 }
 
-                var result = _repository.DeleteMediaRequestAsync(requestId).Result;
+                var result = await _repository.DeleteMediaRequestAsync(requestId).ConfigureAwait(false);
                 if (!result)
                 {
                     return NotFound("Request not found");
@@ -1157,7 +1147,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of requests made by the current user.</returns>
         [HttpGet("Requests/My")]
-        public ActionResult<List<MediaRequest>> GetMyRequests()
+        public async Task<ActionResult<List<MediaRequest>>> GetMyRequests()
         {
             try
             {
@@ -1176,8 +1166,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1217,7 +1206,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The updated request data.</param>
         /// <returns>The updated request.</returns>
         [HttpPut("Requests/{requestId}")]
-        public ActionResult<MediaRequest> UpdateMediaRequest(
+        public async Task<ActionResult<MediaRequest>> UpdateMediaRequest(
             [FromRoute] [Required] Guid requestId,
             [FromBody] [Required] MediaRequestDto request)
         {
@@ -1238,8 +1227,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1254,7 +1242,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Get the existing request
-                var existingRequest = _repository.GetMediaRequestAsync(requestId).Result;
+                var existingRequest = await _repository.GetMediaRequestAsync(requestId).ConfigureAwait(false);
                 if (existingRequest == null)
                 {
                     return NotFound("Request not found");
@@ -1272,14 +1260,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("You can only edit pending requests");
                 }
 
-                var result = _repository.UpdateMediaRequestAsync(
+                var result = await _repository.UpdateMediaRequestAsync(
                     requestId,
                     request.Title,
                     request.Type,
                     request.Notes,
                     request.CustomFields,
                     request.ImdbCode,
-                    request.ImdbLink).Result;
+                    request.ImdbLink).ConfigureAwait(false);
 
                 if (result == null)
                 {
@@ -1304,7 +1292,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="snoozedUntil">The date until which to snooze (ISO 8601 format).</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Snooze")]
-        public ActionResult<MediaRequest> SnoozeRequest(
+        public async Task<ActionResult<MediaRequest>> SnoozeRequest(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string snoozedUntil)
         {
@@ -1325,8 +1313,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1356,7 +1343,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("Snooze date must be in the future.");
                 }
 
-                var result = _repository.SnoozeMediaRequestAsync(requestId, snoozeDate).Result;
+                var result = await _repository.SnoozeMediaRequestAsync(requestId, snoozeDate).ConfigureAwait(false);
                 if (result == null)
                 {
                     return NotFound("Request not found");
@@ -1379,7 +1366,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="requestId">The request ID.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Unsnooze")]
-        public ActionResult<MediaRequest> UnsnoozeRequest([FromRoute] [Required] Guid requestId)
+        public async Task<ActionResult<MediaRequest>> UnsnoozeRequest([FromRoute] [Required] Guid requestId)
         {
             try
             {
@@ -1398,8 +1385,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1418,7 +1404,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Only administrators can unsnooze requests");
                 }
 
-                var result = _repository.UnsnoozeMediaRequestAsync(requestId).Result;
+                var result = await _repository.UnsnoozeMediaRequestAsync(requestId).ConfigureAwait(false);
                 if (result == null)
                 {
                     return NotFound("Request not found");
@@ -1440,7 +1426,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>Request count info.</returns>
         [HttpGet("Requests/Count")]
-        public ActionResult GetRequestCount()
+        public async Task<ActionResult> GetRequestCount()
         {
             try
             {
@@ -1459,8 +1445,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1506,7 +1491,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="pageSize">Items per page (default 50).</param>
         /// <returns>Paginated list of media items with stats.</returns>
         [HttpGet("Media")]
-        public ActionResult<object> GetMediaItems(
+        public async Task<ActionResult<object>> GetMediaItems(
             [FromQuery] string? search = null,
             [FromQuery] string? type = null,
             [FromQuery] string? parentId = null,
@@ -1532,8 +1517,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1811,7 +1795,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="delayDays">Number of days until deletion.</param>
         /// <returns>The scheduled deletion.</returns>
         [HttpPost("Media/{itemId}/ScheduleDeletion")]
-        public ActionResult<ScheduledDeletion> ScheduleDeletion(
+        public async Task<ActionResult<ScheduledDeletion>> ScheduleDeletion(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] int? delayDays = null,
             [FromQuery] int? delayHours = null)
@@ -1833,8 +1817,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1903,7 +1886,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     DeleteAt = deleteAt
                 };
 
-                var result = _repository.ScheduleDeletionAsync(deletion).Result;
+                var result = await _repository.ScheduleDeletionAsync(deletion).ConfigureAwait(false);
                 _logger.LogInformation("Admin {UserId} scheduled deletion for item {ItemId} ({Title}) in {Delay}",
                     userId, itemId, item.Name, delayDescription);
 
@@ -1922,7 +1905,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">The item ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Media/{itemId}/ScheduleDeletion")]
-        public ActionResult CancelScheduledDeletion([FromRoute] [Required] Guid itemId)
+        public async Task<ActionResult> CancelScheduledDeletion([FromRoute] [Required] Guid itemId)
         {
             try
             {
@@ -1941,8 +1924,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -1967,7 +1949,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not found");
                 }
 
-                var cancelled = _repository.CancelDeletionAsync(itemId).Result;
+                var cancelled = await _repository.CancelDeletionAsync(itemId).ConfigureAwait(false);
                 if (!cancelled)
                 {
                     return NotFound("No scheduled deletion found for this item");
@@ -1990,11 +1972,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>List of scheduled deletions.</returns>
         [HttpGet("ScheduledDeletions")]
         [AllowAnonymous]
-        public ActionResult<List<ScheduledDeletion>> GetScheduledDeletions()
+        public async Task<ActionResult<List<ScheduledDeletion>>> GetScheduledDeletions()
         {
             try
             {
-                var userId = GetAuthenticatedUserId();
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2025,7 +2007,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The deletion request data.</param>
         /// <returns>The created deletion request.</returns>
         [HttpPost("DeletionRequests")]
-        public ActionResult<DeletionRequest> CreateDeletionRequest([FromBody] [Required] DeletionRequestDto request)
+        public async Task<ActionResult<DeletionRequest>> CreateDeletionRequest([FromBody] [Required] DeletionRequestDto request)
         {
             try
             {
@@ -2050,8 +2032,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
 
                     var token = tokenMatch.Groups[1].Value;
-                    var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                    var session = sessionTask.Result;
+                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                     if (session == null)
                     {
                         return Unauthorized("Invalid or expired token");
@@ -2082,7 +2063,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Validate the original media request exists
-                var mediaRequest = _repository.GetMediaRequestAsync(request.MediaRequestId).Result;
+                var mediaRequest = await _repository.GetMediaRequestAsync(request.MediaRequestId).ConfigureAwait(false);
                 if (mediaRequest == null)
                 {
                     return NotFound("Original media request not found");
@@ -2144,7 +2125,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var result = _repository.AddDeletionRequestAsync(deletionRequest).Result;
+                var result = await _repository.AddDeletionRequestAsync(deletionRequest).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} created deletion request for '{Title}' (MediaRequest: {MediaRequestId})",
                     userId, request.Title, request.MediaRequestId);
 
@@ -2162,7 +2143,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all deletion requests.</returns>
         [HttpGet("DeletionRequests")]
-        public ActionResult<List<DeletionRequest>> GetDeletionRequests()
+        public async Task<ActionResult<List<DeletionRequest>>> GetDeletionRequests()
         {
             try
             {
@@ -2181,8 +2162,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -2221,7 +2201,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated deletion request.</returns>
         [HttpPost("DeletionRequests/{requestId}/Action")]
-        public ActionResult<DeletionRequest> ActionDeletionRequest(
+        public async Task<ActionResult<DeletionRequest>> ActionDeletionRequest(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string action,
             [FromQuery] int? delayDays = null,
@@ -2245,8 +2225,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (tokenMatch.Success)
                         {
                             var token = tokenMatch.Groups[1].Value;
-                            var sessionTask = _sessionManager.GetSessionByAuthenticationToken(token, null, null);
-                            var session = sessionTask.Result;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                             if (session != null)
                             {
                                 userId = session.UserId;
@@ -2294,13 +2273,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     if (deletionRequest.DeletionType == "request")
                     {
                         // Delete the media request itself
-                        var deleted = _repository.DeleteMediaRequestAsync(deletionRequest.MediaRequestId).Result;
+                        var deleted = await _repository.DeleteMediaRequestAsync(deletionRequest.MediaRequestId).ConfigureAwait(false);
                         if (!deleted)
                         {
                             _logger.LogWarning("Media request {MediaRequestId} not found when approving deletion request", deletionRequest.MediaRequestId);
                         }
 
-                        var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
+                        var result = await _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).ConfigureAwait(false);
                         _logger.LogInformation("Admin {UserId} approved deletion of request {MediaRequestId} via deletion request {RequestId}",
                             userId, deletionRequest.MediaRequestId, requestId);
 
@@ -2345,10 +2324,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                             DeleteAt = deleteAt
                         };
 
-                        _repository.ScheduleDeletionAsync(deletion).Wait();
+                        await _repository.ScheduleDeletionAsync(deletion).ConfigureAwait(false);
 
                         // Update deletion request status
-                        var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).Result;
+                        var result = await _repository.UpdateDeletionRequestStatusAsync(requestId, "approved", user.Username).ConfigureAwait(false);
                         _logger.LogInformation("Admin {UserId} approved media deletion request {RequestId} for item {ItemId}, scheduled at {DeleteAt}",
                             userId, requestId, deletionRequest.ItemId, deleteAt);
 
@@ -2358,7 +2337,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 else
                 {
                     // Reject
-                    var result = _repository.UpdateDeletionRequestStatusAsync(requestId, "rejected", user.Username, rejectionReason).Result;
+                    var result = await _repository.UpdateDeletionRequestStatusAsync(requestId, "rejected", user.Username, rejectionReason).ConfigureAwait(false);
                     _logger.LogInformation("Admin {UserId} rejected deletion request {RequestId}", userId, requestId);
 
                     return Ok(result);
@@ -2379,14 +2358,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="duration">Duration: 1d, 1w, 1m, or permanent.</param>
         /// <returns>The created ban.</returns>
         [HttpPost("Bans")]
-        public ActionResult<UserBan> CreateBan(
+        public async Task<ActionResult<UserBan>> CreateBan(
             [FromQuery] [Required] Guid userId,
             [FromQuery] [Required] string banType,
             [FromQuery] [Required] string duration)
         {
             try
             {
-                var adminId = GetAuthenticatedUserId();
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (adminId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2447,7 +2426,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     BannedByUsername = admin.Username
                 };
 
-                var result = _repository.AddUserBanAsync(ban).Result;
+                var result = await _repository.AddUserBanAsync(ban).ConfigureAwait(false);
                 _logger.LogInformation("Admin {AdminId} banned user {UserId} from {BanType} for {Duration}",
                     adminId, userId, banTypeLower, duration);
 
@@ -2466,11 +2445,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banType">The ban type.</param>
         /// <returns>List of active bans.</returns>
         [HttpGet("Bans")]
-        public ActionResult<List<UserBan>> GetBans([FromQuery] [Required] string banType)
+        public async Task<ActionResult<List<UserBan>>> GetBans([FromQuery] [Required] string banType)
         {
             try
             {
-                var adminId = GetAuthenticatedUserId();
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (adminId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2497,11 +2476,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banType">The ban type.</param>
         /// <returns>Ban info or null.</returns>
         [HttpGet("Bans/Check")]
-        public ActionResult CheckBan([FromQuery] [Required] string banType)
+        public async Task<ActionResult> CheckBan([FromQuery] [Required] string banType)
         {
             try
             {
-                var userId = GetAuthenticatedUserId();
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2528,11 +2507,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banId">The ban ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Bans/{banId}")]
-        public ActionResult LiftBan([FromRoute] [Required] Guid banId)
+        public async Task<ActionResult> LiftBan([FromRoute] [Required] Guid banId)
         {
             try
             {
-                var adminId = GetAuthenticatedUserId();
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (adminId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2543,7 +2522,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Only administrators can lift bans");
                 }
 
-                var lifted = _repository.LiftBanAsync(banId).Result;
+                var lifted = await _repository.LiftBanAsync(banId).ConfigureAwait(false);
                 if (!lifted)
                 {
                     return NotFound("Ban not found");
@@ -2562,7 +2541,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Helper to get authenticated user ID from headers.
         /// </summary>
-        private Guid GetAuthenticatedUserId()
+        private async Task<Guid> GetAuthenticatedUserIdAsync()
         {
             var userId = User.GetUserId();
             if (userId != Guid.Empty)
@@ -2579,7 +2558,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (tokenMatch.Success)
                 {
                     var token = tokenMatch.Groups[1].Value;
-                    var session = _sessionManager.GetSessionByAuthenticationToken(token, null, null).Result;
+                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
                     if (session != null)
                     {
                         return session.UserId;
