@@ -9,11 +9,11 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
-        "version": "2.0.1.0",
+        "version": "2.0.2.0",
         "changelog": "Dev release: Fix blocking .Result/.Wait() calls - convert to async/await for improved stability. Server-side GIF proxy for API key security.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.1.0/jellyfin-plugin-ratings_2.0.1.0.zip",
-        "checksum": "1ea32990184a4d3e7184ef058b5ad843",
+        "targetAbi": "10.11.1.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.2.0/jellyfin-plugin-ratings_2.0.2.0.zip",
+        "checksum": "b0eb2d487f23add94a068e7f005a1e82",
         "timestamp": "2026-02-19T12:00:00Z"
       }
     ]
