@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
-        "version": "2.0.9.0",
-        "changelog": "Fix: Chat scrolls to bottom after GIF images fully load",
+        "version": "2.0.10.0",
+        "changelog": "Fix: Force scroll to bottom when user sends a message (GIF or text)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.9.0/jellyfin-plugin-ratings_2.0.9.0.zip",
-        "checksum": "de6d3a421f6dc7985b6dadf125774237",
-        "timestamp": "2026-02-19T23:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.10.0/jellyfin-plugin-ratings_2.0.10.0.zip",
+        "checksum": "8245d5566d43c7f253df6ae10e379144",
+        "timestamp": "2026-02-19T23:30:00Z"
       }
     ]
   }
