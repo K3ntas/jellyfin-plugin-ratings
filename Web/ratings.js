@@ -14637,8 +14637,8 @@
                 btn.onclick = function () { self.showBanUserDialog(this.getAttribute('data-ban-userid'), this.getAttribute('data-ban-username')); };
             });
 
-            // Scroll to bottom if user was at bottom OR this is initial load
-            if (wasAtBottom || this.chatInitialLoad) {
+            // Scroll to bottom if user was at bottom, initial load, or just sent a message
+            if (wasAtBottom || this.chatInitialLoad || this.chatForceScrollToBottom) {
                 // Wait for images (GIFs) to load before scrolling
                 var images = container.querySelectorAll('img');
                 var pendingImages = Array.from(images).filter(function(img) { return !img.complete; });
@@ -14667,6 +14667,7 @@
                     }, 10);
                 }
                 this.chatInitialLoad = false; // Reset flag
+                this.chatForceScrollToBottom = false; // Reset force flag
             }
 
             // Update scroll button visibility
@@ -14814,6 +14815,8 @@
                 var emojiPicker = document.getElementById('chatEmojiPicker');
                 if (gifPicker) gifPicker.classList.remove('visible');
                 if (emojiPicker) emojiPicker.classList.remove('visible');
+                // Force scroll to bottom after sending (user wants to see their message)
+                self.chatForceScrollToBottom = true;
                 // Reload messages
                 self.loadChatMessages();
             })
@@ -15476,8 +15479,8 @@
                 };
             });
 
-            // Always scroll to bottom on initial load or if user was at bottom
-            if (wasAtBottom || this.chatInitialLoad) {
+            // Always scroll to bottom on initial load, if user was at bottom, or just sent a message
+            if (wasAtBottom || this.chatInitialLoad || this.chatForceScrollToBottom) {
                 // Wait for images (GIFs) to load before scrolling
                 var images = container.querySelectorAll('img');
                 var pendingImages = Array.from(images).filter(function(img) { return !img.complete; });
@@ -15505,6 +15508,7 @@
                         container.scrollTop = container.scrollHeight;
                     }, 10);
                 }
+                this.chatForceScrollToBottom = false; // Reset force flag
             }
             this.updateScrollButtonVisibility();
         },
@@ -15524,6 +15528,8 @@
 
                 if (input) input.value = '';
 
+                // Force scroll to bottom after sending (user wants to see their message)
+                this.chatForceScrollToBottom = true;
                 // Reload messages
                 this.loadDMMessages(otherUserId);
             } catch (e) {
