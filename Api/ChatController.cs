@@ -301,10 +301,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                // Try Klipy API as fallback
+                // Try Klipy API as fallback (correct URL format: api.klipy.com/api/v1/{key}/gifs/search)
                 if (!string.IsNullOrEmpty(klipyKey))
                 {
-                    var klipyUrl = $"https://klipy.com/api/gifs/search?query={encodedQuery}&limit={limit}&key={klipyKey}";
+                    var klipyUrl = $"https://api.klipy.com/api/v1/{klipyKey}/gifs/search?q={encodedQuery}&per_page={limit}&customer_id=jellyfin";
                     _logger.LogDebug("Calling Klipy API");
 
                     var response = await _httpClient.GetAsync(klipyUrl).ConfigureAwait(false);
@@ -389,33 +389,53 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         /// <summary>
         /// Parse Klipy API response.
+        /// Response format: { data: { data: [ { file: { xs/sm/md/hd: { gif: { url: "..." } } } } ] } }
         /// </summary>
         private List<object> ParseKlipyResponse(string content)
         {
             var results = new List<object>();
             using var doc = JsonDocument.Parse(content);
 
-            if (doc.RootElement.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
+            // Klipy response: data.data[] contains the GIF items
+            if (doc.RootElement.TryGetProperty("data", out var outerData) &&
+                outerData.TryGetProperty("data", out var dataElement) &&
+                dataElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in dataElement.EnumerateArray())
                 {
                     var gifUrl = "";
                     var previewUrl = "";
-                    var title = "";
 
-                    if (item.TryGetProperty("url", out var urlProp))
+                    // Extract URLs from file.{size}.gif.url structure
+                    if (item.TryGetProperty("file", out var file))
                     {
-                        gifUrl = urlProp.GetString() ?? "";
-                    }
+                        // Full size: prefer md (medium) or hd (high definition)
+                        if (file.TryGetProperty("md", out var md) &&
+                            md.TryGetProperty("gif", out var mdGif) &&
+                            mdGif.TryGetProperty("url", out var mdUrl))
+                        {
+                            gifUrl = mdUrl.GetString() ?? "";
+                        }
+                        else if (file.TryGetProperty("hd", out var hd) &&
+                                 hd.TryGetProperty("gif", out var hdGif) &&
+                                 hdGif.TryGetProperty("url", out var hdUrl))
+                        {
+                            gifUrl = hdUrl.GetString() ?? "";
+                        }
 
-                    if (item.TryGetProperty("preview", out var previewProp))
-                    {
-                        previewUrl = previewProp.GetString() ?? "";
-                    }
-
-                    if (item.TryGetProperty("title", out var titleProp))
-                    {
-                        title = titleProp.GetString() ?? "";
+                        // Preview: prefer xs (extra small) or sm (small)
+                        if (file.TryGetProperty("xs", out var xs) &&
+                            xs.TryGetProperty("gif", out var xsGif) &&
+                            xsGif.TryGetProperty("url", out var xsUrl))
+                        {
+                            previewUrl = xsUrl.GetString() ?? "";
+                        }
+                        else if (file.TryGetProperty("sm", out var sm) &&
+                                 sm.TryGetProperty("gif", out var smGif) &&
+                                 smGif.TryGetProperty("url", out var smUrl))
+                        {
+                            previewUrl = smUrl.GetString() ?? "";
+                        }
                     }
 
                     if (!string.IsNullOrEmpty(gifUrl))
@@ -424,7 +444,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         {
                             url = gifUrl,
                             preview = string.IsNullOrEmpty(previewUrl) ? gifUrl : previewUrl,
-                            title = title
+                            title = ""
                         });
                     }
                 }
