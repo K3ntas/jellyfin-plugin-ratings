@@ -14639,10 +14639,33 @@
 
             // Scroll to bottom if user was at bottom OR this is initial load
             if (wasAtBottom || this.chatInitialLoad) {
-                // Use setTimeout to ensure DOM is rendered before scrolling
-                setTimeout(function() {
-                    container.scrollTop = container.scrollHeight;
-                }, 10);
+                // Wait for images (GIFs) to load before scrolling
+                var images = container.querySelectorAll('img');
+                var pendingImages = Array.from(images).filter(function(img) { return !img.complete; });
+
+                if (pendingImages.length > 0) {
+                    var loaded = 0;
+                    var scrollAfterLoad = function() {
+                        loaded++;
+                        if (loaded >= pendingImages.length) {
+                            container.scrollTop = container.scrollHeight;
+                            self.updateScrollButtonVisibility();
+                        }
+                    };
+                    pendingImages.forEach(function(img) {
+                        img.addEventListener('load', scrollAfterLoad, { once: true });
+                        img.addEventListener('error', scrollAfterLoad, { once: true });
+                    });
+                    // Fallback: scroll after 500ms even if images haven't loaded
+                    setTimeout(function() {
+                        container.scrollTop = container.scrollHeight;
+                    }, 500);
+                } else {
+                    // No pending images, scroll immediately
+                    setTimeout(function() {
+                        container.scrollTop = container.scrollHeight;
+                    }, 10);
+                }
                 this.chatInitialLoad = false; // Reset flag
             }
 
@@ -15455,9 +15478,33 @@
 
             // Always scroll to bottom on initial load or if user was at bottom
             if (wasAtBottom || this.chatInitialLoad) {
-                setTimeout(function() {
-                    container.scrollTop = container.scrollHeight;
-                }, 10);
+                // Wait for images (GIFs) to load before scrolling
+                var images = container.querySelectorAll('img');
+                var pendingImages = Array.from(images).filter(function(img) { return !img.complete; });
+                var self = this;
+
+                if (pendingImages.length > 0) {
+                    var loaded = 0;
+                    var scrollAfterLoad = function() {
+                        loaded++;
+                        if (loaded >= pendingImages.length) {
+                            container.scrollTop = container.scrollHeight;
+                            self.updateScrollButtonVisibility();
+                        }
+                    };
+                    pendingImages.forEach(function(img) {
+                        img.addEventListener('load', scrollAfterLoad, { once: true });
+                        img.addEventListener('error', scrollAfterLoad, { once: true });
+                    });
+                    // Fallback: scroll after 500ms even if images haven't loaded
+                    setTimeout(function() {
+                        container.scrollTop = container.scrollHeight;
+                    }, 500);
+                } else {
+                    setTimeout(function() {
+                        container.scrollTop = container.scrollHeight;
+                    }, 10);
+                }
             }
             this.updateScrollButtonVisibility();
         },
