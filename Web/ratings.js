@@ -14869,7 +14869,18 @@
             const baseUrl = ApiClient.serverAddress();
             const url = baseUrl + '/Ratings/Chat/GifSearch?query=' + encodeURIComponent(query) + '&limit=20';
 
-            fetch(url, { method: 'GET', credentials: 'include' })
+            // Build auth header for Jellyfin
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + accessToken + '"';
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'X-Emby-Authorization': authHeader
+                }
+            })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     var gifs = data.results || [];
