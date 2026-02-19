@@ -1,261 +1,223 @@
-# Jellyfin Plugin Dev Branch Release Workflow
-
-Development/testing workflow using the `dev` branch. Test releases go here before being merged to `main` for production.
-
----
+# Dev Branch Release Workflow
 
 ## Overview
 
-| Branch | Purpose | Manifest URL |
-|--------|---------|--------------|
-| `main` | Stable releases for all users | `https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/manifest.json` |
-| `dev` | Test releases for development | `https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/manifest.json` |
+The dev branch uses separate versioning (2.x.x.x) for testing before merging to main.
+
+**Dev Manifest URL:**
+```
+https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/manifest.json
+```
 
 ---
 
-## Initial Setup (One Time)
+## Version Numbering
 
-### 1. Create Dev Branch
-
-```bash
-git checkout main
-git pull
-git checkout -b dev
-git push -u origin dev
-```
-
-### 2. Create Dev Manifest
-
-Copy `manifest.json` to use dev branch URLs:
-
-```json
-{
-  "versions": [
-    {
-      "version": "1.0.307.0",
-      "changelog": "Testing new feature",
-      "targetAbi": "10.11.0.0",
-      "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.307.0-dev/jellyfin-plugin-ratings_1.0.307.0.zip",
-      "checksum": "YOUR_MD5_CHECKSUM",
-      "timestamp": "2026-02-19T12:00:00Z"
-    }
-  ]
-}
-```
-
-### 3. Add Dev Repository to Jellyfin Test Server
-
-In your test Jellyfin server:
-1. Go to **Dashboard** → **Plugins** → **Repositories**
-2. Add: `https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/manifest.json`
-3. Name it "Ratings Plugin (Dev)"
+| Branch | Version Format | Example |
+|--------|---------------|---------|
+| main   | 1.0.x.0       | 1.0.306.0, 1.0.307.0 |
+| dev    | 2.0.x.0       | 2.0.1.0, 2.0.2.0 |
 
 ---
 
-## Dev Release Workflow
+## Release Steps
 
-### 1. Make Changes on Dev Branch
-
-```bash
-# Switch to dev branch
-git checkout dev
-
-# Make your code changes
-# Edit files...
-
-# Update version in .csproj (use same version with -dev suffix conceptually)
-# <Version>1.0.307.0</Version>
+### 1. Update Version
+```xml
+<!-- Jellyfin.Plugin.Ratings.csproj -->
+<Version>2.0.X.0</Version>
 ```
 
-### 2. Build and Package
-
+### 2. Build
 ```bash
-# Build
-dotnet clean
+cd /path/to/jellyfinratings
+rm -rf bin obj
 dotnet build -c Release
-
-# Create ZIP (Windows PowerShell)
-Compress-Archive -Path 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.dll', 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.pdb' -DestinationPath 'jellyfin-plugin-ratings_1.0.307.0.zip' -Force
-
-# Generate checksum
-certutil -hashfile jellyfin-plugin-ratings_1.0.307.0.zip MD5
 ```
 
-### 3. Update Dev Manifest
+### 3. Package
+```powershell
+Compress-Archive -Path 'bin/Release/net9.0/Jellyfin.Plugin.Ratings.dll','bin/Release/net9.0/Jellyfin.Plugin.Ratings.pdb' -DestinationPath 'release/jellyfin-plugin-ratings_2.0.X.0.zip' -Force
+```
 
-Edit `manifest.json` on dev branch with new version:
+### 4. Get Checksum
+```bash
+certutil -hashfile release/jellyfin-plugin-ratings_2.0.X.0.zip MD5
+```
 
+### 5. Update manifest.json
 ```json
 {
-  "version": "1.0.307.0",
-  "changelog": "DEV: Testing chat improvements",
-  "targetAbi": "10.11.0.0",
-  "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.307.0-dev/jellyfin-plugin-ratings_1.0.307.0.zip",
-  "checksum": "NEW_CHECKSUM_HERE",
-  "timestamp": "2026-02-19T12:00:00Z"
+  "version": "2.0.X.0",
+  "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.X.0/jellyfin-plugin-ratings_2.0.X.0.zip",
+  "checksum": "<MD5_HASH>",
+  "targetAbi": "10.11.0.0"
 }
 ```
 
-### 4. Commit and Push to Dev
-
+### 6. Commit & Push
 ```bash
 git add -A
-git commit -m "DEV v1.0.307.0: Testing new feature
-
-Work in progress - not for production
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
-
+git commit -m "Dev vX.X.X.X - Description"
 git push origin dev
 ```
 
-### 5. Create Dev Release on GitHub
-
-Use `-dev` suffix for pre-release tags:
-
+### 7. Create GitHub Release
 ```bash
-gh release create v1.0.307.0-dev \
-  jellyfin-plugin-ratings_1.0.307.0.zip \
-  --title "v1.0.307.0-dev - Testing" \
-  --notes "## Development Release
-
-**DO NOT USE IN PRODUCTION**
-
-### Changes Being Tested
-- Feature X
-- Bug fix Y
-
-### Known Issues
-- May have bugs
-- Not fully tested" \
+gh release create v2.0.X.0 release/jellyfin-plugin-ratings_2.0.X.0.zip \
+  --target dev \
   --prerelease \
-  --target dev
-```
-
-### 6. Test on Jellyfin Test Server
-
-1. Go to **Dashboard** → **Plugins** → **Catalog**
-2. Find "Ratings" (from dev repository)
-3. Click **Update** or **Install**
-4. Restart Jellyfin
-5. Test your changes
-
-### 7. Iterate as Needed
-
-Repeat steps 1-6 until the feature is ready. Each iteration:
-- Increment version: 1.0.307.0 → 1.0.308.0 → 1.0.309.0
-- Create new `-dev` release
-- Test on dev server
-
----
-
-## Promoting Dev to Production
-
-When testing is complete and the feature is ready:
-
-### 1. Merge Dev to Main
-
-```bash
-git checkout main
-git pull
-git merge dev
-git push
-```
-
-### 2. Create Production Release
-
-Follow the standard `release_workflow.md` process:
-- Create release **without** `-dev` suffix
-- Update main `manifest.json`
-- Create proper release notes
-
-### 3. Clean Up Dev Releases (Optional)
-
-Delete old dev releases to keep things tidy:
-
-```bash
-# Delete a specific dev release
-gh release delete v1.0.307.0-dev --yes
-
-# Delete the tag too
-git push origin :refs/tags/v1.0.307.0-dev
+  --title "v2.0.X.0 (Dev)" \
+  --notes "Dev release notes..."
 ```
 
 ---
 
-## Quick Reference
+## Common Issues & Fixes
 
-### Switch Between Branches
+### Issue 1: "NotSupported" Status in Jellyfin
 
-```bash
-# Switch to dev for testing
-git checkout dev
+**Symptoms:**
+- Plugin shows "NotSupported" in Jellyfin catalog
+- Plugin installs but doesn't load
 
-# Switch to main for production
-git checkout main
+**Cause:**
+Plugin compiled with newer Jellyfin packages than the server version.
+
+**Diagnosis:**
+Check Jellyfin server logs for:
+```
+Could not load file or assembly 'MediaBrowser.Controller, Version=10.11.6.0'
 ```
 
-### Dev Release Command
-
-```bash
-gh release create v1.0.XXX.0-dev \
-  jellyfin-plugin-ratings_1.0.XXX.0.zip \
-  --title "v1.0.XXX.0-dev - Testing" \
-  --notes "Development release - testing only" \
-  --prerelease \
-  --target dev
+**Fix:**
+Downgrade packages in csproj to match server:
+```xml
+<PackageReference Include="Jellyfin.Controller" Version="10.11.0" />
+<PackageReference Include="Jellyfin.Model" Version="10.11.0" />
 ```
 
-### Production Release Command
-
-```bash
-gh release create v1.0.XXX.0 \
-  jellyfin-plugin-ratings_1.0.XXX.0.zip \
-  --title "v1.0.XXX.0 - Feature Name" \
-  --notes "Production release notes" \
-  --target main
-```
+**Prevention:**
+Dependabot is configured to ignore Jellyfin packages (see `.github/dependabot.yml`).
 
 ---
 
-## Best Practices
+### Issue 2: Dependabot Updates Breaking Compatibility
 
-1. **Always test on dev first** - Never push untested code to main
-2. **Use `-dev` suffix** for dev release tags to distinguish them
-3. **Mark as prerelease** - GitHub will show them differently
-4. **Clean up old dev releases** - Don't let them pile up
-5. **Keep dev manifest separate** - Dev manifest points to dev releases
-6. **Version numbers** - Dev and main can have same versions, distinguished by tag suffix
+**Problem:**
+Dependabot auto-updates Jellyfin packages to latest version, which may be newer than users' servers.
 
----
-
-## Manifest URLs Summary
-
-| Environment | URL |
-|-------------|-----|
-| **Production** | `https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/manifest.json` |
-| **Development** | `https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/manifest.json` |
-
-Users add the production URL. You add the development URL to your test server.
-
----
-
-## Troubleshooting
-
-### Plugin not showing in dev catalog
-- Check dev manifest.json is valid JSON
-- Verify sourceUrl points to existing release
-- Verify checksum matches the ZIP file
-
-### Dev changes appearing in production
-- Make sure you're on the correct branch
-- Check which manifest URL your servers are using
-
-### Merge conflicts
-```bash
-git checkout dev
-git merge main  # Get latest main changes into dev first
-# Resolve conflicts
-git commit
-git push origin dev
+**Current Protection (.github/dependabot.yml):**
+```yaml
+ignore:
+  - dependency-name: "Jellyfin.Controller"
+  - dependency-name: "Jellyfin.Model"
 ```
+
+**Best Practice:**
+- Keep Jellyfin packages at minimum required version (10.11.0)
+- Only update manually when dropping support for older servers
+- Test on oldest supported server version
+
+---
+
+### Issue 3: targetAbi Mismatch
+
+**What is targetAbi?**
+Minimum Jellyfin server version required by the plugin.
+
+**Correct Setting:**
+```json
+"targetAbi": "10.11.0.0"
+```
+
+**Rule:**
+- Set to the MINIMUM version you support
+- NOT the version you compiled with
+- Allows users with 10.11.0, 10.11.1, 10.11.2, etc. to use the plugin
+
+---
+
+### Issue 4: Same GUID Conflict
+
+**Problem:**
+Dev and main plugins share the same GUID. Users cannot have both installed.
+
+**Current Design:**
+- Same GUID intentionally (same plugin, different versions)
+- Users must uninstall one before installing the other
+
+**If Separate Plugins Needed:**
+Change GUID in dev branch:
+- `manifest.json` - guid field
+- `Plugin.cs` - Id property
+- `Web/ratings.js` - pluginId
+- `Configuration/configPage.html` - pluginId
+
+---
+
+### Issue 5: Plugin Won't Load After Install
+
+**Symptoms:**
+- Plugin installed successfully
+- Shows in "My Plugins" but doesn't work
+- No errors in UI
+
+**Diagnosis:**
+1. Check server logs for assembly load errors
+2. Verify checksum matches
+3. Check .NET version compatibility
+
+**Common Fixes:**
+1. Delete plugin folder manually and reinstall
+2. Restart Jellyfin completely
+3. Verify packages match server version
+
+---
+
+## Package Version Compatibility Matrix
+
+| Jellyfin Server | Recommended Package Version |
+|----------------|----------------------------|
+| 10.11.0        | 10.11.0                    |
+| 10.11.1        | 10.11.0                    |
+| 10.11.2+       | 10.11.0                    |
+| 10.12.x        | 10.12.0 (when available)   |
+
+**Rule:** Always use the OLDEST package version that works.
+
+---
+
+## Merging Dev to Main
+
+When dev is tested and ready:
+
+1. **Update main branch packages** (if needed)
+2. **Merge dev to main:**
+   ```bash
+   git checkout main
+   git merge dev
+   ```
+3. **Update version to main numbering:**
+   ```xml
+   <Version>1.0.307.0</Version>
+   ```
+4. **Update main manifest.json** with new version
+5. **Create production release** (not prerelease)
+
+---
+
+## Cleanup Commands
+
+**Delete old dev releases:**
+```bash
+gh release delete v2.0.X.0 --yes
+```
+
+**Delete plugin from server (if broken):**
+```bash
+rm -rf /config/plugins/Ratings\ \(Dev\)_2.0.X.0/
+```
+
+**Force Jellyfin to re-download manifest:**
+- Dashboard → Plugins → Repositories → Remove → Re-add
