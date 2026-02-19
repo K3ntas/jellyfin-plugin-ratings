@@ -1,20 +1,140 @@
 [
   {
     "guid": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
-    "name": "Ratings (Dev)",
-    "description": "DEVELOPMENT/TESTING VERSION - Professional rating system for Jellyfin. This is the testing branch with latest fixes and features.",
-    "overview": "Dev/Testing version of the Ratings plugin. Use for testing only - may contain bugs.",
+    "name": "Ratings",
+    "description": "Professional rating system for Jellyfin. Rate media with 1-10 stars, view detailed user ratings on hover, and see rating badges on media cards. Optimized for large libraries with lazy loading.",
+    "overview": "Comprehensive rating plugin with star-based UI, average ratings display, detailed user rating popups, and performance-optimized card overlays for large media libraries.",
     "owner": "K3ntas",
     "category": "Metadata",
-    "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
+    "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "2.0.10.0",
-        "changelog": "Fix: Force scroll to bottom when user sends a message (GIF or text)",
+        "version": "1.0.307.0",
+        "changelog": "Fix GIF search (Klipy API), chat auto-scroll improvements, security fixes for API key exposure",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.10.0/jellyfin-plugin-ratings_2.0.10.0.zip",
-        "checksum": "8245d5566d43c7f253df6ae10e379144",
-        "timestamp": "2026-02-19T23:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.307.0/jellyfin-plugin-ratings_1.0.307.0.zip",
+        "checksum": "b84885d7d0eb8f1577ec85041aab7b0f",
+        "timestamp": "2026-02-19T20:45:00Z"
+      },
+      {
+        "version": "1.0.306.0",
+        "changelog": "Messenger-style chat bubbles.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.306.0/jellyfin-plugin-ratings_1.0.306.0.zip",
+        "checksum": "fe16263849212998d42b4d31260aacad",
+        "timestamp": "2026-02-18T20:00:00Z"
+      },
+      {
+        "version": "1.0.292.0",
+        "changelog": "Stability and reliability improvements, enhanced permission checks, improved input handling across the plugin.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.292.0/jellyfin-plugin-ratings_1.0.292.0.zip",
+        "checksum": "e4bcb958412a638d0b5bd40b32ae4f00",
+        "timestamp": "2026-02-16T06:00:00Z"
+      },
+      {
+        "version": "1.0.291.0",
+        "changelog": "Improved chat system reliability and performance optimizations.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.291.0/jellyfin-plugin-ratings_1.0.291.0.zip",
+        "checksum": "07c2f43f11cbbcc0284e13bca0503930",
+        "timestamp": "2026-02-16T01:00:00Z"
+      },
+      {
+        "version": "1.0.290.0",
+        "changelog": "Fix emoji rendering (HTML entity issue), replace Tenor GIF API with Klipy, fix emoji picker positioning and settings gear.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.290.0/jellyfin-plugin-ratings_1.0.290.0.zip",
+        "checksum": "d3a241ade4e1e8c1c3b57153b207fa2e",
+        "timestamp": "2026-02-16T00:30:00Z"
+      },
+      {
+        "version": "1.0.289.0",
+        "changelog": "Fix emoji picker and settings gear: add z-index/positioning for pickers, fix admin panel overflow, fix heartbeat response casing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.289.0/jellyfin-plugin-ratings_1.0.289.0.zip",
+        "checksum": "db600f768e77a1a01b65044683178cf7",
+        "timestamp": "2026-02-16T00:00:00Z"
+      },
+      {
+        "version": "1.0.288.0",
+        "changelog": "Fix chat messages not appearing live: Generate empty state dynamically to avoid innerHTML destroying elements.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.288.0/jellyfin-plugin-ratings_1.0.288.0.zip",
+        "checksum": "5bfc316146de2c618698d82cfe6ed455",
+        "timestamp": "2026-02-15T22:45:00Z"
+      },
+      {
+        "version": "1.0.274.0",
+        "changelog": "Multi-language localization system with 16 languages: English, Spanish, Chinese, Portuguese, Russian, Japanese, German, French, Korean, Italian, Turkish, Polish, Dutch, Arabic, Hindi, Lithuanian. Language selector dropdown in UI, admin can set default language.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.274.0/jellyfin-plugin-ratings_1.0.274.0.zip",
+        "checksum": "7bbe9ef9bdf741f7ab29fd67cef31cc3",
+        "timestamp": "2026-02-15T16:15:00Z"
+      },
+      {
+        "version": "1.0.273.0",
+        "changelog": "Settings redesign, badge display profiles with H/V axis, rating widget repositioned above detail ribbon with responsive mobile layout.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.273.0/jellyfin-plugin-ratings_1.0.273.0.zip",
+        "checksum": "143f35dddba6a711057a9099904bd24d",
+        "timestamp": "2026-02-12T15:30:00Z"
+      },
+      {
+        "version": "1.0.252.0",
+        "changelog": "User ban system for media and deletion requests, show all rejection messages, codebase security audit.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.252.0/jellyfin-plugin-ratings_1.0.252.0.zip",
+        "checksum": "27587e022b745f6a17f8a2d427d65ca0",
+        "timestamp": "2026-02-09T22:00:00Z"
+      },
+      {
+        "version": "1.0.251.0",
+        "changelog": "Custom rejection reason modal, notification badges on admin tabs, brighter bell cross lines.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.251.0/jellyfin-plugin-ratings_1.0.251.0.zip",
+        "checksum": "09c6264f84b713fc7e707b3029c03f3f",
+        "timestamp": "2026-02-09T19:00:00Z"
+      },
+      {
+        "version": "1.0.250.0",
+        "changelog": "Rejection reasons for deletion requests, 3-request limit per media, badge alignment fix, console log cleanup.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.250.0/jellyfin-plugin-ratings_1.0.250.0.zip",
+        "checksum": "2e311742232d7165d5db767231fabdf2",
+        "timestamp": "2026-02-09T18:00:00Z"
+      },
+      {
+        "version": "1.0.249.0",
+        "changelog": "Two deletion request types: 'Request to delete request' (for pending/processing) and 'Request to delete media' (for fulfilled). Fixed button visibility.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.249.0/jellyfin-plugin-ratings_1.0.249.0.zip",
+        "checksum": "69a46afa2c2cc8812a778d132e5dbd02",
+        "timestamp": "2026-02-09T13:00:00Z"
+      },
+      {
+        "version": "1.0.248.0",
+        "changelog": "Ask to Delete: Users can request deletion of fulfilled media. Admins see a new Deletion Requests tab with schedule options.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.248.0/jellyfin-plugin-ratings_1.0.248.0.zip",
+        "checksum": "58c77f290a9731606c612f7a688d60ff",
+        "timestamp": "2026-02-09T12:00:00Z"
+      },
+      {
+        "version": "1.0.247.0",
+        "changelog": "Fix notification tooltip not disappearing - now auto-hides after 2 seconds on all platforms.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.247.0/jellyfin-plugin-ratings_1.0.247.0.zip",
+        "checksum": "59b6625549ade4c107202595405cee8e",
+        "timestamp": "2026-02-08T23:23:00Z"
+      },
+      {
+        "version": "1.0.246.0",
+        "changelog": "Fix red cross lines to match larger bell icon, raise bell 3px on small screens.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.246.0/jellyfin-plugin-ratings_1.0.246.0.zip",
+        "checksum": "b333334138f075887ff5d9ddbb12eeb7",
+        "timestamp": "2026-02-08T23:17:00Z"
       }
     ]
   }
