@@ -8,3 +8,8 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    ignore:
+      # Jellyfin packages must stay at 10.11.0 for broad server compatibility
+      # Only update manually when ready to drop support for older servers
+      - dependency-name: "Jellyfin.Controller"
+      - dependency-name: "Jellyfin.Model"
