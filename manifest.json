@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
-        "version": "2.0.8.0",
-        "changelog": "Fix: Correct Klipy API URL format (api.klipy.com/api/v1/{key}/gifs/search)",
+        "version": "2.0.9.0",
+        "changelog": "Fix: Chat scrolls to bottom after GIF images fully load",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.8.0/jellyfin-plugin-ratings_2.0.8.0.zip",
-        "checksum": "0584708f4506db379fd0a67340be1d8a",
-        "timestamp": "2026-02-19T22:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.9.0/jellyfin-plugin-ratings_2.0.9.0.zip",
+        "checksum": "de6d3a421f6dc7985b6dadf125774237",
+        "timestamp": "2026-02-19T23:00:00Z"
       }
     ]
   }
