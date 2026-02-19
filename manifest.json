@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
-        "version": "2.0.5.0",
-        "changelog": "Fix: GIF button not showing (HasGifSupport missing from config), Fix: querySelector error on request badge",
+        "version": "2.0.6.0",
+        "changelog": "Fix: GIF search 401 error - add auth header to requests",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.5.0/jellyfin-plugin-ratings_2.0.5.0.zip",
-        "checksum": "fe7bfb74dba540358cefe1e55bb91bc9",
-        "timestamp": "2026-02-19T21:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.6.0/jellyfin-plugin-ratings_2.0.6.0.zip",
+        "checksum": "2a33f85819fb19fa9d3f6def7e599c82",
+        "timestamp": "2026-02-19T21:30:00Z"
       }
     ]
   }
