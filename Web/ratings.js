@@ -12655,6 +12655,11 @@
          */
         updateRequestBadge: function (btn) {
             const self = this;
+            // Guard: if btn not provided, try to find it
+            if (!btn) {
+                btn = document.getElementById('requestMediaBtn');
+                if (!btn) return; // Still not found, exit silently
+            }
             try {
                 Promise.all([
                     this.fetchAllRequests(),

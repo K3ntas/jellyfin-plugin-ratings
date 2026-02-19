@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
-        "version": "2.0.4.0",
-        "changelog": "Dev release: Async/await stability fixes, server-side GIF proxy. Downgraded packages for Jellyfin 10.11.x compatibility.",
+        "version": "2.0.5.0",
+        "changelog": "Fix: GIF button not showing (HasGifSupport missing from config), Fix: querySelector error on request badge",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.4.0/jellyfin-plugin-ratings_2.0.4.0.zip",
-        "checksum": "5f9b666cf8600acc24f58b30fab90769",
-        "timestamp": "2026-02-19T20:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.5.0/jellyfin-plugin-ratings_2.0.5.0.zip",
+        "checksum": "fe7bfb74dba540358cefe1e55bb91bc9",
+        "timestamp": "2026-02-19T21:00:00Z"
       }
     ]
   }
