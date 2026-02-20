@@ -13,7 +13,7 @@
         "changelog": "Chat avatars: Show user profile pictures in chat messages. Notification badge: Combined count of public + DM unread messages",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.15.0/jellyfin-plugin-ratings_2.0.15.0.zip",
-        "checksum": "30bd4e388e0e3837abb82a545afd875a",
+        "checksum": "9d83cc48cc3eab541738f839b8452db4",
         "timestamp": "2026-02-20T20:00:00Z"
       },
       {
