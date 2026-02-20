@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net;
 using System.Net.Mime;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data;
@@ -73,6 +75,35 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Sanitizes user input to prevent XSS attacks.
+        /// Strips HTML tags and encodes special characters.
+        /// </summary>
+        /// <param name="input">The input string to sanitize.</param>
+        /// <param name="maxLength">Maximum allowed length (default 500).</param>
+        /// <returns>Sanitized string.</returns>
+        private static string SanitizeInput(string? input, int maxLength = 500)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
+
+            // Strip HTML tags
+            var sanitized = Regex.Replace(input, @"<[^>]*>", string.Empty);
+
+            // HTML encode special characters to prevent XSS
+            sanitized = WebUtility.HtmlEncode(sanitized);
+
+            // Limit length
+            if (sanitized.Length > maxLength)
+            {
+                sanitized = sanitized.Substring(0, maxLength);
+            }
+
+            return sanitized.Trim();
         }
 
         /// <summary>
@@ -452,7 +483,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public ActionResult GetTest()
         {
-            return Ok(new { message = "Ratings plugin is loaded!", version = "1.0.8.0" });
+            return Ok(new { message = "Ratings plugin is loaded!" });
         }
 
         /// <summary>
@@ -920,12 +951,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Id = Guid.NewGuid(),
                     UserId = userId,
                     Username = user.Username,
-                    Title = request.Title,
-                    Type = request.Type,
-                    Notes = request.Notes,
-                    CustomFields = request.CustomFields,
-                    ImdbCode = request.ImdbCode,
-                    ImdbLink = request.ImdbLink,
+                    Title = SanitizeInput(request.Title, 500),
+                    Type = SanitizeInput(request.Type, 100),
+                    Notes = SanitizeInput(request.Notes, 2000),
+                    CustomFields = SanitizeInput(request.CustomFields, 5000),
+                    ImdbCode = SanitizeInput(request.ImdbCode, 50),
+                    ImdbLink = request.ImdbLink, // Already validated as URL above
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -1298,11 +1329,11 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 var result = await _repository.UpdateMediaRequestAsync(
                     requestId,
-                    request.Title,
-                    request.Type,
-                    request.Notes,
-                    request.CustomFields,
-                    request.ImdbCode,
+                    SanitizeInput(request.Title, 500),
+                    SanitizeInput(request.Type, 100),
+                    SanitizeInput(request.Notes, 2000),
+                    SanitizeInput(request.CustomFields, 5000),
+                    SanitizeInput(request.ImdbCode, 50),
                     request.ImdbLink).ConfigureAwait(false);
 
                 if (result == null)
