@@ -24,7 +24,8 @@
         chatLastSeenTimestamp: null, // Last time chat was opened (for unread tracking)
         chatUnreadSenders: new Set(), // Unique senders of unread messages
         chatLastMessageId: null, // Last seen message ID
-        chatUnreadCount: 0, // Unread message count (unique senders)
+        chatUnreadCount: 0, // Unread message count (combined public + DM)
+        chatPublicUnreadCount: 0, // Public chat unread count
         chatTypingUsers: [], // Users currently typing
         chatIsAdmin: false, // Current user is admin
         chatIsModerator: false, // Current user is moderator
@@ -14585,7 +14586,11 @@
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
                 const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
-                const avatarContent = '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
+                // Use avatar image if available, otherwise show initial
+                const userAvatar = msg.userAvatar || msg.UserAvatar;
+                const avatarContent = userAvatar
+                    ? '<img src="' + self.escapeHtml(userAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><span class="chat-avatar-initial" style="display:none">' + self.escapeHtml(userInitial) + '</span>'
+                    : '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
 
@@ -15134,16 +15139,30 @@
          * Update unread badge
          */
         updateUnreadBadge: function (count) {
-            const badge = document.getElementById('chatBadge');
-            if (badge) {
-                if (count > 0) {
-                    badge.textContent = count > 99 ? '99+' : count;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
+            // Store public message unread count
+            this.chatPublicUnreadCount = count;
+            // Update combined badge (public + DM)
+            this.updateCombinedBadge();
+        },
+
+        /**
+         * Update combined badge showing total unread (public + DM)
+         */
+        updateCombinedBadge: function () {
+            const badge = document.getElementById('chatDMBadge');
+            if (!badge) return;
+
+            const publicCount = this.chatPublicUnreadCount || 0;
+            const dmCount = this.dmUnreadCount || 0;
+            const totalCount = publicCount + dmCount;
+
+            if (totalCount > 0) {
+                badge.textContent = totalCount > 99 ? '99+' : totalCount;
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
             }
-            this.chatUnreadCount = count;
+            this.chatUnreadCount = totalCount;
         },
 
         /**
@@ -15232,15 +15251,8 @@
          * Update DM badge on chat button (badge is inline like Latest Media)
          */
         updateDMBadge: function () {
-            const badge = document.getElementById('chatDMBadge');
-            if (!badge) return;
-
-            if (this.dmUnreadCount > 0) {
-                badge.textContent = this.dmUnreadCount > 99 ? '99+' : this.dmUnreadCount;
-                badge.classList.add('visible');
-            } else {
-                badge.classList.remove('visible');
-            }
+            // Update combined badge (public + DM)
+            this.updateCombinedBadge();
         },
 
         /**
@@ -15455,9 +15467,13 @@
                 }
 
                 const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
+                const senderAvatar = msg.senderAvatar || msg.SenderAvatar;
+                const dmAvatarHtml = senderAvatar
+                    ? '<img src="' + this.escapeHtml(senderAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><span class="chat-avatar-initial" style="display:none">' + this.escapeHtml(senderInitial) + '</span>'
+                    : '<span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>';
                 div.innerHTML = `
                     <div class="chat-avatar">
-                        <span class="chat-avatar-initial">${this.escapeHtml(senderInitial)}</span>
+                        ${dmAvatarHtml}
                     </div>
                     <div class="chat-message-content">
                         <div class="chat-message-header">
