@@ -1965,5 +1965,72 @@ namespace Jellyfin.Plugin.Ratings.Data
                 return false;
             }
         }
+
+        /// <summary>
+        /// Cleans up expired data to prevent unbounded growth.
+        /// Should be called periodically (e.g., on plugin startup and daily).
+        /// </summary>
+        public async Task CleanupExpiredDataAsync()
+        {
+            var now = DateTime.UtcNow;
+            var cleanedUp = false;
+
+            lock (_lock)
+            {
+                // Remove expired user bans
+                var expiredUserBans = _userBans.Values
+                    .Where(b => b.ExpiresAt.HasValue && b.ExpiresAt.Value < now)
+                    .Select(b => b.Id)
+                    .ToList();
+                foreach (var id in expiredUserBans)
+                {
+                    _userBans.Remove(id);
+                    cleanedUp = true;
+                }
+
+                // Remove expired chat bans
+                var expiredChatBans = _chatBans.Values
+                    .Where(b => b.ExpiresAt.HasValue && b.ExpiresAt.Value < now)
+                    .Select(b => b.Id)
+                    .ToList();
+                foreach (var id in expiredChatBans)
+                {
+                    _chatBans.Remove(id);
+                    cleanedUp = true;
+                }
+
+                // Remove inactive chat users (not seen in 30 days)
+                var inactiveCutoff = now.AddDays(-30);
+                var inactiveUsers = _chatUsers.Values
+                    .Where(u => u.LastSeen < inactiveCutoff)
+                    .Select(u => u.UserId)
+                    .ToList();
+                foreach (var id in inactiveUsers)
+                {
+                    _chatUsers.Remove(id);
+                    cleanedUp = true;
+                }
+
+                // Remove old notifications (older than 7 days)
+                var notificationCutoff = now.AddDays(-7);
+                var oldNotifications = _notifications
+                    .Where(n => n.CreatedAt < notificationCutoff)
+                    .ToList();
+                foreach (var n in oldNotifications)
+                {
+                    _notifications.Remove(n);
+                    cleanedUp = true;
+                }
+            }
+
+            if (cleanedUp)
+            {
+                _logger.LogInformation("Cleaned up expired data (bans, inactive users, old notifications)");
+                // Save all affected collections
+                _ = SaveUserBansAsync();
+                _ = SaveChatBansAsync();
+                _ = SaveChatUsersAsync();
+            }
+        }
     }
 }

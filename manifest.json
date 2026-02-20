@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.13.0",
+        "changelog": "Security: rate limiter thread safety, HTML encoding defense-in-depth, expired data cleanup, file locking",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.13.0/jellyfin-plugin-ratings_2.0.13.0.zip",
+        "checksum": "38bbdf45e2fee36f7920e06b9ac825cb",
+        "timestamp": "2026-02-20T17:30:00Z"
+      },
+      {
         "version": "2.0.12.0",
         "changelog": "Major security update: race condition fixes, XSS sanitization, input validation, HttpClient timeout",
         "targetAbi": "10.11.0.0",
