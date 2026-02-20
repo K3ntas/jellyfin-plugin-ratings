@@ -1973,7 +1973,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         public async Task CleanupExpiredDataAsync()
         {
             var now = DateTime.UtcNow;
-            var cleanedUp = false;
+            var userBansChanged = false;
+            var chatBansChanged = false;
+            var chatUsersChanged = false;
 
             lock (_lock)
             {
@@ -1985,7 +1987,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 foreach (var id in expiredUserBans)
                 {
                     _userBans.Remove(id);
-                    cleanedUp = true;
+                    userBansChanged = true;
                 }
 
                 // Remove expired chat bans
@@ -1996,7 +1998,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 foreach (var id in expiredChatBans)
                 {
                     _chatBans.Remove(id);
-                    cleanedUp = true;
+                    chatBansChanged = true;
                 }
 
                 // Remove inactive chat users (not seen in 30 days)
@@ -2008,7 +2010,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 foreach (var id in inactiveUsers)
                 {
                     _chatUsers.Remove(id);
-                    cleanedUp = true;
+                    chatUsersChanged = true;
                 }
 
                 // Remove old notifications (older than 7 days)
@@ -2019,17 +2021,28 @@ namespace Jellyfin.Plugin.Ratings.Data
                 foreach (var n in oldNotifications)
                 {
                     _notifications.Remove(n);
-                    cleanedUp = true;
                 }
             }
 
-            if (cleanedUp)
+            // Save AFTER releasing the lock to avoid deadlock
+            if (userBansChanged || chatBansChanged || chatUsersChanged)
             {
                 _logger.LogInformation("Cleaned up expired data (bans, inactive users, old notifications)");
-                // Save all affected collections
-                _ = SaveUserBansAsync();
-                _ = SaveChatBansAsync();
-                _ = SaveChatUsersAsync();
+            }
+
+            if (userBansChanged)
+            {
+                await SaveUserBansAsync().ConfigureAwait(false);
+            }
+
+            if (chatBansChanged)
+            {
+                await SaveChatBansAsync().ConfigureAwait(false);
+            }
+
+            if (chatUsersChanged)
+            {
+                await SaveChatUsersAsync().ConfigureAwait(false);
             }
         }
     }
