@@ -969,6 +969,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetDMUsers([FromQuery] string? query)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -997,6 +1000,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetConversations()
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1028,6 +1034,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromQuery] DateTime? since,
             [FromQuery] int limit = 50)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1144,6 +1153,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetUnreadDMCount()
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1158,6 +1170,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> DeleteDM([FromRoute] Guid messageId)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 

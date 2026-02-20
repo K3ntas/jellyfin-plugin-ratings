@@ -897,6 +897,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                     _ = _repository.CleanupOldRejectedRequestsAsync(autoDeleteDays);
                 }
 
+                // Validate ImdbLink URL if provided
+                if (!string.IsNullOrWhiteSpace(request.ImdbLink))
+                {
+                    if (!Uri.TryCreate(request.ImdbLink, UriKind.Absolute, out var imdbUri) ||
+                        (imdbUri.Scheme != "https" && imdbUri.Scheme != "http"))
+                    {
+                        return BadRequest("Invalid IMDB link format");
+                    }
+
+                    // Only allow IMDB URLs
+                    var host = imdbUri.Host.ToLowerInvariant();
+                    if (!host.Equals("imdb.com", StringComparison.OrdinalIgnoreCase) &&
+                        !host.EndsWith(".imdb.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return BadRequest("IMDB link must be from imdb.com");
+                    }
+                }
+
                 var mediaRequest = new MediaRequest
                 {
                     Id = Guid.NewGuid(),
@@ -1258,6 +1276,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (existingRequest.Status != "pending")
                 {
                     return BadRequest("You can only edit pending requests");
+                }
+
+                // Validate ImdbLink URL if provided
+                if (!string.IsNullOrWhiteSpace(request.ImdbLink))
+                {
+                    if (!Uri.TryCreate(request.ImdbLink, UriKind.Absolute, out var imdbUri) ||
+                        (imdbUri.Scheme != "https" && imdbUri.Scheme != "http"))
+                    {
+                        return BadRequest("Invalid IMDB link format");
+                    }
+
+                    // Only allow IMDB URLs
+                    var host = imdbUri.Host.ToLowerInvariant();
+                    if (!host.Equals("imdb.com", StringComparison.OrdinalIgnoreCase) &&
+                        !host.EndsWith(".imdb.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return BadRequest("IMDB link must be from imdb.com");
+                    }
                 }
 
                 var result = await _repository.UpdateMediaRequestAsync(
@@ -2583,7 +2619,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         public static Guid GetUserId(this System.Security.Claims.ClaimsPrincipal principal)
         {
             var userId = principal.FindFirst("Jellyfin.UserId")?.Value;
-            return string.IsNullOrEmpty(userId) ? Guid.Empty : Guid.Parse(userId);
+            return Guid.TryParse(userId, out var id) ? id : Guid.Empty;
         }
     }
 }
