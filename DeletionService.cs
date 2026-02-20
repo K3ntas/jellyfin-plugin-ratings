@@ -36,9 +36,19 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <inheritdoc />
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Deletion service starting");
+
+            // Run cleanup of expired data on startup
+            try
+            {
+                await _repository.CleanupExpiredDataAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during startup cleanup");
+            }
 
             // Check for due deletions every hour
             _deletionTimer = new Timer(
@@ -46,8 +56,6 @@ namespace Jellyfin.Plugin.Ratings
                 null,
                 TimeSpan.FromMinutes(1), // Initial delay - check shortly after startup
                 TimeSpan.FromHours(1));  // Then check every hour
-
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
@@ -95,6 +103,9 @@ namespace Jellyfin.Plugin.Ratings
         {
             try
             {
+                // Run periodic cleanup of expired data (expired bans, inactive users, etc.)
+                await _repository.CleanupExpiredDataAsync().ConfigureAwait(false);
+
                 // Check if media management is enabled
                 var config = Plugin.Instance?.Configuration;
                 if (config?.EnableMediaManagement != true)
