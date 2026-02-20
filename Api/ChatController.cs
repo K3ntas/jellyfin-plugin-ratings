@@ -146,9 +146,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Remove event handler attributes
             input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
 
-            // Defense-in-depth: HTML encode special characters
-            // This ensures even if regex misses something, XSS is prevented
-            input = WebUtility.HtmlEncode(input);
+            // Note: NOT HTML encoding here because client renders with textContent (safe)
+            // Adding encoding would cause "&" to display as "&amp;"
 
             return input;
         }

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.14.0",
+        "changelog": "Hotfix: Fix deadlock in CleanupExpiredDataAsync that caused 500 errors",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.14.0/jellyfin-plugin-ratings_2.0.14.0.zip",
+        "checksum": "b637e5dc81589bdb72a3665cdf762f52",
+        "timestamp": "2026-02-20T18:00:00Z"
+      },
+      {
         "version": "2.0.13.0",
         "changelog": "Security: rate limiter thread safety, HTML encoding defense-in-depth, expired data cleanup, file locking",
         "targetAbi": "10.11.0.0",
