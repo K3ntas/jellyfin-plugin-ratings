@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Text.Json;
@@ -32,11 +33,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<ChatController> _logger;
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 
         // Rate limiting with ConcurrentDictionary for thread safety
         private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _rateLimits = new();
         private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
+        private static readonly object _cleanupLock = new object();
 
         /// <summary>
         /// Allowed GIF domains for security (exact match or subdomain).
@@ -144,6 +146,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Remove event handler attributes
             input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
 
+            // Note: NOT HTML encoding here because client renders with textContent (safe)
+            // Adding encoding would cause "&" to display as "&amp;"
+
             return input;
         }
 
@@ -183,15 +188,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             var now = DateTime.UtcNow;
 
-            // Periodic cleanup of stale entries (every 5 minutes)
+            // Periodic cleanup of stale entries (every 5 minutes) - thread-safe
             if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
             {
-                _lastRateLimitCleanup = now;
-                foreach (var key in _rateLimits.Keys.ToList())
+                lock (_cleanupLock)
                 {
-                    if (_rateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                    // Double-check after acquiring lock
+                    if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
                     {
-                        _rateLimits.TryRemove(key, out _);
+                        _lastRateLimitCleanup = now;
+                        foreach (var key in _rateLimits.Keys.ToList())
+                        {
+                            if (_rateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                            {
+                                _rateLimits.TryRemove(key, out _);
+                            }
+                        }
                     }
                 }
             }
@@ -561,6 +573,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             var maxLength = config?.ChatMaxMessageLength ?? 500;
             var sanitizedContent = SanitizeMessage(dto.Content, maxLength);
 
+            // HTML-encode GIF URL to prevent XSS (URL is already validated by IsValidGifUrl)
+            var sanitizedGifUrl = !string.IsNullOrEmpty(dto.GifUrl) && IsValidGifUrl(dto.GifUrl)
+                ? WebUtility.HtmlEncode(dto.GifUrl)
+                : null;
+
             var message = new ChatMessage
             {
                 Id = Guid.NewGuid(),
@@ -568,7 +585,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 UserName = user.Username,
                 UserAvatar = $"/Users/{userId}/Images/Primary",
                 Content = sanitizedContent,
-                GifUrl = dto.GifUrl,
+                GifUrl = sanitizedGifUrl,
                 Timestamp = DateTime.UtcNow,
                 ReplyToId = dto.ReplyToId
             };
@@ -828,6 +845,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Duration must be positive");
             }
 
+            // Cap ban duration at 1 year (525600 minutes) to prevent abuse
+            var cappedDuration = durationMinutes.HasValue ? Math.Min(durationMinutes.Value, 525600) : (int?)null;
+
             var banningUser = _userManager.GetUserById(userId);
 
             var ban = new ChatBan
@@ -840,8 +860,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 BannedBy = userId,
                 BannedByName = banningUser?.Username ?? "Unknown",
                 BannedAt = DateTime.UtcNow,
-                ExpiresAt = durationMinutes.HasValue ? DateTime.UtcNow.AddMinutes(durationMinutes.Value) : null,
-                IsPermanent = !durationMinutes.HasValue
+                ExpiresAt = cappedDuration.HasValue ? DateTime.UtcNow.AddMinutes(cappedDuration.Value) : null,
+                IsPermanent = !cappedDuration.HasValue
             };
 
             var result = await _repository.AddChatBanAsync(ban).ConfigureAwait(false);
@@ -969,6 +989,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetDMUsers([FromQuery] string? query)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -997,6 +1020,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetConversations()
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1028,6 +1054,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromQuery] DateTime? since,
             [FromQuery] int limit = 50)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1115,6 +1144,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             var maxLength = config?.ChatMaxMessageLength ?? 500;
             var sanitizedContent = SanitizeMessage(dto.Content, maxLength);
 
+            // HTML-encode GIF URL to prevent XSS (URL is already validated by IsValidGifUrl)
+            var sanitizedGifUrl = !string.IsNullOrEmpty(dto.GifUrl) && IsValidGifUrl(dto.GifUrl)
+                ? WebUtility.HtmlEncode(dto.GifUrl)
+                : null;
+
             var message = new PrivateMessage
             {
                 Id = Guid.NewGuid(),
@@ -1124,7 +1158,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 RecipientId = otherUserId,
                 RecipientName = recipient.Username,
                 Content = sanitizedContent,
-                GifUrl = dto.GifUrl,
+                GifUrl = sanitizedGifUrl,
                 Timestamp = DateTime.UtcNow,
                 IsRead = false
             };
@@ -1144,6 +1178,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetUnreadDMCount()
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
@@ -1158,6 +1195,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> DeleteDM([FromRoute] Guid messageId)
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
