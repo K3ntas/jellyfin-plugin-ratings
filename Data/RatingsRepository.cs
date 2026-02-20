@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Common.Configuration;
@@ -19,6 +20,18 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly ILogger<RatingsRepository> _logger;
         private readonly string _dataPath;
         private readonly object _lock = new object();
+
+        // Semaphores to prevent concurrent file writes (fixes race condition)
+        private static readonly SemaphoreSlim _ratingsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _requestsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _deletionsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _deletionRequestsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _userBansWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _chatMessagesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _chatUsersWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _chatModeratorsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _chatBansWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _privateMessagesWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
@@ -100,19 +113,30 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveRatingsAsync()
         {
+            await _ratingsWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var ratingsFile = Path.Combine(_dataPath, "ratings.json");
-                var json = JsonSerializer.Serialize(_ratings.Values.ToList(), new JsonSerializerOptions
+                List<UserRating> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _ratings.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
                 await File.WriteAllTextAsync(ratingsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} ratings to disk", _ratings.Count);
+                _logger.LogDebug("Saved {Count} ratings to disk", snapshot.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving ratings to disk");
+            }
+            finally
+            {
+                _ratingsWriteLock.Release();
             }
         }
 
@@ -285,19 +309,30 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveMediaRequestsAsync()
         {
+            await _requestsWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var requestsFile = Path.Combine(_dataPath, "media_requests.json");
-                var json = JsonSerializer.Serialize(_mediaRequests.Values.ToList(), new JsonSerializerOptions
+                List<MediaRequest> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _mediaRequests.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
                 await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} media requests to disk", _mediaRequests.Count);
+                _logger.LogDebug("Saved {Count} media requests to disk", snapshot.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving media requests to disk");
+            }
+            finally
+            {
+                _requestsWriteLock.Release();
             }
         }
 
@@ -681,19 +716,30 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveScheduledDeletionsAsync()
         {
+            await _deletionsWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var deletionsFile = Path.Combine(_dataPath, "scheduled_deletions.json");
-                var json = JsonSerializer.Serialize(_scheduledDeletions.Values.ToList(), new JsonSerializerOptions
+                List<ScheduledDeletion> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _scheduledDeletions.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
                 await File.WriteAllTextAsync(deletionsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} scheduled deletions to disk", _scheduledDeletions.Count);
+                _logger.LogDebug("Saved {Count} scheduled deletions to disk", snapshot.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving scheduled deletions to disk");
+            }
+            finally
+            {
+                _deletionsWriteLock.Release();
             }
         }
 
@@ -848,19 +894,30 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveDeletionRequestsAsync()
         {
+            await _deletionRequestsWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var requestsFile = Path.Combine(_dataPath, "deletion_requests.json");
-                var json = JsonSerializer.Serialize(_deletionRequests.Values.ToList(), new JsonSerializerOptions
+                List<DeletionRequest> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _deletionRequests.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
                 await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} deletion requests to disk", _deletionRequests.Count);
+                _logger.LogDebug("Saved {Count} deletion requests to disk", snapshot.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving deletion requests to disk");
+            }
+            finally
+            {
+                _deletionRequestsWriteLock.Release();
             }
         }
 
@@ -1008,10 +1065,17 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveUserBansAsync()
         {
+            await _userBansWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var bansFile = Path.Combine(_dataPath, "user_bans.json");
-                var json = JsonSerializer.Serialize(_userBans.Values.ToList(), new JsonSerializerOptions
+                List<UserBan> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _userBans.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
                 {
                     WriteIndented = true
                 });
@@ -1020,6 +1084,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving user bans to disk");
+            }
+            finally
+            {
+                _userBansWriteLock.Release();
             }
         }
 
@@ -1123,15 +1191,26 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveChatMessagesAsync()
         {
+            await _chatMessagesWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var messagesFile = Path.Combine(_dataPath, "chat_messages.json");
-                var json = JsonSerializer.Serialize(_chatMessages, new JsonSerializerOptions { WriteIndented = true });
+                List<ChatMessage> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _chatMessages.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving chat messages to disk");
+            }
+            finally
+            {
+                _chatMessagesWriteLock.Release();
             }
         }
 
@@ -1281,15 +1360,26 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveChatUsersAsync()
         {
+            await _chatUsersWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var usersFile = Path.Combine(_dataPath, "chat_users.json");
-                var json = JsonSerializer.Serialize(_chatUsers.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                List<ChatUser> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _chatUsers.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(usersFile, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving chat users to disk");
+            }
+            finally
+            {
+                _chatUsersWriteLock.Release();
             }
         }
 
@@ -1444,15 +1534,26 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveChatModeratorsAsync()
         {
+            await _chatModeratorsWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var modsFile = Path.Combine(_dataPath, "chat_moderators.json");
-                var json = JsonSerializer.Serialize(_chatModerators.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                List<ChatModerator> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _chatModerators.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(modsFile, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving chat moderators to disk");
+            }
+            finally
+            {
+                _chatModeratorsWriteLock.Release();
             }
         }
 
@@ -1561,15 +1662,26 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SaveChatBansAsync()
         {
+            await _chatBansWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var bansFile = Path.Combine(_dataPath, "chat_bans.json");
-                var json = JsonSerializer.Serialize(_chatBans.Values.ToList(), new JsonSerializerOptions { WriteIndented = true });
+                List<ChatBan> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _chatBans.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(bansFile, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving chat bans to disk");
+            }
+            finally
+            {
+                _chatBansWriteLock.Release();
             }
         }
 
@@ -1682,15 +1794,26 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         private async Task SavePrivateMessagesAsync()
         {
+            await _privateMessagesWriteLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 var messagesFile = Path.Combine(_dataPath, "private_messages.json");
-                var json = JsonSerializer.Serialize(_privateMessages, new JsonSerializerOptions { WriteIndented = true });
+                List<PrivateMessage> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _privateMessages.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving private messages to disk");
+            }
+            finally
+            {
+                _privateMessagesWriteLock.Release();
             }
         }
 
