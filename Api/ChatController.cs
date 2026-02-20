@@ -38,6 +38,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         // Rate limiting with ConcurrentDictionary for thread safety
         private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _rateLimits = new();
         private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
+        private static readonly object _cleanupLock = new object();
 
         /// <summary>
         /// Allowed GIF domains for security (exact match or subdomain).
@@ -145,6 +146,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Remove event handler attributes
             input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
 
+            // Defense-in-depth: HTML encode special characters
+            // This ensures even if regex misses something, XSS is prevented
+            input = WebUtility.HtmlEncode(input);
+
             return input;
         }
 
@@ -184,15 +189,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             var now = DateTime.UtcNow;
 
-            // Periodic cleanup of stale entries (every 5 minutes)
+            // Periodic cleanup of stale entries (every 5 minutes) - thread-safe
             if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
             {
-                _lastRateLimitCleanup = now;
-                foreach (var key in _rateLimits.Keys.ToList())
+                lock (_cleanupLock)
                 {
-                    if (_rateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                    // Double-check after acquiring lock
+                    if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
                     {
-                        _rateLimits.TryRemove(key, out _);
+                        _lastRateLimitCleanup = now;
+                        foreach (var key in _rateLimits.Keys.ToList())
+                        {
+                            if (_rateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                            {
+                                _rateLimits.TryRemove(key, out _);
+                            }
+                        }
                     }
                 }
             }

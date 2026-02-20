@@ -64,6 +64,8 @@ namespace Jellyfin.Plugin.Ratings
             return Array.Empty<TaskTriggerInfo>();
         }
 
+        private static readonly object _fileLock = new object();
+
         private void CleanupOldInjection()
         {
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
@@ -74,16 +76,19 @@ namespace Jellyfin.Plugin.Ratings
 
             try
             {
-                var content = File.ReadAllText(indexPath);
-                var startComment = Regex.Escape("<!-- BEGIN Ratings Plugin -->");
-                var endComment = Regex.Escape("<!-- END Ratings Plugin -->");
-
-                var cleanupRegex = new Regex($"{startComment}[\\s\\S]*?{endComment}\\s*", RegexOptions.Multiline);
-
-                if (cleanupRegex.IsMatch(content))
+                lock (_fileLock)
                 {
-                    content = cleanupRegex.Replace(content, string.Empty);
-                    File.WriteAllText(indexPath, content);
+                    var content = File.ReadAllText(indexPath);
+                    var startComment = Regex.Escape("<!-- BEGIN Ratings Plugin -->");
+                    var endComment = Regex.Escape("<!-- END Ratings Plugin -->");
+
+                    var cleanupRegex = new Regex($"{startComment}[\\s\\S]*?{endComment}\\s*", RegexOptions.Multiline);
+
+                    if (cleanupRegex.IsMatch(content))
+                    {
+                        content = cleanupRegex.Replace(content, string.Empty);
+                        File.WriteAllText(indexPath, content);
+                    }
                 }
             }
             catch
@@ -102,24 +107,27 @@ namespace Jellyfin.Plugin.Ratings
 
             try
             {
-                var content = File.ReadAllText(indexPath);
-
-                // Check if already injected (in case cleanup failed)
-                if (content.Contains("<!-- BEGIN Ratings Plugin -->"))
+                lock (_fileLock)
                 {
-                    return;
-                }
+                    var content = File.ReadAllText(indexPath);
 
-                var startComment = "<!-- BEGIN Ratings Plugin -->";
-                var endComment = "<!-- END Ratings Plugin -->";
-                var scriptTag = "<script defer src=\"/Ratings/ratings.js\"></script>";
+                    // Check if already injected (in case cleanup failed)
+                    if (content.Contains("<!-- BEGIN Ratings Plugin -->"))
+                    {
+                        return;
+                    }
 
-                var injectionBlock = $"{startComment}\n{scriptTag}\n{endComment}\n";
+                    var startComment = "<!-- BEGIN Ratings Plugin -->";
+                    var endComment = "<!-- END Ratings Plugin -->";
+                    var scriptTag = "<script defer src=\"/Ratings/ratings.js\"></script>";
 
-                if (content.Contains("</body>"))
-                {
-                    content = content.Replace("</body>", $"{injectionBlock}</body>");
-                    File.WriteAllText(indexPath, content);
+                    var injectionBlock = $"{startComment}\n{scriptTag}\n{endComment}\n";
+
+                    if (content.Contains("</body>"))
+                    {
+                        content = content.Replace("</body>", $"{injectionBlock}</body>");
+                        File.WriteAllText(indexPath, content);
+                    }
                 }
             }
             catch
