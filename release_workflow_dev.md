@@ -1,223 +1,123 @@
 # Dev Branch Release Workflow
 
-## Overview
-
-The dev branch uses separate versioning (2.x.x.x) for testing before merging to main.
-
-**Dev Manifest URL:**
-```
-https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/manifest.json
-```
+Quick reference for releasing on the **dev** branch for testing.
 
 ---
 
-## Version Numbering
+## Important: Known Issues
 
-| Branch | Version Format | Example |
-|--------|---------------|---------|
-| main   | 1.0.x.0       | 1.0.306.0, 1.0.307.0 |
-| dev    | 2.0.x.0       | 2.0.1.0, 2.0.2.0 |
+### Old Plugin Folders Not Being Deleted (2026-02-20)
 
----
+**Problem**: After updating the plugin, Jellyfin loads BOTH old and new versions, causing:
+- `AmbiguousMatchException` (routes registered twice)
+- `InvalidCastException` (configuration type conflicts)
+- Plugin constantly asking for restart
 
-## Release Steps
+**Root Cause**: The release ZIP was missing the `.pdb` file. Jellyfin uses this for proper plugin identification and upgrade handling.
 
-### 1. Update Version
-```xml
-<!-- Jellyfin.Plugin.Ratings.csproj -->
-<Version>2.0.X.0</Version>
-```
+**Solution**: ALWAYS include both `.dll` AND `.pdb` files in the release ZIP:
 
-### 2. Build
-```bash
-cd /path/to/jellyfinratings
-rm -rf bin obj
-dotnet build -c Release
-```
-
-### 3. Package
 ```powershell
-Compress-Archive -Path 'bin/Release/net9.0/Jellyfin.Plugin.Ratings.dll','bin/Release/net9.0/Jellyfin.Plugin.Ratings.pdb' -DestinationPath 'release/jellyfin-plugin-ratings_2.0.X.0.zip' -Force
+# CORRECT - includes both files
+Compress-Archive -Path 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.dll', 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.pdb' -DestinationPath 'jellyfin-plugin-ratings_VERSION.zip' -Force
+
+# WRONG - missing PDB causes upgrade issues
+Compress-Archive -Path 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.dll' -DestinationPath 'jellyfin-plugin-ratings_VERSION.zip' -Force
 ```
 
-### 4. Get Checksum
+**Manual Fix** (if old folders remain):
 ```bash
-certutil -hashfile release/jellyfin-plugin-ratings_2.0.X.0.zip MD5
-```
+# List plugin folders
+docker exec -it jf-test ls /config/plugins/ | grep Ratings
 
-### 5. Update manifest.json
-```json
-{
-  "version": "2.0.X.0",
-  "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.X.0/jellyfin-plugin-ratings_2.0.X.0.zip",
-  "checksum": "<MD5_HASH>",
-  "targetAbi": "10.11.0.0"
-}
-```
+# Delete old version(s) - keep only the newest
+docker exec -it jf-test rm -rf "/config/plugins/Ratings (Dev)_OLD_VERSION"
 
-### 6. Commit & Push
-```bash
-git add -A
-git commit -m "Dev vX.X.X.X - Description"
-git push origin dev
-```
-
-### 7. Create GitHub Release
-```bash
-gh release create v2.0.X.0 release/jellyfin-plugin-ratings_2.0.X.0.zip \
-  --target dev \
-  --prerelease \
-  --title "v2.0.X.0 (Dev)" \
-  --notes "Dev release notes..."
+# Restart
+docker restart jf-test
 ```
 
 ---
 
-## Common Issues & Fixes
+## Quick Release Checklist
 
-### Issue 1: "NotSupported" Status in Jellyfin
-
-**Symptoms:**
-- Plugin shows "NotSupported" in Jellyfin catalog
-- Plugin installs but doesn't load
-
-**Cause:**
-Plugin compiled with newer Jellyfin packages than the server version.
-
-**Diagnosis:**
-Check Jellyfin server logs for:
-```
-Could not load file or assembly 'MediaBrowser.Controller, Version=10.11.6.0'
-```
-
-**Fix:**
-Downgrade packages in csproj to match server:
-```xml
-<PackageReference Include="Jellyfin.Controller" Version="10.11.0" />
-<PackageReference Include="Jellyfin.Model" Version="10.11.0" />
-```
-
-**Prevention:**
-Dependabot is configured to ignore Jellyfin packages (see `.github/dependabot.yml`).
-
----
-
-### Issue 2: Dependabot Updates Breaking Compatibility
-
-**Problem:**
-Dependabot auto-updates Jellyfin packages to latest version, which may be newer than users' servers.
-
-**Current Protection (.github/dependabot.yml):**
-```yaml
-ignore:
-  - dependency-name: "Jellyfin.Controller"
-  - dependency-name: "Jellyfin.Model"
-```
-
-**Best Practice:**
-- Keep Jellyfin packages at minimum required version (10.11.0)
-- Only update manually when dropping support for older servers
-- Test on oldest supported server version
-
----
-
-### Issue 3: targetAbi Mismatch
-
-**What is targetAbi?**
-Minimum Jellyfin server version required by the plugin.
-
-**Correct Setting:**
-```json
-"targetAbi": "10.11.0.0"
-```
-
-**Rule:**
-- Set to the MINIMUM version you support
-- NOT the version you compiled with
-- Allows users with 10.11.0, 10.11.1, 10.11.2, etc. to use the plugin
-
----
-
-### Issue 4: Same GUID Conflict
-
-**Problem:**
-Dev and main plugins share the same GUID. Users cannot have both installed.
-
-**Current Design:**
-- Same GUID intentionally (same plugin, different versions)
-- Users must uninstall one before installing the other
-
-**If Separate Plugins Needed:**
-Change GUID in dev branch:
-- `manifest.json` - guid field
-- `Plugin.cs` - Id property
-- `Web/ratings.js` - pluginId
-- `Configuration/configPage.html` - pluginId
-
----
-
-### Issue 5: Plugin Won't Load After Install
-
-**Symptoms:**
-- Plugin installed successfully
-- Shows in "My Plugins" but doesn't work
-- No errors in UI
-
-**Diagnosis:**
-1. Check server logs for assembly load errors
-2. Verify checksum matches
-3. Check .NET version compatibility
-
-**Common Fixes:**
-1. Delete plugin folder manually and reinstall
-2. Restart Jellyfin completely
-3. Verify packages match server version
-
----
-
-## Package Version Compatibility Matrix
-
-| Jellyfin Server | Recommended Package Version |
-|----------------|----------------------------|
-| 10.11.0        | 10.11.0                    |
-| 10.11.1        | 10.11.0                    |
-| 10.11.2+       | 10.11.0                    |
-| 10.12.x        | 10.12.0 (when available)   |
-
-**Rule:** Always use the OLDEST package version that works.
-
----
-
-## Merging Dev to Main
-
-When dev is tested and ready:
-
-1. **Update main branch packages** (if needed)
-2. **Merge dev to main:**
+1. **Update version** in `Jellyfin.Plugin.Ratings.csproj`
+2. **Clean build**:
    ```bash
-   git checkout main
-   git merge dev
+   dotnet clean && dotnet build -c Release
    ```
-3. **Update version to main numbering:**
-   ```xml
-   <Version>1.0.307.0</Version>
+3. **Create ZIP with BOTH dll and pdb**:
+   ```powershell
+   Compress-Archive -Path 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.dll', 'bin\Release\net9.0\Jellyfin.Plugin.Ratings.pdb' -DestinationPath 'jellyfin-plugin-ratings_VERSION.zip' -Force
    ```
-4. **Update main manifest.json** with new version
-5. **Create production release** (not prerelease)
+4. **Get checksum**:
+   ```powershell
+   (Get-FileHash jellyfin-plugin-ratings_VERSION.zip -Algorithm MD5).Hash.ToLower()
+   ```
+5. **Update manifest.json** with new version entry
+6. **Commit and push**:
+   ```bash
+   git add -A && git commit -m "vVERSION: Description" && git push origin dev
+   ```
+7. **Create GitHub release** (prerelease for dev):
+   ```bash
+   gh release create vVERSION jellyfin-plugin-ratings_VERSION.zip --title "vVERSION - Title" --prerelease --notes "Release notes"
+   ```
 
 ---
 
-## Cleanup Commands
+## Dev vs Main Branch
 
-**Delete old dev releases:**
+| Aspect | Main (Production) | Dev (Testing) |
+|--------|-------------------|---------------|
+| Version prefix | `1.0.x.x` | `2.0.x.x` |
+| Plugin name | `Ratings` | `Ratings (Dev)` |
+| Prerelease | No | Yes (`--prerelease`) |
+| Target users | All users | Testers only |
+
+---
+
+## Test Server Commands
+
 ```bash
-gh release delete v2.0.X.0 --yes
+# Check which container
+docker ps | grep -i jellyfin
+# jf-test = test server
+# jellyfin = production server
+
+# Check loaded plugins
+docker logs jf-test 2>&1 | grep -i "loaded plugin"
+
+# List plugin folders
+docker exec -it jf-test ls /config/plugins/
+
+# Force update (delete and restart)
+docker exec -it jf-test rm -rf "/config/plugins/Ratings (Dev)_*"
+docker restart jf-test
 ```
 
-**Delete plugin from server (if broken):**
+---
+
+## Troubleshooting
+
+### Multiple plugin versions loaded
+```
+[INF] Loaded plugin: "Ratings (Dev)" "2.0.14.0"
+[INF] Loaded plugin: "Ratings (Dev)" "2.0.15.0"
+```
+**Fix**: Delete older version folder, restart Jellyfin.
+
+### 500 errors after update
+Check logs for specific error:
 ```bash
-rm -rf /config/plugins/Ratings\ \(Dev\)_2.0.X.0/
+docker logs jf-test --tail 100 2>&1 | grep -i error
 ```
 
-**Force Jellyfin to re-download manifest:**
-- Dashboard → Plugins → Repositories → Remove → Re-add
+### Plugin not updating
+1. Check if manifest.json was pushed
+2. Clear Jellyfin plugin cache
+3. Manually delete plugin folder and reinstall
+
+---
+
+**Last updated**: 2026-02-20
