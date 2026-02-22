@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.16.0",
+        "changelog": "Backup & Restore: Export/import all plugin data. Red warning when backup overdue.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.16.0/jellyfin-plugin-ratings_2.0.16.0.zip",
+        "checksum": "80f60809e29642e6722dce2099907a26",
+        "timestamp": "2026-02-22T22:00:00Z"
+      },
+      {
         "version": "2.0.15.0",
         "changelog": "Chat avatars: Show user profile pictures in chat messages. Notification badge: Combined count of public + DM unread messages",
         "targetAbi": "10.11.0.0",

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mime;
@@ -8,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data;
+using MediaBrowser.Common.Configuration;
 using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
@@ -15,6 +17,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +36,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly ILibraryManager _libraryManager;
         private readonly ISessionManager _sessionManager;
         private readonly IUserDataManager _userDataManager;
+        private readonly IApplicationPaths _appPaths;
         private readonly ILogger<RatingsController> _logger;
 
         /// <summary>
@@ -43,6 +47,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="libraryManager">Library manager.</param>
         /// <param name="sessionManager">Session manager.</param>
         /// <param name="userDataManager">User data manager.</param>
+        /// <param name="appPaths">Application paths.</param>
         /// <param name="logger">Logger instance.</param>
         public RatingsController(
             RatingsRepository repository,
@@ -50,6 +55,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             ILibraryManager libraryManager,
             ISessionManager sessionManager,
             IUserDataManager userDataManager,
+            IApplicationPaths appPaths,
             ILogger<RatingsController> logger)
         {
             _repository = repository;
@@ -57,6 +63,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _libraryManager = libraryManager;
             _sessionManager = sessionManager;
             _userDataManager = userDataManager;
+            _appPaths = appPaths;
             _logger = logger;
         }
 
@@ -2604,6 +2611,181 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        #region Backup & Restore
+
+        /// <summary>
+        /// Export all plugin data as a single JSON file for backup.
+        /// </summary>
+        /// <returns>JSON backup file.</returns>
+        [HttpGet("Backup/Export")]
+        [Authorize(Policy = "RequiresElevation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> ExportBackup()
+        {
+            try
+            {
+                var dataPath = Path.Combine(_appPaths.DataPath, "ratings");
+                var backupData = new Dictionary<string, object?>
+                {
+                    { "exportDate", DateTime.UtcNow.ToString("o") },
+                    { "pluginVersion", Plugin.Instance?.Version.ToString() ?? "unknown" }
+                };
+
+                // List of data files to backup
+                var dataFiles = new[]
+                {
+                    "ratings.json",
+                    "media_requests.json",
+                    "scheduled_deletions.json",
+                    "deletion_requests.json",
+                    "user_bans.json",
+                    "chat_messages.json",
+                    "chat_users.json",
+                    "chat_moderators.json",
+                    "chat_bans.json",
+                    "private_messages.json"
+                };
+
+                foreach (var fileName in dataFiles)
+                {
+                    var filePath = Path.Combine(dataPath, fileName);
+                    var key = Path.GetFileNameWithoutExtension(fileName);
+
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var content = await System.IO.File.ReadAllTextAsync(filePath).ConfigureAwait(false);
+                        try
+                        {
+                            backupData[key] = System.Text.Json.JsonSerializer.Deserialize<object>(content);
+                        }
+                        catch
+                        {
+                            backupData[key] = null;
+                        }
+                    }
+                    else
+                    {
+                        backupData[key] = null;
+                    }
+                }
+
+                // Update last backup date in config
+                var config = Plugin.Instance?.Configuration;
+                if (config != null)
+                {
+                    config.LastBackupDate = DateTime.UtcNow.ToString("o");
+                    Plugin.Instance?.SaveConfiguration();
+                }
+
+                var jsonOptions = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
+                var json = System.Text.Json.JsonSerializer.Serialize(backupData, jsonOptions);
+                var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                var fileName2 = $"ratings_backup_{DateTime.UtcNow:yyyy-MM-dd_HHmmss}.json";
+
+                return File(bytes, "application/json", fileName2);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting backup");
+                return StatusCode(500, "Failed to export backup");
+            }
+        }
+
+        /// <summary>
+        /// Import plugin data from a backup file.
+        /// </summary>
+        /// <param name="backupJson">The backup JSON content.</param>
+        /// <returns>Import result.</returns>
+        [HttpPost("Backup/Import")]
+        [Authorize(Policy = "RequiresElevation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> ImportBackup([FromBody] System.Text.Json.JsonElement backupJson)
+        {
+            try
+            {
+                var dataPath = Path.Combine(_appPaths.DataPath, "ratings");
+
+                // Ensure directory exists
+                if (!Directory.Exists(dataPath))
+                {
+                    Directory.CreateDirectory(dataPath);
+                }
+
+                // Map of backup keys to file names
+                var keyToFile = new Dictionary<string, string>
+                {
+                    { "ratings", "ratings.json" },
+                    { "media_requests", "media_requests.json" },
+                    { "scheduled_deletions", "scheduled_deletions.json" },
+                    { "deletion_requests", "deletion_requests.json" },
+                    { "user_bans", "user_bans.json" },
+                    { "chat_messages", "chat_messages.json" },
+                    { "chat_users", "chat_users.json" },
+                    { "chat_moderators", "chat_moderators.json" },
+                    { "chat_bans", "chat_bans.json" },
+                    { "private_messages", "private_messages.json" }
+                };
+
+                var importedCount = 0;
+
+                foreach (var kvp in keyToFile)
+                {
+                    if (backupJson.TryGetProperty(kvp.Key, out var data) && data.ValueKind != System.Text.Json.JsonValueKind.Null)
+                    {
+                        var filePath = Path.Combine(dataPath, kvp.Value);
+                        var json = data.GetRawText();
+                        await System.IO.File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+                        importedCount++;
+                    }
+                }
+
+                // Reload data in repository
+                await _repository.ReloadAllDataAsync().ConfigureAwait(false);
+
+                _logger.LogInformation("Backup imported successfully. {Count} data files restored.", importedCount);
+                return Ok(new { success = true, message = $"Imported {importedCount} data files. Please restart Jellyfin for full effect." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error importing backup");
+                return StatusCode(500, "Failed to import backup: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Get backup status (last backup date).
+        /// </summary>
+        /// <returns>Backup status.</returns>
+        [HttpGet("Backup/Status")]
+        [Authorize(Policy = "RequiresElevation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult GetBackupStatus()
+        {
+            var config = Plugin.Instance?.Configuration;
+            var lastBackup = config?.LastBackupDate;
+
+            DateTime? lastBackupDate = null;
+            int? daysSinceBackup = null;
+
+            if (!string.IsNullOrEmpty(lastBackup) && DateTime.TryParse(lastBackup, out var parsed))
+            {
+                lastBackupDate = parsed;
+                daysSinceBackup = (int)(DateTime.UtcNow - parsed).TotalDays;
+            }
+
+            return Ok(new
+            {
+                lastBackupDate,
+                daysSinceBackup,
+                neverBackedUp = lastBackupDate == null
+            });
+        }
+
+        #endregion
 
         /// <summary>
         /// Helper to get authenticated user ID from headers.
