@@ -458,7 +458,41 @@
                         </div>
                     </div>
 
-                    <!-- ============ GROUP 6: Live Chat ============ -->
+                    <!-- ============ GROUP 6: Backup & Restore ============ -->
+                    <div class="settings-group" id="groupBackup">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupBackup')">
+                            <span class="settings-group-arrow">&#9660;</span>
+                            <span>Backup &amp; Restore</span>
+                        </div>
+                        <div class="settings-group-content">
+
+                            <!-- Backup Warning -->
+                            <div id="backupWarning" class="backup-warning" style="display: none;">
+                                <span class="backup-warning-icon">&#9888;</span>
+                                <span id="backupWarningText">You haven't backed up your data yet.</span>
+                            </div>
+
+                            <div class="fieldDescription" style="margin-bottom: 15px;">
+                                Export all plugin data (ratings, chat messages, media requests, bans, etc.) to a JSON file.
+                                You can restore this backup after reinstalling the plugin.
+                            </div>
+
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                                <button type="button" is="emby-button" class="raised" id="btnExportBackup" style="background: #00a4dc;">
+                                    <span>&#128190; Export Backup</span>
+                                </button>
+                                <button type="button" is="emby-button" class="raised" id="btnImportBackup">
+                                    <span>&#128194; Import Backup</span>
+                                </button>
+                                <input type="file" id="backupFileInput" accept=".json" style="display: none;" />
+                            </div>
+
+                            <div id="backupStatus" class="fieldDescription" style="color: #888;"></div>
+
+                        </div>
+                    </div>
+
+                    <!-- ============ GROUP 7: Live Chat ============ -->
                     <div class="settings-group" id="groupLiveChat">
                         <div class="settings-group-header" onclick="toggleSettingsGroup('groupLiveChat')">
                             <span class="settings-group-arrow">&#9660;</span>
@@ -654,6 +688,23 @@
             .axis-dropdown-item:hover {
                 background: rgba(255,255,255,0.1);
             }
+
+            /* Backup warning styles */
+            .backup-warning {
+                background: rgba(220, 53, 69, 0.15);
+                border: 1px solid rgba(220, 53, 69, 0.5);
+                border-radius: 6px;
+                padding: 12px 16px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: #ff6b6b;
+                font-weight: 500;
+            }
+            .backup-warning-icon {
+                font-size: 1.4em;
+            }
         </style>
 
         <script type="text/javascript">
@@ -775,8 +826,134 @@
                 });
             });
 
+            // Backup & Restore functionality
+            function checkBackupStatus() {
+                fetch(ApiClient.serverAddress() + '/Ratings/Backup/Status', {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                    }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var warningEl = document.getElementById('backupWarning');
+                    var warningText = document.getElementById('backupWarningText');
+                    var statusEl = document.getElementById('backupStatus');
+
+                    if (data.neverBackedUp) {
+                        warningEl.style.display = 'flex';
+                        warningText.textContent = "You haven't backed up your data yet. Consider creating a backup.";
+                        statusEl.textContent = 'Never backed up';
+                    } else if (data.daysSinceBackup > 30) {
+                        warningEl.style.display = 'flex';
+                        var months = Math.floor(data.daysSinceBackup / 30);
+                        if (months >= 2) {
+                            warningText.textContent = "You haven't backed up your data in " + months + " months.";
+                        } else {
+                            warningText.textContent = "You haven't backed up your data in over a month.";
+                        }
+                        statusEl.textContent = 'Last backup: ' + new Date(data.lastBackupDate).toLocaleDateString();
+                    } else {
+                        warningEl.style.display = 'none';
+                        statusEl.textContent = 'Last backup: ' + new Date(data.lastBackupDate).toLocaleDateString();
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('backupStatus').textContent = 'Could not check backup status';
+                });
+            }
+
+            document.getElementById('btnExportBackup').addEventListener('click', function() {
+                Dashboard.showLoadingMsg();
+                fetch(ApiClient.serverAddress() + '/Ratings/Backup/Export', {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                    }
+                })
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Export failed');
+                    var filename = response.headers.get('content-disposition');
+                    if (filename) {
+                        var match = filename.match(/filename="?([^"]+)"?/);
+                        filename = match ? match[1] : 'ratings_backup.json';
+                    } else {
+                        filename = 'ratings_backup_' + new Date().toISOString().slice(0,10) + '.json';
+                    }
+                    return response.blob().then(function(blob) {
+                        return { blob: blob, filename: filename };
+                    });
+                })
+                .then(function(data) {
+                    var url = window.URL.createObjectURL(data.blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    Dashboard.hideLoadingMsg();
+                    Dashboard.alert('Backup exported successfully!');
+                    checkBackupStatus();
+                })
+                .catch(function(err) {
+                    Dashboard.hideLoadingMsg();
+                    Dashboard.alert('Failed to export backup: ' + err.message);
+                });
+            });
+
+            document.getElementById('btnImportBackup').addEventListener('click', function() {
+                document.getElementById('backupFileInput').click();
+            });
+
+            document.getElementById('backupFileInput').addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+
+                if (!confirm('This will overwrite all existing plugin data. Are you sure you want to continue?')) {
+                    e.target.value = '';
+                    return;
+                }
+
+                Dashboard.showLoadingMsg();
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        var backupData = JSON.parse(event.target.result);
+                        fetch(ApiClient.serverAddress() + '/Ratings/Backup/Import', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                            },
+                            body: JSON.stringify(backupData)
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            Dashboard.hideLoadingMsg();
+                            if (data.success) {
+                                Dashboard.alert(data.message || 'Backup imported successfully!');
+                            } else {
+                                Dashboard.alert('Import failed: ' + (data.message || 'Unknown error'));
+                            }
+                        })
+                        .catch(function(err) {
+                            Dashboard.hideLoadingMsg();
+                            Dashboard.alert('Failed to import backup: ' + err.message);
+                        });
+                    } catch (err) {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert('Invalid backup file format');
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            });
+
             document.querySelector('#ratingsConfigPage').addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
+                checkBackupStatus();
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
