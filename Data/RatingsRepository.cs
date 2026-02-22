@@ -84,6 +84,30 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Reloads all data from disk. Used after importing a backup.
+        /// </summary>
+        /// <returns>Task.</returns>
+        public Task ReloadAllDataAsync()
+        {
+            lock (_lock)
+            {
+                LoadRatings();
+                LoadMediaRequests();
+                LoadScheduledDeletions();
+                LoadDeletionRequests();
+                LoadUserBans();
+                LoadChatMessages();
+                LoadChatUsers();
+                LoadChatModerators();
+                LoadChatBans();
+                LoadPrivateMessages();
+            }
+
+            _logger.LogInformation("All data reloaded from disk after backup import");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Loads ratings from disk.
         /// </summary>
         private void LoadRatings()
