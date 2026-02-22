@@ -341,5 +341,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Get a free key at https://klipy.com
         /// </summary>
         public string KlipyApiKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last backup date (ISO 8601 format).
+        /// Used to show backup reminder warning.
+        /// </summary>
+        public string LastBackupDate { get; set; } = string.Empty;
     }
 }
