@@ -1166,17 +1166,19 @@
 
                 @media (max-width: 480px) {
                     .ratings-plugin-star {
-                        font-size: 1.1em;
+                        font-size: 1em;
                     }
                     .ratings-plugin-stats {
                         font-size: 0.8em;
                     }
                     .ratings-plugin-stars {
-                        gap: 0.1em;
+                        gap: 0.05em;
+                        flex-wrap: nowrap !important;
                     }
                     .ratings-plugin-container {
                         padding: 0.2em 0.4em;
                         gap: 0.1em;
+                        left: 58% !important;
                     }
                 }
 
