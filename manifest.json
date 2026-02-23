@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.17.0",
+        "changelog": "Fix chat avatar display, add notification settings (public/private toggle)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.17.0/jellyfin-plugin-ratings_2.0.17.0.zip",
+        "checksum": "07538f6ba7793c26abb7e55ec7c3cb78",
+        "timestamp": "2026-02-23T12:00:00Z"
+      },
+      {
         "version": "2.0.16.0",
         "changelog": "Backup & Restore: Export/import all plugin data. Red warning when backup overdue.",
         "targetAbi": "10.11.0.0",
