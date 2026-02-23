@@ -86,6 +86,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ChatAllowEmojis = true;
             TenorApiKey = string.Empty;
             KlipyApiKey = string.Empty;
+
+            // Chat notification settings
+            ChatNotifyPublic = true;
+            ChatNotifyPrivate = true;
         }
 
         /// <summary>
@@ -347,5 +351,15 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Used to show backup reminder warning.
         /// </summary>
         public string LastBackupDate { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to show notifications for public chat messages.
+        /// </summary>
+        public bool ChatNotifyPublic { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to show notifications for private messages.
+        /// </summary>
+        public bool ChatNotifyPrivate { get; set; }
     }
 }
