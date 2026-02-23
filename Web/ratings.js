@@ -14355,7 +14355,7 @@
         },
 
         /**
-         * Check for unread messages and update badge with unique sender count
+         * Check for unread messages and update badge with message count
          */
         checkUnreadMessages: function () {
             const self = this;
@@ -14382,7 +14382,7 @@
 
                 // Find messages newer than last seen, from other users
                 const lastSeen = new Date(self.chatLastSeenTimestamp);
-                const unreadSenders = new Set();
+                let unreadCount = 0;
 
                 data.forEach(function (msg) {
                     const msgTime = new Date(msg.timestamp || msg.Timestamp);
@@ -14390,12 +14390,11 @@
 
                     // Count if: message is newer than last seen AND not from current user
                     if (msgTime > lastSeen && senderId !== currentUserId) {
-                        unreadSenders.add(senderId);
+                        unreadCount++;
                     }
                 });
 
-                self.chatUnreadSenders = unreadSenders;
-                self.updateUnreadBadge(unreadSenders.size);
+                self.updateUnreadBadge(unreadCount);
             })
             .catch(function () {});
         },
