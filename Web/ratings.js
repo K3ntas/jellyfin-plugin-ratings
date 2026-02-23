@@ -40,6 +40,8 @@
         dmAutocompleteUsers: [], // Users for autocomplete
         dmAutocompleteVisible: false, // Whether autocomplete dropdown is visible
         dmAutocompleteIndex: 0, // Selected index in autocomplete
+        chatNotifyPublic: true, // Show public chat notifications
+        chatNotifyPrivate: true, // Show private message notifications
 
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
@@ -1164,17 +1166,19 @@
 
                 @media (max-width: 480px) {
                     .ratings-plugin-star {
-                        font-size: 1.1em;
+                        font-size: 1em;
                     }
                     .ratings-plugin-stats {
                         font-size: 0.8em;
                     }
                     .ratings-plugin-stars {
-                        gap: 0.1em;
+                        gap: 0.05em;
+                        flex-wrap: nowrap !important;
                     }
                     .ratings-plugin-container {
                         padding: 0.2em 0.4em;
                         gap: 0.1em;
+                        left: 58% !important;
                     }
                 }
 
@@ -5080,9 +5084,8 @@
                     display: none !important;
                 }
 
-                /* Avatar initials */
+                /* Avatar initials - hidden when image loads */
                 .chat-avatar-initial {
-                    display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     width: 100% !important;
@@ -5092,6 +5095,12 @@
                     font-weight: bold !important;
                     font-size: 14px !important;
                     border-radius: 50% !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                }
+                .chat-avatar-initial.hidden {
+                    display: none !important;
                 }
 
                 .chat-avatar-placeholder {
@@ -5467,6 +5476,7 @@
                     color: #fff !important;
                     flex-shrink: 0 !important;
                     overflow: hidden !important;
+                    position: relative !important;
                 }
 
                 .chat-avatar img {
@@ -13961,6 +13971,9 @@
                             maxMessageLength: config.ChatMaxMessageLength || 500,
                             rateLimitPerMinute: config.ChatRateLimitPerMinute || 10
                         };
+                        // Notification settings
+                        self.chatNotifyPublic = config.ChatNotifyPublic !== false;
+                        self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
                         if (self.chatEnabled) {
                             self.initChat();
                         }
@@ -14269,6 +14282,7 @@
          * Toggle chat window
          */
         toggleChat: function () {
+            const self = this;
             const chatWindow = document.getElementById('chatWindow');
             this.chatOpen = !this.chatOpen;
 
@@ -14280,16 +14294,28 @@
                 this.loadOnlineUsers();
                 // Initialize DM system
                 this.initDMSystem();
-                // Mark as read - update timestamp and clear senders
-                this.chatLastSeenTimestamp = new Date().toISOString();
-                this.chatUnreadSenders = new Set();
+                // Mark public chat as read on server
+                this.markPublicChatRead();
                 this.updateUnreadBadge(0);
             } else {
                 chatWindow.classList.remove('visible');
                 this.stopChatPolling();
-                // Update last seen when closing chat
-                this.chatLastSeenTimestamp = new Date().toISOString();
+                // Mark as read when closing too
+                this.markPublicChatRead();
             }
+        },
+
+        /**
+         * Mark public chat as read on server
+         */
+        markPublicChatRead: function () {
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Public/MarkRead', {
+                method: 'POST',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            }).catch(function () {});
         },
 
         /**
@@ -14344,47 +14370,23 @@
         },
 
         /**
-         * Check for unread messages and update badge with unique sender count
+         * Check for unread public messages using server-side tracking
          */
         checkUnreadMessages: function () {
             const self = this;
             if (!window.ApiClient) return;
 
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
+            fetch(baseUrl + '/Ratings/Chat/Public/Unread', {
                 method: 'GET',
                 credentials: 'include',
                 headers: this.getChatAuthHeaders()
             })
-            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (!Array.isArray(data)) return;
-
-                // Get current user ID
-                const currentUserId = ApiClient.getCurrentUserId ? ApiClient.getCurrentUserId() : null;
-
-                // If no last seen timestamp, set it to now (first load)
-                if (!self.chatLastSeenTimestamp) {
-                    self.chatLastSeenTimestamp = new Date().toISOString();
-                    return;
+                if (data && typeof data.count === 'number') {
+                    self.updateUnreadBadge(data.count);
                 }
-
-                // Find messages newer than last seen, from other users
-                const lastSeen = new Date(self.chatLastSeenTimestamp);
-                const unreadSenders = new Set();
-
-                data.forEach(function (msg) {
-                    const msgTime = new Date(msg.timestamp || msg.Timestamp);
-                    const senderId = msg.userId || msg.UserId;
-
-                    // Count if: message is newer than last seen AND not from current user
-                    if (msgTime > lastSeen && senderId !== currentUserId) {
-                        unreadSenders.add(senderId);
-                    }
-                });
-
-                self.chatUnreadSenders = unreadSenders;
-                self.updateUnreadBadge(unreadSenders.size);
             })
             .catch(function () {});
         },
@@ -14589,7 +14591,7 @@
                 // Use avatar image if available, otherwise show initial
                 const userAvatar = msg.userAvatar || msg.UserAvatar;
                 const avatarContent = userAvatar
-                    ? '<img src="' + self.escapeHtml(userAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><span class="chat-avatar-initial" style="display:none">' + self.escapeHtml(userInitial) + '</span>'
+                    ? '<img src="' + self.escapeHtml(userAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>'
                     : '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
@@ -15147,13 +15149,15 @@
 
         /**
          * Update combined badge showing total unread (public + DM)
+         * Respects notification settings (chatNotifyPublic, chatNotifyPrivate)
          */
         updateCombinedBadge: function () {
             const badge = document.getElementById('chatDMBadge');
             if (!badge) return;
 
-            const publicCount = this.chatPublicUnreadCount || 0;
-            const dmCount = this.dmUnreadCount || 0;
+            // Only count if the setting is enabled
+            const publicCount = this.chatNotifyPublic ? (this.chatPublicUnreadCount || 0) : 0;
+            const dmCount = this.chatNotifyPrivate ? (this.dmUnreadCount || 0) : 0;
             const totalCount = publicCount + dmCount;
 
             if (totalCount > 0) {
@@ -15469,7 +15473,7 @@
                 const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
                 const senderAvatar = msg.senderAvatar || msg.SenderAvatar;
                 const dmAvatarHtml = senderAvatar
-                    ? '<img src="' + this.escapeHtml(senderAvatar) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><span class="chat-avatar-initial" style="display:none">' + this.escapeHtml(senderInitial) + '</span>'
+                    ? '<img src="' + this.escapeHtml(senderAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>'
                     : '<span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>';
                 div.innerHTML = `
                     <div class="chat-avatar">
