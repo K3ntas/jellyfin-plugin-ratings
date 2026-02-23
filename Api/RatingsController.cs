@@ -579,7 +579,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ChatAllowGifs = config?.ChatAllowGifs ?? true,
                     ChatAllowEmojis = config?.ChatAllowEmojis ?? true,
                     ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
-                    ChatRateLimitPerMinute = config?.ChatRateLimitPerMinute ?? 10
+                    ChatRateLimitPerMinute = config?.ChatRateLimitPerMinute ?? 10,
+                    ChatNotifyPublic = config?.ChatNotifyPublic ?? true,
+                    ChatNotifyPrivate = config?.ChatNotifyPrivate ?? true
                 });
             }
             catch (Exception ex)

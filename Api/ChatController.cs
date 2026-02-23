@@ -1207,5 +1207,39 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             return Ok(new { success = true });
         }
+
+        /// <summary>
+        /// Gets public chat unread count.
+        /// </summary>
+        [HttpGet("Public/Unread")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetPublicUnreadCount()
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            var count = _repository.GetPublicChatUnreadCount(userId);
+            return Ok(new { count });
+        }
+
+        /// <summary>
+        /// Marks public chat as read for current user.
+        /// </summary>
+        [HttpPost("Public/MarkRead")]
+        [AllowAnonymous]
+        public async Task<ActionResult> MarkPublicChatRead()
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty) return Unauthorized();
+
+            await _repository.MarkPublicChatReadAsync(userId).ConfigureAwait(false);
+            return Ok(new { success = true });
+        }
     }
 }

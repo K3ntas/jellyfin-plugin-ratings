@@ -32,6 +32,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _chatModeratorsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _chatBansWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _privateMessagesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _publicChatLastSeenWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
@@ -43,6 +44,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, ChatModerator> _chatModerators;
         private Dictionary<Guid, ChatBan> _chatBans;
         private List<PrivateMessage> _privateMessages;
+        private Dictionary<Guid, DateTime> _publicChatLastSeen;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -81,6 +83,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadChatModerators();
             LoadChatBans();
             LoadPrivateMessages();
+            LoadPublicChatLastSeen();
         }
 
         /// <summary>
@@ -101,6 +104,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadChatModerators();
                 LoadChatBans();
                 LoadPrivateMessages();
+                LoadPublicChatLastSeen();
             }
 
             _logger.LogInformation("All data reloaded from disk after backup import");
@@ -1839,6 +1843,95 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 _privateMessagesWriteLock.Release();
             }
+        }
+
+        /// <summary>
+        /// Loads public chat last seen timestamps from disk.
+        /// </summary>
+        private void LoadPublicChatLastSeen()
+        {
+            _publicChatLastSeen = new Dictionary<Guid, DateTime>();
+            try
+            {
+                var lastSeenFile = Path.Combine(_dataPath, "public_chat_last_seen.json");
+                if (File.Exists(lastSeenFile))
+                {
+                    var json = File.ReadAllText(lastSeenFile);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    if (data != null)
+                    {
+                        foreach (var kvp in data)
+                        {
+                            if (Guid.TryParse(kvp.Key, out var userId))
+                            {
+                                _publicChatLastSeen[userId] = kvp.Value;
+                            }
+                        }
+
+                        _logger.LogInformation("Loaded {Count} public chat last seen entries", _publicChatLastSeen.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading public chat last seen from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves public chat last seen timestamps to disk.
+        /// </summary>
+        private async Task SavePublicChatLastSeenAsync()
+        {
+            await _publicChatLastSeenWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var lastSeenFile = Path.Combine(_dataPath, "public_chat_last_seen.json");
+                Dictionary<string, DateTime> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _publicChatLastSeen.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(lastSeenFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving public chat last seen to disk");
+            }
+            finally
+            {
+                _publicChatLastSeenWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Gets the public chat unread count for a user.
+        /// </summary>
+        public int GetPublicChatUnreadCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                // Get user's last seen timestamp, default to epoch if never seen
+                var lastSeen = _publicChatLastSeen.TryGetValue(userId, out var ts) ? ts : DateTime.MinValue;
+
+                // Count messages newer than last seen, excluding user's own messages
+                return _chatMessages.Count(m => m.Timestamp > lastSeen && m.UserId != userId);
+            }
+        }
+
+        /// <summary>
+        /// Marks public chat as read for a user (sets last seen to now).
+        /// </summary>
+        public async Task MarkPublicChatReadAsync(Guid userId)
+        {
+            lock (_lock)
+            {
+                _publicChatLastSeen[userId] = DateTime.UtcNow;
+            }
+
+            await SavePublicChatLastSeenAsync().ConfigureAwait(false);
         }
 
         /// <summary>
