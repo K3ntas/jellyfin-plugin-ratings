@@ -557,6 +557,32 @@
                                 </div>
                             </div>
 
+                            <!-- Chat Notification Settings -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Chat Notification Badge</h3>
+                            <div class="fieldDescription" style="margin-bottom: 10px;">
+                                Choose which message types count toward the notification badge on the chat button.
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkChatNotifyPublic" type="checkbox" is="emby-checkbox" />
+                                    <span>Public Chat Messages</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Include unread public chat messages in the badge count.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkChatNotifyPrivate" type="checkbox" is="emby-checkbox" />
+                                    <span>Private Messages (DMs)</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Include unread private messages in the badge count.
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1032,6 +1058,8 @@
                     document.querySelector('#chkChatAllowGifs').checked = config.ChatAllowGifs !== false;
                     document.querySelector('#chkChatAllowEmojis').checked = config.ChatAllowEmojis !== false;
                     document.querySelector('#txtKlipyApiKey').value = config.KlipyApiKey || config.TenorApiKey || '';
+                    document.querySelector('#chkChatNotifyPublic').checked = config.ChatNotifyPublic !== false;
+                    document.querySelector('#chkChatNotifyPrivate').checked = config.ChatNotifyPrivate !== false;
 
                     Dashboard.hideLoadingMsg();
                 });
@@ -1114,6 +1142,8 @@
                     config.ChatAllowEmojis = document.querySelector('#chkChatAllowEmojis').checked;
                     config.KlipyApiKey = document.querySelector('#txtKlipyApiKey').value;
                     config.TenorApiKey = '';
+                    config.ChatNotifyPublic = document.querySelector('#chkChatNotifyPublic').checked;
+                    config.ChatNotifyPrivate = document.querySelector('#chkChatNotifyPrivate').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
