@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.18.0",
+        "changelog": "Fix public chat notification count (now counts messages, not unique senders)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.18.0/jellyfin-plugin-ratings_2.0.18.0.zip",
+        "checksum": "31f40c18f64a36186f0a0b79c130504f",
+        "timestamp": "2026-02-23T13:00:00Z"
+      },
+      {
         "version": "2.0.17.0",
         "changelog": "Fix chat avatar display, add notification settings (public/private toggle)",
         "targetAbi": "10.11.0.0",
