@@ -14280,6 +14280,7 @@
          * Toggle chat window
          */
         toggleChat: function () {
+            const self = this;
             const chatWindow = document.getElementById('chatWindow');
             this.chatOpen = !this.chatOpen;
 
@@ -14291,16 +14292,28 @@
                 this.loadOnlineUsers();
                 // Initialize DM system
                 this.initDMSystem();
-                // Mark as read - update timestamp and clear senders
-                this.chatLastSeenTimestamp = new Date().toISOString();
-                this.chatUnreadSenders = new Set();
+                // Mark public chat as read on server
+                this.markPublicChatRead();
                 this.updateUnreadBadge(0);
             } else {
                 chatWindow.classList.remove('visible');
                 this.stopChatPolling();
-                // Update last seen when closing chat
-                this.chatLastSeenTimestamp = new Date().toISOString();
+                // Mark as read when closing too
+                this.markPublicChatRead();
             }
+        },
+
+        /**
+         * Mark public chat as read on server
+         */
+        markPublicChatRead: function () {
+            if (!window.ApiClient) return;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Public/MarkRead', {
+                method: 'POST',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            }).catch(function () {});
         },
 
         /**
@@ -14355,46 +14368,23 @@
         },
 
         /**
-         * Check for unread messages and update badge with message count
+         * Check for unread public messages using server-side tracking
          */
         checkUnreadMessages: function () {
             const self = this;
             if (!window.ApiClient) return;
 
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Messages?limit=50', {
+            fetch(baseUrl + '/Ratings/Chat/Public/Unread', {
                 method: 'GET',
                 credentials: 'include',
                 headers: this.getChatAuthHeaders()
             })
-            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (!Array.isArray(data)) return;
-
-                // Get current user ID
-                const currentUserId = ApiClient.getCurrentUserId ? ApiClient.getCurrentUserId() : null;
-
-                // If no last seen timestamp, set it to now (first load)
-                if (!self.chatLastSeenTimestamp) {
-                    self.chatLastSeenTimestamp = new Date().toISOString();
-                    return;
+                if (data && typeof data.count === 'number') {
+                    self.updateUnreadBadge(data.count);
                 }
-
-                // Find messages newer than last seen, from other users
-                const lastSeen = new Date(self.chatLastSeenTimestamp);
-                let unreadCount = 0;
-
-                data.forEach(function (msg) {
-                    const msgTime = new Date(msg.timestamp || msg.Timestamp);
-                    const senderId = msg.userId || msg.UserId;
-
-                    // Count if: message is newer than last seen AND not from current user
-                    if (msgTime > lastSeen && senderId !== currentUserId) {
-                        unreadCount++;
-                    }
-                });
-
-                self.updateUnreadBadge(unreadCount);
             })
             .catch(function () {});
         },
