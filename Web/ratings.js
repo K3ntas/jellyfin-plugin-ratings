@@ -15278,33 +15278,33 @@
                                     </div>
                                     <div class="chat-mod-action-label">Penalties</div>
                                     <div class="chat-mod-type-grid" id="chatModTypeGrid">
-                                        <button class="chat-mod-type-btn selected" data-action-type="snooze">
+                                        <button type="button" class="chat-mod-type-btn selected" data-action-type="snooze">
                                             <div class="chat-mod-type-icon">😴</div>
                                             <div class="chat-mod-type-label">Snooze</div>
                                         </button>
-                                        <button class="chat-mod-type-btn" data-action-type="chat">
+                                        <button type="button" class="chat-mod-type-btn" data-action-type="chat">
                                             <div class="chat-mod-type-icon">💬</div>
                                             <div class="chat-mod-type-label">Chat Ban</div>
                                         </button>
-                                        <button class="chat-mod-type-btn" data-action-type="media">
+                                        <button type="button" class="chat-mod-type-btn" data-action-type="media">
                                             <div class="chat-mod-type-icon">🎬</div>
                                             <div class="chat-mod-type-label">Media Ban</div>
                                         </button>
                                     </div>
                                     <div class="chat-mod-action-label">Duration</div>
                                     <div class="chat-mod-duration-presets" id="chatModDurationPresets">
-                                        <button class="chat-mod-duration-btn selected" data-duration="10">10m</button>
-                                        <button class="chat-mod-duration-btn" data-duration="60">1h</button>
-                                        <button class="chat-mod-duration-btn" data-duration="1440">1d</button>
-                                        <button class="chat-mod-duration-btn" data-duration="10080">1w</button>
-                                        <button class="chat-mod-duration-btn" data-duration="0">Perm</button>
+                                        <button type="button" class="chat-mod-duration-btn selected" data-duration="10">10m</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="60">1h</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="1440">1d</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="10080">1w</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">Perm</button>
                                     </div>
                                     <div class="chat-mod-action-label">Reason (optional)</div>
                                     <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="Enter reason...">
                                     <div class="chat-mod-preview" id="chatModPreview">User will be muted for 10 minutes</div>
                                     <div class="chat-mod-action-buttons">
-                                        <button class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
-                                        <button class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
+                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
+                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
                                     </div>
                                 </div>
                                 <div class="chat-mod-section-title">Active Bans</div>
@@ -17055,8 +17055,11 @@
             // Apply button
             const applyBtn = document.getElementById('chatModApplyBtn');
             if (applyBtn) {
-                applyBtn.onclick = function () {
+                applyBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     self.applyModAction();
+                    return false;
                 };
             }
 
@@ -17254,21 +17257,24 @@
          * Apply the moderation action
          */
         applyModAction: function () {
-            if (!this.modActionTarget) return;
+            if (!this.modActionTarget) {
+                console.warn('[Ratings] No action target selected');
+                this.showModToast('Please select a user first');
+                return;
+            }
 
             const userId = this.modActionTarget.userId;
             const banType = this.modActionType;
             const durationMinutes = this.modActionDuration;
             const reason = document.getElementById('chatModReasonInput')?.value || '';
 
-            // Apply the ban
+            console.log('[Ratings] Applying penalty:', { userId, banType, durationMinutes, reason });
+
+            // Apply the ban (will refresh ban list on success)
             this.banChatUser(userId, banType, durationMinutes, reason);
 
-            // Hide panel and refresh
+            // Hide panel
             this.hideActionPanel();
-            setTimeout(function () {
-                this.loadModPanelBans();
-            }.bind(this), 500);
         },
 
         /**
@@ -17669,9 +17675,17 @@
             })
             .then(function (r) {
                 if (!r.ok) {
-                    return r.json().then(function (data) {
-                        self.showModToast(data.message || data || 'Failed to apply penalty');
-                        throw new Error('Ban failed');
+                    return r.text().then(function (text) {
+                        var msg = 'Failed to apply penalty';
+                        try {
+                            var data = JSON.parse(text);
+                            msg = data.message || data.title || msg;
+                        } catch (e) {
+                            msg = text || msg;
+                        }
+                        self.showModToast(msg);
+                        console.error('[Ratings] Ban failed:', r.status, msg);
+                        throw new Error('Ban failed: ' + msg);
                     });
                 }
                 // Success - show toast based on ban type
@@ -17682,7 +17696,10 @@
                 self.loadBannedUsers();
                 self.loadModPanelBans();
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.error('[Ratings] Ban error:', err);
+                self.showModToast('Error applying penalty');
+            });
         },
 
         /**

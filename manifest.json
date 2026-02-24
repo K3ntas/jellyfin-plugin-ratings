@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.27.0",
+        "changelog": "Fix penalty apply: type=button on all buttons, better error handling with console logs, prevent page refresh",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.27.0/jellyfin-plugin-ratings_2.0.27.0.zip",
+        "checksum": "c05c128ec463b715b811366208db9ee0",
+        "timestamp": "2026-02-24T22:45:00Z"
+      },
+      {
         "version": "2.0.26.0",
         "changelog": "Toast notifications working, system messages in chat for mod actions, ban list display fixed",
         "targetAbi": "10.11.0.0",
