@@ -53,6 +53,12 @@
         modActionType: 'snooze', // 'snooze', 'chat', 'media'
         modActionDuration: 10, // minutes (0 = permanent)
 
+        // User search in Bans section (for Manage User)
+        userSearchUsers: [], // Users matching search query in Bans section
+        userSearchIndex: 0, // Selected index in user search dropdown
+        userSearchVisible: false, // Whether user search dropdown is visible
+        modSelectedTextStyle: '', // Selected text style for user
+
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
             gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -6122,10 +6128,10 @@
                     top: 50% !important;
                     left: 50% !important;
                     transform: translate(-50%, -50%) !important;
-                    width: 500px !important;
+                    width: 700px !important;
                     max-width: 95vw !important;
-                    height: 600px !important;
-                    max-height: 85vh !important;
+                    height: 750px !important;
+                    max-height: 90vh !important;
                     background: #1a1a1a !important;
                     border-radius: 12px !important;
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
@@ -6647,6 +6653,168 @@
 
                 .chat-mod-apply-btn:hover {
                     background: #e53935 !important;
+                }
+
+                /* User Search in Bans Section */
+                .chat-mod-user-search {
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-user-search-wrapper {
+                    position: relative !important;
+                }
+
+                .chat-mod-user-search-input {
+                    width: 100% !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    padding: 12px 14px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    outline: none !important;
+                    box-sizing: border-box !important;
+                }
+
+                .chat-mod-user-search-input:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-user-search-dropdown {
+                    position: absolute !important;
+                    top: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    max-height: 200px !important;
+                    overflow-y: auto !important;
+                    z-index: 100 !important;
+                    display: none;
+                    margin-top: 4px !important;
+                }
+
+                .chat-mod-user-search-dropdown.visible {
+                    display: block !important;
+                }
+
+                .chat-mod-user-search-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 10px 12px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s ease !important;
+                }
+
+                .chat-mod-user-search-item:hover,
+                .chat-mod-user-search-item.selected {
+                    background: rgba(0,164,220,0.2) !important;
+                }
+
+                /* Color Picker Row */
+                .chat-mod-color-row {
+                    display: flex !important;
+                    gap: 16px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-color-group {
+                    flex: 1 !important;
+                }
+
+                .chat-mod-color-label {
+                    font-size: 12px !important;
+                    color: #888 !important;
+                    margin-bottom: 8px !important;
+                    display: block !important;
+                }
+
+                .chat-mod-color-input-wrapper {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .chat-mod-color-picker {
+                    width: 40px !important;
+                    height: 36px !important;
+                    padding: 2px !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    background: #2a2a2a !important;
+                    cursor: pointer !important;
+                }
+
+                .chat-mod-color-picker::-webkit-color-swatch-wrapper {
+                    padding: 2px !important;
+                }
+
+                .chat-mod-color-picker::-webkit-color-swatch {
+                    border-radius: 4px !important;
+                    border: none !important;
+                }
+
+                .chat-mod-color-hex {
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 6px !important;
+                    padding: 8px 10px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-family: monospace !important;
+                    outline: none !important;
+                }
+
+                .chat-mod-color-hex:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-color-clear {
+                    background: transparent !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    padding: 8px !important;
+                    color: #888 !important;
+                    cursor: pointer !important;
+                    font-size: 14px !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-mod-color-clear:hover {
+                    border-color: #f44336 !important;
+                    color: #f44336 !important;
+                }
+
+                .chat-mod-color-preview {
+                    padding: 10px 12px !important;
+                    background: #1a1a1a !important;
+                    border-radius: 6px !important;
+                    margin-bottom: 16px !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-mod-style-btn {
+                    padding: 6px 12px !important;
+                    background: #2a2a2a !important;
+                    border: 2px solid transparent !important;
+                    border-radius: 6px !important;
+                    color: #ccc !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-style-btn:hover {
+                    background: #333 !important;
+                }
+
+                .chat-mod-style-btn.selected {
+                    background: rgba(0,164,220,0.15) !important;
+                    border-color: #00a4dc !important;
+                    color: #00a4dc !important;
                 }
 
                 /* Ban List */
@@ -14970,6 +15138,13 @@
                             </div>
                             <!-- Bans Section -->
                             <div class="chat-mod-section" id="chatModSectionBans">
+                                <div class="chat-mod-section-title">Select User</div>
+                                <div class="chat-mod-user-search">
+                                    <div class="chat-mod-user-search-wrapper">
+                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="Search for a user to manage...">
+                                        <div class="chat-mod-user-search-dropdown" id="chatModUserSearchDropdown"></div>
+                                    </div>
+                                </div>
                                 <div class="chat-mod-action-panel" id="chatModActionPanel">
                                     <div class="chat-mod-action-header">
                                         <span class="chat-mod-action-title">Manage User</span>
@@ -14979,7 +15154,44 @@
                                         <div class="chat-mod-action-avatar" id="chatModActionAvatar">U</div>
                                         <span class="chat-mod-action-name" id="chatModActionName">Username</span>
                                     </div>
-                                    <div class="chat-mod-action-label">Action Type</div>
+                                    <div class="chat-mod-action-label">Chat Style (colors)</div>
+                                    <div class="chat-mod-color-row">
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Nickname Color</span>
+                                            <div class="chat-mod-color-input-wrapper">
+                                                <input type="color" class="chat-mod-color-picker" id="chatModNicknameColor" value="#ffffff">
+                                                <input type="text" class="chat-mod-color-hex" id="chatModNicknameHex" placeholder="#ffffff" maxlength="7">
+                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="Clear">×</button>
+                                            </div>
+                                        </div>
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Message Color</span>
+                                            <div class="chat-mod-color-input-wrapper">
+                                                <input type="color" class="chat-mod-color-picker" id="chatModMessageColor" value="#cccccc">
+                                                <input type="text" class="chat-mod-color-hex" id="chatModMessageHex" placeholder="#cccccc" maxlength="7">
+                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="Clear">×</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-mod-color-row">
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Text Style</span>
+                                            <div style="display:flex;gap:8px;">
+                                                <button class="chat-mod-style-btn" data-style="">Normal</button>
+                                                <button class="chat-mod-style-btn" data-style="bold">Bold</button>
+                                                <button class="chat-mod-style-btn" data-style="italic">Italic</button>
+                                                <button class="chat-mod-style-btn" data-style="bold-italic">Both</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-mod-color-preview" id="chatModColorPreview">
+                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">Sample message text</span>
+                                    </div>
+                                    <div class="chat-mod-action-buttons" style="margin-bottom:16px;">
+                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">Reset Style</button>
+                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">Apply Style</button>
+                                    </div>
+                                    <div class="chat-mod-action-label">Penalties</div>
                                     <div class="chat-mod-type-grid" id="chatModTypeGrid">
                                         <button class="chat-mod-type-btn selected" data-action-type="snooze">
                                             <div class="chat-mod-type-icon">😴</div>
@@ -15007,7 +15219,7 @@
                                     <div class="chat-mod-preview" id="chatModPreview">User will be muted for 10 minutes</div>
                                     <div class="chat-mod-action-buttons">
                                         <button class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
-                                        <button class="chat-mod-apply-btn" id="chatModApplyBtn">Apply</button>
+                                        <button class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
                                     </div>
                                 </div>
                                 <div class="chat-mod-section-title">Active Bans</div>
@@ -15980,7 +16192,33 @@
                 if (!e.target.closest('#chatModSearchInput') && !e.target.closest('#chatModSearchDropdown')) {
                     self.hideModSearchDropdown();
                 }
+                if (!e.target.closest('#chatModUserSearchInput') && !e.target.closest('#chatModUserSearchDropdown')) {
+                    self.hideUserSearchDropdown();
+                }
             });
+
+            // User search in Bans section
+            const userSearchInput = document.getElementById('chatModUserSearchInput');
+            if (userSearchInput) {
+                let userSearchTimeout;
+                userSearchInput.oninput = function () {
+                    clearTimeout(userSearchTimeout);
+                    const query = this.value.trim();
+                    userSearchTimeout = setTimeout(function () {
+                        if (query.length >= 1) {
+                            self.searchUsersForManage(query);
+                        } else {
+                            self.hideUserSearchDropdown();
+                        }
+                    }, 300);
+                };
+                userSearchInput.onkeydown = function (e) {
+                    self.handleUserSearchKeydown(e);
+                };
+            }
+
+            // Bind color/style events
+            this.bindColorStyleEvents();
         },
 
         /**
@@ -16157,7 +16395,10 @@
             .then(function (users) {
                 // Filter: not already moderator, not admin, matches query
                 const filtered = users.filter(function (u) {
-                    if (u.isModerator || u.isAdmin) return false;
+                    // Check both lowercase and capitalized (API returns IsAdmin, IsModerator)
+                    const isAdmin = u.isAdmin || u.IsAdmin;
+                    const isModerator = u.isModerator || u.IsModerator;
+                    if (isModerator || isAdmin) return false;
                     const name = (u.name || u.Name || '').toLowerCase();
                     return name.includes(query.toLowerCase());
                 }).slice(0, 10); // Max 10 results
@@ -16302,6 +16543,382 @@
         },
 
         /**
+         * Search users for the Manage User section (all users, not just non-mods)
+         */
+        searchUsersForManage: function (query) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/All', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                // Filter by query only, include all users (mods and non-mods)
+                const filtered = users.filter(function (u) {
+                    // Exclude admins - they can't be managed
+                    const isAdmin = u.isAdmin || u.IsAdmin;
+                    if (isAdmin) return false;
+                    const name = (u.name || u.Name || '').toLowerCase();
+                    return name.includes(query.toLowerCase());
+                }).slice(0, 10);
+
+                self.userSearchUsers = filtered.map(function (u) {
+                    return {
+                        userId: u.id || u.Id,
+                        userName: u.name || u.Name || 'Unknown'
+                    };
+                });
+                self.userSearchIndex = 0;
+                self.renderUserSearchDropdown();
+            })
+            .catch(function () {
+                self.userSearchUsers = [];
+                self.hideUserSearchDropdown();
+            });
+        },
+
+        /**
+         * Render user search dropdown for Manage section
+         */
+        renderUserSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (!dropdown) return;
+
+            if (!this.userSearchUsers || this.userSearchUsers.length === 0) {
+                dropdown.innerHTML = '<div class="chat-mod-user-search-item"><span>No users found</span></div>';
+                dropdown.classList.add('visible');
+                this.userSearchVisible = true;
+                return;
+            }
+
+            const self = this;
+            dropdown.innerHTML = this.userSearchUsers.map(function (user, index) {
+                const initial = (user.userName || 'U').charAt(0).toUpperCase();
+                return '<div class="chat-mod-user-search-item' + (index === self.userSearchIndex ? ' selected' : '') + '" data-user-id="' + self.escapeHtml(user.userId) + '" data-user-name="' + self.escapeHtml(user.userName) + '">'
+                    + '<div class="chat-mod-search-avatar">' + self.escapeHtml(initial) + '</div>'
+                    + '<span class="chat-mod-search-name">' + self.escapeHtml(user.userName) + '</span>'
+                    + '</div>';
+            }).join('');
+
+            dropdown.classList.add('visible');
+            this.userSearchVisible = true;
+
+            // Bind click events
+            dropdown.querySelectorAll('.chat-mod-user-search-item[data-user-id]').forEach(function (item) {
+                item.onclick = function () {
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    self.selectUserForManage(userId, userName);
+                };
+            });
+        },
+
+        /**
+         * Hide user search dropdown
+         */
+        hideUserSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+            }
+            this.userSearchVisible = false;
+        },
+
+        /**
+         * Handle keyboard navigation in user search
+         */
+        handleUserSearchKeydown: function (e) {
+            if (!this.userSearchVisible) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.userSearchIndex = Math.min(this.userSearchIndex + 1, (this.userSearchUsers || []).length - 1);
+                this.updateUserSearchSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.userSearchIndex = Math.max(this.userSearchIndex - 1, 0);
+                this.updateUserSearchSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const user = (this.userSearchUsers || [])[this.userSearchIndex];
+                if (user) {
+                    this.selectUserForManage(user.userId, user.userName);
+                }
+            } else if (e.key === 'Escape') {
+                this.hideUserSearchDropdown();
+            }
+        },
+
+        /**
+         * Update user search selection highlight
+         */
+        updateUserSearchSelection: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (!dropdown) return;
+
+            const self = this;
+            dropdown.querySelectorAll('.chat-mod-user-search-item').forEach(function (item, index) {
+                item.classList.toggle('selected', index === self.userSearchIndex);
+            });
+        },
+
+        /**
+         * Select a user from the Manage search dropdown
+         */
+        selectUserForManage: function (userId, userName) {
+            // Update input
+            const input = document.getElementById('chatModUserSearchInput');
+            if (input) {
+                input.value = userName;
+            }
+
+            this.hideUserSearchDropdown();
+
+            // Show the action panel with this user
+            this.showActionPanel(userId, userName);
+
+            // Load existing style for this user
+            this.loadUserStyleForEdit(userId);
+        },
+
+        /**
+         * Load existing user style for editing
+         */
+        loadUserStyleForEdit: function (userId) {
+            const self = this;
+            const style = this.chatUserStyles && this.chatUserStyles[userId];
+
+            // Reset color inputs
+            const nicknameColor = document.getElementById('chatModNicknameColor');
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageColor = document.getElementById('chatModMessageColor');
+            const messageHex = document.getElementById('chatModMessageHex');
+
+            if (style && style.nicknameColor) {
+                if (nicknameColor) nicknameColor.value = style.nicknameColor;
+                if (nicknameHex) nicknameHex.value = style.nicknameColor;
+            } else {
+                if (nicknameColor) nicknameColor.value = '#ffffff';
+                if (nicknameHex) nicknameHex.value = '';
+            }
+
+            if (style && style.messageColor) {
+                if (messageColor) messageColor.value = style.messageColor;
+                if (messageHex) messageHex.value = style.messageColor;
+            } else {
+                if (messageColor) messageColor.value = '#cccccc';
+                if (messageHex) messageHex.value = '';
+            }
+
+            // Reset text style buttons
+            const textStyle = style ? (style.textStyle || '') : '';
+            document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
+                btn.classList.toggle('selected', btn.getAttribute('data-style') === textStyle);
+            });
+
+            this.modSelectedTextStyle = textStyle;
+            this.updateColorPreview();
+        },
+
+        /**
+         * Bind color picker and style button events
+         */
+        bindColorStyleEvents: function () {
+            const self = this;
+
+            // Nickname color picker
+            const nicknameColor = document.getElementById('chatModNicknameColor');
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            if (nicknameColor) {
+                nicknameColor.oninput = function () {
+                    if (nicknameHex) nicknameHex.value = this.value;
+                    self.updateColorPreview();
+                };
+            }
+            if (nicknameHex) {
+                nicknameHex.oninput = function () {
+                    const val = this.value.trim();
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        if (nicknameColor) nicknameColor.value = val;
+                        self.updateColorPreview();
+                    }
+                };
+            }
+
+            // Message color picker
+            const messageColor = document.getElementById('chatModMessageColor');
+            const messageHex = document.getElementById('chatModMessageHex');
+            if (messageColor) {
+                messageColor.oninput = function () {
+                    if (messageHex) messageHex.value = this.value;
+                    self.updateColorPreview();
+                };
+            }
+            if (messageHex) {
+                messageHex.oninput = function () {
+                    const val = this.value.trim();
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        if (messageColor) messageColor.value = val;
+                        self.updateColorPreview();
+                    }
+                };
+            }
+
+            // Clear buttons
+            const nicknameClear = document.getElementById('chatModNicknameClear');
+            if (nicknameClear) {
+                nicknameClear.onclick = function () {
+                    if (nicknameColor) nicknameColor.value = '#ffffff';
+                    if (nicknameHex) nicknameHex.value = '';
+                    self.updateColorPreview();
+                };
+            }
+            const messageClear = document.getElementById('chatModMessageClear');
+            if (messageClear) {
+                messageClear.onclick = function () {
+                    if (messageColor) messageColor.value = '#cccccc';
+                    if (messageHex) messageHex.value = '';
+                    self.updateColorPreview();
+                };
+            }
+
+            // Text style buttons
+            document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    document.querySelectorAll('.chat-mod-style-btn').forEach(function (b) {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    self.modSelectedTextStyle = this.getAttribute('data-style') || '';
+                    self.updateColorPreview();
+                };
+            });
+
+            // Apply style button
+            const applyStyleBtn = document.getElementById('chatModStyleApplyBtn');
+            if (applyStyleBtn) {
+                applyStyleBtn.onclick = function () {
+                    self.applyUserStyle();
+                };
+            }
+
+            // Reset style button
+            const resetStyleBtn = document.getElementById('chatModStyleResetBtn');
+            if (resetStyleBtn) {
+                resetStyleBtn.onclick = function () {
+                    self.resetUserStyle();
+                };
+            }
+        },
+
+        /**
+         * Update color preview in action panel
+         */
+        updateColorPreview: function () {
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageHex = document.getElementById('chatModMessageHex');
+            const previewNickname = document.getElementById('chatModPreviewNickname');
+            const previewMessage = document.getElementById('chatModPreviewMessage');
+
+            if (previewNickname) {
+                const color = nicknameHex && nicknameHex.value ? nicknameHex.value : '#ffffff';
+                previewNickname.style.color = color;
+            }
+
+            if (previewMessage) {
+                const color = messageHex && messageHex.value ? messageHex.value : '#cccccc';
+                let style = 'color:' + color + ';';
+                if (this.modSelectedTextStyle === 'bold' || this.modSelectedTextStyle === 'bold-italic') {
+                    style += 'font-weight:bold;';
+                }
+                if (this.modSelectedTextStyle === 'italic' || this.modSelectedTextStyle === 'bold-italic') {
+                    style += 'font-style:italic;';
+                }
+                previewMessage.style.cssText = style;
+            }
+
+            // Update preview nickname text to match selected user
+            if (this.modActionTarget && previewNickname) {
+                previewNickname.textContent = this.modActionTarget.userName;
+            }
+        },
+
+        /**
+         * Apply user style
+         */
+        applyUserStyle: function () {
+            if (!this.modActionTarget) return;
+
+            const self = this;
+            const userId = this.modActionTarget.userId;
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageHex = document.getElementById('chatModMessageHex');
+
+            const nicknameColor = nicknameHex && nicknameHex.value ? nicknameHex.value : null;
+            const messageColor = messageHex && messageHex.value ? messageHex.value : null;
+            const textStyle = this.modSelectedTextStyle || null;
+
+            const baseUrl = ApiClient.serverAddress();
+            let url = baseUrl + '/Ratings/Chat/Users/' + userId + '/Style?';
+            const params = [];
+            if (nicknameColor) params.push('nicknameColor=' + encodeURIComponent(nicknameColor));
+            if (messageColor) params.push('messageColor=' + encodeURIComponent(messageColor));
+            if (textStyle) params.push('textStyle=' + encodeURIComponent(textStyle));
+            url += params.join('&');
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    self.showNotification('Style applied successfully', 'success');
+                    self.loadUserStyles(); // Reload styles
+                } else {
+                    r.text().then(function (txt) {
+                        self.showNotification('Failed to apply style: ' + txt, 'error');
+                    });
+                }
+            })
+            .catch(function (err) {
+                self.showNotification('Failed to apply style', 'error');
+            });
+        },
+
+        /**
+         * Reset user style
+         */
+        resetUserStyle: function () {
+            if (!this.modActionTarget) return;
+
+            const self = this;
+            const userId = this.modActionTarget.userId;
+            const baseUrl = ApiClient.serverAddress();
+
+            fetch(baseUrl + '/Ratings/Chat/Users/' + userId + '/Style', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    self.showNotification('Style reset successfully', 'success');
+                    self.loadUserStyles();
+                    // Reset UI
+                    self.loadUserStyleForEdit(userId);
+                } else {
+                    self.showNotification('Failed to reset style', 'error');
+                }
+            })
+            .catch(function () {
+                self.showNotification('Failed to reset style', 'error');
+            });
+        },
+
+        /**
          * Bind action panel events
          */
         bindActionPanelEvents: function () {
@@ -16407,6 +17024,9 @@
             this.updateActionTypeAccess();
             this.updateActionPreview();
 
+            // Load existing user style for editing
+            this.loadUserStyleForEdit(userId);
+
             // Show panel
             const panel = document.getElementById('chatModActionPanel');
             if (panel) panel.classList.add('visible');
@@ -16419,6 +17039,10 @@
             this.modActionTarget = null;
             const panel = document.getElementById('chatModActionPanel');
             if (panel) panel.classList.remove('visible');
+
+            // Clear user search input
+            const userSearchInput = document.getElementById('chatModUserSearchInput');
+            if (userSearchInput) userSearchInput.value = '';
         },
 
         /**
