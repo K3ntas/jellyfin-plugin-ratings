@@ -20,6 +20,9 @@ namespace Jellyfin.Plugin.Ratings
             // Register middleware startup filter for script injection (works without file permissions)
             serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();
 
+            // Register middleware for blocking media playback for banned users
+            serviceCollection.AddSingleton<IStartupFilter, PlaybackBlockingStartupFilter>();
+
             // Register hosted service for JavaScript injection as fallback (for setups where file modification works)
             serviceCollection.AddHostedService<JavaScriptInjectionService>();
 
