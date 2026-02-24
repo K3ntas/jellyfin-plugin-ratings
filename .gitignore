@@ -49,3 +49,8 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 *.zip
+
+# Development documentation (local only, never push)
+release_workflow*.md
+*_plan.md
+*_workflow.md
