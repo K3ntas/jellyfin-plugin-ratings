@@ -90,6 +90,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Chat notification settings
             ChatNotifyPublic = true;
             ChatNotifyPrivate = true;
+
+            // Moderator system settings
+            ModLevel1DeleteLimit = 20;
+            ModLevel1SnoozeMinutes = 10;
+            ModLevel2DeleteLimit = 50;
+            ModLevel2TempBanMaxDays = 7;
+            ModLevel3MediaBanMaxDays = 7;
+            ModeratorActionRateLimitPerMinute = 10;
         }
 
         /// <summary>
@@ -361,5 +369,37 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether to show notifications for private messages.
         /// </summary>
         public bool ChatNotifyPrivate { get; set; }
+
+        // Moderator system settings
+
+        /// <summary>
+        /// Gets or sets the daily message delete limit for Level 1 moderators.
+        /// </summary>
+        public int ModLevel1DeleteLimit { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default snooze duration in minutes for Level 1 moderators.
+        /// </summary>
+        public int ModLevel1SnoozeMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the daily message delete limit for Level 2 moderators.
+        /// </summary>
+        public int ModLevel2DeleteLimit { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum temporary ban duration in days for Level 2 moderators.
+        /// </summary>
+        public int ModLevel2TempBanMaxDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum media ban duration in days per user per month for Level 3 moderators.
+        /// </summary>
+        public int ModLevel3MediaBanMaxDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the rate limit for moderator actions per minute.
+        /// </summary>
+        public int ModeratorActionRateLimitPerMinute { get; set; }
     }
 }

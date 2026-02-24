@@ -583,6 +583,53 @@
                                 </div>
                             </div>
 
+                            <!-- Moderator System Settings -->
+                            <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Moderator System</h3>
+                            <div class="fieldDescription" style="margin-bottom: 10px;">
+                                Configure limits and permissions for the 3-level moderator hierarchy.<br>
+                                <span style="color:#888; font-size:0.9em;">
+                                    Level 1: Snooze, delete messages, change user styles<br>
+                                    Level 2: All Level 1 + temporary bans<br>
+                                    Level 3: All Level 2 + permanent bans, media bans, manage Level 1-2 mods
+                                </span>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModLevel1DeleteLimit">Level 1 Daily Delete Limit</label>
+                                <input id="txtModLevel1DeleteLimit" type="number" is="emby-input" min="1" max="500" step="1" />
+                                <div class="fieldDescription">Maximum messages a Level 1 moderator can delete per day (default: 20)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModLevel1SnoozeMinutes">Level 1 Default Snooze (Minutes)</label>
+                                <input id="txtModLevel1SnoozeMinutes" type="number" is="emby-input" min="1" max="1440" step="1" />
+                                <div class="fieldDescription">Default snooze duration for Level 1 moderators (default: 10)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModLevel2DeleteLimit">Level 2 Daily Delete Limit</label>
+                                <input id="txtModLevel2DeleteLimit" type="number" is="emby-input" min="1" max="1000" step="1" />
+                                <div class="fieldDescription">Maximum messages a Level 2 moderator can delete per day (default: 50)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModLevel2TempBanMaxDays">Level 2 Max Temp Ban (Days)</label>
+                                <input id="txtModLevel2TempBanMaxDays" type="number" is="emby-input" min="1" max="365" step="1" />
+                                <div class="fieldDescription">Maximum temp ban duration for Level 2 moderators (default: 7)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModLevel3MediaBanMaxDays">Level 3 Media Ban Limit (Days/User/Month)</label>
+                                <input id="txtModLevel3MediaBanMaxDays" type="number" is="emby-input" min="1" max="30" step="1" />
+                                <div class="fieldDescription">Max media ban days per user per month for Level 3 mods (default: 7)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtModeratorActionRateLimitPerMinute">Moderator Action Rate Limit</label>
+                                <input id="txtModeratorActionRateLimitPerMinute" type="number" is="emby-input" min="1" max="100" step="1" />
+                                <div class="fieldDescription">Maximum moderator actions per minute (default: 10)</div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1061,6 +1108,14 @@
                     document.querySelector('#chkChatNotifyPublic').checked = config.ChatNotifyPublic !== false;
                     document.querySelector('#chkChatNotifyPrivate').checked = config.ChatNotifyPrivate !== false;
 
+                    // Moderator system settings
+                    document.querySelector('#txtModLevel1DeleteLimit').value = config.ModLevel1DeleteLimit || 20;
+                    document.querySelector('#txtModLevel1SnoozeMinutes').value = config.ModLevel1SnoozeMinutes || 10;
+                    document.querySelector('#txtModLevel2DeleteLimit').value = config.ModLevel2DeleteLimit || 50;
+                    document.querySelector('#txtModLevel2TempBanMaxDays').value = config.ModLevel2TempBanMaxDays || 7;
+                    document.querySelector('#txtModLevel3MediaBanMaxDays').value = config.ModLevel3MediaBanMaxDays || 7;
+                    document.querySelector('#txtModeratorActionRateLimitPerMinute').value = config.ModeratorActionRateLimitPerMinute || 10;
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -1144,6 +1199,14 @@
                     config.TenorApiKey = '';
                     config.ChatNotifyPublic = document.querySelector('#chkChatNotifyPublic').checked;
                     config.ChatNotifyPrivate = document.querySelector('#chkChatNotifyPrivate').checked;
+
+                    // Moderator system settings
+                    config.ModLevel1DeleteLimit = parseInt(document.querySelector('#txtModLevel1DeleteLimit').value) || 20;
+                    config.ModLevel1SnoozeMinutes = parseInt(document.querySelector('#txtModLevel1SnoozeMinutes').value) || 10;
+                    config.ModLevel2DeleteLimit = parseInt(document.querySelector('#txtModLevel2DeleteLimit').value) || 50;
+                    config.ModLevel2TempBanMaxDays = parseInt(document.querySelector('#txtModLevel2TempBanMaxDays').value) || 7;
+                    config.ModLevel3MediaBanMaxDays = parseInt(document.querySelector('#txtModLevel3MediaBanMaxDays').value) || 7;
+                    config.ModeratorActionRateLimitPerMinute = parseInt(document.querySelector('#txtModeratorActionRateLimitPerMinute').value) || 10;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
