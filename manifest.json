@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.22.0",
+        "changelog": "Moderator Tab Restructuring: full-height tab, user search autocomplete, inline action panel",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.22.0-dev/jellyfin-plugin-ratings_2.0.22.0.zip",
+        "checksum": "54537d04f75f6e2e0c07bdd4f3a628f4",
+        "timestamp": "2026-02-24T21:30:00Z"
+      },
+      {
         "version": "2.0.21.0",
         "changelog": "3-Level Moderator System: action logging, media blocking middleware, quotas, user style overrides",
         "targetAbi": "10.11.0.0",
