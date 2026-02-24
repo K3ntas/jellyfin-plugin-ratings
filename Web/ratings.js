@@ -6939,6 +6939,28 @@
                     color: #4caf50 !important;
                 }
 
+                /* System Messages (mod actions) */
+                .chat-system-message {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    padding: 8px 12px !important;
+                    margin: 8px 0 !important;
+                    background: rgba(0, 164, 220, 0.1) !important;
+                    border-left: 3px solid #00a4dc !important;
+                    border-radius: 0 8px 8px 0 !important;
+                    font-size: 12px !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-system-icon {
+                    font-size: 14px !important;
+                }
+
+                .chat-system-text {
+                    flex: 1 !important;
+                }
+
                 /* Actions Log */
                 .chat-mod-action-log {
                     max-height: 400px !important;
@@ -16341,12 +16363,14 @@
                             + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' deletes · ' + actionCount + ' actions</div>'
                             + '</div>'
                             + '</div>'
-                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '">Remove</button>' : '')
+                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">Remove</button>' : '')
                             + '</div>';
                     }).join('');
 
                     list.querySelectorAll('[data-remove-mod-id]').forEach(function (btn) {
-                        btn.onclick = function () { self.removeModerator(this.getAttribute('data-remove-mod-id')); };
+                        btn.onclick = function () {
+                            self.removeModerator(this.getAttribute('data-remove-mod-id'), this.getAttribute('data-mod-name'));
+                        };
                     });
                 }
 
@@ -16386,21 +16410,31 @@
                     list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
                 } else {
                     list.innerHTML = bans.map(function (ban) {
-                        const expiresText = ban.isPermanent ? 'Permanent' : (ban.expiresAt ? 'Expires ' + self.formatTimeAgo(new Date(ban.expiresAt)) : '');
+                        // API returns PascalCase, handle both
+                        const banId = ban.Id || ban.id;
+                        const banUserName = ban.UserName || ban.userName || 'Unknown';
+                        const banType = ban.BanType || ban.banType || 'unknown';
+                        const isPermanent = ban.IsPermanent || ban.isPermanent;
+                        const expiresAt = ban.ExpiresAt || ban.expiresAt;
+                        const reason = ban.Reason || ban.reason;
+
+                        const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeAgo(new Date(expiresAt)) : '');
                         return '<div class="chat-mod-ban-item">'
                             + '<div class="chat-mod-ban-info">'
                             + '<div class="chat-mod-ban-user">'
-                            + '<span class="chat-mod-ban-name">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
-                            + '<span class="chat-mod-ban-type" style="background:' + self.getBanTypeColor(ban.banType) + ';">' + ban.banType + '</span>'
+                            + '<span class="chat-mod-ban-name">' + self.escapeHtml(banUserName) + '</span>'
+                            + '<span class="chat-mod-ban-type" style="background:' + self.getBanTypeColor(banType) + ';">' + banType + '</span>'
                             + '</div>'
-                            + '<span class="chat-mod-ban-expires">' + expiresText + (ban.reason ? ' · ' + self.escapeHtml(ban.reason) : '') + '</span>'
+                            + '<span class="chat-mod-ban-expires">' + expiresText + (reason ? ' · ' + self.escapeHtml(reason) : '') + '</span>'
                             + '</div>'
-                            + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(ban.id) + '">Unban</button>'
+                            + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">Unban</button>'
                             + '</div>';
                     }).join('');
 
                     list.querySelectorAll('[data-unban-id]').forEach(function (btn) {
-                        btn.onclick = function () { self.unbanChatUser(this.getAttribute('data-unban-id')); };
+                        btn.onclick = function () {
+                            self.unbanChatUser(this.getAttribute('data-unban-id'), this.getAttribute('data-ban-user'));
+                        };
                     });
                 }
             })
@@ -16927,6 +16961,7 @@
 
             const self = this;
             const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName || 'User';
             const nicknameHex = document.getElementById('chatModNicknameHex');
             const messageHex = document.getElementById('chatModMessageHex');
 
@@ -16949,16 +16984,17 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function (toast) { toast('Style applied successfully'); });
+                    self.showModToast('Style applied to ' + userName);
+                    self.addModSystemMessage('Style updated for ' + userName, '🎨');
                     self.loadUserStyles(); // Reload styles
                 } else {
                     r.text().then(function (txt) {
-                        require(['toast'], function (toast) { toast('Failed to apply style: ' + txt); });
+                        self.showModToast('Failed to apply style: ' + txt);
                     });
                 }
             })
             .catch(function (err) {
-                require(['toast'], function (toast) { toast('Failed to apply style'); });
+                self.showModToast('Failed to apply style');
             });
         },
 
@@ -16970,6 +17006,7 @@
 
             const self = this;
             const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName || 'User';
             const baseUrl = ApiClient.serverAddress();
 
             fetch(baseUrl + '/Ratings/Chat/Users/' + userId + '/Style', {
@@ -16979,16 +17016,17 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function (toast) { toast('Style reset successfully'); });
+                    self.showModToast('Style reset for ' + userName);
+                    self.addModSystemMessage('Style reset for ' + userName, '🎨');
                     self.loadUserStyles();
                     // Reset UI
                     self.loadUserStyleForEdit(userId);
                 } else {
-                    require(['toast'], function (toast) { toast('Failed to reset style'); });
+                    self.showModToast('Failed to reset style');
                 }
             })
             .catch(function () {
-                require(['toast'], function (toast) { toast('Failed to reset style'); });
+                self.showModToast('Failed to reset style');
             });
         },
 
@@ -17614,6 +17652,9 @@
         banChatUser: function (userId, banType, durationMinutes, reason) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
+            // Get username from action target
+            const userName = self.modActionTarget ? self.modActionTarget.userName : 'User';
+
             let url = baseUrl + '/Ratings/Chat/Ban?targetUserId=' + encodeURIComponent(userId) + '&banType=' + encodeURIComponent(banType);
             if (durationMinutes && durationMinutes > 0) {
                 url += '&durationMinutes=' + durationMinutes;
@@ -17629,14 +17670,15 @@
             .then(function (r) {
                 if (!r.ok) {
                     return r.json().then(function (data) {
-                        require(['toast'], function (toast) { toast(data.message || data || 'Failed to apply penalty'); });
+                        self.showModToast(data.message || data || 'Failed to apply penalty');
                         throw new Error('Ban failed');
                     });
                 }
                 // Success - show toast based on ban type
                 const actionName = banType === 'snooze' ? 'Snooze' : banType === 'chat' ? 'Chat ban' : 'Media ban';
                 const durationText = durationMinutes > 0 ? self.formatDuration(durationMinutes) : 'permanent';
-                require(['toast'], function (toast) { toast(actionName + ' applied (' + durationText + ')'); });
+                self.showModToast(actionName + ' applied to ' + userName + ' (' + durationText + ')');
+                self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
                 self.loadBannedUsers();
                 self.loadModPanelBans();
             })
@@ -17646,9 +17688,11 @@
         /**
          * Unban a user
          */
-        unbanChatUser: function (banId) {
+        unbanChatUser: function (banId, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
+            userName = userName || 'User';
+
             fetch(baseUrl + '/Ratings/Chat/Ban/' + encodeURIComponent(banId), {
                 method: 'DELETE',
                 credentials: 'include',
@@ -17656,25 +17700,29 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function (toast) { toast('Penalty removed'); });
+                    self.showModToast('Penalty removed');
+                    self.addModSystemMessage('Penalty removed from ' + userName, '✅');
                     self.loadBannedUsers();
                     self.loadModPanelBans();
                 } else {
-                    require(['toast'], function (toast) { toast('Failed to remove penalty'); });
+                    self.showModToast('Failed to remove penalty');
                 }
             })
             .catch(function () {
-                require(['toast'], function (toast) { toast('Failed to remove penalty'); });
+                self.showModToast('Failed to remove penalty');
             });
         },
 
         /**
          * Add moderator
          */
-        addModerator: function (userId, level) {
+        addModerator: function (userId, level, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
             level = level || 1;
+            // Get username from selected user if not provided
+            userName = userName || (self.modSelectedUser ? self.modSelectedUser.userName : 'User');
+
             fetch(baseUrl + '/Ratings/Chat/Moderators?targetUserId=' + encodeURIComponent(userId) + '&level=' + level, {
                 method: 'POST',
                 credentials: 'include',
@@ -17682,27 +17730,31 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function (toast) { toast('Moderator added (Level ' + level + ')'); });
+                    self.showModToast('Moderator added: ' + userName + ' (Level ' + level + ')');
+                    self.addModSystemMessage(userName + ' is now a Level ' + level + ' moderator', '👮');
                     self.loadModeratorStats();
                     self.loadUsersForModSelect();
                     self.loadModPanelModerators();
+                    self.clearModSearch();
                 } else {
                     r.text().then(function (txt) {
-                        require(['toast'], function (toast) { toast('Failed to add moderator: ' + txt); });
+                        self.showModToast('Failed to add moderator: ' + txt);
                     });
                 }
             })
             .catch(function () {
-                require(['toast'], function (toast) { toast('Failed to add moderator'); });
+                self.showModToast('Failed to add moderator');
             });
         },
 
         /**
          * Remove moderator
          */
-        removeModerator: function (moderatorId) {
+        removeModerator: function (moderatorId, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
+            userName = userName || 'Moderator';
+
             fetch(baseUrl + '/Ratings/Chat/Moderators/' + encodeURIComponent(moderatorId), {
                 method: 'DELETE',
                 credentials: 'include',
@@ -17710,16 +17762,17 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function (toast) { toast('Moderator removed'); });
+                    self.showModToast('Moderator removed');
+                    self.addModSystemMessage('Moderator removed', '👮');
                     self.loadModeratorStats();
                     self.loadUsersForModSelect();
                     self.loadModPanelModerators();
                 } else {
-                    require(['toast'], function (toast) { toast('Failed to remove moderator'); });
+                    self.showModToast('Failed to remove moderator');
                 }
             })
             .catch(function () {
-                require(['toast'], function (toast) { toast('Failed to remove moderator'); });
+                self.showModToast('Failed to remove moderator');
             });
         },
 
@@ -17782,6 +17835,38 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+
+        /**
+         * Show toast notification for moderator actions
+         */
+        showModToast: function (message) {
+            try {
+                require(['toast'], function (toast) {
+                    toast(message);
+                });
+            } catch (e) {
+                console.log('[Ratings] Toast:', message);
+            }
+        },
+
+        /**
+         * Add a system message to chat (visible only to mods/admins)
+         */
+        addModSystemMessage: function (message, icon) {
+            if (!this.chatIsAdmin && !this.chatIsModerator) return;
+
+            const container = document.getElementById('chatMessagesContainer');
+            if (!container) return;
+
+            icon = icon || '⚙️';
+            const msgEl = document.createElement('div');
+            msgEl.className = 'chat-system-message';
+            msgEl.innerHTML = '<span class="chat-system-icon">' + icon + '</span> <span class="chat-system-text">' + this.escapeHtml(message) + '</span>';
+            container.appendChild(msgEl);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
         },
 
         /**
