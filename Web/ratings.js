@@ -6128,9 +6128,9 @@
                     top: 50% !important;
                     left: 50% !important;
                     transform: translate(-50%, -50%) !important;
-                    width: 700px !important;
+                    width: 900px !important;
                     max-width: 95vw !important;
-                    height: 750px !important;
+                    height: 850px !important;
                     max-height: 90vh !important;
                     background: #1a1a1a !important;
                     border-radius: 12px !important;
@@ -6143,6 +6143,69 @@
 
                 .mod-window.visible {
                     display: flex !important;
+                }
+
+                /* Mobile styles for Moderator Window */
+                @media (max-width: 768px) {
+                    .mod-window {
+                        width: 100% !important;
+                        height: 100% !important;
+                        max-width: 100vw !important;
+                        max-height: 100vh !important;
+                        border-radius: 0 !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        transform: none !important;
+                    }
+
+                    .mod-window-body {
+                        flex-direction: column !important;
+                    }
+
+                    .chat-mod-sidebar {
+                        width: 100% !important;
+                        flex-direction: row !important;
+                        border-right: none !important;
+                        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                        padding: 4px 8px !important;
+                        overflow-x: auto !important;
+                        flex-shrink: 0 !important;
+                    }
+
+                    .chat-mod-sidebar-btn {
+                        flex-direction: row !important;
+                        padding: 8px 12px !important;
+                        gap: 6px !important;
+                        border-left: none !important;
+                        border-bottom: 3px solid transparent !important;
+                        white-space: nowrap !important;
+                    }
+
+                    .chat-mod-sidebar-btn.active {
+                        border-left-color: transparent !important;
+                        border-bottom-color: #00a4dc !important;
+                    }
+
+                    .chat-mod-sidebar-label {
+                        font-size: 11px !important;
+                    }
+
+                    .chat-mod-content {
+                        padding: 12px !important;
+                    }
+
+                    .chat-mod-color-row {
+                        flex-direction: column !important;
+                        gap: 12px !important;
+                    }
+
+                    .chat-mod-type-grid {
+                        grid-template-columns: repeat(3, 1fr) !important;
+                    }
+
+                    .chat-mod-action-panel {
+                        padding: 12px !important;
+                    }
                 }
 
                 .mod-window-header {
@@ -16260,16 +16323,25 @@
                     list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
-                        const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && mod.level < 3);
+                        // API returns PascalCase, handle both for safety
+                        const modLevel = mod.Level || mod.level || 0;
+                        const modUserName = mod.UserName || mod.userName || 'Unknown';
+                        const modId = mod.Id || mod.id;
+                        const modUserId = mod.UserId || mod.userId;
+                        const dailyDeleteCount = mod.DailyDeleteCount || mod.dailyDeleteCount || 0;
+                        const dailyDeleteLimit = mod.DailyDeleteLimit || mod.dailyDeleteLimit || 0;
+                        const actionCount = mod.ActionCount || mod.actionCount || 0;
+
+                        const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && modLevel < 3);
                         return '<div class="chat-mod-item">'
                             + '<div class="chat-mod-item-info">'
-                            + '<span class="chat-mod-item-level" style="background:' + self.getModLevelColor(mod.level) + ';">L' + mod.level + '</span>'
+                            + '<span class="chat-mod-item-level" style="background:' + self.getModLevelColor(modLevel) + ';">L' + modLevel + '</span>'
                             + '<div>'
-                            + '<div class="chat-mod-item-name">' + self.escapeHtml(mod.userName) + '</div>'
-                            + '<div class="chat-mod-item-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' deletes · ' + mod.actionCount + ' actions</div>'
+                            + '<div class="chat-mod-item-name">' + self.escapeHtml(modUserName) + '</div>'
+                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' deletes · ' + actionCount + ' actions</div>'
                             + '</div>'
                             + '</div>'
-                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(mod.id) + '">Remove</button>' : '')
+                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '">Remove</button>' : '')
                             + '</div>';
                     }).join('');
 
@@ -16282,7 +16354,9 @@
                 const filter = document.getElementById('chatModActionsFilter');
                 if (filter) {
                     filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
-                        return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
+                        const modUserId = mod.UserId || mod.userId;
+                        const modUserName = mod.UserName || mod.userName || 'Unknown';
+                        return '<option value="' + self.escapeHtml(modUserId) + '">' + self.escapeHtml(modUserName) + '</option>';
                     }).join('');
                 }
             })
@@ -16875,16 +16949,16 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    self.showNotification('Style applied successfully', 'success');
+                    require(['toast'], function (toast) { toast('Style applied successfully'); });
                     self.loadUserStyles(); // Reload styles
                 } else {
                     r.text().then(function (txt) {
-                        self.showNotification('Failed to apply style: ' + txt, 'error');
+                        require(['toast'], function (toast) { toast('Failed to apply style: ' + txt); });
                     });
                 }
             })
             .catch(function (err) {
-                self.showNotification('Failed to apply style', 'error');
+                require(['toast'], function (toast) { toast('Failed to apply style'); });
             });
         },
 
@@ -16905,16 +16979,16 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    self.showNotification('Style reset successfully', 'success');
+                    require(['toast'], function (toast) { toast('Style reset successfully'); });
                     self.loadUserStyles();
                     // Reset UI
                     self.loadUserStyleForEdit(userId);
                 } else {
-                    self.showNotification('Failed to reset style', 'error');
+                    require(['toast'], function (toast) { toast('Failed to reset style'); });
                 }
             })
             .catch(function () {
-                self.showNotification('Failed to reset style', 'error');
+                require(['toast'], function (toast) { toast('Failed to reset style'); });
             });
         },
 
@@ -17555,11 +17629,16 @@
             .then(function (r) {
                 if (!r.ok) {
                     return r.json().then(function (data) {
-                        alert(data.message || data || 'Failed to ban user');
+                        require(['toast'], function (toast) { toast(data.message || data || 'Failed to apply penalty'); });
                         throw new Error('Ban failed');
                     });
                 }
+                // Success - show toast based on ban type
+                const actionName = banType === 'snooze' ? 'Snooze' : banType === 'chat' ? 'Chat ban' : 'Media ban';
+                const durationText = durationMinutes > 0 ? self.formatDuration(durationMinutes) : 'permanent';
+                require(['toast'], function (toast) { toast(actionName + ' applied (' + durationText + ')'); });
                 self.loadBannedUsers();
+                self.loadModPanelBans();
             })
             .catch(function () {});
         },
@@ -17575,10 +17654,18 @@
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadBannedUsers();
+            .then(function (r) {
+                if (r.ok) {
+                    require(['toast'], function (toast) { toast('Penalty removed'); });
+                    self.loadBannedUsers();
+                    self.loadModPanelBans();
+                } else {
+                    require(['toast'], function (toast) { toast('Failed to remove penalty'); });
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                require(['toast'], function (toast) { toast('Failed to remove penalty'); });
+            });
         },
 
         /**
@@ -17593,11 +17680,21 @@
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadModeratorStats();
-                self.loadUsersForModSelect();
+            .then(function (r) {
+                if (r.ok) {
+                    require(['toast'], function (toast) { toast('Moderator added (Level ' + level + ')'); });
+                    self.loadModeratorStats();
+                    self.loadUsersForModSelect();
+                    self.loadModPanelModerators();
+                } else {
+                    r.text().then(function (txt) {
+                        require(['toast'], function (toast) { toast('Failed to add moderator: ' + txt); });
+                    });
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                require(['toast'], function (toast) { toast('Failed to add moderator'); });
+            });
         },
 
         /**
@@ -17611,11 +17708,19 @@
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadModeratorStats();
-                self.loadUsersForModSelect();
+            .then(function (r) {
+                if (r.ok) {
+                    require(['toast'], function (toast) { toast('Moderator removed'); });
+                    self.loadModeratorStats();
+                    self.loadUsersForModSelect();
+                    self.loadModPanelModerators();
+                } else {
+                    require(['toast'], function (toast) { toast('Failed to remove moderator'); });
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                require(['toast'], function (toast) { toast('Failed to remove moderator'); });
+            });
         },
 
         /**
