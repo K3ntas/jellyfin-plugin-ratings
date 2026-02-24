@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.24.0",
+        "changelog": "Moderator Panel improvements: larger size, user search in Manage tab, nickname/message color pickers, text style selection, admin filtering fix",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.24.0/jellyfin-plugin-ratings_2.0.24.0.zip",
+        "checksum": "b6564c4cabbf967e9c77b30c49ac652b",
+        "timestamp": "2026-02-24T22:05:00Z"
+      },
+      {
         "version": "2.0.23.0",
         "changelog": "Moderator Panel as separate floating window (not chat tab), restored settings gear icon",
         "targetAbi": "10.11.0.0",
