@@ -33,6 +33,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _chatBansWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _privateMessagesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _publicChatLastSeenWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _moderatorActionsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _userStyleOverridesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
@@ -45,6 +48,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, ChatBan> _chatBans;
         private List<PrivateMessage> _privateMessages;
         private Dictionary<Guid, DateTime> _publicChatLastSeen;
+        private List<ModeratorAction> _moderatorActions;
+        private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
+        private Dictionary<Guid, MediaQuota> _mediaQuotas;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -67,6 +73,9 @@ namespace Jellyfin.Plugin.Ratings.Data
             _chatModerators = new Dictionary<Guid, ChatModerator>();
             _chatBans = new Dictionary<Guid, ChatBan>();
             _privateMessages = new List<PrivateMessage>();
+            _moderatorActions = new List<ModeratorAction>();
+            _userStyleOverrides = new Dictionary<Guid, UserStyleOverride>();
+            _mediaQuotas = new Dictionary<Guid, MediaQuota>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -84,6 +93,9 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadChatBans();
             LoadPrivateMessages();
             LoadPublicChatLastSeen();
+            LoadModeratorActions();
+            LoadUserStyleOverrides();
+            LoadMediaQuotas();
         }
 
         /// <summary>
@@ -105,6 +117,9 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadChatBans();
                 LoadPrivateMessages();
                 LoadPublicChatLastSeen();
+                LoadModeratorActions();
+                LoadUserStyleOverrides();
+                LoadMediaQuotas();
             }
 
             _logger.LogInformation("All data reloaded from disk after backup import");
@@ -2160,6 +2175,454 @@ namespace Jellyfin.Plugin.Ratings.Data
             if (chatUsersChanged)
             {
                 await SaveChatUsersAsync().ConfigureAwait(false);
+            }
+        }
+
+        // ============ MODERATOR ACTIONS ============
+
+        /// <summary>
+        /// Loads moderator actions from disk.
+        /// </summary>
+        private void LoadModeratorActions()
+        {
+            try
+            {
+                var actionsFile = Path.Combine(_dataPath, "moderator_actions.json");
+                if (File.Exists(actionsFile))
+                {
+                    var json = File.ReadAllText(actionsFile);
+                    var actions = JsonSerializer.Deserialize<List<ModeratorAction>>(json);
+                    if (actions != null)
+                    {
+                        _moderatorActions = actions;
+                        _logger.LogInformation("Loaded {Count} moderator actions from disk", _moderatorActions.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading moderator actions from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves moderator actions to disk.
+        /// </summary>
+        private async Task SaveModeratorActionsAsync()
+        {
+            await _moderatorActionsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var actionsFile = Path.Combine(_dataPath, "moderator_actions.json");
+                List<ModeratorAction> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _moderatorActions.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(actionsFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving moderator actions to disk");
+            }
+            finally
+            {
+                _moderatorActionsWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Adds a moderator action to the log.
+        /// </summary>
+        public async Task<ModeratorAction> AddModeratorActionAsync(ModeratorAction action)
+        {
+            lock (_lock)
+            {
+                _moderatorActions.Add(action);
+                // Keep only last 10000 actions
+                while (_moderatorActions.Count > 10000)
+                {
+                    _moderatorActions.RemoveAt(0);
+                }
+                _ = SaveModeratorActionsAsync();
+                return action;
+            }
+        }
+
+        /// <summary>
+        /// Gets moderator actions, optionally filtered by moderator ID.
+        /// </summary>
+        public List<ModeratorAction> GetModeratorActions(Guid? moderatorId = null, int limit = 100)
+        {
+            lock (_lock)
+            {
+                var query = _moderatorActions.AsEnumerable();
+                if (moderatorId.HasValue)
+                {
+                    query = query.Where(a => a.ModeratorId == moderatorId.Value);
+                }
+                return query.OrderByDescending(a => a.Timestamp).Take(limit).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the action count for a moderator.
+        /// </summary>
+        public int GetModeratorActionCount(Guid moderatorId)
+        {
+            lock (_lock)
+            {
+                return _moderatorActions.Count(a => a.ModeratorId == moderatorId);
+            }
+        }
+
+        /// <summary>
+        /// Gets the media ban days used this month by a moderator for a specific target user.
+        /// </summary>
+        public int GetMediaBanDaysUsedThisMonth(Guid moderatorId, Guid targetUserId)
+        {
+            lock (_lock)
+            {
+                var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                return _moderatorActions
+                    .Where(a => a.ModeratorId == moderatorId &&
+                               a.TargetUserId == targetUserId &&
+                               a.ActionType == "media_ban" &&
+                               a.Timestamp >= startOfMonth)
+                    .Sum(a =>
+                    {
+                        // Parse days from Details JSON if present
+                        if (!string.IsNullOrEmpty(a.Details))
+                        {
+                            try
+                            {
+                                using var doc = JsonDocument.Parse(a.Details);
+                                if (doc.RootElement.TryGetProperty("durationDays", out var days))
+                                {
+                                    return days.GetInt32();
+                                }
+                            }
+                            catch { }
+                        }
+                        return 0;
+                    });
+            }
+        }
+
+        // ============ USER STYLE OVERRIDES ============
+
+        /// <summary>
+        /// Loads user style overrides from disk.
+        /// </summary>
+        private void LoadUserStyleOverrides()
+        {
+            try
+            {
+                var stylesFile = Path.Combine(_dataPath, "user_style_overrides.json");
+                if (File.Exists(stylesFile))
+                {
+                    var json = File.ReadAllText(stylesFile);
+                    var styles = JsonSerializer.Deserialize<List<UserStyleOverride>>(json);
+                    if (styles != null)
+                    {
+                        _userStyleOverrides = styles.ToDictionary(s => s.UserId);
+                        _logger.LogInformation("Loaded {Count} user style overrides from disk", _userStyleOverrides.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading user style overrides from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves user style overrides to disk.
+        /// </summary>
+        private async Task SaveUserStyleOverridesAsync()
+        {
+            await _userStyleOverridesWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var stylesFile = Path.Combine(_dataPath, "user_style_overrides.json");
+                List<UserStyleOverride> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _userStyleOverrides.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(stylesFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving user style overrides to disk");
+            }
+            finally
+            {
+                _userStyleOverridesWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Sets or updates a user style override.
+        /// </summary>
+        public async Task<UserStyleOverride> SetUserStyleOverrideAsync(UserStyleOverride style)
+        {
+            lock (_lock)
+            {
+                _userStyleOverrides[style.UserId] = style;
+                _ = SaveUserStyleOverridesAsync();
+                return style;
+            }
+        }
+
+        /// <summary>
+        /// Gets a user style override by user ID.
+        /// </summary>
+        public UserStyleOverride? GetUserStyleOverride(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _userStyleOverrides.TryGetValue(userId, out var style) ? style : null;
+            }
+        }
+
+        /// <summary>
+        /// Gets all user style overrides.
+        /// </summary>
+        public List<UserStyleOverride> GetAllUserStyleOverrides()
+        {
+            lock (_lock)
+            {
+                return _userStyleOverrides.Values.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Removes a user style override.
+        /// </summary>
+        public async Task<bool> RemoveUserStyleOverrideAsync(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_userStyleOverrides.ContainsKey(userId))
+                {
+                    _userStyleOverrides.Remove(userId);
+                    _ = SaveUserStyleOverridesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // ============ MEDIA QUOTAS ============
+
+        /// <summary>
+        /// Loads media quotas from disk.
+        /// </summary>
+        private void LoadMediaQuotas()
+        {
+            try
+            {
+                var quotasFile = Path.Combine(_dataPath, "media_quotas.json");
+                if (File.Exists(quotasFile))
+                {
+                    var json = File.ReadAllText(quotasFile);
+                    var quotas = JsonSerializer.Deserialize<List<MediaQuota>>(json);
+                    if (quotas != null)
+                    {
+                        _mediaQuotas = quotas.ToDictionary(q => q.UserId);
+                        _logger.LogInformation("Loaded {Count} media quotas from disk", _mediaQuotas.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading media quotas from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves media quotas to disk.
+        /// </summary>
+        private async Task SaveMediaQuotasAsync()
+        {
+            await _mediaQuotasWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var quotasFile = Path.Combine(_dataPath, "media_quotas.json");
+                List<MediaQuota> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _mediaQuotas.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(quotasFile, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving media quotas to disk");
+            }
+            finally
+            {
+                _mediaQuotasWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Sets or updates a media quota for a user.
+        /// </summary>
+        public async Task<MediaQuota> SetMediaQuotaAsync(MediaQuota quota)
+        {
+            var now = DateTime.UtcNow;
+            // Initialize reset times if not set
+            if (quota.DailyReset == default)
+            {
+                quota.DailyReset = now.Date.AddDays(1);
+            }
+            if (quota.WeeklyReset == default)
+            {
+                var daysUntilMonday = ((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7;
+                if (daysUntilMonday == 0) daysUntilMonday = 7;
+                quota.WeeklyReset = now.Date.AddDays(daysUntilMonday);
+            }
+            if (quota.MonthlyReset == default)
+            {
+                quota.MonthlyReset = new DateTime(now.Year, now.Month, 1).AddMonths(1);
+            }
+
+            lock (_lock)
+            {
+                _mediaQuotas[quota.UserId] = quota;
+                _ = SaveMediaQuotasAsync();
+                return quota;
+            }
+        }
+
+        /// <summary>
+        /// Gets a media quota by user ID.
+        /// </summary>
+        public MediaQuota? GetMediaQuota(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _mediaQuotas.TryGetValue(userId, out var quota) ? quota : null;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user's media quota is exceeded.
+        /// </summary>
+        public bool IsMediaQuotaExceeded(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (!_mediaQuotas.TryGetValue(userId, out var quota))
+                {
+                    return false; // No quota = no limit
+                }
+                return quota.IsQuotaExceeded();
+            }
+        }
+
+        /// <summary>
+        /// Increments media usage for a user.
+        /// </summary>
+        public async Task IncrementMediaUsageAsync(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_mediaQuotas.TryGetValue(userId, out var quota))
+                {
+                    quota.IncrementUsage();
+                    _ = SaveMediaQuotasAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Removes a media quota for a user.
+        /// </summary>
+        public async Task<bool> RemoveMediaQuotaAsync(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_mediaQuotas.ContainsKey(userId))
+                {
+                    _mediaQuotas.Remove(userId);
+                    _ = SaveMediaQuotasAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Updates a chat moderator.
+        /// </summary>
+        public async Task<ChatModerator?> UpdateChatModeratorAsync(Guid moderatorId, int? level = null)
+        {
+            lock (_lock)
+            {
+                if (_chatModerators.TryGetValue(moderatorId, out var moderator))
+                {
+                    if (level.HasValue)
+                    {
+                        moderator.Level = level.Value;
+                    }
+                    _ = SaveChatModeratorsAsync();
+                    return moderator;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Resets daily delete count for a moderator if needed.
+        /// </summary>
+        public void ResetModeratorDailyDeleteCount(Guid moderatorId)
+        {
+            lock (_lock)
+            {
+                if (_chatModerators.TryGetValue(moderatorId, out var moderator))
+                {
+                    var now = DateTime.UtcNow;
+                    if (now >= moderator.DailyDeleteReset)
+                    {
+                        moderator.DailyDeleteCount = 0;
+                        moderator.DailyDeleteReset = now.Date.AddDays(1);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Increments daily delete count for a moderator.
+        /// </summary>
+        public async Task IncrementModeratorDeleteCountAsync(Guid moderatorId)
+        {
+            lock (_lock)
+            {
+                if (_chatModerators.TryGetValue(moderatorId, out var moderator))
+                {
+                    moderator.DailyDeleteCount++;
+                    _ = SaveChatModeratorsAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a chat moderator by ID.
+        /// </summary>
+        public ChatModerator? GetChatModeratorById(Guid moderatorId)
+        {
+            lock (_lock)
+            {
+                return _chatModerators.TryGetValue(moderatorId, out var moderator) ? moderator : null;
             }
         }
     }

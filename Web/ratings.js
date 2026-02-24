@@ -5919,6 +5919,127 @@
                     color: #ff4444 !important;
                 }
 
+                /* Admin Panel Tabs */
+                .chat-admin-tabs {
+                    display: flex !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    padding: 0 !important;
+                }
+
+                .chat-admin-tab {
+                    flex: 1 !important;
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    padding: 10px !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    border-bottom: 2px solid transparent !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-admin-tab:hover {
+                    color: #fff !important;
+                }
+
+                .chat-admin-tab.active {
+                    color: #00a4dc !important;
+                    border-bottom-color: #00a4dc !important;
+                }
+
+                .chat-admin-tab-content {
+                    padding: 12px !important;
+                    max-height: 220px !important;
+                    overflow-y: auto !important;
+                }
+
+                .chat-admin-add {
+                    display: flex !important;
+                    gap: 8px !important;
+                    margin-top: 10px !important;
+                    padding-top: 10px !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-admin-select {
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    color: #fff !important;
+                    padding: 6px 8px !important;
+                    font-size: 12px !important;
+                    border-radius: 4px !important;
+                }
+
+                .chat-admin-filter {
+                    margin-bottom: 10px !important;
+                }
+
+                .chat-admin-user-info {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                }
+
+                .chat-admin-user-stats {
+                    font-size: 11px !important;
+                    color: #666 !important;
+                    margin-top: 2px !important;
+                }
+
+                .chat-mod-level {
+                    display: inline-block !important;
+                    padding: 2px 6px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-stats {
+                    font-size: 10px !important;
+                    color: #888 !important;
+                }
+
+                .chat-ban-type {
+                    display: inline-block !important;
+                    padding: 2px 6px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    color: #fff !important;
+                    text-transform: uppercase !important;
+                }
+
+                .chat-action-item {
+                    padding: 8px 0 !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                }
+
+                .chat-action-header {
+                    font-size: 12px !important;
+                    color: #ddd !important;
+                }
+
+                .chat-action-mod {
+                    color: #00a4dc !important;
+                    font-weight: 500 !important;
+                }
+
+                .chat-action-type {
+                    color: #888 !important;
+                }
+
+                .chat-action-target {
+                    color: #ff9800 !important;
+                }
+
+                .chat-action-time {
+                    font-size: 10px !important;
+                    color: #666 !important;
+                    margin-top: 2px !important;
+                }
+
                 /* Chat Status Messages */
                 .chat-status {
                     text-align: center !important;
@@ -14079,13 +14200,33 @@
                         </div>
                     </div>
                     <div class="chat-admin-panel" id="chatAdminPanel">
-                        <div class="chat-admin-section">
-                            <div class="chat-admin-title">${this.t('chatModerators')}</div>
-                            <div class="chat-admin-list" id="chatModeratorList"></div>
+                        <div class="chat-admin-tabs">
+                            <button class="chat-admin-tab active" data-admin-tab="moderators">${this.t('chatModerators')}</button>
+                            <button class="chat-admin-tab" data-admin-tab="banned">${this.t('chatBannedUsers')}</button>
+                            <button class="chat-admin-tab" data-admin-tab="actions">Actions</button>
                         </div>
-                        <div class="chat-admin-section">
-                            <div class="chat-admin-title">${this.t('chatBannedUsers')}</div>
+                        <div class="chat-admin-tab-content" id="chatAdminTabModerators">
+                            <div class="chat-admin-list" id="chatModeratorList"></div>
+                            <div class="chat-admin-add" id="chatAddModSection" style="display:none;">
+                                <select id="chatAddModSelect" class="chat-admin-select"></select>
+                                <select id="chatAddModLevel" class="chat-admin-select" style="width:60px;">
+                                    <option value="1">L1</option>
+                                    <option value="2">L2</option>
+                                    <option value="3">L3</option>
+                                </select>
+                                <button class="chat-admin-btn" id="chatAddModBtn">${this.t('chatAddMod')}</button>
+                            </div>
+                        </div>
+                        <div class="chat-admin-tab-content" id="chatAdminTabBanned" style="display:none;">
                             <div class="chat-admin-list" id="chatBannedList"></div>
+                        </div>
+                        <div class="chat-admin-tab-content" id="chatAdminTabActions" style="display:none;">
+                            <div class="chat-admin-filter">
+                                <select id="chatActionsFilter" class="chat-admin-select">
+                                    <option value="">All Moderators</option>
+                                </select>
+                            </div>
+                            <div class="chat-admin-list" id="chatActionsList"></div>
                         </div>
                         <div class="chat-admin-section" id="chatClearSection" style="display:none;">
                             <button class="chat-admin-btn danger" id="chatClearAllBtn" style="width:100%;">${this.t('chatClearAll')}</button>
@@ -14297,6 +14438,9 @@
                 // Mark public chat as read on server
                 this.markPublicChatRead();
                 this.updateUnreadBadge(0);
+                // Load moderator info and user styles
+                this.loadMyModeratorInfo();
+                this.loadUserStyles();
             } else {
                 chatWindow.classList.remove('visible');
                 this.stopChatPolling();
@@ -14595,27 +14739,29 @@
                     : '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
+                // Get user style overrides
+                const userStyle = self.getUserMessageStyle(msg.userId);
 
                 if (msg.isDeleted) {
                     html += '<div class="chat-message' + (isOwn ? ' own' : '') + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
-                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
+                        + '<span class="chat-username ' + roleClass + '"' + (userStyle.nicknameStyle ? ' style="' + userStyle.nicknameStyle + '"' : '') + '>' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
                         + '<div class="chat-bubble"><span class="chat-message-text" style="opacity:0.5;font-style:italic;">' + self.t('chatDeleted') + '</span></div>'
                         + '</div></div>';
                 } else {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '" data-user-id="' + msg.userId + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
-                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
+                        + '<span class="chat-username ' + roleClass + '"' + (userStyle.nicknameStyle ? ' style="' + userStyle.nicknameStyle + '"' : '') + '>' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
                         + '<div class="chat-bubble">'
-                        + (msg.content ? '<span class="chat-message-text">' + self.escapeHtml(msg.content) + '</span>' : '')
+                        + (msg.content ? '<span class="chat-message-text"' + (userStyle.messageStyle ? ' style="' + userStyle.messageStyle + '"' : '') + '>' + self.escapeHtml(msg.content) + '</span>' : '')
                         + (msg.gifUrl ? '<img class="chat-message-gif" src="' + self.escapeHtml(msg.gifUrl) + '" alt="GIF">' : '')
                         + '</div>';
 
@@ -14956,17 +15102,68 @@
          * Load admin panel data
          */
         loadAdminPanel: function () {
-            this.loadModerators();
+            this.loadModeratorStats();
             this.loadBannedUsers();
+            this.loadModeratorActions();
+            this.loadUsersForModSelect();
+            this.bindAdminTabs();
         },
 
         /**
-         * Load moderators list
+         * Bind admin panel tab switching
          */
-        loadModerators: function () {
+        bindAdminTabs: function () {
+            const self = this;
+            const tabs = document.querySelectorAll('.chat-admin-tab');
+            tabs.forEach(function (tab) {
+                tab.onclick = function () {
+                    tabs.forEach(function (t) { t.classList.remove('active'); });
+                    this.classList.add('active');
+                    const tabName = this.dataset.adminTab;
+                    document.getElementById('chatAdminTabModerators').style.display = tabName === 'moderators' ? '' : 'none';
+                    document.getElementById('chatAdminTabBanned').style.display = tabName === 'banned' ? '' : 'none';
+                    document.getElementById('chatAdminTabActions').style.display = tabName === 'actions' ? '' : 'none';
+                };
+            });
+        },
+
+        /**
+         * Load users for add moderator select
+         */
+        loadUsersForModSelect: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+            fetch(baseUrl + '/Ratings/Chat/Users/All', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                const select = document.getElementById('chatAddModSelect');
+                select.innerHTML = '<option value="">Select user...</option>' + users.filter(function (u) { return !u.isModerator && !u.isAdmin; }).map(function (u) {
+                    return '<option value="' + self.escapeHtml(u.id) + '">' + self.escapeHtml(u.name) + '</option>';
+                }).join('');
+            })
+            .catch(function () {});
+
+            // Bind add mod button
+            document.getElementById('chatAddModBtn').onclick = function () {
+                const userId = document.getElementById('chatAddModSelect').value;
+                const level = parseInt(document.getElementById('chatAddModLevel').value) || 1;
+                if (userId) {
+                    self.addModerator(userId, level);
+                }
+            };
+        },
+
+        /**
+         * Load moderators list with stats
+         */
+        loadModeratorStats: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
                 method: 'GET',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
@@ -14974,21 +15171,191 @@
             .then(function (r) { return r.json(); })
             .then(function (mods) {
                 const list = document.getElementById('chatModeratorList');
-                if (mods.length === 0) {
+                const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
+
+                // Show add mod section if can manage
+                document.getElementById('chatAddModSection').style.display = canManageMods ? '' : 'none';
+
+                if (!mods || mods.length === 0) {
                     list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
+                        const levelBadge = '<span class="chat-mod-level" style="background:' + self.getModLevelColor(mod.level) + ';">L' + mod.level + '</span>';
+                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' deletes | ' + mod.actionCount + ' actions</span>';
+                        const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && mod.level < 3);
+
                         return '<div class="chat-admin-item">'
+                            + '<div class="chat-admin-user-info">'
+                            + levelBadge + ' '
                             + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
-                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" data-action="remove-mod" data-user-id="' + self.escapeHtml(mod.userId) + '">' + self.t('chatRemoveMod') + '</button>' : '')
+                            + '</div>'
+                            + '<div class="chat-admin-user-stats">' + statsText + '</div>'
+                            + (canRemove ? '<button class="chat-admin-btn danger" data-action="remove-mod" data-mod-id="' + self.escapeHtml(mod.id) + '">' + self.t('chatRemoveMod') + '</button>' : '')
                             + '</div>';
                     }).join('');
                     list.querySelectorAll('[data-action="remove-mod"]').forEach(function (btn) {
-                        btn.onclick = function () { RatingsPlugin.removeModerator(this.dataset.userId); };
+                        btn.onclick = function () { self.removeModerator(this.dataset.modId); };
                     });
                 }
+
+                // Update actions filter
+                const filter = document.getElementById('chatActionsFilter');
+                filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                    return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
+                }).join('');
+                filter.onchange = function () {
+                    self.loadModeratorActions(this.value || null);
+                };
             })
-            .catch(function () {});
+            .catch(function () {
+                document.getElementById('chatModeratorList').innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+            });
+        },
+
+        /**
+         * Get color for moderator level
+         */
+        getModLevelColor: function (level) {
+            switch (level) {
+                case 1: return '#4a9eff';
+                case 2: return '#9c27b0';
+                case 3: return '#ff9800';
+                default: return '#666';
+            }
+        },
+
+        /**
+         * Load moderator actions log
+         */
+        loadModeratorActions: function (moderatorId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            let url = baseUrl + '/Ratings/Chat/Moderators/Actions?limit=50';
+            if (moderatorId) {
+                url += '&moderatorId=' + encodeURIComponent(moderatorId);
+            }
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (actions) {
+                const list = document.getElementById('chatActionsList');
+                if (!actions || actions.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                } else {
+                    list.innerHTML = actions.map(function (action) {
+                        const timeAgo = self.formatTimeAgo(new Date(action.timestamp));
+                        const actionLabel = self.getActionLabel(action.actionType);
+                        return '<div class="chat-action-item">'
+                            + '<div class="chat-action-header">'
+                            + '<span class="chat-action-mod">' + self.escapeHtml(action.moderatorName) + '</span>'
+                            + ' <span class="chat-action-type">' + actionLabel + '</span> '
+                            + '<span class="chat-action-target">' + self.escapeHtml(action.targetUserName) + '</span>'
+                            + '</div>'
+                            + '<div class="chat-action-time">' + timeAgo + '</div>'
+                            + '</div>';
+                    }).join('');
+                }
+            })
+            .catch(function () {
+                document.getElementById('chatActionsList').innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+            });
+        },
+
+        /**
+         * Get human-readable action label
+         */
+        getActionLabel: function (actionType) {
+            const labels = {
+                'delete_message': 'deleted message from',
+                'snooze': 'snoozed',
+                'temp_ban': 'temp banned',
+                'perm_ban': 'permanently banned',
+                'media_ban': 'media banned',
+                'add_mod': 'added as moderator',
+                'remove_mod': 'removed as moderator',
+                'set_quota': 'set quota for',
+                'change_style': 'changed style for',
+                'change_level': 'changed level for'
+            };
+            return labels[actionType] || actionType;
+        },
+
+        /**
+         * Load my moderator info
+         */
+        loadMyModeratorInfo: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (info) {
+                self.chatModInfo = info;
+            })
+            .catch(function () {
+                self.chatModInfo = null;
+            });
+        },
+
+        /**
+         * Load user style overrides
+         */
+        loadUserStyles: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/Styles', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (styles) {
+                self.chatUserStyles = styles || {};
+            })
+            .catch(function () {
+                self.chatUserStyles = {};
+            });
+        },
+
+        /**
+         * Get inline styles for a user's message based on style overrides
+         */
+        getUserMessageStyle: function (userId) {
+            if (!this.chatUserStyles || !this.chatUserStyles[userId]) {
+                return { nicknameStyle: '', messageStyle: '' };
+            }
+            const style = this.chatUserStyles[userId];
+            let nicknameStyle = '';
+            let messageStyle = '';
+
+            if (style.nicknameColor) {
+                nicknameStyle += 'color:' + style.nicknameColor + ' !important;';
+            }
+            if (style.messageColor) {
+                messageStyle += 'color:' + style.messageColor + ' !important;';
+            }
+            if (style.textStyle === 'bold' || style.textStyle === 'bold-italic') {
+                messageStyle += 'font-weight:bold !important;';
+            }
+            if (style.textStyle === 'italic' || style.textStyle === 'bold-italic') {
+                messageStyle += 'font-style:italic !important;';
+            }
+
+            return { nicknameStyle: nicknameStyle, messageStyle: messageStyle };
+        },
+
+        /**
+         * Load moderators list (legacy compatibility)
+         */
+        loadModerators: function () {
+            this.loadModeratorStats();
         },
 
         /**
@@ -14997,7 +15364,7 @@
         loadBannedUsers: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban/List', {
+            fetch(baseUrl + '/Ratings/Chat/Bans', {
                 method: 'GET',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
@@ -15006,61 +15373,142 @@
             .then(function (bans) {
                 const list = document.getElementById('chatBannedList');
                 if (!bans || bans.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
                 } else {
                     list.innerHTML = bans.map(function (ban) {
+                        const banTypeBadge = '<span class="chat-ban-type" style="background:' + self.getBanTypeColor(ban.banType) + ';">' + ban.banType + '</span>';
+                        const expiresText = ban.isPermanent ? 'Permanent' : (ban.expiresAt ? 'Expires ' + self.formatTimeAgo(new Date(ban.expiresAt)) : '');
                         return '<div class="chat-admin-item">'
+                            + '<div class="chat-admin-user-info">'
+                            + banTypeBadge + ' '
                             + '<span class="chat-admin-user">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
+                            + '</div>'
+                            + '<div class="chat-admin-user-stats">' + expiresText + (ban.reason ? ' - ' + self.escapeHtml(ban.reason) : '') + '</div>'
                             + '<button class="chat-admin-btn" data-action="unban" data-ban-id="' + self.escapeHtml(ban.id) + '">' + self.t('chatUnban') + '</button>'
                             + '</div>';
                     }).join('');
                     list.querySelectorAll('[data-action="unban"]').forEach(function (btn) {
-                        btn.onclick = function () { RatingsPlugin.unbanChatUser(this.dataset.banId); };
+                        btn.onclick = function () { self.unbanChatUser(this.dataset.banId); };
                     });
                 }
             })
             .catch(function () {
-                document.getElementById('chatBannedList').innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+                document.getElementById('chatBannedList').innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
             });
         },
 
         /**
-         * Show ban user dialog
+         * Get color for ban type
+         */
+        getBanTypeColor: function (banType) {
+            switch (banType) {
+                case 'snooze': return '#ff9800';
+                case 'chat': return '#f44336';
+                case 'media': return '#9c27b0';
+                default: return '#666';
+            }
+        },
+
+        /**
+         * Show ban user dialog with level-appropriate options
          */
         showBanUserDialog: function (userId, userName) {
             const self = this;
-            const duration = prompt('Ban duration:\n1 = 10 minutes\n2 = 1 hour\n3 = 1 day\n4 = 1 week\n5 = Permanent', '1');
-            if (!duration) return;
+            const modInfo = this.chatModInfo || {};
+            const isAdmin = this.chatIsAdmin;
+            const level = modInfo.level || (isAdmin ? 99 : 0);
 
-            let minutes = 10;
-            switch (duration) {
-                case '2': minutes = 60; break;
-                case '3': minutes = 60 * 24; break;
-                case '4': minutes = 60 * 24 * 7; break;
-                case '5': minutes = 0; break; // Permanent
+            // Build options based on moderator level
+            let options = 'Action:\n1 = Snooze (10 min mute)';
+            if (level >= 2 || isAdmin) {
+                options += '\n2 = Temp ban (1 hour)\n3 = Temp ban (1 day)\n4 = Temp ban (1 week)';
+            }
+            if (level >= 3 || isAdmin) {
+                options += '\n5 = Permanent ban\n6 = Media ban (1 day)\n7 = Media ban (1 week)';
+            }
+            if (isAdmin) {
+                options += '\n8 = Permanent media ban';
             }
 
-            this.banChatUser(userId, 'chat', minutes);
+            const action = prompt(options, '1');
+            if (!action) return;
+
+            let banType = 'snooze';
+            let minutes = 10;
+
+            switch (action) {
+                case '1':
+                    banType = 'snooze';
+                    minutes = modInfo.defaultSnoozeMinutes || 10;
+                    break;
+                case '2':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60;
+                    break;
+                case '3':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60 * 24;
+                    break;
+                case '4':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60 * 24 * 7;
+                    break;
+                case '5':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for permanent bans');
+                    banType = 'chat';
+                    minutes = 0; // Permanent
+                    break;
+                case '6':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for media bans');
+                    banType = 'media';
+                    minutes = 60 * 24;
+                    break;
+                case '7':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for media bans');
+                    banType = 'media';
+                    minutes = 60 * 24 * 7;
+                    break;
+                case '8':
+                    if (!isAdmin) return alert('Only admins can do permanent media bans');
+                    banType = 'media';
+                    minutes = 0;
+                    break;
+                default:
+                    return;
+            }
+
+            const reason = prompt('Reason (optional):');
+            this.banChatUser(userId, banType, minutes, reason || '');
         },
 
         /**
          * Ban a user from chat
          */
-        banChatUser: function (userId, banType, durationMinutes) {
+        banChatUser: function (userId, banType, durationMinutes, reason) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban', {
+            let url = baseUrl + '/Ratings/Chat/Ban?targetUserId=' + encodeURIComponent(userId) + '&banType=' + encodeURIComponent(banType);
+            if (durationMinutes && durationMinutes > 0) {
+                url += '&durationMinutes=' + durationMinutes;
+            }
+            if (reason) {
+                url += '&reason=' + encodeURIComponent(reason);
+            }
+            fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: self.getChatAuthHeaders(),
-                body: JSON.stringify({
-                    userId: userId,
-                    banType: banType,
-                    durationMinutes: durationMinutes,
-                    reason: 'Banned by moderator'
-                })
+                headers: self.getChatAuthHeaders()
             })
-            .then(function () {
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.json().then(function (data) {
+                        alert(data.message || data || 'Failed to ban user');
+                        throw new Error('Ban failed');
+                    });
+                }
                 self.loadBannedUsers();
             })
             .catch(function () {});
@@ -15069,10 +15517,10 @@
         /**
          * Unban a user
          */
-        unbanChatUser: function (userId) {
+        unbanChatUser: function (banId) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban?userId=' + userId, {
+            fetch(baseUrl + '/Ratings/Chat/Ban/' + encodeURIComponent(banId), {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
@@ -15086,17 +15534,18 @@
         /**
          * Add moderator
          */
-        addModerator: function (userId) {
+        addModerator: function (userId, level) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+            level = level || 1;
+            fetch(baseUrl + '/Ratings/Chat/Moderators?targetUserId=' + encodeURIComponent(userId) + '&level=' + level, {
                 method: 'POST',
                 credentials: 'include',
-                headers: self.getChatAuthHeaders(),
-                body: JSON.stringify({ userId: userId })
+                headers: self.getChatAuthHeaders()
             })
             .then(function () {
-                self.loadModerators();
+                self.loadModeratorStats();
+                self.loadUsersForModSelect();
             })
             .catch(function () {});
         },
@@ -15104,16 +15553,17 @@
         /**
          * Remove moderator
          */
-        removeModerator: function (userId) {
+        removeModerator: function (moderatorId) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators/' + userId, {
+            fetch(baseUrl + '/Ratings/Chat/Moderators/' + encodeURIComponent(moderatorId), {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
             .then(function () {
-                self.loadModerators();
+                self.loadModeratorStats();
+                self.loadUsersForModSelect();
             })
             .catch(function () {});
         },
