@@ -1029,6 +1029,40 @@
 
             // Initialize chat feature
             this.initChatWithRetry();
+
+            // Initialize playback ban interceptor
+            this.initPlaybackBanInterceptor();
+        },
+
+        /**
+         * Intercept fetch requests to detect media ban during playback
+         */
+        initPlaybackBanInterceptor: function () {
+            const self = this;
+            const originalFetch = window.fetch;
+
+            window.fetch = function (url, options) {
+                return originalFetch.apply(this, arguments).then(function (response) {
+                    // Check if this is a playback request that was blocked
+                    const urlStr = typeof url === 'string' ? url : url.url || '';
+                    const isPlaybackRequest = urlStr.includes('/Videos/') ||
+                                              urlStr.includes('/Audio/') ||
+                                              urlStr.includes('/PlaybackInfo') ||
+                                              urlStr.includes('/Playing');
+
+                    if (isPlaybackRequest && response.status === 403) {
+                        // Clone response to read body without consuming it
+                        response.clone().json().then(function (data) {
+                            if (data && data.message && data.message.includes('banned')) {
+                                // Show media ban notification
+                                self.showBanNotification('media', data.expiresAt, data.isPermanent);
+                            }
+                        }).catch(function () {});
+                    }
+
+                    return response;
+                });
+            };
         },
 
         /**
@@ -15772,54 +15806,73 @@
         },
 
         /**
-         * Show ban notification popup with countdown
+         * Track active ban notifications and their intervals
+         */
+        _banNotifications: {},
+        _banCountdownIntervals: {},
+
+        /**
+         * Show ban notification popup with countdown (supports multiple)
          */
         showBanNotification: function (banType, expiresAt, isPermanent) {
             const self = this;
+            const notificationId = 'chatBanNotification_' + banType;
 
-            // Remove existing notification if any
-            this.closeBanNotification();
+            // Don't create duplicate notification for same ban type
+            if (document.getElementById(notificationId)) {
+                return;
+            }
 
             // Create notification element
             const notification = document.createElement('div');
-            notification.id = 'chatBanNotification';
+            notification.id = notificationId;
             notification.className = 'chat-ban-notification';
+            notification.setAttribute('data-ban-type', banType);
 
             const banTypeLabel = banType === 'chat' ? 'Chat Banned' :
                                  banType === 'snooze' ? 'Muted' :
                                  banType === 'media' ? 'Media Banned' : 'Banned';
 
+            const banIcon = banType === 'snooze' ? '🔇' :
+                           banType === 'media' ? '🎬' : '🚫';
+
             let countdownHtml = '';
             if (isPermanent) {
                 countdownHtml = '<span class="chat-ban-countdown">Permanent</span>';
             } else if (expiresAt) {
-                countdownHtml = '<span class="chat-ban-countdown" id="chatBanCountdown"></span>';
+                countdownHtml = '<span class="chat-ban-countdown" id="chatBanCountdown_' + banType + '"></span>';
             }
 
             notification.innerHTML =
                 '<div class="chat-ban-notification-content">' +
-                    '<span class="chat-ban-notification-icon">' + (banType === 'snooze' ? '🔇' : '🚫') + '</span>' +
+                    '<span class="chat-ban-notification-icon">' + banIcon + '</span>' +
                     '<div class="chat-ban-notification-text">' +
                         '<span class="chat-ban-notification-title">' + banTypeLabel + '</span>' +
                         countdownHtml +
                     '</div>' +
-                    '<button class="chat-ban-notification-close" id="chatBanNotificationClose">×</button>' +
+                    '<button class="chat-ban-notification-close" data-close-ban="' + banType + '">×</button>' +
                 '</div>';
 
             document.body.appendChild(notification);
 
             // Bind close button
-            document.getElementById('chatBanNotificationClose').onclick = function () {
-                self.closeBanNotification();
+            notification.querySelector('[data-close-ban]').onclick = function () {
+                self.closeBanNotification(banType);
             };
 
             // Start countdown timer if not permanent
             if (!isPermanent && expiresAt) {
-                this.updateBanCountdown(new Date(expiresAt));
-                this._banCountdownInterval = setInterval(function () {
-                    self.updateBanCountdown(new Date(expiresAt));
+                this.updateBanCountdown(banType, new Date(expiresAt));
+                this._banCountdownIntervals[banType] = setInterval(function () {
+                    self.updateBanCountdown(banType, new Date(expiresAt));
                 }, 1000);
             }
+
+            // Track this notification
+            this._banNotifications[banType] = true;
+
+            // Reposition all notifications
+            this.repositionBanNotifications();
 
             // Show with animation
             setTimeout(function () {
@@ -15828,10 +15881,22 @@
         },
 
         /**
-         * Update ban countdown timer
+         * Reposition ban notifications to stack vertically
          */
-        updateBanCountdown: function (expiresAt) {
-            const countdownEl = document.getElementById('chatBanCountdown');
+        repositionBanNotifications: function () {
+            const notifications = document.querySelectorAll('.chat-ban-notification');
+            let topOffset = 20;
+            notifications.forEach(function (notification) {
+                notification.style.top = topOffset + 'px';
+                topOffset += notification.offsetHeight + 10;
+            });
+        },
+
+        /**
+         * Update ban countdown timer for specific ban type
+         */
+        updateBanCountdown: function (banType, expiresAt) {
+            const countdownEl = document.getElementById('chatBanCountdown_' + banType);
             if (!countdownEl) return;
 
             const now = new Date();
@@ -15839,7 +15904,7 @@
 
             if (diff <= 0) {
                 // Ban expired
-                this.closeBanNotification();
+                this.closeBanNotification(banType);
                 // Refresh ban status
                 this.checkChatBanStatus();
                 return;
@@ -15863,24 +15928,49 @@
         },
 
         /**
-         * Close ban notification popup
+         * Close ban notification popup (single or all)
          */
-        closeBanNotification: function () {
-            // Clear countdown interval
-            if (this._banCountdownInterval) {
-                clearInterval(this._banCountdownInterval);
-                this._banCountdownInterval = null;
-            }
+        closeBanNotification: function (banType) {
+            const self = this;
 
-            // Remove notification element
-            const notification = document.getElementById('chatBanNotification');
-            if (notification) {
-                notification.classList.remove('visible');
-                setTimeout(function () {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
+            if (banType) {
+                // Close specific notification
+                const notificationId = 'chatBanNotification_' + banType;
+                const notification = document.getElementById(notificationId);
+
+                // Clear interval
+                if (this._banCountdownIntervals[banType]) {
+                    clearInterval(this._banCountdownIntervals[banType]);
+                    delete this._banCountdownIntervals[banType];
+                }
+
+                // Remove notification
+                if (notification) {
+                    notification.classList.remove('visible');
+                    setTimeout(function () {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                        delete self._banNotifications[banType];
+                        self.repositionBanNotifications();
+                    }, 300);
+                }
+            } else {
+                // Close all notifications
+                Object.keys(this._banCountdownIntervals).forEach(function (type) {
+                    clearInterval(self._banCountdownIntervals[type]);
+                });
+                this._banCountdownIntervals = {};
+
+                document.querySelectorAll('.chat-ban-notification').forEach(function (notification) {
+                    notification.classList.remove('visible');
+                    setTimeout(function () {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                });
+                this._banNotifications = {};
             }
         },
 
@@ -15997,28 +16087,51 @@
             const status = document.getElementById('chatStatus');
             const input = document.getElementById('chatInput');
 
+            // Track which notifications should be shown
+            const activeBans = [];
+
+            // Check chat ban
             if (this.chatBanStatus && this.chatBanStatus.chatBan) {
+                const ban = this.chatBanStatus.chatBan;
+                this.showBanNotification('chat', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('chat');
+            } else {
+                this.closeBanNotification('chat');
+            }
+
+            // Check snooze/mute ban
+            if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
+                const ban = this.chatBanStatus.snoozeBan;
+                this.showBanNotification('snooze', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('snooze');
+            } else {
+                this.closeBanNotification('snooze');
+            }
+
+            // Check media ban
+            if (this.chatBanStatus && this.chatBanStatus.mediaBan) {
+                const ban = this.chatBanStatus.mediaBan;
+                this.showBanNotification('media', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('media');
+            } else {
+                this.closeBanNotification('media');
+            }
+
+            // Update input state based on chat-affecting bans
+            if (activeBans.includes('chat')) {
                 inputArea.style.display = 'none';
                 status.style.display = 'block';
                 status.className = 'chat-status error';
                 status.textContent = this.t('chatBanned');
-                // Show ban notification popup
-                const ban = this.chatBanStatus.chatBan;
-                this.showBanNotification('chat', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
-            } else if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
+            } else if (activeBans.includes('snooze')) {
                 inputArea.style.display = 'none';
                 status.style.display = 'block';
                 status.className = 'chat-status warning';
                 status.textContent = this.t('chatMuted');
-                // Show mute notification popup
-                const ban = this.chatBanStatus.snoozeBan;
-                this.showBanNotification('snooze', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
             } else {
                 inputArea.style.display = '';
                 status.style.display = 'none';
                 input.disabled = false;
-                // Close any ban notification
-                this.closeBanNotification();
             }
         },
 
