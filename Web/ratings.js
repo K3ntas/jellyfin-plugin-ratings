@@ -16474,13 +16474,19 @@
                     list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
-                        const timeAgo = self.formatTimeAgo(new Date(action.timestamp));
-                        const actionLabel = self.getActionLabel(action.actionType);
+                        // Handle both PascalCase and camelCase from API
+                        const timestamp = action.Timestamp || action.timestamp;
+                        const actionType = action.ActionType || action.actionType || '';
+                        const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
+                        const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+
+                        const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
+                        const actionLabel = self.getActionLabel(actionType);
                         return '<div class="chat-mod-log-item">'
                             + '<div class="chat-mod-log-header">'
-                            + '<span class="chat-mod-log-mod">' + self.escapeHtml(action.moderatorName) + '</span>'
+                            + '<span class="chat-mod-log-mod">' + self.escapeHtml(moderatorName) + '</span>'
                             + ' <span class="chat-mod-log-action">' + actionLabel + '</span> '
-                            + '<span class="chat-mod-log-target">' + self.escapeHtml(action.targetUserName) + '</span>'
+                            + '<span class="chat-mod-log-target">' + self.escapeHtml(targetUserName) + '</span>'
                             + '</div>'
                             + '<div class="chat-mod-log-time">' + timeAgo + '</div>'
                             + '</div>';
@@ -17418,17 +17424,24 @@
             .then(function (r) { return r.json(); })
             .then(function (actions) {
                 const list = document.getElementById('chatActionsList');
+                if (!list) return;
                 if (!actions || actions.length === 0) {
                     list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
-                        const timeAgo = self.formatTimeAgo(new Date(action.timestamp));
-                        const actionLabel = self.getActionLabel(action.actionType);
+                        // Handle both PascalCase and camelCase from API
+                        const timestamp = action.Timestamp || action.timestamp;
+                        const actionType = action.ActionType || action.actionType || '';
+                        const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
+                        const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+
+                        const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
+                        const actionLabel = self.getActionLabel(actionType);
                         return '<div class="chat-action-item">'
                             + '<div class="chat-action-header">'
-                            + '<span class="chat-action-mod">' + self.escapeHtml(action.moderatorName) + '</span>'
+                            + '<span class="chat-action-mod">' + self.escapeHtml(moderatorName) + '</span>'
                             + ' <span class="chat-action-type">' + actionLabel + '</span> '
-                            + '<span class="chat-action-target">' + self.escapeHtml(action.targetUserName) + '</span>'
+                            + '<span class="chat-action-target">' + self.escapeHtml(targetUserName) + '</span>'
                             + '</div>'
                             + '<div class="chat-action-time">' + timeAgo + '</div>'
                             + '</div>';
