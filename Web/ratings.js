@@ -18,6 +18,7 @@
         chatConfig: null, // Chat configuration from server
         chatOpen: false, // Whether chat window is open
         chatMessages: [], // Current chat messages
+        _failedAvatars: {}, // Cache of failed avatar URLs to prevent 404 spam
         chatUsers: [], // Online users
         chatPollingInterval: null, // Polling timer
         chatBackgroundPollingInterval: null, // Background polling for badge (when chat closed)
@@ -15773,12 +15774,9 @@
 
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
-                const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
-                // Use avatar image if available, otherwise show initial
+                // Use avatar helper with fallback caching
                 const userAvatar = msg.userAvatar || msg.UserAvatar;
-                const avatarContent = userAvatar
-                    ? '<img src="' + self.escapeHtml(userAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>'
-                    : '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
+                const avatarContent = self.getAvatarHtml(userAvatar, msg.userName);
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
                 // Get user style overrides
@@ -17274,14 +17272,15 @@
             const userName = this.modActionTarget.userName;
             const banType = this.modActionType;
             const durationMinutes = this.modActionDuration;
-            const reason = document.getElementById('chatModReasonInput')?.value || '';
+            const reasonInput = document.getElementById('chatModReasonInput');
+            const reason = reasonInput?.value || '';
 
             console.log('[Ratings] Applying penalty:', { userId, userName, banType, durationMinutes, reason });
 
-            // Hide panel first to clear modActionTarget
-            this.hideActionPanel();
+            // Clear reason field but keep panel open for potential additional penalties
+            if (reasonInput) reasonInput.value = '';
 
-            // Apply the ban (pass userName since modActionTarget is now cleared)
+            // Apply the ban - panel stays open, ban list will refresh
             this.banChatUser(userId, banType, durationMinutes, reason, userName);
         },
 
@@ -17895,6 +17894,40 @@
         },
 
         /**
+         * Format a date to relative time ago string
+         */
+        formatTimeAgo: function (date) {
+            if (!date) return '';
+            const now = new Date();
+            const diff = now - date;
+            const diffMins = Math.floor(diff / 60000);
+            const diffHours = Math.floor(diff / 3600000);
+            const diffDays = Math.floor(diff / 86400000);
+
+            if (diffMins < 1) return this.t('timeJustNow') || 'just now';
+            if (diffMins < 60) return diffMins + ' ' + (this.t('timeMinutes') || 'min') + ' ' + (this.t('timeAgo') || 'ago');
+            if (diffHours < 24) return diffHours + ' ' + (this.t('timeHours') || 'h') + ' ' + (this.t('timeAgo') || 'ago');
+            return diffDays + ' ' + (this.t('timeDays') || 'd') + ' ' + (this.t('timeAgo') || 'ago');
+        },
+
+        /**
+         * Generate avatar HTML with fallback to initial
+         * Caches failed avatar URLs to prevent repeated 404 requests
+         */
+        getAvatarHtml: function (avatarUrl, userName) {
+            const self = this;
+            const initial = (userName || 'U').charAt(0).toUpperCase();
+
+            // If no URL or URL failed before, just show initial
+            if (!avatarUrl || this._failedAvatars[avatarUrl]) {
+                return '<span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
+            }
+
+            // Show image with fallback - mark as failed on error
+            return '<img src="' + this.escapeHtml(avatarUrl) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\';window.ratingsPlugin&&(window.ratingsPlugin._failedAvatars[\'' + this.escapeHtml(avatarUrl).replace(/'/g, "\\'") + '\']=true)"><span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
+        },
+
+        /**
          * Add a system message to chat (visible only to mods/admins)
          */
         addModSystemMessage: function (message, icon) {
@@ -18204,11 +18237,8 @@
                     bubbleContent += '<img src="' + this.escapeHtml(msg.gifUrl) + '" class="chat-gif" alt="GIF" loading="lazy">';
                 }
 
-                const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
                 const senderAvatar = msg.senderAvatar || msg.SenderAvatar;
-                const dmAvatarHtml = senderAvatar
-                    ? '<img src="' + this.escapeHtml(senderAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>'
-                    : '<span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>';
+                const dmAvatarHtml = this.getAvatarHtml(senderAvatar, msg.senderName);
                 div.innerHTML = `
                     <div class="chat-avatar">
                         ${dmAvatarHtml}
@@ -18494,6 +18524,9 @@
             return null;
         }
     };
+
+    // Make plugin accessible globally for avatar caching
+    window.ratingsPlugin = RatingsPlugin;
 
     // Initialize when DOM is ready
 
