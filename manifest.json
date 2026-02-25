@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.35.0",
+        "changelog": "Mod panel restructure: clickable bans, ban search, mod level in user panel, always-visible action buttons for mods",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.35.0/jellyfin-plugin-ratings_2.0.35.0.zip",
+        "checksum": "137a059134cc8f78b9137791ad767c5a",
+        "timestamp": "2026-02-25T20:45:00Z"
+      },
+      {
         "version": "2.0.34.0",
         "changelog": "Fix: Ban expiration now shows 'in 10m' instead of 'just now'",
         "targetAbi": "10.11.0.0",
