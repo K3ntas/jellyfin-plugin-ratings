@@ -16396,6 +16396,7 @@
         loadModPanelBans: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
+            console.log('[Ratings] Loading ban list...');
             fetch(baseUrl + '/Ratings/Chat/Bans', {
                 method: 'GET',
                 credentials: 'include',
@@ -16403,10 +16404,15 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (bans) {
+                console.log('[Ratings] Bans loaded:', bans);
                 const list = document.getElementById('chatModBanList');
-                if (!list) return;
+                if (!list) {
+                    console.log('[Ratings] chatModBanList element not found');
+                    return;
+                }
 
                 if (!bans || bans.length === 0) {
+                    console.log('[Ratings] No bans to display');
                     list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
                 } else {
                     list.innerHTML = bans.map(function (ban) {
@@ -16438,7 +16444,8 @@
                     });
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
+                console.error('[Ratings] Failed to load bans:', err);
                 const list = document.getElementById('chatModBanList');
                 if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
             });
@@ -17697,6 +17704,7 @@
                 self.showModToast(actionName + ' applied to ' + userName + ' (' + durationText + ')');
                 self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
                 // Refresh all mod panel data
+                console.log('[Ratings] Ban success, refreshing lists...');
                 self.loadBannedUsers();
                 self.loadModPanelBans();
                 self.loadModPanelActions();
