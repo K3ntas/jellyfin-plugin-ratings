@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.28.0",
+        "changelog": "Add missing formatDuration function",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.28.0/jellyfin-plugin-ratings_2.0.28.0.zip",
+        "checksum": "45136245ace74757e60d851370ce9130",
+        "timestamp": "2026-02-25T17:10:00Z"
+      },
+      {
         "version": "2.0.27.0",
         "changelog": "Fix penalty apply: type=button on all buttons, better error handling with console logs, prevent page refresh",
         "targetAbi": "10.11.0.0",
