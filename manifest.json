@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.36.0",
+        "changelog": "Ban notification popup with countdown, close chat/mod panel on page change, reset chat on logout/login",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.36.0/jellyfin-plugin-ratings_2.0.36.0.zip",
+        "checksum": "442f2ba34401b3e88e73611a709cc2b8",
+        "timestamp": "2026-02-25T22:45:00Z"
+      },
+      {
         "version": "2.0.35.0",
         "changelog": "Mod panel restructure: clickable bans, ban search, mod level in user panel, always-visible action buttons for mods",
         "targetAbi": "10.11.0.0",

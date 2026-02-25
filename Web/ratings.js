@@ -6129,6 +6129,86 @@
                     }
                 }
 
+                /* ========== Ban Notification Popup ========== */
+                .chat-ban-notification {
+                    position: fixed !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    z-index: 10000010 !important;
+                    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%) !important;
+                    border: 1px solid rgba(255, 68, 68, 0.3) !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 68, 68, 0.1) !important;
+                    padding: 16px 20px !important;
+                    min-width: 280px !important;
+                    max-width: 400px !important;
+                    opacity: 0;
+                    transform: translateX(100%) !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                .chat-ban-notification.visible {
+                    opacity: 1;
+                    transform: translateX(0) !important;
+                }
+
+                .chat-ban-notification-content {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                }
+
+                .chat-ban-notification-icon {
+                    font-size: 28px !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-ban-notification-text {
+                    flex: 1 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 4px !important;
+                }
+
+                .chat-ban-notification-title {
+                    font-size: 15px !important;
+                    font-weight: 600 !important;
+                    color: #ff6b6b !important;
+                }
+
+                .chat-ban-countdown {
+                    font-size: 13px !important;
+                    color: #aaa !important;
+                    font-family: monospace !important;
+                }
+
+                .chat-ban-notification-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #666 !important;
+                    font-size: 20px !important;
+                    cursor: pointer !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    transition: all 0.2s ease !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-ban-notification-close:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    color: #fff !important;
+                }
+
+                @media (max-width: 480px) {
+                    .chat-ban-notification {
+                        top: 10px !important;
+                        right: 10px !important;
+                        left: 10px !important;
+                        min-width: auto !important;
+                        max-width: none !important;
+                    }
+                }
+
                 /* ========== Moderator Window (Separate Floating Window) ========== */
                 .mod-window {
                     position: fixed !important;
@@ -7160,11 +7240,38 @@
          * Handle page change
          */
         onPageChange: function () {
+            // Close chat window and moderator panel on page navigation
+            this.closeChatOnPageChange();
+
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
             }
+        },
+
+        /**
+         * Close chat window and moderator panel on page change
+         */
+        closeChatOnPageChange: function () {
+            // Close chat window if open
+            if (this.chatOpen) {
+                const chatWindow = document.getElementById('chatWindow');
+                if (chatWindow) {
+                    chatWindow.classList.remove('visible');
+                }
+                this.chatOpen = false;
+                this.stopChatPolling();
+            }
+
+            // Close moderator panel if open
+            const modWindow = document.querySelector('.mod-window');
+            if (modWindow && modWindow.classList.contains('visible')) {
+                modWindow.classList.remove('visible');
+            }
+
+            // Close ban notification popup if open
+            this.closeBanNotification();
         },
 
         /**
@@ -8127,6 +8234,9 @@
 
                             // Clear all cached data
                             self.clearRequestCache();
+
+                            // Reset chat state on user change
+                            self.resetChatOnUserChange();
 
                             // Handle notification session lifecycle
                             if (lastUserId && !currentUserId) {
@@ -15611,6 +15721,170 @@
         },
 
         /**
+         * Reset chat state on user change (logout/login/switch)
+         */
+        resetChatOnUserChange: function () {
+            // Close chat window
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow) {
+                chatWindow.classList.remove('visible');
+                chatWindow.classList.remove('chat-is-mod');
+                chatWindow.classList.remove('chat-is-admin');
+            }
+            this.chatOpen = false;
+
+            // Close moderator panel
+            const modWindow = document.querySelector('.mod-window');
+            if (modWindow) {
+                modWindow.classList.remove('visible');
+            }
+
+            // Stop polling
+            this.stopChatPolling();
+            this.stopBackgroundPolling();
+
+            // Clear chat state
+            this.chatMessages = [];
+            this.chatTypingUsers = [];
+            this.chatOnlineUsers = [];
+            this.chatBanStatus = null;
+            this.chatIsAdmin = false;
+            this.chatIsModerator = false;
+            this.chatModInfo = null;
+            this.dmConversations = [];
+            this.dmActiveConversation = null;
+            this.dmMessages = [];
+
+            // Close ban notification
+            this.closeBanNotification();
+
+            // Clear the messages container
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
+
+            // Reset input state
+            const inputArea = document.getElementById('chatInputArea');
+            const status = document.getElementById('chatStatus');
+            if (inputArea) inputArea.style.display = '';
+            if (status) status.style.display = 'none';
+        },
+
+        /**
+         * Show ban notification popup with countdown
+         */
+        showBanNotification: function (banType, expiresAt, isPermanent) {
+            const self = this;
+
+            // Remove existing notification if any
+            this.closeBanNotification();
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'chatBanNotification';
+            notification.className = 'chat-ban-notification';
+
+            const banTypeLabel = banType === 'chat' ? 'Chat Banned' :
+                                 banType === 'snooze' ? 'Muted' :
+                                 banType === 'media' ? 'Media Banned' : 'Banned';
+
+            let countdownHtml = '';
+            if (isPermanent) {
+                countdownHtml = '<span class="chat-ban-countdown">Permanent</span>';
+            } else if (expiresAt) {
+                countdownHtml = '<span class="chat-ban-countdown" id="chatBanCountdown"></span>';
+            }
+
+            notification.innerHTML =
+                '<div class="chat-ban-notification-content">' +
+                    '<span class="chat-ban-notification-icon">' + (banType === 'snooze' ? '🔇' : '🚫') + '</span>' +
+                    '<div class="chat-ban-notification-text">' +
+                        '<span class="chat-ban-notification-title">' + banTypeLabel + '</span>' +
+                        countdownHtml +
+                    '</div>' +
+                    '<button class="chat-ban-notification-close" id="chatBanNotificationClose">×</button>' +
+                '</div>';
+
+            document.body.appendChild(notification);
+
+            // Bind close button
+            document.getElementById('chatBanNotificationClose').onclick = function () {
+                self.closeBanNotification();
+            };
+
+            // Start countdown timer if not permanent
+            if (!isPermanent && expiresAt) {
+                this.updateBanCountdown(new Date(expiresAt));
+                this._banCountdownInterval = setInterval(function () {
+                    self.updateBanCountdown(new Date(expiresAt));
+                }, 1000);
+            }
+
+            // Show with animation
+            setTimeout(function () {
+                notification.classList.add('visible');
+            }, 10);
+        },
+
+        /**
+         * Update ban countdown timer
+         */
+        updateBanCountdown: function (expiresAt) {
+            const countdownEl = document.getElementById('chatBanCountdown');
+            if (!countdownEl) return;
+
+            const now = new Date();
+            const diff = expiresAt - now;
+
+            if (diff <= 0) {
+                // Ban expired
+                this.closeBanNotification();
+                // Refresh ban status
+                this.checkChatBanStatus();
+                return;
+            }
+
+            const totalSeconds = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let timeStr = '';
+            if (hours > 0) {
+                timeStr = hours + 'h ' + minutes + 'm ' + seconds + 's';
+            } else if (minutes > 0) {
+                timeStr = minutes + 'm ' + seconds + 's';
+            } else {
+                timeStr = seconds + 's';
+            }
+
+            countdownEl.textContent = timeStr + ' remaining';
+        },
+
+        /**
+         * Close ban notification popup
+         */
+        closeBanNotification: function () {
+            // Clear countdown interval
+            if (this._banCountdownInterval) {
+                clearInterval(this._banCountdownInterval);
+                this._banCountdownInterval = null;
+            }
+
+            // Remove notification element
+            const notification = document.getElementById('chatBanNotification');
+            if (notification) {
+                notification.classList.remove('visible');
+                setTimeout(function () {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        },
+
+        /**
          * Start background polling for unread badge (runs even when chat is closed)
          */
         startBackgroundPolling: function () {
@@ -15728,15 +16002,23 @@
                 status.style.display = 'block';
                 status.className = 'chat-status error';
                 status.textContent = this.t('chatBanned');
+                // Show ban notification popup
+                const ban = this.chatBanStatus.chatBan;
+                this.showBanNotification('chat', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
             } else if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
                 inputArea.style.display = 'none';
                 status.style.display = 'block';
                 status.className = 'chat-status warning';
                 status.textContent = this.t('chatMuted');
+                // Show mute notification popup
+                const ban = this.chatBanStatus.snoozeBan;
+                this.showBanNotification('snooze', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
             } else {
                 inputArea.style.display = '';
                 status.style.display = 'none';
                 input.disabled = false;
+                // Close any ban notification
+                this.closeBanNotification();
             }
         },
 
