@@ -7001,6 +7001,13 @@
                     color: #666 !important;
                 }
 
+                .chat-mod-log-details {
+                    font-size: 11px !important;
+                    color: #888 !important;
+                    margin-top: 2px !important;
+                    font-style: italic !important;
+                }
+
                 /* Empty state */
                 .chat-mod-empty {
                     text-align: center !important;
@@ -16479,6 +16486,30 @@
                         const actionType = action.ActionType || action.actionType || '';
                         const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
                         const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+                        const details = action.Details || action.details;
+
+                        // Parse details JSON for additional info
+                        let detailsInfo = '';
+                        if (details) {
+                            try {
+                                const d = typeof details === 'string' ? JSON.parse(details) : details;
+                                const parts = [];
+                                if (d.durationMinutes) {
+                                    parts.push(self.formatDuration(d.durationMinutes));
+                                } else if (d.permanent) {
+                                    parts.push('permanent');
+                                }
+                                if (d.reason) {
+                                    parts.push('"' + d.reason + '"');
+                                }
+                                if (d.level) {
+                                    parts.push('L' + d.level);
+                                }
+                                if (parts.length > 0) {
+                                    detailsInfo = '<div class="chat-mod-log-details">' + self.escapeHtml(parts.join(' · ')) + '</div>';
+                                }
+                            } catch (e) { /* ignore parse errors */ }
+                        }
 
                         const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
                         const actionLabel = self.getActionLabel(actionType);
@@ -16488,6 +16519,7 @@
                             + ' <span class="chat-mod-log-action">' + actionLabel + '</span> '
                             + '<span class="chat-mod-log-target">' + self.escapeHtml(targetUserName) + '</span>'
                             + '</div>'
+                            + detailsInfo
                             + '<div class="chat-mod-log-time">' + timeAgo + '</div>'
                             + '</div>';
                     }).join('');
@@ -17309,10 +17341,13 @@
         },
 
         /**
-         * Load users for add moderator select
+         * Load users for add moderator select (old admin panel)
          */
         loadUsersForModSelect: function () {
             const self = this;
+            const select = document.getElementById('chatAddModSelect');
+            if (!select) return; // Old admin panel not present
+
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Users/All', {
                 method: 'GET',
@@ -17321,28 +17356,34 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (users) {
-                const select = document.getElementById('chatAddModSelect');
+                if (!select) return;
                 select.innerHTML = '<option value="">Select user...</option>' + users.filter(function (u) { return !u.isModerator && !u.isAdmin; }).map(function (u) {
                     return '<option value="' + self.escapeHtml(u.id) + '">' + self.escapeHtml(u.name) + '</option>';
                 }).join('');
             })
             .catch(function () {});
 
-            // Bind add mod button
-            document.getElementById('chatAddModBtn').onclick = function () {
-                const userId = document.getElementById('chatAddModSelect').value;
-                const level = parseInt(document.getElementById('chatAddModLevel').value) || 1;
-                if (userId) {
-                    self.addModerator(userId, level);
-                }
-            };
+            // Bind add mod button (only if exists)
+            const addBtn = document.getElementById('chatAddModBtn');
+            if (addBtn) {
+                addBtn.onclick = function () {
+                    const userId = document.getElementById('chatAddModSelect').value;
+                    const level = parseInt(document.getElementById('chatAddModLevel').value) || 1;
+                    if (userId) {
+                        self.addModerator(userId, level);
+                    }
+                };
+            }
         },
 
         /**
-         * Load moderators list with stats
+         * Load moderators list with stats (old admin panel)
          */
         loadModeratorStats: function () {
             const self = this;
+            const list = document.getElementById('chatModeratorList');
+            if (!list) return; // Old admin panel not present
+
             const baseUrl = ApiClient.serverAddress();
             fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
                 method: 'GET',
@@ -17351,11 +17392,12 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (mods) {
-                const list = document.getElementById('chatModeratorList');
+                if (!list) return;
                 const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
 
                 // Show add mod section if can manage
-                document.getElementById('chatAddModSection').style.display = canManageMods ? '' : 'none';
+                const addSection = document.getElementById('chatAddModSection');
+                if (addSection) addSection.style.display = canManageMods ? '' : 'none';
 
                 if (!mods || mods.length === 0) {
                     list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
@@ -17381,15 +17423,18 @@
 
                 // Update actions filter
                 const filter = document.getElementById('chatActionsFilter');
-                filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
-                    return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
-                }).join('');
-                filter.onchange = function () {
-                    self.loadModeratorActions(this.value || null);
-                };
+                if (filter) {
+                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                        return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
+                    }).join('');
+                    filter.onchange = function () {
+                        self.loadModeratorActions(this.value || null);
+                    };
+                }
             })
             .catch(function () {
-                document.getElementById('chatModeratorList').innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                const list = document.getElementById('chatModeratorList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
             });
         },
 
@@ -17434,6 +17479,30 @@
                         const actionType = action.ActionType || action.actionType || '';
                         const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
                         const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+                        const details = action.Details || action.details;
+
+                        // Parse details JSON for additional info
+                        let detailsInfo = '';
+                        if (details) {
+                            try {
+                                const d = typeof details === 'string' ? JSON.parse(details) : details;
+                                const parts = [];
+                                if (d.durationMinutes) {
+                                    parts.push(self.formatDuration(d.durationMinutes));
+                                } else if (d.permanent) {
+                                    parts.push('permanent');
+                                }
+                                if (d.reason) {
+                                    parts.push('"' + d.reason + '"');
+                                }
+                                if (d.level) {
+                                    parts.push('L' + d.level);
+                                }
+                                if (parts.length > 0) {
+                                    detailsInfo = '<div class="chat-mod-log-details">' + self.escapeHtml(parts.join(' · ')) + '</div>';
+                                }
+                            } catch (e) { /* ignore parse errors */ }
+                        }
 
                         const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
                         const actionLabel = self.getActionLabel(actionType);
@@ -17443,13 +17512,15 @@
                             + ' <span class="chat-action-type">' + actionLabel + '</span> '
                             + '<span class="chat-action-target">' + self.escapeHtml(targetUserName) + '</span>'
                             + '</div>'
+                            + detailsInfo
                             + '<div class="chat-action-time">' + timeAgo + '</div>'
                             + '</div>';
                     }).join('');
                 }
             })
             .catch(function () {
-                document.getElementById('chatActionsList').innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                const list = document.getElementById('chatActionsList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
             });
         },
 
