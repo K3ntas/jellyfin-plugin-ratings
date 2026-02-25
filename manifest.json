@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.31.0",
+        "changelog": "Fix: formatTimeAgo missing, avatar 404 spam prevention, keep panel open after penalty",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.31.0/jellyfin-plugin-ratings_2.0.31.0.zip",
+        "checksum": "031e278896669a9917f97bd9bdee35d4",
+        "timestamp": "2026-02-25T19:10:00Z"
+      },
+      {
         "version": "2.0.30.0",
         "changelog": "Debug: Add console logging for ban list loading to diagnose empty list issue",
         "targetAbi": "10.11.0.0",
