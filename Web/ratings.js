@@ -16429,7 +16429,7 @@
                         const expiresAt = ban.ExpiresAt || ban.expiresAt;
                         const reason = ban.Reason || ban.reason;
 
-                        const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeAgo(new Date(expiresAt)) : '');
+                        const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(expiresAt)) : '');
                         return '<div class="chat-mod-ban-item">'
                             + '<div class="chat-mod-ban-info">'
                             + '<div class="chat-mod-ban-user">'
@@ -17637,7 +17637,7 @@
                 } else {
                     list.innerHTML = bans.map(function (ban) {
                         const banTypeBadge = '<span class="chat-ban-type" style="background:' + self.getBanTypeColor(ban.banType) + ';">' + ban.banType + '</span>';
-                        const expiresText = ban.isPermanent ? 'Permanent' : (ban.expiresAt ? 'Expires ' + self.formatTimeAgo(new Date(ban.expiresAt)) : '');
+                        const expiresText = ban.isPermanent ? 'Permanent' : (ban.expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(ban.expiresAt)) : '');
                         return '<div class="chat-admin-item">'
                             + '<div class="chat-admin-user-info">'
                             + banTypeBadge + ' '
@@ -17975,6 +17975,27 @@
             if (minutes < 1440) return Math.round(minutes / 60) + 'h';
             if (minutes < 10080) return Math.round(minutes / 1440) + 'd';
             return Math.round(minutes / 10080) + 'w';
+        },
+
+        /**
+         * Format time until a future date (for ban expiration)
+         */
+        formatTimeUntil: function (date) {
+            if (!date) return '';
+            const now = new Date();
+            const diff = date - now;
+
+            // If already expired
+            if (diff <= 0) return 'expired';
+
+            const diffMins = Math.floor(diff / 60000);
+            const diffHours = Math.floor(diff / 3600000);
+            const diffDays = Math.floor(diff / 86400000);
+
+            if (diffMins < 1) return 'in <1m';
+            if (diffMins < 60) return 'in ' + diffMins + 'm';
+            if (diffHours < 24) return 'in ' + diffHours + 'h';
+            return 'in ' + diffDays + 'd';
         },
 
         /**
