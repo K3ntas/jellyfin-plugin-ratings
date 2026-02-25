@@ -17868,6 +17868,17 @@
         },
 
         /**
+         * Format duration in minutes to human readable string
+         */
+        formatDuration: function (minutes) {
+            if (!minutes || minutes <= 0) return 'permanent';
+            if (minutes < 60) return minutes + 'm';
+            if (minutes < 1440) return Math.round(minutes / 60) + 'h';
+            if (minutes < 10080) return Math.round(minutes / 1440) + 'd';
+            return Math.round(minutes / 10080) + 'w';
+        },
+
+        /**
          * Add a system message to chat (visible only to mods/admins)
          */
         addModSystemMessage: function (message, icon) {
