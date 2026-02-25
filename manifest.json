@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.34.0",
+        "changelog": "Fix: Ban expiration now shows 'in 10m' instead of 'just now'",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.34.0/jellyfin-plugin-ratings_2.0.34.0.zip",
+        "checksum": "749d1d601ae184cdfcb3751c93b7222e",
+        "timestamp": "2026-02-25T20:17:00Z"
+      },
+      {
         "version": "2.0.33.0",
         "changelog": "Fix: Null checks for old panel elements, action log shows duration/reason",
         "targetAbi": "10.11.0.0",
