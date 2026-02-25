@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.37.0",
+        "changelog": "Multiple ban notifications - show all 3 penalties simultaneously, media ban on playback block",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.37.0/jellyfin-plugin-ratings_2.0.37.0.zip",
+        "checksum": "6f54b52b580107e647ff2f774c843734",
+        "timestamp": "2026-02-25T22:55:00Z"
+      },
+      {
         "version": "2.0.36.0",
         "changelog": "Ban notification popup with countdown, close chat/mod panel on page change, reset chat on logout/login",
         "targetAbi": "10.11.0.0",
