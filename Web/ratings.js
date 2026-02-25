@@ -5596,6 +5596,12 @@
                     display: flex !important;
                 }
 
+                /* Always show action buttons for mods/admins */
+                .chat-is-mod .chat-message-actions,
+                .chat-is-admin .chat-message-actions {
+                    display: flex !important;
+                }
+
                 .chat-message.own .chat-message-actions {
                     justify-content: flex-end !important;
                 }
@@ -6384,6 +6390,63 @@
                 .chat-mod-add-btn:disabled {
                     background: #333 !important;
                     cursor: not-allowed !important;
+                }
+
+                /* Moderator status row in user management panel */
+                .chat-mod-moderator-controls {
+                    margin-bottom: 16px !important;
+                    padding-bottom: 16px !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .chat-mod-mod-row {
+                    display: flex !important;
+                    gap: 8px !important;
+                    align-items: center !important;
+                }
+
+                .chat-mod-mod-row .chat-mod-level-select {
+                    flex: 1 !important;
+                    width: auto !important;
+                }
+
+                .chat-mod-user-status {
+                    display: inline-block !important;
+                    padding: 4px 10px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    margin-left: 8px !important;
+                }
+
+                .chat-mod-user-status.mod {
+                    background: rgba(0,164,220,0.2) !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-mod-user-status.admin {
+                    background: rgba(156,39,176,0.2) !important;
+                    color: #ba68c8 !important;
+                }
+
+                .chat-mod-user-status.banned {
+                    background: rgba(244,67,54,0.2) !important;
+                    color: #f44336 !important;
+                }
+
+                /* Ban search */
+                .chat-mod-ban-search {
+                    margin-bottom: 12px !important;
+                }
+
+                /* Clickable ban items */
+                .chat-mod-ban-item {
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-mod-ban-item:hover {
+                    background: rgba(255,255,255,0.05) !important;
                 }
 
                 .chat-mod-search-dropdown {
@@ -15206,32 +15269,9 @@
                             </button>
                         </div>
                         <div class="chat-mod-content">
-                            <!-- Users Section -->
+                            <!-- Users Section - User Management -->
                             <div class="chat-mod-section visible" id="chatModSectionUsers">
-                                <div class="chat-mod-section-title">Add Moderator</div>
-                                <div class="chat-mod-search-wrapper" id="chatModAddSection" style="display:none;">
-                                    <div class="chat-mod-search-row">
-                                        <input type="text" class="chat-mod-search-input" id="chatModSearchInput" placeholder="Search users...">
-                                        <select class="chat-mod-level-select" id="chatModLevelSelect">
-                                            <option value="1">L1</option>
-                                            <option value="2">L2</option>
-                                            <option value="3">L3</option>
-                                        </select>
-                                        <button class="chat-mod-add-btn" id="chatModAddBtn" disabled>Add</button>
-                                    </div>
-                                    <div class="chat-mod-search-dropdown" id="chatModSearchDropdown"></div>
-                                </div>
-                                <div class="chat-mod-section-title" style="margin-top:20px;">Current Moderators</div>
-                                <div class="chat-mod-list" id="chatModList">
-                                    <div class="chat-mod-empty">
-                                        <div class="chat-mod-empty-icon">👥</div>
-                                        <div>No moderators</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Bans Section -->
-                            <div class="chat-mod-section" id="chatModSectionBans">
-                                <div class="chat-mod-section-title">Select User</div>
+                                <div class="chat-mod-section-title">Search User</div>
                                 <div class="chat-mod-user-search">
                                     <div class="chat-mod-user-search-wrapper">
                                         <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="Search for a user to manage...">
@@ -15246,8 +15286,23 @@
                                     <div class="chat-mod-action-target" id="chatModActionTarget">
                                         <div class="chat-mod-action-avatar" id="chatModActionAvatar">U</div>
                                         <span class="chat-mod-action-name" id="chatModActionName">Username</span>
+                                        <span class="chat-mod-user-status" id="chatModUserStatus"></span>
                                     </div>
-                                    <div class="chat-mod-action-label">Chat Style (colors)</div>
+                                    <!-- Moderator Controls -->
+                                    <div class="chat-mod-action-label">Moderator Status</div>
+                                    <div class="chat-mod-moderator-controls" id="chatModModeratorControls">
+                                        <div class="chat-mod-mod-row" id="chatModModRow">
+                                            <select class="chat-mod-level-select" id="chatModUserLevel">
+                                                <option value="0">Not a Moderator</option>
+                                                <option value="1">Level 1</option>
+                                                <option value="2">Level 2</option>
+                                                <option value="3">Level 3</option>
+                                            </select>
+                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">Apply</button>
+                                        </div>
+                                    </div>
+                                    <!-- Style Controls -->
+                                    <div class="chat-mod-action-label">Chat Style</div>
                                     <div class="chat-mod-color-row">
                                         <div class="chat-mod-color-group">
                                             <span class="chat-mod-color-label">Nickname Color</span>
@@ -15284,6 +15339,7 @@
                                         <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">Reset Style</button>
                                         <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">Apply Style</button>
                                     </div>
+                                    <!-- Penalty Controls -->
                                     <div class="chat-mod-action-label">Penalties</div>
                                     <div class="chat-mod-type-grid" id="chatModTypeGrid">
                                         <button type="button" class="chat-mod-type-btn selected" data-action-type="snooze">
@@ -15315,7 +15371,21 @@
                                         <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
                                     </div>
                                 </div>
-                                <div class="chat-mod-section-title">Active Bans</div>
+                                <div class="chat-mod-section-title" style="margin-top:20px;">Current Moderators</div>
+                                <div class="chat-mod-list" id="chatModList">
+                                    <div class="chat-mod-empty">
+                                        <div class="chat-mod-empty-icon">👥</div>
+                                        <div>No moderators</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Bans Section -->
+                            <div class="chat-mod-section" id="chatModSectionBans">
+                                <div class="chat-mod-section-title">Search Bans</div>
+                                <div class="chat-mod-ban-search">
+                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="Search banned users...">
+                                </div>
+                                <div class="chat-mod-section-title" style="margin-top:12px;">Active Bans</div>
                                 <div class="chat-mod-list" id="chatModBanList">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">🚫</div>
@@ -15612,6 +15682,12 @@
                     self.chatIsModerator = data.isModerator || data.IsModerator || false;
                     // Show moderator tab if user is admin or moderator
                     self.showModeratorTab();
+                    // Add class to chat window for CSS styling of action buttons
+                    const chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow) {
+                        chatWindow.classList.toggle('chat-is-admin', self.chatIsAdmin);
+                        chatWindow.classList.toggle('chat-is-mod', self.chatIsModerator);
+                    }
                 })
                 .catch(function () {});
             };
@@ -16287,7 +16363,7 @@
                 }
             });
 
-            // User search in Bans section
+            // User search in Users section
             const userSearchInput = document.getElementById('chatModUserSearchInput');
             if (userSearchInput) {
                 let userSearchTimeout;
@@ -16304,6 +16380,19 @@
                 };
                 userSearchInput.onkeydown = function (e) {
                     self.handleUserSearchKeydown(e);
+                };
+            }
+
+            // Ban search in Bans section (filters existing ban list)
+            const banSearchInput = document.getElementById('chatModBanSearchInput');
+            if (banSearchInput) {
+                let banSearchTimeout;
+                banSearchInput.oninput = function () {
+                    clearTimeout(banSearchTimeout);
+                    const query = this.value.trim();
+                    banSearchTimeout = setTimeout(function () {
+                        self.filterBanList(query);
+                    }, 200);
                 };
             }
 
@@ -16410,50 +16499,94 @@
             .then(function (r) { return r.json(); })
             .then(function (bans) {
                 console.log('[Ratings] Bans loaded:', bans);
-                const list = document.getElementById('chatModBanList');
-                if (!list) {
-                    console.log('[Ratings] chatModBanList element not found');
-                    return;
-                }
-
-                if (!bans || bans.length === 0) {
-                    console.log('[Ratings] No bans to display');
-                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
-                } else {
-                    list.innerHTML = bans.map(function (ban) {
-                        // API returns PascalCase, handle both
-                        const banId = ban.Id || ban.id;
-                        const banUserName = ban.UserName || ban.userName || 'Unknown';
-                        const banType = ban.BanType || ban.banType || 'unknown';
-                        const isPermanent = ban.IsPermanent || ban.isPermanent;
-                        const expiresAt = ban.ExpiresAt || ban.expiresAt;
-                        const reason = ban.Reason || ban.reason;
-
-                        const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(expiresAt)) : '');
-                        return '<div class="chat-mod-ban-item">'
-                            + '<div class="chat-mod-ban-info">'
-                            + '<div class="chat-mod-ban-user">'
-                            + '<span class="chat-mod-ban-name">' + self.escapeHtml(banUserName) + '</span>'
-                            + '<span class="chat-mod-ban-type" style="background:' + self.getBanTypeColor(banType) + ';">' + banType + '</span>'
-                            + '</div>'
-                            + '<span class="chat-mod-ban-expires">' + expiresText + (reason ? ' · ' + self.escapeHtml(reason) : '') + '</span>'
-                            + '</div>'
-                            + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">Unban</button>'
-                            + '</div>';
-                    }).join('');
-
-                    list.querySelectorAll('[data-unban-id]').forEach(function (btn) {
-                        btn.onclick = function () {
-                            self.unbanChatUser(this.getAttribute('data-unban-id'), this.getAttribute('data-ban-user'));
-                        };
-                    });
-                }
+                // Store bans for filtering
+                self._cachedBans = bans || [];
+                self.renderBanList(bans || []);
             })
             .catch(function (err) {
                 console.error('[Ratings] Failed to load bans:', err);
+                self._cachedBans = [];
                 const list = document.getElementById('chatModBanList');
                 if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
             });
+        },
+
+        /**
+         * Render ban list (used for both initial load and filtering)
+         */
+        renderBanList: function (bans) {
+            const self = this;
+            const list = document.getElementById('chatModBanList');
+            if (!list) {
+                console.log('[Ratings] chatModBanList element not found');
+                return;
+            }
+
+            if (!bans || bans.length === 0) {
+                console.log('[Ratings] No bans to display');
+                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+            } else {
+                list.innerHTML = bans.map(function (ban) {
+                    // API returns PascalCase, handle both
+                    const banId = ban.Id || ban.id;
+                    const banUserId = ban.UserId || ban.userId;
+                    const banUserName = ban.UserName || ban.userName || 'Unknown';
+                    const banType = ban.BanType || ban.banType || 'unknown';
+                    const isPermanent = ban.IsPermanent || ban.isPermanent;
+                    const expiresAt = ban.ExpiresAt || ban.expiresAt;
+                    const reason = ban.Reason || ban.reason;
+
+                    const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(expiresAt)) : '');
+                    return '<div class="chat-mod-ban-item" data-ban-userid="' + self.escapeHtml(banUserId) + '" data-ban-username="' + self.escapeHtml(banUserName) + '">'
+                        + '<div class="chat-mod-ban-info">'
+                        + '<div class="chat-mod-ban-user">'
+                        + '<span class="chat-mod-ban-name">' + self.escapeHtml(banUserName) + '</span>'
+                        + '<span class="chat-mod-ban-type" style="background:' + self.getBanTypeColor(banType) + ';">' + banType + '</span>'
+                        + '</div>'
+                        + '<span class="chat-mod-ban-expires">' + expiresText + (reason ? ' · ' + self.escapeHtml(reason) : '') + '</span>'
+                        + '</div>'
+                        + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">Unban</button>'
+                        + '</div>';
+                }).join('');
+
+                // Bind unban buttons
+                list.querySelectorAll('[data-unban-id]').forEach(function (btn) {
+                    btn.onclick = function (e) {
+                        e.stopPropagation(); // Prevent opening action panel
+                        self.unbanChatUser(this.getAttribute('data-unban-id'), this.getAttribute('data-ban-user'));
+                    };
+                });
+
+                // Bind click on ban items to open action panel
+                list.querySelectorAll('.chat-mod-ban-item').forEach(function (item) {
+                    item.onclick = function () {
+                        const userId = this.getAttribute('data-ban-userid');
+                        const userName = this.getAttribute('data-ban-username');
+                        if (userId && userName) {
+                            self.showActionPanel(userId, userName);
+                        }
+                    };
+                });
+            }
+        },
+
+        /**
+         * Filter ban list by search query
+         */
+        filterBanList: function (query) {
+            if (!this._cachedBans) return;
+
+            const lowerQuery = (query || '').toLowerCase().trim();
+            if (!lowerQuery) {
+                this.renderBanList(this._cachedBans);
+                return;
+            }
+
+            const filtered = this._cachedBans.filter(function (ban) {
+                const userName = (ban.UserName || ban.userName || '').toLowerCase();
+                return userName.includes(lowerQuery);
+            });
+            this.renderBanList(filtered);
         },
 
         /**
@@ -17144,6 +17277,127 @@
                     self.updateActionPreview();
                 };
             }
+
+            // Moderator level apply button
+            const modApplyBtn = document.getElementById('chatModApplyModBtn');
+            if (modApplyBtn) {
+                modApplyBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.applyModeratorLevel();
+                    return false;
+                };
+            }
+        },
+
+        /**
+         * Apply moderator level to the target user
+         */
+        applyModeratorLevel: function () {
+            const self = this;
+            if (!this.modActionTarget) {
+                require(['toast'], function(toast) { toast('No user selected'); });
+                return;
+            }
+
+            const levelSelect = document.getElementById('chatModUserLevel');
+            const newLevel = parseInt(levelSelect.value) || 0;
+            const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName;
+
+            if (newLevel === 0) {
+                // Remove moderator
+                this.removeModeratorByUserId(userId, userName);
+            } else {
+                // Add or update moderator level
+                this.addModeratorWithLevel(userId, userName, newLevel);
+            }
+        },
+
+        /**
+         * Add or update moderator with specific level
+         */
+        addModeratorWithLevel: function (userId, userName, level) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+                method: 'POST',
+                credentials: 'include',
+                headers: Object.assign(self.getChatAuthHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ userId: userId, level: level })
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    require(['toast'], function(toast) { toast(userName + ' is now Level ' + level + ' moderator'); });
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                    self.updateUserStatusDisplay(userId, level);
+                } else {
+                    require(['toast'], function(toast) { toast('Failed to update moderator'); });
+                }
+            })
+            .catch(function () {
+                require(['toast'], function(toast) { toast('Failed to update moderator'); });
+            });
+        },
+
+        /**
+         * Remove moderator by user ID
+         */
+        removeModeratorByUserId: function (userId, userName) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+
+            // First we need to find the moderator ID from the user ID
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                const mod = mods.find(function (m) {
+                    return (m.UserId || m.userId) === userId;
+                });
+                if (mod) {
+                    const modId = mod.Id || mod.id;
+                    return fetch(baseUrl + '/Ratings/Chat/Moderators/' + modId, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: self.getChatAuthHeaders()
+                    });
+                } else {
+                    require(['toast'], function(toast) { toast(userName + ' is not a moderator'); });
+                    return null;
+                }
+            })
+            .then(function (r) {
+                if (r && r.ok) {
+                    require(['toast'], function(toast) { toast(userName + ' removed from moderators'); });
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                    self.updateUserStatusDisplay(userId, 0);
+                }
+            })
+            .catch(function () {
+                require(['toast'], function(toast) { toast('Failed to remove moderator'); });
+            });
+        },
+
+        /**
+         * Update user status display in action panel
+         */
+        updateUserStatusDisplay: function (userId, level) {
+            const statusEl = document.getElementById('chatModUserStatus');
+            if (!statusEl) return;
+
+            if (level > 0) {
+                statusEl.textContent = 'L' + level + ' Mod';
+                statusEl.className = 'chat-mod-user-status mod';
+            } else {
+                statusEl.textContent = '';
+                statusEl.className = 'chat-mod-user-status';
+            }
         },
 
         /**
@@ -17157,8 +17411,8 @@
             // Open moderator window if not already open
             this.toggleModeratorWindow(true);
 
-            // Switch to Bans section
-            this.switchModSection('bans');
+            // Switch to Users section (where the action panel is located)
+            this.switchModSection('users');
 
             // Update target display
             const avatarEl = document.getElementById('chatModActionAvatar');
@@ -17185,9 +17439,51 @@
             // Load existing user style for editing
             this.loadUserStyleForEdit(userId);
 
+            // Load user's moderator status
+            this.loadUserModeratorStatus(userId);
+
             // Show panel
             const panel = document.getElementById('chatModActionPanel');
             if (panel) panel.classList.add('visible');
+        },
+
+        /**
+         * Load user's moderator status for the action panel
+         */
+        loadUserModeratorStatus: function (userId) {
+            const self = this;
+            const levelSelect = document.getElementById('chatModUserLevel');
+            const statusEl = document.getElementById('chatModUserStatus');
+
+            // Reset to default
+            if (levelSelect) levelSelect.value = '0';
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'chat-mod-user-status';
+            }
+
+            // Check if user is a moderator
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                const mod = mods.find(function (m) {
+                    return (m.UserId || m.userId) === userId;
+                });
+                if (mod) {
+                    const level = mod.Level || mod.level || 0;
+                    if (levelSelect) levelSelect.value = String(level);
+                    if (statusEl) {
+                        statusEl.textContent = 'L' + level + ' Mod';
+                        statusEl.className = 'chat-mod-user-status mod';
+                    }
+                }
+            })
+            .catch(function () {});
         },
 
         /**
