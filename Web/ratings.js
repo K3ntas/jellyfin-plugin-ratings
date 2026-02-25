@@ -17264,17 +17264,18 @@
             }
 
             const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName;
             const banType = this.modActionType;
             const durationMinutes = this.modActionDuration;
             const reason = document.getElementById('chatModReasonInput')?.value || '';
 
-            console.log('[Ratings] Applying penalty:', { userId, banType, durationMinutes, reason });
+            console.log('[Ratings] Applying penalty:', { userId, userName, banType, durationMinutes, reason });
 
-            // Apply the ban (will refresh ban list on success)
-            this.banChatUser(userId, banType, durationMinutes, reason);
-
-            // Hide panel
+            // Hide panel first to clear modActionTarget
             this.hideActionPanel();
+
+            // Apply the ban (pass userName since modActionTarget is now cleared)
+            this.banChatUser(userId, banType, durationMinutes, reason, userName);
         },
 
         /**
@@ -17540,6 +17541,7 @@
             .then(function (r) { return r.json(); })
             .then(function (bans) {
                 const list = document.getElementById('chatBannedList');
+                if (!list) return; // Element doesn't exist in new mod panel
                 if (!bans || bans.length === 0) {
                     list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
                 } else {
@@ -17561,7 +17563,8 @@
                 }
             })
             .catch(function () {
-                document.getElementById('chatBannedList').innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
+                var list = document.getElementById('chatBannedList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
             });
         },
 
@@ -17655,11 +17658,11 @@
         /**
          * Ban a user from chat
          */
-        banChatUser: function (userId, banType, durationMinutes, reason) {
+        banChatUser: function (userId, banType, durationMinutes, reason, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            // Get username from action target
-            const userName = self.modActionTarget ? self.modActionTarget.userName : 'User';
+            // Use passed userName or get from action target (fallback)
+            userName = userName || (self.modActionTarget ? self.modActionTarget.userName : 'User');
 
             let url = baseUrl + '/Ratings/Chat/Ban?targetUserId=' + encodeURIComponent(userId) + '&banType=' + encodeURIComponent(banType);
             if (durationMinutes && durationMinutes > 0) {
@@ -17693,8 +17696,10 @@
                 const durationText = durationMinutes > 0 ? self.formatDuration(durationMinutes) : 'permanent';
                 self.showModToast(actionName + ' applied to ' + userName + ' (' + durationText + ')');
                 self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
+                // Refresh all mod panel data
                 self.loadBannedUsers();
                 self.loadModPanelBans();
+                self.loadModPanelActions();
             })
             .catch(function (err) {
                 console.error('[Ratings] Ban error:', err);
@@ -17721,6 +17726,7 @@
                     self.addModSystemMessage('Penalty removed from ' + userName, '✅');
                     self.loadBannedUsers();
                     self.loadModPanelBans();
+                    self.loadModPanelActions();
                 } else {
                     self.showModToast('Failed to remove penalty');
                 }
@@ -17752,6 +17758,7 @@
                     self.loadModeratorStats();
                     self.loadUsersForModSelect();
                     self.loadModPanelModerators();
+                    self.loadModPanelActions();
                     self.clearModSearch();
                 } else {
                     r.text().then(function (txt) {
@@ -17784,6 +17791,7 @@
                     self.loadModeratorStats();
                     self.loadUsersForModSelect();
                     self.loadModPanelModerators();
+                    self.loadModPanelActions();
                 } else {
                     self.showModToast('Failed to remove moderator');
                 }
