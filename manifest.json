@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.32.0",
+        "changelog": "Fix: Action logs PascalCase handling (was showing undefined/NaN)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.32.0/jellyfin-plugin-ratings_2.0.32.0.zip",
+        "checksum": "2426108c8f703779ca83bff4417027cf",
+        "timestamp": "2026-02-25T19:40:00Z"
+      },
+      {
         "version": "2.0.31.0",
         "changelog": "Fix: formatTimeAgo missing, avatar 404 spam prevention, keep panel open after penalty",
         "targetAbi": "10.11.0.0",
