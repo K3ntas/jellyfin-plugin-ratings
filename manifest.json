@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.39.0",
+        "changelog": "Ban notifications reappear on page change, banned users can view chat (read-only)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.39.0/jellyfin-plugin-ratings_2.0.39.0.zip",
+        "checksum": "eb730819ad67edeaad7503e7199209ea",
+        "timestamp": "2026-02-26T21:05:00Z"
+      },
+      {
         "version": "2.0.38.0",
         "changelog": "Fix ban notifications stacking (column layout), mobile button spacing, notification position",
         "targetAbi": "10.11.0.0",
