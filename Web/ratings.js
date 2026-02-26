@@ -7351,8 +7351,14 @@
                 modWindow.classList.remove('visible');
             }
 
-            // Close ban notification popup if open
+            // Close ban notifications and re-check status (will show again if still banned)
             this.closeBanNotification();
+
+            // Re-check ban status after short delay to show notifications on new page
+            const self = this;
+            setTimeout(function () {
+                self.checkChatBanStatus();
+            }, 500);
         },
 
         /**

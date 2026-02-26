@@ -598,12 +598,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
-            // Check if user is banned from chat
-            var chatBan = _repository.GetActiveChatBan(userId, "chat");
-            if (chatBan != null)
-            {
-                return StatusCode(403, new { message = "You are banned from chat", expiresAt = chatBan.ExpiresAt, reason = chatBan.Reason });
-            }
+            // Note: Banned users CAN view messages, they just can't post.
+            // Ban check is done in the POST endpoint, not here.
 
             if (limit > 500) limit = 500;
             var messages = _repository.GetRecentChatMessages(limit, since);
