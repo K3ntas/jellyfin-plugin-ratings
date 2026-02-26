@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.38.0",
+        "changelog": "Fix ban notifications stacking (column layout), mobile button spacing, notification position",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.38.0/jellyfin-plugin-ratings_2.0.38.0.zip",
+        "checksum": "cf3a5049c545cf6f914fb4bfa5e294d5",
+        "timestamp": "2026-02-26T20:40:00Z"
+      },
+      {
         "version": "2.0.37.0",
         "changelog": "Multiple ban notifications - show all 3 penalties simultaneously, media ban on playback block",
         "targetAbi": "10.11.0.0",

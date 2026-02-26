@@ -1491,6 +1491,17 @@
 
                 /* Mobile Responsive - Dynamic scaling handled by JavaScript */
                 @media screen and (max-width: 925px) {
+                    /* Reduce spacing between header buttons on mobile */
+                    .headerRight {
+                        gap: 2px !important;
+                    }
+
+                    .headerRight > button,
+                    .headerRight > .paper-icon-button-light {
+                        padding: 6px !important;
+                        margin: 0 !important;
+                    }
+
                     #requestMediaBtn {
                         padding: 8px 16px !important;
                         font-size: 16px !important;
@@ -1508,6 +1519,17 @@
                         font-size: 9px !important;
                         top: -5px !important;
                         right: -5px !important;
+                    }
+
+                    #latestMediaBtn,
+                    #chatBtn {
+                        padding: 6px !important;
+                    }
+
+                    #latestMediaBtn svg,
+                    #chatBtn svg {
+                        width: 20px !important;
+                        height: 20px !important;
                     }
                 }
 
@@ -1850,7 +1872,7 @@
                 @media screen and (max-width: 925px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 55px !important;
+                        top: 60px !important;
                         left: auto !important;
                         right: 150px !important;
                     }
@@ -1859,7 +1881,7 @@
                 @media screen and (max-width: 590px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 58px !important;
+                        top: 62px !important;
                         right: 130px !important;
                     }
 
@@ -1876,7 +1898,7 @@
                 @media screen and (max-width: 470px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 12px !important;
+                        top: 16px !important;
                         right: 180px !important;
                     }
 
@@ -6163,12 +6185,20 @@
                     }
                 }
 
-                /* ========== Ban Notification Popup ========== */
-                .chat-ban-notification {
+                /* ========== Ban Notification Container ========== */
+                .chat-ban-notification-container {
                     position: fixed !important;
-                    top: 20px !important;
+                    top: 70px !important;
                     right: 20px !important;
                     z-index: 10000010 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 10px !important;
+                    pointer-events: none !important;
+                }
+
+                /* ========== Ban Notification Popup ========== */
+                .chat-ban-notification {
                     background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%) !important;
                     border: 1px solid rgba(255, 68, 68, 0.3) !important;
                     border-radius: 12px !important;
@@ -6176,13 +6206,14 @@
                     padding: 16px 20px !important;
                     min-width: 280px !important;
                     max-width: 400px !important;
-                    opacity: 0;
-                    transform: translateX(100%) !important;
-                    transition: all 0.3s ease !important;
+                    opacity: 0 !important;
+                    transform: translateX(50px) !important;
+                    transition: opacity 0.3s ease, transform 0.3s ease !important;
+                    pointer-events: auto !important;
                 }
 
                 .chat-ban-notification.visible {
-                    opacity: 1;
+                    opacity: 1 !important;
                     transform: translateX(0) !important;
                 }
 
@@ -6213,7 +6244,7 @@
                 .chat-ban-countdown {
                     font-size: 13px !important;
                     color: #aaa !important;
-                    font-family: monospace !important;
+                    font-family: monospace, Consolas, "Courier New", monospace !important;
                 }
 
                 .chat-ban-notification-close {
@@ -6224,7 +6255,7 @@
                     cursor: pointer !important;
                     padding: 4px 8px !important;
                     border-radius: 4px !important;
-                    transition: all 0.2s ease !important;
+                    transition: background 0.2s ease, color 0.2s ease !important;
                     line-height: 1 !important;
                 }
 
@@ -6234,12 +6265,28 @@
                 }
 
                 @media (max-width: 480px) {
-                    .chat-ban-notification {
-                        top: 10px !important;
+                    .chat-ban-notification-container {
+                        top: 90px !important;
                         right: 10px !important;
                         left: 10px !important;
+                    }
+
+                    .chat-ban-notification {
                         min-width: auto !important;
                         max-width: none !important;
+                        padding: 12px 16px !important;
+                    }
+
+                    .chat-ban-notification-icon {
+                        font-size: 24px !important;
+                    }
+
+                    .chat-ban-notification-title {
+                        font-size: 14px !important;
+                    }
+
+                    .chat-ban-countdown {
+                        font-size: 12px !important;
                     }
                 }
 
@@ -15812,6 +15859,20 @@
         _banCountdownIntervals: {},
 
         /**
+         * Get or create the ban notification container
+         */
+        getBanNotificationContainer: function () {
+            let container = document.getElementById('chatBanNotificationContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'chatBanNotificationContainer';
+                container.className = 'chat-ban-notification-container';
+                document.body.appendChild(container);
+            }
+            return container;
+        },
+
+        /**
          * Show ban notification popup with countdown (supports multiple)
          */
         showBanNotification: function (banType, expiresAt, isPermanent) {
@@ -15822,6 +15883,9 @@
             if (document.getElementById(notificationId)) {
                 return;
             }
+
+            // Get or create container
+            const container = this.getBanNotificationContainer();
 
             // Create notification element
             const notification = document.createElement('div');
@@ -15853,7 +15917,7 @@
                     '<button class="chat-ban-notification-close" data-close-ban="' + banType + '">×</button>' +
                 '</div>';
 
-            document.body.appendChild(notification);
+            container.appendChild(notification);
 
             // Bind close button
             notification.querySelector('[data-close-ban]').onclick = function () {
@@ -15871,25 +15935,10 @@
             // Track this notification
             this._banNotifications[banType] = true;
 
-            // Reposition all notifications
-            this.repositionBanNotifications();
-
             // Show with animation
             setTimeout(function () {
                 notification.classList.add('visible');
-            }, 10);
-        },
-
-        /**
-         * Reposition ban notifications to stack vertically
-         */
-        repositionBanNotifications: function () {
-            const notifications = document.querySelectorAll('.chat-ban-notification');
-            let topOffset = 20;
-            notifications.forEach(function (notification) {
-                notification.style.top = topOffset + 'px';
-                topOffset += notification.offsetHeight + 10;
-            });
+            }, 50);
         },
 
         /**
@@ -15952,7 +16001,6 @@
                             notification.parentNode.removeChild(notification);
                         }
                         delete self._banNotifications[banType];
-                        self.repositionBanNotifications();
                     }, 300);
                 }
             } else {
@@ -15971,6 +16019,16 @@
                     }, 300);
                 });
                 this._banNotifications = {};
+
+                // Remove container if empty
+                const container = document.getElementById('chatBanNotificationContainer');
+                if (container) {
+                    setTimeout(function () {
+                        if (container.children.length === 0 && container.parentNode) {
+                            container.parentNode.removeChild(container);
+                        }
+                    }, 350);
+                }
             }
         },
 
