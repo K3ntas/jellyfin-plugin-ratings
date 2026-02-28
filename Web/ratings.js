@@ -17938,11 +17938,10 @@
         addModeratorWithLevel: function (userId, userName, level) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+            fetch(baseUrl + '/Ratings/Chat/Moderators?targetUserId=' + encodeURIComponent(userId) + '&level=' + level, {
                 method: 'POST',
                 credentials: 'include',
-                headers: Object.assign(self.getChatAuthHeaders(), { 'Content-Type': 'application/json' }),
-                body: JSON.stringify({ userId: userId, level: level })
+                headers: self.getChatAuthHeaders()
             })
             .then(function (r) {
                 if (r.ok) {
@@ -17951,11 +17950,11 @@
                     self.loadModPanelActions();
                     self.updateUserStatusDisplay(userId, level);
                 } else {
-                    require(['toast'], function(toast) { toast('Failed to update moderator'); });
+                    self.showModToast('Failed to update moderator');
                 }
             })
             .catch(function () {
-                require(['toast'], function(toast) { toast('Failed to update moderator'); });
+                self.showModToast('Failed to update moderator');
             });
         },
 
