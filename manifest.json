@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.45.0",
+        "changelog": "Refresh chat after style change to apply styles instantly",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.45.0/jellyfin-plugin-ratings_2.0.45.0.zip",
+        "checksum": "a02518fdde30474244b55b904d6ebf5d",
+        "timestamp": "2026-02-28T20:03:00Z"
+      },
+      {
         "version": "2.0.44.0",
         "changelog": "Fix require errors, add modal debug logging",
         "targetAbi": "10.11.0.0",

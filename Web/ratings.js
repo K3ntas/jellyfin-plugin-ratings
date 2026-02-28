@@ -17779,10 +17779,17 @@
             .then(function (r) {
                 console.log('[Ratings] Style API response:', r.status, r.ok);
                 if (r.ok) {
-                    console.log('[Ratings] Style applied successfully, showing modal...');
-                    self.showStyleSuccessModal(userName, nicknameColor, messageColor, textStyle);
+                    console.log('[Ratings] Style applied successfully');
                     self.addModSystemMessage('Style updated for ' + userName, '🎨');
-                    self.loadUserStyles(); // Reload styles
+                    // Reload styles then refresh chat to show new styles
+                    self.loadUserStylesAndRefresh();
+                    // Show success modal
+                    try {
+                        self.showStyleSuccessModal(userName, nicknameColor, messageColor, textStyle);
+                    } catch (e) {
+                        console.error('[Ratings] Modal error:', e);
+                        self.showModToast('Style applied to ' + userName);
+                    }
                 } else {
                     r.text().then(function (txt) {
                         console.log('[Ratings] Style API failed:', txt);
@@ -18494,6 +18501,28 @@
             .then(function (r) { return r.json(); })
             .then(function (styles) {
                 self.chatUserStyles = styles || {};
+            })
+            .catch(function () {
+                self.chatUserStyles = {};
+            });
+        },
+
+        /**
+         * Load user styles and refresh chat messages to apply them
+         */
+        loadUserStylesAndRefresh: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/Styles', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (styles) {
+                self.chatUserStyles = styles || {};
+                // Refresh chat messages to apply new styles
+                self.loadChatMessages();
             })
             .catch(function () {
                 self.chatUserStyles = {};
