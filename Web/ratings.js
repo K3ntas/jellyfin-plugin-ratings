@@ -18,6 +18,7 @@
         chatConfig: null, // Chat configuration from server
         chatOpen: false, // Whether chat window is open
         chatMessages: [], // Current chat messages
+        _failedAvatars: {}, // Cache of failed avatar URLs to prevent 404 spam
         chatUsers: [], // Online users
         chatPollingInterval: null, // Polling timer
         chatBackgroundPollingInterval: null, // Background polling for badge (when chat closed)
@@ -42,6 +43,22 @@
         dmAutocompleteIndex: 0, // Selected index in autocomplete
         chatNotifyPublic: true, // Show public chat notifications
         chatNotifyPrivate: true, // Show private message notifications
+
+        // Moderator Panel state
+        chatModPanelSection: 'users', // 'users', 'bans', 'actions'
+        modSearchUsers: [], // Users matching search query
+        modSearchIndex: 0, // Selected index in search dropdown
+        modSearchVisible: false, // Whether search dropdown is visible
+        modSelectedUser: null, // {userId, userName} selected from search
+        modActionTarget: null, // {userId, userName} being penalized
+        modActionType: 'snooze', // 'snooze', 'chat', 'media'
+        modActionDuration: 10, // minutes (0 = permanent)
+
+        // User search in Bans section (for Manage User)
+        userSearchUsers: [], // Users matching search query in Bans section
+        userSearchIndex: 0, // Selected index in user search dropdown
+        userSearchVisible: false, // Whether user search dropdown is visible
+        modSelectedTextStyle: '', // Selected text style for user
 
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
@@ -1012,6 +1029,40 @@
 
             // Initialize chat feature
             this.initChatWithRetry();
+
+            // Initialize playback ban interceptor
+            this.initPlaybackBanInterceptor();
+        },
+
+        /**
+         * Intercept fetch requests to detect media ban during playback
+         */
+        initPlaybackBanInterceptor: function () {
+            const self = this;
+            const originalFetch = window.fetch;
+
+            window.fetch = function (url, options) {
+                return originalFetch.apply(this, arguments).then(function (response) {
+                    // Check if this is a playback request that was blocked
+                    const urlStr = typeof url === 'string' ? url : url.url || '';
+                    const isPlaybackRequest = urlStr.includes('/Videos/') ||
+                                              urlStr.includes('/Audio/') ||
+                                              urlStr.includes('/PlaybackInfo') ||
+                                              urlStr.includes('/Playing');
+
+                    if (isPlaybackRequest && response.status === 403) {
+                        // Clone response to read body without consuming it
+                        response.clone().json().then(function (data) {
+                            if (data && data.message && data.message.includes('banned')) {
+                                // Show media ban notification
+                                self.showBanNotification('media', data.expiresAt, data.isPermanent);
+                            }
+                        }).catch(function () {});
+                    }
+
+                    return response;
+                });
+            };
         },
 
         /**
@@ -1440,6 +1491,17 @@
 
                 /* Mobile Responsive - Dynamic scaling handled by JavaScript */
                 @media screen and (max-width: 925px) {
+                    /* Reduce spacing between header buttons on mobile */
+                    .headerRight {
+                        gap: 2px !important;
+                    }
+
+                    .headerRight > button,
+                    .headerRight > .paper-icon-button-light {
+                        padding: 6px !important;
+                        margin: 0 !important;
+                    }
+
                     #requestMediaBtn {
                         padding: 8px 16px !important;
                         font-size: 16px !important;
@@ -1457,6 +1519,17 @@
                         font-size: 9px !important;
                         top: -5px !important;
                         right: -5px !important;
+                    }
+
+                    #latestMediaBtn,
+                    #chatBtn {
+                        padding: 6px !important;
+                    }
+
+                    #latestMediaBtn svg,
+                    #chatBtn svg {
+                        width: 20px !important;
+                        height: 20px !important;
                     }
                 }
 
@@ -1799,7 +1872,7 @@
                 @media screen and (max-width: 925px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 55px !important;
+                        top: 60px !important;
                         left: auto !important;
                         right: 150px !important;
                     }
@@ -1808,7 +1881,7 @@
                 @media screen and (max-width: 590px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 58px !important;
+                        top: 62px !important;
                         right: 130px !important;
                     }
 
@@ -1825,7 +1898,7 @@
                 @media screen and (max-width: 470px) {
                     #notificationToggle {
                         position: absolute !important;
-                        top: 12px !important;
+                        top: 16px !important;
                         right: 180px !important;
                     }
 
@@ -5103,6 +5176,27 @@
                     display: none !important;
                 }
 
+                /* Avatar img with fallback to initial */
+                .chat-avatar-img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 50% !important;
+                    object-fit: cover !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    z-index: 1 !important;
+                }
+                .chat-avatar-img + .chat-avatar-initial {
+                    display: none !important;
+                }
+                .chat-avatar-img.avatar-error + .chat-avatar-initial {
+                    display: flex !important;
+                }
+                .chat-avatar-img.avatar-error {
+                    display: none !important;
+                }
+
                 .chat-avatar-placeholder {
                     display: flex !important;
                     align-items: center !important;
@@ -5579,6 +5673,12 @@
                     display: flex !important;
                 }
 
+                /* Always show action buttons for mods/admins */
+                .chat-is-mod .chat-message-actions,
+                .chat-is-admin .chat-message-actions {
+                    display: flex !important;
+                }
+
                 .chat-message.own .chat-message-actions {
                     justify-content: flex-end !important;
                 }
@@ -5919,6 +6019,127 @@
                     color: #ff4444 !important;
                 }
 
+                /* Admin Panel Tabs */
+                .chat-admin-tabs {
+                    display: flex !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    padding: 0 !important;
+                }
+
+                .chat-admin-tab {
+                    flex: 1 !important;
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    padding: 10px !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    border-bottom: 2px solid transparent !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-admin-tab:hover {
+                    color: #fff !important;
+                }
+
+                .chat-admin-tab.active {
+                    color: #00a4dc !important;
+                    border-bottom-color: #00a4dc !important;
+                }
+
+                .chat-admin-tab-content {
+                    padding: 12px !important;
+                    max-height: 220px !important;
+                    overflow-y: auto !important;
+                }
+
+                .chat-admin-add {
+                    display: flex !important;
+                    gap: 8px !important;
+                    margin-top: 10px !important;
+                    padding-top: 10px !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                .chat-admin-select {
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    color: #fff !important;
+                    padding: 6px 8px !important;
+                    font-size: 12px !important;
+                    border-radius: 4px !important;
+                }
+
+                .chat-admin-filter {
+                    margin-bottom: 10px !important;
+                }
+
+                .chat-admin-user-info {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                }
+
+                .chat-admin-user-stats {
+                    font-size: 11px !important;
+                    color: #666 !important;
+                    margin-top: 2px !important;
+                }
+
+                .chat-mod-level {
+                    display: inline-block !important;
+                    padding: 2px 6px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-stats {
+                    font-size: 10px !important;
+                    color: #888 !important;
+                }
+
+                .chat-ban-type {
+                    display: inline-block !important;
+                    padding: 2px 6px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    color: #fff !important;
+                    text-transform: uppercase !important;
+                }
+
+                .chat-action-item {
+                    padding: 8px 0 !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                }
+
+                .chat-action-header {
+                    font-size: 12px !important;
+                    color: #ddd !important;
+                }
+
+                .chat-action-mod {
+                    color: #00a4dc !important;
+                    font-weight: 500 !important;
+                }
+
+                .chat-action-type {
+                    color: #888 !important;
+                }
+
+                .chat-action-target {
+                    color: #ff9800 !important;
+                }
+
+                .chat-action-time {
+                    font-size: 10px !important;
+                    color: #666 !important;
+                    margin-top: 2px !important;
+                }
+
                 /* Chat Status Messages */
                 .chat-status {
                     text-align: center !important;
@@ -5979,6 +6200,1251 @@
                     .chat-admin-panel.visible {
                         max-height: 50vh !important;
                     }
+
+                    .chat-mod-panel {
+                        max-height: 100% !important;
+                    }
+                }
+
+                /* ========== Ban Notification Container ========== */
+                .chat-ban-notification-container {
+                    position: fixed !important;
+                    top: 70px !important;
+                    right: 20px !important;
+                    z-index: 10000010 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 10px !important;
+                    pointer-events: none !important;
+                }
+
+                /* ========== Ban Notification Popup ========== */
+                .chat-ban-notification {
+                    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%) !important;
+                    border: 1px solid rgba(255, 68, 68, 0.3) !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 68, 68, 0.1) !important;
+                    padding: 16px 20px !important;
+                    min-width: 280px !important;
+                    max-width: 400px !important;
+                    opacity: 0 !important;
+                    transform: translateX(50px) !important;
+                    transition: opacity 0.3s ease, transform 0.3s ease !important;
+                    pointer-events: auto !important;
+                }
+
+                .chat-ban-notification.visible {
+                    opacity: 1 !important;
+                    transform: translateX(0) !important;
+                }
+
+                .chat-ban-notification-content {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                }
+
+                .chat-ban-notification-icon {
+                    font-size: 28px !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-ban-notification-text {
+                    flex: 1 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 4px !important;
+                }
+
+                .chat-ban-notification-title {
+                    font-size: 15px !important;
+                    font-weight: 600 !important;
+                    color: #ff6b6b !important;
+                }
+
+                .chat-ban-countdown {
+                    font-size: 13px !important;
+                    color: #aaa !important;
+                    font-family: monospace, Consolas, "Courier New", monospace !important;
+                }
+
+                .chat-ban-notification-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #666 !important;
+                    font-size: 20px !important;
+                    cursor: pointer !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    transition: background 0.2s ease, color 0.2s ease !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-ban-notification-close:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    color: #fff !important;
+                }
+
+                @media (max-width: 480px) {
+                    .chat-ban-notification-container {
+                        top: 90px !important;
+                        right: 10px !important;
+                        left: 10px !important;
+                    }
+
+                    .chat-ban-notification {
+                        min-width: auto !important;
+                        max-width: none !important;
+                        padding: 12px 16px !important;
+                    }
+
+                    .chat-ban-notification-icon {
+                        font-size: 24px !important;
+                    }
+
+                    .chat-ban-notification-title {
+                        font-size: 14px !important;
+                    }
+
+                    .chat-ban-countdown {
+                        font-size: 12px !important;
+                    }
+                }
+
+                /* ========== Moderator Window (Separate Floating Window) ========== */
+                .mod-window {
+                    position: fixed !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    width: 900px !important;
+                    max-width: 95vw !important;
+                    height: 850px !important;
+                    max-height: 90vh !important;
+                    background: #1a1a1a !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+                    z-index: 10000001 !important;
+                    display: none;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                }
+
+                .mod-window.visible {
+                    display: flex !important;
+                }
+
+                /* Mobile styles for Moderator Window */
+                @media (max-width: 768px) {
+                    .mod-window {
+                        width: 100% !important;
+                        height: 100% !important;
+                        max-width: 100vw !important;
+                        max-height: 100vh !important;
+                        border-radius: 0 !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        transform: none !important;
+                    }
+
+                    .mod-window-body {
+                        flex-direction: column !important;
+                    }
+
+                    .chat-mod-sidebar {
+                        width: 100% !important;
+                        flex-direction: row !important;
+                        border-right: none !important;
+                        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                        padding: 4px 8px !important;
+                        overflow-x: auto !important;
+                        flex-shrink: 0 !important;
+                    }
+
+                    .chat-mod-sidebar-btn {
+                        flex-direction: row !important;
+                        padding: 8px 12px !important;
+                        gap: 6px !important;
+                        border-left: none !important;
+                        border-bottom: 3px solid transparent !important;
+                        white-space: nowrap !important;
+                    }
+
+                    .chat-mod-sidebar-btn.active {
+                        border-left-color: transparent !important;
+                        border-bottom-color: #00a4dc !important;
+                    }
+
+                    .chat-mod-sidebar-label {
+                        font-size: 11px !important;
+                    }
+
+                    .chat-mod-content {
+                        padding: 12px !important;
+                    }
+
+                    .chat-mod-color-row {
+                        flex-direction: column !important;
+                        gap: 12px !important;
+                    }
+
+                    .chat-mod-type-grid {
+                        grid-template-columns: repeat(3, 1fr) !important;
+                    }
+
+                    .chat-mod-action-panel {
+                        padding: 12px !important;
+                    }
+                }
+
+                .mod-window-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 12px 16px !important;
+                    background: #252525 !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .mod-window-title {
+                    font-size: 15px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                }
+
+                .mod-window-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    font-size: 18px !important;
+                    cursor: pointer !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .mod-window-close:hover {
+                    background: rgba(255,255,255,0.1) !important;
+                    color: #fff !important;
+                }
+
+                .mod-window-body {
+                    display: flex !important;
+                    flex: 1 !important;
+                    min-height: 0 !important;
+                    overflow: hidden !important;
+                }
+
+                .chat-mod-sidebar {
+                    width: 60px !important;
+                    background: #151515 !important;
+                    border-right: 1px solid rgba(255,255,255,0.1) !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    padding: 8px 0 !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-mod-sidebar-btn {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    gap: 4px !important;
+                    padding: 12px 8px !important;
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    cursor: pointer !important;
+                    font-size: 18px !important;
+                    transition: all 0.2s ease !important;
+                    border-left: 3px solid transparent !important;
+                }
+
+                .chat-mod-sidebar-btn:hover {
+                    color: #ccc !important;
+                    background: rgba(255,255,255,0.05) !important;
+                }
+
+                .chat-mod-sidebar-btn.active {
+                    background: rgba(0,164,220,0.15) !important;
+                    color: #00a4dc !important;
+                    border-left-color: #00a4dc !important;
+                }
+
+                .chat-mod-sidebar-label {
+                    font-size: 9px !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                }
+
+                .chat-mod-content {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    padding: 16px !important;
+                    min-width: 0 !important;
+                }
+
+                .chat-mod-content::-webkit-scrollbar {
+                    width: 6px !important;
+                }
+
+                .chat-mod-content::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,0.2) !important;
+                    border-radius: 3px !important;
+                }
+
+                .chat-mod-section {
+                    display: none;
+                }
+
+                .chat-mod-section.visible {
+                    display: block !important;
+                }
+
+                .chat-mod-section-title {
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    margin-bottom: 16px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                /* Moderator User Search */
+                .chat-mod-search-wrapper {
+                    position: relative !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-search-row {
+                    display: flex !important;
+                    gap: 8px !important;
+                    align-items: center !important;
+                }
+
+                .chat-mod-search-input {
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    padding: 10px 12px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    outline: none !important;
+                }
+
+                .chat-mod-search-input:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-search-input::placeholder {
+                    color: #666 !important;
+                }
+
+                .chat-mod-level-select {
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    padding: 10px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    width: 70px !important;
+                }
+
+                .chat-mod-add-btn {
+                    background: #00a4dc !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    padding: 10px 16px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-mod-add-btn:hover {
+                    background: #0095c8 !important;
+                }
+
+                .chat-mod-add-btn:disabled {
+                    background: #333 !important;
+                    cursor: not-allowed !important;
+                }
+
+                /* Moderator status row in user management panel */
+                .chat-mod-moderator-controls {
+                    margin-bottom: 16px !important;
+                    padding-bottom: 16px !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .chat-mod-mod-row {
+                    display: flex !important;
+                    gap: 8px !important;
+                    align-items: center !important;
+                }
+
+                .chat-mod-mod-row .chat-mod-level-select {
+                    flex: 1 !important;
+                    width: auto !important;
+                }
+
+                .chat-mod-user-status {
+                    display: inline-block !important;
+                    padding: 4px 10px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    border-radius: 4px !important;
+                    margin-left: 8px !important;
+                }
+
+                .chat-mod-user-status.mod {
+                    background: rgba(0,164,220,0.2) !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-mod-user-status.admin {
+                    background: rgba(156,39,176,0.2) !important;
+                    color: #ba68c8 !important;
+                }
+
+                .chat-mod-user-status.banned {
+                    background: rgba(244,67,54,0.2) !important;
+                    color: #f44336 !important;
+                }
+
+                /* Ban search */
+                .chat-mod-ban-search {
+                    margin-bottom: 12px !important;
+                }
+
+                /* Clickable ban items */
+                .chat-mod-ban-item {
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-mod-ban-item:hover {
+                    background: rgba(255,255,255,0.05) !important;
+                }
+
+                .chat-mod-search-dropdown {
+                    position: absolute !important;
+                    top: 100% !important;
+                    left: 0 !important;
+                    right: 70px !important;
+                    background: #222 !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    max-height: 200px !important;
+                    overflow-y: auto !important;
+                    z-index: 100 !important;
+                    margin-top: 4px !important;
+                    display: none;
+                }
+
+                .chat-mod-search-dropdown.visible {
+                    display: block !important;
+                }
+
+                .chat-mod-search-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 10px 12px !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-mod-search-item:hover,
+                .chat-mod-search-item.selected {
+                    background: rgba(0,164,220,0.2) !important;
+                }
+
+                .chat-mod-search-avatar {
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 50% !important;
+                    background: #444 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    font-size: 14px !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-mod-search-name {
+                    font-size: 14px !important;
+                    color: #fff !important;
+                }
+
+                /* Moderator List */
+                .chat-mod-list {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                }
+
+                .chat-mod-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 12px !important;
+                    background: #252525 !important;
+                    border-radius: 8px !important;
+                    gap: 12px !important;
+                }
+
+                .chat-mod-item-info {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                }
+
+                .chat-mod-item-name {
+                    font-size: 14px !important;
+                    color: #fff !important;
+                    font-weight: 500 !important;
+                }
+
+                .chat-mod-item-stats {
+                    font-size: 11px !important;
+                    color: #888 !important;
+                }
+
+                .chat-mod-item-level {
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-item-btn {
+                    background: transparent !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    padding: 6px 12px !important;
+                    color: #888 !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-item-btn:hover {
+                    border-color: #f44336 !important;
+                    color: #f44336 !important;
+                }
+
+                /* Action Panel */
+                .chat-mod-action-panel {
+                    background: #252525 !important;
+                    border-radius: 12px !important;
+                    padding: 16px !important;
+                    margin-bottom: 16px !important;
+                    display: none;
+                }
+
+                .chat-mod-action-panel.visible {
+                    display: block !important;
+                }
+
+                .chat-mod-action-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-action-title {
+                    font-size: 14px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-action-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    font-size: 18px !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-mod-action-close:hover {
+                    color: #fff !important;
+                }
+
+                .chat-mod-action-target {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                    padding: 12px !important;
+                    background: rgba(0,0,0,0.2) !important;
+                    border-radius: 8px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-action-avatar {
+                    width: 40px !important;
+                    height: 40px !important;
+                    border-radius: 50% !important;
+                    background: #444 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    font-size: 16px !important;
+                    flex-shrink: 0 !important;
+                }
+
+                .chat-mod-action-name {
+                    font-size: 15px !important;
+                    font-weight: 500 !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-action-label {
+                    font-size: 12px !important;
+                    color: #888 !important;
+                    margin-bottom: 8px !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                }
+
+                .chat-mod-type-grid {
+                    display: grid !important;
+                    grid-template-columns: repeat(3, 1fr) !important;
+                    gap: 8px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-type-btn {
+                    padding: 12px 8px !important;
+                    background: #2a2a2a !important;
+                    border: 2px solid transparent !important;
+                    border-radius: 8px !important;
+                    cursor: pointer !important;
+                    text-align: center !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-type-btn:hover:not(.disabled) {
+                    background: #333 !important;
+                }
+
+                .chat-mod-type-btn.selected {
+                    background: rgba(0,164,220,0.15) !important;
+                    border-color: #00a4dc !important;
+                }
+
+                .chat-mod-type-btn.disabled {
+                    opacity: 0.4 !important;
+                    cursor: not-allowed !important;
+                }
+
+                .chat-mod-type-icon {
+                    font-size: 20px !important;
+                    margin-bottom: 4px !important;
+                }
+
+                .chat-mod-type-label {
+                    font-size: 11px !important;
+                    color: #ccc !important;
+                }
+
+                .chat-mod-type-btn.selected .chat-mod-type-label {
+                    color: #00a4dc !important;
+                }
+
+                .chat-mod-duration-presets {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 8px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-duration-btn {
+                    padding: 8px 12px !important;
+                    background: #2a2a2a !important;
+                    border: 2px solid transparent !important;
+                    border-radius: 6px !important;
+                    color: #ccc !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-duration-btn:hover {
+                    background: #333 !important;
+                }
+
+                .chat-mod-duration-btn.selected {
+                    background: rgba(0,164,220,0.15) !important;
+                    border-color: #00a4dc !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-mod-duration-btn.disabled {
+                    opacity: 0.4 !important;
+                    cursor: not-allowed !important;
+                }
+
+                .chat-mod-reason-input {
+                    width: 100% !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    padding: 10px 12px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    margin-bottom: 16px !important;
+                    outline: none !important;
+                    box-sizing: border-box !important;
+                }
+
+                .chat-mod-reason-input:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-preview {
+                    padding: 12px !important;
+                    background: rgba(255,152,0,0.1) !important;
+                    border: 1px solid rgba(255,152,0,0.3) !important;
+                    border-radius: 8px !important;
+                    color: #ffb74d !important;
+                    font-size: 13px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-action-buttons {
+                    display: flex !important;
+                    gap: 8px !important;
+                    justify-content: flex-end !important;
+                }
+
+                .chat-mod-cancel-btn {
+                    background: transparent !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 8px !important;
+                    padding: 10px 20px !important;
+                    color: #888 !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-cancel-btn:hover {
+                    border-color: #fff !important;
+                    color: #fff !important;
+                }
+
+                .chat-mod-apply-btn {
+                    background: #f44336 !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    padding: 10px 20px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-mod-apply-btn:hover {
+                    background: #e53935 !important;
+                }
+
+                /* User Search in Bans Section */
+                .chat-mod-user-search {
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-user-search-wrapper {
+                    position: relative !important;
+                }
+
+                .chat-mod-user-search-input {
+                    width: 100% !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    padding: 12px 14px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    outline: none !important;
+                    box-sizing: border-box !important;
+                }
+
+                .chat-mod-user-search-input:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-user-search-dropdown {
+                    position: absolute !important;
+                    top: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 8px !important;
+                    max-height: 200px !important;
+                    overflow-y: auto !important;
+                    z-index: 100 !important;
+                    display: none;
+                    margin-top: 4px !important;
+                }
+
+                .chat-mod-user-search-dropdown.visible {
+                    display: block !important;
+                }
+
+                .chat-mod-user-search-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding: 10px 12px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s ease !important;
+                }
+
+                .chat-mod-user-search-item:hover,
+                .chat-mod-user-search-item.selected {
+                    background: rgba(0,164,220,0.2) !important;
+                }
+
+                /* Color Picker Row */
+                .chat-mod-color-row {
+                    display: flex !important;
+                    gap: 16px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-mod-color-group {
+                    flex: 1 !important;
+                }
+
+                .chat-mod-color-label {
+                    font-size: 12px !important;
+                    color: #888 !important;
+                    margin-bottom: 8px !important;
+                    display: block !important;
+                }
+
+                .chat-mod-color-input-wrapper {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .chat-mod-color-picker {
+                    width: 40px !important;
+                    height: 36px !important;
+                    padding: 2px !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    background: #2a2a2a !important;
+                    cursor: pointer !important;
+                }
+
+                .chat-mod-color-picker::-webkit-color-swatch-wrapper {
+                    padding: 2px !important;
+                }
+
+                .chat-mod-color-picker::-webkit-color-swatch {
+                    border-radius: 4px !important;
+                    border: none !important;
+                }
+
+                .chat-mod-color-hex {
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    border: 1px solid rgba(255,255,255,0.15) !important;
+                    border-radius: 6px !important;
+                    padding: 8px 10px !important;
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-family: monospace !important;
+                    outline: none !important;
+                }
+
+                .chat-mod-color-hex:focus {
+                    border-color: rgba(0,164,220,0.5) !important;
+                }
+
+                .chat-mod-color-clear {
+                    background: transparent !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    padding: 8px !important;
+                    color: #888 !important;
+                    cursor: pointer !important;
+                    font-size: 14px !important;
+                    line-height: 1 !important;
+                }
+
+                .chat-mod-color-clear:hover {
+                    border-color: #f44336 !important;
+                    color: #f44336 !important;
+                }
+
+                .chat-mod-color-preview {
+                    padding: 10px 12px !important;
+                    background: #1a1a1a !important;
+                    border-radius: 6px !important;
+                    margin-bottom: 16px !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-mod-style-btn {
+                    padding: 6px 12px !important;
+                    background: #2a2a2a !important;
+                    border: 2px solid transparent !important;
+                    border-radius: 6px !important;
+                    color: #ccc !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-style-btn:hover {
+                    background: #333 !important;
+                }
+
+                .chat-mod-style-btn.selected {
+                    background: rgba(0,164,220,0.15) !important;
+                    border-color: #00a4dc !important;
+                    color: #00a4dc !important;
+                }
+
+                /* Ban List */
+                .chat-mod-ban-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 12px !important;
+                    background: #252525 !important;
+                    border-radius: 8px !important;
+                    margin-bottom: 8px !important;
+                }
+
+                .chat-mod-ban-info {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 4px !important;
+                }
+
+                .chat-mod-ban-user {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .chat-mod-ban-name {
+                    font-size: 14px !important;
+                    color: #fff !important;
+                    font-weight: 500 !important;
+                }
+
+                .chat-mod-ban-type {
+                    padding: 2px 6px !important;
+                    border-radius: 4px !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    color: #fff !important;
+                    text-transform: uppercase !important;
+                }
+
+                .chat-mod-ban-expires {
+                    font-size: 11px !important;
+                    color: #888 !important;
+                }
+
+                .chat-mod-unban-btn {
+                    background: transparent !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    border-radius: 6px !important;
+                    padding: 6px 12px !important;
+                    color: #888 !important;
+                    font-size: 12px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                }
+
+                .chat-mod-unban-btn:hover {
+                    border-color: #4caf50 !important;
+                    color: #4caf50 !important;
+                }
+
+                /* System Messages (mod actions) */
+                .chat-system-message {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    padding: 8px 12px !important;
+                    margin: 8px 0 !important;
+                    background: rgba(0, 164, 220, 0.1) !important;
+                    border-left: 3px solid #00a4dc !important;
+                    border-radius: 0 8px 8px 0 !important;
+                    font-size: 12px !important;
+                    color: #00a4dc !important;
+                }
+
+                .chat-system-icon {
+                    font-size: 14px !important;
+                }
+
+                .chat-system-text {
+                    flex: 1 !important;
+                }
+
+                /* Actions Log */
+                .chat-mod-action-log {
+                    max-height: 400px !important;
+                    overflow-y: auto !important;
+                }
+
+                .chat-mod-log-item {
+                    padding: 10px 0 !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+                }
+
+                .chat-mod-log-item:last-child {
+                    border-bottom: none !important;
+                }
+
+                .chat-mod-log-header {
+                    font-size: 13px !important;
+                    color: #ddd !important;
+                    margin-bottom: 4px !important;
+                }
+
+                .chat-mod-log-mod {
+                    color: #00a4dc !important;
+                    font-weight: 500 !important;
+                }
+
+                .chat-mod-log-action {
+                    color: #888 !important;
+                }
+
+                .chat-mod-log-target {
+                    color: #ff9800 !important;
+                }
+
+                .chat-mod-log-time {
+                    font-size: 11px !important;
+                    color: #666 !important;
+                }
+
+                .chat-mod-log-details {
+                    font-size: 11px !important;
+                    color: #888 !important;
+                    margin-top: 2px !important;
+                    font-style: italic !important;
+                }
+
+                /* Empty state */
+                .chat-mod-empty {
+                    text-align: center !important;
+                    color: #666 !important;
+                    padding: 40px 20px !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-mod-empty-icon {
+                    font-size: 32px !important;
+                    margin-bottom: 12px !important;
+                    opacity: 0.5 !important;
+                }
+
+                /* Penalty Success Modal */
+                .chat-penalty-modal-overlay {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(0,0,0,0.7) !important;
+                    z-index: 10000020 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-overlay.visible {
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+
+                .chat-penalty-modal {
+                    background: #252525 !important;
+                    border-radius: 12px !important;
+                    padding: 0 !important;
+                    width: 90% !important;
+                    max-width: 400px !important;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+                    transform: scale(0.9) !important;
+                    transition: transform 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-overlay.visible .chat-penalty-modal {
+                    transform: scale(1) !important;
+                }
+
+                .chat-penalty-modal-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 16px 20px !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .chat-penalty-modal-title {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    color: #4caf50 !important;
+                }
+
+                .chat-penalty-modal-title-icon {
+                    font-size: 20px !important;
+                }
+
+                .chat-penalty-modal-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    font-size: 20px !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    line-height: 1 !important;
+                    transition: color 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-close:hover {
+                    color: #fff !important;
+                }
+
+                .chat-penalty-modal-body {
+                    padding: 24px 20px !important;
+                    text-align: center !important;
+                }
+
+                .chat-penalty-modal-icon {
+                    font-size: 48px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-penalty-modal-message {
+                    font-size: 15px !important;
+                    color: #ddd !important;
+                    line-height: 1.5 !important;
+                }
+
+                .chat-penalty-modal-user {
+                    color: #ff9800 !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-type {
+                    color: #f44336 !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-duration {
+                    color: #00a4dc !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-footer {
+                    padding: 16px 20px !important;
+                    border-top: 1px solid rgba(255,255,255,0.1) !important;
+                    display: flex !important;
+                    justify-content: center !important;
+                }
+
+                .chat-penalty-modal-ok {
+                    background: #4caf50 !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    padding: 12px 40px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-weight: 500 !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-ok:hover {
+                    background: #43a047 !important;
+                }
+
+                /* Modal Changes List (for style/moderator modals) */
+                .chat-modal-changes {
+                    margin-top: 16px !important;
+                    padding: 12px !important;
+                    background: rgba(255,255,255,0.05) !important;
+                    border-radius: 8px !important;
+                    text-align: left !important;
+                }
+
+                .chat-modal-change-item {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                    padding: 6px 0 !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+                }
+
+                .chat-modal-change-item:last-child {
+                    border-bottom: none !important;
+                }
+
+                .chat-modal-change-label {
+                    color: #888 !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-modal-change-value {
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                }
+
+                /* Image error fallback - hides broken images (no inline JS) */
+                .plugin-img-fallback.img-error {
+                    display: none !important;
+                }
+
+                /* Netflix card fallback - show placeholder */
+                .netflix-card-img.img-error {
+                    display: block !important;
+                    background: #2a2a2a !important;
+                    min-height: 100% !important;
+                }
+                .netflix-card-img.img-error::after {
+                    content: 'No Image' !important;
+                    position: absolute !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    color: #666 !important;
+                    font-size: 14px !important;
                 }
             `;
 
@@ -6056,11 +7522,44 @@
          * Handle page change
          */
         onPageChange: function () {
+            // Close chat window and moderator panel on page navigation
+            this.closeChatOnPageChange();
+
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
             }
+        },
+
+        /**
+         * Close chat window and moderator panel on page change
+         */
+        closeChatOnPageChange: function () {
+            // Close chat window if open
+            if (this.chatOpen) {
+                const chatWindow = document.getElementById('chatWindow');
+                if (chatWindow) {
+                    chatWindow.classList.remove('visible');
+                }
+                this.chatOpen = false;
+                this.stopChatPolling();
+            }
+
+            // Close moderator panel if open
+            const modWindow = document.querySelector('.mod-window');
+            if (modWindow && modWindow.classList.contains('visible')) {
+                modWindow.classList.remove('visible');
+            }
+
+            // Close ban notifications and re-check status (will show again if still banned)
+            this.closeBanNotification();
+
+            // Re-check ban status after short delay to show notifications on new page
+            const self = this;
+            setTimeout(function () {
+                self.checkChatBanStatus();
+            }, 500);
         },
 
         /**
@@ -7024,6 +8523,9 @@
                             // Clear all cached data
                             self.clearRequestCache();
 
+                            // Reset chat state on user change
+                            self.resetChatOnUserChange();
+
                             // Handle notification session lifecycle
                             if (lastUserId && !currentUserId) {
                                 // User logged out - clear notification session and stop polling
@@ -7985,7 +9487,7 @@
 
                         html += `
                             <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
-                                <img src="${imageSrc}" class="latest-item-image" alt="" onerror="this.style.visibility='hidden'"/>
+                                <img src="${imageSrc}" class="latest-item-image plugin-img-fallback" alt=""/>
                                 <div class="latest-item-info">
                                     <div class="latest-item-title">${self.escapeHtml(itemName)}${badge}</div>
                                     <div class="latest-item-meta">
@@ -8861,7 +10363,7 @@
                     html += `
                         <tr style="animation-delay: ${animDelay}ms">
                             <td>
-                                <img src="${self.escapeHtml(baseUrl + imageUrl)}?maxWidth=80" class="media-item-image" alt="" onerror="this.style.display='none'" />
+                                <img src="${self.escapeHtml(baseUrl + imageUrl)}?maxWidth=80" class="media-item-image plugin-img-fallback" alt="" />
                             </td>
                             <td>
                                 <div class="media-item-title">
@@ -9777,7 +11279,7 @@
 
                     html += `
                         <a href="#!/details?id=${itemId}" class="dropdown-item" data-item-id="${itemId}">
-                            <img src="${imageSrc}" class="dropdown-item-image" alt="" onerror="this.style.display='none'"/>
+                            <img src="${imageSrc}" class="dropdown-item-image plugin-img-fallback" alt=""/>
                             <div class="dropdown-item-info">
                                 <div class="dropdown-item-title">${self.escapeHtml(itemName)}</div>
                                 <div class="dropdown-item-meta">
@@ -13125,7 +14627,7 @@
             // Build image URL
             let imageHtml = '';
             if (notification.ImageUrl && !notification.IsTest) {
-                imageHtml = `<img class="ratings-notification-image" src="${this.escapeHtml(baseUrl + notification.ImageUrl)}" alt="" onerror="this.style.display='none'">`;
+                imageHtml = `<img class="ratings-notification-image plugin-img-fallback" src="${this.escapeHtml(baseUrl + notification.ImageUrl)}" alt="">`;
             }
 
             // Build content based on notification type
@@ -13788,7 +15290,7 @@
 
                 cardsHtml += `
                     <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
-                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22><rect fill=%22%232a2a2a%22 width=%22300%22 height=%22450%22/><text x=%22150%22 y=%22225%22 fill=%22%23666%22 text-anchor=%22middle%22 font-size=%2220%22>No Image</text></svg>'">
+                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
                         <div class="netflix-card-overlay">
                             <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
                             <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
@@ -14074,21 +15576,8 @@
                             </span>
                         </div>
                         <div class="chat-header-right">
-                            <button class="chat-header-btn" id="chatSettingsBtn" title="Settings" style="display:none;">⚙️</button>
+                            <button class="chat-header-btn" id="chatSettingsBtn" title="Moderator Panel" style="display:none;">⚙️</button>
                             <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
-                        </div>
-                    </div>
-                    <div class="chat-admin-panel" id="chatAdminPanel">
-                        <div class="chat-admin-section">
-                            <div class="chat-admin-title">${this.t('chatModerators')}</div>
-                            <div class="chat-admin-list" id="chatModeratorList"></div>
-                        </div>
-                        <div class="chat-admin-section">
-                            <div class="chat-admin-title">${this.t('chatBannedUsers')}</div>
-                            <div class="chat-admin-list" id="chatBannedList"></div>
-                        </div>
-                        <div class="chat-admin-section" id="chatClearSection" style="display:none;">
-                            <button class="chat-admin-btn danger" id="chatClearAllBtn" style="width:100%;">${this.t('chatClearAll')}</button>
                         </div>
                     </div>
                     <div class="chat-tabs" id="chatTabs">
@@ -14142,6 +15631,9 @@
             div.innerHTML = chatHtml;
             document.body.appendChild(div.firstElementChild);
 
+            // Create moderator window (separate from chat)
+            this.createModeratorWindow();
+
             // Bind events
             this.bindChatEvents();
 
@@ -14150,23 +15642,227 @@
         },
 
         /**
+         * Create the moderator window (separate floating window)
+         */
+        createModeratorWindow: function () {
+            const modWindowHtml = `
+                <div id="modWindow" class="mod-window">
+                    <div class="mod-window-header">
+                        <span class="mod-window-title">Moderator Panel</span>
+                        <button class="mod-window-close" id="modWindowClose">✕</button>
+                    </div>
+                    <div class="mod-window-body">
+                        <div class="chat-mod-sidebar">
+                            <button class="chat-mod-sidebar-btn active" data-mod-section="users" title="Users">
+                                <span class="chat-mod-sidebar-icon">👥</span>
+                                <span class="chat-mod-sidebar-label">Users</span>
+                            </button>
+                            <button class="chat-mod-sidebar-btn" data-mod-section="bans" title="Bans">
+                                <span class="chat-mod-sidebar-icon">🚫</span>
+                                <span class="chat-mod-sidebar-label">Bans</span>
+                            </button>
+                            <button class="chat-mod-sidebar-btn" data-mod-section="actions" title="Actions">
+                                <span class="chat-mod-sidebar-icon">📋</span>
+                                <span class="chat-mod-sidebar-label">Log</span>
+                            </button>
+                        </div>
+                        <div class="chat-mod-content">
+                            <!-- Users Section - User Management -->
+                            <div class="chat-mod-section visible" id="chatModSectionUsers">
+                                <div class="chat-mod-section-title">Search User</div>
+                                <div class="chat-mod-user-search">
+                                    <div class="chat-mod-user-search-wrapper">
+                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="Search for a user to manage...">
+                                        <div class="chat-mod-user-search-dropdown" id="chatModUserSearchDropdown"></div>
+                                    </div>
+                                </div>
+                                <div class="chat-mod-action-panel" id="chatModActionPanel">
+                                    <div class="chat-mod-action-header">
+                                        <span class="chat-mod-action-title">Manage User</span>
+                                        <button class="chat-mod-action-close" id="chatModActionClose">×</button>
+                                    </div>
+                                    <div class="chat-mod-action-target" id="chatModActionTarget">
+                                        <div class="chat-mod-action-avatar" id="chatModActionAvatar">U</div>
+                                        <span class="chat-mod-action-name" id="chatModActionName">Username</span>
+                                        <span class="chat-mod-user-status" id="chatModUserStatus"></span>
+                                    </div>
+                                    <!-- Moderator Controls -->
+                                    <div class="chat-mod-action-label">Moderator Status</div>
+                                    <div class="chat-mod-moderator-controls" id="chatModModeratorControls">
+                                        <div class="chat-mod-mod-row" id="chatModModRow">
+                                            <select class="chat-mod-level-select" id="chatModUserLevel">
+                                                <option value="0">Not a Moderator</option>
+                                                <option value="1">Level 1</option>
+                                                <option value="2">Level 2</option>
+                                                <option value="3">Level 3</option>
+                                            </select>
+                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">Apply</button>
+                                        </div>
+                                    </div>
+                                    <!-- Style Controls -->
+                                    <div class="chat-mod-action-label">Chat Style</div>
+                                    <div class="chat-mod-color-row">
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Nickname Color</span>
+                                            <div class="chat-mod-color-input-wrapper">
+                                                <input type="color" class="chat-mod-color-picker" id="chatModNicknameColor" value="#ffffff">
+                                                <input type="text" class="chat-mod-color-hex" id="chatModNicknameHex" placeholder="#ffffff" maxlength="7">
+                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="Clear">×</button>
+                                            </div>
+                                        </div>
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Message Color</span>
+                                            <div class="chat-mod-color-input-wrapper">
+                                                <input type="color" class="chat-mod-color-picker" id="chatModMessageColor" value="#cccccc">
+                                                <input type="text" class="chat-mod-color-hex" id="chatModMessageHex" placeholder="#cccccc" maxlength="7">
+                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="Clear">×</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-mod-color-row">
+                                        <div class="chat-mod-color-group">
+                                            <span class="chat-mod-color-label">Text Style</span>
+                                            <div style="display:flex;gap:8px;">
+                                                <button class="chat-mod-style-btn" data-style="">Normal</button>
+                                                <button class="chat-mod-style-btn" data-style="bold">Bold</button>
+                                                <button class="chat-mod-style-btn" data-style="italic">Italic</button>
+                                                <button class="chat-mod-style-btn" data-style="bold-italic">Both</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-mod-color-preview" id="chatModColorPreview">
+                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">Sample message text</span>
+                                    </div>
+                                    <div class="chat-mod-action-buttons" style="margin-bottom:16px;">
+                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">Reset Style</button>
+                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">Apply Style</button>
+                                    </div>
+                                    <!-- Penalty Controls -->
+                                    <div class="chat-mod-action-label">Penalties</div>
+                                    <div class="chat-mod-type-grid" id="chatModTypeGrid">
+                                        <button type="button" class="chat-mod-type-btn selected" data-action-type="snooze">
+                                            <div class="chat-mod-type-icon">😴</div>
+                                            <div class="chat-mod-type-label">Snooze</div>
+                                        </button>
+                                        <button type="button" class="chat-mod-type-btn" data-action-type="chat">
+                                            <div class="chat-mod-type-icon">💬</div>
+                                            <div class="chat-mod-type-label">Chat Ban</div>
+                                        </button>
+                                        <button type="button" class="chat-mod-type-btn" data-action-type="media">
+                                            <div class="chat-mod-type-icon">🎬</div>
+                                            <div class="chat-mod-type-label">Media Ban</div>
+                                        </button>
+                                    </div>
+                                    <div class="chat-mod-action-label">Duration</div>
+                                    <div class="chat-mod-duration-presets" id="chatModDurationPresets">
+                                        <button type="button" class="chat-mod-duration-btn selected" data-duration="10">10m</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="60">1h</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="1440">1d</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="10080">1w</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">Perm</button>
+                                    </div>
+                                    <div class="chat-mod-action-label">Reason (optional)</div>
+                                    <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="Enter reason...">
+                                    <div class="chat-mod-preview" id="chatModPreview">User will be muted for 10 minutes</div>
+                                    <div class="chat-mod-action-buttons">
+                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
+                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
+                                    </div>
+                                </div>
+                                <div class="chat-mod-section-title" style="margin-top:20px;">Current Moderators</div>
+                                <div class="chat-mod-list" id="chatModList">
+                                    <div class="chat-mod-empty">
+                                        <div class="chat-mod-empty-icon">👥</div>
+                                        <div>No moderators</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Bans Section -->
+                            <div class="chat-mod-section" id="chatModSectionBans">
+                                <div class="chat-mod-section-title">Search Bans</div>
+                                <div class="chat-mod-ban-search">
+                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="Search banned users...">
+                                </div>
+                                <div class="chat-mod-section-title" style="margin-top:12px;">Active Bans</div>
+                                <div class="chat-mod-list" id="chatModBanList">
+                                    <div class="chat-mod-empty">
+                                        <div class="chat-mod-empty-icon">🚫</div>
+                                        <div>No active bans</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Actions Section -->
+                            <div class="chat-mod-section" id="chatModSectionActions">
+                                <div class="chat-mod-section-title">Moderator Actions</div>
+                                <div style="margin-bottom:12px;">
+                                    <select class="chat-mod-level-select" id="chatModActionsFilter" style="width:100%;">
+                                        <option value="">All Moderators</option>
+                                    </select>
+                                </div>
+                                <div class="chat-mod-action-log" id="chatModActionLog">
+                                    <div class="chat-mod-empty">
+                                        <div class="chat-mod-empty-icon">📋</div>
+                                        <div>No actions recorded</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modDiv = document.createElement('div');
+            modDiv.innerHTML = modWindowHtml;
+            document.body.appendChild(modDiv.firstElementChild);
+        },
+
+        /**
          * Bind chat event handlers
          */
         bindChatEvents: function () {
             const self = this;
+
+            // Delegated error handler for all plugin images (no inline JS for security)
+            document.addEventListener('error', function (e) {
+                if (e.target && e.target.classList) {
+                    // Handle chat avatar images
+                    if (e.target.classList.contains('chat-avatar-img')) {
+                        var url = e.target.getAttribute('data-avatar-url');
+                        e.target.classList.add('avatar-error');
+                        if (url && window.ratingsPlugin) {
+                            window.ratingsPlugin._failedAvatars[url] = true;
+                        }
+                    }
+                    // Handle all other plugin images with fallback class
+                    if (e.target.classList.contains('plugin-img-fallback')) {
+                        e.target.classList.add('img-error');
+                    }
+                }
+            }, true); // Use capture phase for error events
+
+            // Delegated load handler for avatar images
+            document.addEventListener('load', function (e) {
+                if (e.target && e.target.classList && e.target.classList.contains('chat-avatar-img')) {
+                    var initial = e.target.nextElementSibling;
+                    if (initial && initial.classList.contains('chat-avatar-initial')) {
+                        initial.classList.add('hidden');
+                    }
+                }
+            }, true);
 
             // Close button
             document.getElementById('chatCloseBtn').onclick = function () {
                 self.toggleChat();
             };
 
-            // Settings button
+            // Settings button (opens moderator window)
             document.getElementById('chatSettingsBtn').onclick = function () {
-                const panel = document.getElementById('chatAdminPanel');
-                panel.classList.toggle('visible');
-                if (panel.classList.contains('visible')) {
-                    self.loadAdminPanel();
-                }
+                self.toggleModeratorWindow();
+            };
+
+            // Moderator window close button
+            document.getElementById('modWindowClose').onclick = function () {
+                self.toggleModeratorWindow(false);
             };
 
             // Send button - routes to DM or public based on active tab
@@ -14268,9 +15964,6 @@
                 if (!e.target.closest('#chatGifPicker') && !e.target.closest('#chatGifBtn')) {
                     document.getElementById('chatGifPicker').classList.remove('visible');
                 }
-                if (!e.target.closest('#chatAdminPanel') && !e.target.closest('#chatSettingsBtn')) {
-                    document.getElementById('chatAdminPanel').classList.remove('visible');
-                }
                 // Close user autocomplete when clicking outside
                 if (!e.target.closest('#chatUserAutocomplete') && !e.target.closest('#chatInput')) {
                     self.hideDMAutocomplete();
@@ -14297,6 +15990,9 @@
                 // Mark public chat as read on server
                 this.markPublicChatRead();
                 this.updateUnreadBadge(0);
+                // Load moderator info and user styles
+                this.loadMyModeratorInfo();
+                this.loadUserStyles();
             } else {
                 chatWindow.classList.remove('visible');
                 this.stopChatPolling();
@@ -14337,6 +16033,237 @@
             if (this.chatPollingInterval) {
                 clearInterval(this.chatPollingInterval);
                 this.chatPollingInterval = null;
+            }
+        },
+
+        /**
+         * Reset chat state on user change (logout/login/switch)
+         */
+        resetChatOnUserChange: function () {
+            // Close chat window
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow) {
+                chatWindow.classList.remove('visible');
+                chatWindow.classList.remove('chat-is-mod');
+                chatWindow.classList.remove('chat-is-admin');
+            }
+            this.chatOpen = false;
+
+            // Close moderator panel
+            const modWindow = document.querySelector('.mod-window');
+            if (modWindow) {
+                modWindow.classList.remove('visible');
+            }
+
+            // Stop polling
+            this.stopChatPolling();
+            this.stopBackgroundPolling();
+
+            // Clear chat state
+            this.chatMessages = [];
+            this.chatTypingUsers = [];
+            this.chatOnlineUsers = [];
+            this.chatBanStatus = null;
+            this.chatIsAdmin = false;
+            this.chatIsModerator = false;
+            this.chatModInfo = null;
+            this.dmConversations = [];
+            this.dmActiveConversation = null;
+            this.dmMessages = [];
+
+            // Close ban notification
+            this.closeBanNotification();
+
+            // Clear the messages container
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
+
+            // Reset input state
+            const inputArea = document.getElementById('chatInputArea');
+            const status = document.getElementById('chatStatus');
+            if (inputArea) inputArea.style.display = '';
+            if (status) status.style.display = 'none';
+        },
+
+        /**
+         * Track active ban notifications and their intervals
+         */
+        _banNotifications: {},
+        _banCountdownIntervals: {},
+
+        /**
+         * Get or create the ban notification container
+         */
+        getBanNotificationContainer: function () {
+            let container = document.getElementById('chatBanNotificationContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'chatBanNotificationContainer';
+                container.className = 'chat-ban-notification-container';
+                document.body.appendChild(container);
+            }
+            return container;
+        },
+
+        /**
+         * Show ban notification popup with countdown (supports multiple)
+         */
+        showBanNotification: function (banType, expiresAt, isPermanent) {
+            const self = this;
+            const notificationId = 'chatBanNotification_' + banType;
+
+            // Don't create duplicate notification for same ban type
+            if (document.getElementById(notificationId)) {
+                return;
+            }
+
+            // Get or create container
+            const container = this.getBanNotificationContainer();
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = notificationId;
+            notification.className = 'chat-ban-notification';
+            notification.setAttribute('data-ban-type', banType);
+
+            const banTypeLabel = banType === 'chat' ? 'Chat Banned' :
+                                 banType === 'snooze' ? 'Muted' :
+                                 banType === 'media' ? 'Media Banned' : 'Banned';
+
+            const banIcon = banType === 'snooze' ? '🔇' :
+                           banType === 'media' ? '🎬' : '🚫';
+
+            let countdownHtml = '';
+            if (isPermanent) {
+                countdownHtml = '<span class="chat-ban-countdown">Permanent</span>';
+            } else if (expiresAt) {
+                countdownHtml = '<span class="chat-ban-countdown" id="chatBanCountdown_' + banType + '"></span>';
+            }
+
+            notification.innerHTML =
+                '<div class="chat-ban-notification-content">' +
+                    '<span class="chat-ban-notification-icon">' + banIcon + '</span>' +
+                    '<div class="chat-ban-notification-text">' +
+                        '<span class="chat-ban-notification-title">' + banTypeLabel + '</span>' +
+                        countdownHtml +
+                    '</div>' +
+                    '<button class="chat-ban-notification-close" data-close-ban="' + banType + '">×</button>' +
+                '</div>';
+
+            container.appendChild(notification);
+
+            // Bind close button
+            notification.querySelector('[data-close-ban]').onclick = function () {
+                self.closeBanNotification(banType);
+            };
+
+            // Start countdown timer if not permanent
+            if (!isPermanent && expiresAt) {
+                this.updateBanCountdown(banType, new Date(expiresAt));
+                this._banCountdownIntervals[banType] = setInterval(function () {
+                    self.updateBanCountdown(banType, new Date(expiresAt));
+                }, 1000);
+            }
+
+            // Track this notification
+            this._banNotifications[banType] = true;
+
+            // Show with animation
+            setTimeout(function () {
+                notification.classList.add('visible');
+            }, 50);
+        },
+
+        /**
+         * Update ban countdown timer for specific ban type
+         */
+        updateBanCountdown: function (banType, expiresAt) {
+            const countdownEl = document.getElementById('chatBanCountdown_' + banType);
+            if (!countdownEl) return;
+
+            const now = new Date();
+            const diff = expiresAt - now;
+
+            if (diff <= 0) {
+                // Ban expired
+                this.closeBanNotification(banType);
+                // Refresh ban status
+                this.checkChatBanStatus();
+                return;
+            }
+
+            const totalSeconds = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let timeStr = '';
+            if (hours > 0) {
+                timeStr = hours + 'h ' + minutes + 'm ' + seconds + 's';
+            } else if (minutes > 0) {
+                timeStr = minutes + 'm ' + seconds + 's';
+            } else {
+                timeStr = seconds + 's';
+            }
+
+            countdownEl.textContent = timeStr + ' remaining';
+        },
+
+        /**
+         * Close ban notification popup (single or all)
+         */
+        closeBanNotification: function (banType) {
+            const self = this;
+
+            if (banType) {
+                // Close specific notification
+                const notificationId = 'chatBanNotification_' + banType;
+                const notification = document.getElementById(notificationId);
+
+                // Clear interval
+                if (this._banCountdownIntervals[banType]) {
+                    clearInterval(this._banCountdownIntervals[banType]);
+                    delete this._banCountdownIntervals[banType];
+                }
+
+                // Remove notification
+                if (notification) {
+                    notification.classList.remove('visible');
+                    setTimeout(function () {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                        delete self._banNotifications[banType];
+                    }, 300);
+                }
+            } else {
+                // Close all notifications
+                Object.keys(this._banCountdownIntervals).forEach(function (type) {
+                    clearInterval(self._banCountdownIntervals[type]);
+                });
+                this._banCountdownIntervals = {};
+
+                document.querySelectorAll('.chat-ban-notification').forEach(function (notification) {
+                    notification.classList.remove('visible');
+                    setTimeout(function () {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                });
+                this._banNotifications = {};
+
+                // Remove container if empty
+                const container = document.getElementById('chatBanNotificationContainer');
+                if (container) {
+                    setTimeout(function () {
+                        if (container.children.length === 0 && container.parentNode) {
+                            container.parentNode.removeChild(container);
+                        }
+                    }, 350);
+                }
             }
         },
 
@@ -14410,13 +16337,13 @@
                 .then(function (data) {
                     self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
                     self.chatIsModerator = data.isModerator || data.IsModerator || false;
-                    var settingsBtn = document.getElementById('chatSettingsBtn');
-                    if (settingsBtn) {
-                        settingsBtn.style.display = (self.chatIsAdmin || self.chatIsModerator) ? '' : 'none';
-                    }
-                    var clearSection = document.getElementById('chatClearSection');
-                    if (clearSection) {
-                        clearSection.style.display = self.chatIsAdmin ? '' : 'none';
+                    // Show moderator tab if user is admin or moderator
+                    self.showModeratorTab();
+                    // Add class to chat window for CSS styling of action buttons
+                    const chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow) {
+                        chatWindow.classList.toggle('chat-is-admin', self.chatIsAdmin);
+                        chatWindow.classList.toggle('chat-is-mod', self.chatIsModerator);
                     }
                 })
                 .catch(function () {});
@@ -14453,12 +16380,43 @@
             const status = document.getElementById('chatStatus');
             const input = document.getElementById('chatInput');
 
+            // Track which notifications should be shown
+            const activeBans = [];
+
+            // Check chat ban
             if (this.chatBanStatus && this.chatBanStatus.chatBan) {
+                const ban = this.chatBanStatus.chatBan;
+                this.showBanNotification('chat', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('chat');
+            } else {
+                this.closeBanNotification('chat');
+            }
+
+            // Check snooze/mute ban
+            if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
+                const ban = this.chatBanStatus.snoozeBan;
+                this.showBanNotification('snooze', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('snooze');
+            } else {
+                this.closeBanNotification('snooze');
+            }
+
+            // Check media ban
+            if (this.chatBanStatus && this.chatBanStatus.mediaBan) {
+                const ban = this.chatBanStatus.mediaBan;
+                this.showBanNotification('media', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                activeBans.push('media');
+            } else {
+                this.closeBanNotification('media');
+            }
+
+            // Update input state based on chat-affecting bans
+            if (activeBans.includes('chat')) {
                 inputArea.style.display = 'none';
                 status.style.display = 'block';
                 status.className = 'chat-status error';
                 status.textContent = this.t('chatBanned');
-            } else if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
+            } else if (activeBans.includes('snooze')) {
                 inputArea.style.display = 'none';
                 status.style.display = 'block';
                 status.className = 'chat-status warning';
@@ -14587,35 +16545,34 @@
 
             this.chatMessages.forEach(function (msg) {
                 const isOwn = msg.userId === currentUserId;
-                const userInitial = (msg.userName || 'U').charAt(0).toUpperCase();
-                // Use avatar image if available, otherwise show initial
+                // Use avatar helper with fallback caching
                 const userAvatar = msg.userAvatar || msg.UserAvatar;
-                const avatarContent = userAvatar
-                    ? '<img src="' + self.escapeHtml(userAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>'
-                    : '<span class="chat-avatar-initial">' + self.escapeHtml(userInitial) + '</span>';
+                const avatarContent = self.getAvatarHtml(userAvatar, msg.userName);
                 const roleClass = msg.isAdmin ? 'admin' : (msg.isModerator ? 'moderator' : '');
                 const timeStr = self.formatChatTime(msg.timestamp);
+                // Get user style overrides
+                const userStyle = self.getUserMessageStyle(msg.userId);
 
                 if (msg.isDeleted) {
                     html += '<div class="chat-message' + (isOwn ? ' own' : '') + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
-                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
+                        + '<span class="chat-username ' + roleClass + '"' + (userStyle.nicknameStyle ? ' style="' + userStyle.nicknameStyle + '"' : '') + '>' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
                         + '<div class="chat-bubble"><span class="chat-message-text" style="opacity:0.5;font-style:italic;">' + self.t('chatDeleted') + '</span></div>'
                         + '</div></div>';
                 } else {
-                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '">'
+                    html += '<div class="chat-message' + (isOwn ? ' own' : '') + '" data-message-id="' + msg.id + '" data-user-id="' + msg.userId + '">'
                         + '<div class="chat-avatar">' + avatarContent + '</div>'
                         + '<div class="chat-message-content">'
                         + '<div class="chat-message-header">'
-                        + '<span class="chat-username ' + roleClass + '">' + self.escapeHtml(msg.userName) + '</span>'
+                        + '<span class="chat-username ' + roleClass + '"' + (userStyle.nicknameStyle ? ' style="' + userStyle.nicknameStyle + '"' : '') + '>' + self.escapeHtml(msg.userName) + '</span>'
                         + '<span class="chat-timestamp">' + timeStr + '</span>'
                         + '</div>'
                         + '<div class="chat-bubble">'
-                        + (msg.content ? '<span class="chat-message-text">' + self.escapeHtml(msg.content) + '</span>' : '')
+                        + (msg.content ? '<span class="chat-message-text"' + (userStyle.messageStyle ? ' style="' + userStyle.messageStyle + '"' : '') + '>' + self.escapeHtml(msg.content) + '</span>' : '')
                         + (msg.gifUrl ? '<img class="chat-message-gif" src="' + self.escapeHtml(msg.gifUrl) + '" alt="GIF">' : '')
                         + '</div>';
 
@@ -14623,9 +16580,9 @@
                     if (isOwn || self.chatIsAdmin || self.chatIsModerator) {
                         html += '<div class="chat-message-actions">'
                             + '<button class="chat-action-btn delete" data-delete-id="' + self.escapeHtml(String(msg.id)) + '">' + self.t('delete') + '</button>';
-                        // Add ban option for admin/mod on other users
+                        // Add manage option for admin/mod on other users
                         if (!isOwn && (self.chatIsAdmin || self.chatIsModerator)) {
-                            html += '<button class="chat-action-btn" data-ban-userid="' + self.escapeHtml(String(msg.userId)) + '" data-ban-username="' + self.escapeHtml(msg.userName) + '">' + self.t('chatBan') + '</button>';
+                            html += '<button class="chat-action-btn" data-manage-userid="' + self.escapeHtml(String(msg.userId)) + '" data-manage-username="' + self.escapeHtml(msg.userName) + '">Manage</button>';
                         }
                         html += '</div>';
                     }
@@ -14640,8 +16597,13 @@
             container.querySelectorAll('[data-delete-id]').forEach(function (btn) {
                 btn.onclick = function () { self.deleteChatMessage(this.getAttribute('data-delete-id')); };
             });
-            container.querySelectorAll('[data-ban-userid]').forEach(function (btn) {
-                btn.onclick = function () { self.showBanUserDialog(this.getAttribute('data-ban-userid'), this.getAttribute('data-ban-username')); };
+            container.querySelectorAll('[data-manage-userid]').forEach(function (btn) {
+                btn.onclick = function () {
+                    const userId = this.getAttribute('data-manage-userid');
+                    const userName = this.getAttribute('data-manage-username');
+                    // Open moderator window with action panel
+                    self.showActionPanel(userId, userName);
+                };
             });
 
             // Scroll to bottom if user was at bottom, initial load, or just sent a message
@@ -14956,39 +16918,1738 @@
          * Load admin panel data
          */
         loadAdminPanel: function () {
-            this.loadModerators();
+            this.loadModeratorStats();
             this.loadBannedUsers();
+            this.loadModeratorActions();
+            this.loadUsersForModSelect();
+            this.bindAdminTabs();
         },
 
         /**
-         * Load moderators list
+         * Show or hide the moderator settings button based on permissions
          */
-        loadModerators: function () {
+        showModeratorTab: function () {
+            const settingsBtn = document.getElementById('chatSettingsBtn');
+            if (!settingsBtn) return;
+
+            // Show settings button if user is admin or moderator
+            if (this.chatIsAdmin || this.chatIsModerator) {
+                settingsBtn.style.display = '';
+            } else {
+                settingsBtn.style.display = 'none';
+            }
+        },
+
+        /**
+         * Toggle moderator window visibility
+         */
+        toggleModeratorWindow: function (forceState) {
+            const modWindow = document.getElementById('modWindow');
+            if (!modWindow) return;
+
+            const shouldShow = forceState !== undefined ? forceState : !modWindow.classList.contains('visible');
+
+            if (shouldShow) {
+                modWindow.classList.add('visible');
+                this.modWindowOpen = true;
+                this.loadModeratorPanel();
+            } else {
+                modWindow.classList.remove('visible');
+                this.modWindowOpen = false;
+            }
+        },
+
+        /**
+         * Load moderator panel data
+         */
+        loadModeratorPanel: function () {
+            const self = this;
+
+            // Load all data
+            this.loadModPanelModerators();
+            this.loadModPanelBans();
+            this.loadModPanelActions();
+
+            // Show add moderator section if user can manage mods
+            const canManageMods = this.chatIsAdmin || (this.chatModInfo && this.chatModInfo.level >= 3);
+            const addSection = document.getElementById('chatModAddSection');
+            if (addSection) {
+                addSection.style.display = canManageMods ? '' : 'none';
+            }
+
+            // Bind panel events (only once)
+            if (!this.modPanelEventsBound) {
+                this.bindModPanelEvents();
+                this.modPanelEventsBound = true;
+            }
+        },
+
+        /**
+         * Bind moderator panel events
+         */
+        bindModPanelEvents: function () {
+            const self = this;
+
+            // Sidebar section switching
+            document.querySelectorAll('.chat-mod-sidebar-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    const section = this.getAttribute('data-mod-section');
+                    self.switchModSection(section);
+                };
+            });
+
+            // Search input
+            const searchInput = document.getElementById('chatModSearchInput');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.oninput = function () {
+                    clearTimeout(searchTimeout);
+                    const query = this.value.trim();
+                    searchTimeout = setTimeout(function () {
+                        if (query.length >= 1) {
+                            self.searchModeratorCandidates(query);
+                        } else {
+                            self.hideModSearchDropdown();
+                        }
+                    }, 300);
+                };
+                searchInput.onkeydown = function (e) {
+                    self.handleModSearchKeydown(e);
+                };
+            }
+
+            // Add moderator button
+            const addBtn = document.getElementById('chatModAddBtn');
+            if (addBtn) {
+                addBtn.onclick = function () {
+                    if (self.modSelectedUser) {
+                        const level = parseInt(document.getElementById('chatModLevelSelect').value) || 1;
+                        self.addModerator(self.modSelectedUser.userId, level);
+                        self.clearModSearch();
+                    }
+                };
+            }
+
+            // Action panel events
+            this.bindActionPanelEvents();
+
+            // Actions filter
+            const actionsFilter = document.getElementById('chatModActionsFilter');
+            if (actionsFilter) {
+                actionsFilter.onchange = function () {
+                    self.loadModPanelActions(this.value || null);
+                };
+            }
+
+            // Click outside to close search dropdown
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#chatModSearchInput') && !e.target.closest('#chatModSearchDropdown')) {
+                    self.hideModSearchDropdown();
+                }
+                if (!e.target.closest('#chatModUserSearchInput') && !e.target.closest('#chatModUserSearchDropdown')) {
+                    self.hideUserSearchDropdown();
+                }
+            });
+
+            // User search in Users section
+            const userSearchInput = document.getElementById('chatModUserSearchInput');
+            if (userSearchInput) {
+                let userSearchTimeout;
+                userSearchInput.oninput = function () {
+                    clearTimeout(userSearchTimeout);
+                    const query = this.value.trim();
+                    userSearchTimeout = setTimeout(function () {
+                        if (query.length >= 1) {
+                            self.searchUsersForManage(query);
+                        } else {
+                            self.hideUserSearchDropdown();
+                        }
+                    }, 300);
+                };
+                userSearchInput.onkeydown = function (e) {
+                    self.handleUserSearchKeydown(e);
+                };
+            }
+
+            // Ban search in Bans section (filters existing ban list)
+            const banSearchInput = document.getElementById('chatModBanSearchInput');
+            if (banSearchInput) {
+                let banSearchTimeout;
+                banSearchInput.oninput = function () {
+                    clearTimeout(banSearchTimeout);
+                    const query = this.value.trim();
+                    banSearchTimeout = setTimeout(function () {
+                        self.filterBanList(query);
+                    }, 200);
+                };
+            }
+
+            // Bind color/style events
+            this.bindColorStyleEvents();
+        },
+
+        /**
+         * Switch moderator panel sidebar section
+         */
+        switchModSection: function (section) {
+            this.chatModPanelSection = section;
+
+            // Update sidebar button states
+            document.querySelectorAll('.chat-mod-sidebar-btn').forEach(function (btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-mod-section') === section);
+            });
+
+            // Show/hide sections
+            document.getElementById('chatModSectionUsers').classList.toggle('visible', section === 'users');
+            document.getElementById('chatModSectionBans').classList.toggle('visible', section === 'bans');
+            document.getElementById('chatModSectionActions').classList.toggle('visible', section === 'actions');
+        },
+
+        /**
+         * Load moderators for the new panel
+         */
+        loadModPanelModerators: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
                 method: 'GET',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
             .then(function (r) { return r.json(); })
             .then(function (mods) {
-                const list = document.getElementById('chatModeratorList');
-                if (mods.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                const list = document.getElementById('chatModList');
+                if (!list) return;
+
+                const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
+
+                if (!mods || mods.length === 0) {
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
-                        return '<div class="chat-admin-item">'
-                            + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
-                            + (self.chatIsAdmin ? '<button class="chat-admin-btn danger" data-action="remove-mod" data-user-id="' + self.escapeHtml(mod.userId) + '">' + self.t('chatRemoveMod') + '</button>' : '')
+                        // API returns PascalCase, handle both for safety
+                        const modLevel = mod.Level || mod.level || 0;
+                        const modUserName = mod.UserName || mod.userName || 'Unknown';
+                        const modId = mod.Id || mod.id;
+                        const modUserId = mod.UserId || mod.userId;
+                        const dailyDeleteCount = mod.DailyDeleteCount || mod.dailyDeleteCount || 0;
+                        const dailyDeleteLimit = mod.DailyDeleteLimit || mod.dailyDeleteLimit || 0;
+                        const actionCount = mod.ActionCount || mod.actionCount || 0;
+
+                        const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && modLevel < 3);
+                        return '<div class="chat-mod-item">'
+                            + '<div class="chat-mod-item-info">'
+                            + '<span class="chat-mod-item-level" style="background:' + self.getModLevelColor(modLevel) + ';">L' + modLevel + '</span>'
+                            + '<div>'
+                            + '<div class="chat-mod-item-name">' + self.escapeHtml(modUserName) + '</div>'
+                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' deletes · ' + actionCount + ' actions</div>'
+                            + '</div>'
+                            + '</div>'
+                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">Remove</button>' : '')
                             + '</div>';
                     }).join('');
-                    list.querySelectorAll('[data-action="remove-mod"]').forEach(function (btn) {
-                        btn.onclick = function () { RatingsPlugin.removeModerator(this.dataset.userId); };
+
+                    list.querySelectorAll('[data-remove-mod-id]').forEach(function (btn) {
+                        btn.onclick = function () {
+                            self.removeModerator(this.getAttribute('data-remove-mod-id'), this.getAttribute('data-mod-name'));
+                        };
+                    });
+                }
+
+                // Update actions filter
+                const filter = document.getElementById('chatModActionsFilter');
+                if (filter) {
+                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                        const modUserId = mod.UserId || mod.userId;
+                        const modUserName = mod.UserName || mod.userName || 'Unknown';
+                        return '<option value="' + self.escapeHtml(modUserId) + '">' + self.escapeHtml(modUserName) + '</option>';
+                    }).join('');
+                }
+            })
+            .catch(function () {
+                const list = document.getElementById('chatModList');
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
+            });
+        },
+
+        /**
+         * Load banned users for the new panel
+         */
+        loadModPanelBans: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            console.log('[Ratings] Loading ban list...');
+            fetch(baseUrl + '/Ratings/Chat/Bans', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (bans) {
+                console.log('[Ratings] Bans loaded:', bans);
+                // Store bans for filtering
+                self._cachedBans = bans || [];
+                self.renderBanList(bans || []);
+            })
+            .catch(function (err) {
+                console.error('[Ratings] Failed to load bans:', err);
+                self._cachedBans = [];
+                const list = document.getElementById('chatModBanList');
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+            });
+        },
+
+        /**
+         * Render ban list (used for both initial load and filtering)
+         */
+        renderBanList: function (bans) {
+            const self = this;
+            const list = document.getElementById('chatModBanList');
+            if (!list) {
+                console.log('[Ratings] chatModBanList element not found');
+                return;
+            }
+
+            if (!bans || bans.length === 0) {
+                console.log('[Ratings] No bans to display');
+                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+            } else {
+                list.innerHTML = bans.map(function (ban) {
+                    // API returns PascalCase, handle both
+                    const banId = ban.Id || ban.id;
+                    const banUserId = ban.UserId || ban.userId;
+                    const banUserName = ban.UserName || ban.userName || 'Unknown';
+                    const banType = ban.BanType || ban.banType || 'unknown';
+                    const isPermanent = ban.IsPermanent || ban.isPermanent;
+                    const expiresAt = ban.ExpiresAt || ban.expiresAt;
+                    const reason = ban.Reason || ban.reason;
+
+                    const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(expiresAt)) : '');
+                    return '<div class="chat-mod-ban-item" data-ban-userid="' + self.escapeHtml(banUserId) + '" data-ban-username="' + self.escapeHtml(banUserName) + '">'
+                        + '<div class="chat-mod-ban-info">'
+                        + '<div class="chat-mod-ban-user">'
+                        + '<span class="chat-mod-ban-name">' + self.escapeHtml(banUserName) + '</span>'
+                        + '<span class="chat-mod-ban-type" style="background:' + self.getBanTypeColor(banType) + ';">' + banType + '</span>'
+                        + '</div>'
+                        + '<span class="chat-mod-ban-expires">' + expiresText + (reason ? ' · ' + self.escapeHtml(reason) : '') + '</span>'
+                        + '</div>'
+                        + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">Unban</button>'
+                        + '</div>';
+                }).join('');
+
+                // Bind unban buttons
+                list.querySelectorAll('[data-unban-id]').forEach(function (btn) {
+                    btn.onclick = function (e) {
+                        e.stopPropagation(); // Prevent opening action panel
+                        self.unbanChatUser(this.getAttribute('data-unban-id'), this.getAttribute('data-ban-user'));
+                    };
+                });
+
+                // Bind click on ban items to open action panel
+                list.querySelectorAll('.chat-mod-ban-item').forEach(function (item) {
+                    item.onclick = function () {
+                        const userId = this.getAttribute('data-ban-userid');
+                        const userName = this.getAttribute('data-ban-username');
+                        if (userId && userName) {
+                            self.showActionPanel(userId, userName);
+                        }
+                    };
+                });
+            }
+        },
+
+        /**
+         * Filter ban list by search query
+         */
+        filterBanList: function (query) {
+            if (!this._cachedBans) return;
+
+            const lowerQuery = (query || '').toLowerCase().trim();
+            if (!lowerQuery) {
+                this.renderBanList(this._cachedBans);
+                return;
+            }
+
+            const filtered = this._cachedBans.filter(function (ban) {
+                const userName = (ban.UserName || ban.userName || '').toLowerCase();
+                return userName.includes(lowerQuery);
+            });
+            this.renderBanList(filtered);
+        },
+
+        /**
+         * Load moderator actions for the new panel
+         */
+        loadModPanelActions: function (moderatorId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            let url = baseUrl + '/Ratings/Chat/Moderators/Actions?limit=50';
+            if (moderatorId) {
+                url += '&moderatorId=' + encodeURIComponent(moderatorId);
+            }
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (actions) {
+                const list = document.getElementById('chatModActionLog');
+                if (!list) return;
+
+                if (!actions || actions.length === 0) {
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+                } else {
+                    list.innerHTML = actions.map(function (action) {
+                        // Handle both PascalCase and camelCase from API
+                        const timestamp = action.Timestamp || action.timestamp;
+                        const actionType = action.ActionType || action.actionType || '';
+                        const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
+                        const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+                        const details = action.Details || action.details;
+
+                        // Parse details JSON for additional info
+                        let detailsInfo = '';
+                        if (details) {
+                            try {
+                                const d = typeof details === 'string' ? JSON.parse(details) : details;
+                                const parts = [];
+                                if (d.durationMinutes) {
+                                    parts.push(self.formatDuration(d.durationMinutes));
+                                } else if (d.permanent) {
+                                    parts.push('permanent');
+                                }
+                                if (d.reason) {
+                                    parts.push('"' + d.reason + '"');
+                                }
+                                if (d.level) {
+                                    parts.push('L' + d.level);
+                                }
+                                if (parts.length > 0) {
+                                    detailsInfo = '<div class="chat-mod-log-details">' + self.escapeHtml(parts.join(' · ')) + '</div>';
+                                }
+                            } catch (e) { /* ignore parse errors */ }
+                        }
+
+                        const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
+                        const actionLabel = self.getActionLabel(actionType);
+                        return '<div class="chat-mod-log-item">'
+                            + '<div class="chat-mod-log-header">'
+                            + '<span class="chat-mod-log-mod">' + self.escapeHtml(moderatorName) + '</span>'
+                            + ' <span class="chat-mod-log-action">' + actionLabel + '</span> '
+                            + '<span class="chat-mod-log-target">' + self.escapeHtml(targetUserName) + '</span>'
+                            + '</div>'
+                            + detailsInfo
+                            + '<div class="chat-mod-log-time">' + timeAgo + '</div>'
+                            + '</div>';
+                    }).join('');
+                }
+            })
+            .catch(function () {
+                const list = document.getElementById('chatModActionLog');
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+            });
+        },
+
+        /**
+         * Search for users to add as moderators
+         */
+        searchModeratorCandidates: function (query) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/All', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                // Filter: not already moderator, not admin, matches query
+                const filtered = users.filter(function (u) {
+                    // Check both lowercase and capitalized (API returns IsAdmin, IsModerator)
+                    const isAdmin = u.isAdmin || u.IsAdmin;
+                    const isModerator = u.isModerator || u.IsModerator;
+                    if (isModerator || isAdmin) return false;
+                    const name = (u.name || u.Name || '').toLowerCase();
+                    return name.includes(query.toLowerCase());
+                }).slice(0, 10); // Max 10 results
+
+                self.modSearchUsers = filtered.map(function (u) {
+                    return {
+                        userId: u.id || u.Id,
+                        userName: u.name || u.Name || 'Unknown'
+                    };
+                });
+                self.modSearchIndex = 0;
+                self.renderModSearchDropdown();
+            })
+            .catch(function () {
+                self.modSearchUsers = [];
+                self.hideModSearchDropdown();
+            });
+        },
+
+        /**
+         * Render moderator search dropdown
+         */
+        renderModSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModSearchDropdown');
+            if (!dropdown) return;
+
+            if (this.modSearchUsers.length === 0) {
+                dropdown.innerHTML = '<div class="chat-mod-search-item"><span class="chat-mod-search-name">No users found</span></div>';
+                dropdown.classList.add('visible');
+                this.modSearchVisible = true;
+                return;
+            }
+
+            const self = this;
+            dropdown.innerHTML = this.modSearchUsers.map(function (user, index) {
+                const initial = (user.userName || 'U').charAt(0).toUpperCase();
+                return '<div class="chat-mod-search-item' + (index === self.modSearchIndex ? ' selected' : '') + '" data-user-id="' + self.escapeHtml(user.userId) + '" data-user-name="' + self.escapeHtml(user.userName) + '">'
+                    + '<div class="chat-mod-search-avatar">' + self.escapeHtml(initial) + '</div>'
+                    + '<span class="chat-mod-search-name">' + self.escapeHtml(user.userName) + '</span>'
+                    + '</div>';
+            }).join('');
+
+            dropdown.classList.add('visible');
+            this.modSearchVisible = true;
+
+            // Bind click events
+            dropdown.querySelectorAll('.chat-mod-search-item[data-user-id]').forEach(function (item) {
+                item.onclick = function () {
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    self.selectModCandidate(userId, userName);
+                };
+            });
+        },
+
+        /**
+         * Hide moderator search dropdown
+         */
+        hideModSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModSearchDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+            }
+            this.modSearchVisible = false;
+        },
+
+        /**
+         * Select a user from the search dropdown
+         */
+        selectModCandidate: function (userId, userName) {
+            this.modSelectedUser = { userId: userId, userName: userName };
+
+            // Update input to show selected user
+            const input = document.getElementById('chatModSearchInput');
+            if (input) {
+                input.value = userName;
+            }
+
+            // Enable add button
+            const addBtn = document.getElementById('chatModAddBtn');
+            if (addBtn) {
+                addBtn.disabled = false;
+            }
+
+            this.hideModSearchDropdown();
+        },
+
+        /**
+         * Clear moderator search
+         */
+        clearModSearch: function () {
+            const input = document.getElementById('chatModSearchInput');
+            if (input) input.value = '';
+
+            const addBtn = document.getElementById('chatModAddBtn');
+            if (addBtn) addBtn.disabled = true;
+
+            this.modSelectedUser = null;
+            this.modSearchUsers = [];
+            this.modSearchIndex = 0;
+            this.hideModSearchDropdown();
+
+            // Reload moderators list
+            this.loadModPanelModerators();
+        },
+
+        /**
+         * Handle keyboard navigation in moderator search
+         */
+        handleModSearchKeydown: function (e) {
+            if (!this.modSearchVisible) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.modSearchIndex = Math.min(this.modSearchIndex + 1, this.modSearchUsers.length - 1);
+                this.updateModSearchSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.modSearchIndex = Math.max(this.modSearchIndex - 1, 0);
+                this.updateModSearchSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const user = this.modSearchUsers[this.modSearchIndex];
+                if (user) {
+                    this.selectModCandidate(user.userId, user.userName);
+                }
+            } else if (e.key === 'Escape') {
+                this.hideModSearchDropdown();
+            }
+        },
+
+        /**
+         * Update search selection highlight
+         */
+        updateModSearchSelection: function () {
+            const dropdown = document.getElementById('chatModSearchDropdown');
+            if (!dropdown) return;
+
+            dropdown.querySelectorAll('.chat-mod-search-item').forEach(function (item, index) {
+                item.classList.toggle('selected', index === this.modSearchIndex);
+            }.bind(this));
+        },
+
+        /**
+         * Search users for the Manage User section (all users, not just non-mods)
+         */
+        searchUsersForManage: function (query) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/All', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                // Filter by query only, include all users (mods and non-mods)
+                const filtered = users.filter(function (u) {
+                    // Exclude admins - they can't be managed
+                    const isAdmin = u.isAdmin || u.IsAdmin;
+                    if (isAdmin) return false;
+                    const name = (u.name || u.Name || '').toLowerCase();
+                    return name.includes(query.toLowerCase());
+                }).slice(0, 10);
+
+                self.userSearchUsers = filtered.map(function (u) {
+                    return {
+                        userId: u.id || u.Id,
+                        userName: u.name || u.Name || 'Unknown'
+                    };
+                });
+                self.userSearchIndex = 0;
+                self.renderUserSearchDropdown();
+            })
+            .catch(function () {
+                self.userSearchUsers = [];
+                self.hideUserSearchDropdown();
+            });
+        },
+
+        /**
+         * Render user search dropdown for Manage section
+         */
+        renderUserSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (!dropdown) return;
+
+            if (!this.userSearchUsers || this.userSearchUsers.length === 0) {
+                dropdown.innerHTML = '<div class="chat-mod-user-search-item"><span>No users found</span></div>';
+                dropdown.classList.add('visible');
+                this.userSearchVisible = true;
+                return;
+            }
+
+            const self = this;
+            dropdown.innerHTML = this.userSearchUsers.map(function (user, index) {
+                const initial = (user.userName || 'U').charAt(0).toUpperCase();
+                return '<div class="chat-mod-user-search-item' + (index === self.userSearchIndex ? ' selected' : '') + '" data-user-id="' + self.escapeHtml(user.userId) + '" data-user-name="' + self.escapeHtml(user.userName) + '">'
+                    + '<div class="chat-mod-search-avatar">' + self.escapeHtml(initial) + '</div>'
+                    + '<span class="chat-mod-search-name">' + self.escapeHtml(user.userName) + '</span>'
+                    + '</div>';
+            }).join('');
+
+            dropdown.classList.add('visible');
+            this.userSearchVisible = true;
+
+            // Bind click events
+            dropdown.querySelectorAll('.chat-mod-user-search-item[data-user-id]').forEach(function (item) {
+                item.onclick = function () {
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    self.selectUserForManage(userId, userName);
+                };
+            });
+        },
+
+        /**
+         * Hide user search dropdown
+         */
+        hideUserSearchDropdown: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+            }
+            this.userSearchVisible = false;
+        },
+
+        /**
+         * Handle keyboard navigation in user search
+         */
+        handleUserSearchKeydown: function (e) {
+            if (!this.userSearchVisible) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.userSearchIndex = Math.min(this.userSearchIndex + 1, (this.userSearchUsers || []).length - 1);
+                this.updateUserSearchSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.userSearchIndex = Math.max(this.userSearchIndex - 1, 0);
+                this.updateUserSearchSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const user = (this.userSearchUsers || [])[this.userSearchIndex];
+                if (user) {
+                    this.selectUserForManage(user.userId, user.userName);
+                }
+            } else if (e.key === 'Escape') {
+                this.hideUserSearchDropdown();
+            }
+        },
+
+        /**
+         * Update user search selection highlight
+         */
+        updateUserSearchSelection: function () {
+            const dropdown = document.getElementById('chatModUserSearchDropdown');
+            if (!dropdown) return;
+
+            const self = this;
+            dropdown.querySelectorAll('.chat-mod-user-search-item').forEach(function (item, index) {
+                item.classList.toggle('selected', index === self.userSearchIndex);
+            });
+        },
+
+        /**
+         * Select a user from the Manage search dropdown
+         */
+        selectUserForManage: function (userId, userName) {
+            // Update input
+            const input = document.getElementById('chatModUserSearchInput');
+            if (input) {
+                input.value = userName;
+            }
+
+            this.hideUserSearchDropdown();
+
+            // Show the action panel with this user
+            this.showActionPanel(userId, userName);
+
+            // Load existing style for this user
+            this.loadUserStyleForEdit(userId);
+        },
+
+        /**
+         * Load existing user style for editing
+         */
+        loadUserStyleForEdit: function (userId) {
+            const self = this;
+            const style = this.chatUserStyles && this.chatUserStyles[userId];
+
+            // Reset color inputs
+            const nicknameColor = document.getElementById('chatModNicknameColor');
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageColor = document.getElementById('chatModMessageColor');
+            const messageHex = document.getElementById('chatModMessageHex');
+
+            if (style && style.nicknameColor) {
+                if (nicknameColor) nicknameColor.value = style.nicknameColor;
+                if (nicknameHex) nicknameHex.value = style.nicknameColor;
+            } else {
+                if (nicknameColor) nicknameColor.value = '#ffffff';
+                if (nicknameHex) nicknameHex.value = '';
+            }
+
+            if (style && style.messageColor) {
+                if (messageColor) messageColor.value = style.messageColor;
+                if (messageHex) messageHex.value = style.messageColor;
+            } else {
+                if (messageColor) messageColor.value = '#cccccc';
+                if (messageHex) messageHex.value = '';
+            }
+
+            // Reset text style buttons
+            const textStyle = style ? (style.textStyle || '') : '';
+            document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
+                btn.classList.toggle('selected', btn.getAttribute('data-style') === textStyle);
+            });
+
+            this.modSelectedTextStyle = textStyle;
+            this.updateColorPreview();
+        },
+
+        /**
+         * Bind color picker and style button events
+         */
+        bindColorStyleEvents: function () {
+            const self = this;
+
+            // Nickname color picker
+            const nicknameColor = document.getElementById('chatModNicknameColor');
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            if (nicknameColor) {
+                nicknameColor.oninput = function () {
+                    if (nicknameHex) nicknameHex.value = this.value;
+                    self.updateColorPreview();
+                };
+            }
+            if (nicknameHex) {
+                nicknameHex.oninput = function () {
+                    const val = this.value.trim();
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        if (nicknameColor) nicknameColor.value = val;
+                        self.updateColorPreview();
+                    }
+                };
+            }
+
+            // Message color picker
+            const messageColor = document.getElementById('chatModMessageColor');
+            const messageHex = document.getElementById('chatModMessageHex');
+            if (messageColor) {
+                messageColor.oninput = function () {
+                    if (messageHex) messageHex.value = this.value;
+                    self.updateColorPreview();
+                };
+            }
+            if (messageHex) {
+                messageHex.oninput = function () {
+                    const val = this.value.trim();
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        if (messageColor) messageColor.value = val;
+                        self.updateColorPreview();
+                    }
+                };
+            }
+
+            // Clear buttons
+            const nicknameClear = document.getElementById('chatModNicknameClear');
+            if (nicknameClear) {
+                nicknameClear.onclick = function () {
+                    if (nicknameColor) nicknameColor.value = '#ffffff';
+                    if (nicknameHex) nicknameHex.value = '';
+                    self.updateColorPreview();
+                };
+            }
+            const messageClear = document.getElementById('chatModMessageClear');
+            if (messageClear) {
+                messageClear.onclick = function () {
+                    if (messageColor) messageColor.value = '#cccccc';
+                    if (messageHex) messageHex.value = '';
+                    self.updateColorPreview();
+                };
+            }
+
+            // Text style buttons
+            document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    document.querySelectorAll('.chat-mod-style-btn').forEach(function (b) {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    self.modSelectedTextStyle = this.getAttribute('data-style') || '';
+                    self.updateColorPreview();
+                };
+            });
+
+            // Apply style button
+            const applyStyleBtn = document.getElementById('chatModStyleApplyBtn');
+            if (applyStyleBtn) {
+                applyStyleBtn.onclick = function () {
+                    self.applyUserStyle();
+                };
+            }
+
+            // Reset style button
+            const resetStyleBtn = document.getElementById('chatModStyleResetBtn');
+            if (resetStyleBtn) {
+                resetStyleBtn.onclick = function () {
+                    self.resetUserStyle();
+                };
+            }
+        },
+
+        /**
+         * Update color preview in action panel
+         */
+        updateColorPreview: function () {
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageHex = document.getElementById('chatModMessageHex');
+            const previewNickname = document.getElementById('chatModPreviewNickname');
+            const previewMessage = document.getElementById('chatModPreviewMessage');
+
+            if (previewNickname) {
+                const color = nicknameHex && nicknameHex.value ? nicknameHex.value : '#ffffff';
+                previewNickname.style.color = color;
+            }
+
+            if (previewMessage) {
+                const color = messageHex && messageHex.value ? messageHex.value : '#cccccc';
+                let style = 'color:' + color + ';';
+                if (this.modSelectedTextStyle === 'bold' || this.modSelectedTextStyle === 'bold-italic') {
+                    style += 'font-weight:bold;';
+                }
+                if (this.modSelectedTextStyle === 'italic' || this.modSelectedTextStyle === 'bold-italic') {
+                    style += 'font-style:italic;';
+                }
+                previewMessage.style.cssText = style;
+            }
+
+            // Update preview nickname text to match selected user
+            if (this.modActionTarget && previewNickname) {
+                previewNickname.textContent = this.modActionTarget.userName;
+            }
+        },
+
+        /**
+         * Apply user style
+         */
+        applyUserStyle: function () {
+            if (!this.modActionTarget) return;
+
+            const self = this;
+            const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName || 'User';
+            const nicknameHex = document.getElementById('chatModNicknameHex');
+            const messageHex = document.getElementById('chatModMessageHex');
+
+            const nicknameColor = nicknameHex && nicknameHex.value ? nicknameHex.value : null;
+            const messageColor = messageHex && messageHex.value ? messageHex.value : null;
+            const textStyle = this.modSelectedTextStyle || null;
+
+            const baseUrl = ApiClient.serverAddress();
+            let url = baseUrl + '/Ratings/Chat/Users/' + userId + '/Style?';
+            const params = [];
+            if (nicknameColor) params.push('nicknameColor=' + encodeURIComponent(nicknameColor));
+            if (messageColor) params.push('messageColor=' + encodeURIComponent(messageColor));
+            if (textStyle) params.push('textStyle=' + encodeURIComponent(textStyle));
+            url += params.join('&');
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (r) {
+                console.log('[Ratings] Style API response:', r.status, r.ok);
+                if (r.ok) {
+                    console.log('[Ratings] Style applied successfully');
+                    self.addModSystemMessage('Style updated for ' + userName, '🎨');
+                    // Reload styles then refresh chat to show new styles
+                    self.loadUserStylesAndRefresh();
+                    // Show success modal
+                    try {
+                        self.showStyleSuccessModal(userName, nicknameColor, messageColor, textStyle);
+                    } catch (e) {
+                        console.error('[Ratings] Modal error:', e);
+                        self.showModToast('Style applied to ' + userName);
+                    }
+                } else {
+                    r.text().then(function (txt) {
+                        console.log('[Ratings] Style API failed:', txt);
+                        self.showModToast('Failed to apply style: ' + txt);
                     });
                 }
             })
+            .catch(function (err) {
+                console.error('[Ratings] Style API error:', err);
+                self.showModToast('Failed to apply style');
+            });
+        },
+
+        /**
+         * Reset user style
+         */
+        resetUserStyle: function () {
+            if (!this.modActionTarget) return;
+
+            const self = this;
+            const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName || 'User';
+            const baseUrl = ApiClient.serverAddress();
+
+            fetch(baseUrl + '/Ratings/Chat/Users/' + userId + '/Style', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    self.showModToast('Style reset for ' + userName);
+                    self.addModSystemMessage('Style reset for ' + userName, '🎨');
+                    self.loadUserStyles();
+                    // Reset UI
+                    self.loadUserStyleForEdit(userId);
+                } else {
+                    self.showModToast('Failed to reset style');
+                }
+            })
+            .catch(function () {
+                self.showModToast('Failed to reset style');
+            });
+        },
+
+        /**
+         * Bind action panel events
+         */
+        bindActionPanelEvents: function () {
+            const self = this;
+
+            // Close button
+            const closeBtn = document.getElementById('chatModActionClose');
+            if (closeBtn) {
+                closeBtn.onclick = function () {
+                    self.hideActionPanel();
+                };
+            }
+
+            // Cancel button
+            const cancelBtn = document.getElementById('chatModCancelBtn');
+            if (cancelBtn) {
+                cancelBtn.onclick = function () {
+                    self.hideActionPanel();
+                };
+            }
+
+            // Apply button
+            const applyBtn = document.getElementById('chatModApplyBtn');
+            if (applyBtn) {
+                applyBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.applyModAction();
+                    return false;
+                };
+            }
+
+            // Action type buttons
+            document.querySelectorAll('#chatModTypeGrid .chat-mod-type-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    if (this.classList.contains('disabled')) return;
+
+                    // Update selection
+                    document.querySelectorAll('#chatModTypeGrid .chat-mod-type-btn').forEach(function (b) {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    self.modActionType = this.getAttribute('data-action-type');
+                    self.updateActionTypeAccess();
+                    self.updateActionPreview();
+                };
+            });
+
+            // Duration buttons
+            document.querySelectorAll('#chatModDurationPresets .chat-mod-duration-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    if (this.classList.contains('disabled')) return;
+
+                    // Update selection
+                    document.querySelectorAll('#chatModDurationPresets .chat-mod-duration-btn').forEach(function (b) {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    self.modActionDuration = parseInt(this.getAttribute('data-duration')) || 0;
+                    self.updateActionPreview();
+                };
+            });
+
+            // Reason input
+            const reasonInput = document.getElementById('chatModReasonInput');
+            if (reasonInput) {
+                reasonInput.oninput = function () {
+                    self.updateActionPreview();
+                };
+            }
+
+            // Moderator level apply button
+            const modApplyBtn = document.getElementById('chatModApplyModBtn');
+            if (modApplyBtn) {
+                modApplyBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.applyModeratorLevel();
+                    return false;
+                };
+            }
+        },
+
+        /**
+         * Apply moderator level to the target user
+         */
+        applyModeratorLevel: function () {
+            const self = this;
+            if (!this.modActionTarget) {
+                require(['toast'], function(toast) { toast('No user selected'); });
+                return;
+            }
+
+            const levelSelect = document.getElementById('chatModUserLevel');
+            const newLevel = parseInt(levelSelect.value) || 0;
+            const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName;
+
+            if (newLevel === 0) {
+                // Remove moderator
+                this.removeModeratorByUserId(userId, userName);
+            } else {
+                // Add or update moderator level
+                this.addModeratorWithLevel(userId, userName, newLevel);
+            }
+        },
+
+        /**
+         * Add or update moderator with specific level
+         */
+        addModeratorWithLevel: function (userId, userName, level) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators?targetUserId=' + encodeURIComponent(userId) + '&level=' + level, {
+                method: 'POST',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) {
+                if (r.ok) {
+                    self.showModeratorSuccessModal(userName, level, true);
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                    self.updateUserStatusDisplay(userId, level);
+                } else {
+                    self.showModToast('Failed to update moderator');
+                }
+            })
+            .catch(function () {
+                self.showModToast('Failed to update moderator');
+            });
+        },
+
+        /**
+         * Remove moderator by user ID
+         */
+        removeModeratorByUserId: function (userId, userName) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+
+            // First we need to find the moderator ID from the user ID
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                const mod = mods.find(function (m) {
+                    return (m.UserId || m.userId) === userId;
+                });
+                if (mod) {
+                    const modId = mod.Id || mod.id;
+                    return fetch(baseUrl + '/Ratings/Chat/Moderators/' + modId, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: self.getChatAuthHeaders()
+                    });
+                } else {
+                    require(['toast'], function(toast) { toast(userName + ' is not a moderator'); });
+                    return null;
+                }
+            })
+            .then(function (r) {
+                if (r && r.ok) {
+                    self.showModToast(userName + ' removed from moderators');
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                    self.updateUserStatusDisplay(userId, 0);
+                }
+            })
+            .catch(function () {
+                self.showModToast('Failed to remove moderator');
+            });
+        },
+
+        /**
+         * Update user status display in action panel
+         */
+        updateUserStatusDisplay: function (userId, level) {
+            const statusEl = document.getElementById('chatModUserStatus');
+            if (!statusEl) return;
+
+            if (level > 0) {
+                statusEl.textContent = 'L' + level + ' Mod';
+                statusEl.className = 'chat-mod-user-status mod';
+            } else {
+                statusEl.textContent = '';
+                statusEl.className = 'chat-mod-user-status';
+            }
+        },
+
+        /**
+         * Show action panel for a user
+         */
+        showActionPanel: function (userId, userName) {
+            this.modActionTarget = { userId: userId, userName: userName };
+            this.modActionType = 'snooze';
+            this.modActionDuration = 10;
+
+            // Open moderator window if not already open
+            this.toggleModeratorWindow(true);
+
+            // Switch to Users section (where the action panel is located)
+            this.switchModSection('users');
+
+            // Update target display
+            const avatarEl = document.getElementById('chatModActionAvatar');
+            const nameEl = document.getElementById('chatModActionName');
+            if (avatarEl) avatarEl.textContent = (userName || 'U').charAt(0).toUpperCase();
+            if (nameEl) nameEl.textContent = userName || 'Unknown';
+
+            // Reset selections
+            document.querySelectorAll('#chatModTypeGrid .chat-mod-type-btn').forEach(function (btn) {
+                btn.classList.toggle('selected', btn.getAttribute('data-action-type') === 'snooze');
+            });
+            document.querySelectorAll('#chatModDurationPresets .chat-mod-duration-btn').forEach(function (btn) {
+                btn.classList.toggle('selected', btn.getAttribute('data-duration') === '10');
+            });
+
+            // Clear reason
+            const reasonInput = document.getElementById('chatModReasonInput');
+            if (reasonInput) reasonInput.value = '';
+
+            // Update access based on mod level
+            this.updateActionTypeAccess();
+            this.updateActionPreview();
+
+            // Load existing user style for editing
+            this.loadUserStyleForEdit(userId);
+
+            // Load user's moderator status
+            this.loadUserModeratorStatus(userId);
+
+            // Show panel
+            const panel = document.getElementById('chatModActionPanel');
+            if (panel) panel.classList.add('visible');
+        },
+
+        /**
+         * Load user's moderator status for the action panel
+         */
+        loadUserModeratorStatus: function (userId) {
+            const self = this;
+            const levelSelect = document.getElementById('chatModUserLevel');
+            const statusEl = document.getElementById('chatModUserStatus');
+
+            // Reset to default
+            if (levelSelect) levelSelect.value = '0';
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'chat-mod-user-status';
+            }
+
+            // Check if user is a moderator
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                const mod = mods.find(function (m) {
+                    return (m.UserId || m.userId) === userId;
+                });
+                if (mod) {
+                    const level = mod.Level || mod.level || 0;
+                    if (levelSelect) levelSelect.value = String(level);
+                    if (statusEl) {
+                        statusEl.textContent = 'L' + level + ' Mod';
+                        statusEl.className = 'chat-mod-user-status mod';
+                    }
+                }
+            })
             .catch(function () {});
+        },
+
+        /**
+         * Hide action panel
+         */
+        hideActionPanel: function () {
+            this.modActionTarget = null;
+            const panel = document.getElementById('chatModActionPanel');
+            if (panel) panel.classList.remove('visible');
+
+            // Clear user search input
+            const userSearchInput = document.getElementById('chatModUserSearchInput');
+            if (userSearchInput) userSearchInput.value = '';
+        },
+
+        /**
+         * Update action type button access based on mod level
+         */
+        updateActionTypeAccess: function () {
+            const modInfo = this.chatModInfo || {};
+            const isAdmin = this.chatIsAdmin;
+            const level = modInfo.level || (isAdmin ? 99 : 0);
+
+            // Snooze: All mods (L1+)
+            // Chat ban: L2+ or admin
+            // Media ban: L3+ or admin
+
+            const chatBtn = document.querySelector('[data-action-type="chat"]');
+            const mediaBtn = document.querySelector('[data-action-type="media"]');
+
+            if (chatBtn) {
+                chatBtn.classList.toggle('disabled', level < 2 && !isAdmin);
+            }
+            if (mediaBtn) {
+                mediaBtn.classList.toggle('disabled', level < 3 && !isAdmin);
+            }
+
+            // Update duration presets based on action type
+            this.updateDurationAccess();
+        },
+
+        /**
+         * Update duration button access
+         */
+        updateDurationAccess: function () {
+            const modInfo = this.chatModInfo || {};
+            const isAdmin = this.chatIsAdmin;
+            const level = modInfo.level || (isAdmin ? 99 : 0);
+
+            // Permanent bans: L3+ or admin
+            const permBtn = document.querySelector('[data-duration="0"]');
+            if (permBtn) {
+                permBtn.classList.toggle('disabled', level < 3 && !isAdmin);
+            }
+        },
+
+        /**
+         * Update action preview text
+         */
+        updateActionPreview: function () {
+            const preview = document.getElementById('chatModPreview');
+            if (!preview || !this.modActionTarget) return;
+
+            const userName = this.modActionTarget.userName || 'User';
+            const actionType = this.modActionType;
+            const duration = this.modActionDuration;
+            const reason = document.getElementById('chatModReasonInput')?.value || '';
+
+            let actionText = '';
+            let durationText = '';
+
+            // Action type text
+            switch (actionType) {
+                case 'snooze':
+                    actionText = 'muted';
+                    break;
+                case 'chat':
+                    actionText = 'banned from chat';
+                    break;
+                case 'media':
+                    actionText = 'banned from media actions';
+                    break;
+            }
+
+            // Duration text
+            if (duration === 0) {
+                durationText = 'permanently';
+            } else if (duration < 60) {
+                durationText = 'for ' + duration + ' minute' + (duration === 1 ? '' : 's');
+            } else if (duration < 1440) {
+                const hours = Math.floor(duration / 60);
+                durationText = 'for ' + hours + ' hour' + (hours === 1 ? '' : 's');
+            } else if (duration < 10080) {
+                const days = Math.floor(duration / 1440);
+                durationText = 'for ' + days + ' day' + (days === 1 ? '' : 's');
+            } else {
+                const weeks = Math.floor(duration / 10080);
+                durationText = 'for ' + weeks + ' week' + (weeks === 1 ? '' : 's');
+            }
+
+            let previewText = userName + ' will be ' + actionText + ' ' + durationText;
+            if (reason) {
+                previewText += ' (Reason: ' + reason + ')';
+            }
+
+            preview.textContent = previewText;
+        },
+
+        /**
+         * Apply the moderation action
+         */
+        applyModAction: function () {
+            if (!this.modActionTarget) {
+                console.warn('[Ratings] No action target selected');
+                this.showModToast('Please select a user first');
+                return;
+            }
+
+            const userId = this.modActionTarget.userId;
+            const userName = this.modActionTarget.userName;
+            const banType = this.modActionType;
+            const durationMinutes = this.modActionDuration;
+            const reasonInput = document.getElementById('chatModReasonInput');
+            const reason = reasonInput?.value || '';
+
+            console.log('[Ratings] Applying penalty:', { userId, userName, banType, durationMinutes, reason });
+
+            // Clear reason field but keep panel open for potential additional penalties
+            if (reasonInput) reasonInput.value = '';
+
+            // Apply the ban - panel stays open, ban list will refresh
+            this.banChatUser(userId, banType, durationMinutes, reason, userName);
+        },
+
+        /**
+         * Bind admin panel tab switching
+         */
+        bindAdminTabs: function () {
+            const self = this;
+            const tabs = document.querySelectorAll('.chat-admin-tab');
+            tabs.forEach(function (tab) {
+                tab.onclick = function () {
+                    tabs.forEach(function (t) { t.classList.remove('active'); });
+                    this.classList.add('active');
+                    const tabName = this.dataset.adminTab;
+                    document.getElementById('chatAdminTabModerators').style.display = tabName === 'moderators' ? '' : 'none';
+                    document.getElementById('chatAdminTabBanned').style.display = tabName === 'banned' ? '' : 'none';
+                    document.getElementById('chatAdminTabActions').style.display = tabName === 'actions' ? '' : 'none';
+                };
+            });
+        },
+
+        /**
+         * Load users for add moderator select (old admin panel)
+         */
+        loadUsersForModSelect: function () {
+            const self = this;
+            const select = document.getElementById('chatAddModSelect');
+            if (!select) return; // Old admin panel not present
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/All', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (users) {
+                if (!select) return;
+                select.innerHTML = '<option value="">Select user...</option>' + users.filter(function (u) { return !u.isModerator && !u.isAdmin; }).map(function (u) {
+                    return '<option value="' + self.escapeHtml(u.id) + '">' + self.escapeHtml(u.name) + '</option>';
+                }).join('');
+            })
+            .catch(function () {});
+
+            // Bind add mod button (only if exists)
+            const addBtn = document.getElementById('chatAddModBtn');
+            if (addBtn) {
+                addBtn.onclick = function () {
+                    const userId = document.getElementById('chatAddModSelect').value;
+                    const level = parseInt(document.getElementById('chatAddModLevel').value) || 1;
+                    if (userId) {
+                        self.addModerator(userId, level);
+                    }
+                };
+            }
+        },
+
+        /**
+         * Load moderators list with stats (old admin panel)
+         */
+        loadModeratorStats: function () {
+            const self = this;
+            const list = document.getElementById('chatModeratorList');
+            if (!list) return; // Old admin panel not present
+
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (mods) {
+                if (!list) return;
+                const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
+
+                // Show add mod section if can manage
+                const addSection = document.getElementById('chatAddModSection');
+                if (addSection) addSection.style.display = canManageMods ? '' : 'none';
+
+                if (!mods || mods.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                } else {
+                    list.innerHTML = mods.map(function (mod) {
+                        const levelBadge = '<span class="chat-mod-level" style="background:' + self.getModLevelColor(mod.level) + ';">L' + mod.level + '</span>';
+                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' deletes | ' + mod.actionCount + ' actions</span>';
+                        const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && mod.level < 3);
+
+                        return '<div class="chat-admin-item">'
+                            + '<div class="chat-admin-user-info">'
+                            + levelBadge + ' '
+                            + '<span class="chat-admin-user">' + self.escapeHtml(mod.userName) + '</span>'
+                            + '</div>'
+                            + '<div class="chat-admin-user-stats">' + statsText + '</div>'
+                            + (canRemove ? '<button class="chat-admin-btn danger" data-action="remove-mod" data-mod-id="' + self.escapeHtml(mod.id) + '">' + self.t('chatRemoveMod') + '</button>' : '')
+                            + '</div>';
+                    }).join('');
+                    list.querySelectorAll('[data-action="remove-mod"]').forEach(function (btn) {
+                        btn.onclick = function () { self.removeModerator(this.dataset.modId); };
+                    });
+                }
+
+                // Update actions filter
+                const filter = document.getElementById('chatActionsFilter');
+                if (filter) {
+                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                        return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
+                    }).join('');
+                    filter.onchange = function () {
+                        self.loadModeratorActions(this.value || null);
+                    };
+                }
+            })
+            .catch(function () {
+                const list = document.getElementById('chatModeratorList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+            });
+        },
+
+        /**
+         * Get color for moderator level
+         */
+        getModLevelColor: function (level) {
+            switch (level) {
+                case 1: return '#4a9eff';
+                case 2: return '#9c27b0';
+                case 3: return '#ff9800';
+                default: return '#666';
+            }
+        },
+
+        /**
+         * Load moderator actions log
+         */
+        loadModeratorActions: function (moderatorId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            let url = baseUrl + '/Ratings/Chat/Moderators/Actions?limit=50';
+            if (moderatorId) {
+                url += '&moderatorId=' + encodeURIComponent(moderatorId);
+            }
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (actions) {
+                const list = document.getElementById('chatActionsList');
+                if (!list) return;
+                if (!actions || actions.length === 0) {
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                } else {
+                    list.innerHTML = actions.map(function (action) {
+                        // Handle both PascalCase and camelCase from API
+                        const timestamp = action.Timestamp || action.timestamp;
+                        const actionType = action.ActionType || action.actionType || '';
+                        const moderatorName = action.ModeratorName || action.moderatorName || 'Unknown';
+                        const targetUserName = action.TargetUserName || action.targetUserName || 'Unknown';
+                        const details = action.Details || action.details;
+
+                        // Parse details JSON for additional info
+                        let detailsInfo = '';
+                        if (details) {
+                            try {
+                                const d = typeof details === 'string' ? JSON.parse(details) : details;
+                                const parts = [];
+                                if (d.durationMinutes) {
+                                    parts.push(self.formatDuration(d.durationMinutes));
+                                } else if (d.permanent) {
+                                    parts.push('permanent');
+                                }
+                                if (d.reason) {
+                                    parts.push('"' + d.reason + '"');
+                                }
+                                if (d.level) {
+                                    parts.push('L' + d.level);
+                                }
+                                if (parts.length > 0) {
+                                    detailsInfo = '<div class="chat-mod-log-details">' + self.escapeHtml(parts.join(' · ')) + '</div>';
+                                }
+                            } catch (e) { /* ignore parse errors */ }
+                        }
+
+                        const timeAgo = timestamp ? self.formatTimeAgo(new Date(timestamp)) : '';
+                        const actionLabel = self.getActionLabel(actionType);
+                        return '<div class="chat-action-item">'
+                            + '<div class="chat-action-header">'
+                            + '<span class="chat-action-mod">' + self.escapeHtml(moderatorName) + '</span>'
+                            + ' <span class="chat-action-type">' + actionLabel + '</span> '
+                            + '<span class="chat-action-target">' + self.escapeHtml(targetUserName) + '</span>'
+                            + '</div>'
+                            + detailsInfo
+                            + '<div class="chat-action-time">' + timeAgo + '</div>'
+                            + '</div>';
+                    }).join('');
+                }
+            })
+            .catch(function () {
+                const list = document.getElementById('chatActionsList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+            });
+        },
+
+        /**
+         * Get human-readable action label
+         */
+        getActionLabel: function (actionType) {
+            const labels = {
+                'delete_message': 'deleted message from',
+                'snooze': 'snoozed',
+                'temp_ban': 'temp banned',
+                'perm_ban': 'permanently banned',
+                'media_ban': 'media banned',
+                'add_mod': 'added as moderator',
+                'remove_mod': 'removed as moderator',
+                'set_quota': 'set quota for',
+                'change_style': 'changed style for',
+                'change_level': 'changed level for'
+            };
+            return labels[actionType] || actionType;
+        },
+
+        /**
+         * Load my moderator info
+         */
+        loadMyModeratorInfo: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Moderators/Me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (info) {
+                self.chatModInfo = info;
+            })
+            .catch(function () {
+                self.chatModInfo = null;
+            });
+        },
+
+        /**
+         * Load user style overrides
+         */
+        loadUserStyles: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/Styles', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (styles) {
+                self.chatUserStyles = styles || {};
+            })
+            .catch(function () {
+                self.chatUserStyles = {};
+            });
+        },
+
+        /**
+         * Load user styles and refresh chat messages to apply them
+         */
+        loadUserStylesAndRefresh: function () {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Chat/Users/Styles', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (styles) {
+                self.chatUserStyles = styles || {};
+                // Refresh chat messages to apply new styles
+                self.loadChatMessages();
+            })
+            .catch(function () {
+                self.chatUserStyles = {};
+            });
+        },
+
+        /**
+         * Get inline styles for a user's message based on style overrides
+         */
+        getUserMessageStyle: function (userId) {
+            if (!this.chatUserStyles) {
+                return { nicknameStyle: '', messageStyle: '' };
+            }
+            // Normalize userId - try both with and without dashes
+            let style = this.chatUserStyles[userId];
+            if (!style) {
+                // Try with dashes if userId has none
+                const withDashes = userId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+                style = this.chatUserStyles[withDashes];
+            }
+            if (!style) {
+                // Try without dashes if userId has them
+                const noDashes = userId.replace(/-/g, '');
+                style = this.chatUserStyles[noDashes];
+            }
+            if (!style) {
+                return { nicknameStyle: '', messageStyle: '' };
+            }
+            let nicknameStyle = '';
+            let messageStyle = '';
+
+            // Handle both camelCase and PascalCase (API returns PascalCase)
+            const nickColor = style.nicknameColor || style.NicknameColor;
+            const msgColor = style.messageColor || style.MessageColor;
+            const txtStyle = style.textStyle || style.TextStyle;
+
+            if (nickColor) {
+                nicknameStyle += 'color:' + nickColor + ' !important;';
+            }
+            if (msgColor) {
+                messageStyle += 'color:' + msgColor + ' !important;';
+            }
+            if (txtStyle === 'bold' || txtStyle === 'bold-italic') {
+                messageStyle += 'font-weight:bold !important;';
+            }
+            if (txtStyle === 'italic' || txtStyle === 'bold-italic') {
+                messageStyle += 'font-style:italic !important;';
+            }
+
+            return { nicknameStyle: nicknameStyle, messageStyle: messageStyle };
+        },
+
+        /**
+         * Load moderators list (legacy compatibility)
+         */
+        loadModerators: function () {
+            this.loadModeratorStats();
         },
 
         /**
@@ -14997,7 +18658,7 @@
         loadBannedUsers: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban/List', {
+            fetch(baseUrl + '/Ratings/Chat/Bans', {
                 method: 'GET',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
@@ -15005,117 +18666,265 @@
             .then(function (r) { return r.json(); })
             .then(function (bans) {
                 const list = document.getElementById('chatBannedList');
+                if (!list) return; // Element doesn't exist in new mod panel
                 if (!bans || bans.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
                 } else {
                     list.innerHTML = bans.map(function (ban) {
+                        const banTypeBadge = '<span class="chat-ban-type" style="background:' + self.getBanTypeColor(ban.banType) + ';">' + ban.banType + '</span>';
+                        const expiresText = ban.isPermanent ? 'Permanent' : (ban.expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(ban.expiresAt)) : '');
                         return '<div class="chat-admin-item">'
+                            + '<div class="chat-admin-user-info">'
+                            + banTypeBadge + ' '
                             + '<span class="chat-admin-user">' + self.escapeHtml(ban.userName || 'Unknown') + '</span>'
+                            + '</div>'
+                            + '<div class="chat-admin-user-stats">' + expiresText + (ban.reason ? ' - ' + self.escapeHtml(ban.reason) : '') + '</div>'
                             + '<button class="chat-admin-btn" data-action="unban" data-ban-id="' + self.escapeHtml(ban.id) + '">' + self.t('chatUnban') + '</button>'
                             + '</div>';
                     }).join('');
                     list.querySelectorAll('[data-action="unban"]').forEach(function (btn) {
-                        btn.onclick = function () { RatingsPlugin.unbanChatUser(this.dataset.banId); };
+                        btn.onclick = function () { self.unbanChatUser(this.dataset.banId); };
                     });
                 }
             })
             .catch(function () {
-                document.getElementById('chatBannedList').innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('noBannedUsers') + '</div>';
+                var list = document.getElementById('chatBannedList');
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
             });
         },
 
         /**
-         * Show ban user dialog
+         * Get color for ban type
+         */
+        getBanTypeColor: function (banType) {
+            switch (banType) {
+                case 'snooze': return '#ff9800';
+                case 'chat': return '#f44336';
+                case 'media': return '#9c27b0';
+                default: return '#666';
+            }
+        },
+
+        /**
+         * Show ban user dialog with level-appropriate options
          */
         showBanUserDialog: function (userId, userName) {
             const self = this;
-            const duration = prompt('Ban duration:\n1 = 10 minutes\n2 = 1 hour\n3 = 1 day\n4 = 1 week\n5 = Permanent', '1');
-            if (!duration) return;
+            const modInfo = this.chatModInfo || {};
+            const isAdmin = this.chatIsAdmin;
+            const level = modInfo.level || (isAdmin ? 99 : 0);
 
-            let minutes = 10;
-            switch (duration) {
-                case '2': minutes = 60; break;
-                case '3': minutes = 60 * 24; break;
-                case '4': minutes = 60 * 24 * 7; break;
-                case '5': minutes = 0; break; // Permanent
+            // Build options based on moderator level
+            let options = 'Action:\n1 = Snooze (10 min mute)';
+            if (level >= 2 || isAdmin) {
+                options += '\n2 = Temp ban (1 hour)\n3 = Temp ban (1 day)\n4 = Temp ban (1 week)';
+            }
+            if (level >= 3 || isAdmin) {
+                options += '\n5 = Permanent ban\n6 = Media ban (1 day)\n7 = Media ban (1 week)';
+            }
+            if (isAdmin) {
+                options += '\n8 = Permanent media ban';
             }
 
-            this.banChatUser(userId, 'chat', minutes);
+            const action = prompt(options, '1');
+            if (!action) return;
+
+            let banType = 'snooze';
+            let minutes = 10;
+
+            switch (action) {
+                case '1':
+                    banType = 'snooze';
+                    minutes = modInfo.defaultSnoozeMinutes || 10;
+                    break;
+                case '2':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60;
+                    break;
+                case '3':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60 * 24;
+                    break;
+                case '4':
+                    if (level < 2 && !isAdmin) return alert('You need level 2+ for temp bans');
+                    banType = 'chat';
+                    minutes = 60 * 24 * 7;
+                    break;
+                case '5':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for permanent bans');
+                    banType = 'chat';
+                    minutes = 0; // Permanent
+                    break;
+                case '6':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for media bans');
+                    banType = 'media';
+                    minutes = 60 * 24;
+                    break;
+                case '7':
+                    if (level < 3 && !isAdmin) return alert('You need level 3+ for media bans');
+                    banType = 'media';
+                    minutes = 60 * 24 * 7;
+                    break;
+                case '8':
+                    if (!isAdmin) return alert('Only admins can do permanent media bans');
+                    banType = 'media';
+                    minutes = 0;
+                    break;
+                default:
+                    return;
+            }
+
+            const reason = prompt('Reason (optional):');
+            this.banChatUser(userId, banType, minutes, reason || '');
         },
 
         /**
          * Ban a user from chat
          */
-        banChatUser: function (userId, banType, durationMinutes) {
+        banChatUser: function (userId, banType, durationMinutes, reason, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban', {
+            // Use passed userName or get from action target (fallback)
+            userName = userName || (self.modActionTarget ? self.modActionTarget.userName : 'User');
+
+            let url = baseUrl + '/Ratings/Chat/Ban?targetUserId=' + encodeURIComponent(userId) + '&banType=' + encodeURIComponent(banType);
+            if (durationMinutes && durationMinutes > 0) {
+                url += '&durationMinutes=' + durationMinutes;
+            }
+            if (reason) {
+                url += '&reason=' + encodeURIComponent(reason);
+            }
+            fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: self.getChatAuthHeaders(),
-                body: JSON.stringify({
-                    userId: userId,
-                    banType: banType,
-                    durationMinutes: durationMinutes,
-                    reason: 'Banned by moderator'
-                })
+                headers: self.getChatAuthHeaders()
             })
-            .then(function () {
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.text().then(function (text) {
+                        var msg = 'Failed to apply penalty';
+                        try {
+                            var data = JSON.parse(text);
+                            msg = data.message || data.title || msg;
+                        } catch (e) {
+                            msg = text || msg;
+                        }
+                        self.showModToast(msg);
+                        console.error('[Ratings] Ban failed:', r.status, msg);
+                        throw new Error('Ban failed: ' + msg);
+                    });
+                }
+                // Success - show info modal with penalty details
+                const actionName = banType === 'snooze' ? 'Snooze' : banType === 'chat' ? 'Chat ban' : 'Media ban';
+                const durationText = durationMinutes > 0 ? self.formatDuration(durationMinutes) : 'permanent';
+                self.showPenaltySuccessModal(userName, banType, durationMinutes);
+                self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
+                // Refresh all mod panel data
+                console.log('[Ratings] Ban success, refreshing lists...');
                 self.loadBannedUsers();
+                self.loadModPanelBans();
+                self.loadModPanelActions();
             })
-            .catch(function () {});
+            .catch(function (err) {
+                console.error('[Ratings] Ban error:', err);
+                self.showModToast('Error applying penalty');
+            });
         },
 
         /**
          * Unban a user
          */
-        unbanChatUser: function (userId) {
+        unbanChatUser: function (banId, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Ban?userId=' + userId, {
+            userName = userName || 'User';
+
+            fetch(baseUrl + '/Ratings/Chat/Ban/' + encodeURIComponent(banId), {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadBannedUsers();
+            .then(function (r) {
+                if (r.ok) {
+                    self.showModToast('Penalty removed');
+                    self.addModSystemMessage('Penalty removed from ' + userName, '✅');
+                    self.loadBannedUsers();
+                    self.loadModPanelBans();
+                    self.loadModPanelActions();
+                } else {
+                    self.showModToast('Failed to remove penalty');
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                self.showModToast('Failed to remove penalty');
+            });
         },
 
         /**
          * Add moderator
          */
-        addModerator: function (userId) {
+        addModerator: function (userId, level, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators', {
+            level = level || 1;
+            // Get username from selected user if not provided
+            userName = userName || (self.modSelectedUser ? self.modSelectedUser.userName : 'User');
+
+            fetch(baseUrl + '/Ratings/Chat/Moderators?targetUserId=' + encodeURIComponent(userId) + '&level=' + level, {
                 method: 'POST',
                 credentials: 'include',
-                headers: self.getChatAuthHeaders(),
-                body: JSON.stringify({ userId: userId })
+                headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadModerators();
+            .then(function (r) {
+                if (r.ok) {
+                    self.showModeratorSuccessModal(userName, level, false);
+                    self.addModSystemMessage(userName + ' is now a Level ' + level + ' moderator', '👮');
+                    self.loadModeratorStats();
+                    self.loadUsersForModSelect();
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                    self.clearModSearch();
+                } else {
+                    r.text().then(function (txt) {
+                        self.showModToast('Failed to add moderator: ' + txt);
+                    });
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                self.showModToast('Failed to add moderator');
+            });
         },
 
         /**
          * Remove moderator
          */
-        removeModerator: function (userId) {
+        removeModerator: function (moderatorId, userName) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Moderators/' + userId, {
+            userName = userName || 'Moderator';
+
+            fetch(baseUrl + '/Ratings/Chat/Moderators/' + encodeURIComponent(moderatorId), {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: self.getChatAuthHeaders()
             })
-            .then(function () {
-                self.loadModerators();
+            .then(function (r) {
+                if (r.ok) {
+                    self.showModToast('Moderator removed');
+                    self.addModSystemMessage('Moderator removed', '👮');
+                    self.loadModeratorStats();
+                    self.loadUsersForModSelect();
+                    self.loadModPanelModerators();
+                    self.loadModPanelActions();
+                } else {
+                    self.showModToast('Failed to remove moderator');
+                }
             })
-            .catch(function () {});
+            .catch(function () {
+                self.showModToast('Failed to remove moderator');
+            });
         },
 
         /**
@@ -15177,6 +18986,383 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+
+        /**
+         * Show toast notification for moderator actions
+         */
+        showModToast: function (message) {
+            try {
+                require(['toast'], function (toast) {
+                    toast(message);
+                });
+            } catch (e) {
+                console.log('[Ratings] Toast:', message);
+            }
+        },
+
+        /**
+         * Show penalty success modal after applying a penalty
+         */
+        showPenaltySuccessModal: function (userName, banType, durationMinutes) {
+            const self = this;
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Determine penalty type text and icon
+            let typeText, typeIcon;
+            switch (banType) {
+                case 'snooze':
+                    typeText = 'snoozed';
+                    typeIcon = '🔇';
+                    break;
+                case 'chat':
+                    typeText = 'banned from chat';
+                    typeIcon = '🚫';
+                    break;
+                case 'media':
+                    typeText = 'banned from media';
+                    typeIcon = '📵';
+                    break;
+                default:
+                    typeText = 'penalized';
+                    typeIcon = '⚠️';
+            }
+
+            // Format duration
+            let durationText;
+            if (!durationMinutes || durationMinutes <= 0) {
+                durationText = 'permanently';
+            } else if (durationMinutes < 60) {
+                durationText = 'for ' + durationMinutes + ' minute' + (durationMinutes > 1 ? 's' : '');
+            } else if (durationMinutes < 1440) {
+                const hours = Math.round(durationMinutes / 60);
+                durationText = 'for ' + hours + ' hour' + (hours > 1 ? 's' : '');
+            } else if (durationMinutes < 10080) {
+                const days = Math.round(durationMinutes / 1440);
+                durationText = 'for ' + days + ' day' + (days > 1 ? 's' : '');
+            } else {
+                const weeks = Math.round(durationMinutes / 10080);
+                durationText = 'for ' + weeks + ' week' + (weeks > 1 ? 's' : '');
+            }
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Penalty Applied</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">' + typeIcon + '</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            'User <span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span> ' +
+                            'is <span class="chat-penalty-modal-type">' + typeText + '</span> ' +
+                            '<span class="chat-penalty-modal-duration">' + durationText + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+
+            // Close on overlay click (outside modal)
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) {
+                    closeModal();
+                }
+            });
+
+            // Close on Escape key
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        /**
+         * Show style success modal after applying user style
+         */
+        showStyleSuccessModal: function (userName, nicknameColor, messageColor, textStyle) {
+            const self = this;
+            console.log('[Ratings] showStyleSuccessModal called:', userName, nicknameColor, messageColor, textStyle);
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                console.log('[Ratings] Removing existing modal');
+                existing.remove();
+            }
+
+            // Build changes list
+            let changesHtml = '';
+            if (nicknameColor) {
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Nickname color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + nicknameColor + ';">' + nicknameColor + '</span>' +
+                '</div>';
+            }
+            if (messageColor) {
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Message color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + messageColor + ';">' + messageColor + '</span>' +
+                '</div>';
+            }
+            if (textStyle) {
+                const styleDisplay = textStyle === 'bold' ? 'Bold' : textStyle === 'italic' ? 'Italic' : textStyle;
+                const styleCSS = textStyle === 'bold' ? 'font-weight:bold;' : textStyle === 'italic' ? 'font-style:italic;' : '';
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Text style:</span>' +
+                    '<span class="chat-modal-change-value" style="' + styleCSS + '">' + styleDisplay + '</span>' +
+                '</div>';
+            }
+            if (!changesHtml) {
+                changesHtml = '<div class="chat-modal-change-item"><span class="chat-modal-change-label">Default style applied</span></div>';
+            }
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Style Applied</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">🎨</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            'Style updated for <span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span>' +
+                        '</div>' +
+                        '<div class="chat-modal-changes">' + changesHtml + '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            console.log('[Ratings] Style modal HTML created');
+            document.body.appendChild(overlay);
+            console.log('[Ratings] Style modal appended to body');
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+                console.log('[Ratings] Style modal visible class added');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        /**
+         * Show moderator success modal after adding/updating moderator
+         */
+        showModeratorSuccessModal: function (userName, level, isUpdate) {
+            const self = this;
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Level descriptions
+            const levelDesc = level === 1 ? 'Basic moderation' : level === 2 ? 'Advanced moderation' : 'Full admin access';
+            const actionText = isUpdate ? 'updated to' : 'added as';
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Moderator ' + (isUpdate ? 'Updated' : 'Added') + '</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">👮</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            '<span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span> ' +
+                            actionText + ' <span class="chat-penalty-modal-type">Level ' + level + '</span> moderator' +
+                        '</div>' +
+                        '<div class="chat-modal-changes">' +
+                            '<div class="chat-modal-change-item">' +
+                                '<span class="chat-modal-change-label">Permissions:</span>' +
+                                '<span class="chat-modal-change-value">' + levelDesc + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        /**
+         * Format duration in minutes to human readable string
+         */
+        formatDuration: function (minutes) {
+            if (!minutes || minutes <= 0) return 'permanent';
+            if (minutes < 60) return minutes + 'm';
+            if (minutes < 1440) return Math.round(minutes / 60) + 'h';
+            if (minutes < 10080) return Math.round(minutes / 1440) + 'd';
+            return Math.round(minutes / 10080) + 'w';
+        },
+
+        /**
+         * Format time until a future date (for ban expiration)
+         */
+        formatTimeUntil: function (date) {
+            if (!date) return '';
+            const now = new Date();
+            const diff = date - now;
+
+            // If already expired
+            if (diff <= 0) return 'expired';
+
+            const diffMins = Math.floor(diff / 60000);
+            const diffHours = Math.floor(diff / 3600000);
+            const diffDays = Math.floor(diff / 86400000);
+
+            if (diffMins < 1) return 'in <1m';
+            if (diffMins < 60) return 'in ' + diffMins + 'm';
+            if (diffHours < 24) return 'in ' + diffHours + 'h';
+            return 'in ' + diffDays + 'd';
+        },
+
+        /**
+         * Format a date to relative time ago string
+         */
+        formatTimeAgo: function (date) {
+            if (!date) return '';
+            const now = new Date();
+            const diff = now - date;
+            const diffMins = Math.floor(diff / 60000);
+            const diffHours = Math.floor(diff / 3600000);
+            const diffDays = Math.floor(diff / 86400000);
+
+            if (diffMins < 1) return this.t('timeJustNow') || 'just now';
+            if (diffMins < 60) return diffMins + ' ' + (this.t('timeMinutes') || 'min') + ' ' + (this.t('timeAgo') || 'ago');
+            if (diffHours < 24) return diffHours + ' ' + (this.t('timeHours') || 'h') + ' ' + (this.t('timeAgo') || 'ago');
+            return diffDays + ' ' + (this.t('timeDays') || 'd') + ' ' + (this.t('timeAgo') || 'ago');
+        },
+
+        /**
+         * Generate avatar HTML with fallback to initial
+         * Caches failed avatar URLs to prevent repeated 404 requests
+         */
+        getAvatarHtml: function (avatarUrl, userName) {
+            const initial = (userName || 'U').charAt(0).toUpperCase();
+
+            // If no URL or URL failed before, just show initial
+            if (!avatarUrl || this._failedAvatars[avatarUrl]) {
+                return '<span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
+            }
+
+            // Show image with data attributes for delegated error handling (no inline JS)
+            return '<img src="' + this.escapeHtml(avatarUrl) + '" alt="" class="chat-avatar-img" data-avatar-url="' + this.escapeHtml(avatarUrl) + '"><span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
+        },
+
+        /**
+         * Add a system message to chat (visible only to mods/admins)
+         */
+        addModSystemMessage: function (message, icon) {
+            if (!this.chatIsAdmin && !this.chatIsModerator) return;
+
+            const container = document.getElementById('chatMessagesContainer');
+            if (!container) return;
+
+            icon = icon || '⚙️';
+            const msgEl = document.createElement('div');
+            msgEl.className = 'chat-system-message';
+            msgEl.innerHTML = '<span class="chat-system-icon">' + icon + '</span> <span class="chat-system-text">' + this.escapeHtml(message) + '</span>';
+            container.appendChild(msgEl);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
         },
 
         /**
@@ -15470,11 +19656,8 @@
                     bubbleContent += '<img src="' + this.escapeHtml(msg.gifUrl) + '" class="chat-gif" alt="GIF" loading="lazy">';
                 }
 
-                const senderInitial = (msg.senderName || 'U').charAt(0).toUpperCase();
                 const senderAvatar = msg.senderAvatar || msg.SenderAvatar;
-                const dmAvatarHtml = senderAvatar
-                    ? '<img src="' + this.escapeHtml(senderAvatar) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\'"><span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>'
-                    : '<span class="chat-avatar-initial">' + this.escapeHtml(senderInitial) + '</span>';
+                const dmAvatarHtml = this.getAvatarHtml(senderAvatar, msg.senderName);
                 div.innerHTML = `
                     <div class="chat-avatar">
                         ${dmAvatarHtml}
@@ -15760,6 +19943,9 @@
             return null;
         }
     };
+
+    // Make plugin accessible globally for avatar caching
+    window.ratingsPlugin = RatingsPlugin;
 
     // Initialize when DOM is ready
 

@@ -17,16 +17,34 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Ratings.Api
 {
+    /// <summary>
+    /// Exception filter that converts UnauthorizedAccessException to 401 Unauthorized.
+    /// This allows RequireAuthAsync() to throw instead of requiring manual checks.
+    /// </summary>
+    public class AuthExceptionFilter : IExceptionFilter
+    {
+        public void OnException(ExceptionContext context)
+        {
+            if (context.Exception is UnauthorizedAccessException)
+            {
+                context.Result = new UnauthorizedResult();
+                context.ExceptionHandled = true;
+            }
+        }
+    }
+
     /// <summary>
     /// Chat API controller.
     /// </summary>
     [ApiController]
     [Route("Ratings/Chat")]
     [Produces(MediaTypeNames.Application.Json)]
+    [TypeFilter(typeof(AuthExceptionFilter))]
     public class ChatController : ControllerBase
     {
         private readonly RatingsRepository _repository;
@@ -39,6 +57,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _rateLimits = new();
         private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
         private static readonly object _cleanupLock = new object();
+
+        // Global GIF rate limit to prevent upstream API abuse
+        private static int _globalGifRequestCount;
+        private static DateTime _globalGifResetTime = DateTime.UtcNow;
+        private static readonly object _globalGifLock = new object();
+        private const int MaxGlobalGifRequestsPerMinute = 500;
 
         /// <summary>
         /// Allowed GIF domains for security (exact match or subdomain).
@@ -94,6 +118,21 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Requires authentication and returns user ID. Throws if not authenticated.
+        /// Use this instead of GetCurrentUserIdAsync() + manual check to prevent forgetting auth checks.
+        /// </summary>
+        /// <exception cref="UnauthorizedAccessException">Thrown when user is not authenticated.</exception>
+        private async Task<Guid> RequireAuthAsync()
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty)
+            {
+                throw new UnauthorizedAccessException("Authentication required");
+            }
+            return userId;
+        }
+
+        /// <summary>
         /// Checks if a user is a Jellyfin administrator (server-side check).
         /// </summary>
         private bool IsJellyfinAdmin(Guid userId)
@@ -117,6 +156,144 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             if (IsJellyfinAdmin(userId)) return true;
             return _repository.IsChatModerator(userId);
+        }
+
+        /// <summary>
+        /// Gets the moderator level for a user.
+        /// Admin = int.MaxValue, otherwise the moderator level or 0.
+        /// </summary>
+        private int GetModeratorLevel(Guid userId)
+        {
+            if (IsJellyfinAdmin(userId)) return int.MaxValue;
+            var mod = _repository.GetChatModeratorByUserId(userId);
+            return mod?.Level ?? 0;
+        }
+
+        /// <summary>
+        /// Checks if a moderator can perform an action on a target user.
+        /// Returns false if trying to target an equal/higher level user.
+        /// </summary>
+        private bool CanTargetUser(Guid moderatorId, Guid targetId)
+        {
+            // Admins cannot be targeted by anyone except other admins
+            if (IsJellyfinAdmin(targetId) && !IsJellyfinAdmin(moderatorId))
+            {
+                return false;
+            }
+
+            var modLevel = GetModeratorLevel(moderatorId);
+            var targetLevel = GetModeratorLevel(targetId);
+
+            // Cannot target equal or higher level users
+            return modLevel > targetLevel;
+        }
+
+        /// <summary>
+        /// Checks if moderator has reached their daily delete limit.
+        /// Returns false if limit not reached (can still delete).
+        /// </summary>
+        private bool IsDeleteLimitReached(Guid moderatorId)
+        {
+            // Admins have no limit
+            if (IsJellyfinAdmin(moderatorId)) return false;
+
+            var mod = _repository.GetChatModeratorByUserId(moderatorId);
+            if (mod == null) return true;
+
+            // Reset count if needed
+            _repository.ResetModeratorDailyDeleteCount(mod.Id);
+
+            var config = Plugin.Instance?.Configuration;
+            var limit = mod.Level == 1 ? (config?.ModLevel1DeleteLimit ?? 20) : (config?.ModLevel2DeleteLimit ?? 50);
+
+            return mod.DailyDeleteCount >= limit;
+        }
+
+        /// <summary>
+        /// Validates a hex color string.
+        /// </summary>
+        private static bool IsValidHexColor(string? color)
+        {
+            if (string.IsNullOrEmpty(color)) return true; // null/empty is valid (no color)
+            return Regex.IsMatch(color, @"^#[0-9A-Fa-f]{6}$");
+        }
+
+        /// <summary>
+        /// Validates a text style string.
+        /// </summary>
+        private static bool IsValidTextStyle(string? style)
+        {
+            if (string.IsNullOrEmpty(style)) return true;
+            return style == "bold" || style == "italic" || style == "bold-italic";
+        }
+
+        /// <summary>
+        /// Logs a moderator action.
+        /// </summary>
+        private async Task LogModeratorActionAsync(Guid moderatorId, string actionType, Guid targetId, string? details = null)
+        {
+            var mod = _repository.GetChatModeratorByUserId(moderatorId);
+            var modUser = _userManager.GetUserById(moderatorId);
+            var targetUser = _userManager.GetUserById(targetId);
+
+            var action = new Models.ModeratorAction
+            {
+                Id = Guid.NewGuid(),
+                ModeratorId = moderatorId,
+                ModeratorName = modUser?.Username ?? "Admin",
+                ModeratorLevel = mod?.Level ?? (IsJellyfinAdmin(moderatorId) ? 99 : 0),
+                ActionType = actionType,
+                TargetUserId = targetId,
+                TargetUserName = targetUser?.Username ?? "Unknown",
+                Details = details,
+                Timestamp = DateTime.UtcNow
+            };
+
+            await _repository.AddModeratorActionAsync(action).ConfigureAwait(false);
+        }
+
+        // Moderator action rate limiting
+        private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _modActionRateLimits = new();
+        private static DateTime _lastModRateLimitCleanup = DateTime.UtcNow;
+        private static readonly object _modCleanupLock = new object();
+
+        /// <summary>
+        /// Checks moderator action rate limit. Includes periodic cleanup to prevent memory leak.
+        /// </summary>
+        private static bool IsModeratorActionRateLimited(Guid moderatorId, int maxPerMinute)
+        {
+            var now = DateTime.UtcNow;
+
+            // Periodic cleanup of stale entries (every 5 minutes) - prevents memory leak
+            if ((now - _lastModRateLimitCleanup).TotalMinutes >= 5)
+            {
+                lock (_modCleanupLock)
+                {
+                    if ((now - _lastModRateLimitCleanup).TotalMinutes >= 5)
+                    {
+                        _lastModRateLimitCleanup = now;
+                        foreach (var key in _modActionRateLimits.Keys.ToList())
+                        {
+                            if (_modActionRateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                            {
+                                _modActionRateLimits.TryRemove(key, out _);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var entry = _modActionRateLimits.AddOrUpdate(
+                moderatorId,
+                _ => (now, 1),
+                (_, existing) =>
+                {
+                    if ((now - existing.ResetTime).TotalMinutes >= 1)
+                        return (now, 1);
+                    return (existing.ResetTime, existing.Count + 1);
+                });
+
+            return entry.Count > maxPerMinute;
         }
 
         /// <summary>
@@ -222,6 +399,24 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Global rate limit for GIF searches to prevent upstream API abuse.
+        /// </summary>
+        private static bool IsGlobalGifRateLimited()
+        {
+            lock (_globalGifLock)
+            {
+                var now = DateTime.UtcNow;
+                if ((now - _globalGifResetTime).TotalMinutes >= 1)
+                {
+                    _globalGifResetTime = now;
+                    _globalGifRequestCount = 0;
+                }
+                _globalGifRequestCount++;
+                return _globalGifRequestCount > MaxGlobalGifRequestsPerMinute;
+            }
+        }
+
+        /// <summary>
         /// Gets chat configuration. API keys are NOT exposed to clients.
         /// </summary>
         [HttpGet("Config")]
@@ -229,7 +424,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         public async Task<ActionResult> GetChatConfig()
         {
             var config = Plugin.Instance?.Configuration;
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Check if GIF search is available (API key configured server-side)
             var hasGifSupport = !string.IsNullOrEmpty(config?.KlipyApiKey) || !string.IsNullOrEmpty(config?.TenorApiKey);
@@ -258,13 +453,18 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("GIFs are disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
-            // Rate limit GIF searches
-            if (IsRateLimited(userId, 30)) // 30 searches per minute
+            // Rate limit GIF searches per user
+            if (IsRateLimited(userId, 30)) // 30 searches per minute per user
             {
                 return StatusCode(429, "Rate limit exceeded");
+            }
+
+            // Global rate limit to protect upstream API quotas
+            if (IsGlobalGifRateLimited())
+            {
+                return StatusCode(429, "GIF search temporarily unavailable");
             }
 
             if (string.IsNullOrWhiteSpace(query))
@@ -478,15 +678,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
-            // Check if user is banned from chat
-            var chatBan = _repository.GetActiveChatBan(userId, "chat");
-            if (chatBan != null)
-            {
-                return StatusCode(403, new { message = "You are banned from chat", expiresAt = chatBan.ExpiresAt, reason = chatBan.Reason });
-            }
+            // Note: Banned users CAN view messages, they just can't post.
+            // Ban check is done in the POST endpoint, not here.
 
             if (limit > 500) limit = 500;
             var messages = _repository.GetRecentChatMessages(limit, since);
@@ -524,8 +719,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Check if user is banned
             var chatBan = _repository.GetActiveChatBan(userId, "chat");
@@ -595,7 +789,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Deletes a chat message (admin/moderator only).
+        /// Deletes a chat message (admin/moderator only for others' messages).
         /// </summary>
         [HttpDelete("Messages/{messageId}")]
         [AllowAnonymous]
@@ -604,20 +798,55 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
-            // Check if user owns the message or is a moderator
             var message = _repository.GetChatMessageById(messageId);
             if (message == null) return NotFound("Message not found");
 
-            if (message.UserId != userId && !CanModerate(userId))
+            // Users can always delete their own messages
+            if (message.UserId == userId)
+            {
+                var deleted = await _repository.DeleteChatMessageAsync(messageId, userId).ConfigureAwait(false);
+                return Ok(new { success = deleted });
+            }
+
+            // Moderator deleting another user's message
+            if (!CanModerate(userId))
             {
                 return Forbid("You can only delete your own messages");
             }
 
-            var deleted = await _repository.DeleteChatMessageAsync(messageId, userId).ConfigureAwait(false);
-            if (!deleted) return NotFound("Message not found");
+            // Check rate limit for moderator actions
+            var actionRateLimit = config?.ModeratorActionRateLimitPerMinute ?? 10;
+            if (IsModeratorActionRateLimited(userId, actionRateLimit))
+            {
+                return StatusCode(429, "Moderator action rate limit exceeded");
+            }
+
+            // Check delete limit (Level 1 and 2 have limits)
+            if (IsDeleteLimitReached(userId))
+            {
+                return BadRequest("Daily message delete limit reached");
+            }
+
+            // Cannot delete messages from equal/higher level mods
+            if (!CanTargetUser(userId, message.UserId))
+            {
+                return BadRequest("Cannot delete messages from equal or higher level moderators");
+            }
+
+            var wasDeleted = await _repository.DeleteChatMessageAsync(messageId, userId).ConfigureAwait(false);
+            if (!wasDeleted) return NotFound("Message not found");
+
+            // Increment delete counter and log action
+            var mod = _repository.GetChatModeratorByUserId(userId);
+            if (mod != null)
+            {
+                await _repository.IncrementModeratorDeleteCountAsync(mod.Id).ConfigureAwait(false);
+            }
+
+            await LogModeratorActionAsync(userId, "delete_message", message.UserId,
+                JsonSerializer.Serialize(new { messageId = messageId.ToString() })).ConfigureAwait(false);
 
             return Ok(new { success = true });
         }
@@ -635,8 +864,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var users = _repository.GetOnlineChatUsers(5);
             // Return only display info, not raw user IDs
@@ -657,8 +885,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> Heartbeat()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var user = _userManager.GetUserById(userId);
             if (user == null) return Unauthorized();
@@ -685,8 +912,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> SetTyping([FromQuery] bool isTyping)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             _repository.SetChatUserTyping(userId, isTyping);
             return Ok();
@@ -699,8 +925,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> MarkRead([FromQuery] Guid messageId)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             await _repository.UpdateLastSeenMessageAsync(userId, messageId).ConfigureAwait(false);
             return Ok();
@@ -713,8 +938,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetUnreadCount()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var chatUser = _repository.GetChatUser(userId);
             var count = _repository.GetUnreadChatMessageCount(userId, chatUser?.LastSeenMessageId);
@@ -730,7 +954,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetModerators()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var moderators = _repository.GetAllChatModerators();
@@ -738,14 +962,34 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Adds a moderator (admin only).
+        /// Adds a moderator. Admin can add any level, Level 3 can add Level 1-2.
         /// </summary>
         [HttpPost("Moderators")]
         [AllowAnonymous]
-        public async Task<ActionResult> AddModerator([FromQuery] Guid targetUserId)
+        public async Task<ActionResult> AddModerator([FromQuery] Guid targetUserId, [FromQuery] int level = 1)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (!IsJellyfinAdmin(userId)) return Forbid();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            var myLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            // Level 3+ or admin can add moderators
+            if (myLevel < 3 && !isAdmin)
+            {
+                return Forbid("Only level 3 moderators or admins can add moderators");
+            }
+
+            // Validate level
+            if (level < 1 || level > 3)
+            {
+                return BadRequest("Level must be 1, 2, or 3");
+            }
+
+            // Level 3 mods can only add Level 1-2
+            if (!isAdmin && level >= 3)
+            {
+                return BadRequest("Only admins can add level 3 moderators");
+            }
 
             var targetUser = _userManager.GetUserById(targetUserId);
             if (targetUser == null) return NotFound("User not found");
@@ -764,25 +1008,52 @@ namespace Jellyfin.Plugin.Ratings.Api
                 AssignedAt = DateTime.UtcNow,
                 CanDeleteMessages = true,
                 CanSnoozeUsers = true,
-                CanTempBan = true
+                CanTempBan = level >= 2,
+                Level = level
             };
 
             var result = await _repository.AddChatModeratorAsync(moderator).ConfigureAwait(false);
+
+            // Log action
+            await LogModeratorActionAsync(userId, "add_mod", targetUserId,
+                JsonSerializer.Serialize(new { level })).ConfigureAwait(false);
+
             return Ok(result);
         }
 
         /// <summary>
-        /// Removes a moderator (admin only).
+        /// Removes a moderator. Admin can remove any, Level 3 can remove Level 1-2.
         /// </summary>
         [HttpDelete("Moderators/{moderatorId}")]
         [AllowAnonymous]
         public async Task<ActionResult> RemoveModerator([FromRoute] Guid moderatorId)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (!IsJellyfinAdmin(userId)) return Forbid();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            var myLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            // Level 3+ or admin can remove moderators
+            if (myLevel < 3 && !isAdmin)
+            {
+                return Forbid("Only level 3 moderators or admins can remove moderators");
+            }
+
+            var targetMod = _repository.GetChatModeratorById(moderatorId);
+            if (targetMod == null) return NotFound("Moderator not found");
+
+            // Level 3 mods can only remove Level 1-2
+            if (!isAdmin && targetMod.Level >= 3)
+            {
+                return BadRequest("Only admins can remove level 3 moderators");
+            }
 
             var removed = await _repository.RemoveChatModeratorAsync(moderatorId).ConfigureAwait(false);
             if (!removed) return NotFound("Moderator not found");
+
+            // Log action
+            await LogModeratorActionAsync(userId, "remove_mod", targetMod.UserId,
+                JsonSerializer.Serialize(new { removedLevel = targetMod.Level })).ConfigureAwait(false);
 
             return Ok(new { success = true });
         }
@@ -790,7 +1061,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         // Ban Management
 
         /// <summary>
-        /// Bans a user from chat.
+        /// Bans a user from chat. Level requirements:
+        /// - snooze: Level 1+
+        /// - chat (temp): Level 2+
+        /// - chat (perm): Level 3+ / Admin
+        /// - media: Level 3+ / Admin
         /// </summary>
         [HttpPost("Ban")]
         [AllowAnonymous]
@@ -803,8 +1078,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Validate ban type
             var validBanTypes = new[] { "chat", "snooze", "media" };
@@ -813,31 +1087,89 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Invalid ban type. Must be: chat, snooze, or media");
             }
 
-            // Media bans are admin only
-            if (banType == "media" && !IsJellyfinAdmin(userId))
+            // Check rate limit for moderator actions
+            var actionRateLimit = config?.ModeratorActionRateLimitPerMinute ?? 10;
+            if (IsModeratorActionRateLimited(userId, actionRateLimit))
             {
-                return Forbid("Only admins can ban users from watching media");
+                return StatusCode(429, "Moderator action rate limit exceeded");
             }
 
-            // Other bans require moderator or admin
-            if (!CanModerate(userId))
+            var modLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            // Level-based permission checks
+            if (banType == "snooze")
             {
-                return Forbid("Only admins and moderators can ban users");
+                // Level 1+ can snooze
+                if (modLevel < 1)
+                {
+                    return Forbid("Snooze requires moderator level 1 or higher");
+                }
+            }
+            else if (banType == "chat")
+            {
+                // Permanent bans require Level 3+ or Admin
+                if (!durationMinutes.HasValue)
+                {
+                    if (modLevel < 3 && !isAdmin)
+                    {
+                        return Forbid("Permanent chat bans require moderator level 3 or admin");
+                    }
+                }
+                else
+                {
+                    // Temp bans require Level 2+
+                    if (modLevel < 2)
+                    {
+                        return Forbid("Temporary chat bans require moderator level 2 or higher");
+                    }
+
+                    // Level 2 has max temp ban duration
+                    if (modLevel == 2 && !isAdmin)
+                    {
+                        var maxDays = config?.ModLevel2TempBanMaxDays ?? 7;
+                        var maxMinutes = maxDays * 24 * 60;
+                        if (durationMinutes.Value > maxMinutes)
+                        {
+                            return BadRequest($"Level 2 moderators can only temp ban for up to {maxDays} days");
+                        }
+                    }
+                }
+            }
+            else if (banType == "media")
+            {
+                // Media bans require Level 3+ or Admin
+                if (modLevel < 3 && !isAdmin)
+                {
+                    return Forbid("Media bans require moderator level 3 or admin");
+                }
+
+                // Check monthly media ban limit per user (Level 3 only, not admins)
+                if (!isAdmin && durationMinutes.HasValue)
+                {
+                    var maxDaysPerMonth = config?.ModLevel3MediaBanMaxDays ?? 7;
+                    var daysUsed = _repository.GetMediaBanDaysUsedThisMonth(userId, targetUserId);
+                    var requestedDays = (int)Math.Ceiling(durationMinutes.Value / (24.0 * 60));
+                    if (daysUsed + requestedDays > maxDaysPerMonth)
+                    {
+                        return BadRequest($"Media ban limit exceeded. You can only ban this user for {maxDaysPerMonth - daysUsed} more days this month");
+                    }
+                }
             }
 
             var targetUser = _userManager.GetUserById(targetUserId);
             if (targetUser == null) return NotFound("User not found");
 
-            // Can't ban Jellyfin admins
+            // Can't target Jellyfin admins
             if (IsJellyfinAdmin(targetUserId))
             {
                 return BadRequest("Cannot ban administrators");
             }
 
-            // Only admins can ban moderators
-            if (_repository.IsChatModerator(targetUserId) && !IsJellyfinAdmin(userId))
+            // Can't target equal or higher level moderators
+            if (!CanTargetUser(userId, targetUserId))
             {
-                return BadRequest("Only administrators can ban moderators");
+                return BadRequest("Cannot ban equal or higher level moderators");
             }
 
             if (durationMinutes.HasValue && durationMinutes.Value <= 0)
@@ -865,6 +1197,15 @@ namespace Jellyfin.Plugin.Ratings.Api
             };
 
             var result = await _repository.AddChatBanAsync(ban).ConfigureAwait(false);
+
+            // Log the action
+            var actionType = banType == "snooze" ? "snooze" :
+                            (banType == "media" ? "media_ban" :
+                            (ban.IsPermanent ? "perm_ban" : "temp_ban"));
+            var durationDays = cappedDuration.HasValue ? (int)Math.Ceiling(cappedDuration.Value / (24.0 * 60)) : 0;
+            await LogModeratorActionAsync(userId, actionType, targetUserId,
+                JsonSerializer.Serialize(new { reason = ban.Reason, durationMinutes = cappedDuration, durationDays, permanent = ban.IsPermanent })).ConfigureAwait(false);
+
             return Ok(result);
         }
 
@@ -878,7 +1219,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             // Check if this ban was placed by an admin - only admins can lift admin-placed bans
@@ -906,7 +1247,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             var bans = _repository.GetAllActiveChatBans();
@@ -920,8 +1261,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetBanStatus()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var chatBan = _repository.GetActiveChatBan(userId, "chat");
             var snoozeBan = _repository.GetActiveChatBan(userId, "snooze");
@@ -942,7 +1282,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetAllUsers()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var users = _userManager.Users
@@ -992,8 +1332,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var users = _userManager.Users
                 .Where(u => u.Id != userId) // Exclude self
@@ -1023,8 +1362,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var conversations = _repository.GetConversations(userId);
 
@@ -1057,8 +1395,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // SECURITY: GetPrivateMessages only returns messages where userId is sender or recipient
             var messages = _repository.GetPrivateMessages(userId, otherUserId, Math.Min(limit, 100), since);
@@ -1092,8 +1429,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             var config = Plugin.Instance?.Configuration;
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Cannot DM yourself
             if (userId == otherUserId)
@@ -1181,8 +1517,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var count = _repository.GetUnreadDMCount(userId);
             return Ok(new { count });
@@ -1198,8 +1533,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // SECURITY: DeletePrivateMessageAsync verifies userId is the sender
             var deleted = await _repository.DeletePrivateMessageAsync(messageId, userId).ConfigureAwait(false);
@@ -1218,8 +1552,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var count = _repository.GetPublicChatUnreadCount(userId);
             return Ok(new { count });
@@ -1235,11 +1568,353 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             await _repository.MarkPublicChatReadAsync(userId).ConfigureAwait(false);
             return Ok(new { success = true });
+        }
+
+        // ============ MODERATOR MANAGEMENT ENDPOINTS ============
+
+        /// <summary>
+        /// Gets moderator stats including action counts (admin/mod only).
+        /// </summary>
+        [HttpGet("Moderators/Stats")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetModeratorStats()
+        {
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+            if (!CanModerate(userId)) return Forbid();
+
+            var moderators = _repository.GetAllChatModerators();
+            var config = Plugin.Instance?.Configuration;
+
+            var stats = moderators.Select(m =>
+            {
+                _repository.ResetModeratorDailyDeleteCount(m.Id);
+                var limit = m.Level == 1 ? (config?.ModLevel1DeleteLimit ?? 20) : (config?.ModLevel2DeleteLimit ?? 50);
+
+                return new
+                {
+                    m.Id,
+                    m.UserId,
+                    m.UserName,
+                    m.Level,
+                    m.AssignedAt,
+                    AssignedByName = _userManager.GetUserById(m.AssignedBy)?.Username ?? "Unknown",
+                    ActionCount = _repository.GetModeratorActionCount(m.UserId),
+                    DailyDeleteCount = m.DailyDeleteCount,
+                    DailyDeleteLimit = limit
+                };
+            }).ToList();
+
+            return Ok(stats);
+        }
+
+        /// <summary>
+        /// Gets moderator action log (admin/mod only).
+        /// </summary>
+        [HttpGet("Moderators/Actions")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetModeratorActions(
+            [FromQuery] Guid? moderatorId,
+            [FromQuery] int limit = 100)
+        {
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+            if (!CanModerate(userId)) return Forbid();
+
+            var actions = _repository.GetModeratorActions(moderatorId, Math.Min(limit, 500));
+            return Ok(actions);
+        }
+
+        /// <summary>
+        /// Updates a moderator's level (admin only for level 3, level 3+ for 1-2).
+        /// </summary>
+        [HttpPut("Moderators/{moderatorId}/Level")]
+        [AllowAnonymous]
+        public async Task<ActionResult> UpdateModeratorLevel(
+            [FromRoute] Guid moderatorId,
+            [FromQuery] int level)
+        {
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            var myLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            if (myLevel < 3 && !isAdmin)
+            {
+                return Forbid("Only level 3 moderators or admins can change levels");
+            }
+
+            if (level < 1 || level > 3)
+            {
+                return BadRequest("Level must be 1, 2, or 3");
+            }
+
+            var targetMod = _repository.GetChatModeratorById(moderatorId);
+            if (targetMod == null) return NotFound("Moderator not found");
+
+            // Level 3 mods can only set levels 1-2
+            if (!isAdmin && (level >= 3 || targetMod.Level >= 3))
+            {
+                return BadRequest("Only admins can modify level 3 moderators");
+            }
+
+            var oldLevel = targetMod.Level;
+            var updated = await _repository.UpdateChatModeratorAsync(moderatorId, level).ConfigureAwait(false);
+
+            await LogModeratorActionAsync(userId, "change_level", targetMod.UserId,
+                JsonSerializer.Serialize(new { oldLevel, newLevel = level })).ConfigureAwait(false);
+
+            return Ok(updated);
+        }
+
+        // ============ USER STYLE OVERRIDE ENDPOINTS ============
+
+        /// <summary>
+        /// Sets user style override (Level 1+ mods).
+        /// </summary>
+        [HttpPost("Users/{targetUserId}/Style")]
+        [AllowAnonymous]
+        public async Task<ActionResult> SetUserStyle(
+            [FromRoute] Guid targetUserId,
+            [FromQuery] string? nicknameColor,
+            [FromQuery] string? messageColor,
+            [FromQuery] string? textStyle)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var modLevel = GetModeratorLevel(userId);
+
+            if (modLevel < 1)
+            {
+                return Forbid("Only moderators can set user styles");
+            }
+
+            // Validate colors
+            if (!IsValidHexColor(nicknameColor))
+            {
+                return BadRequest("Invalid nickname color format. Use #RRGGBB");
+            }
+            if (!IsValidHexColor(messageColor))
+            {
+                return BadRequest("Invalid message color format. Use #RRGGBB");
+            }
+            if (!IsValidTextStyle(textStyle))
+            {
+                return BadRequest("Invalid text style. Use: bold, italic, or bold-italic");
+            }
+
+            var targetUser = _userManager.GetUserById(targetUserId);
+            if (targetUser == null) return NotFound("User not found");
+
+            var settingUser = _userManager.GetUserById(userId);
+
+            var style = new Models.UserStyleOverride
+            {
+                UserId = targetUserId,
+                UserName = targetUser.Username,
+                NicknameColor = nicknameColor,
+                MessageColor = messageColor,
+                TextStyle = textStyle ?? string.Empty,
+                SetBy = userId,
+                SetByName = settingUser?.Username ?? "Unknown",
+                SetAt = DateTime.UtcNow
+            };
+
+            var result = await _repository.SetUserStyleOverrideAsync(style).ConfigureAwait(false);
+
+            await LogModeratorActionAsync(userId, "change_style", targetUserId,
+                JsonSerializer.Serialize(new { nicknameColor, messageColor, textStyle })).ConfigureAwait(false);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Removes user style override (Level 1+ mods).
+        /// </summary>
+        [HttpDelete("Users/{targetUserId}/Style")]
+        [AllowAnonymous]
+        public async Task<ActionResult> RemoveUserStyle([FromRoute] Guid targetUserId)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var modLevel = GetModeratorLevel(userId);
+
+            if (modLevel < 1)
+            {
+                return Forbid("Only moderators can remove user styles");
+            }
+
+            var removed = await _repository.RemoveUserStyleOverrideAsync(targetUserId).ConfigureAwait(false);
+            if (!removed) return NotFound("Style override not found");
+
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Gets all user style overrides (mods only).
+        /// </summary>
+        [HttpGet("Users/Styles")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetAllUserStyles()
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            // Anyone can see styles (needed for rendering)
+            var styles = _repository.GetAllUserStyleOverrides();
+            return Ok(styles.ToDictionary(s => s.UserId.ToString(), s => new
+            {
+                s.NicknameColor,
+                s.MessageColor,
+                s.TextStyle
+            }));
+        }
+
+        // ============ MEDIA QUOTA ENDPOINTS ============
+
+        /// <summary>
+        /// Sets media quota for a user (Level 3+ / Admin).
+        /// </summary>
+        [HttpPost("Users/{targetUserId}/Quota")]
+        [AllowAnonymous]
+        public async Task<ActionResult> SetMediaQuota(
+            [FromRoute] Guid targetUserId,
+            [FromQuery] int dailyLimit = 0,
+            [FromQuery] int weeklyLimit = 0,
+            [FromQuery] int monthlyLimit = 0)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var modLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            if (modLevel < 3 && !isAdmin)
+            {
+                return Forbid("Only level 3 moderators or admins can set media quotas");
+            }
+
+            // Cannot set quota on admins
+            if (IsJellyfinAdmin(targetUserId))
+            {
+                return BadRequest("Cannot set quota on administrators");
+            }
+
+            // Cannot set quota on equal/higher level mods
+            if (!CanTargetUser(userId, targetUserId))
+            {
+                return BadRequest("Cannot set quota on equal or higher level moderators");
+            }
+
+            var targetUser = _userManager.GetUserById(targetUserId);
+            if (targetUser == null) return NotFound("User not found");
+
+            var settingUser = _userManager.GetUserById(userId);
+
+            var quota = new Models.MediaQuota
+            {
+                UserId = targetUserId,
+                UserName = targetUser.Username,
+                DailyLimit = Math.Max(0, dailyLimit),
+                WeeklyLimit = Math.Max(0, weeklyLimit),
+                MonthlyLimit = Math.Max(0, monthlyLimit),
+                SetBy = userId,
+                SetByName = settingUser?.Username ?? "Unknown",
+                SetAt = DateTime.UtcNow
+            };
+
+            var result = await _repository.SetMediaQuotaAsync(quota).ConfigureAwait(false);
+
+            await LogModeratorActionAsync(userId, "set_quota", targetUserId,
+                JsonSerializer.Serialize(new { dailyLimit, weeklyLimit, monthlyLimit })).ConfigureAwait(false);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Removes media quota for a user (Level 3+ / Admin).
+        /// </summary>
+        [HttpDelete("Users/{targetUserId}/Quota")]
+        [AllowAnonymous]
+        public async Task<ActionResult> RemoveMediaQuota([FromRoute] Guid targetUserId)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var modLevel = GetModeratorLevel(userId);
+            var isAdmin = IsJellyfinAdmin(userId);
+
+            if (modLevel < 3 && !isAdmin)
+            {
+                return Forbid("Only level 3 moderators or admins can remove media quotas");
+            }
+
+            var removed = await _repository.RemoveMediaQuotaAsync(targetUserId).ConfigureAwait(false);
+            if (!removed) return NotFound("Quota not found");
+
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Gets current user's moderator info (level, limits, etc.).
+        /// </summary>
+        [HttpGet("Moderators/Me")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetMyModeratorInfo()
+        {
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            var isAdmin = IsJellyfinAdmin(userId);
+            var mod = _repository.GetChatModeratorByUserId(userId);
+            var config = Plugin.Instance?.Configuration;
+
+            if (!isAdmin && mod == null)
+            {
+                return Ok(new { isModerator = false, isAdmin = false });
+            }
+
+            if (isAdmin)
+            {
+                return Ok(new
+                {
+                    isModerator = true,
+                    isAdmin = true,
+                    level = 99,
+                    canAddMods = true,
+                    canMediaBan = true,
+                    canPermBan = true,
+                    dailyDeleteLimit = -1, // unlimited
+                    dailyDeleteCount = 0
+                });
+            }
+
+            _repository.ResetModeratorDailyDeleteCount(mod!.Id);
+            var deleteLimit = mod.Level == 1 ? (config?.ModLevel1DeleteLimit ?? 20) : (config?.ModLevel2DeleteLimit ?? 50);
+
+            return Ok(new
+            {
+                isModerator = true,
+                isAdmin = false,
+                level = mod.Level,
+                canAddMods = mod.Level >= 3,
+                canMediaBan = mod.Level >= 3,
+                canPermBan = mod.Level >= 3,
+                canTempBan = mod.Level >= 2,
+                dailyDeleteLimit = deleteLimit,
+                dailyDeleteCount = mod.DailyDeleteCount,
+                tempBanMaxDays = config?.ModLevel2TempBanMaxDays ?? 7,
+                mediaBanMaxDays = config?.ModLevel3MediaBanMaxDays ?? 7
+            });
         }
     }
 }
