@@ -20,6 +20,19 @@ namespace Jellyfin.Plugin.Ratings
         private readonly RatingsRepository _repository;
         private readonly ISessionManager _sessionManager;
 
+        // Pre-compiled regex patterns for performance
+        private static readonly Regex PlaybackInfoRegex = new(
+            @"/items/[a-f0-9-]+/playbackinfo",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex VideoStreamRegex = new(
+            @"/videos/[a-f0-9-]+/(stream|master\.m3u8)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex AuthTokenRegex = new(
+            @"Token=""([^""]+)""",
+            RegexOptions.Compiled);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaybackBlockingMiddleware"/> class.
         /// </summary>
@@ -115,7 +128,7 @@ namespace Jellyfin.Plugin.Ratings
             }
 
             // Items play endpoints
-            if (Regex.IsMatch(path, @"/items/[a-f0-9-]+/playbackinfo", RegexOptions.IgnoreCase))
+            if (PlaybackInfoRegex.IsMatch(path))
             {
                 return true;
             }
@@ -143,7 +156,7 @@ namespace Jellyfin.Plugin.Ratings
                 }
 
                 // Direct video file requests
-                if (Regex.IsMatch(path, @"/videos/[a-f0-9-]+/(stream|master\.m3u8)", RegexOptions.IgnoreCase))
+                if (VideoStreamRegex.IsMatch(path))
                 {
                     return true;
                 }
@@ -173,7 +186,7 @@ namespace Jellyfin.Plugin.Ratings
                 return Guid.Empty;
             }
 
-            var tokenMatch = Regex.Match(authHeader, @"Token=""([^""]+)""");
+            var tokenMatch = AuthTokenRegex.Match(authHeader);
             if (!tokenMatch.Success)
             {
                 return Guid.Empty;

@@ -40,6 +40,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
         private static readonly object _cleanupLock = new object();
 
+        // Global GIF rate limit to prevent upstream API abuse
+        private static int _globalGifRequestCount;
+        private static DateTime _globalGifResetTime = DateTime.UtcNow;
+        private static readonly object _globalGifLock = new object();
+        private const int MaxGlobalGifRequestsPerMinute = 500;
+
         /// <summary>
         /// Allowed GIF domains for security (exact match or subdomain).
         /// </summary>
@@ -339,6 +345,24 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Global rate limit for GIF searches to prevent upstream API abuse.
+        /// </summary>
+        private static bool IsGlobalGifRateLimited()
+        {
+            lock (_globalGifLock)
+            {
+                var now = DateTime.UtcNow;
+                if ((now - _globalGifResetTime).TotalMinutes >= 1)
+                {
+                    _globalGifResetTime = now;
+                    _globalGifRequestCount = 0;
+                }
+                _globalGifRequestCount++;
+                return _globalGifRequestCount > MaxGlobalGifRequestsPerMinute;
+            }
+        }
+
+        /// <summary>
         /// Gets chat configuration. API keys are NOT exposed to clients.
         /// </summary>
         [HttpGet("Config")]
@@ -347,6 +371,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             var config = Plugin.Instance?.Configuration;
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+
+            // Require authentication - config should not be exposed to anonymous users
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
 
             // Check if GIF search is available (API key configured server-side)
             var hasGifSupport = !string.IsNullOrEmpty(config?.KlipyApiKey) || !string.IsNullOrEmpty(config?.TenorApiKey);
@@ -378,10 +408,16 @@ namespace Jellyfin.Plugin.Ratings.Api
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
             if (userId == Guid.Empty) return Unauthorized();
 
-            // Rate limit GIF searches
-            if (IsRateLimited(userId, 30)) // 30 searches per minute
+            // Rate limit GIF searches per user
+            if (IsRateLimited(userId, 30)) // 30 searches per minute per user
             {
                 return StatusCode(429, "Rate limit exceeded");
+            }
+
+            // Global rate limit to protect upstream API quotas
+            if (IsGlobalGifRateLimited())
+            {
+                return StatusCode(429, "GIF search temporarily unavailable");
             }
 
             if (string.IsNullOrWhiteSpace(query))
