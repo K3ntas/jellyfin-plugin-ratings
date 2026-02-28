@@ -17994,14 +17994,14 @@
             })
             .then(function (r) {
                 if (r && r.ok) {
-                    require(['toast'], function(toast) { toast(userName + ' removed from moderators'); });
+                    self.showModToast(userName + ' removed from moderators');
                     self.loadModPanelModerators();
                     self.loadModPanelActions();
                     self.updateUserStatusDisplay(userId, 0);
                 }
             })
             .catch(function () {
-                require(['toast'], function(toast) { toast('Failed to remove moderator'); });
+                self.showModToast('Failed to remove moderator');
             });
         },
 
@@ -18997,10 +18997,12 @@
          */
         showStyleSuccessModal: function (userName, nicknameColor, messageColor, textStyle) {
             const self = this;
+            console.log('[Ratings] showStyleSuccessModal called:', userName, nicknameColor, messageColor, textStyle);
 
             // Remove existing modal if any
             const existing = document.querySelector('.chat-penalty-modal-overlay');
             if (existing) {
+                console.log('[Ratings] Removing existing modal');
                 existing.remove();
             }
 
@@ -19054,11 +19056,14 @@
                     '</div>' +
                 '</div>';
 
+            console.log('[Ratings] Style modal HTML created');
             document.body.appendChild(overlay);
+            console.log('[Ratings] Style modal appended to body');
 
             // Show with animation
             requestAnimationFrame(function () {
                 overlay.classList.add('visible');
+                console.log('[Ratings] Style modal visible class added');
             });
 
             // Close handlers
