@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.48.0",
+        "changelog": "Security hardening: auth checks, import sanitization, inline JS removal, regex precompile, global GIF rate limit",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.48.0/jellyfin-plugin-ratings_2.0.48.0.zip",
+        "checksum": "80b9ec1f52ac64cb7b55508bd7569977",
+        "timestamp": "2026-02-28T23:05:00Z"
+      },
+      {
         "version": "2.0.47.0",
         "changelog": "Fix style property case (PascalCase from API)",
         "targetAbi": "10.11.0.0",
