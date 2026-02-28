@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.40.0",
+        "changelog": "Penalty success modal - shows info popup after applying ban/snooze with user, type, and duration",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.40.0/jellyfin-plugin-ratings_2.0.40.0.zip",
+        "checksum": "3f2f5ad5bc82a9aae8c8241f5d073779",
+        "timestamp": "2026-02-28T18:41:00Z"
+      },
+      {
         "version": "2.0.39.0",
         "changelog": "Ban notifications reappear on page change, banned users can view chat (read-only)",
         "targetAbi": "10.11.0.0",
