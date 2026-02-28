@@ -7372,6 +7372,38 @@
                 .chat-penalty-modal-ok:hover {
                     background: #43a047 !important;
                 }
+
+                /* Modal Changes List (for style/moderator modals) */
+                .chat-modal-changes {
+                    margin-top: 16px !important;
+                    padding: 12px !important;
+                    background: rgba(255,255,255,0.05) !important;
+                    border-radius: 8px !important;
+                    text-align: left !important;
+                }
+
+                .chat-modal-change-item {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                    padding: 6px 0 !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+                }
+
+                .chat-modal-change-item:last-child {
+                    border-bottom: none !important;
+                }
+
+                .chat-modal-change-label {
+                    color: #888 !important;
+                    font-size: 13px !important;
+                }
+
+                .chat-modal-change-value {
+                    color: #fff !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -17746,7 +17778,7 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    self.showModToast('Style applied to ' + userName);
+                    self.showStyleSuccessModal(userName, nicknameColor, messageColor, textStyle);
                     self.addModSystemMessage('Style updated for ' + userName, '🎨');
                     self.loadUserStyles(); // Reload styles
                 } else {
@@ -17914,7 +17946,7 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    require(['toast'], function(toast) { toast(userName + ' is now Level ' + level + ' moderator'); });
+                    self.showModeratorSuccessModal(userName, level, true);
                     self.loadModPanelModerators();
                     self.loadModPanelActions();
                     self.updateUserStatusDisplay(userId, level);
@@ -18726,7 +18758,7 @@
             })
             .then(function (r) {
                 if (r.ok) {
-                    self.showModToast('Moderator added: ' + userName + ' (Level ' + level + ')');
+                    self.showModeratorSuccessModal(userName, level, false);
                     self.addModSystemMessage(userName + ' is now a Level ' + level + ' moderator', '👮');
                     self.loadModeratorStats();
                     self.loadUsersForModSelect();
@@ -18948,6 +18980,172 @@
             });
 
             // Close on Escape key
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        /**
+         * Show style success modal after applying user style
+         */
+        showStyleSuccessModal: function (userName, nicknameColor, messageColor, textStyle) {
+            const self = this;
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Build changes list
+            let changesHtml = '';
+            if (nicknameColor) {
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Nickname color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + nicknameColor + ';">' + nicknameColor + '</span>' +
+                '</div>';
+            }
+            if (messageColor) {
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Message color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + messageColor + ';">' + messageColor + '</span>' +
+                '</div>';
+            }
+            if (textStyle) {
+                const styleDisplay = textStyle === 'bold' ? 'Bold' : textStyle === 'italic' ? 'Italic' : textStyle;
+                const styleCSS = textStyle === 'bold' ? 'font-weight:bold;' : textStyle === 'italic' ? 'font-style:italic;' : '';
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Text style:</span>' +
+                    '<span class="chat-modal-change-value" style="' + styleCSS + '">' + styleDisplay + '</span>' +
+                '</div>';
+            }
+            if (!changesHtml) {
+                changesHtml = '<div class="chat-modal-change-item"><span class="chat-modal-change-label">Default style applied</span></div>';
+            }
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Style Applied</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">🎨</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            'Style updated for <span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span>' +
+                        '</div>' +
+                        '<div class="chat-modal-changes">' + changesHtml + '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        },
+
+        /**
+         * Show moderator success modal after adding/updating moderator
+         */
+        showModeratorSuccessModal: function (userName, level, isUpdate) {
+            const self = this;
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Level descriptions
+            const levelDesc = level === 1 ? 'Basic moderation' : level === 2 ? 'Advanced moderation' : 'Full admin access';
+            const actionText = isUpdate ? 'updated to' : 'added as';
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Moderator ' + (isUpdate ? 'Updated' : 'Added') + '</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">👮</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            '<span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span> ' +
+                            actionText + ' <span class="chat-penalty-modal-type">Level ' + level + '</span> moderator' +
+                        '</div>' +
+                        '<div class="chat-modal-changes">' +
+                            '<div class="chat-modal-change-item">' +
+                                '<span class="chat-modal-change-label">Permissions:</span>' +
+                                '<span class="chat-modal-change-value">' + levelDesc + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
             const escHandler = function (e) {
                 if (e.key === 'Escape') {
                     closeModal();
