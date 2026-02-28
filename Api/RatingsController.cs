@@ -2740,6 +2740,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         var filePath = Path.Combine(dataPath, kvp.Value);
                         var json = data.GetRawText();
+
+                        // Sanitize chat messages on import to prevent XSS
+                        if (kvp.Key == "chat_messages" || kvp.Key == "private_messages")
+                        {
+                            json = SanitizeChatMessagesJson(json);
+                        }
+
                         await System.IO.File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
                         importedCount++;
                     }
@@ -2754,7 +2761,39 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error importing backup");
-                return StatusCode(500, "Failed to import backup: " + ex.Message);
+                return StatusCode(500, "Failed to import backup");
+            }
+        }
+
+        /// <summary>
+        /// Sanitizes chat message content in backup JSON to prevent XSS.
+        /// </summary>
+        private string SanitizeChatMessagesJson(string json)
+        {
+            try
+            {
+                var messages = System.Text.Json.JsonSerializer.Deserialize<List<ChatMessage>>(json);
+                if (messages == null) return json;
+
+                foreach (var msg in messages)
+                {
+                    if (!string.IsNullOrEmpty(msg.Content))
+                    {
+                        msg.Content = SanitizeInput(msg.Content, 500);
+                    }
+                    // Also sanitize username to be safe
+                    if (!string.IsNullOrEmpty(msg.UserName))
+                    {
+                        msg.UserName = SanitizeInput(msg.UserName, 100);
+                    }
+                }
+
+                return System.Text.Json.JsonSerializer.Serialize(messages);
+            }
+            catch
+            {
+                // Return original if parsing fails - will still be validated on load
+                return json;
             }
         }
 

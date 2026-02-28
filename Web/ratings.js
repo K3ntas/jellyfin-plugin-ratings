@@ -5176,6 +5176,27 @@
                     display: none !important;
                 }
 
+                /* Avatar img with fallback to initial */
+                .chat-avatar-img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 50% !important;
+                    object-fit: cover !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    z-index: 1 !important;
+                }
+                .chat-avatar-img + .chat-avatar-initial {
+                    display: none !important;
+                }
+                .chat-avatar-img.avatar-error + .chat-avatar-initial {
+                    display: flex !important;
+                }
+                .chat-avatar-img.avatar-error {
+                    display: none !important;
+                }
+
                 .chat-avatar-placeholder {
                     display: flex !important;
                     align-items: center !important;
@@ -7404,6 +7425,27 @@
                     font-size: 13px !important;
                     font-weight: 500 !important;
                 }
+
+                /* Image error fallback - hides broken images (no inline JS) */
+                .plugin-img-fallback.img-error {
+                    display: none !important;
+                }
+
+                /* Netflix card fallback - show placeholder */
+                .netflix-card-img.img-error {
+                    display: block !important;
+                    background: #2a2a2a !important;
+                    min-height: 100% !important;
+                }
+                .netflix-card-img.img-error::after {
+                    content: 'No Image' !important;
+                    position: absolute !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    color: #666 !important;
+                    font-size: 14px !important;
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -9445,7 +9487,7 @@
 
                         html += `
                             <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
-                                <img src="${imageSrc}" class="latest-item-image" alt="" onerror="this.style.visibility='hidden'"/>
+                                <img src="${imageSrc}" class="latest-item-image plugin-img-fallback" alt=""/>
                                 <div class="latest-item-info">
                                     <div class="latest-item-title">${self.escapeHtml(itemName)}${badge}</div>
                                     <div class="latest-item-meta">
@@ -10321,7 +10363,7 @@
                     html += `
                         <tr style="animation-delay: ${animDelay}ms">
                             <td>
-                                <img src="${self.escapeHtml(baseUrl + imageUrl)}?maxWidth=80" class="media-item-image" alt="" onerror="this.style.display='none'" />
+                                <img src="${self.escapeHtml(baseUrl + imageUrl)}?maxWidth=80" class="media-item-image plugin-img-fallback" alt="" />
                             </td>
                             <td>
                                 <div class="media-item-title">
@@ -11237,7 +11279,7 @@
 
                     html += `
                         <a href="#!/details?id=${itemId}" class="dropdown-item" data-item-id="${itemId}">
-                            <img src="${imageSrc}" class="dropdown-item-image" alt="" onerror="this.style.display='none'"/>
+                            <img src="${imageSrc}" class="dropdown-item-image plugin-img-fallback" alt=""/>
                             <div class="dropdown-item-info">
                                 <div class="dropdown-item-title">${self.escapeHtml(itemName)}</div>
                                 <div class="dropdown-item-meta">
@@ -14585,7 +14627,7 @@
             // Build image URL
             let imageHtml = '';
             if (notification.ImageUrl && !notification.IsTest) {
-                imageHtml = `<img class="ratings-notification-image" src="${this.escapeHtml(baseUrl + notification.ImageUrl)}" alt="" onerror="this.style.display='none'">`;
+                imageHtml = `<img class="ratings-notification-image plugin-img-fallback" src="${this.escapeHtml(baseUrl + notification.ImageUrl)}" alt="">`;
             }
 
             // Build content based on notification type
@@ -15248,7 +15290,7 @@
 
                 cardsHtml += `
                     <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
-                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22><rect fill=%22%232a2a2a%22 width=%22300%22 height=%22450%22/><text x=%22150%22 y=%22225%22 fill=%22%23666%22 text-anchor=%22middle%22 font-size=%2220%22>No Image</text></svg>'">
+                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
                         <div class="netflix-card-overlay">
                             <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
                             <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
@@ -15779,6 +15821,34 @@
          */
         bindChatEvents: function () {
             const self = this;
+
+            // Delegated error handler for all plugin images (no inline JS for security)
+            document.addEventListener('error', function (e) {
+                if (e.target && e.target.classList) {
+                    // Handle chat avatar images
+                    if (e.target.classList.contains('chat-avatar-img')) {
+                        var url = e.target.getAttribute('data-avatar-url');
+                        e.target.classList.add('avatar-error');
+                        if (url && window.ratingsPlugin) {
+                            window.ratingsPlugin._failedAvatars[url] = true;
+                        }
+                    }
+                    // Handle all other plugin images with fallback class
+                    if (e.target.classList.contains('plugin-img-fallback')) {
+                        e.target.classList.add('img-error');
+                    }
+                }
+            }, true); // Use capture phase for error events
+
+            // Delegated load handler for avatar images
+            document.addEventListener('load', function (e) {
+                if (e.target && e.target.classList && e.target.classList.contains('chat-avatar-img')) {
+                    var initial = e.target.nextElementSibling;
+                    if (initial && initial.classList.contains('chat-avatar-initial')) {
+                        initial.classList.add('hidden');
+                    }
+                }
+            }, true);
 
             // Close button
             document.getElementById('chatCloseBtn').onclick = function () {
@@ -19265,7 +19335,6 @@
          * Caches failed avatar URLs to prevent repeated 404 requests
          */
         getAvatarHtml: function (avatarUrl, userName) {
-            const self = this;
             const initial = (userName || 'U').charAt(0).toUpperCase();
 
             // If no URL or URL failed before, just show initial
@@ -19273,8 +19342,8 @@
                 return '<span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
             }
 
-            // Show image with fallback - mark as failed on error
-            return '<img src="' + this.escapeHtml(avatarUrl) + '" alt="" onload="this.nextElementSibling.classList.add(\'hidden\')" onerror="this.style.display=\'none\';window.ratingsPlugin&&(window.ratingsPlugin._failedAvatars[\'' + this.escapeHtml(avatarUrl).replace(/'/g, "\\'") + '\']=true)"><span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
+            // Show image with data attributes for delegated error handling (no inline JS)
+            return '<img src="' + this.escapeHtml(avatarUrl) + '" alt="" class="chat-avatar-img" data-avatar-url="' + this.escapeHtml(avatarUrl) + '"><span class="chat-avatar-initial">' + this.escapeHtml(initial) + '</span>';
         },
 
         /**
