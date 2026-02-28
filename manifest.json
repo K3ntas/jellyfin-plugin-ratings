@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.41.0",
+        "changelog": "Info modals for style and moderator actions - shows details after applying changes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.41.0/jellyfin-plugin-ratings_2.0.41.0.zip",
+        "checksum": "71fe6d8eca98c4caee14561e546d6e16",
+        "timestamp": "2026-02-28T19:22:00Z"
+      },
+      {
         "version": "2.0.40.0",
         "changelog": "Penalty success modal - shows info popup after applying ban/snooze with user, type, and duration",
         "targetAbi": "10.11.0.0",
