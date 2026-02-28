@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.47.0",
+        "changelog": "Fix style property case (PascalCase from API)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.47.0/jellyfin-plugin-ratings_2.0.47.0.zip",
+        "checksum": "f3e4ca41730e9ba5ae56ac45d28e3072",
+        "timestamp": "2026-02-28T22:40:00Z"
+      },
+      {
         "version": "2.0.46.0",
         "changelog": "Fix userId format mismatch for style lookup (with/without dashes)",
         "targetAbi": "10.11.0.0",
