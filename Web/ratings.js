@@ -7245,6 +7245,133 @@
                     margin-bottom: 12px !important;
                     opacity: 0.5 !important;
                 }
+
+                /* Penalty Success Modal */
+                .chat-penalty-modal-overlay {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(0,0,0,0.7) !important;
+                    z-index: 10000020 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-overlay.visible {
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+
+                .chat-penalty-modal {
+                    background: #252525 !important;
+                    border-radius: 12px !important;
+                    padding: 0 !important;
+                    width: 90% !important;
+                    max-width: 400px !important;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+                    transform: scale(0.9) !important;
+                    transition: transform 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-overlay.visible .chat-penalty-modal {
+                    transform: scale(1) !important;
+                }
+
+                .chat-penalty-modal-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 16px 20px !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                }
+
+                .chat-penalty-modal-title {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    color: #4caf50 !important;
+                }
+
+                .chat-penalty-modal-title-icon {
+                    font-size: 20px !important;
+                }
+
+                .chat-penalty-modal-close {
+                    background: transparent !important;
+                    border: none !important;
+                    color: #888 !important;
+                    font-size: 20px !important;
+                    cursor: pointer !important;
+                    padding: 4px !important;
+                    line-height: 1 !important;
+                    transition: color 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-close:hover {
+                    color: #fff !important;
+                }
+
+                .chat-penalty-modal-body {
+                    padding: 24px 20px !important;
+                    text-align: center !important;
+                }
+
+                .chat-penalty-modal-icon {
+                    font-size: 48px !important;
+                    margin-bottom: 16px !important;
+                }
+
+                .chat-penalty-modal-message {
+                    font-size: 15px !important;
+                    color: #ddd !important;
+                    line-height: 1.5 !important;
+                }
+
+                .chat-penalty-modal-user {
+                    color: #ff9800 !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-type {
+                    color: #f44336 !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-duration {
+                    color: #00a4dc !important;
+                    font-weight: 600 !important;
+                }
+
+                .chat-penalty-modal-footer {
+                    padding: 16px 20px !important;
+                    border-top: 1px solid rgba(255,255,255,0.1) !important;
+                    display: flex !important;
+                    justify-content: center !important;
+                }
+
+                .chat-penalty-modal-ok {
+                    background: #4caf50 !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    padding: 12px 40px !important;
+                    color: #fff !important;
+                    font-size: 14px !important;
+                    font-weight: 500 !important;
+                    cursor: pointer !important;
+                    transition: background 0.2s ease !important;
+                }
+
+                .chat-penalty-modal-ok:hover {
+                    background: #43a047 !important;
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -18536,10 +18663,10 @@
                         throw new Error('Ban failed: ' + msg);
                     });
                 }
-                // Success - show toast based on ban type
+                // Success - show info modal with penalty details
                 const actionName = banType === 'snooze' ? 'Snooze' : banType === 'chat' ? 'Chat ban' : 'Media ban';
                 const durationText = durationMinutes > 0 ? self.formatDuration(durationMinutes) : 'permanent';
-                self.showModToast(actionName + ' applied to ' + userName + ' (' + durationText + ')');
+                self.showPenaltySuccessModal(userName, banType, durationMinutes);
                 self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
                 // Refresh all mod panel data
                 console.log('[Ratings] Ban success, refreshing lists...');
@@ -18719,6 +18846,115 @@
             } catch (e) {
                 console.log('[Ratings] Toast:', message);
             }
+        },
+
+        /**
+         * Show penalty success modal after applying a penalty
+         */
+        showPenaltySuccessModal: function (userName, banType, durationMinutes) {
+            const self = this;
+
+            // Remove existing modal if any
+            const existing = document.querySelector('.chat-penalty-modal-overlay');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Determine penalty type text and icon
+            let typeText, typeIcon;
+            switch (banType) {
+                case 'snooze':
+                    typeText = 'snoozed';
+                    typeIcon = '🔇';
+                    break;
+                case 'chat':
+                    typeText = 'banned from chat';
+                    typeIcon = '🚫';
+                    break;
+                case 'media':
+                    typeText = 'banned from media';
+                    typeIcon = '📵';
+                    break;
+                default:
+                    typeText = 'penalized';
+                    typeIcon = '⚠️';
+            }
+
+            // Format duration
+            let durationText;
+            if (!durationMinutes || durationMinutes <= 0) {
+                durationText = 'permanently';
+            } else if (durationMinutes < 60) {
+                durationText = 'for ' + durationMinutes + ' minute' + (durationMinutes > 1 ? 's' : '');
+            } else if (durationMinutes < 1440) {
+                const hours = Math.round(durationMinutes / 60);
+                durationText = 'for ' + hours + ' hour' + (hours > 1 ? 's' : '');
+            } else if (durationMinutes < 10080) {
+                const days = Math.round(durationMinutes / 1440);
+                durationText = 'for ' + days + ' day' + (days > 1 ? 's' : '');
+            } else {
+                const weeks = Math.round(durationMinutes / 10080);
+                durationText = 'for ' + weeks + ' week' + (weeks > 1 ? 's' : '');
+            }
+
+            // Create modal HTML
+            const overlay = document.createElement('div');
+            overlay.className = 'chat-penalty-modal-overlay';
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Penalty Applied</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">' + typeIcon + '</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            'User <span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span> ' +
+                            'is <span class="chat-penalty-modal-type">' + typeText + '</span> ' +
+                            '<span class="chat-penalty-modal-duration">' + durationText + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Show with animation
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+
+            // Close handlers
+            const closeModal = function () {
+                overlay.classList.remove('visible');
+                setTimeout(function () {
+                    overlay.remove();
+                }, 200);
+            };
+
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
+
+            // Close on overlay click (outside modal)
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) {
+                    closeModal();
+                }
+            });
+
+            // Close on Escape key
+            const escHandler = function (e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
         },
 
         /**
