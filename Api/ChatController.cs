@@ -17,16 +17,34 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Ratings.Api
 {
+    /// <summary>
+    /// Exception filter that converts UnauthorizedAccessException to 401 Unauthorized.
+    /// This allows RequireAuthAsync() to throw instead of requiring manual checks.
+    /// </summary>
+    public class AuthExceptionFilter : IExceptionFilter
+    {
+        public void OnException(ExceptionContext context)
+        {
+            if (context.Exception is UnauthorizedAccessException)
+            {
+                context.Result = new UnauthorizedResult();
+                context.ExceptionHandled = true;
+            }
+        }
+    }
+
     /// <summary>
     /// Chat API controller.
     /// </summary>
     [ApiController]
     [Route("Ratings/Chat")]
     [Produces(MediaTypeNames.Application.Json)]
+    [TypeFilter(typeof(AuthExceptionFilter))]
     public class ChatController : ControllerBase
     {
         private readonly RatingsRepository _repository;
@@ -97,6 +115,21 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Guid.Empty;
             }
+        }
+
+        /// <summary>
+        /// Requires authentication and returns user ID. Throws if not authenticated.
+        /// Use this instead of GetCurrentUserIdAsync() + manual check to prevent forgetting auth checks.
+        /// </summary>
+        /// <exception cref="UnauthorizedAccessException">Thrown when user is not authenticated.</exception>
+        private async Task<Guid> RequireAuthAsync()
+        {
+            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty)
+            {
+                throw new UnauthorizedAccessException("Authentication required");
+            }
+            return userId;
         }
 
         /// <summary>
@@ -370,13 +403,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         public async Task<ActionResult> GetChatConfig()
         {
             var config = Plugin.Instance?.Configuration;
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-
-            // Require authentication - config should not be exposed to anonymous users
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized();
-            }
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Check if GIF search is available (API key configured server-side)
             var hasGifSupport = !string.IsNullOrEmpty(config?.KlipyApiKey) || !string.IsNullOrEmpty(config?.TenorApiKey);
@@ -405,8 +432,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("GIFs are disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Rate limit GIF searches per user
             if (IsRateLimited(userId, 30)) // 30 searches per minute per user
@@ -631,8 +657,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Note: Banned users CAN view messages, they just can't post.
             // Ban check is done in the POST endpoint, not here.
@@ -673,8 +698,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Check if user is banned
             var chatBan = _repository.GetActiveChatBan(userId, "chat");
@@ -753,8 +777,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var message = _repository.GetChatMessageById(messageId);
             if (message == null) return NotFound("Message not found");
@@ -820,8 +843,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest("Chat is disabled");
             }
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var users = _repository.GetOnlineChatUsers(5);
             // Return only display info, not raw user IDs
@@ -842,8 +864,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> Heartbeat()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var user = _userManager.GetUserById(userId);
             if (user == null) return Unauthorized();
@@ -870,8 +891,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> SetTyping([FromQuery] bool isTyping)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             _repository.SetChatUserTyping(userId, isTyping);
             return Ok();
@@ -884,8 +904,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> MarkRead([FromQuery] Guid messageId)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             await _repository.UpdateLastSeenMessageAsync(userId, messageId).ConfigureAwait(false);
             return Ok();
@@ -898,8 +917,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetUnreadCount()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var chatUser = _repository.GetChatUser(userId);
             var count = _repository.GetUnreadChatMessageCount(userId, chatUser?.LastSeenMessageId);
@@ -929,8 +947,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> AddModerator([FromQuery] Guid targetUserId, [FromQuery] int level = 1)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var myLevel = GetModeratorLevel(userId);
             var isAdmin = IsJellyfinAdmin(userId);
@@ -990,8 +1007,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> RemoveModerator([FromRoute] Guid moderatorId)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var myLevel = GetModeratorLevel(userId);
             var isAdmin = IsJellyfinAdmin(userId);
@@ -1041,8 +1057,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Validate ban type
             var validBanTypes = new[] { "chat", "snooze", "media" };
@@ -1225,8 +1240,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetBanStatus()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var chatBan = _repository.GetActiveChatBan(userId, "chat");
             var snoozeBan = _repository.GetActiveChatBan(userId, "snooze");
@@ -1297,8 +1311,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var users = _userManager.Users
                 .Where(u => u.Id != userId) // Exclude self
@@ -1328,8 +1341,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var conversations = _repository.GetConversations(userId);
 
@@ -1362,8 +1374,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // SECURITY: GetPrivateMessages only returns messages where userId is sender or recipient
             var messages = _repository.GetPrivateMessages(userId, otherUserId, Math.Min(limit, 100), since);
@@ -1397,8 +1408,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             var config = Plugin.Instance?.Configuration;
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Cannot DM yourself
             if (userId == otherUserId)
@@ -1486,8 +1496,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var count = _repository.GetUnreadDMCount(userId);
             return Ok(new { count });
@@ -1503,8 +1512,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // SECURITY: DeletePrivateMessageAsync verifies userId is the sender
             var deleted = await _repository.DeletePrivateMessageAsync(messageId, userId).ConfigureAwait(false);
@@ -1523,8 +1531,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var count = _repository.GetPublicChatUnreadCount(userId);
             return Ok(new { count });
@@ -1540,8 +1547,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             await _repository.MarkPublicChatReadAsync(userId).ConfigureAwait(false);
             return Ok(new { success = true });
@@ -1609,8 +1615,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] Guid moderatorId,
             [FromQuery] int level)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var myLevel = GetModeratorLevel(userId);
             var isAdmin = IsJellyfinAdmin(userId);
@@ -1740,8 +1745,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             // Anyone can see styles (needed for rendering)
             var styles = _repository.GetAllUserStyleOverrides();
@@ -1847,8 +1851,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetMyModeratorInfo()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
-            if (userId == Guid.Empty) return Unauthorized();
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
 
             var isAdmin = IsJellyfinAdmin(userId);
             var mod = _repository.GetChatModeratorByUserId(userId);
