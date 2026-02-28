@@ -17777,17 +17777,21 @@
                 headers: this.getChatAuthHeaders()
             })
             .then(function (r) {
+                console.log('[Ratings] Style API response:', r.status, r.ok);
                 if (r.ok) {
+                    console.log('[Ratings] Style applied successfully, showing modal...');
                     self.showStyleSuccessModal(userName, nicknameColor, messageColor, textStyle);
                     self.addModSystemMessage('Style updated for ' + userName, '🎨');
                     self.loadUserStyles(); // Reload styles
                 } else {
                     r.text().then(function (txt) {
+                        console.log('[Ratings] Style API failed:', txt);
                         self.showModToast('Failed to apply style: ' + txt);
                     });
                 }
             })
             .catch(function (err) {
+                console.error('[Ratings] Style API error:', err);
                 self.showModToast('Failed to apply style');
             });
         },
