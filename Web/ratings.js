@@ -18533,10 +18533,24 @@
          * Get inline styles for a user's message based on style overrides
          */
         getUserMessageStyle: function (userId) {
-            if (!this.chatUserStyles || !this.chatUserStyles[userId]) {
+            if (!this.chatUserStyles) {
                 return { nicknameStyle: '', messageStyle: '' };
             }
-            const style = this.chatUserStyles[userId];
+            // Normalize userId - try both with and without dashes
+            let style = this.chatUserStyles[userId];
+            if (!style) {
+                // Try with dashes if userId has none
+                const withDashes = userId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+                style = this.chatUserStyles[withDashes];
+            }
+            if (!style) {
+                // Try without dashes if userId has them
+                const noDashes = userId.replace(/-/g, '');
+                style = this.chatUserStyles[noDashes];
+            }
+            if (!style) {
+                return { nicknameStyle: '', messageStyle: '' };
+            }
             let nicknameStyle = '';
             let messageStyle = '';
 
