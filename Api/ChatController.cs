@@ -254,13 +254,34 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         // Moderator action rate limiting
         private static readonly ConcurrentDictionary<Guid, (DateTime ResetTime, int Count)> _modActionRateLimits = new();
+        private static DateTime _lastModRateLimitCleanup = DateTime.UtcNow;
+        private static readonly object _modCleanupLock = new object();
 
         /// <summary>
-        /// Checks moderator action rate limit.
+        /// Checks moderator action rate limit. Includes periodic cleanup to prevent memory leak.
         /// </summary>
         private static bool IsModeratorActionRateLimited(Guid moderatorId, int maxPerMinute)
         {
             var now = DateTime.UtcNow;
+
+            // Periodic cleanup of stale entries (every 5 minutes) - prevents memory leak
+            if ((now - _lastModRateLimitCleanup).TotalMinutes >= 5)
+            {
+                lock (_modCleanupLock)
+                {
+                    if ((now - _lastModRateLimitCleanup).TotalMinutes >= 5)
+                    {
+                        _lastModRateLimitCleanup = now;
+                        foreach (var key in _modActionRateLimits.Keys.ToList())
+                        {
+                            if (_modActionRateLimits.TryGetValue(key, out var val) && (now - val.ResetTime).TotalMinutes >= 2)
+                            {
+                                _modActionRateLimits.TryRemove(key, out _);
+                            }
+                        }
+                    }
+                }
+            }
 
             var entry = _modActionRateLimits.AddOrUpdate(
                 moderatorId,
@@ -933,7 +954,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetModerators()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var moderators = _repository.GetAllChatModerators();
@@ -1198,7 +1219,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             // Check if this ban was placed by an admin - only admins can lift admin-placed bans
@@ -1226,7 +1247,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var config = Plugin.Instance?.Configuration;
             if (config?.EnableChat != true) return BadRequest("Chat is disabled");
 
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             var bans = _repository.GetAllActiveChatBans();
@@ -1261,7 +1282,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetAllUsers()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!IsJellyfinAdmin(userId)) return Forbid();
 
             var users = _userManager.Users
@@ -1562,7 +1583,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [AllowAnonymous]
         public async Task<ActionResult> GetModeratorStats()
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             var moderators = _repository.GetAllChatModerators();
@@ -1599,7 +1620,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromQuery] Guid? moderatorId,
             [FromQuery] int limit = 100)
         {
-            var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!CanModerate(userId)) return Forbid();
 
             var actions = _repository.GetModeratorActions(moderatorId, Math.Min(limit, 500));
