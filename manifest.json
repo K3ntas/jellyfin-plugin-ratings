@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.49.0",
+        "changelog": "Add RequireAuthAsync pattern - forgetting auth check now fails loudly instead of silently",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.49.0/jellyfin-plugin-ratings_2.0.49.0.zip",
+        "checksum": "49862cecf2617f4757d0a88116aadc37",
+        "timestamp": "2026-02-28T23:20:00Z"
+      },
+      {
         "version": "2.0.48.0",
         "changelog": "Security hardening: auth checks, import sanitization, inline JS removal, regex precompile, global GIF rate limit",
         "targetAbi": "10.11.0.0",
