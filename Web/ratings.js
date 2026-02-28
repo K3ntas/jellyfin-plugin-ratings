@@ -18554,16 +18554,21 @@
             let nicknameStyle = '';
             let messageStyle = '';
 
-            if (style.nicknameColor) {
-                nicknameStyle += 'color:' + style.nicknameColor + ' !important;';
+            // Handle both camelCase and PascalCase (API returns PascalCase)
+            const nickColor = style.nicknameColor || style.NicknameColor;
+            const msgColor = style.messageColor || style.MessageColor;
+            const txtStyle = style.textStyle || style.TextStyle;
+
+            if (nickColor) {
+                nicknameStyle += 'color:' + nickColor + ' !important;';
             }
-            if (style.messageColor) {
-                messageStyle += 'color:' + style.messageColor + ' !important;';
+            if (msgColor) {
+                messageStyle += 'color:' + msgColor + ' !important;';
             }
-            if (style.textStyle === 'bold' || style.textStyle === 'bold-italic') {
+            if (txtStyle === 'bold' || txtStyle === 'bold-italic') {
                 messageStyle += 'font-weight:bold !important;';
             }
-            if (style.textStyle === 'italic' || style.textStyle === 'bold-italic') {
+            if (txtStyle === 'italic' || txtStyle === 'bold-italic') {
                 messageStyle += 'font-style:italic !important;';
             }
 
