@@ -4079,6 +4079,15 @@
 
                 /* Mobile responsive */
                 @media screen and (max-width: 768px) {
+                    .netflix-genre-row {
+                        margin-bottom: 15px;
+                    }
+
+                    .netflix-row-content {
+                        gap: 6px;
+                        padding: 6px 3%;
+                    }
+
                     .netflix-card {
                         width: 140px;
                         height: 210px;
@@ -4091,6 +4100,7 @@
 
                     .netflix-genre-title {
                         font-size: 1.1em;
+                        margin-bottom: 8px;
                     }
 
                     .netflix-sort-btn {
