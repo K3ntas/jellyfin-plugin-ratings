@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.57.0",
+        "changelog": "Fix 925px breakpoint spacing in Netflix view",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.57.0/jellyfin-plugin-ratings_2.0.57.0.zip",
+        "checksum": "7e8a7b20e623c1e5c13d539362535810",
+        "timestamp": "2026-03-07T16:46:00Z"
+      },
+      {
         "version": "2.0.56.0",
         "changelog": "Fix mobile genre row spacing with forced heights",
         "targetAbi": "10.11.0.0",
