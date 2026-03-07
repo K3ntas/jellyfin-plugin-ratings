@@ -4080,37 +4080,49 @@
                 /* Mobile responsive */
                 @media screen and (max-width: 768px) {
                     .netflix-genre-row {
-                        margin-bottom: 15px;
+                        margin-bottom: 12px !important;
+                    }
+
+                    .netflix-row-wrapper {
+                        min-height: 0 !important;
+                        height: auto !important;
                     }
 
                     .netflix-row-content {
-                        gap: 6px;
-                        padding: 6px 3%;
+                        gap: 6px !important;
+                        padding: 6px 3% !important;
+                        min-height: 0 !important;
+                        height: auto !important;
+                        align-items: flex-start !important;
                     }
 
                     .netflix-card {
-                        width: 140px;
-                        height: 210px;
+                        width: 140px !important;
+                        height: 210px !important;
+                        min-height: 0 !important;
+                        max-height: 210px !important;
                     }
 
                     .netflix-card-placeholder {
-                        width: 140px;
-                        height: 210px;
+                        width: 140px !important;
+                        height: 210px !important;
+                        min-height: 0 !important;
+                        max-height: 210px !important;
                     }
 
                     .netflix-genre-title {
-                        font-size: 1.1em;
-                        margin-bottom: 8px;
+                        font-size: 1.1em !important;
+                        margin-bottom: 6px !important;
                     }
 
                     .netflix-sort-btn {
-                        width: 24px;
-                        height: 24px;
-                        font-size: 12px;
+                        width: 24px !important;
+                        height: 24px !important;
+                        font-size: 12px !important;
                     }
 
                     .netflix-scroll-btn {
-                        display: none;
+                        display: none !important;
                     }
                 }
 
