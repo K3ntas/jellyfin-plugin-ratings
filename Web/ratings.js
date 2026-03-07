@@ -4330,6 +4330,28 @@
                     font-weight: 500 !important;
                 }
 
+                #latestMediaDropdown .tab-badge {
+                    display: inline-block !important;
+                    background: #00a4dc !important;
+                    color: #fff !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    padding: 2px 6px !important;
+                    border-radius: 10px !important;
+                    margin-left: 6px !important;
+                    min-width: 16px !important;
+                    text-align: center !important;
+                }
+
+                #latestMediaDropdown .tab-badge.leaving {
+                    background: #f44336 !important;
+                }
+
+                #latestMediaDropdown .tab-badge.leaving-total {
+                    background: rgba(244, 67, 54, 0.3) !important;
+                    color: #f44336 !important;
+                }
+
                 #latestMediaDropdown .latest-loading {
                     padding: 20px !important;
                     text-align: center !important;
@@ -9291,47 +9313,69 @@
             const authHeader = ApiClient._serverInfo?.AccessToken ?
                 `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Get last seen time
+            // Get last seen times
             const lastSeenStr = localStorage.getItem('ratings_latest_media_seen');
             const lastSeen = lastSeenStr ? new Date(lastSeenStr) : new Date(0);
+            const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
+            const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch latest items
-            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
-            })
-            .then(r => r.json())
-            .then(data => {
-                const items = data.Items || [];
-                // Count items newer than last seen, deduplicate series by SeriesId
+            // Fetch both: latest items and scheduled deletions
+            Promise.all([
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()).catch(() => ({ Items: [] })),
+                fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()).catch(() => [])
+            ])
+            .then(([mediaData, deletions]) => {
+                // Count new media items
+                const items = mediaData.Items || [];
                 const seenSeries = new Set();
-                let newCount = 0;
+                let newMediaCount = 0;
 
                 items.forEach(item => {
                     const itemDate = new Date(item.DateCreated);
                     if (itemDate > lastSeen) {
                         if (item.Type === 'Episode') {
-                            // For episodes, count the series once
                             if (item.SeriesId && !seenSeries.has(item.SeriesId)) {
                                 seenSeries.add(item.SeriesId);
-                                newCount++;
+                                newMediaCount++;
                             }
                         } else {
-                            // Movies and Series
                             if (!seenSeries.has(item.Id)) {
                                 seenSeries.add(item.Id);
-                                newCount++;
+                                newMediaCount++;
                             }
                         }
                     }
                 });
 
-                // Update badge
+                // Count scheduled deletions (new since last seen)
+                const activeDeletions = (deletions || []).filter(d => !d.IsCancelled && !d.isCancelled);
+                let leavingSoonCount = 0;
+                activeDeletions.forEach(d => {
+                    const scheduledAt = new Date(d.ScheduledAt || d.scheduledAt);
+                    if (scheduledAt > lastSeenLeaving) {
+                        leavingSoonCount++;
+                    }
+                });
+
+                // Store counts for tab badges
+                self._latestMediaCount = newMediaCount;
+                self._leavingSoonCount = leavingSoonCount;
+                self._totalLeavingSoon = activeDeletions.length;
+
+                // Update main icon badge (combined count)
                 const badge = document.getElementById('latestMediaBadge');
                 if (badge) {
-                    if (newCount > 0) {
-                        badge.textContent = newCount > 99 ? '99+' : newCount;
+                    const totalCount = newMediaCount + leavingSoonCount;
+                    if (totalCount > 0) {
+                        badge.textContent = totalCount > 99 ? '99+' : totalCount;
                         badge.classList.add('visible');
                     } else {
                         badge.classList.remove('visible');
@@ -9350,11 +9394,14 @@
         loadLatestMedia: function (dropdown, activeTab = 'latest') {
             const self = this;
 
-            // Build tabs header
+            // Build tabs header with badges
             const buildTabsHeader = (active) => {
+                const latestBadge = self._latestMediaCount > 0 ? `<span class="tab-badge">${self._latestMediaCount > 99 ? '99+' : self._latestMediaCount}</span>` : '';
+                const leavingBadge = self._leavingSoonCount > 0 ? `<span class="tab-badge leaving">${self._leavingSoonCount > 99 ? '99+' : self._leavingSoonCount}</span>` :
+                                     (self._totalLeavingSoon > 0 ? `<span class="tab-badge leaving-total">${self._totalLeavingSoon}</span>` : '');
                 return `<div class="latest-header">
-                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}</button>
-                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}</button>
+                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}${latestBadge}</button>
+                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}${leavingBadge}</button>
                 </div>`;
             };
 
@@ -9617,9 +9664,12 @@
 
             // Build tabs header
             const buildTabsHeader = (active) => {
+                const latestBadge = self._latestMediaCount > 0 ? `<span class="tab-badge">${self._latestMediaCount > 99 ? '99+' : self._latestMediaCount}</span>` : '';
+                const leavingBadge = self._leavingSoonCount > 0 ? `<span class="tab-badge leaving">${self._leavingSoonCount > 99 ? '99+' : self._leavingSoonCount}</span>` :
+                                     (self._totalLeavingSoon > 0 ? `<span class="tab-badge leaving-total">${self._totalLeavingSoon}</span>` : '');
                 return `<div class="latest-header">
-                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}</button>
-                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}</button>
+                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}${latestBadge}</button>
+                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}${leavingBadge}</button>
                 </div>`;
             };
 
@@ -9638,6 +9688,10 @@
                     });
                 });
             };
+
+            // Mark leaving soon as seen when viewing this tab
+            localStorage.setItem('ratings_leaving_soon_seen', new Date().toISOString());
+            self._leavingSoonCount = 0; // Clear the "new" count after viewing
 
             // Show loading state
             dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-loading">${self.t('leavingSoonLoading')}</div>`;
