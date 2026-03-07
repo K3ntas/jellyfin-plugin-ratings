@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.51.0",
+        "changelog": "Fix request form not supporting accents/apostrophes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.51.0/jellyfin-plugin-ratings_2.0.51.0.zip",
+        "checksum": "3914e07d6cc4a6b44536e41ef83ecea7",
+        "timestamp": "2026-03-07T14:05:00Z"
+      },
+      {
         "version": "2.0.50.0",
         "changelog": "Fix mod rate limiter memory leak, consistent 401/403 HTTP responses",
         "targetAbi": "10.11.0.0",
