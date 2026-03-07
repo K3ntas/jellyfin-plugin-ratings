@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.53.0",
+        "changelog": "Add notification badges to Latest Media and Leaving Soon tabs",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.53.0/jellyfin-plugin-ratings_2.0.53.0.zip",
+        "checksum": "53e35067de1b8ab60b6af5723112f3b8",
+        "timestamp": "2026-03-07T15:18:00Z"
+      },
+      {
         "version": "2.0.52.0",
         "changelog": "Add Leaving Soon tab to Latest Media dropdown",
         "targetAbi": "10.11.0.0",
