@@ -98,11 +98,27 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return string.Empty;
             }
 
-            // Strip HTML tags
-            var sanitized = Regex.Replace(input, @"<[^>]*>", string.Empty);
+            // Trim first
+            var sanitized = input.Trim();
 
-            // HTML encode special characters to prevent XSS
-            sanitized = WebUtility.HtmlEncode(sanitized);
+            // Strip all HTML tags (handles malformed tags too)
+            sanitized = Regex.Replace(sanitized, @"<[^>]*?>", string.Empty, RegexOptions.None);
+            // Also strip incomplete tags at end
+            sanitized = Regex.Replace(sanitized, @"<[^>]*$", string.Empty, RegexOptions.None);
+
+            // Recursively remove javascript: protocol until stable
+            string previous;
+            do
+            {
+                previous = sanitized;
+                sanitized = Regex.Replace(sanitized, @"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", string.Empty, RegexOptions.IgnoreCase);
+            } while (sanitized != previous);
+
+            // Remove event handler attributes
+            sanitized = Regex.Replace(sanitized, @"on\w+\s*=", string.Empty, RegexOptions.IgnoreCase);
+
+            // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
+            // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
 
             // Limit length
             if (sanitized.Length > maxLength)
@@ -110,7 +126,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 sanitized = sanitized.Substring(0, maxLength);
             }
 
-            return sanitized.Trim();
+            return sanitized;
         }
 
         /// <summary>
