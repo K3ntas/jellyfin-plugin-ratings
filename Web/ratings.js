@@ -4077,6 +4077,45 @@
                     100% { background-position: -200% 0; }
                 }
 
+                /* Tablet/narrow responsive - matches header breakpoint */
+                @media screen and (max-width: 925px) {
+                    .netflix-genre-row {
+                        margin-bottom: 15px !important;
+                    }
+
+                    .netflix-row-wrapper {
+                        min-height: 0 !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                    }
+
+                    .netflix-scroll-btn {
+                        display: none !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        position: static !important;
+                    }
+
+                    .netflix-row-content {
+                        min-height: 0 !important;
+                        height: auto !important;
+                    }
+
+                    .netflix-card {
+                        width: 160px !important;
+                        height: 240px !important;
+                    }
+
+                    .netflix-card-placeholder {
+                        width: 160px !important;
+                        height: 240px !important;
+                    }
+
+                    .netflix-genre-title {
+                        margin-bottom: 8px !important;
+                    }
+                }
+
                 /* Mobile responsive */
                 @media screen and (max-width: 768px) {
                     .netflix-genre-row {
@@ -4123,6 +4162,9 @@
 
                     .netflix-scroll-btn {
                         display: none !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        position: static !important;
                     }
                 }
 
