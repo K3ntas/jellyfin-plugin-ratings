@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.52.0",
+        "changelog": "Add Leaving Soon tab to Latest Media dropdown",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.52.0/jellyfin-plugin-ratings_2.0.52.0.zip",
+        "checksum": "02dd2b10d0e3cca728fa4a6ec9c356c8",
+        "timestamp": "2026-03-07T14:53:00Z"
+      },
+      {
         "version": "2.0.51.0",
         "changelog": "Fix request form not supporting accents/apostrophes",
         "targetAbi": "10.11.0.0",
