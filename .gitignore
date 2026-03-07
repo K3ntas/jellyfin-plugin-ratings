@@ -52,5 +52,13 @@ artifacts/
 
 # Development documentation (local only, never push)
 release_workflow*.md
+RELEASE_WORKFLOW*.md
 *_plan.md
+*_PLAN.md
 *_workflow.md
+*_WORKFLOW.md
+PLAN-*.md
+plan-*.md
+
+# Release artifacts (upload to GitHub releases, not repo)
+jellyfin-plugin-ratings_*.zip
