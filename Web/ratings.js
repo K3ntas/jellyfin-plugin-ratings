@@ -86,6 +86,7 @@
                 categoryNew: '🆕 New', categoryProcessing: '🔄 Processing', categoryPending: '⏳ Pending', categorySnoozed: '💤 Snoozed', categoryDone: '✅ Done', categoryRejected: '❌ Rejected',
                 createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
                 leavingSoon: 'Leaving Soon', leavingSoonEmpty: 'No media scheduled for deletion', leavingSoonLoading: 'Loading...', timeLeft: 'left',
+                sortHighest: 'Highest rated first', sortLowest: 'Lowest rated first',
                 newEpisode: '+1 episode', newEpisodes: '+{count} episodes', typeMovie: 'Movie', typeSeries: 'Series', typeAnime: 'Anime', typeOther: 'Other',
                 timeAgo: 'ago', timeJustNow: 'just now', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Media Management', mediaSearch: 'Search...', mediaTypeAll: 'All Types', mediaTypeMovie: 'Movies', mediaTypeSeries: 'Series',
@@ -137,6 +138,7 @@
                 categoryNew: '🆕 Nuevo', categoryProcessing: '🔄 Procesando', categoryPending: '⏳ Pendiente', categorySnoozed: '💤 Pospuesto', categoryDone: '✅ Completado', categoryRejected: '❌ Rechazado',
                 createRequest: 'Crear Solicitud', latestMedia: 'Contenido Reciente', latestMediaLoading: 'Cargando...', latestMediaEmpty: 'No hay contenido reciente', latestMediaError: 'Error al cargar',
                 leavingSoon: 'Por Eliminar', leavingSoonEmpty: 'Sin contenido programado para eliminar', leavingSoonLoading: 'Cargando...', timeLeft: 'restante',
+                sortHighest: 'Mayor calificación primero', sortLowest: 'Menor calificación primero',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodios', typeMovie: 'Película', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Otro',
                 timeAgo: 'hace', timeJustNow: 'ahora mismo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Contenido', mediaManagementTitle: 'Gestión de Contenido', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Películas', mediaTypeSeries: 'Series',
@@ -183,6 +185,7 @@
                 categoryNew: '🆕 新', categoryProcessing: '🔄 处理中', categoryPending: '⏳ 待处理', categorySnoozed: '💤 已暂停', categoryDone: '✅ 已完成', categoryRejected: '❌ 已拒绝',
                 createRequest: '创建请求', latestMedia: '最新媒体', latestMediaLoading: '加载中...', latestMediaEmpty: '没有最近的媒体', latestMediaError: '加载失败',
                 leavingSoon: '即将删除', leavingSoonEmpty: '没有计划删除的媒体', leavingSoonLoading: '加载中...', timeLeft: '剩余',
+                sortHighest: '最高评分优先', sortLowest: '最低评分优先',
                 newEpisode: '+1 集', newEpisodes: '+{count} 集', typeMovie: '电影', typeSeries: '剧集', typeAnime: '动漫', typeOther: '其他',
                 timeAgo: '前', timeJustNow: '刚刚', timeMinutes: '分钟', timeHours: '小时', timeDays: '天',
                 mediaManagement: '媒体', mediaManagementTitle: '媒体管理', mediaSearch: '搜索...', mediaTypeAll: '全部类型', mediaTypeMovie: '电影', mediaTypeSeries: '剧集',
@@ -229,6 +232,7 @@
                 categoryNew: '🆕 Novo', categoryProcessing: '🔄 Processando', categoryPending: '⏳ Pendente', categorySnoozed: '💤 Adiado', categoryDone: '✅ Concluído', categoryRejected: '❌ Rejeitado',
                 createRequest: 'Criar Solicitação', latestMedia: 'Mídia Recente', latestMediaLoading: 'Carregando...', latestMediaEmpty: 'Nenhuma mídia recente', latestMediaError: 'Falha ao carregar',
                 leavingSoon: 'Saindo em Breve', leavingSoonEmpty: 'Nenhuma mídia agendada para exclusão', leavingSoonLoading: 'Carregando...', timeLeft: 'restante',
+                sortHighest: 'Melhor avaliados primeiro', sortLowest: 'Pior avaliados primeiro',
                 newEpisode: '+1 episódio', newEpisodes: '+{count} episódios', typeMovie: 'Filme', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Outro',
                 timeAgo: 'atrás', timeJustNow: 'agora mesmo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Mídia', mediaManagementTitle: 'Gerenciamento de Mídia', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Filmes', mediaTypeSeries: 'Séries',
@@ -275,6 +279,7 @@
                 categoryNew: '🆕 Новые', categoryProcessing: '🔄 В обработке', categoryPending: '⏳ Ожидание', categorySnoozed: '💤 Отложено', categoryDone: '✅ Готово', categoryRejected: '❌ Отклонено',
                 createRequest: 'Создать Запрос', latestMedia: 'Последние Добавления', latestMediaLoading: 'Загрузка...', latestMediaEmpty: 'Нет недавних медиа', latestMediaError: 'Ошибка загрузки',
                 leavingSoon: 'Скоро Удалится', leavingSoonEmpty: 'Нет запланированных удалений', leavingSoonLoading: 'Загрузка...', timeLeft: 'осталось',
+                sortHighest: 'Высший рейтинг первым', sortLowest: 'Низший рейтинг первым',
                 newEpisode: '+1 эпизод', newEpisodes: '+{count} эпизодов', typeMovie: 'Фильм', typeSeries: 'Сериал', typeAnime: 'Аниме', typeOther: 'Другое',
                 timeAgo: 'назад', timeJustNow: 'только что', timeMinutes: 'мин', timeHours: 'ч', timeDays: 'д',
                 mediaManagement: 'Медиа', mediaManagementTitle: 'Управление Медиа', mediaSearch: 'Поиск...', mediaTypeAll: 'Все Типы', mediaTypeMovie: 'Фильмы', mediaTypeSeries: 'Сериалы',
@@ -321,6 +326,7 @@
                 categoryNew: '🆕 新規', categoryProcessing: '🔄 処理中', categoryPending: '⏳ 保留中', categorySnoozed: '💤 スヌーズ', categoryDone: '✅ 完了', categoryRejected: '❌ 却下',
                 createRequest: 'リクエスト作成', latestMedia: '最新メディア', latestMediaLoading: '読み込み中...', latestMediaEmpty: '最近のメディアなし', latestMediaError: '読み込み失敗',
                 leavingSoon: 'まもなく削除', leavingSoonEmpty: '削除予定のメディアはありません', leavingSoonLoading: '読み込み中...', timeLeft: '残り',
+                sortHighest: '高評価順', sortLowest: '低評価順',
                 newEpisode: '+1 エピソード', newEpisodes: '+{count} エピソード', typeMovie: '映画', typeSeries: 'シリーズ', typeAnime: 'アニメ', typeOther: 'その他',
                 timeAgo: '前', timeJustNow: 'たった今', timeMinutes: '分', timeHours: '時間', timeDays: '日',
                 mediaManagement: 'メディア', mediaManagementTitle: 'メディア管理', mediaSearch: '検索...', mediaTypeAll: 'すべて', mediaTypeMovie: '映画', mediaTypeSeries: 'シリーズ',
@@ -367,6 +373,7 @@
                 categoryNew: '🆕 Neu', categoryProcessing: '🔄 In Bearbeitung', categoryPending: '⏳ Ausstehend', categorySnoozed: '💤 Zurückgestellt', categoryDone: '✅ Erledigt', categoryRejected: '❌ Abgelehnt',
                 createRequest: 'Anfrage Erstellen', latestMedia: 'Neueste Medien', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Keine neuen Medien', latestMediaError: 'Laden fehlgeschlagen',
                 leavingSoon: 'Bald Gelöscht', leavingSoonEmpty: 'Keine geplanten Löschungen', leavingSoonLoading: 'Laden...', timeLeft: 'übrig',
+                sortHighest: 'Höchste Bewertung zuerst', sortLowest: 'Niedrigste Bewertung zuerst',
                 newEpisode: '+1 Episode', newEpisodes: '+{count} Episoden', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Sonstiges',
                 timeAgo: 'vor', timeJustNow: 'gerade eben', timeMinutes: 'Min', timeHours: 'Std', timeDays: 'T',
                 mediaManagement: 'Medien', mediaManagementTitle: 'Medienverwaltung', mediaSearch: 'Suchen...', mediaTypeAll: 'Alle Typen', mediaTypeMovie: 'Filme', mediaTypeSeries: 'Serien',
@@ -413,6 +420,7 @@
                 categoryNew: '🆕 Nouveau', categoryProcessing: '🔄 En cours', categoryPending: '⏳ En attente', categorySnoozed: '💤 Reporté', categoryDone: '✅ Terminé', categoryRejected: '❌ Refusé',
                 createRequest: 'Créer Demande', latestMedia: 'Derniers Médias', latestMediaLoading: 'Chargement...', latestMediaEmpty: 'Pas de médias récents', latestMediaError: 'Échec du chargement',
                 leavingSoon: 'Bientôt Supprimé', leavingSoonEmpty: 'Aucun média prévu pour suppression', leavingSoonLoading: 'Chargement...', timeLeft: 'restant',
+                sortHighest: 'Mieux notés en premier', sortLowest: 'Moins bien notés en premier',
                 newEpisode: '+1 épisode', newEpisodes: '+{count} épisodes', typeMovie: 'Film', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Autre',
                 timeAgo: 'il y a', timeJustNow: 'à l\'instant', timeMinutes: 'min', timeHours: 'h', timeDays: 'j',
                 mediaManagement: 'Médias', mediaManagementTitle: 'Gestion des Médias', mediaSearch: 'Rechercher...', mediaTypeAll: 'Tous Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Séries',
@@ -459,6 +467,7 @@
                 categoryNew: '🆕 신규', categoryProcessing: '🔄 처리 중', categoryPending: '⏳ 대기 중', categorySnoozed: '💤 일시 중지', categoryDone: '✅ 완료', categoryRejected: '❌ 거부됨',
                 createRequest: '요청 생성', latestMedia: '최신 미디어', latestMediaLoading: '로딩 중...', latestMediaEmpty: '최근 미디어 없음', latestMediaError: '로딩 실패',
                 leavingSoon: '곧 삭제됨', leavingSoonEmpty: '삭제 예정 미디어 없음', leavingSoonLoading: '로딩 중...', timeLeft: '남음',
+                sortHighest: '높은 평점순', sortLowest: '낮은 평점순',
                 newEpisode: '+1 에피소드', newEpisodes: '+{count} 에피소드', typeMovie: '영화', typeSeries: '시리즈', typeAnime: '애니메이션', typeOther: '기타',
                 timeAgo: '전', timeJustNow: '방금', timeMinutes: '분', timeHours: '시간', timeDays: '일',
                 mediaManagement: '미디어', mediaManagementTitle: '미디어 관리', mediaSearch: '검색...', mediaTypeAll: '모든 유형', mediaTypeMovie: '영화', mediaTypeSeries: '시리즈',
@@ -505,6 +514,7 @@
                 categoryNew: '🆕 Nuovo', categoryProcessing: '🔄 In elaborazione', categoryPending: '⏳ In attesa', categorySnoozed: '💤 Posticipato', categoryDone: '✅ Completato', categoryRejected: '❌ Rifiutato',
                 createRequest: 'Crea Richiesta', latestMedia: 'Ultimi Media', latestMediaLoading: 'Caricamento...', latestMediaEmpty: 'Nessun media recente', latestMediaError: 'Caricamento fallito',
                 leavingSoon: 'In Scadenza', leavingSoonEmpty: 'Nessun media in eliminazione', leavingSoonLoading: 'Caricamento...', timeLeft: 'rimanente',
+                sortHighest: 'Più votati per primi', sortLowest: 'Meno votati per primi',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodi', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Altro',
                 timeAgo: 'fa', timeJustNow: 'adesso', timeMinutes: 'min', timeHours: 'h', timeDays: 'g',
                 mediaManagement: 'Media', mediaManagementTitle: 'Gestione Media', mediaSearch: 'Cerca...', mediaTypeAll: 'Tutti i Tipi', mediaTypeMovie: 'Film', mediaTypeSeries: 'Serie',
@@ -551,6 +561,7 @@
                 categoryNew: '🆕 Yeni', categoryProcessing: '🔄 İşleniyor', categoryPending: '⏳ Bekliyor', categorySnoozed: '💤 Ertelendi', categoryDone: '✅ Tamamlandı', categoryRejected: '❌ Reddedildi',
                 createRequest: 'İstek Oluştur', latestMedia: 'Son Medya', latestMediaLoading: 'Yükleniyor...', latestMediaEmpty: 'Son medya yok', latestMediaError: 'Yükleme başarısız',
                 leavingSoon: 'Yakında Silinecek', leavingSoonEmpty: 'Silinmek üzere medya yok', leavingSoonLoading: 'Yükleniyor...', timeLeft: 'kaldı',
+                sortHighest: 'En yüksek puan önce', sortLowest: 'En düşük puan önce',
                 newEpisode: '+1 bölüm', newEpisodes: '+{count} bölüm', typeMovie: 'Film', typeSeries: 'Dizi', typeAnime: 'Anime', typeOther: 'Diğer',
                 timeAgo: 'önce', timeJustNow: 'şimdi', timeMinutes: 'dk', timeHours: 'sa', timeDays: 'g',
                 mediaManagement: 'Medya', mediaManagementTitle: 'Medya Yönetimi', mediaSearch: 'Ara...', mediaTypeAll: 'Tüm Türler', mediaTypeMovie: 'Filmler', mediaTypeSeries: 'Diziler',
@@ -597,6 +608,7 @@
                 categoryNew: '🆕 Nowe', categoryProcessing: '🔄 Przetwarzanie', categoryPending: '⏳ Oczekujące', categorySnoozed: '💤 Odłożone', categoryDone: '✅ Gotowe', categoryRejected: '❌ Odrzucone',
                 createRequest: 'Utwórz Prośbę', latestMedia: 'Najnowsze Media', latestMediaLoading: 'Ładowanie...', latestMediaEmpty: 'Brak nowych mediów', latestMediaError: 'Błąd ładowania',
                 leavingSoon: 'Wkrótce Usunięte', leavingSoonEmpty: 'Brak zaplanowanych usunięć', leavingSoonLoading: 'Ładowanie...', timeLeft: 'pozostało',
+                sortHighest: 'Najwyżej ocenione', sortLowest: 'Najniżej ocenione',
                 newEpisode: '+1 odcinek', newEpisodes: '+{count} odcinków', typeMovie: 'Film', typeSeries: 'Serial', typeAnime: 'Anime', typeOther: 'Inne',
                 timeAgo: 'temu', timeJustNow: 'przed chwilą', timeMinutes: 'min', timeHours: 'godz', timeDays: 'dni',
                 mediaManagement: 'Media', mediaManagementTitle: 'Zarządzanie Mediami', mediaSearch: 'Szukaj...', mediaTypeAll: 'Wszystkie Typy', mediaTypeMovie: 'Filmy', mediaTypeSeries: 'Seriale',
@@ -643,6 +655,7 @@
                 categoryNew: '🆕 Nieuw', categoryProcessing: '🔄 Bezig', categoryPending: '⏳ Wachtend', categorySnoozed: '💤 Uitgesteld', categoryDone: '✅ Klaar', categoryRejected: '❌ Afgewezen',
                 createRequest: 'Verzoek Maken', latestMedia: 'Laatste Media', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Geen recente media', latestMediaError: 'Laden mislukt',
                 leavingSoon: 'Binnenkort Verwijderd', leavingSoonEmpty: 'Geen geplande verwijderingen', leavingSoonLoading: 'Laden...', timeLeft: 'over',
+                sortHighest: 'Hoogst beoordeeld eerst', sortLowest: 'Laagst beoordeeld eerst',
                 newEpisode: '+1 aflevering', newEpisodes: '+{count} afleveringen', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Anders',
                 timeAgo: 'geleden', timeJustNow: 'zojuist', timeMinutes: 'min', timeHours: 'u', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Mediabeheer', mediaSearch: 'Zoeken...', mediaTypeAll: 'Alle Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Series',
@@ -689,6 +702,7 @@
                 categoryNew: '🆕 جديد', categoryProcessing: '🔄 قيد المعالجة', categoryPending: '⏳ قيد الانتظار', categorySnoozed: '💤 مؤجل', categoryDone: '✅ مكتمل', categoryRejected: '❌ مرفوض',
                 createRequest: 'إنشاء طلب', latestMedia: 'أحدث الوسائط', latestMediaLoading: 'جاري التحميل...', latestMediaEmpty: 'لا توجد وسائط حديثة', latestMediaError: 'فشل التحميل',
                 leavingSoon: 'ستتم إزالتها قريباً', leavingSoonEmpty: 'لا توجد وسائط مجدولة للحذف', leavingSoonLoading: 'جاري التحميل...', timeLeft: 'متبقي',
+                sortHighest: 'الأعلى تقييماً أولاً', sortLowest: 'الأدنى تقييماً أولاً',
                 newEpisode: '+1 حلقة', newEpisodes: '+{count} حلقات', typeMovie: 'فيلم', typeSeries: 'مسلسل', typeAnime: 'أنمي', typeOther: 'أخرى',
                 timeAgo: 'مضت', timeJustNow: 'الآن', timeMinutes: 'دقيقة', timeHours: 'ساعة', timeDays: 'يوم',
                 mediaManagement: 'الوسائط', mediaManagementTitle: 'إدارة الوسائط', mediaSearch: 'بحث...', mediaTypeAll: 'جميع الأنواع', mediaTypeMovie: 'أفلام', mediaTypeSeries: 'مسلسلات',
@@ -735,6 +749,7 @@
                 categoryNew: '🆕 नया', categoryProcessing: '🔄 प्रगति में', categoryPending: '⏳ लंबित', categorySnoozed: '💤 स्नूज़्ड', categoryDone: '✅ पूर्ण', categoryRejected: '❌ अस्वीकृत',
                 createRequest: 'अनुरोध बनाएं', latestMedia: 'नवीनतम मीडिया', latestMediaLoading: 'लोड हो रहा है...', latestMediaEmpty: 'कोई हालिया मीडिया नहीं', latestMediaError: 'लोड विफल',
                 leavingSoon: 'जल्द हटाया जाएगा', leavingSoonEmpty: 'हटाने के लिए कोई मीडिया निर्धारित नहीं', leavingSoonLoading: 'लोड हो रहा है...', timeLeft: 'बाकी',
+                sortHighest: 'उच्चतम रेटिंग पहले', sortLowest: 'निम्नतम रेटिंग पहले',
                 newEpisode: '+1 एपिसोड', newEpisodes: '+{count} एपिसोड', typeMovie: 'फिल्म', typeSeries: 'श्रृंखला', typeAnime: 'एनीमे', typeOther: 'अन्य',
                 timeAgo: 'पहले', timeJustNow: 'अभी', timeMinutes: 'मिनट', timeHours: 'घंटे', timeDays: 'दिन',
                 mediaManagement: 'मीडिया', mediaManagementTitle: 'मीडिया प्रबंधन', mediaSearch: 'खोजें...', mediaTypeAll: 'सभी प्रकार', mediaTypeMovie: 'फिल्में', mediaTypeSeries: 'श्रृंखला',
@@ -781,6 +796,7 @@
                 categoryNew: '🆕 Nauji', categoryProcessing: '🔄 Vykdoma', categoryPending: '⏳ Laukiama', categorySnoozed: '💤 Atidėta', categoryDone: '✅ Atlikta', categoryRejected: '❌ Atmesta',
                 createRequest: 'Sukurti Užklausą', latestMedia: 'Naujausia Medija', latestMediaLoading: 'Kraunama...', latestMediaEmpty: 'Naujų medijų nerasta', latestMediaError: 'Nepavyko įkelti',
                 leavingSoon: 'Greitai Bus Ištrinta', leavingSoonEmpty: 'Nėra suplanuotų ištrynimų', leavingSoonLoading: 'Kraunama...', timeLeft: 'liko',
+                sortHighest: 'Aukščiausiai įvertinti', sortLowest: 'Žemiausiai įvertinti',
                 newEpisode: '+1 serija', newEpisodes: '+{count} serijos', typeMovie: 'Filmas', typeSeries: 'Serialas', typeAnime: 'Anime', typeOther: 'Kita',
                 timeAgo: 'prieš', timeJustNow: 'ką tik', timeMinutes: 'min', timeHours: 'val', timeDays: 'd',
                 mediaManagement: 'Medija', mediaManagementTitle: 'Medijos Valdymas', mediaSearch: 'Ieškoti...', mediaTypeAll: 'Visi Tipai', mediaTypeMovie: 'Filmai', mediaTypeSeries: 'Serialai',
@@ -3854,6 +3870,52 @@
                     margin-bottom: 12px;
                     padding-left: 4%;
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .netflix-genre-title-text {
+                    flex-shrink: 0;
+                }
+
+                .netflix-sort-buttons {
+                    display: flex;
+                    gap: 4px;
+                    opacity: 0.6;
+                    transition: opacity 0.2s ease;
+                }
+
+                .netflix-genre-title:hover .netflix-sort-buttons {
+                    opacity: 1;
+                }
+
+                .netflix-sort-btn {
+                    background: rgba(255, 255, 255, 0.15);
+                    border: none;
+                    color: #fff;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                }
+
+                .netflix-sort-btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+
+                .netflix-sort-btn.active {
+                    background: rgba(229, 9, 20, 0.9);
+                    color: #fff;
+                }
+
+                .netflix-sort-btn.active:hover {
+                    background: rgba(229, 9, 20, 1);
                 }
 
                 .netflix-row-wrapper {
@@ -3999,6 +4061,22 @@
                     font-size: 16px;
                 }
 
+                /* Lazy loading placeholder */
+                .netflix-card-placeholder {
+                    flex: 0 0 auto;
+                    width: 200px;
+                    height: 300px;
+                    border-radius: 4px;
+                    background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+                    background-size: 200% 100%;
+                    animation: netflix-shimmer 1.5s infinite;
+                }
+
+                @keyframes netflix-shimmer {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+
                 /* Mobile responsive */
                 @media screen and (max-width: 768px) {
                     .netflix-card {
@@ -4006,8 +4084,19 @@
                         height: 210px;
                     }
 
+                    .netflix-card-placeholder {
+                        width: 140px;
+                        height: 210px;
+                    }
+
                     .netflix-genre-title {
                         font-size: 1.1em;
+                    }
+
+                    .netflix-sort-btn {
+                        width: 24px;
+                        height: 24px;
+                        font-size: 12px;
                     }
 
                     .netflix-scroll-btn {
@@ -15540,12 +15629,19 @@
                 sortedGenres.forEach(([genre, genreItems]) => {
                     const shuffledItems = shuffleArray(genreItems);
                     html += self.buildGenreRow(genre, shuffledItems, baseUrl);
-                });                container.innerHTML = html;
+                });
+                container.innerHTML = html;
                 // Make sure container is visible
                 container.style.display = 'block';
 
                 // Attach scroll button handlers
                 self.attachScrollHandlers(container);
+
+                // Attach sort button handlers
+                self.attachSortHandlers(container, baseUrl);
+
+                // Set up lazy loading for placeholder cards
+                self.setupNetflixLazyLoading(container, baseUrl);
 
                 // Apply rating badges to Netflix cards
                 self.applyNetflixRatingBadges(container);
@@ -15560,36 +15656,43 @@
         },
 
         /**
-         * Build HTML for a genre row
+         * Build HTML for a genre row with sort buttons and lazy loading
          */
         buildGenreRow: function (genre, items, baseUrl) {
             const self = this;
+            const genreId = 'genre-' + genre.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-            // Limit to 20 items per row
-            const rowItems = items.slice(0, 20);
-
+            // Build cards - first 10 loaded immediately, rest are placeholders for lazy loading
+            const initialLoadCount = 10;
             let cardsHtml = '';
-            rowItems.forEach(item => {
-                const imageUrl = item.ImageTags && item.ImageTags.Primary
-                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
-                    : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
 
-                const itemUrl = `#!/details?id=${item.Id}`;
-
-                cardsHtml += `
-                    <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
-                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
-                        <div class="netflix-card-overlay">
-                            <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
-                            <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
-                        </div>
-                    </a>
-                `;
+            items.forEach((item, index) => {
+                if (index < initialLoadCount) {
+                    // Load first cards immediately
+                    cardsHtml += self.buildNetflixCard(item, baseUrl);
+                } else {
+                    // Create placeholder for lazy loading
+                    cardsHtml += `<div class="netflix-card-placeholder" data-item-index="${index}"></div>`;
+                }
             });
 
+            // Store items data as base64 encoded JSON for sorting
+            const itemsData = btoa(encodeURIComponent(JSON.stringify(items.map(item => ({
+                Id: item.Id,
+                Name: item.Name,
+                ImageTags: item.ImageTags,
+                CommunityRating: item.CommunityRating
+            })))));
+
             return `
-                <div class="netflix-genre-row">
-                    <div class="netflix-genre-title">${this.escapeHtml(genre)}</div>
+                <div class="netflix-genre-row" data-genre="${this.escapeHtml(genre)}" data-genre-id="${genreId}" data-items="${itemsData}" data-sort-state="none">
+                    <div class="netflix-genre-title">
+                        <span class="netflix-genre-title-text">${this.escapeHtml(genre)}</span>
+                        <span class="netflix-sort-buttons">
+                            <button class="netflix-sort-btn" data-sort="desc" title="${this.t('sortHighest')}">▲</button>
+                            <button class="netflix-sort-btn" data-sort="asc" title="${this.t('sortLowest')}">▼</button>
+                        </span>
+                    </div>
                     <div class="netflix-row-wrapper">
                         <button class="netflix-scroll-btn left" aria-label="Scroll left">‹</button>
                         <div class="netflix-row-content">
@@ -15598,6 +15701,27 @@
                         <button class="netflix-scroll-btn right" aria-label="Scroll right">›</button>
                     </div>
                 </div>
+            `;
+        },
+
+        /**
+         * Build a single Netflix card HTML
+         */
+        buildNetflixCard: function (item, baseUrl) {
+            const imageUrl = item.ImageTags && item.ImageTags.Primary
+                ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
+                : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
+
+            const itemUrl = `#!/details?id=${item.Id}`;
+
+            return `
+                <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
+                    <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
+                    <div class="netflix-card-overlay">
+                        <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
+                        <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
+                    </div>
+                </a>
             `;
         },
 
@@ -15623,6 +15747,228 @@
                         content.scrollBy({ left: 600, behavior: 'smooth' });
                     });
                 }
+            });
+        },
+
+        /**
+         * Attach sort button handlers to genre rows
+         */
+        attachSortHandlers: function (container, baseUrl) {
+            const self = this;
+            const sortButtons = container.querySelectorAll('.netflix-sort-btn');
+
+            sortButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const genreRow = btn.closest('.netflix-genre-row');
+                    if (!genreRow) return;
+
+                    const sortDirection = btn.getAttribute('data-sort'); // 'asc' or 'desc'
+                    const currentSortState = genreRow.getAttribute('data-sort-state');
+
+                    // If clicking same sort direction again, shuffle randomly
+                    if (currentSortState === sortDirection) {
+                        self.shuffleGenreRow(genreRow, baseUrl);
+                        return;
+                    }
+
+                    // Sort by rating
+                    self.sortGenreRow(genreRow, sortDirection, baseUrl);
+                });
+            });
+        },
+
+        /**
+         * Sort a genre row by custom ratings
+         */
+        sortGenreRow: function (genreRow, direction, baseUrl) {
+            const self = this;
+            const rowContent = genreRow.querySelector('.netflix-row-content');
+            if (!rowContent) return;
+
+            // Get items data from the row
+            const itemsData = genreRow.getAttribute('data-items');
+            if (!itemsData) return;
+
+            let items;
+            try {
+                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+            } catch (e) {
+                console.error('Failed to parse items data:', e);
+                return;
+            }
+
+            // Sort items by cached ratings
+            const sortedItems = [...items].sort((a, b) => {
+                const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+
+                // Items without ratings go to the end
+                if (ratingA === -1 && ratingB === -1) return 0;
+                if (ratingA === -1) return 1;
+                if (ratingB === -1) return -1;
+
+                // Sort by direction
+                if (direction === 'desc') {
+                    return ratingB - ratingA; // Highest first
+                } else {
+                    return ratingA - ratingB; // Lowest first
+                }
+            });
+
+            // Update items data to reflect new order
+            const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
+            genreRow.setAttribute('data-items', newItemsData);
+
+            // Re-render cards with lazy loading
+            self.renderGenreCards(genreRow, sortedItems, baseUrl);
+
+            // Update sort state and button styles
+            genreRow.setAttribute('data-sort-state', direction);
+            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
+            });
+        },
+
+        /**
+         * Shuffle a genre row randomly
+         */
+        shuffleGenreRow: function (genreRow, baseUrl) {
+            const self = this;
+            const itemsData = genreRow.getAttribute('data-items');
+            if (!itemsData) return;
+
+            let items;
+            try {
+                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+            } catch (e) {
+                console.error('Failed to parse items data:', e);
+                return;
+            }
+
+            // Shuffle array
+            const shuffled = [...items];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // Update items data to reflect new order
+            const newItemsData = btoa(encodeURIComponent(JSON.stringify(shuffled)));
+            genreRow.setAttribute('data-items', newItemsData);
+
+            // Re-render cards
+            self.renderGenreCards(genreRow, shuffled, baseUrl);
+
+            // Reset sort state and button styles
+            genreRow.setAttribute('data-sort-state', 'none');
+            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+        },
+
+        /**
+         * Render cards for a genre row with lazy loading
+         */
+        renderGenreCards: function (genreRow, items, baseUrl) {
+            const self = this;
+            const rowContent = genreRow.querySelector('.netflix-row-content');
+            if (!rowContent) return;
+
+            const initialLoadCount = 10;
+            let cardsHtml = '';
+
+            items.forEach((item, index) => {
+                if (index < initialLoadCount) {
+                    cardsHtml += self.buildNetflixCard(item, baseUrl);
+                } else {
+                    cardsHtml += `<div class="netflix-card-placeholder" data-item-index="${index}"></div>`;
+                }
+            });
+
+            rowContent.innerHTML = cardsHtml;
+
+            // Scroll to beginning
+            rowContent.scrollLeft = 0;
+
+            // Re-apply rating badges to visible cards
+            self.applyNetflixRatingBadges(genreRow);
+
+            // Re-apply leaving badges
+            self.applyNetflixLeavingBadges(genreRow);
+
+            // Set up lazy loading for new placeholders
+            self.setupNetflixLazyLoading(genreRow, baseUrl);
+        },
+
+        /**
+         * Set up Intersection Observer for lazy loading Netflix cards
+         */
+        setupNetflixLazyLoading: function (container, baseUrl) {
+            const self = this;
+
+            // Get all genre rows in the container
+            const genreRows = container.classList.contains('netflix-genre-row')
+                ? [container]
+                : container.querySelectorAll('.netflix-genre-row');
+
+            genreRows.forEach(genreRow => {
+                const rowContent = genreRow.querySelector('.netflix-row-content');
+                if (!rowContent) return;
+
+                // Create observer for this row's scroll container
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const placeholder = entry.target;
+                            const itemIndex = parseInt(placeholder.getAttribute('data-item-index'), 10);
+                            if (isNaN(itemIndex)) return;
+
+                            // Get items data
+                            const itemsData = genreRow.getAttribute('data-items');
+                            if (!itemsData) return;
+
+                            let items;
+                            try {
+                                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+                            } catch (e) {
+                                return;
+                            }
+
+                            const item = items[itemIndex];
+                            if (!item) return;
+
+                            // Replace placeholder with actual card
+                            const cardHtml = self.buildNetflixCard(item, baseUrl);
+                            const temp = document.createElement('div');
+                            temp.innerHTML = cardHtml;
+                            const newCard = temp.firstElementChild;
+
+                            placeholder.replaceWith(newCard);
+
+                            // Apply rating badge to new card
+                            self.applyNetflixRatingBadges(genreRow);
+
+                            // Apply leaving badge if applicable
+                            self.applyNetflixLeavingBadges(genreRow);
+
+                            // Stop observing this placeholder
+                            observer.unobserve(placeholder);
+                        }
+                    });
+                }, {
+                    root: rowContent, // Observe within the horizontal scroll container
+                    rootMargin: '0px 400px 0px 0px', // Load cards 400px before they scroll into view (right side)
+                    threshold: 0
+                });
+
+                // Observe all placeholders in this row
+                const placeholders = rowContent.querySelectorAll('.netflix-card-placeholder');
+                placeholders.forEach(placeholder => {
+                    observer.observe(placeholder);
+                });
             });
         },
 
