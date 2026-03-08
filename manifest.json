@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.58.0",
+        "changelog": "Fix header expansion causing genre row spacing issues at 925px",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.58.0/jellyfin-plugin-ratings_2.0.58.0.zip",
+        "checksum": "a7a9fd91f1366be6a772503154282627",
+        "timestamp": "2026-03-08T13:08:00Z"
+      },
+      {
         "version": "2.0.57.0",
         "changelog": "Fix 925px breakpoint spacing in Netflix view",
         "targetAbi": "10.11.0.0",
