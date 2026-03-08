@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.59.0",
+        "changelog": "Remove scroll buttons from DOM at narrow widths, fix notification bell",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.59.0/jellyfin-plugin-ratings_2.0.59.0.zip",
+        "checksum": "254e84d31ef133617acbef46e01bb415",
+        "timestamp": "2026-03-08T13:17:00Z"
+      },
+      {
         "version": "2.0.58.0",
         "changelog": "Fix header expansion causing genre row spacing issues at 925px",
         "targetAbi": "10.11.0.0",
