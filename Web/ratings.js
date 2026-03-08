@@ -4079,64 +4079,35 @@
 
                 /* Tablet/narrow responsive - matches header breakpoint */
                 @media screen and (max-width: 925px) {
-                    .netflix-view-container {
-                        top: 110px !important;
-                    }
-
                     .netflix-genre-row {
                         margin-bottom: 10px !important;
-                        display: block !important;
-                        height: auto !important;
-                        min-height: 0 !important;
-                        max-height: none !important;
-                        overflow: visible !important;
                     }
 
                     .netflix-row-wrapper {
                         position: static !important;
-                        min-height: 0 !important;
-                        height: auto !important;
-                        max-height: none !important;
                         overflow: visible !important;
-                        display: block !important;
                     }
 
                     .netflix-scroll-btn {
                         display: none !important;
-                        visibility: hidden !important;
-                        height: 0 !important;
-                        width: 0 !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        border: 0 !important;
-                        position: absolute !important;
-                        left: -9999px !important;
                     }
 
                     .netflix-row-content {
-                        min-height: 0 !important;
-                        height: auto !important;
-                        max-height: none !important;
                         padding: 5px 3% !important;
                     }
 
                     .netflix-card {
                         width: 160px !important;
                         height: 240px !important;
-                        min-height: 0 !important;
-                        max-height: 240px !important;
                     }
 
                     .netflix-card-placeholder {
                         width: 160px !important;
                         height: 240px !important;
-                        min-height: 0 !important;
-                        max-height: 240px !important;
                     }
 
                     .netflix-genre-title {
                         margin-bottom: 6px !important;
-                        padding-left: 3% !important;
                     }
                 }
 
@@ -15818,6 +15789,12 @@
          */
         attachScrollHandlers: function (container) {
             const rows = container.querySelectorAll('.netflix-row-wrapper');
+
+            // Remove scroll buttons entirely on narrow viewports
+            if (window.innerWidth <= 925) {
+                container.querySelectorAll('.netflix-scroll-btn').forEach(btn => btn.remove());
+                return;
+            }
 
             rows.forEach(row => {
                 const content = row.querySelector('.netflix-row-content');
