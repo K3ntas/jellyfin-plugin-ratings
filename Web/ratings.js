@@ -85,6 +85,8 @@
                 snooze: 'Snooze', unsnooze: 'Unsnooze', snoozed: 'SNOOZED', snoozedUntil: 'Snoozed until', snoozeDate: 'Snooze until date',
                 categoryNew: '🆕 New', categoryProcessing: '🔄 Processing', categoryPending: '⏳ Pending', categorySnoozed: '💤 Snoozed', categoryDone: '✅ Done', categoryRejected: '❌ Rejected',
                 createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
+                leavingSoon: 'Leaving Soon', leavingSoonEmpty: 'No media scheduled for deletion', leavingSoonLoading: 'Loading...', timeLeft: 'left',
+                sortHighest: 'Highest rated first', sortLowest: 'Lowest rated first',
                 newEpisode: '+1 episode', newEpisodes: '+{count} episodes', typeMovie: 'Movie', typeSeries: 'Series', typeAnime: 'Anime', typeOther: 'Other',
                 timeAgo: 'ago', timeJustNow: 'just now', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Media Management', mediaSearch: 'Search...', mediaTypeAll: 'All Types', mediaTypeMovie: 'Movies', mediaTypeSeries: 'Series',
@@ -135,6 +137,8 @@
                 snooze: 'Posponer', unsnooze: 'Reactivar', snoozed: 'POSPUESTO', snoozedUntil: 'Pospuesto hasta', snoozeDate: 'Posponer hasta fecha',
                 categoryNew: '🆕 Nuevo', categoryProcessing: '🔄 Procesando', categoryPending: '⏳ Pendiente', categorySnoozed: '💤 Pospuesto', categoryDone: '✅ Completado', categoryRejected: '❌ Rechazado',
                 createRequest: 'Crear Solicitud', latestMedia: 'Contenido Reciente', latestMediaLoading: 'Cargando...', latestMediaEmpty: 'No hay contenido reciente', latestMediaError: 'Error al cargar',
+                leavingSoon: 'Por Eliminar', leavingSoonEmpty: 'Sin contenido programado para eliminar', leavingSoonLoading: 'Cargando...', timeLeft: 'restante',
+                sortHighest: 'Mayor calificación primero', sortLowest: 'Menor calificación primero',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodios', typeMovie: 'Película', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Otro',
                 timeAgo: 'hace', timeJustNow: 'ahora mismo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Contenido', mediaManagementTitle: 'Gestión de Contenido', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Películas', mediaTypeSeries: 'Series',
@@ -180,6 +184,8 @@
                 snooze: '暂停', unsnooze: '取消暂停', snoozed: '已暂停', snoozedUntil: '暂停至', snoozeDate: '暂停至日期',
                 categoryNew: '🆕 新', categoryProcessing: '🔄 处理中', categoryPending: '⏳ 待处理', categorySnoozed: '💤 已暂停', categoryDone: '✅ 已完成', categoryRejected: '❌ 已拒绝',
                 createRequest: '创建请求', latestMedia: '最新媒体', latestMediaLoading: '加载中...', latestMediaEmpty: '没有最近的媒体', latestMediaError: '加载失败',
+                leavingSoon: '即将删除', leavingSoonEmpty: '没有计划删除的媒体', leavingSoonLoading: '加载中...', timeLeft: '剩余',
+                sortHighest: '最高评分优先', sortLowest: '最低评分优先',
                 newEpisode: '+1 集', newEpisodes: '+{count} 集', typeMovie: '电影', typeSeries: '剧集', typeAnime: '动漫', typeOther: '其他',
                 timeAgo: '前', timeJustNow: '刚刚', timeMinutes: '分钟', timeHours: '小时', timeDays: '天',
                 mediaManagement: '媒体', mediaManagementTitle: '媒体管理', mediaSearch: '搜索...', mediaTypeAll: '全部类型', mediaTypeMovie: '电影', mediaTypeSeries: '剧集',
@@ -225,6 +231,8 @@
                 snooze: 'Adiar', unsnooze: 'Reativar', snoozed: 'ADIADO', snoozedUntil: 'Adiado até', snoozeDate: 'Adiar até data',
                 categoryNew: '🆕 Novo', categoryProcessing: '🔄 Processando', categoryPending: '⏳ Pendente', categorySnoozed: '💤 Adiado', categoryDone: '✅ Concluído', categoryRejected: '❌ Rejeitado',
                 createRequest: 'Criar Solicitação', latestMedia: 'Mídia Recente', latestMediaLoading: 'Carregando...', latestMediaEmpty: 'Nenhuma mídia recente', latestMediaError: 'Falha ao carregar',
+                leavingSoon: 'Saindo em Breve', leavingSoonEmpty: 'Nenhuma mídia agendada para exclusão', leavingSoonLoading: 'Carregando...', timeLeft: 'restante',
+                sortHighest: 'Melhor avaliados primeiro', sortLowest: 'Pior avaliados primeiro',
                 newEpisode: '+1 episódio', newEpisodes: '+{count} episódios', typeMovie: 'Filme', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Outro',
                 timeAgo: 'atrás', timeJustNow: 'agora mesmo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Mídia', mediaManagementTitle: 'Gerenciamento de Mídia', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Filmes', mediaTypeSeries: 'Séries',
@@ -270,6 +278,8 @@
                 snooze: 'Отложить', unsnooze: 'Возобновить', snoozed: 'ОТЛОЖЕНО', snoozedUntil: 'Отложено до', snoozeDate: 'Отложить до даты',
                 categoryNew: '🆕 Новые', categoryProcessing: '🔄 В обработке', categoryPending: '⏳ Ожидание', categorySnoozed: '💤 Отложено', categoryDone: '✅ Готово', categoryRejected: '❌ Отклонено',
                 createRequest: 'Создать Запрос', latestMedia: 'Последние Добавления', latestMediaLoading: 'Загрузка...', latestMediaEmpty: 'Нет недавних медиа', latestMediaError: 'Ошибка загрузки',
+                leavingSoon: 'Скоро Удалится', leavingSoonEmpty: 'Нет запланированных удалений', leavingSoonLoading: 'Загрузка...', timeLeft: 'осталось',
+                sortHighest: 'Высший рейтинг первым', sortLowest: 'Низший рейтинг первым',
                 newEpisode: '+1 эпизод', newEpisodes: '+{count} эпизодов', typeMovie: 'Фильм', typeSeries: 'Сериал', typeAnime: 'Аниме', typeOther: 'Другое',
                 timeAgo: 'назад', timeJustNow: 'только что', timeMinutes: 'мин', timeHours: 'ч', timeDays: 'д',
                 mediaManagement: 'Медиа', mediaManagementTitle: 'Управление Медиа', mediaSearch: 'Поиск...', mediaTypeAll: 'Все Типы', mediaTypeMovie: 'Фильмы', mediaTypeSeries: 'Сериалы',
@@ -315,6 +325,8 @@
                 snooze: 'スヌーズ', unsnooze: '再開', snoozed: 'スヌーズ中', snoozedUntil: 'スヌーズ期限', snoozeDate: 'スヌーズ日付',
                 categoryNew: '🆕 新規', categoryProcessing: '🔄 処理中', categoryPending: '⏳ 保留中', categorySnoozed: '💤 スヌーズ', categoryDone: '✅ 完了', categoryRejected: '❌ 却下',
                 createRequest: 'リクエスト作成', latestMedia: '最新メディア', latestMediaLoading: '読み込み中...', latestMediaEmpty: '最近のメディアなし', latestMediaError: '読み込み失敗',
+                leavingSoon: 'まもなく削除', leavingSoonEmpty: '削除予定のメディアはありません', leavingSoonLoading: '読み込み中...', timeLeft: '残り',
+                sortHighest: '高評価順', sortLowest: '低評価順',
                 newEpisode: '+1 エピソード', newEpisodes: '+{count} エピソード', typeMovie: '映画', typeSeries: 'シリーズ', typeAnime: 'アニメ', typeOther: 'その他',
                 timeAgo: '前', timeJustNow: 'たった今', timeMinutes: '分', timeHours: '時間', timeDays: '日',
                 mediaManagement: 'メディア', mediaManagementTitle: 'メディア管理', mediaSearch: '検索...', mediaTypeAll: 'すべて', mediaTypeMovie: '映画', mediaTypeSeries: 'シリーズ',
@@ -360,6 +372,8 @@
                 snooze: 'Zurückstellen', unsnooze: 'Reaktivieren', snoozed: 'ZURÜCKGESTELLT', snoozedUntil: 'Zurückgestellt bis', snoozeDate: 'Zurückstellen bis',
                 categoryNew: '🆕 Neu', categoryProcessing: '🔄 In Bearbeitung', categoryPending: '⏳ Ausstehend', categorySnoozed: '💤 Zurückgestellt', categoryDone: '✅ Erledigt', categoryRejected: '❌ Abgelehnt',
                 createRequest: 'Anfrage Erstellen', latestMedia: 'Neueste Medien', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Keine neuen Medien', latestMediaError: 'Laden fehlgeschlagen',
+                leavingSoon: 'Bald Gelöscht', leavingSoonEmpty: 'Keine geplanten Löschungen', leavingSoonLoading: 'Laden...', timeLeft: 'übrig',
+                sortHighest: 'Höchste Bewertung zuerst', sortLowest: 'Niedrigste Bewertung zuerst',
                 newEpisode: '+1 Episode', newEpisodes: '+{count} Episoden', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Sonstiges',
                 timeAgo: 'vor', timeJustNow: 'gerade eben', timeMinutes: 'Min', timeHours: 'Std', timeDays: 'T',
                 mediaManagement: 'Medien', mediaManagementTitle: 'Medienverwaltung', mediaSearch: 'Suchen...', mediaTypeAll: 'Alle Typen', mediaTypeMovie: 'Filme', mediaTypeSeries: 'Serien',
@@ -405,6 +419,8 @@
                 snooze: 'Reporter', unsnooze: 'Réactiver', snoozed: 'REPORTÉ', snoozedUntil: 'Reporté jusqu\'à', snoozeDate: 'Reporter jusqu\'à',
                 categoryNew: '🆕 Nouveau', categoryProcessing: '🔄 En cours', categoryPending: '⏳ En attente', categorySnoozed: '💤 Reporté', categoryDone: '✅ Terminé', categoryRejected: '❌ Refusé',
                 createRequest: 'Créer Demande', latestMedia: 'Derniers Médias', latestMediaLoading: 'Chargement...', latestMediaEmpty: 'Pas de médias récents', latestMediaError: 'Échec du chargement',
+                leavingSoon: 'Bientôt Supprimé', leavingSoonEmpty: 'Aucun média prévu pour suppression', leavingSoonLoading: 'Chargement...', timeLeft: 'restant',
+                sortHighest: 'Mieux notés en premier', sortLowest: 'Moins bien notés en premier',
                 newEpisode: '+1 épisode', newEpisodes: '+{count} épisodes', typeMovie: 'Film', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Autre',
                 timeAgo: 'il y a', timeJustNow: 'à l\'instant', timeMinutes: 'min', timeHours: 'h', timeDays: 'j',
                 mediaManagement: 'Médias', mediaManagementTitle: 'Gestion des Médias', mediaSearch: 'Rechercher...', mediaTypeAll: 'Tous Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Séries',
@@ -450,6 +466,8 @@
                 snooze: '일시 중지', unsnooze: '재개', snoozed: '일시 중지됨', snoozedUntil: '일시 중지 기한', snoozeDate: '일시 중지 날짜',
                 categoryNew: '🆕 신규', categoryProcessing: '🔄 처리 중', categoryPending: '⏳ 대기 중', categorySnoozed: '💤 일시 중지', categoryDone: '✅ 완료', categoryRejected: '❌ 거부됨',
                 createRequest: '요청 생성', latestMedia: '최신 미디어', latestMediaLoading: '로딩 중...', latestMediaEmpty: '최근 미디어 없음', latestMediaError: '로딩 실패',
+                leavingSoon: '곧 삭제됨', leavingSoonEmpty: '삭제 예정 미디어 없음', leavingSoonLoading: '로딩 중...', timeLeft: '남음',
+                sortHighest: '높은 평점순', sortLowest: '낮은 평점순',
                 newEpisode: '+1 에피소드', newEpisodes: '+{count} 에피소드', typeMovie: '영화', typeSeries: '시리즈', typeAnime: '애니메이션', typeOther: '기타',
                 timeAgo: '전', timeJustNow: '방금', timeMinutes: '분', timeHours: '시간', timeDays: '일',
                 mediaManagement: '미디어', mediaManagementTitle: '미디어 관리', mediaSearch: '검색...', mediaTypeAll: '모든 유형', mediaTypeMovie: '영화', mediaTypeSeries: '시리즈',
@@ -495,6 +513,8 @@
                 snooze: 'Posticipa', unsnooze: 'Riattiva', snoozed: 'POSTICIPATO', snoozedUntil: 'Posticipato fino a', snoozeDate: 'Posticipa fino a',
                 categoryNew: '🆕 Nuovo', categoryProcessing: '🔄 In elaborazione', categoryPending: '⏳ In attesa', categorySnoozed: '💤 Posticipato', categoryDone: '✅ Completato', categoryRejected: '❌ Rifiutato',
                 createRequest: 'Crea Richiesta', latestMedia: 'Ultimi Media', latestMediaLoading: 'Caricamento...', latestMediaEmpty: 'Nessun media recente', latestMediaError: 'Caricamento fallito',
+                leavingSoon: 'In Scadenza', leavingSoonEmpty: 'Nessun media in eliminazione', leavingSoonLoading: 'Caricamento...', timeLeft: 'rimanente',
+                sortHighest: 'Più votati per primi', sortLowest: 'Meno votati per primi',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodi', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Altro',
                 timeAgo: 'fa', timeJustNow: 'adesso', timeMinutes: 'min', timeHours: 'h', timeDays: 'g',
                 mediaManagement: 'Media', mediaManagementTitle: 'Gestione Media', mediaSearch: 'Cerca...', mediaTypeAll: 'Tutti i Tipi', mediaTypeMovie: 'Film', mediaTypeSeries: 'Serie',
@@ -540,6 +560,8 @@
                 snooze: 'Ertele', unsnooze: 'Yeniden Etkinleştir', snoozed: 'ERTELENDİ', snoozedUntil: 'Ertelendi', snoozeDate: 'Erteleme tarihi',
                 categoryNew: '🆕 Yeni', categoryProcessing: '🔄 İşleniyor', categoryPending: '⏳ Bekliyor', categorySnoozed: '💤 Ertelendi', categoryDone: '✅ Tamamlandı', categoryRejected: '❌ Reddedildi',
                 createRequest: 'İstek Oluştur', latestMedia: 'Son Medya', latestMediaLoading: 'Yükleniyor...', latestMediaEmpty: 'Son medya yok', latestMediaError: 'Yükleme başarısız',
+                leavingSoon: 'Yakında Silinecek', leavingSoonEmpty: 'Silinmek üzere medya yok', leavingSoonLoading: 'Yükleniyor...', timeLeft: 'kaldı',
+                sortHighest: 'En yüksek puan önce', sortLowest: 'En düşük puan önce',
                 newEpisode: '+1 bölüm', newEpisodes: '+{count} bölüm', typeMovie: 'Film', typeSeries: 'Dizi', typeAnime: 'Anime', typeOther: 'Diğer',
                 timeAgo: 'önce', timeJustNow: 'şimdi', timeMinutes: 'dk', timeHours: 'sa', timeDays: 'g',
                 mediaManagement: 'Medya', mediaManagementTitle: 'Medya Yönetimi', mediaSearch: 'Ara...', mediaTypeAll: 'Tüm Türler', mediaTypeMovie: 'Filmler', mediaTypeSeries: 'Diziler',
@@ -585,6 +607,8 @@
                 snooze: 'Odłóż', unsnooze: 'Wznów', snoozed: 'ODŁOŻONE', snoozedUntil: 'Odłożone do', snoozeDate: 'Odłóż do daty',
                 categoryNew: '🆕 Nowe', categoryProcessing: '🔄 Przetwarzanie', categoryPending: '⏳ Oczekujące', categorySnoozed: '💤 Odłożone', categoryDone: '✅ Gotowe', categoryRejected: '❌ Odrzucone',
                 createRequest: 'Utwórz Prośbę', latestMedia: 'Najnowsze Media', latestMediaLoading: 'Ładowanie...', latestMediaEmpty: 'Brak nowych mediów', latestMediaError: 'Błąd ładowania',
+                leavingSoon: 'Wkrótce Usunięte', leavingSoonEmpty: 'Brak zaplanowanych usunięć', leavingSoonLoading: 'Ładowanie...', timeLeft: 'pozostało',
+                sortHighest: 'Najwyżej ocenione', sortLowest: 'Najniżej ocenione',
                 newEpisode: '+1 odcinek', newEpisodes: '+{count} odcinków', typeMovie: 'Film', typeSeries: 'Serial', typeAnime: 'Anime', typeOther: 'Inne',
                 timeAgo: 'temu', timeJustNow: 'przed chwilą', timeMinutes: 'min', timeHours: 'godz', timeDays: 'dni',
                 mediaManagement: 'Media', mediaManagementTitle: 'Zarządzanie Mediami', mediaSearch: 'Szukaj...', mediaTypeAll: 'Wszystkie Typy', mediaTypeMovie: 'Filmy', mediaTypeSeries: 'Seriale',
@@ -630,6 +654,8 @@
                 snooze: 'Uitstellen', unsnooze: 'Heractiveren', snoozed: 'UITGESTELD', snoozedUntil: 'Uitgesteld tot', snoozeDate: 'Uitstellen tot',
                 categoryNew: '🆕 Nieuw', categoryProcessing: '🔄 Bezig', categoryPending: '⏳ Wachtend', categorySnoozed: '💤 Uitgesteld', categoryDone: '✅ Klaar', categoryRejected: '❌ Afgewezen',
                 createRequest: 'Verzoek Maken', latestMedia: 'Laatste Media', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Geen recente media', latestMediaError: 'Laden mislukt',
+                leavingSoon: 'Binnenkort Verwijderd', leavingSoonEmpty: 'Geen geplande verwijderingen', leavingSoonLoading: 'Laden...', timeLeft: 'over',
+                sortHighest: 'Hoogst beoordeeld eerst', sortLowest: 'Laagst beoordeeld eerst',
                 newEpisode: '+1 aflevering', newEpisodes: '+{count} afleveringen', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Anders',
                 timeAgo: 'geleden', timeJustNow: 'zojuist', timeMinutes: 'min', timeHours: 'u', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Mediabeheer', mediaSearch: 'Zoeken...', mediaTypeAll: 'Alle Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Series',
@@ -675,6 +701,8 @@
                 snooze: 'تأجيل', unsnooze: 'إلغاء التأجيل', snoozed: 'مؤجل', snoozedUntil: 'مؤجل حتى', snoozeDate: 'تأجيل حتى',
                 categoryNew: '🆕 جديد', categoryProcessing: '🔄 قيد المعالجة', categoryPending: '⏳ قيد الانتظار', categorySnoozed: '💤 مؤجل', categoryDone: '✅ مكتمل', categoryRejected: '❌ مرفوض',
                 createRequest: 'إنشاء طلب', latestMedia: 'أحدث الوسائط', latestMediaLoading: 'جاري التحميل...', latestMediaEmpty: 'لا توجد وسائط حديثة', latestMediaError: 'فشل التحميل',
+                leavingSoon: 'ستتم إزالتها قريباً', leavingSoonEmpty: 'لا توجد وسائط مجدولة للحذف', leavingSoonLoading: 'جاري التحميل...', timeLeft: 'متبقي',
+                sortHighest: 'الأعلى تقييماً أولاً', sortLowest: 'الأدنى تقييماً أولاً',
                 newEpisode: '+1 حلقة', newEpisodes: '+{count} حلقات', typeMovie: 'فيلم', typeSeries: 'مسلسل', typeAnime: 'أنمي', typeOther: 'أخرى',
                 timeAgo: 'مضت', timeJustNow: 'الآن', timeMinutes: 'دقيقة', timeHours: 'ساعة', timeDays: 'يوم',
                 mediaManagement: 'الوسائط', mediaManagementTitle: 'إدارة الوسائط', mediaSearch: 'بحث...', mediaTypeAll: 'جميع الأنواع', mediaTypeMovie: 'أفلام', mediaTypeSeries: 'مسلسلات',
@@ -720,6 +748,8 @@
                 snooze: 'स्नूज़', unsnooze: 'अनस्नूज़', snoozed: 'स्नूज़्ड', snoozedUntil: 'तक स्नूज़्ड', snoozeDate: 'स्नूज़ तिथि',
                 categoryNew: '🆕 नया', categoryProcessing: '🔄 प्रगति में', categoryPending: '⏳ लंबित', categorySnoozed: '💤 स्नूज़्ड', categoryDone: '✅ पूर्ण', categoryRejected: '❌ अस्वीकृत',
                 createRequest: 'अनुरोध बनाएं', latestMedia: 'नवीनतम मीडिया', latestMediaLoading: 'लोड हो रहा है...', latestMediaEmpty: 'कोई हालिया मीडिया नहीं', latestMediaError: 'लोड विफल',
+                leavingSoon: 'जल्द हटाया जाएगा', leavingSoonEmpty: 'हटाने के लिए कोई मीडिया निर्धारित नहीं', leavingSoonLoading: 'लोड हो रहा है...', timeLeft: 'बाकी',
+                sortHighest: 'उच्चतम रेटिंग पहले', sortLowest: 'निम्नतम रेटिंग पहले',
                 newEpisode: '+1 एपिसोड', newEpisodes: '+{count} एपिसोड', typeMovie: 'फिल्म', typeSeries: 'श्रृंखला', typeAnime: 'एनीमे', typeOther: 'अन्य',
                 timeAgo: 'पहले', timeJustNow: 'अभी', timeMinutes: 'मिनट', timeHours: 'घंटे', timeDays: 'दिन',
                 mediaManagement: 'मीडिया', mediaManagementTitle: 'मीडिया प्रबंधन', mediaSearch: 'खोजें...', mediaTypeAll: 'सभी प्रकार', mediaTypeMovie: 'फिल्में', mediaTypeSeries: 'श्रृंखला',
@@ -765,6 +795,8 @@
                 snooze: 'Atidėti', unsnooze: 'Atšaukti atidėjimą', snoozed: 'ATIDĖTA', snoozedUntil: 'Atidėta iki', snoozeDate: 'Atidėti iki datos',
                 categoryNew: '🆕 Nauji', categoryProcessing: '🔄 Vykdoma', categoryPending: '⏳ Laukiama', categorySnoozed: '💤 Atidėta', categoryDone: '✅ Atlikta', categoryRejected: '❌ Atmesta',
                 createRequest: 'Sukurti Užklausą', latestMedia: 'Naujausia Medija', latestMediaLoading: 'Kraunama...', latestMediaEmpty: 'Naujų medijų nerasta', latestMediaError: 'Nepavyko įkelti',
+                leavingSoon: 'Greitai Bus Ištrinta', leavingSoonEmpty: 'Nėra suplanuotų ištrynimų', leavingSoonLoading: 'Kraunama...', timeLeft: 'liko',
+                sortHighest: 'Aukščiausiai įvertinti', sortLowest: 'Žemiausiai įvertinti',
                 newEpisode: '+1 serija', newEpisodes: '+{count} serijos', typeMovie: 'Filmas', typeSeries: 'Serialas', typeAnime: 'Anime', typeOther: 'Kita',
                 timeAgo: 'prieš', timeJustNow: 'ką tik', timeMinutes: 'min', timeHours: 'val', timeDays: 'd',
                 mediaManagement: 'Medija', mediaManagementTitle: 'Medijos Valdymas', mediaSearch: 'Ieškoti...', mediaTypeAll: 'Visi Tipai', mediaTypeMovie: 'Filmai', mediaTypeSeries: 'Serialai',
@@ -3837,7 +3869,55 @@
                     font-weight: 700;
                     margin-bottom: 12px;
                     padding-left: 4%;
+                    padding-top: 0 !important;
+                    padding-bottom: 0 !important;
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .netflix-genre-title-text {
+                    flex-shrink: 0;
+                }
+
+                .netflix-sort-buttons {
+                    display: flex;
+                    gap: 4px;
+                    opacity: 0.6;
+                    transition: opacity 0.2s ease;
+                }
+
+                .netflix-genre-title:hover .netflix-sort-buttons {
+                    opacity: 1;
+                }
+
+                .netflix-sort-btn {
+                    background: rgba(255, 255, 255, 0.15);
+                    border: none;
+                    color: #fff;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                }
+
+                .netflix-sort-btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+
+                .netflix-sort-btn.active {
+                    background: rgba(229, 9, 20, 0.9);
+                    color: #fff;
+                }
+
+                .netflix-sort-btn.active:hover {
+                    background: rgba(229, 9, 20, 1);
                 }
 
                 .netflix-row-wrapper {
@@ -3983,19 +4063,105 @@
                     font-size: 16px;
                 }
 
-                /* Mobile responsive */
-                @media screen and (max-width: 768px) {
-                    .netflix-card {
-                        width: 140px;
-                        height: 210px;
+                /* Lazy loading placeholder */
+                .netflix-card-placeholder {
+                    flex: 0 0 auto;
+                    width: 200px;
+                    height: 300px;
+                    border-radius: 4px;
+                    background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+                    background-size: 200% 100%;
+                    animation: netflix-shimmer 1.5s infinite;
+                }
+
+                @keyframes netflix-shimmer {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+
+                /* Tablet/narrow responsive - matches header breakpoint */
+                @media screen and (max-width: 925px) {
+                    .netflix-genre-row {
+                        margin-bottom: 10px !important;
                     }
 
-                    .netflix-genre-title {
-                        font-size: 1.1em;
+                    .netflix-row-wrapper {
+                        position: static !important;
+                        overflow: visible !important;
                     }
 
                     .netflix-scroll-btn {
-                        display: none;
+                        display: none !important;
+                    }
+
+                    .netflix-row-content {
+                        padding: 5px 3% !important;
+                    }
+
+                    .netflix-card {
+                        width: 160px !important;
+                        height: 240px !important;
+                    }
+
+                    .netflix-card-placeholder {
+                        width: 160px !important;
+                        height: 240px !important;
+                    }
+
+                    .netflix-genre-title {
+                        margin-bottom: 6px !important;
+                    }
+                }
+
+                /* Mobile responsive */
+                @media screen and (max-width: 768px) {
+                    .netflix-genre-row {
+                        margin-bottom: 12px !important;
+                    }
+
+                    .netflix-row-wrapper {
+                        min-height: 0 !important;
+                        height: auto !important;
+                    }
+
+                    .netflix-row-content {
+                        gap: 6px !important;
+                        padding: 6px 3% !important;
+                        min-height: 0 !important;
+                        height: auto !important;
+                        align-items: flex-start !important;
+                    }
+
+                    .netflix-card {
+                        width: 140px !important;
+                        height: 210px !important;
+                        min-height: 0 !important;
+                        max-height: 210px !important;
+                    }
+
+                    .netflix-card-placeholder {
+                        width: 140px !important;
+                        height: 210px !important;
+                        min-height: 0 !important;
+                        max-height: 210px !important;
+                    }
+
+                    .netflix-genre-title {
+                        font-size: 1.1em !important;
+                        margin-bottom: 6px !important;
+                    }
+
+                    .netflix-sort-btn {
+                        width: 24px !important;
+                        height: 24px !important;
+                        font-size: 12px !important;
+                    }
+
+                    .netflix-scroll-btn {
+                        display: none !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        position: static !important;
                     }
                 }
 
@@ -4262,15 +4428,78 @@
                 }
 
                 #latestMediaDropdown .latest-header {
-                    padding: 12px 14px !important;
+                    padding: 0 !important;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-                    font-size: 13px !important;
-                    font-weight: 600 !important;
-                    color: #fff !important;
                     background: #1a1a1a !important;
                     position: sticky !important;
                     top: 0 !important;
                     z-index: 1 !important;
+                    display: flex !important;
+                }
+
+                #latestMediaDropdown .latest-tab {
+                    flex: 1 !important;
+                    padding: 12px 14px !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    color: #888 !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    transition: color 0.15s ease, background 0.15s ease !important;
+                    text-align: center !important;
+                }
+
+                #latestMediaDropdown .latest-tab:hover {
+                    color: #ccc !important;
+                    background: rgba(255, 255, 255, 0.05) !important;
+                }
+
+                #latestMediaDropdown .latest-tab.active {
+                    color: #fff !important;
+                    font-weight: 600 !important;
+                    border-bottom: 2px solid #00a4dc !important;
+                }
+
+                #latestMediaDropdown .latest-tab-leaving.active {
+                    border-bottom-color: #f44336 !important;
+                }
+
+                #latestMediaDropdown .leaving-badge {
+                    background: #f44336 !important;
+                    color: #fff !important;
+                    font-size: 9px !important;
+                    padding: 2px 5px !important;
+                    border-radius: 8px !important;
+                    margin-left: 4px !important;
+                    font-weight: 600 !important;
+                }
+
+                #latestMediaDropdown .latest-item-time.leaving {
+                    color: #f44336 !important;
+                    font-weight: 500 !important;
+                }
+
+                #latestMediaDropdown .tab-badge {
+                    display: inline-block !important;
+                    background: #00a4dc !important;
+                    color: #fff !important;
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    padding: 2px 6px !important;
+                    border-radius: 10px !important;
+                    margin-left: 6px !important;
+                    min-width: 16px !important;
+                    text-align: center !important;
+                }
+
+                #latestMediaDropdown .tab-badge.leaving {
+                    background: #f44336 !important;
+                }
+
+                #latestMediaDropdown .tab-badge.leaving-total {
+                    background: rgba(244, 67, 54, 0.3) !important;
+                    color: #f44336 !important;
                 }
 
                 #latestMediaDropdown .latest-loading {
@@ -9234,47 +9463,69 @@
             const authHeader = ApiClient._serverInfo?.AccessToken ?
                 `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Get last seen time
+            // Get last seen times
             const lastSeenStr = localStorage.getItem('ratings_latest_media_seen');
             const lastSeen = lastSeenStr ? new Date(lastSeenStr) : new Date(0);
+            const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
+            const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch latest items
-            fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
-            })
-            .then(r => r.json())
-            .then(data => {
-                const items = data.Items || [];
-                // Count items newer than last seen, deduplicate series by SeriesId
+            // Fetch both: latest items and scheduled deletions
+            Promise.all([
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()).catch(() => ({ Items: [] })),
+                fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()).catch(() => [])
+            ])
+            .then(([mediaData, deletions]) => {
+                // Count new media items
+                const items = mediaData.Items || [];
                 const seenSeries = new Set();
-                let newCount = 0;
+                let newMediaCount = 0;
 
                 items.forEach(item => {
                     const itemDate = new Date(item.DateCreated);
                     if (itemDate > lastSeen) {
                         if (item.Type === 'Episode') {
-                            // For episodes, count the series once
                             if (item.SeriesId && !seenSeries.has(item.SeriesId)) {
                                 seenSeries.add(item.SeriesId);
-                                newCount++;
+                                newMediaCount++;
                             }
                         } else {
-                            // Movies and Series
                             if (!seenSeries.has(item.Id)) {
                                 seenSeries.add(item.Id);
-                                newCount++;
+                                newMediaCount++;
                             }
                         }
                     }
                 });
 
-                // Update badge
+                // Count scheduled deletions (new since last seen)
+                const activeDeletions = (deletions || []).filter(d => !d.IsCancelled && !d.isCancelled);
+                let leavingSoonCount = 0;
+                activeDeletions.forEach(d => {
+                    const scheduledAt = new Date(d.ScheduledAt || d.scheduledAt);
+                    if (scheduledAt > lastSeenLeaving) {
+                        leavingSoonCount++;
+                    }
+                });
+
+                // Store counts for tab badges
+                self._latestMediaCount = newMediaCount;
+                self._leavingSoonCount = leavingSoonCount;
+                self._totalLeavingSoon = activeDeletions.length;
+
+                // Update main icon badge (combined count)
                 const badge = document.getElementById('latestMediaBadge');
                 if (badge) {
-                    if (newCount > 0) {
-                        badge.textContent = newCount > 99 ? '99+' : newCount;
+                    const totalCount = newMediaCount + leavingSoonCount;
+                    if (totalCount > 0) {
+                        badge.textContent = totalCount > 99 ? '99+' : totalCount;
                         badge.classList.add('visible');
                     } else {
                         badge.classList.remove('visible');
@@ -9290,14 +9541,48 @@
         /**
          * Load latest media items into dropdown
          */
-        loadLatestMedia: function (dropdown) {
+        loadLatestMedia: function (dropdown, activeTab = 'latest') {
             const self = this;
 
+            // Build tabs header with badges
+            const buildTabsHeader = (active) => {
+                const latestBadge = self._latestMediaCount > 0 ? `<span class="tab-badge">${self._latestMediaCount > 99 ? '99+' : self._latestMediaCount}</span>` : '';
+                const leavingBadge = self._leavingSoonCount > 0 ? `<span class="tab-badge leaving">${self._leavingSoonCount > 99 ? '99+' : self._leavingSoonCount}</span>` :
+                                     (self._totalLeavingSoon > 0 ? `<span class="tab-badge leaving-total">${self._totalLeavingSoon}</span>` : '');
+                return `<div class="latest-header">
+                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}${latestBadge}</button>
+                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}${leavingBadge}</button>
+                </div>`;
+            };
+
             // Show loading state
-            dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-loading">${self.t('latestMediaLoading')}</div>`;
+            dropdown.innerHTML = buildTabsHeader(activeTab) + `<div class="latest-loading">${activeTab === 'latest' ? self.t('latestMediaLoading') : self.t('leavingSoonLoading')}</div>`;
+
+            // Add tab click handlers
+            const attachTabHandlers = () => {
+                dropdown.querySelectorAll('.latest-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const tabType = tab.dataset.tab;
+                        if (tabType === 'latest') {
+                            self.loadLatestMedia(dropdown, 'latest');
+                        } else {
+                            self.loadLeavingSoon(dropdown);
+                        }
+                    });
+                });
+            };
+            attachTabHandlers();
+
+            if (activeTab !== 'latest') {
+                self.loadLeavingSoon(dropdown);
+                return;
+            }
 
             if (!window.ApiClient) {
-                dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                dropdown.innerHTML = buildTabsHeader('latest') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                attachTabHandlers();
                 return;
             }
 
@@ -9428,11 +9713,12 @@
                     }).slice(0, 30);
 
                     if (uniqueItems.length === 0) {
-                        dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaEmpty')}</div>`;
+                        dropdown.innerHTML = buildTabsHeader('latest') + `<div class="latest-empty">${self.t('latestMediaEmpty')}</div>`;
+                        attachTabHandlers();
                         return;
                     }
 
-                    let html = `<div class="latest-header">${self.t('latestMedia')}</div>`;
+                    let html = buildTabsHeader('latest');
 
                     uniqueItems.forEach(item => {
                         const itemId = item.Id;
@@ -9508,11 +9794,163 @@
                             dropdown.classList.remove('visible');
                         });
                     });
+
+                    // Re-attach tab handlers after innerHTML update
+                    attachTabHandlers();
                 });
             })
             .catch(err => {
                 console.error('Failed to load latest media:', err);
-                dropdown.innerHTML = `<div class="latest-header">${self.t('latestMedia')}</div><div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                dropdown.innerHTML = buildTabsHeader('latest') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                attachTabHandlers();
+            });
+        },
+
+        /**
+         * Load leaving soon (scheduled deletions) into dropdown
+         */
+        loadLeavingSoon: function (dropdown) {
+            const self = this;
+
+            // Build tabs header
+            const buildTabsHeader = (active) => {
+                const latestBadge = self._latestMediaCount > 0 ? `<span class="tab-badge">${self._latestMediaCount > 99 ? '99+' : self._latestMediaCount}</span>` : '';
+                const leavingBadge = self._leavingSoonCount > 0 ? `<span class="tab-badge leaving">${self._leavingSoonCount > 99 ? '99+' : self._leavingSoonCount}</span>` :
+                                     (self._totalLeavingSoon > 0 ? `<span class="tab-badge leaving-total">${self._totalLeavingSoon}</span>` : '');
+                return `<div class="latest-header">
+                    <button class="latest-tab latest-tab-latest ${active === 'latest' ? 'active' : ''}" data-tab="latest">${self.t('latestMedia')}${latestBadge}</button>
+                    <button class="latest-tab latest-tab-leaving ${active === 'leaving' ? 'active' : ''}" data-tab="leaving">${self.t('leavingSoon')}${leavingBadge}</button>
+                </div>`;
+            };
+
+            // Add tab click handlers
+            const attachTabHandlers = () => {
+                dropdown.querySelectorAll('.latest-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const tabType = tab.dataset.tab;
+                        if (tabType === 'latest') {
+                            self.loadLatestMedia(dropdown, 'latest');
+                        } else {
+                            self.loadLeavingSoon(dropdown);
+                        }
+                    });
+                });
+            };
+
+            // Mark leaving soon as seen when viewing this tab
+            localStorage.setItem('ratings_leaving_soon_seen', new Date().toISOString());
+            self._leavingSoonCount = 0; // Clear the "new" count after viewing
+
+            // Show loading state
+            dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-loading">${self.t('leavingSoonLoading')}</div>`;
+            attachTabHandlers();
+
+            if (!window.ApiClient) {
+                dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                attachTabHandlers();
+                return;
+            }
+
+            const baseUrl = ApiClient.serverAddress();
+            const authHeader = ApiClient._serverInfo?.AccessToken ?
+                `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
+
+            // Fetch scheduled deletions
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(r => r.json())
+            .then(deletions => {
+                // Filter out cancelled ones and sort by DeleteAt (soonest first)
+                const activeDeletions = (deletions || [])
+                    .filter(d => !d.IsCancelled && !d.isCancelled)
+                    .sort((a, b) => new Date(a.DeleteAt || a.deleteAt) - new Date(b.DeleteAt || b.deleteAt));
+
+                if (activeDeletions.length === 0) {
+                    dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-empty">${self.t('leavingSoonEmpty')}</div>`;
+                    attachTabHandlers();
+                    return;
+                }
+
+                // Helper to format time left
+                const formatTimeLeft = (deleteAt) => {
+                    const now = new Date();
+                    const target = new Date(deleteAt);
+                    const diffMs = target - now;
+
+                    if (diffMs <= 0) return self.t('mediaSoon') || 'Soon';
+
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffDays > 0) {
+                        return `${diffDays}${self.t('timeDays')} ${self.t('timeLeft')}`;
+                    } else if (diffHours > 0) {
+                        return `${diffHours}${self.t('timeHours')} ${self.t('timeLeft')}`;
+                    } else {
+                        return `${diffMins}${self.t('timeMinutes')} ${self.t('timeLeft')}`;
+                    }
+                };
+
+                let html = buildTabsHeader('leaving');
+
+                activeDeletions.forEach(deletion => {
+                    const itemId = deletion.ItemId || deletion.itemId;
+                    const itemTitle = deletion.ItemTitle || deletion.itemTitle || 'Unknown';
+                    const itemType = deletion.ItemType || deletion.itemType || 'Movie';
+                    const deleteAt = deletion.DeleteAt || deletion.deleteAt;
+                    const timeLeft = formatTimeLeft(deleteAt);
+
+                    // Determine display type
+                    let displayType = 'other';
+                    let typeLabel = self.t('typeOther');
+
+                    if (itemType === 'Movie') {
+                        displayType = 'movie';
+                        typeLabel = self.t('typeMovie');
+                    } else if (itemType === 'Series') {
+                        displayType = 'series';
+                        typeLabel = self.t('typeSeries');
+                    }
+
+                    // Get image URL
+                    const imageSrc = `${baseUrl}/Items/${itemId}/Images/Primary?maxHeight=96`;
+
+                    html += `
+                        <a href="#!/details?id=${itemId}" class="latest-item" data-item-id="${itemId}">
+                            <img src="${imageSrc}" class="latest-item-image plugin-img-fallback" alt=""/>
+                            <div class="latest-item-info">
+                                <div class="latest-item-title">${self.escapeHtml(itemTitle)}</div>
+                                <div class="latest-item-meta">
+                                    <span class="latest-item-type ${displayType}">${typeLabel}</span>
+                                    <span class="latest-item-time leaving">${timeLeft}</span>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                dropdown.innerHTML = html;
+
+                // Add click handlers to close dropdown after navigation
+                dropdown.querySelectorAll('.latest-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        dropdown.classList.remove('visible');
+                    });
+                });
+
+                // Re-attach tab handlers
+                attachTabHandlers();
+            })
+            .catch(err => {
+                console.error('Failed to load leaving soon:', err);
+                dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
+                attachTabHandlers();
             });
         },
 
@@ -10934,9 +11372,7 @@
                     '[data-role="page"]',
                     '.itemsContainer',
                     '.verticalSection',
-                    '.netflix-view-container',
-                    '.netflix-genre-row',
-                    '.netflix-genre-title'
+                    '.netflix-view-container'
                 ];
 
                 contentSelectors.forEach(selector => {
@@ -15252,12 +15688,19 @@
                 sortedGenres.forEach(([genre, genreItems]) => {
                     const shuffledItems = shuffleArray(genreItems);
                     html += self.buildGenreRow(genre, shuffledItems, baseUrl);
-                });                container.innerHTML = html;
+                });
+                container.innerHTML = html;
                 // Make sure container is visible
                 container.style.display = 'block';
 
                 // Attach scroll button handlers
                 self.attachScrollHandlers(container);
+
+                // Attach sort button handlers
+                self.attachSortHandlers(container, baseUrl);
+
+                // Set up lazy loading for placeholder cards
+                self.setupNetflixLazyLoading(container, baseUrl);
 
                 // Apply rating badges to Netflix cards
                 self.applyNetflixRatingBadges(container);
@@ -15272,36 +15715,43 @@
         },
 
         /**
-         * Build HTML for a genre row
+         * Build HTML for a genre row with sort buttons and lazy loading
          */
         buildGenreRow: function (genre, items, baseUrl) {
             const self = this;
+            const genreId = 'genre-' + genre.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-            // Limit to 20 items per row
-            const rowItems = items.slice(0, 20);
-
+            // Build cards - first 10 loaded immediately, rest are placeholders for lazy loading
+            const initialLoadCount = 10;
             let cardsHtml = '';
-            rowItems.forEach(item => {
-                const imageUrl = item.ImageTags && item.ImageTags.Primary
-                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
-                    : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
 
-                const itemUrl = `#!/details?id=${item.Id}`;
-
-                cardsHtml += `
-                    <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
-                        <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
-                        <div class="netflix-card-overlay">
-                            <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
-                            <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
-                        </div>
-                    </a>
-                `;
+            items.forEach((item, index) => {
+                if (index < initialLoadCount) {
+                    // Load first cards immediately
+                    cardsHtml += self.buildNetflixCard(item, baseUrl);
+                } else {
+                    // Create placeholder for lazy loading
+                    cardsHtml += `<div class="netflix-card-placeholder" data-item-index="${index}"></div>`;
+                }
             });
 
+            // Store items data as base64 encoded JSON for sorting
+            const itemsData = btoa(encodeURIComponent(JSON.stringify(items.map(item => ({
+                Id: item.Id,
+                Name: item.Name,
+                ImageTags: item.ImageTags,
+                CommunityRating: item.CommunityRating
+            })))));
+
             return `
-                <div class="netflix-genre-row">
-                    <div class="netflix-genre-title">${this.escapeHtml(genre)}</div>
+                <div class="netflix-genre-row" data-genre="${this.escapeHtml(genre)}" data-genre-id="${genreId}" data-items="${itemsData}" data-sort-state="none">
+                    <div class="netflix-genre-title">
+                        <span class="netflix-genre-title-text">${this.escapeHtml(genre)}</span>
+                        <span class="netflix-sort-buttons">
+                            <button class="netflix-sort-btn" data-sort="desc" title="${this.t('sortHighest')}">▲</button>
+                            <button class="netflix-sort-btn" data-sort="asc" title="${this.t('sortLowest')}">▼</button>
+                        </span>
+                    </div>
                     <div class="netflix-row-wrapper">
                         <button class="netflix-scroll-btn left" aria-label="Scroll left">‹</button>
                         <div class="netflix-row-content">
@@ -15314,10 +15764,37 @@
         },
 
         /**
+         * Build a single Netflix card HTML
+         */
+        buildNetflixCard: function (item, baseUrl) {
+            const imageUrl = item.ImageTags && item.ImageTags.Primary
+                ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
+                : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
+
+            const itemUrl = `#!/details?id=${item.Id}`;
+
+            return `
+                <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
+                    <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
+                    <div class="netflix-card-overlay">
+                        <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
+                        <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
+                    </div>
+                </a>
+            `;
+        },
+
+        /**
          * Attach scroll button handlers
          */
         attachScrollHandlers: function (container) {
             const rows = container.querySelectorAll('.netflix-row-wrapper');
+
+            // Remove scroll buttons entirely on narrow viewports
+            if (window.innerWidth <= 925) {
+                container.querySelectorAll('.netflix-scroll-btn').forEach(btn => btn.remove());
+                return;
+            }
 
             rows.forEach(row => {
                 const content = row.querySelector('.netflix-row-content');
@@ -15335,6 +15812,228 @@
                         content.scrollBy({ left: 600, behavior: 'smooth' });
                     });
                 }
+            });
+        },
+
+        /**
+         * Attach sort button handlers to genre rows
+         */
+        attachSortHandlers: function (container, baseUrl) {
+            const self = this;
+            const sortButtons = container.querySelectorAll('.netflix-sort-btn');
+
+            sortButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const genreRow = btn.closest('.netflix-genre-row');
+                    if (!genreRow) return;
+
+                    const sortDirection = btn.getAttribute('data-sort'); // 'asc' or 'desc'
+                    const currentSortState = genreRow.getAttribute('data-sort-state');
+
+                    // If clicking same sort direction again, shuffle randomly
+                    if (currentSortState === sortDirection) {
+                        self.shuffleGenreRow(genreRow, baseUrl);
+                        return;
+                    }
+
+                    // Sort by rating
+                    self.sortGenreRow(genreRow, sortDirection, baseUrl);
+                });
+            });
+        },
+
+        /**
+         * Sort a genre row by custom ratings
+         */
+        sortGenreRow: function (genreRow, direction, baseUrl) {
+            const self = this;
+            const rowContent = genreRow.querySelector('.netflix-row-content');
+            if (!rowContent) return;
+
+            // Get items data from the row
+            const itemsData = genreRow.getAttribute('data-items');
+            if (!itemsData) return;
+
+            let items;
+            try {
+                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+            } catch (e) {
+                console.error('Failed to parse items data:', e);
+                return;
+            }
+
+            // Sort items by cached ratings
+            const sortedItems = [...items].sort((a, b) => {
+                const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+
+                // Items without ratings go to the end
+                if (ratingA === -1 && ratingB === -1) return 0;
+                if (ratingA === -1) return 1;
+                if (ratingB === -1) return -1;
+
+                // Sort by direction
+                if (direction === 'desc') {
+                    return ratingB - ratingA; // Highest first
+                } else {
+                    return ratingA - ratingB; // Lowest first
+                }
+            });
+
+            // Update items data to reflect new order
+            const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
+            genreRow.setAttribute('data-items', newItemsData);
+
+            // Re-render cards with lazy loading
+            self.renderGenreCards(genreRow, sortedItems, baseUrl);
+
+            // Update sort state and button styles
+            genreRow.setAttribute('data-sort-state', direction);
+            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
+            });
+        },
+
+        /**
+         * Shuffle a genre row randomly
+         */
+        shuffleGenreRow: function (genreRow, baseUrl) {
+            const self = this;
+            const itemsData = genreRow.getAttribute('data-items');
+            if (!itemsData) return;
+
+            let items;
+            try {
+                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+            } catch (e) {
+                console.error('Failed to parse items data:', e);
+                return;
+            }
+
+            // Shuffle array
+            const shuffled = [...items];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // Update items data to reflect new order
+            const newItemsData = btoa(encodeURIComponent(JSON.stringify(shuffled)));
+            genreRow.setAttribute('data-items', newItemsData);
+
+            // Re-render cards
+            self.renderGenreCards(genreRow, shuffled, baseUrl);
+
+            // Reset sort state and button styles
+            genreRow.setAttribute('data-sort-state', 'none');
+            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+        },
+
+        /**
+         * Render cards for a genre row with lazy loading
+         */
+        renderGenreCards: function (genreRow, items, baseUrl) {
+            const self = this;
+            const rowContent = genreRow.querySelector('.netflix-row-content');
+            if (!rowContent) return;
+
+            const initialLoadCount = 10;
+            let cardsHtml = '';
+
+            items.forEach((item, index) => {
+                if (index < initialLoadCount) {
+                    cardsHtml += self.buildNetflixCard(item, baseUrl);
+                } else {
+                    cardsHtml += `<div class="netflix-card-placeholder" data-item-index="${index}"></div>`;
+                }
+            });
+
+            rowContent.innerHTML = cardsHtml;
+
+            // Scroll to beginning
+            rowContent.scrollLeft = 0;
+
+            // Re-apply rating badges to visible cards
+            self.applyNetflixRatingBadges(genreRow);
+
+            // Re-apply leaving badges
+            self.applyNetflixLeavingBadges(genreRow);
+
+            // Set up lazy loading for new placeholders
+            self.setupNetflixLazyLoading(genreRow, baseUrl);
+        },
+
+        /**
+         * Set up Intersection Observer for lazy loading Netflix cards
+         */
+        setupNetflixLazyLoading: function (container, baseUrl) {
+            const self = this;
+
+            // Get all genre rows in the container
+            const genreRows = container.classList.contains('netflix-genre-row')
+                ? [container]
+                : container.querySelectorAll('.netflix-genre-row');
+
+            genreRows.forEach(genreRow => {
+                const rowContent = genreRow.querySelector('.netflix-row-content');
+                if (!rowContent) return;
+
+                // Create observer for this row's scroll container
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const placeholder = entry.target;
+                            const itemIndex = parseInt(placeholder.getAttribute('data-item-index'), 10);
+                            if (isNaN(itemIndex)) return;
+
+                            // Get items data
+                            const itemsData = genreRow.getAttribute('data-items');
+                            if (!itemsData) return;
+
+                            let items;
+                            try {
+                                items = JSON.parse(decodeURIComponent(atob(itemsData)));
+                            } catch (e) {
+                                return;
+                            }
+
+                            const item = items[itemIndex];
+                            if (!item) return;
+
+                            // Replace placeholder with actual card
+                            const cardHtml = self.buildNetflixCard(item, baseUrl);
+                            const temp = document.createElement('div');
+                            temp.innerHTML = cardHtml;
+                            const newCard = temp.firstElementChild;
+
+                            placeholder.replaceWith(newCard);
+
+                            // Apply rating badge to new card
+                            self.applyNetflixRatingBadges(genreRow);
+
+                            // Apply leaving badge if applicable
+                            self.applyNetflixLeavingBadges(genreRow);
+
+                            // Stop observing this placeholder
+                            observer.unobserve(placeholder);
+                        }
+                    });
+                }, {
+                    root: rowContent, // Observe within the horizontal scroll container
+                    rootMargin: '0px 400px 0px 0px', // Load cards 400px before they scroll into view (right side)
+                    threshold: 0
+                });
+
+                // Observe all placeholders in this row
+                const placeholders = rowContent.querySelectorAll('.netflix-card-placeholder');
+                placeholders.forEach(placeholder => {
+                    observer.observe(placeholder);
+                });
             });
         },
 
