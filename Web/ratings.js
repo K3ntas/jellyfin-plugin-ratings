@@ -3869,6 +3869,8 @@
                     font-weight: 700;
                     margin-bottom: 12px;
                     padding-left: 4%;
+                    padding-top: 0 !important;
+                    padding-bottom: 0 !important;
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
                     display: flex;
                     align-items: center;
