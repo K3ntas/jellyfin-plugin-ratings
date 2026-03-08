@@ -11372,9 +11372,7 @@
                     '[data-role="page"]',
                     '.itemsContainer',
                     '.verticalSection',
-                    '.netflix-view-container',
-                    '.netflix-genre-row',
-                    '.netflix-genre-title'
+                    '.netflix-view-container'
                 ];
 
                 contentSelectors.forEach(selector => {
