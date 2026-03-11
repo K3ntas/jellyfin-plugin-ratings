@@ -1423,7 +1423,7 @@
                 #requestMediaBtn {
                     position: absolute !important;
                     top: 8px;
-                    right: 240px !important;
+                    right: 260px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                     padding: 12px 48px !important;
@@ -1556,12 +1556,22 @@
                     #latestMediaBtn,
                     #chatBtn {
                         padding: 6px !important;
+                        height: 36px !important;
+                        width: 36px !important;
+                        min-width: 36px !important;
+                        margin-right: 2px !important;
                     }
 
                     #latestMediaBtn svg,
                     #chatBtn svg {
                         width: 20px !important;
                         height: 20px !important;
+                    }
+
+                    /* Notification toggle bell - move left and up on mobile */
+                    #notificationToggleIcon {
+                        margin-right: 8px !important;
+                        margin-top: -5px !important;
                     }
                 }
 
@@ -5343,6 +5353,12 @@
                     color: #fff !important;
                     font-size: 24px !important;
                     position: relative !important;
+                    margin-right: 4px !important;
+                    vertical-align: middle !important;
+                    height: 40px !important;
+                    width: 40px !important;
+                    min-width: 40px !important;
+                    flex-shrink: 0 !important;
                 }
 
                 #chatBtn:hover {
@@ -5357,6 +5373,7 @@
                     width: 24px !important;
                     height: 24px !important;
                     fill: currentColor !important;
+                    margin-top: 3px !important;
                 }
 
                 /* Chat notification badge */
@@ -6412,7 +6429,8 @@
                         right: 0 !important;
                         bottom: 0 !important;
                         width: 100% !important;
-                        height: 100% !important;
+                        height: 100vh !important;
+                        height: 100dvh !important; /* Dynamic viewport height - accounts for mobile keyboard */
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                     }
@@ -16260,9 +16278,9 @@
 
             const tryInject = function () {
                 attempts++;
-                const castBtn = document.querySelector('.headerCastButton');
+                const headerRight = document.querySelector('.headerRight');
 
-                if (castBtn && !document.getElementById('chatBtn')) {
+                if (headerRight && !document.getElementById('chatBtn')) {
                     // Create chat button - same structure as Latest Media button
                     const chatBtn = document.createElement('button');
                     chatBtn.id = 'chatBtn';
@@ -16278,9 +16296,16 @@
                         self.toggleChat();
                     };
 
-                    // Insert before or replace cast button
-                    castBtn.parentNode.insertBefore(chatBtn, castBtn);
-                    castBtn.style.display = 'none';
+                    // Insert after latestMediaBtn if it exists, otherwise at beginning
+                    const latestMediaBtn = document.getElementById('latestMediaBtn');
+                    if (latestMediaBtn && latestMediaBtn.nextSibling) {
+                        headerRight.insertBefore(chatBtn, latestMediaBtn.nextSibling);
+                    } else if (latestMediaBtn) {
+                        headerRight.appendChild(chatBtn);
+                    } else {
+                        // Insert at beginning if no latestMediaBtn
+                        headerRight.insertBefore(chatBtn, headerRight.firstChild);
+                    }
 
                     return;
                 }
@@ -16632,6 +16657,72 @@
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
+
+            // Handle mobile keyboard - resize chat window to fit visible viewport
+            // This fixes Firefox and other browsers where keyboard covers the input
+            var adjustChatForKeyboard = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (!chatWindow || !self.chatOpen) return;
+
+                if (window.visualViewport) {
+                    // Use visualViewport for accurate visible height
+                    var vh = window.visualViewport.height;
+                    var vt = window.visualViewport.offsetTop;
+                    chatWindow.style.height = vh + 'px';
+                    chatWindow.style.top = vt + 'px';
+                    chatWindow.style.bottom = 'auto';
+                } else {
+                    // Fallback: use window.innerHeight
+                    chatWindow.style.height = window.innerHeight + 'px';
+                    chatWindow.style.top = '0';
+                    chatWindow.style.bottom = 'auto';
+                }
+                // Scroll to bottom after resize
+                setTimeout(function () {
+                    self.scrollChatToBottom();
+                }, 50);
+            };
+
+            var resetChatSize = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (!chatWindow) return;
+                // Only reset on mobile
+                if (window.innerWidth <= 480) {
+                    chatWindow.style.height = '';
+                    chatWindow.style.top = '';
+                    chatWindow.style.bottom = '';
+                }
+            };
+
+            input.onfocus = function () {
+                // On mobile, adjust chat window size when keyboard opens
+                if (window.innerWidth <= 480) {
+                    setTimeout(adjustChatForKeyboard, 100);
+                    setTimeout(adjustChatForKeyboard, 300);
+                    setTimeout(adjustChatForKeyboard, 500);
+                }
+            };
+
+            input.onblur = function () {
+                // Reset chat size when keyboard closes
+                if (window.innerWidth <= 480) {
+                    setTimeout(resetChatSize, 100);
+                }
+            };
+
+            // Use visualViewport API for real-time keyboard tracking
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', function () {
+                    if (self.chatOpen && window.innerWidth <= 480) {
+                        adjustChatForKeyboard();
+                    }
+                });
+                window.visualViewport.addEventListener('scroll', function () {
+                    if (self.chatOpen && window.innerWidth <= 480) {
+                        adjustChatForKeyboard();
+                    }
+                });
+            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
