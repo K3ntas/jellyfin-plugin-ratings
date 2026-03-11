@@ -16634,33 +16634,69 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard opening - ensure input stays visible
-            // This fixes Firefox and other browsers where keyboard doesn't trigger resize
-            input.onfocus = function () {
-                const inputEl = this;
-                const scrollInputIntoView = function () {
-                    // Scroll chat messages to bottom
+            // Handle mobile keyboard - resize chat window to fit visible viewport
+            // This fixes Firefox and other browsers where keyboard covers the input
+            var adjustChatForKeyboard = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (!chatWindow || !self.chatOpen) return;
+
+                if (window.visualViewport) {
+                    // Use visualViewport for accurate visible height
+                    var vh = window.visualViewport.height;
+                    var vt = window.visualViewport.offsetTop;
+                    chatWindow.style.height = vh + 'px';
+                    chatWindow.style.top = vt + 'px';
+                    chatWindow.style.bottom = 'auto';
+                } else {
+                    // Fallback: use window.innerHeight
+                    chatWindow.style.height = window.innerHeight + 'px';
+                    chatWindow.style.top = '0';
+                    chatWindow.style.bottom = 'auto';
+                }
+                // Scroll to bottom after resize
+                setTimeout(function () {
                     self.scrollChatToBottom();
-                    // Ensure input field itself is visible (not hidden by keyboard)
-                    inputEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                };
-                // Delay to allow keyboard to fully open
-                setTimeout(scrollInputIntoView, 300);
-                // Second scroll after keyboard animation completes
-                setTimeout(scrollInputIntoView, 600);
+                }, 50);
             };
 
-            // Use visualViewport API for more reliable keyboard detection (if available)
+            var resetChatSize = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (!chatWindow) return;
+                // Only reset on mobile
+                if (window.innerWidth <= 480) {
+                    chatWindow.style.height = '';
+                    chatWindow.style.top = '';
+                    chatWindow.style.bottom = '';
+                }
+            };
+
+            input.onfocus = function () {
+                // On mobile, adjust chat window size when keyboard opens
+                if (window.innerWidth <= 480) {
+                    setTimeout(adjustChatForKeyboard, 100);
+                    setTimeout(adjustChatForKeyboard, 300);
+                    setTimeout(adjustChatForKeyboard, 500);
+                }
+            };
+
+            input.onblur = function () {
+                // Reset chat size when keyboard closes
+                if (window.innerWidth <= 480) {
+                    setTimeout(resetChatSize, 100);
+                }
+            };
+
+            // Use visualViewport API for real-time keyboard tracking
             if (window.visualViewport) {
-                let lastHeight = window.visualViewport.height;
                 window.visualViewport.addEventListener('resize', function () {
-                    const currentHeight = window.visualViewport.height;
-                    // Keyboard opened (viewport got smaller)
-                    if (currentHeight < lastHeight && self.chatOpen && document.activeElement === input) {
-                        self.scrollChatToBottom();
-                        input.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    if (self.chatOpen && window.innerWidth <= 480) {
+                        adjustChatForKeyboard();
                     }
-                    lastHeight = currentHeight;
+                });
+                window.visualViewport.addEventListener('scroll', function () {
+                    if (self.chatOpen && window.innerWidth <= 480) {
+                        adjustChatForKeyboard();
+                    }
                 });
             }
 
