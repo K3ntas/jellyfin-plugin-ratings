@@ -6437,13 +6437,6 @@
                         overflow: hidden !important;
                     }
 
-                    /* When keyboard is open - switch to absolute positioning for WebView compatibility */
-                    #chatWindow.keyboard-open {
-                        position: absolute !important;
-                        height: 100% !important;
-                        overflow-y: auto !important;
-                    }
-
                     /* Ensure input area is always visible */
                     #chatWindow .chat-input-area {
                         position: relative !important;
@@ -6454,7 +6447,7 @@
                     /* Messages should fill remaining space and be scrollable */
                     #chatWindow .chat-messages {
                         flex: 1 1 auto !important;
-                        min-height: 100px !important;
+                        min-height: 50px !important;
                         overflow-y: auto !important;
                     }
 
@@ -6464,11 +6457,11 @@
                         left: 0 !important;
                         right: 0 !important;
                         border-radius: 0 !important;
-                        max-height: 50vh !important;
+                        max-height: 30vh !important;
                     }
 
                     .chat-admin-panel.visible {
-                        max-height: 50vh !important;
+                        max-height: 30vh !important;
                     }
 
                     .chat-mod-panel {
@@ -16681,98 +16674,33 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard - for Android WebView/Jellyfin app
-            // The key insight: position:fixed doesn't work with Android WebView keyboards
-            // Solution: Remove fixed positioning when keyboard opens, use native scroll
-
-            var keyboardOpen = false;
-
-            var enableKeyboardMode = function () {
-                var chatWindow = document.getElementById('chatWindow');
-                var inputArea = document.getElementById('chatInputArea');
-                if (!chatWindow || !self.chatOpen) return;
-                if (window.innerWidth > 480) return;
-                if (keyboardOpen) return;
-
-                keyboardOpen = true;
-                chatWindow.classList.add('keyboard-open');
-
-                // Change from fixed to absolute positioning
-                // This allows the WebView to handle keyboard properly
-                chatWindow.style.position = 'absolute';
-                chatWindow.style.top = '0';
-                chatWindow.style.left = '0';
-                chatWindow.style.right = '0';
-                chatWindow.style.bottom = 'auto';
-                chatWindow.style.height = '100%';
-
-                // Add padding to body to prevent content behind chat
-                document.body.style.overflow = 'hidden';
-
-                // Scroll input into view after a delay
-                setTimeout(function () {
-                    if (inputArea) {
-                        inputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                    }
-                }, 100);
-
-                setTimeout(function () {
-                    if (inputArea) {
-                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
-                    }
-                }, 300);
-
-                setTimeout(function () {
-                    if (inputArea) {
-                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
-                    }
-                }, 500);
-            };
-
-            var disableKeyboardMode = function () {
-                var chatWindow = document.getElementById('chatWindow');
-                if (!chatWindow) return;
-                if (window.innerWidth > 480) return;
-
-                keyboardOpen = false;
-                chatWindow.classList.remove('keyboard-open');
-
-                // Restore fixed positioning
-                chatWindow.style.position = '';
-                chatWindow.style.top = '';
-                chatWindow.style.left = '';
-                chatWindow.style.right = '';
-                chatWindow.style.bottom = '';
-                chatWindow.style.height = '';
-
-                document.body.style.overflow = '';
-            };
-
-            // Focus/blur handlers - main trigger for keyboard mode
+            // Handle mobile keyboard - simple 50% height reduction for Android/WebView
             input.onfocus = function () {
                 if (window.innerWidth <= 480) {
-                    enableKeyboardMode();
+                    var chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow) {
+                        chatWindow.style.height = '50%';
+                        chatWindow.style.top = '0';
+                        chatWindow.style.bottom = 'auto';
+                    }
+                    setTimeout(function () {
+                        self.scrollChatToBottom();
+                    }, 100);
                 }
             };
 
             input.onblur = function () {
                 if (window.innerWidth <= 480) {
-                    // Delay to allow tap on send button
-                    setTimeout(disableKeyboardMode, 200);
+                    setTimeout(function () {
+                        var chatWindow = document.getElementById('chatWindow');
+                        if (chatWindow) {
+                            chatWindow.style.height = '';
+                            chatWindow.style.top = '';
+                            chatWindow.style.bottom = '';
+                        }
+                    }, 200);
                 }
             };
-
-            // Also listen for visualViewport if available (bonus)
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', function () {
-                    if (self.chatOpen && window.innerWidth <= 480 && keyboardOpen) {
-                        var inputArea = document.getElementById('chatInputArea');
-                        if (inputArea) {
-                            inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
-                        }
-                    }
-                });
-            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
