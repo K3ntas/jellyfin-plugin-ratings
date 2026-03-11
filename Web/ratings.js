@@ -948,7 +948,7 @@
          * Uses inline styles to override the hardcoded @media CSS defaults.
          */
         applyBadgeProfile: function () {
-            var container = document.getElementById('ratingsPluginComponent');
+            var container = this.queryInVisiblePage('#ratingsPluginComponent');
             if (!container) return;
 
             var profile = this.getMatchingBadgeProfile();
@@ -7707,11 +7707,8 @@
                         lastUrl = url;
                         lastItemId = itemId;
 
-                        // Remove old component if it exists
-                        const oldComponent = document.getElementById('ratingsPluginComponent');
-                        if (oldComponent) {
-                            oldComponent.remove();
-                        }
+                        // Remove old components from ALL pages (visible and cached)
+                        document.querySelectorAll('#ratingsPluginComponent').forEach(el => el.remove());
 
                         self.onPageChange();
                     }
@@ -7733,11 +7730,8 @@
                     lastUrl = url;
                     lastItemId = itemId;
 
-                    // Remove old component if it exists
-                    const oldComponent = document.getElementById('ratingsPluginComponent');
-                    if (oldComponent) {
-                        oldComponent.remove();
-                    }
+                    // Remove old components from ALL pages (visible and cached)
+                    document.querySelectorAll('#ratingsPluginComponent').forEach(el => el.remove());
 
                     self.onPageChange();
                 }
@@ -7802,8 +7796,8 @@
             const checkInterval = setInterval(() => {
                 attempts++;
 
-                // Check if the detailRibbon element exists (primary target)
-                const detailRibbon = document.querySelector('.detailRibbon');
+                // Check if the detailRibbon element exists in the VISIBLE page (not cached ones)
+                const detailRibbon = self.queryInVisiblePage('.detailRibbon');
 
                 if (detailRibbon) {
                     clearInterval(checkInterval);
@@ -7813,6 +7807,32 @@
                     clearInterval(checkInterval);
                 }
             }, 100); // Check every 100ms for faster detection
+        },
+
+        /**
+         * Get the currently visible detail page (not hidden/cached ones)
+         * Jellyfin's SPA caches multiple detail pages in the DOM with .hide class
+         */
+        getVisibleDetailPage: function () {
+            const allPages = document.querySelectorAll('.itemDetailPage');
+            for (const page of allPages) {
+                if (!page.classList.contains('hide')) {
+                    return page;
+                }
+            }
+            return null;
+        },
+
+        /**
+         * Query selector within the visible detail page context
+         * Falls back to document if no visible page found
+         */
+        queryInVisiblePage: function (selector) {
+            const visiblePage = this.getVisibleDetailPage();
+            if (visiblePage) {
+                return visiblePage.querySelector(selector);
+            }
+            return document.querySelector(selector);
         },
 
         /**
@@ -7857,8 +7877,15 @@
          * Inject rating component into the page
          */
         injectRatingComponent: function (itemId) {
-            if (document.getElementById('ratingsPluginComponent')) {
-                return; // Already injected
+            const self = this;
+            const visiblePage = this.getVisibleDetailPage();
+
+            // Check if already injected in the VISIBLE page (not hidden/cached ones)
+            const existingComponent = visiblePage
+                ? visiblePage.querySelector('#ratingsPluginComponent')
+                : document.getElementById('ratingsPluginComponent');
+            if (existingComponent) {
+                return; // Already injected in visible page
             }
 
             const container = document.createElement('div');
@@ -7881,8 +7908,9 @@
             `;
 
             // Position above .detailRibbon vertically, aligned with .detailSection horizontally
-            const detailRibbon = document.querySelector('.detailRibbon');
-            const detailSection = document.querySelector('.detailSection');
+            // Query within visible page context to avoid grabbing elements from cached pages
+            const detailRibbon = this.queryInVisiblePage('.detailRibbon');
+            const detailSection = this.queryInVisiblePage('.detailSection');
 
             if (detailRibbon) {
                 detailRibbon.classList.add('ratings-plugin-ribbon-anchor');
@@ -7890,8 +7918,8 @@
 
                 // Align widget: on desktop align with detailSection, on mobile CSS handles centering
                 function alignWidget() {
-                    var el = document.getElementById('ratingsPluginComponent');
-                    var ribbon = document.querySelector('.detailRibbon');
+                    var el = self.queryInVisiblePage('#ratingsPluginComponent');
+                    var ribbon = self.queryInVisiblePage('.detailRibbon');
                     if (!el || !ribbon) return;
 
                     if (window.innerWidth <= 1024) {
@@ -7900,7 +7928,7 @@
                         return;
                     }
 
-                    var section = document.querySelector('.detailSection');
+                    var section = self.queryInVisiblePage('.detailSection');
                     if (section) {
                         var rr = ribbon.getBoundingClientRect();
                         var sr = section.getBoundingClientRect();
@@ -7916,10 +7944,10 @@
                     realignTimer = setTimeout(alignWidget, 100);
                 });
             } else {
-                // Fallback
-                const detailPageContent = document.querySelector('.detailPageContent') ||
-                                         document.querySelector('.itemDetailPage') ||
-                                         document.querySelector('.detailPage-content');
+                // Fallback - still use visible page context
+                const detailPageContent = this.queryInVisiblePage('.detailPageContent') ||
+                                         visiblePage ||
+                                         this.queryInVisiblePage('.detailPage-content');
                 if (detailPageContent) {
                     detailPageContent.insertBefore(container, detailPageContent.firstChild);
                 }
@@ -7948,9 +7976,13 @@
          */
         attachEventListeners: function (itemId) {
             const self = this;
-            const stars = document.querySelectorAll('.ratings-plugin-star');
-            const popup = document.getElementById('ratingsPluginPopup');
-            const starsContainer = document.getElementById('ratingsPluginStars');
+            const visiblePage = this.getVisibleDetailPage();
+            // Query within visible page context to avoid cached pages
+            const stars = visiblePage
+                ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                : document.querySelectorAll('.ratings-plugin-star');
+            const popup = this.queryInVisiblePage('#ratingsPluginPopup');
+            const starsContainer = this.queryInVisiblePage('#ratingsPluginStars');
 
             stars.forEach(star => {
                 star.addEventListener('click', () => {
@@ -7987,7 +8019,10 @@
          * Highlight stars up to rating
          */
         highlightStars: function (rating) {
-            const stars = document.querySelectorAll('.ratings-plugin-star');
+            const visiblePage = this.getVisibleDetailPage();
+            const stars = visiblePage
+                ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                : document.querySelectorAll('.ratings-plugin-star');
             stars.forEach((star, index) => {
                 if (index < rating) {
                     star.classList.add('hover');
@@ -8002,7 +8037,7 @@
          */
         loadRatings: function (itemId) {
             const self = this;
-            const statsElement = document.getElementById('ratingsPluginStats');
+            const statsElement = this.queryInVisiblePage('#ratingsPluginStats');
 
 
             // Build URL with authentication
@@ -8069,7 +8104,10 @@
          * Update star display
          */
         updateStarDisplay: function (rating) {
-            const stars = document.querySelectorAll('.ratings-plugin-star');
+            const visiblePage = this.getVisibleDetailPage();
+            const stars = visiblePage
+                ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                : document.querySelectorAll('.ratings-plugin-star');
 
             stars.forEach((star, index) => {
                 star.classList.remove('filled', 'hover');
@@ -8208,8 +8246,9 @@
          * Show detailed ratings popup
          */
         showDetailedRatings: function (itemId) {
-            const popup = document.getElementById('ratingsPluginPopup');
-            const popupList = document.getElementById('ratingsPluginPopupList');
+            const popup = this.queryInVisiblePage('#ratingsPluginPopup');
+            const popupList = this.queryInVisiblePage('#ratingsPluginPopupList');
+            if (!popup || !popupList) return;
 
             popup.classList.add('visible');
             popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Loading...</li>';
