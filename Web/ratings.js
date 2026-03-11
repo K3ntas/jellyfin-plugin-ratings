@@ -6430,18 +6430,20 @@
                         left: 0 !important;
                         right: 0 !important;
                         bottom: 0 !important;
+                        bottom: env(keyboard-inset-height, 0) !important; /* Adjust for virtual keyboard */
                         width: 100% !important;
                         height: 100vh !important;
-                        height: 100dvh !important; /* Dynamic viewport height - accounts for mobile keyboard */
+                        height: 100dvh !important; /* Dynamic viewport height */
+                        height: calc(100vh - env(keyboard-inset-height, 0px)) !important; /* Subtract keyboard height */
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                         overflow: hidden !important;
+                        transition: height 0.15s ease-out !important;
                     }
 
-                    /* When keyboard is open - ensure proper layout */
+                    /* When keyboard is open - JS sets explicit height */
                     #chatWindow.keyboard-open {
                         bottom: auto !important;
-                        height: auto !important;
                     }
 
                     /* Ensure input area sticks to bottom in mobile */
@@ -16684,159 +16686,120 @@
             };
 
             // Handle mobile keyboard - resize chat window to fit visible viewport
-            // This fixes Firefox, Android WebView, and other browsers where keyboard covers the input
+            // Uses VirtualKeyboard API (best), visualViewport API (fallback), window resize (last resort)
 
-            // Detect Android WebView or mobile app context
-            var isAndroidWebView = /Android/.test(navigator.userAgent) && /wv|WebView/.test(navigator.userAgent);
-            var isJellyfinApp = /Jellyfin/.test(navigator.userAgent) || window.NativeShell || window.Android;
-            var isMobileApp = isAndroidWebView || isJellyfinApp;
-
-            // Store initial viewport height for keyboard detection
-            var initialViewportHeight = window.innerHeight;
+            var keyboardHeight = 0;
             var keyboardOpen = false;
 
-            var adjustChatForKeyboard = function () {
+            var adjustChatForKeyboard = function (kbHeight) {
                 var chatWindow = document.getElementById('chatWindow');
-                var inputArea = document.getElementById('chatInputArea');
                 if (!chatWindow || !self.chatOpen) return;
+                if (window.innerWidth > 480) return;
 
-                var visibleHeight;
-                var offsetTop = 0;
+                // Use provided keyboard height or try to detect it
+                var effectiveKbHeight = kbHeight || keyboardHeight;
 
-                if (window.visualViewport && window.visualViewport.height) {
-                    // Use visualViewport for accurate visible height
-                    visibleHeight = window.visualViewport.height;
-                    offsetTop = window.visualViewport.offsetTop;
-                } else {
-                    // Fallback: use window.innerHeight
-                    visibleHeight = window.innerHeight;
+                if (effectiveKbHeight > 0) {
+                    // We have actual keyboard height - resize chat window
+                    var availableHeight = window.innerHeight - effectiveKbHeight;
+                    chatWindow.style.height = availableHeight + 'px';
+                    chatWindow.style.top = '0';
+                    chatWindow.style.bottom = 'auto';
+                } else if (window.visualViewport && window.visualViewport.height) {
+                    // Fallback to visualViewport
+                    chatWindow.style.height = window.visualViewport.height + 'px';
+                    chatWindow.style.top = window.visualViewport.offsetTop + 'px';
+                    chatWindow.style.bottom = 'auto';
                 }
 
-                // Set chat window to visible viewport
-                chatWindow.style.height = visibleHeight + 'px';
-                chatWindow.style.top = offsetTop + 'px';
-                chatWindow.style.bottom = 'auto';
                 chatWindow.classList.add('keyboard-open');
-
-                // For Android WebView/app - use additional approach
-                if (isMobileApp && inputArea) {
-                    // Ensure input area is visible by scrolling it into view
-                    setTimeout(function () {
-                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
-                    }, 50);
-                }
+                keyboardOpen = true;
 
                 // Scroll chat to bottom after resize
                 setTimeout(function () {
                     self.scrollChatToBottom();
                 }, 100);
-
-                keyboardOpen = true;
             };
 
             var resetChatSize = function () {
                 var chatWindow = document.getElementById('chatWindow');
                 if (!chatWindow) return;
-                // Only reset on mobile
                 if (window.innerWidth <= 480) {
                     chatWindow.style.height = '';
                     chatWindow.style.top = '';
                     chatWindow.style.bottom = '';
                     chatWindow.classList.remove('keyboard-open');
                     keyboardOpen = false;
+                    keyboardHeight = 0;
                 }
             };
 
-            input.onfocus = function () {
-                // On mobile, adjust chat window size when keyboard opens
-                if (window.innerWidth <= 480) {
-                    // Multiple attempts with increasing delays for different WebView behaviors
-                    setTimeout(adjustChatForKeyboard, 50);
-                    setTimeout(adjustChatForKeyboard, 150);
-                    setTimeout(adjustChatForKeyboard, 300);
-                    setTimeout(adjustChatForKeyboard, 500);
-                    setTimeout(adjustChatForKeyboard, 800);
+            // PRIMARY: VirtualKeyboard API - provides exact keyboard dimensions
+            // Supported in Chrome 94+, Edge 94+, and Android WebView
+            if ('virtualKeyboard' in navigator) {
+                navigator.virtualKeyboard.overlaysContent = true;
 
-                    // For WebView/app - also try scrollIntoView on the input itself
-                    if (isMobileApp) {
-                        setTimeout(function () {
-                            input.scrollIntoView({ behavior: 'instant', block: 'center' });
-                        }, 400);
-                    }
-                }
-            };
+                navigator.virtualKeyboard.addEventListener('geometrychange', function (event) {
+                    var rect = event.target.boundingRect;
+                    keyboardHeight = rect.height;
 
-            input.onblur = function () {
-                // Reset chat size when keyboard closes
-                if (window.innerWidth <= 480) {
-                    setTimeout(resetChatSize, 100);
-                    setTimeout(resetChatSize, 300);
-                }
-            };
-
-            // Use visualViewport API for real-time keyboard tracking
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', function () {
                     if (self.chatOpen && window.innerWidth <= 480) {
-                        adjustChatForKeyboard();
-                    }
-                });
-                window.visualViewport.addEventListener('scroll', function () {
-                    if (self.chatOpen && window.innerWidth <= 480) {
-                        adjustChatForKeyboard();
+                        if (rect.height > 0) {
+                            adjustChatForKeyboard(rect.height);
+                        } else {
+                            resetChatSize();
+                        }
                     }
                 });
             }
 
-            // Additional resize listener for Android WebView/app
-            // Many WebViews fire window resize when keyboard opens even if visualViewport doesn't work
-            var lastWindowHeight = window.innerHeight;
+            // FALLBACK 1: visualViewport API
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', function () {
+                    if (self.chatOpen && window.innerWidth <= 480) {
+                        // Check if keyboard might be open (viewport shrunk)
+                        if (window.visualViewport.height < window.innerHeight * 0.8) {
+                            adjustChatForKeyboard();
+                        } else if (!document.activeElement || document.activeElement.tagName !== 'TEXTAREA') {
+                            resetChatSize();
+                        }
+                    }
+                });
+            }
+
+            // FALLBACK 2: Window resize listener
+            var initialHeight = window.innerHeight;
             window.addEventListener('resize', function () {
                 if (!self.chatOpen || window.innerWidth > 480) return;
 
                 var currentHeight = window.innerHeight;
-                var heightDiff = lastWindowHeight - currentHeight;
+                var heightDiff = initialHeight - currentHeight;
 
-                // Keyboard opened (height decreased significantly)
                 if (heightDiff > 100) {
-                    adjustChatForKeyboard();
-                }
-                // Keyboard closed (height increased)
-                else if (heightDiff < -100) {
+                    // Keyboard likely opened
+                    keyboardHeight = heightDiff;
+                    adjustChatForKeyboard(heightDiff);
+                } else if (heightDiff < 50 && keyboardOpen) {
+                    // Keyboard likely closed
                     resetChatSize();
                 }
-
-                lastWindowHeight = currentHeight;
             });
 
-            // For Jellyfin Android app - use interval-based keyboard detection
-            // This is more reliable than resize events in some WebViews
-            var keyboardCheckInterval = null;
-            if (isMobileApp) {
-                input.addEventListener('focus', function () {
-                    if (window.innerWidth > 480) return;
+            // Focus/blur handlers
+            input.onfocus = function () {
+                if (window.innerWidth <= 480) {
+                    // Give keyboard time to appear, then adjust
+                    setTimeout(function () { adjustChatForKeyboard(); }, 100);
+                    setTimeout(function () { adjustChatForKeyboard(); }, 300);
+                    setTimeout(function () { adjustChatForKeyboard(); }, 500);
+                }
+            };
 
-                    // Start checking for viewport changes
-                    var checkCount = 0;
-                    keyboardCheckInterval = setInterval(function () {
-                        checkCount++;
-                        adjustChatForKeyboard();
-
-                        // Stop checking after 2 seconds (20 checks at 100ms)
-                        if (checkCount >= 20) {
-                            clearInterval(keyboardCheckInterval);
-                            keyboardCheckInterval = null;
-                        }
-                    }, 100);
-                });
-
-                input.addEventListener('blur', function () {
-                    if (keyboardCheckInterval) {
-                        clearInterval(keyboardCheckInterval);
-                        keyboardCheckInterval = null;
-                    }
-                });
-            }
+            input.onblur = function () {
+                if (window.innerWidth <= 480) {
+                    setTimeout(resetChatSize, 150);
+                }
+            };
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
