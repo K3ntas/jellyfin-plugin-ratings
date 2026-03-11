@@ -6430,35 +6430,31 @@
                         left: 0 !important;
                         right: 0 !important;
                         bottom: 0 !important;
-                        bottom: env(keyboard-inset-height, 0) !important; /* Adjust for virtual keyboard */
                         width: 100% !important;
-                        height: 100vh !important;
-                        height: 100dvh !important; /* Dynamic viewport height */
-                        height: calc(100vh - env(keyboard-inset-height, 0px)) !important; /* Subtract keyboard height */
+                        height: 100% !important;
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                         overflow: hidden !important;
-                        transition: height 0.15s ease-out !important;
                     }
 
-                    /* When keyboard is open - JS sets explicit height */
+                    /* When keyboard is open - switch to absolute positioning for WebView compatibility */
                     #chatWindow.keyboard-open {
-                        bottom: auto !important;
+                        position: absolute !important;
+                        height: 100% !important;
+                        overflow-y: auto !important;
                     }
 
-                    /* Ensure input area sticks to bottom in mobile */
+                    /* Ensure input area is always visible */
                     #chatWindow .chat-input-area {
                         position: relative !important;
-                        bottom: 0 !important;
-                        left: 0 !important;
-                        right: 0 !important;
+                        flex-shrink: 0 !important;
                         padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
                     }
 
-                    /* Messages should fill remaining space */
+                    /* Messages should fill remaining space and be scrollable */
                     #chatWindow .chat-messages {
                         flex: 1 1 auto !important;
-                        min-height: 0 !important;
+                        min-height: 100px !important;
                         overflow-y: auto !important;
                     }
 
@@ -16685,121 +16681,98 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard - resize chat window to fit visible viewport
-            // Uses VirtualKeyboard API (best), visualViewport API (fallback), window resize (last resort)
+            // Handle mobile keyboard - for Android WebView/Jellyfin app
+            // The key insight: position:fixed doesn't work with Android WebView keyboards
+            // Solution: Remove fixed positioning when keyboard opens, use native scroll
 
-            var keyboardHeight = 0;
             var keyboardOpen = false;
 
-            var adjustChatForKeyboard = function (kbHeight) {
+            var enableKeyboardMode = function () {
                 var chatWindow = document.getElementById('chatWindow');
+                var inputArea = document.getElementById('chatInputArea');
                 if (!chatWindow || !self.chatOpen) return;
                 if (window.innerWidth > 480) return;
+                if (keyboardOpen) return;
 
-                // Use provided keyboard height or try to detect it
-                var effectiveKbHeight = kbHeight || keyboardHeight;
-
-                if (effectiveKbHeight > 0) {
-                    // We have actual keyboard height - resize chat window
-                    var availableHeight = window.innerHeight - effectiveKbHeight;
-                    chatWindow.style.height = availableHeight + 'px';
-                    chatWindow.style.top = '0';
-                    chatWindow.style.bottom = 'auto';
-                } else if (window.visualViewport && window.visualViewport.height) {
-                    // Fallback to visualViewport
-                    chatWindow.style.height = window.visualViewport.height + 'px';
-                    chatWindow.style.top = window.visualViewport.offsetTop + 'px';
-                    chatWindow.style.bottom = 'auto';
-                }
-
-                chatWindow.classList.add('keyboard-open');
                 keyboardOpen = true;
+                chatWindow.classList.add('keyboard-open');
 
-                // Scroll chat to bottom after resize
+                // Change from fixed to absolute positioning
+                // This allows the WebView to handle keyboard properly
+                chatWindow.style.position = 'absolute';
+                chatWindow.style.top = '0';
+                chatWindow.style.left = '0';
+                chatWindow.style.right = '0';
+                chatWindow.style.bottom = 'auto';
+                chatWindow.style.height = '100%';
+
+                // Add padding to body to prevent content behind chat
+                document.body.style.overflow = 'hidden';
+
+                // Scroll input into view after a delay
                 setTimeout(function () {
-                    self.scrollChatToBottom();
+                    if (inputArea) {
+                        inputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
                 }, 100);
+
+                setTimeout(function () {
+                    if (inputArea) {
+                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
+                    }
+                }, 300);
+
+                setTimeout(function () {
+                    if (inputArea) {
+                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
+                    }
+                }, 500);
             };
 
-            var resetChatSize = function () {
+            var disableKeyboardMode = function () {
                 var chatWindow = document.getElementById('chatWindow');
                 if (!chatWindow) return;
-                if (window.innerWidth <= 480) {
-                    chatWindow.style.height = '';
-                    chatWindow.style.top = '';
-                    chatWindow.style.bottom = '';
-                    chatWindow.classList.remove('keyboard-open');
-                    keyboardOpen = false;
-                    keyboardHeight = 0;
-                }
+                if (window.innerWidth > 480) return;
+
+                keyboardOpen = false;
+                chatWindow.classList.remove('keyboard-open');
+
+                // Restore fixed positioning
+                chatWindow.style.position = '';
+                chatWindow.style.top = '';
+                chatWindow.style.left = '';
+                chatWindow.style.right = '';
+                chatWindow.style.bottom = '';
+                chatWindow.style.height = '';
+
+                document.body.style.overflow = '';
             };
 
-            // PRIMARY: VirtualKeyboard API - provides exact keyboard dimensions
-            // Supported in Chrome 94+, Edge 94+, and Android WebView
-            if ('virtualKeyboard' in navigator) {
-                navigator.virtualKeyboard.overlaysContent = true;
-
-                navigator.virtualKeyboard.addEventListener('geometrychange', function (event) {
-                    var rect = event.target.boundingRect;
-                    keyboardHeight = rect.height;
-
-                    if (self.chatOpen && window.innerWidth <= 480) {
-                        if (rect.height > 0) {
-                            adjustChatForKeyboard(rect.height);
-                        } else {
-                            resetChatSize();
-                        }
-                    }
-                });
-            }
-
-            // FALLBACK 1: visualViewport API
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', function () {
-                    if (self.chatOpen && window.innerWidth <= 480) {
-                        // Check if keyboard might be open (viewport shrunk)
-                        if (window.visualViewport.height < window.innerHeight * 0.8) {
-                            adjustChatForKeyboard();
-                        } else if (!document.activeElement || document.activeElement.tagName !== 'TEXTAREA') {
-                            resetChatSize();
-                        }
-                    }
-                });
-            }
-
-            // FALLBACK 2: Window resize listener
-            var initialHeight = window.innerHeight;
-            window.addEventListener('resize', function () {
-                if (!self.chatOpen || window.innerWidth > 480) return;
-
-                var currentHeight = window.innerHeight;
-                var heightDiff = initialHeight - currentHeight;
-
-                if (heightDiff > 100) {
-                    // Keyboard likely opened
-                    keyboardHeight = heightDiff;
-                    adjustChatForKeyboard(heightDiff);
-                } else if (heightDiff < 50 && keyboardOpen) {
-                    // Keyboard likely closed
-                    resetChatSize();
-                }
-            });
-
-            // Focus/blur handlers
+            // Focus/blur handlers - main trigger for keyboard mode
             input.onfocus = function () {
                 if (window.innerWidth <= 480) {
-                    // Give keyboard time to appear, then adjust
-                    setTimeout(function () { adjustChatForKeyboard(); }, 100);
-                    setTimeout(function () { adjustChatForKeyboard(); }, 300);
-                    setTimeout(function () { adjustChatForKeyboard(); }, 500);
+                    enableKeyboardMode();
                 }
             };
 
             input.onblur = function () {
                 if (window.innerWidth <= 480) {
-                    setTimeout(resetChatSize, 150);
+                    // Delay to allow tap on send button
+                    setTimeout(disableKeyboardMode, 200);
                 }
             };
+
+            // Also listen for visualViewport if available (bonus)
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', function () {
+                    if (self.chatOpen && window.innerWidth <= 480 && keyboardOpen) {
+                        var inputArea = document.getElementById('chatInputArea');
+                        if (inputArea) {
+                            inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
+                        }
+                    }
+                });
+            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
