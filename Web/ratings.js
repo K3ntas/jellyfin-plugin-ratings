@@ -16675,14 +16675,17 @@
             };
 
             // Handle mobile keyboard - shrink chat to 50% when input focused
+            // Only apply in Jellyfin Android app where keyboard overlays content
+            var isJellyfinApp = window.NativeInterface || window.NativeShell;
+
             var shrinkChat = function () {
-                console.log('[RatingsPlugin] shrinkChat called, innerWidth:', window.innerWidth);
+                if (!isJellyfinApp) return; // Only in Jellyfin app
                 var chatWindow = document.getElementById('chatWindow');
                 if (chatWindow && window.innerWidth <= 1024) {
-                    console.log('[RatingsPlugin] Shrinking chat to 50vh');
-                    chatWindow.style.height = '50vh';
-                    chatWindow.style.top = '0';
-                    chatWindow.style.bottom = 'auto';
+                    // Must use setProperty with 'important' to override CSS !important rules
+                    chatWindow.style.setProperty('height', '50vh', 'important');
+                    chatWindow.style.setProperty('top', '0', 'important');
+                    chatWindow.style.setProperty('bottom', 'auto', 'important');
                     setTimeout(function () {
                         self.scrollChatToBottom();
                     }, 150);
@@ -16690,13 +16693,14 @@
             };
 
             var expandChat = function () {
+                if (!isJellyfinApp) return; // Only in Jellyfin app
                 setTimeout(function () {
                     var chatWindow = document.getElementById('chatWindow');
                     if (chatWindow) {
-                        console.log('[RatingsPlugin] Expanding chat back to full');
-                        chatWindow.style.height = '';
-                        chatWindow.style.top = '';
-                        chatWindow.style.bottom = '';
+                        // Remove the inline styles to let CSS take over again
+                        chatWindow.style.removeProperty('height');
+                        chatWindow.style.removeProperty('top');
+                        chatWindow.style.removeProperty('bottom');
                     }
                 }, 200);
             };
@@ -16706,7 +16710,6 @@
             input.addEventListener('touchstart', shrinkChat);
             input.addEventListener('click', shrinkChat);
             input.addEventListener('blur', expandChat);
-            console.log('[RatingsPlugin] Mobile keyboard handlers registered');
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
