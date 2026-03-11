@@ -5969,6 +5969,8 @@
                     background: #252525 !important;
                     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
                     position: relative !important;
+                    flex-shrink: 0 !important; /* Never shrink input area */
+                    z-index: 10 !important; /* Ensure input is above other elements */
                 }
 
                 .chat-input-row {
@@ -6433,6 +6435,29 @@
                         height: 100dvh !important; /* Dynamic viewport height - accounts for mobile keyboard */
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
+                        overflow: hidden !important;
+                    }
+
+                    /* When keyboard is open - ensure proper layout */
+                    #chatWindow.keyboard-open {
+                        bottom: auto !important;
+                        height: auto !important;
+                    }
+
+                    /* Ensure input area sticks to bottom in mobile */
+                    #chatWindow .chat-input-area {
+                        position: relative !important;
+                        bottom: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+                    }
+
+                    /* Messages should fill remaining space */
+                    #chatWindow .chat-messages {
+                        flex: 1 1 auto !important;
+                        min-height: 0 !important;
+                        overflow-y: auto !important;
                     }
 
                     .chat-emoji-picker,
@@ -16659,28 +16684,54 @@
             };
 
             // Handle mobile keyboard - resize chat window to fit visible viewport
-            // This fixes Firefox and other browsers where keyboard covers the input
+            // This fixes Firefox, Android WebView, and other browsers where keyboard covers the input
+
+            // Detect Android WebView or mobile app context
+            var isAndroidWebView = /Android/.test(navigator.userAgent) && /wv|WebView/.test(navigator.userAgent);
+            var isJellyfinApp = /Jellyfin/.test(navigator.userAgent) || window.NativeShell || window.Android;
+            var isMobileApp = isAndroidWebView || isJellyfinApp;
+
+            // Store initial viewport height for keyboard detection
+            var initialViewportHeight = window.innerHeight;
+            var keyboardOpen = false;
+
             var adjustChatForKeyboard = function () {
                 var chatWindow = document.getElementById('chatWindow');
+                var inputArea = document.getElementById('chatInputArea');
                 if (!chatWindow || !self.chatOpen) return;
 
-                if (window.visualViewport) {
+                var visibleHeight;
+                var offsetTop = 0;
+
+                if (window.visualViewport && window.visualViewport.height) {
                     // Use visualViewport for accurate visible height
-                    var vh = window.visualViewport.height;
-                    var vt = window.visualViewport.offsetTop;
-                    chatWindow.style.height = vh + 'px';
-                    chatWindow.style.top = vt + 'px';
-                    chatWindow.style.bottom = 'auto';
+                    visibleHeight = window.visualViewport.height;
+                    offsetTop = window.visualViewport.offsetTop;
                 } else {
                     // Fallback: use window.innerHeight
-                    chatWindow.style.height = window.innerHeight + 'px';
-                    chatWindow.style.top = '0';
-                    chatWindow.style.bottom = 'auto';
+                    visibleHeight = window.innerHeight;
                 }
-                // Scroll to bottom after resize
+
+                // Set chat window to visible viewport
+                chatWindow.style.height = visibleHeight + 'px';
+                chatWindow.style.top = offsetTop + 'px';
+                chatWindow.style.bottom = 'auto';
+                chatWindow.classList.add('keyboard-open');
+
+                // For Android WebView/app - use additional approach
+                if (isMobileApp && inputArea) {
+                    // Ensure input area is visible by scrolling it into view
+                    setTimeout(function () {
+                        inputArea.scrollIntoView({ behavior: 'instant', block: 'end' });
+                    }, 50);
+                }
+
+                // Scroll chat to bottom after resize
                 setTimeout(function () {
                     self.scrollChatToBottom();
-                }, 50);
+                }, 100);
+
+                keyboardOpen = true;
             };
 
             var resetChatSize = function () {
@@ -16691,15 +16742,27 @@
                     chatWindow.style.height = '';
                     chatWindow.style.top = '';
                     chatWindow.style.bottom = '';
+                    chatWindow.classList.remove('keyboard-open');
+                    keyboardOpen = false;
                 }
             };
 
             input.onfocus = function () {
                 // On mobile, adjust chat window size when keyboard opens
                 if (window.innerWidth <= 480) {
-                    setTimeout(adjustChatForKeyboard, 100);
+                    // Multiple attempts with increasing delays for different WebView behaviors
+                    setTimeout(adjustChatForKeyboard, 50);
+                    setTimeout(adjustChatForKeyboard, 150);
                     setTimeout(adjustChatForKeyboard, 300);
                     setTimeout(adjustChatForKeyboard, 500);
+                    setTimeout(adjustChatForKeyboard, 800);
+
+                    // For WebView/app - also try scrollIntoView on the input itself
+                    if (isMobileApp) {
+                        setTimeout(function () {
+                            input.scrollIntoView({ behavior: 'instant', block: 'center' });
+                        }, 400);
+                    }
                 }
             };
 
@@ -16707,6 +16770,7 @@
                 // Reset chat size when keyboard closes
                 if (window.innerWidth <= 480) {
                     setTimeout(resetChatSize, 100);
+                    setTimeout(resetChatSize, 300);
                 }
             };
 
@@ -16720,6 +16784,56 @@
                 window.visualViewport.addEventListener('scroll', function () {
                     if (self.chatOpen && window.innerWidth <= 480) {
                         adjustChatForKeyboard();
+                    }
+                });
+            }
+
+            // Additional resize listener for Android WebView/app
+            // Many WebViews fire window resize when keyboard opens even if visualViewport doesn't work
+            var lastWindowHeight = window.innerHeight;
+            window.addEventListener('resize', function () {
+                if (!self.chatOpen || window.innerWidth > 480) return;
+
+                var currentHeight = window.innerHeight;
+                var heightDiff = lastWindowHeight - currentHeight;
+
+                // Keyboard opened (height decreased significantly)
+                if (heightDiff > 100) {
+                    adjustChatForKeyboard();
+                }
+                // Keyboard closed (height increased)
+                else if (heightDiff < -100) {
+                    resetChatSize();
+                }
+
+                lastWindowHeight = currentHeight;
+            });
+
+            // For Jellyfin Android app - use interval-based keyboard detection
+            // This is more reliable than resize events in some WebViews
+            var keyboardCheckInterval = null;
+            if (isMobileApp) {
+                input.addEventListener('focus', function () {
+                    if (window.innerWidth > 480) return;
+
+                    // Start checking for viewport changes
+                    var checkCount = 0;
+                    keyboardCheckInterval = setInterval(function () {
+                        checkCount++;
+                        adjustChatForKeyboard();
+
+                        // Stop checking after 2 seconds (20 checks at 100ms)
+                        if (checkCount >= 20) {
+                            clearInterval(keyboardCheckInterval);
+                            keyboardCheckInterval = null;
+                        }
+                    }, 100);
+                });
+
+                input.addEventListener('blur', function () {
+                    if (keyboardCheckInterval) {
+                        clearInterval(keyboardCheckInterval);
+                        keyboardCheckInterval = null;
                     }
                 });
             }
