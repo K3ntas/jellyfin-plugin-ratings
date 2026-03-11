@@ -1423,7 +1423,7 @@
                 #requestMediaBtn {
                     position: absolute !important;
                     top: 8px;
-                    right: 240px !important;
+                    right: 285px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                     padding: 12px 48px !important;
@@ -5367,6 +5367,7 @@
                     width: 24px !important;
                     height: 24px !important;
                     fill: currentColor !important;
+                    margin-top: 3px !important;
                 }
 
                 /* Chat notification badge */
