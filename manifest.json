@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.82.0",
+        "changelog": "CSS 100dvh for keyboard resize - removes JS polling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.82.0/jellyfin-plugin-ratings_2.0.82.0.zip",
+        "checksum": "fc5279f75f4660e19095d72b62269d6c",
+        "timestamp": "2026-03-11T21:24:00Z"
+      },
+      {
         "version": "2.0.81.0",
         "changelog": "Add interactive-widget meta + 300ms delay scrollIntoView for keyboard",
         "targetAbi": "10.11.0.0",
