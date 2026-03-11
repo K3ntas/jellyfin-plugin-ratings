@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.68.0",
+        "changelog": "Request Media at 260px, mobile notification bell moved left and up 5px",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.68.0/jellyfin-plugin-ratings_2.0.68.0.zip",
+        "checksum": "392aab0f31c6e96bdbff0f36bd16c505",
+        "timestamp": "2026-03-11T18:03:00Z"
+      },
+      {
         "version": "2.0.67.0",
         "changelog": "Fix chat icon alignment (down 3px), move Request Media button left",
         "targetAbi": "10.11.0.0",
