@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.83.0",
+        "changelog": "Fix chat visibility + 50% shrink with re-focus for keyboard",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.83.0/jellyfin-plugin-ratings_2.0.83.0.zip",
+        "checksum": "91d22740482e4010d1c624c7275ca053",
+        "timestamp": "2026-03-11T21:30:00Z"
+      },
+      {
         "version": "2.0.82.0",
         "changelog": "CSS 100dvh for keyboard resize - removes JS polling",
         "targetAbi": "10.11.0.0",
