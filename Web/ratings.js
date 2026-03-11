@@ -16674,34 +16674,15 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard for Jellyfin Android app
-            // The app uses adjustPan but position:fixed doesn't pan properly
-            // Solution: Switch to position:absolute and scroll input into view
-            var isJellyfinApp = window.NativeInterface || window.NativeShell ||
-                                (navigator.userAgent.indexOf('Android') > -1 && navigator.userAgent.indexOf('wv') > -1);
-
+            // Handle mobile keyboard - shrink chat to 50% when input focused
             var shrinkChat = function () {
+                console.log('[RatingsPlugin] shrinkChat called, innerWidth:', window.innerWidth);
                 var chatWindow = document.getElementById('chatWindow');
                 if (chatWindow && window.innerWidth <= 1024) {
-                    if (isJellyfinApp) {
-                        // In Jellyfin app: use absolute positioning so system pan works
-                        chatWindow.style.position = 'absolute';
-                        chatWindow.style.height = '50vh';
-                        chatWindow.style.top = '0';
-                        chatWindow.style.bottom = 'auto';
-                        // Force scroll the input into view
-                        setTimeout(function () {
-                            input.scrollIntoView({ block: 'center', behavior: 'instant' });
-                        }, 100);
-                        setTimeout(function () {
-                            input.scrollIntoView({ block: 'center', behavior: 'instant' });
-                        }, 300);
-                    } else {
-                        // In browser: just shrink
-                        chatWindow.style.height = '50%';
-                        chatWindow.style.top = '0';
-                        chatWindow.style.bottom = 'auto';
-                    }
+                    console.log('[RatingsPlugin] Shrinking chat to 50vh');
+                    chatWindow.style.height = '50vh';
+                    chatWindow.style.top = '0';
+                    chatWindow.style.bottom = 'auto';
                     setTimeout(function () {
                         self.scrollChatToBottom();
                     }, 150);
@@ -16712,7 +16693,7 @@
                 setTimeout(function () {
                     var chatWindow = document.getElementById('chatWindow');
                     if (chatWindow) {
-                        chatWindow.style.position = '';
+                        console.log('[RatingsPlugin] Expanding chat back to full');
                         chatWindow.style.height = '';
                         chatWindow.style.top = '';
                         chatWindow.style.bottom = '';
@@ -16725,6 +16706,7 @@
             input.addEventListener('touchstart', shrinkChat);
             input.addEventListener('click', shrinkChat);
             input.addEventListener('blur', expandChat);
+            console.log('[RatingsPlugin] Mobile keyboard handlers registered');
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
