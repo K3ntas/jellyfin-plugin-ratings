@@ -5969,6 +5969,8 @@
                     background: #252525 !important;
                     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
                     position: relative !important;
+                    flex-shrink: 0 !important; /* Never shrink input area */
+                    z-index: 10 !important; /* Ensure input is above other elements */
                 }
 
                 .chat-input-row {
@@ -6422,17 +6424,33 @@
 
                 /* Chat Mobile Responsive */
                 @media (max-width: 480px) {
-                    #chatWindow {
+                    #chatWindow.visible {
                         position: fixed !important;
                         top: 0 !important;
                         left: 0 !important;
                         right: 0 !important;
                         bottom: 0 !important;
                         width: 100% !important;
-                        height: 100vh !important;
-                        height: 100dvh !important; /* Dynamic viewport height - accounts for mobile keyboard */
+                        height: 100% !important;
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
+                        overflow: hidden !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+
+                    /* Ensure input area is always visible */
+                    #chatWindow .chat-input-area {
+                        position: relative !important;
+                        flex-shrink: 0 !important;
+                        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+                    }
+
+                    /* Messages should fill remaining space and be scrollable */
+                    #chatWindow .chat-messages {
+                        flex: 1 1 auto !important;
+                        min-height: 50px !important;
+                        overflow-y: auto !important;
                     }
 
                     .chat-emoji-picker,
@@ -6441,11 +6459,11 @@
                         left: 0 !important;
                         right: 0 !important;
                         border-radius: 0 !important;
-                        max-height: 50vh !important;
+                        max-height: 30vh !important;
                     }
 
                     .chat-admin-panel.visible {
-                        max-height: 50vh !important;
+                        max-height: 30vh !important;
                     }
 
                     .chat-mod-panel {
@@ -16658,69 +16676,47 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard - resize chat window to fit visible viewport
-            // This fixes Firefox and other browsers where keyboard covers the input
-            var adjustChatForKeyboard = function () {
-                var chatWindow = document.getElementById('chatWindow');
-                if (!chatWindow || !self.chatOpen) return;
+            // Handle mobile keyboard in Jellyfin Android app
+            // Shrink chat to 50% when keyboard appears, then re-focus to keep keyboard open
+            var isJellyfinApp = window.NativeInterface || window.NativeShell;
+            var keyboardActive = false;
 
-                if (window.visualViewport) {
-                    // Use visualViewport for accurate visible height
-                    var vh = window.visualViewport.height;
-                    var vt = window.visualViewport.offsetTop;
-                    chatWindow.style.height = vh + 'px';
-                    chatWindow.style.top = vt + 'px';
-                    chatWindow.style.bottom = 'auto';
-                } else {
-                    // Fallback: use window.innerHeight
-                    chatWindow.style.height = window.innerHeight + 'px';
-                    chatWindow.style.top = '0';
-                    chatWindow.style.bottom = 'auto';
-                }
-                // Scroll to bottom after resize
-                setTimeout(function () {
-                    self.scrollChatToBottom();
-                }, 50);
-            };
+            if (isJellyfinApp && window.innerWidth <= 1024) {
+                input.addEventListener('focus', function () {
+                    if (keyboardActive) return; // Already handled
+                    keyboardActive = true;
 
-            var resetChatSize = function () {
-                var chatWindow = document.getElementById('chatWindow');
-                if (!chatWindow) return;
-                // Only reset on mobile
-                if (window.innerWidth <= 480) {
-                    chatWindow.style.height = '';
-                    chatWindow.style.top = '';
-                    chatWindow.style.bottom = '';
-                }
-            };
+                    // Wait for keyboard to start appearing
+                    setTimeout(function () {
+                        var chatWindow = document.getElementById('chatWindow');
+                        if (chatWindow) {
+                            // Shrink chat to 50%
+                            chatWindow.style.setProperty('height', '50vh', 'important');
+                            chatWindow.style.setProperty('top', '0', 'important');
+                            chatWindow.style.setProperty('bottom', 'auto', 'important');
 
-            input.onfocus = function () {
-                // On mobile, adjust chat window size when keyboard opens
-                if (window.innerWidth <= 480) {
-                    setTimeout(adjustChatForKeyboard, 100);
-                    setTimeout(adjustChatForKeyboard, 300);
-                    setTimeout(adjustChatForKeyboard, 500);
-                }
-            };
-
-            input.onblur = function () {
-                // Reset chat size when keyboard closes
-                if (window.innerWidth <= 480) {
-                    setTimeout(resetChatSize, 100);
-                }
-            };
-
-            // Use visualViewport API for real-time keyboard tracking
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', function () {
-                    if (self.chatOpen && window.innerWidth <= 480) {
-                        adjustChatForKeyboard();
-                    }
+                            // Re-focus input to keep keyboard open
+                            setTimeout(function () {
+                                input.focus();
+                                self.scrollChatToBottom();
+                            }, 50);
+                        }
+                    }, 100);
                 });
-                window.visualViewport.addEventListener('scroll', function () {
-                    if (self.chatOpen && window.innerWidth <= 480) {
-                        adjustChatForKeyboard();
-                    }
+
+                input.addEventListener('blur', function () {
+                    // Small delay to check if we're just switching focus
+                    setTimeout(function () {
+                        if (document.activeElement !== input) {
+                            keyboardActive = false;
+                            var chatWindow = document.getElementById('chatWindow');
+                            if (chatWindow) {
+                                chatWindow.style.removeProperty('height');
+                                chatWindow.style.removeProperty('top');
+                                chatWindow.style.removeProperty('bottom');
+                            }
+                        }
+                    }, 100);
                 });
             }
 
