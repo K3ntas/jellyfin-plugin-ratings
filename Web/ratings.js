@@ -6431,10 +6431,12 @@
                         right: 0 !important;
                         bottom: 0 !important;
                         width: 100% !important;
-                        height: 100% !important;
+                        height: 100dvh !important; /* dvh resizes with keyboard */
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                         overflow: hidden !important;
+                        display: flex !important;
+                        flex-direction: column !important;
                     }
 
                     /* Ensure input area is always visible */
@@ -16674,54 +16676,14 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard in Jellyfin Android app
-            // The app's WebView doesn't resize when keyboard appears, so we handle it manually
-            var isJellyfinApp = window.NativeInterface || window.NativeShell;
-
-            if (isJellyfinApp && window.innerWidth <= 1024) {
-                // Add interactive-widget to viewport meta tag for better keyboard handling
-                var viewportMeta = document.querySelector('meta[name="viewport"]');
-                if (viewportMeta) {
-                    var content = viewportMeta.getAttribute('content') || '';
-                    if (content.indexOf('interactive-widget') === -1) {
-                        viewportMeta.setAttribute('content', content + ', interactive-widget=resizes-content');
-                    }
-                }
-
-                // On focus: wait 300ms for keyboard to render, then scroll input into view
-                input.addEventListener('focus', function () {
+            // Mobile keyboard: scroll input into view after 300ms (keyboard render delay)
+            input.addEventListener('focus', function () {
+                if (window.innerWidth <= 480) {
                     setTimeout(function () {
-                        // Scroll the input into view so it's visible above keyboard
                         input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                        // Also try to resize chat if visualViewport is available
-                        if (window.visualViewport) {
-                            var viewportHeight = window.visualViewport.height;
-                            var keyboardHeight = window.innerHeight - viewportHeight;
-                            if (keyboardHeight > 100) {
-                                var chatWindow = document.getElementById('chatWindow');
-                                if (chatWindow) {
-                                    chatWindow.style.setProperty('height', viewportHeight + 'px', 'important');
-                                    chatWindow.style.setProperty('top', '0', 'important');
-                                    chatWindow.style.setProperty('bottom', 'auto', 'important');
-                                }
-                            }
-                        }
                     }, 300);
-                });
-
-                // On blur: restore chat size
-                input.addEventListener('blur', function () {
-                    setTimeout(function () {
-                        var chatWindow = document.getElementById('chatWindow');
-                        if (chatWindow) {
-                            chatWindow.style.removeProperty('height');
-                            chatWindow.style.removeProperty('top');
-                            chatWindow.style.removeProperty('bottom');
-                        }
-                    }, 200);
-                });
-            }
+                }
+            });
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
