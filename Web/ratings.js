@@ -16322,11 +16322,20 @@
                 return;
             }
 
-            // Get all cards
-            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
-            console.log('[Ratings] Found cards:', cards.length);
+            // Get all cards - try multiple selectors
+            let cards = Array.from(itemsContainer.querySelectorAll('.card[data-id]'));
             if (cards.length === 0) {
-                console.log('[Ratings] No cards found!');
+                cards = Array.from(itemsContainer.querySelectorAll('.card'));
+            }
+            if (cards.length === 0) {
+                cards = Array.from(itemsContainer.querySelectorAll('[data-id]'));
+            }
+            console.log('[Ratings] Found cards:', cards.length);
+            if (cards.length > 0) {
+                console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].outerHTML.substring(0, 200));
+            }
+            if (cards.length === 0) {
+                console.log('[Ratings] No cards found! Container HTML:', itemsContainer.innerHTML.substring(0, 500));
                 return;
             }
 
@@ -16339,7 +16348,8 @@
             // Collect item IDs that need ratings fetched
             const itemIds = [];
             cards.forEach(card => {
-                const itemId = self.getItemIdFromCard(card);
+                // Try data-id first, then fallback
+                const itemId = card.getAttribute('data-id') || self.getItemIdFromCard(card);
                 if (itemId && self.ratingsCache[itemId] === undefined) {
                     itemIds.push(itemId);
                 }
@@ -16432,7 +16442,11 @@
             let withRatings = 0;
             let withoutRatings = 0;
             cards.slice(0, 5).forEach(card => {
-                const id = self.getItemIdFromCard(card);
+                // Try multiple ways to get ID
+                let id = card.getAttribute('data-id');
+                if (!id) {
+                    id = self.getItemIdFromCard(card);
+                }
                 const cached = self.ratingsCache[id];
                 console.log('[Ratings] Card ID:', id, 'Cached:', cached);
                 if (cached && cached.AverageRating) withRatings++;
@@ -16442,8 +16456,9 @@
 
             // Sort cards by rating
             const sortedCards = [...cards].sort((a, b) => {
-                const idA = self.getItemIdFromCard(a);
-                const idB = self.getItemIdFromCard(b);
+                // Try data-id first, then fallback to getItemIdFromCard
+                const idA = a.getAttribute('data-id') || self.getItemIdFromCard(a);
+                const idB = b.getAttribute('data-id') || self.getItemIdFromCard(b);
 
                 const ratingA = self.ratingsCache[idA] && self.ratingsCache[idA] !== null ? self.ratingsCache[idA].AverageRating : -1;
                 const ratingB = self.ratingsCache[idB] && self.ratingsCache[idB] !== null ? self.ratingsCache[idB].AverageRating : -1;
