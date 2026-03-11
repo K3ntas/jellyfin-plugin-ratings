@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.79.0",
+        "changelog": "Use visualViewport to resize chat with keyboard",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.79.0/jellyfin-plugin-ratings_2.0.79.0.zip",
+        "checksum": "a2f11fc6100998c3bcea256ff6c4381b",
+        "timestamp": "2026-03-11T20:58:00Z"
+      },
+      {
         "version": "2.0.78.0",
         "changelog": "Add scrollIntoView after chat shrink for keyboard",
         "targetAbi": "10.11.0.0",
