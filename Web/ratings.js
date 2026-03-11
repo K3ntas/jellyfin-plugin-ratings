@@ -16325,13 +16325,100 @@
                 itemsContainer.dataset.originalOrder = originalIds;
             }
 
+            // Collect item IDs that need ratings fetched
+            const itemIds = [];
+            cards.forEach(card => {
+                const itemId = self.getItemIdFromCard(card);
+                if (itemId && self.ratingsCache[itemId] === undefined) {
+                    itemIds.push(itemId);
+                }
+            });
+
+            // If we need to fetch ratings, do it first then sort
+            if (itemIds.length > 0) {
+                self.fetchRatingsForItems(itemIds).then(() => {
+                    self.performLibrarySort(itemsContainer, cards, direction);
+                });
+            } else {
+                // All ratings cached, sort immediately
+                self.performLibrarySort(itemsContainer, cards, direction);
+            }
+        },
+
+        /**
+         * Fetch ratings for multiple items in batch
+         */
+        fetchRatingsForItems: function (itemIds) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Fetch ratings in parallel (limit concurrent requests)
+            const batchSize = 20;
+            const batches = [];
+            for (let i = 0; i < itemIds.length; i += batchSize) {
+                batches.push(itemIds.slice(i, i + batchSize));
+            }
+
+            const fetchBatch = (ids) => {
+                return Promise.all(ids.map(itemId => {
+                    const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
+                    return fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(stats => {
+                        if (stats.TotalRatings > 0) {
+                            self.ratingsCache[itemId] = stats;
+                        } else {
+                            self.ratingsCache[itemId] = null;
+                        }
+                    })
+                    .catch(() => {
+                        self.ratingsCache[itemId] = null;
+                    });
+                }));
+            };
+
+            // Process batches sequentially to avoid overwhelming the server
+            return batches.reduce((promise, batch) => {
+                return promise.then(() => fetchBatch(batch));
+            }, Promise.resolve());
+        },
+
+        /**
+         * Perform the actual sorting of library cards
+         */
+        performLibrarySort: function (itemsContainer, cards, direction) {
+            const self = this;
+
             // Sort cards by rating
-            const sortedCards = cards.sort((a, b) => {
+            const sortedCards = [...cards].sort((a, b) => {
                 const idA = self.getItemIdFromCard(a);
                 const idB = self.getItemIdFromCard(b);
 
-                const ratingA = self.ratingsCache[idA] ? self.ratingsCache[idA].AverageRating : -1;
-                const ratingB = self.ratingsCache[idB] ? self.ratingsCache[idB].AverageRating : -1;
+                const ratingA = self.ratingsCache[idA] && self.ratingsCache[idA] !== null ? self.ratingsCache[idA].AverageRating : -1;
+                const ratingB = self.ratingsCache[idB] && self.ratingsCache[idB] !== null ? self.ratingsCache[idB].AverageRating : -1;
 
                 // Items without ratings go to the end
                 if (ratingA === -1 && ratingB === -1) return 0;
