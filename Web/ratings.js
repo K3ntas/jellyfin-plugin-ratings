@@ -16674,44 +16674,38 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard - shrink chat to 50% when input focused
+            // Handle mobile keyboard - resize chat to fit above keyboard
             // Only apply in Jellyfin Android app where keyboard overlays content
             var isJellyfinApp = window.NativeInterface || window.NativeShell;
 
-            var shrinkChat = function () {
-                if (!isJellyfinApp) return; // Only in Jellyfin app
-                var chatWindow = document.getElementById('chatWindow');
-                if (chatWindow && window.innerWidth <= 1024) {
-                    // Must use setProperty with 'important' to override CSS !important rules
-                    chatWindow.style.setProperty('height', '50vh', 'important');
-                    chatWindow.style.setProperty('top', '0', 'important');
-                    chatWindow.style.setProperty('bottom', 'auto', 'important');
-                    setTimeout(function () {
-                        self.scrollChatToBottom();
-                        // Scroll input into view to ensure it's visible above keyboard
-                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 150);
-                }
-            };
+            if (isJellyfinApp && window.visualViewport) {
+                var lastViewportHeight = window.visualViewport.height;
 
-            var expandChat = function () {
-                if (!isJellyfinApp) return; // Only in Jellyfin app
-                setTimeout(function () {
+                window.visualViewport.addEventListener('resize', function () {
                     var chatWindow = document.getElementById('chatWindow');
-                    if (chatWindow) {
-                        // Remove the inline styles to let CSS take over again
+                    if (!chatWindow || window.innerWidth > 1024) return;
+
+                    var viewportHeight = window.visualViewport.height;
+                    var keyboardHeight = window.innerHeight - viewportHeight;
+
+                    if (keyboardHeight > 100) {
+                        // Keyboard is open - resize chat to fit above it
+                        chatWindow.style.setProperty('height', viewportHeight + 'px', 'important');
+                        chatWindow.style.setProperty('top', '0', 'important');
+                        chatWindow.style.setProperty('bottom', 'auto', 'important');
+                        setTimeout(function () {
+                            self.scrollChatToBottom();
+                        }, 50);
+                    } else {
+                        // Keyboard closed - restore original size
                         chatWindow.style.removeProperty('height');
                         chatWindow.style.removeProperty('top');
                         chatWindow.style.removeProperty('bottom');
                     }
-                }, 200);
-            };
 
-            // Use multiple event types for better WebView compatibility
-            input.addEventListener('focus', shrinkChat);
-            input.addEventListener('touchstart', shrinkChat);
-            input.addEventListener('click', shrinkChat);
-            input.addEventListener('blur', expandChat);
+                    lastViewportHeight = viewportHeight;
+                });
+            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
