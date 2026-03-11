@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.63.0",
+        "changelog": "Fix mobile keyboard hiding chat input on Firefox and other browsers",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.63.0/jellyfin-plugin-ratings_2.0.63.0.zip",
+        "checksum": "115853fc8c0482a1c4158598709632ea",
+        "timestamp": "2026-03-11T16:42:00Z"
+      },
+      {
         "version": "2.0.62.0",
         "changelog": "Fix SPA caching issue causing ratings UI to not appear on some pages",
         "targetAbi": "10.11.0.0",
