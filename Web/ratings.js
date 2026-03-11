@@ -16688,6 +16688,8 @@
                     chatWindow.style.setProperty('bottom', 'auto', 'important');
                     setTimeout(function () {
                         self.scrollChatToBottom();
+                        // Scroll input into view to ensure it's visible above keyboard
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 150);
                 }
             };
