@@ -16285,8 +16285,10 @@
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('[Ratings] Sort button clicked!');
 
                     const sortDirection = btn.getAttribute('data-sort');
+                    console.log('[Ratings] Sort direction:', sortDirection);
                     const currentActive = container.querySelector('.library-sort-btn.active');
                     const wasActive = btn.classList.contains('active');
 
@@ -16310,14 +16312,23 @@
          */
         sortLibraryCards: function (direction) {
             const self = this;
+            console.log('[Ratings] sortLibraryCards called with direction:', direction);
 
             // Find the items container
             const itemsContainer = document.querySelector('.itemsContainer');
-            if (!itemsContainer) return;
+            console.log('[Ratings] itemsContainer:', itemsContainer);
+            if (!itemsContainer) {
+                console.log('[Ratings] No itemsContainer found!');
+                return;
+            }
 
             // Get all cards
             const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
-            if (cards.length === 0) return;
+            console.log('[Ratings] Found cards:', cards.length);
+            if (cards.length === 0) {
+                console.log('[Ratings] No cards found!');
+                return;
+            }
 
             // Store original order if not already stored
             if (!itemsContainer.dataset.originalOrder) {
@@ -16333,14 +16344,18 @@
                     itemIds.push(itemId);
                 }
             });
+            console.log('[Ratings] Item IDs to fetch:', itemIds.length, 'Already cached:', cards.length - itemIds.length);
 
             // If we need to fetch ratings, do it first then sort
             if (itemIds.length > 0) {
+                console.log('[Ratings] Fetching ratings for', itemIds.length, 'items...');
                 self.fetchRatingsForItems(itemIds).then(() => {
+                    console.log('[Ratings] Ratings fetched, now sorting...');
                     self.performLibrarySort(itemsContainer, cards, direction);
                 });
             } else {
                 // All ratings cached, sort immediately
+                console.log('[Ratings] All ratings cached, sorting immediately...');
                 self.performLibrarySort(itemsContainer, cards, direction);
             }
         },
@@ -16411,6 +16426,19 @@
          */
         performLibrarySort: function (itemsContainer, cards, direction) {
             const self = this;
+            console.log('[Ratings] performLibrarySort called, cards:', cards.length, 'direction:', direction);
+
+            // Log some ratings for debugging
+            let withRatings = 0;
+            let withoutRatings = 0;
+            cards.slice(0, 5).forEach(card => {
+                const id = self.getItemIdFromCard(card);
+                const cached = self.ratingsCache[id];
+                console.log('[Ratings] Card ID:', id, 'Cached:', cached);
+                if (cached && cached.AverageRating) withRatings++;
+                else withoutRatings++;
+            });
+            console.log('[Ratings] Sample - with ratings:', withRatings, 'without:', withoutRatings);
 
             // Sort cards by rating
             const sortedCards = [...cards].sort((a, b) => {
@@ -16433,10 +16461,12 @@
                 }
             });
 
+            console.log('[Ratings] Sorted, re-appending cards...');
             // Re-append cards in sorted order
             sortedCards.forEach(card => {
                 itemsContainer.appendChild(card);
             });
+            console.log('[Ratings] Sort complete!');
         },
 
         /**
