@@ -16261,9 +16261,9 @@
 
             const tryInject = function () {
                 attempts++;
-                const castBtn = document.querySelector('.headerCastButton');
+                const headerRight = document.querySelector('.headerRight');
 
-                if (castBtn && !document.getElementById('chatBtn')) {
+                if (headerRight && !document.getElementById('chatBtn')) {
                     // Create chat button - same structure as Latest Media button
                     const chatBtn = document.createElement('button');
                     chatBtn.id = 'chatBtn';
@@ -16279,9 +16279,9 @@
                         self.toggleChat();
                     };
 
-                    // Insert before or replace cast button
-                    castBtn.parentNode.insertBefore(chatBtn, castBtn);
-                    castBtn.style.display = 'none';
+                    // Insert at beginning of headerRight (left of other buttons)
+                    // This keeps cast button and other buttons visible
+                    headerRight.insertBefore(chatBtn, headerRight.firstChild);
 
                     return;
                 }
