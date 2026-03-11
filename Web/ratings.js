@@ -16675,32 +16675,34 @@
             };
 
             // Handle mobile keyboard - simple 50% height reduction for Android/WebView
-            input.onfocus = function () {
-                if (window.innerWidth <= 480) {
-                    var chatWindow = document.getElementById('chatWindow');
-                    if (chatWindow) {
-                        chatWindow.style.height = '50%';
-                        chatWindow.style.top = '0';
-                        chatWindow.style.bottom = 'auto';
-                    }
+            var shrinkChat = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (chatWindow && window.innerWidth <= 1024) {
+                    chatWindow.style.height = '50%';
+                    chatWindow.style.top = '0';
+                    chatWindow.style.bottom = 'auto';
                     setTimeout(function () {
                         self.scrollChatToBottom();
                     }, 100);
                 }
             };
 
-            input.onblur = function () {
-                if (window.innerWidth <= 480) {
-                    setTimeout(function () {
-                        var chatWindow = document.getElementById('chatWindow');
-                        if (chatWindow) {
-                            chatWindow.style.height = '';
-                            chatWindow.style.top = '';
-                            chatWindow.style.bottom = '';
-                        }
-                    }, 200);
-                }
+            var expandChat = function () {
+                setTimeout(function () {
+                    var chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow) {
+                        chatWindow.style.height = '';
+                        chatWindow.style.top = '';
+                        chatWindow.style.bottom = '';
+                    }
+                }, 200);
             };
+
+            // Use multiple event types for better WebView compatibility
+            input.addEventListener('focus', shrinkChat);
+            input.addEventListener('touchstart', shrinkChat);
+            input.addEventListener('click', shrinkChat);
+            input.addEventListener('blur', expandChat);
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
