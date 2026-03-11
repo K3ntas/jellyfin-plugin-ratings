@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.64.0",
+        "changelog": "Fix mobile keyboard - resize chat window to visible viewport",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.64.0/jellyfin-plugin-ratings_2.0.64.0.zip",
+        "checksum": "9cb0b3d5c9e688068f7d602adc689c1f",
+        "timestamp": "2026-03-11T17:02:00Z"
+      },
+      {
         "version": "2.0.63.0",
         "changelog": "Fix mobile keyboard hiding chat input on Firefox and other browsers",
         "targetAbi": "10.11.0.0",
