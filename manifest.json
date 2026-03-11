@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.84.0",
+        "changelog": "Add sorting arrows for non-Netflix library view",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.84.0/jellyfin-plugin-ratings_2.0.84.0.zip",
+        "checksum": "d240ef6ada9d96b426fa067b53901a10",
+        "timestamp": "2026-03-11T22:40:00Z"
+      },
+      {
         "version": "1.0.315.0",
         "changelog": "Fix mobile keyboard in Jellyfin Android app",
         "targetAbi": "10.11.0.0",
