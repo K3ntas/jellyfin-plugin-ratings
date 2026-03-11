@@ -1556,6 +1556,10 @@
                     #latestMediaBtn,
                     #chatBtn {
                         padding: 6px !important;
+                        height: 36px !important;
+                        width: 36px !important;
+                        min-width: 36px !important;
+                        margin-right: 2px !important;
                     }
 
                     #latestMediaBtn svg,
@@ -5343,6 +5347,12 @@
                     color: #fff !important;
                     font-size: 24px !important;
                     position: relative !important;
+                    margin-right: 4px !important;
+                    vertical-align: middle !important;
+                    height: 40px !important;
+                    width: 40px !important;
+                    min-width: 40px !important;
+                    flex-shrink: 0 !important;
                 }
 
                 #chatBtn:hover {
@@ -16279,9 +16289,16 @@
                         self.toggleChat();
                     };
 
-                    // Insert at beginning of headerRight (left of other buttons)
-                    // This keeps cast button and other buttons visible
-                    headerRight.insertBefore(chatBtn, headerRight.firstChild);
+                    // Insert after latestMediaBtn if it exists, otherwise at beginning
+                    const latestMediaBtn = document.getElementById('latestMediaBtn');
+                    if (latestMediaBtn && latestMediaBtn.nextSibling) {
+                        headerRight.insertBefore(chatBtn, latestMediaBtn.nextSibling);
+                    } else if (latestMediaBtn) {
+                        headerRight.appendChild(chatBtn);
+                    } else {
+                        // Insert at beginning if no latestMediaBtn
+                        headerRight.insertBefore(chatBtn, headerRight.firstChild);
+                    }
 
                     return;
                 }
