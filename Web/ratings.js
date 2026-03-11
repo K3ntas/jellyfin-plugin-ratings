@@ -1423,7 +1423,7 @@
                 #requestMediaBtn {
                     position: absolute !important;
                     top: 8px;
-                    right: 285px !important;
+                    right: 260px !important;
                     background: rgba(60, 60, 60, 0.9) !important;
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                     padding: 12px 48px !important;
@@ -1560,6 +1560,11 @@
                         width: 36px !important;
                         min-width: 36px !important;
                         margin-right: 2px !important;
+                    }
+
+                    #latestMediaBtn {
+                        margin-right: 8px !important;
+                        margin-top: -5px !important;
                     }
 
                     #latestMediaBtn svg,
