@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.65.0",
+        "changelog": "Move chat button to left of header, keep cast button visible",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.65.0/jellyfin-plugin-ratings_2.0.65.0.zip",
+        "checksum": "d47c40794d6c6613d60b991b304b0c08",
+        "timestamp": "2026-03-11T17:22:00Z"
+      },
+      {
         "version": "2.0.64.0",
         "changelog": "Fix mobile keyboard - resize chat window to visible viewport",
         "targetAbi": "10.11.0.0",
