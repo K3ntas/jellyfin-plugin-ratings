@@ -6412,7 +6412,8 @@
                         right: 0 !important;
                         bottom: 0 !important;
                         width: 100% !important;
-                        height: 100% !important;
+                        height: 100vh !important;
+                        height: 100dvh !important; /* Dynamic viewport height - accounts for mobile keyboard */
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                     }
@@ -16632,6 +16633,36 @@
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
+
+            // Handle mobile keyboard opening - ensure input stays visible
+            // This fixes Firefox and other browsers where keyboard doesn't trigger resize
+            input.onfocus = function () {
+                const inputEl = this;
+                const scrollInputIntoView = function () {
+                    // Scroll chat messages to bottom
+                    self.scrollChatToBottom();
+                    // Ensure input field itself is visible (not hidden by keyboard)
+                    inputEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                };
+                // Delay to allow keyboard to fully open
+                setTimeout(scrollInputIntoView, 300);
+                // Second scroll after keyboard animation completes
+                setTimeout(scrollInputIntoView, 600);
+            };
+
+            // Use visualViewport API for more reliable keyboard detection (if available)
+            if (window.visualViewport) {
+                let lastHeight = window.visualViewport.height;
+                window.visualViewport.addEventListener('resize', function () {
+                    const currentHeight = window.visualViewport.height;
+                    // Keyboard opened (viewport got smaller)
+                    if (currentHeight < lastHeight && self.chatOpen && document.activeElement === input) {
+                        self.scrollChatToBottom();
+                        input.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+                    lastHeight = currentHeight;
+                });
+            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
