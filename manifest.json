@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.85.0",
+        "changelog": "Fix library sort - fetch ratings before sorting",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.85.0/jellyfin-plugin-ratings_2.0.85.0.zip",
+        "checksum": "3dc7ab12c1b8bf413a3e4c5fb1960d96",
+        "timestamp": "2026-03-11T22:44:00Z"
+      },
+      {
         "version": "2.0.84.0",
         "changelog": "Add sorting arrows for non-Netflix library view",
         "targetAbi": "10.11.0.0",
