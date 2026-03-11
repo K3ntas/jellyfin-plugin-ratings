@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.315.0",
+        "changelog": "Fix mobile keyboard in Jellyfin Android app",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.315.0/jellyfin-plugin-ratings_1.0.315.0.zip",
+        "checksum": "934f9f8826741b9eb08527b87b34b9e8",
+        "timestamp": "2026-03-11T22:17:00Z"
+      },
+      {
         "version": "1.0.314.0",
         "changelog": "Chat button position, mobile keyboard fixes, notification bell alignment",
         "targetAbi": "10.11.0.0",
