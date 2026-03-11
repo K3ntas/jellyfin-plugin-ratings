@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.69.0",
+        "changelog": "Fix notification bell mobile positioning (notificationToggleIcon)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.69.0/jellyfin-plugin-ratings_2.0.69.0.zip",
+        "checksum": "fd5df64f32488e5129a7564d9e3e0b56",
+        "timestamp": "2026-03-11T18:12:00Z"
+      },
+      {
         "version": "2.0.68.0",
         "changelog": "Request Media at 260px, mobile notification bell moved left and up 5px",
         "targetAbi": "10.11.0.0",
