@@ -16674,16 +16674,37 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Handle mobile keyboard - simple 50% height reduction for Android/WebView
+            // Handle mobile keyboard for Jellyfin Android app
+            // The app uses adjustPan but position:fixed doesn't pan properly
+            // Solution: Switch to position:absolute and scroll input into view
+            var isJellyfinApp = window.NativeInterface || window.NativeShell ||
+                                (navigator.userAgent.indexOf('Android') > -1 && navigator.userAgent.indexOf('wv') > -1);
+
             var shrinkChat = function () {
                 var chatWindow = document.getElementById('chatWindow');
                 if (chatWindow && window.innerWidth <= 1024) {
-                    chatWindow.style.height = '50%';
-                    chatWindow.style.top = '0';
-                    chatWindow.style.bottom = 'auto';
+                    if (isJellyfinApp) {
+                        // In Jellyfin app: use absolute positioning so system pan works
+                        chatWindow.style.position = 'absolute';
+                        chatWindow.style.height = '50vh';
+                        chatWindow.style.top = '0';
+                        chatWindow.style.bottom = 'auto';
+                        // Force scroll the input into view
+                        setTimeout(function () {
+                            input.scrollIntoView({ block: 'center', behavior: 'instant' });
+                        }, 100);
+                        setTimeout(function () {
+                            input.scrollIntoView({ block: 'center', behavior: 'instant' });
+                        }, 300);
+                    } else {
+                        // In browser: just shrink
+                        chatWindow.style.height = '50%';
+                        chatWindow.style.top = '0';
+                        chatWindow.style.bottom = 'auto';
+                    }
                     setTimeout(function () {
                         self.scrollChatToBottom();
-                    }, 100);
+                    }, 150);
                 }
             };
 
@@ -16691,6 +16712,7 @@
                 setTimeout(function () {
                     var chatWindow = document.getElementById('chatWindow');
                     if (chatWindow) {
+                        chatWindow.style.position = '';
                         chatWindow.style.height = '';
                         chatWindow.style.top = '';
                         chatWindow.style.bottom = '';
