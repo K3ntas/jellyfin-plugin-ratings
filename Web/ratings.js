@@ -1562,15 +1562,16 @@
                         margin-right: 2px !important;
                     }
 
-                    #latestMediaBtn {
-                        margin-right: 8px !important;
-                        margin-top: -5px !important;
-                    }
-
                     #latestMediaBtn svg,
                     #chatBtn svg {
                         width: 20px !important;
                         height: 20px !important;
+                    }
+
+                    /* Notification toggle bell - move left and up on mobile */
+                    #notificationToggleIcon {
+                        margin-right: 8px !important;
+                        margin-top: -5px !important;
                     }
                 }
 
