@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.70.0",
+        "changelog": "Fix Android app keyboard hiding chat input",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.70.0/jellyfin-plugin-ratings_2.0.70.0.zip",
+        "checksum": "786c6295c62a22f6782a4a839c7870e0",
+        "timestamp": "2026-03-11T19:25:00Z"
+      },
+      {
         "version": "2.0.69.0",
         "changelog": "Fix notification bell mobile positioning (notificationToggleIcon)",
         "targetAbi": "10.11.0.0",
