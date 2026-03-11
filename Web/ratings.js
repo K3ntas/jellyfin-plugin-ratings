@@ -1041,6 +1041,9 @@
             // Initialize Netflix view if enabled
             this.initNetflixView();
 
+            // Initialize library sort buttons for non-Netflix view
+            this.initLibrarySortButtons();
+
             // Initialize new media notifications
             this.initNotifications();
 
@@ -3928,6 +3931,44 @@
 
                 .netflix-sort-btn.active:hover {
                     background: rgba(229, 9, 20, 1);
+                }
+
+                /* Library View Sort Buttons (non-Netflix view) */
+                .library-sort-container {
+                    display: inline-flex;
+                    gap: 4px;
+                    margin-left: 8px;
+                    vertical-align: middle;
+                }
+
+                .library-sort-btn {
+                    background: transparent;
+                    border: none;
+                    color: rgba(255, 255, 255, 0.7);
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    padding: 0;
+                }
+
+                .library-sort-btn:hover {
+                    color: #fff;
+                    background: rgba(255, 255, 255, 0.1);
+                }
+
+                .library-sort-btn.active {
+                    color: #00a4dc;
+                }
+
+                .library-sort-btn.active:hover {
+                    color: #00a4dc;
+                    background: rgba(0, 164, 220, 0.2);
                 }
 
                 .netflix-row-wrapper {
@@ -16110,6 +16151,234 @@
                     observer.observe(placeholder);
                 });
             });
+        },
+
+        /**
+         * Initialize library sort buttons observer for non-Netflix view
+         */
+        initLibrarySortButtons: function () {
+            const self = this;
+            let lastUrl = '';
+
+            const checkLibraryPage = () => {
+                const url = window.location.href;
+                const hash = window.location.hash;
+
+                // Skip Netflix view pages - they have their own sort buttons
+                if (self.netflixViewEnabled && self.isNetflixViewPage()) {
+                    // Remove any existing library sort buttons
+                    const existing = document.getElementById('librarySortContainer');
+                    if (existing) existing.remove();
+                    return;
+                }
+
+                // Check if we're on a library page (movies, tv, etc.)
+                const isLibraryPage = hash.includes('#/movies') ||
+                                     hash.includes('#/tv') ||
+                                     hash.includes('#/music') ||
+                                     hash.includes('#/list') ||
+                                     hash.includes('collectionType=');
+
+                if (!isLibraryPage) {
+                    // Remove sort buttons when leaving library
+                    const existing = document.getElementById('librarySortContainer');
+                    if (existing) existing.remove();
+                    return;
+                }
+
+                // Don't re-inject on same URL
+                if (url === lastUrl && document.getElementById('librarySortContainer')) {
+                    return;
+                }
+                lastUrl = url;
+
+                // Wait for Jellyfin's controls to appear, then inject our buttons
+                self.injectLibrarySortButtons();
+            };
+
+            // Listen for navigation events
+            window.addEventListener('hashchange', () => setTimeout(checkLibraryPage, 300));
+            window.addEventListener('popstate', () => setTimeout(checkLibraryPage, 300));
+
+            // Periodic check as fallback
+            setInterval(checkLibraryPage, 2000);
+
+            // Initial check
+            setTimeout(checkLibraryPage, 1000);
+        },
+
+        /**
+         * Inject sort buttons into library view header
+         */
+        injectLibrarySortButtons: function () {
+            const self = this;
+
+            // Don't inject if already exists
+            if (document.getElementById('librarySortContainer')) return;
+
+            // Find Jellyfin's view controls container
+            // Look for the container with pagination and view buttons
+            const viewControls = document.querySelector('.listTopPaging, .viewControls, .flex.align-items-center.justify-content-center');
+
+            // Alternative: find the filter button and insert before it
+            const filterBtn = document.querySelector('button[title="Filter"], button[data-action="filter"], .btnFilter');
+            const sortBtn = document.querySelector('button[title="Sort"], button[data-action="sort"], .btnSort, button.paper-icon-button-light[title]');
+
+            // Find any button in the header controls area
+            const headerControls = document.querySelector('.listHeader, .sectionTitleContainer');
+
+            let targetContainer = null;
+            let insertBefore = null;
+
+            if (filterBtn && filterBtn.parentElement) {
+                targetContainer = filterBtn.parentElement;
+                insertBefore = filterBtn;
+            } else if (sortBtn && sortBtn.parentElement) {
+                targetContainer = sortBtn.parentElement;
+                insertBefore = sortBtn;
+            } else if (viewControls) {
+                targetContainer = viewControls;
+            } else if (headerControls) {
+                // Find the flex container with buttons
+                const flexContainer = headerControls.querySelector('.flex, [style*="display: flex"], [style*="display:flex"]');
+                if (flexContainer) {
+                    targetContainer = flexContainer;
+                }
+            }
+
+            // Last resort: find by looking for the button group
+            if (!targetContainer) {
+                const allButtons = document.querySelectorAll('button.paper-icon-button-light');
+                for (const btn of allButtons) {
+                    const parent = btn.parentElement;
+                    if (parent && parent.querySelectorAll('button').length >= 3) {
+                        targetContainer = parent;
+                        break;
+                    }
+                }
+            }
+
+            if (!targetContainer) {
+                // Retry after a delay
+                setTimeout(() => self.injectLibrarySortButtons(), 500);
+                return;
+            }
+
+            // Create sort buttons container
+            const container = document.createElement('span');
+            container.id = 'librarySortContainer';
+            container.className = 'library-sort-container';
+            container.innerHTML = `
+                <button class="library-sort-btn" data-sort="desc" title="${self.t('sortHighest')}">▲</button>
+                <button class="library-sort-btn" data-sort="asc" title="${self.t('sortLowest')}">▼</button>
+            `;
+
+            // Insert into container
+            if (insertBefore) {
+                targetContainer.insertBefore(container, insertBefore);
+            } else {
+                targetContainer.appendChild(container);
+            }
+
+            // Attach click handlers
+            container.querySelectorAll('.library-sort-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const sortDirection = btn.getAttribute('data-sort');
+                    const currentActive = container.querySelector('.library-sort-btn.active');
+                    const wasActive = btn.classList.contains('active');
+
+                    // Remove active from all
+                    container.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
+
+                    if (wasActive) {
+                        // Clicking same button again - restore original order
+                        self.restoreLibraryCardsOrder();
+                    } else {
+                        // Sort cards
+                        btn.classList.add('active');
+                        self.sortLibraryCards(sortDirection);
+                    }
+                });
+            });
+        },
+
+        /**
+         * Sort library cards by custom ratings
+         */
+        sortLibraryCards: function (direction) {
+            const self = this;
+
+            // Find the items container
+            const itemsContainer = document.querySelector('.itemsContainer');
+            if (!itemsContainer) return;
+
+            // Get all cards
+            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
+            if (cards.length === 0) return;
+
+            // Store original order if not already stored
+            if (!itemsContainer.dataset.originalOrder) {
+                const originalIds = cards.map(card => card.getAttribute('data-id') || '').join(',');
+                itemsContainer.dataset.originalOrder = originalIds;
+            }
+
+            // Sort cards by rating
+            const sortedCards = cards.sort((a, b) => {
+                const idA = self.getItemIdFromCard(a);
+                const idB = self.getItemIdFromCard(b);
+
+                const ratingA = self.ratingsCache[idA] ? self.ratingsCache[idA].AverageRating : -1;
+                const ratingB = self.ratingsCache[idB] ? self.ratingsCache[idB].AverageRating : -1;
+
+                // Items without ratings go to the end
+                if (ratingA === -1 && ratingB === -1) return 0;
+                if (ratingA === -1) return 1;
+                if (ratingB === -1) return -1;
+
+                // Sort by direction
+                if (direction === 'desc') {
+                    return ratingB - ratingA; // Highest first
+                } else {
+                    return ratingA - ratingB; // Lowest first
+                }
+            });
+
+            // Re-append cards in sorted order
+            sortedCards.forEach(card => {
+                itemsContainer.appendChild(card);
+            });
+        },
+
+        /**
+         * Restore original order of library cards
+         */
+        restoreLibraryCardsOrder: function () {
+            const itemsContainer = document.querySelector('.itemsContainer');
+            if (!itemsContainer || !itemsContainer.dataset.originalOrder) return;
+
+            const originalIds = itemsContainer.dataset.originalOrder.split(',');
+            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
+
+            // Create a map of id to card
+            const cardMap = new Map();
+            cards.forEach(card => {
+                const id = card.getAttribute('data-id') || '';
+                cardMap.set(id, card);
+            });
+
+            // Re-append in original order
+            originalIds.forEach(id => {
+                const card = cardMap.get(id);
+                if (card) {
+                    itemsContainer.appendChild(card);
+                }
+            });
+
+            // Clear stored order
+            delete itemsContainer.dataset.originalOrder;
         },
 
         /**
