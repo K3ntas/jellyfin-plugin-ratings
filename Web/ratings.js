@@ -6424,14 +6424,14 @@
 
                 /* Chat Mobile Responsive */
                 @media (max-width: 480px) {
-                    #chatWindow {
+                    #chatWindow.visible {
                         position: fixed !important;
                         top: 0 !important;
                         left: 0 !important;
                         right: 0 !important;
                         bottom: 0 !important;
                         width: 100% !important;
-                        height: 100dvh !important; /* dvh resizes with keyboard */
+                        height: 100% !important;
                         border-radius: 0 !important;
                         z-index: 9999999 !important;
                         overflow: hidden !important;
@@ -16676,14 +16676,49 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             };
 
-            // Mobile keyboard: scroll input into view after 300ms (keyboard render delay)
-            input.addEventListener('focus', function () {
-                if (window.innerWidth <= 480) {
+            // Handle mobile keyboard in Jellyfin Android app
+            // Shrink chat to 50% when keyboard appears, then re-focus to keep keyboard open
+            var isJellyfinApp = window.NativeInterface || window.NativeShell;
+            var keyboardActive = false;
+
+            if (isJellyfinApp && window.innerWidth <= 1024) {
+                input.addEventListener('focus', function () {
+                    if (keyboardActive) return; // Already handled
+                    keyboardActive = true;
+
+                    // Wait for keyboard to start appearing
                     setTimeout(function () {
-                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300);
-                }
-            });
+                        var chatWindow = document.getElementById('chatWindow');
+                        if (chatWindow) {
+                            // Shrink chat to 50%
+                            chatWindow.style.setProperty('height', '50vh', 'important');
+                            chatWindow.style.setProperty('top', '0', 'important');
+                            chatWindow.style.setProperty('bottom', 'auto', 'important');
+
+                            // Re-focus input to keep keyboard open
+                            setTimeout(function () {
+                                input.focus();
+                                self.scrollChatToBottom();
+                            }, 50);
+                        }
+                    }, 100);
+                });
+
+                input.addEventListener('blur', function () {
+                    // Small delay to check if we're just switching focus
+                    setTimeout(function () {
+                        if (document.activeElement !== input) {
+                            keyboardActive = false;
+                            var chatWindow = document.getElementById('chatWindow');
+                            if (chatWindow) {
+                                chatWindow.style.removeProperty('height');
+                                chatWindow.style.removeProperty('top');
+                                chatWindow.style.removeProperty('bottom');
+                            }
+                        }
+                    }, 100);
+                });
+            }
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
