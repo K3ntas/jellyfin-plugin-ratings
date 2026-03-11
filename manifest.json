@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.78.0",
+        "changelog": "Add scrollIntoView after chat shrink for keyboard",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.78.0/jellyfin-plugin-ratings_2.0.78.0.zip",
+        "checksum": "8b8c0bb4a8609396c8b60c9bb73b2882",
+        "timestamp": "2026-03-11T20:52:00Z"
+      },
+      {
         "version": "2.0.77.0",
         "changelog": "Fix keyboard covering chat input in Jellyfin Android app",
         "targetAbi": "10.11.0.0",
