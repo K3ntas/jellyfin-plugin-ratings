@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/dev/images/logo.png",
     "versions": [
       {
+        "version": "2.0.67.0",
+        "changelog": "Fix chat icon alignment (down 3px), move Request Media button left",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.67.0/jellyfin-plugin-ratings_2.0.67.0.zip",
+        "checksum": "4ca4169720ad622111a10e621f02f874",
+        "timestamp": "2026-03-11T17:54:00Z"
+      },
+      {
         "version": "2.0.66.0",
         "changelog": "Fix chat button alignment and position after Latest Media button",
         "targetAbi": "10.11.0.0",
