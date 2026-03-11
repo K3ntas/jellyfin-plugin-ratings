@@ -16677,35 +16677,64 @@
             // Handle mobile keyboard - resize chat to fit above keyboard
             // Only apply in Jellyfin Android app where keyboard overlays content
             var isJellyfinApp = window.NativeInterface || window.NativeShell;
+            var keyboardPollInterval = null;
+            var originalHeight = null;
 
-            if (isJellyfinApp && window.visualViewport) {
-                var lastViewportHeight = window.visualViewport.height;
+            var adjustChatForKeyboard = function () {
+                var chatWindow = document.getElementById('chatWindow');
+                if (!chatWindow) return;
 
-                window.visualViewport.addEventListener('resize', function () {
+                var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                var keyboardHeight = window.innerHeight - viewportHeight;
+
+                if (keyboardHeight > 100) {
+                    // Keyboard is open - resize chat to fit above it
+                    chatWindow.style.setProperty('height', viewportHeight + 'px', 'important');
+                    chatWindow.style.setProperty('top', '0', 'important');
+                    chatWindow.style.setProperty('bottom', 'auto', 'important');
+                    self.scrollChatToBottom();
+                }
+            };
+
+            var startKeyboardPolling = function () {
+                if (!isJellyfinApp || window.innerWidth > 1024) return;
+                if (keyboardPollInterval) return; // Already polling
+
+                var chatWindow = document.getElementById('chatWindow');
+                if (chatWindow) {
+                    originalHeight = chatWindow.offsetHeight;
+                }
+
+                // Poll for viewport changes for 1 second after focus
+                var pollCount = 0;
+                keyboardPollInterval = setInterval(function () {
+                    adjustChatForKeyboard();
+                    pollCount++;
+                    if (pollCount > 20) { // Stop after 1 second (20 * 50ms)
+                        clearInterval(keyboardPollInterval);
+                        keyboardPollInterval = null;
+                    }
+                }, 50);
+            };
+
+            var restoreChat = function () {
+                if (!isJellyfinApp) return;
+                if (keyboardPollInterval) {
+                    clearInterval(keyboardPollInterval);
+                    keyboardPollInterval = null;
+                }
+                setTimeout(function () {
                     var chatWindow = document.getElementById('chatWindow');
-                    if (!chatWindow || window.innerWidth > 1024) return;
-
-                    var viewportHeight = window.visualViewport.height;
-                    var keyboardHeight = window.innerHeight - viewportHeight;
-
-                    if (keyboardHeight > 100) {
-                        // Keyboard is open - resize chat to fit above it
-                        chatWindow.style.setProperty('height', viewportHeight + 'px', 'important');
-                        chatWindow.style.setProperty('top', '0', 'important');
-                        chatWindow.style.setProperty('bottom', 'auto', 'important');
-                        setTimeout(function () {
-                            self.scrollChatToBottom();
-                        }, 50);
-                    } else {
-                        // Keyboard closed - restore original size
+                    if (chatWindow) {
                         chatWindow.style.removeProperty('height');
                         chatWindow.style.removeProperty('top');
                         chatWindow.style.removeProperty('bottom');
                     }
+                }, 200);
+            };
 
-                    lastViewportHeight = viewportHeight;
-                });
-            }
+            input.addEventListener('focus', startKeyboardPolling);
+            input.addEventListener('blur', restoreChat);
 
             // Emoji picker toggle
             document.getElementById('chatEmojiBtn').onclick = function () {
