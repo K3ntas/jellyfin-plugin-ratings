@@ -13027,15 +13027,12 @@
 
             listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loadingRequests') + '</p>';
 
-            // Fetch media requests, deletion requests, and ban status
+            // Fetch user's own requests, deletion requests, and ban status
             Promise.all([
-                this.fetchAllRequests(),
+                this.fetchMyRequests(),
                 this.fetchDeletionRequests(),
                 this.checkBan('deletion_request')
-            ]).then(([requests, deletionRequests, deletionBanInfo]) => {
-                // Filter to only current user's requests
-                const userId = ApiClient.getCurrentUserId();
-                const userRequests = requests.filter(r => r.UserId === userId);
+            ]).then(([userRequests, deletionRequests, deletionBanInfo]) => {
 
                 if (userRequests.length === 0) {
                     listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + self.t('noRequests') + '</p>';
@@ -14009,6 +14006,47 @@
                     });
                 } catch (err) {
                     console.error('Error in fetchAllRequests:', err);
+                    reject(err);
+                }
+            });
+        },
+
+        /**
+         * Fetch current user's media requests (works for all authenticated users)
+         */
+        fetchMyRequests: function () {
+            return new Promise((resolve, reject) => {
+                try {
+                    const baseUrl = ApiClient.serverAddress();
+                    const accessToken = ApiClient.accessToken();
+                    const deviceId = ApiClient.deviceId();
+                    const url = `${baseUrl}/Ratings/Requests/My`;
+
+                    const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch my requests');
+                        }
+                        return response.json();
+                    })
+                    .then(requests => {
+                        resolve(requests || []);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching my requests:', err);
+                        reject(err);
+                    });
+                } catch (err) {
+                    console.error('Error in fetchMyRequests:', err);
                     reject(err);
                 }
             });
