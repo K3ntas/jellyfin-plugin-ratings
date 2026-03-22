@@ -12986,15 +12986,12 @@
 
             listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loadingRequests') + '</p>';
 
-            // Fetch media requests, deletion requests, and ban status
+            // Fetch user's own requests, deletion requests, and ban status
             Promise.all([
-                this.fetchAllRequests(),
+                this.fetchMyRequests(),
                 this.fetchDeletionRequests(),
                 this.checkBan('deletion_request')
-            ]).then(([requests, deletionRequests, deletionBanInfo]) => {
-                // Filter to only current user's requests
-                const userId = ApiClient.getCurrentUserId();
-                const userRequests = requests.filter(r => r.UserId === userId);
+            ]).then(([userRequests, deletionRequests, deletionBanInfo]) => {
 
                 if (userRequests.length === 0) {
                     listContainer.innerHTML = '<p style="text-align: center; color: #999;">' + self.t('noRequests') + '</p>';
@@ -13974,6 +13971,47 @@
         },
 
         /**
+         * Fetch current user's media requests (works for all authenticated users)
+         */
+        fetchMyRequests: function () {
+            return new Promise((resolve, reject) => {
+                try {
+                    const baseUrl = ApiClient.serverAddress();
+                    const accessToken = ApiClient.accessToken();
+                    const deviceId = ApiClient.deviceId();
+                    const url = `${baseUrl}/Ratings/Requests/My`;
+
+                    const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch my requests');
+                        }
+                        return response.json();
+                    })
+                    .then(requests => {
+                        resolve(requests || []);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching my requests:', err);
+                        reject(err);
+                    });
+                } catch (err) {
+                    console.error('Error in fetchMyRequests:', err);
+                    reject(err);
+                }
+            });
+        },
+
+        /**
          * Fetch all deletion requests
          */
         fetchDeletionRequests: function () {
@@ -14685,12 +14723,12 @@
                 if (!btn) return; // Still not found, exit silently
             }
             try {
-                Promise.all([
-                    this.fetchAllRequests(),
-                    this.fetchDeletionRequests()
-                ]).then(([requests, deletionRequests]) => {
-                    // Check if user is admin
-                    this.checkIfAdmin().then(isAdmin => {
+                // Check if user is admin first, then fetch appropriate data
+                this.checkIfAdmin().then(isAdmin => {
+                    const requestsPromise = isAdmin ? this.fetchAllRequests() : this.fetchMyRequests();
+                    const deletionPromise = isAdmin ? this.fetchDeletionRequests() : Promise.resolve([]);
+
+                    Promise.all([requestsPromise, deletionPromise]).then(([requests, deletionRequests]) => {
                         let count = 0;
 
                         if (isAdmin) {
@@ -14699,9 +14737,7 @@
                             count += deletionRequests.filter(r => r.Status === 'pending').length;
                         } else {
                             // For users: show count of completed (done) requests they haven't seen yet
-                            const userId = ApiClient.getCurrentUserId();
-                            const userRequests = requests.filter(r => r.UserId === userId);
-                            const doneRequests = userRequests.filter(r => r.Status === 'done');
+                            const doneRequests = requests.filter(r => r.Status === 'done');
 
                             // Get viewed request IDs from localStorage
                             const viewedRequests = self.getViewedRequestIds();
@@ -14724,10 +14760,10 @@
                             btn.appendChild(badge);
                         }
                     }).catch(err => {
-                        console.error('Error checking admin status for badge:', err);
+                        console.error('Error updating request badge:', err);
                     });
                 }).catch(err => {
-                    console.error('Error updating request badge:', err);
+                    console.error('Error checking admin status for badge:', err);
                 });
             } catch (err) {
                 console.error('Error in updateRequestBadge:', err);
@@ -14738,32 +14774,38 @@
          * Update badges on admin tabs (Manage / Deletion Requests)
          */
         updateAdminTabBadges: function () {
-            Promise.all([
-                this.fetchAllRequests(),
-                this.fetchDeletionRequests()
-            ]).then(([requests, deletionRequests]) => {
-                const pendingRequests = requests.filter(r => r.Status === 'pending').length;
-                const pendingDeletions = deletionRequests.filter(r => r.Status === 'pending').length;
+            const self = this;
+            // Only run for admins
+            this.checkIfAdmin().then(isAdmin => {
+                if (!isAdmin) return;
 
-                const manageBadge = document.getElementById('manageTabBadge');
-                if (manageBadge) {
-                    if (pendingRequests > 0) {
-                        manageBadge.textContent = pendingRequests;
-                        manageBadge.style.cssText = 'display:inline-flex !important;';
-                    } else {
-                        manageBadge.style.cssText = 'display:none !important;';
-                    }
-                }
+                Promise.all([
+                    self.fetchAllRequests(),
+                    self.fetchDeletionRequests()
+                ]).then(([requests, deletionRequests]) => {
+                    const pendingRequests = requests.filter(r => r.Status === 'pending').length;
+                    const pendingDeletions = deletionRequests.filter(r => r.Status === 'pending').length;
 
-                const deletionsBadge = document.getElementById('deletionsTabBadge');
-                if (deletionsBadge) {
-                    if (pendingDeletions > 0) {
-                        deletionsBadge.textContent = pendingDeletions;
-                        deletionsBadge.style.cssText = 'display:inline-flex !important;';
-                    } else {
-                        deletionsBadge.style.cssText = 'display:none !important;';
+                    const manageBadge = document.getElementById('manageTabBadge');
+                    if (manageBadge) {
+                        if (pendingRequests > 0) {
+                            manageBadge.textContent = pendingRequests;
+                            manageBadge.style.cssText = 'display:inline-flex !important;';
+                        } else {
+                            manageBadge.style.cssText = 'display:none !important;';
+                        }
                     }
-                }
+
+                    const deletionsBadge = document.getElementById('deletionsTabBadge');
+                    if (deletionsBadge) {
+                        if (pendingDeletions > 0) {
+                            deletionsBadge.textContent = pendingDeletions;
+                            deletionsBadge.style.cssText = 'display:inline-flex !important;';
+                        } else {
+                            deletionsBadge.style.cssText = 'display:none !important;';
+                        }
+                    }
+                }).catch(() => {});
             }).catch(() => {});
         },
 
@@ -14786,10 +14828,8 @@
         markDoneRequestsAsViewed: function () {
             const self = this;
             try {
-                this.fetchAllRequests().then(requests => {
-                    const userId = ApiClient.getCurrentUserId();
-                    const userRequests = requests.filter(r => r.UserId === userId);
-                    const doneRequests = userRequests.filter(r => r.Status === 'done');
+                this.fetchMyRequests().then(requests => {
+                    const doneRequests = requests.filter(r => r.Status === 'done');
 
                     // Get current viewed list
                     const viewedIds = self.getViewedRequestIds();
