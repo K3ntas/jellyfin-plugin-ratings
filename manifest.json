@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.89.0",
+        "changelog": "Fix all non-admin request errors (badge, viewed marking, admin tabs)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.89.0/jellyfin-plugin-ratings_2.0.89.0.zip",
+        "checksum": "5e6827f5b5bb5fdb2157c6ddf233f0e4",
+        "timestamp": "2026-03-22T12:30:00Z"
+      },
+      {
         "version": "2.0.88.0",
         "changelog": "Fix non-admin users getting error when loading their requests",
         "targetAbi": "10.11.0.0",
