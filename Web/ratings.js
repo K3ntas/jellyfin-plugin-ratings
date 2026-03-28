@@ -3952,8 +3952,8 @@
                     background: transparent;
                     border: none;
                     color: rgba(255, 255, 255, 0.5);
-                    width: 36px;
-                    height: 36px;
+                    width: 42px;
+                    height: 42px;
                     border-radius: 50%;
                     cursor: pointer;
                     display: inline-flex;
@@ -3967,8 +3967,8 @@
                 }
 
                 .library-sort-btn svg {
-                    width: 24px;
-                    height: 24px;
+                    width: 28px;
+                    height: 28px;
                     fill: currentColor;
                 }
 
@@ -16354,10 +16354,8 @@
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('[Ratings] Sort button clicked!');
 
                     const sortDirection = btn.getAttribute('data-sort');
-                    console.log('[Ratings] Sort direction:', sortDirection);
                     const currentActive = container.querySelector('.library-sort-btn.active');
                     const wasActive = btn.classList.contains('active');
 
@@ -16381,7 +16379,6 @@
          */
         sortLibraryCards: function (direction) {
             const self = this;
-            console.log('[Ratings] sortLibraryCards called with direction:', direction);
 
             // Media types we want to sort
             const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
@@ -16403,20 +16400,8 @@
             let allContainers = [];
             for (const selector of containerSelectors) {
                 allContainers = document.querySelectorAll(selector);
-                if (allContainers.length > 0) {
-                    console.log('[Ratings] Using selector:', selector, 'found:', allContainers.length);
-                    break;
-                }
+                if (allContainers.length > 0) break;
             }
-
-            // Also log all elements with data-type to debug
-            const allDataTypeElements = document.querySelectorAll('[data-type]');
-            const typeCount = {};
-            allDataTypeElements.forEach(el => {
-                const t = el.getAttribute('data-type');
-                typeCount[t] = (typeCount[t] || 0) + 1;
-            });
-            console.log('[Ratings] All data-type elements on page:', typeCount);
 
             for (const container of allContainers) {
                 // Get cards from this container - try multiple selectors
@@ -16437,8 +16422,6 @@
                     return mediaTypes.includes(dataType);
                 });
 
-                console.log('[Ratings] Container:', container.className.substring(0, 50), '- total:', containerCards.length, 'media:', mediaCards.length);
-
                 // Use the container with the MOST media cards
                 if (mediaCards.length > maxMediaCards) {
                     maxMediaCards = mediaCards.length;
@@ -16448,18 +16431,8 @@
             }
 
             if (!itemsContainer || cards.length === 0) {
-                console.log('[Ratings] No media cards found to sort!');
-                // Debug: log first few elements in body with card class
-                const allCards = document.querySelectorAll('.card');
-                console.log('[Ratings] Total .card elements on page:', allCards.length);
-                if (allCards.length > 0) {
-                    console.log('[Ratings] First card sample:', allCards[0].className, allCards[0].getAttribute('data-type'));
-                }
                 return;
             }
-
-            console.log('[Ratings] Found media cards:', cards.length, 'in container:', itemsContainer.className.substring(0, 50));
-            console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].getAttribute('data-type'));
 
             // Store original order if not already stored
             if (!itemsContainer.dataset.originalOrder) {
@@ -16476,18 +16449,14 @@
                     itemIds.push(itemId);
                 }
             });
-            console.log('[Ratings] Item IDs to fetch:', itemIds.length, 'Already cached:', cards.length - itemIds.length);
 
             // If we need to fetch ratings, do it first then sort
             if (itemIds.length > 0) {
-                console.log('[Ratings] Fetching ratings for', itemIds.length, 'items...');
                 self.fetchRatingsForItems(itemIds).then(() => {
-                    console.log('[Ratings] Ratings fetched, now sorting...');
                     self.performLibrarySort(itemsContainer, cards, direction);
                 });
             } else {
                 // All ratings cached, sort immediately
-                console.log('[Ratings] All ratings cached, sorting immediately...');
                 self.performLibrarySort(itemsContainer, cards, direction);
             }
         },
@@ -16558,23 +16527,6 @@
          */
         performLibrarySort: function (itemsContainer, cards, direction) {
             const self = this;
-            console.log('[Ratings] performLibrarySort called, cards:', cards.length, 'direction:', direction);
-
-            // Log some ratings for debugging
-            let withRatings = 0;
-            let withoutRatings = 0;
-            cards.slice(0, 5).forEach(card => {
-                // Try multiple ways to get ID
-                let id = card.getAttribute('data-id');
-                if (!id) {
-                    id = self.getItemIdFromCard(card);
-                }
-                const cached = self.ratingsCache[id];
-                console.log('[Ratings] Card ID:', id, 'Cached:', cached);
-                if (cached && cached.AverageRating) withRatings++;
-                else withoutRatings++;
-            });
-            console.log('[Ratings] Sample - with ratings:', withRatings, 'without:', withoutRatings);
 
             // Sort cards by rating
             const sortedCards = [...cards].sort((a, b) => {
@@ -16598,8 +16550,6 @@
                 }
             });
 
-            console.log('[Ratings] Sorted, re-appending cards...');
-
             // Temporarily disable transitions for instant reorder
             const originalTransition = itemsContainer.style.transition;
             itemsContainer.style.transition = 'none';
@@ -16614,8 +16564,6 @@
 
             // Restore transitions
             itemsContainer.style.transition = originalTransition;
-
-            console.log('[Ratings] Sort complete!');
         },
 
         /**

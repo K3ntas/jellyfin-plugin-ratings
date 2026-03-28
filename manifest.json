@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.96.0",
+        "changelog": "Final icon sizing (42px button, 28px icon), cleaned up debug logs",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.96.0/jellyfin-plugin-ratings_2.0.96.0.zip",
+        "checksum": "1e9a1cb8d33bc135dcc68b8322ccb0c6",
+        "timestamp": "2026-03-28T16:30:00Z"
+      },
+      {
         "version": "2.0.95.0",
         "changelog": "Bigger star icons with up/down arrow inside",
         "targetAbi": "10.11.0.0",
