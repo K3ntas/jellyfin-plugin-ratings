@@ -1134,6 +1134,9 @@
 
             // Initialize social features debug
             this.initSocialDebug();
+
+            // Initialize friends button
+            this.initFriendsButton();
         },
 
         /**
@@ -1246,10 +1249,7 @@
                     return response.json();
                 })
                 .then(function (debugInfo) {
-                    console.log('%c[Social] System initialized', 'color: #4CAF50; font-weight: bold;');
-                    console.log('%c[Social] Debug Info:', 'color: #2196F3;', debugInfo);
-                    console.log('%c[Social] Profiles: ' + debugInfo.ProfileCount + ', Requests: ' + debugInfo.FriendRequestCount + ', Friendships: ' + debugInfo.FriendshipCount, 'color: #9C27B0;');
-                    console.log('%c[Social] Type Social.help() for testing commands', 'color: #FF9800;');
+                    // Debug logs removed for production - use Social.debug() in console if needed
                 })
                 .catch(function (error) {
                     console.warn('[Social] Failed to initialize:', error.message);
@@ -1257,6 +1257,340 @@
             };
 
             tryInit();
+        },
+
+        /**
+         * Initialize the friends floating button and panel
+         */
+        initFriendsButton: function () {
+            const self = this;
+            var attempts = 0;
+
+            var tryInit = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryInit, 1000);
+                    }
+                    return;
+                }
+
+                // Don't create if already exists
+                if (document.getElementById('social-friends-btn')) {
+                    return;
+                }
+
+                // Create floating button
+                var btn = document.createElement('button');
+                btn.id = 'social-friends-btn';
+                btn.className = 'social-friends-btn';
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span class="badge hidden">0</span>';
+                btn.title = 'Friends';
+
+                // Load saved position
+                var savedPos = localStorage.getItem('socialFriendsBtnPos');
+                if (savedPos) {
+                    try {
+                        var pos = JSON.parse(savedPos);
+                        btn.style.bottom = pos.bottom + 'px';
+                        btn.style.right = pos.right + 'px';
+                    } catch (e) {}
+                }
+
+                // Make draggable
+                var isDragging = false;
+                var startX, startY, startRight, startBottom;
+
+                btn.addEventListener('mousedown', function (e) {
+                    if (e.button !== 0) return;
+                    isDragging = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startRight = parseInt(btn.style.right) || 20;
+                    startBottom = parseInt(btn.style.bottom) || 20;
+
+                    var onMouseMove = function (e) {
+                        var dx = startX - e.clientX;
+                        var dy = startY - e.clientY;
+                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                            isDragging = true;
+                            btn.classList.add('dragging');
+                        }
+                        if (isDragging) {
+                            var newRight = Math.max(10, Math.min(window.innerWidth - 60, startRight + dx));
+                            var newBottom = Math.max(10, Math.min(window.innerHeight - 60, startBottom + dy));
+                            btn.style.right = newRight + 'px';
+                            btn.style.bottom = newBottom + 'px';
+                        }
+                    };
+
+                    var onMouseUp = function () {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        btn.classList.remove('dragging');
+                        if (isDragging) {
+                            // Save position
+                            localStorage.setItem('socialFriendsBtnPos', JSON.stringify({
+                                right: parseInt(btn.style.right) || 20,
+                                bottom: parseInt(btn.style.bottom) || 20
+                            }));
+                        }
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                btn.addEventListener('click', function (e) {
+                    if (!isDragging) {
+                        self.toggleFriendsPanel();
+                    }
+                });
+
+                document.body.appendChild(btn);
+
+                // Create panel
+                self.createFriendsPanel();
+
+                // Initial load of data
+                self.loadFriendsData();
+            };
+
+            tryInit();
+        },
+
+        /**
+         * Create the friends panel HTML
+         */
+        createFriendsPanel: function () {
+            if (document.getElementById('social-friends-panel')) {
+                return;
+            }
+
+            var panel = document.createElement('div');
+            panel.id = 'social-friends-panel';
+            panel.className = 'social-friends-panel';
+            panel.innerHTML = `
+                <div class="social-panel-header">
+                    <h3>Friends</h3>
+                    <button class="social-panel-close">&times;</button>
+                </div>
+                <div class="social-panel-tabs">
+                    <button class="social-panel-tab active" data-tab="friends">Friends</button>
+                    <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" style="display:none">0</span></button>
+                </div>
+                <div class="social-panel-search">
+                    <input type="text" placeholder="Search..." id="social-search-input">
+                </div>
+                <div class="social-panel-content" id="social-panel-content">
+                    <div class="social-empty-state">
+                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                        <div>No friends yet</div>
+                    </div>
+                </div>
+            `;
+
+            // Close button
+            panel.querySelector('.social-panel-close').addEventListener('click', function () {
+                panel.classList.remove('open');
+            });
+
+            // Tab switching
+            var self = this;
+            panel.querySelectorAll('.social-panel-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    panel.querySelectorAll('.social-panel-tab').forEach(function (t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    self.loadFriendsData(tab.dataset.tab);
+                });
+            });
+
+            // Search
+            panel.querySelector('#social-search-input').addEventListener('input', function (e) {
+                self.filterFriendsList(e.target.value);
+            });
+
+            document.body.appendChild(panel);
+        },
+
+        /**
+         * Toggle the friends panel open/closed
+         */
+        toggleFriendsPanel: function () {
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    this.loadFriendsData();
+                }
+            }
+        },
+
+        /**
+         * Load friends or requests data
+         */
+        loadFriendsData: function (tab) {
+            tab = tab || 'friends';
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content || !window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            if (tab === 'friends') {
+                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderFriendsList(data.friends || []);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
+                    });
+            } else if (tab === 'requests') {
+                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderRequestsList(data.requests || []);
+                        self.updateRequestsBadge(data.requests ? data.requests.length : 0);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
+                    });
+            }
+        },
+
+        /**
+         * Render the friends list
+         */
+        renderFriendsList: function (friends) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (friends.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><div>No friends yet</div></div>';
+                return;
+            }
+
+            var html = '';
+            friends.forEach(function (friend) {
+                var initial = (friend.username || '?')[0].toUpperCase();
+                html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
+                    '<div class="social-friend-avatar">' + initial + '<span class="social-status-dot offline"></span></div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name">' + self.escapeHtml(friend.username) + '</div>' +
+                    '<div class="social-friend-status">Offline</div>' +
+                    '</div></div>';
+            });
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render the requests list
+         */
+        renderRequestsList: function (requests) {
+            var content = document.getElementById('social-panel-content');
+            var self = this;
+            if (!content) return;
+
+            if (requests.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No pending requests</div></div>';
+                return;
+            }
+
+            var html = '';
+            requests.forEach(function (req) {
+                var initial = (req.fromUsername || '?')[0].toUpperCase();
+                html += '<div class="social-request-item" data-requestid="' + req.id + '">' +
+                    '<div class="social-request-info">' +
+                    '<div class="social-friend-avatar">' + initial + '</div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name">' + self.escapeHtml(req.fromUsername) + '</div>' +
+                    '<div class="social-friend-status">Wants to be friends</div>' +
+                    '</div></div>' +
+                    '<div class="social-request-actions">' +
+                    '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + req.id + '\')">Accept</button>' +
+                    '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + req.id + '\')">Reject</button>' +
+                    '</div></div>';
+            });
+            content.innerHTML = html;
+        },
+
+        /**
+         * Accept a friend request
+         */
+        acceptFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Reject a friend request
+         */
+        rejectFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Update the requests badge count
+         */
+        updateRequestsBadge: function (count) {
+            var btn = document.getElementById('social-friends-btn');
+            var badge = btn ? btn.querySelector('.badge') : null;
+            var tabBadge = document.querySelector('.social-panel-tab[data-tab="requests"] .tab-badge');
+
+            if (badge) {
+                badge.textContent = count;
+                badge.classList.toggle('hidden', count === 0);
+            }
+            if (tabBadge) {
+                tabBadge.textContent = count;
+                tabBadge.style.display = count > 0 ? 'inline' : 'none';
+            }
+        },
+
+        /**
+         * Filter friends list by search term
+         */
+        filterFriendsList: function (term) {
+            var items = document.querySelectorAll('.social-friend-item, .social-request-item');
+            term = term.toLowerCase();
+            items.forEach(function (item) {
+                var name = item.querySelector('.social-friend-name');
+                if (name) {
+                    var match = name.textContent.toLowerCase().includes(term);
+                    item.style.display = match ? '' : 'none';
+                }
+            });
+        },
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        escapeHtml: function (text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         },
 
         /**
@@ -8020,6 +8354,267 @@
                     transform: translate(-50%, -50%) !important;
                     color: #666 !important;
                     font-size: 14px !important;
+                }
+
+                /* Friends Button - Floating */
+                .social-friends-btn {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00a4dc 0%, #0078a8 100%);
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                    z-index: 9999;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    touch-action: none;
+                }
+                .social-friends-btn:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+                }
+                .social-friends-btn.dragging {
+                    cursor: grabbing;
+                    transform: scale(1.05);
+                    opacity: 0.9;
+                }
+                .social-friends-btn svg {
+                    width: 26px;
+                    height: 26px;
+                    fill: white;
+                }
+                .social-friends-btn .badge {
+                    position: absolute;
+                    top: -4px;
+                    right: -4px;
+                    background: #e91e63;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: bold;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0 4px;
+                }
+                .social-friends-btn .badge.hidden {
+                    display: none;
+                }
+
+                /* Friends Panel */
+                .social-friends-panel {
+                    position: fixed;
+                    bottom: 80px;
+                    right: 20px;
+                    width: 320px;
+                    max-height: 450px;
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                    z-index: 9998;
+                    display: none;
+                    flex-direction: column;
+                    overflow: hidden;
+                    border: 1px solid #333;
+                }
+                .social-friends-panel.open {
+                    display: flex;
+                }
+                .social-panel-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 16px;
+                    background: #252525;
+                    border-bottom: 1px solid #333;
+                }
+                .social-panel-header h3 {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .social-panel-close {
+                    background: none;
+                    border: none;
+                    color: #888;
+                    font-size: 20px;
+                    cursor: pointer;
+                    padding: 0;
+                    line-height: 1;
+                }
+                .social-panel-close:hover {
+                    color: #fff;
+                }
+                .social-panel-tabs {
+                    display: flex;
+                    border-bottom: 1px solid #333;
+                }
+                .social-panel-tab {
+                    flex: 1;
+                    padding: 10px;
+                    background: none;
+                    border: none;
+                    color: #888;
+                    font-size: 13px;
+                    cursor: pointer;
+                    position: relative;
+                    transition: color 0.2s, background 0.2s;
+                }
+                .social-panel-tab:hover {
+                    background: #252525;
+                    color: #fff;
+                }
+                .social-panel-tab.active {
+                    color: #00a4dc;
+                    border-bottom: 2px solid #00a4dc;
+                }
+                .social-panel-tab .tab-badge {
+                    background: #e91e63;
+                    color: white;
+                    font-size: 10px;
+                    padding: 1px 5px;
+                    border-radius: 8px;
+                    margin-left: 4px;
+                }
+                .social-panel-content {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 8px;
+                }
+                .social-panel-search {
+                    padding: 8px;
+                    border-bottom: 1px solid #333;
+                }
+                .social-panel-search input {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    font-size: 13px;
+                }
+                .social-panel-search input::placeholder {
+                    color: #666;
+                }
+                .social-friend-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .social-friend-item:hover {
+                    background: #252525;
+                }
+                .social-friend-avatar {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    background: #444;
+                    margin-right: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    color: #888;
+                    position: relative;
+                }
+                .social-friend-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                }
+                .social-status-dot {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    border: 2px solid #1a1a1a;
+                }
+                .social-status-dot.online { background: #4caf50; }
+                .social-status-dot.away { background: #ff9800; }
+                .social-status-dot.dnd { background: #f44336; }
+                .social-status-dot.offline { background: #666; }
+                .social-friend-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .social-friend-name {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #fff;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-friend-status {
+                    font-size: 12px;
+                    color: #888;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-request-item {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 10px;
+                    border-radius: 8px;
+                    background: #252525;
+                    margin-bottom: 8px;
+                }
+                .social-request-info {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 8px;
+                }
+                .social-request-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .social-request-actions button {
+                    flex: 1;
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                }
+                .social-request-actions button:hover {
+                    opacity: 0.9;
+                }
+                .social-btn-accept {
+                    background: #4caf50;
+                    color: white;
+                }
+                .social-btn-reject {
+                    background: #666;
+                    color: white;
+                }
+                .social-empty-state {
+                    text-align: center;
+                    padding: 30px 20px;
+                    color: #666;
+                }
+                .social-empty-state svg {
+                    width: 48px;
+                    height: 48px;
+                    fill: #444;
+                    margin-bottom: 12px;
                 }
             `;
 
