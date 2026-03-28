@@ -2062,10 +2062,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Gets all active scheduled deletions (for displaying badges to all users).
         /// </summary>
-        /// <returns>List of scheduled deletions.</returns>
+        /// <returns>List of scheduled deletions with keep request info.</returns>
         [HttpGet("ScheduledDeletions")]
         [AllowAnonymous]
-        public async Task<ActionResult<List<ScheduledDeletion>>> GetScheduledDeletions()
+        public async Task<ActionResult<List<object>>> GetScheduledDeletions()
         {
             try
             {
@@ -2079,15 +2079,134 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var config = Plugin.Instance?.Configuration;
                 if (config?.EnableMediaManagement != true)
                 {
-                    return Ok(new List<ScheduledDeletion>());
+                    return Ok(new List<object>());
                 }
 
                 var deletions = _repository.GetAllScheduledDeletions();
-                return Ok(deletions);
+                var keepCounts = _repository.GetAllKeepRequestCounts();
+                var autoCancelThreshold = config?.AutoCancelDeletionThreshold ?? 0;
+
+                // Check if current user is admin
+                var user = _userManager.GetUserById(userId);
+                var isAdmin = user?.HasPermission(PermissionKind.IsAdministrator) ?? false;
+
+                // Build response with keep request info
+                var result = deletions.Select(d => new
+                {
+                    d.Id,
+                    d.ItemId,
+                    d.ItemTitle,
+                    d.ItemType,
+                    d.ScheduledByUserId,
+                    d.ScheduledByUsername,
+                    d.ScheduledAt,
+                    d.DeleteAt,
+                    d.IsCancelled,
+                    d.CancelledAt,
+                    KeepRequestCount = keepCounts.TryGetValue(d.ItemId, out var count) ? count : 0,
+                    AutoCancelThreshold = autoCancelThreshold,
+                    UserHasRequested = _repository.HasUserRequestedKeep(d.ItemId, userId),
+                    UserCanRequestToday = !_repository.HasUserRequestedKeepToday(d.ItemId, userId),
+                    IsAdmin = isAdmin
+                }).ToList<object>();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting scheduled deletions");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Submits a request to keep a scheduled-for-deletion item.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Result of the keep request.</returns>
+        [HttpPost("KeepRequest/{itemId}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<object>> SubmitKeepRequest([FromRoute] [Required] Guid itemId)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Check if media management is enabled
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableMediaManagement != true)
+                {
+                    return BadRequest("Media management is not enabled");
+                }
+
+                // Check if item has a scheduled deletion
+                var deletion = _repository.GetScheduledDeletion(itemId);
+                if (deletion == null)
+                {
+                    return NotFound("No scheduled deletion found for this item");
+                }
+
+                // Check if user already requested today
+                if (_repository.HasUserRequestedKeepToday(itemId, userId))
+                {
+                    return BadRequest("You have already requested to keep this item today");
+                }
+
+                // Get username
+                var user = _userManager.GetUserById(userId);
+                var username = user?.Username ?? "Unknown";
+
+                // Create keep request
+                var keepRequest = new KeepRequest
+                {
+                    ItemId = itemId,
+                    UserId = userId,
+                    Username = username
+                };
+
+                var result = await _repository.AddKeepRequestAsync(keepRequest).ConfigureAwait(false);
+                if (result == null)
+                {
+                    return BadRequest("Failed to add keep request");
+                }
+
+                _logger.LogInformation("User {UserId} ({Username}) requested to keep item {ItemId}", userId, username, itemId);
+
+                // Check if auto-cancel threshold is reached
+                var keepCount = _repository.GetKeepRequestCount(itemId);
+                var threshold = config?.AutoCancelDeletionThreshold ?? 0;
+
+                if (threshold > 0 && keepCount >= threshold)
+                {
+                    // Auto-cancel the deletion
+                    await _repository.CancelDeletionAsync(itemId).ConfigureAwait(false);
+                    _logger.LogInformation("Auto-cancelled deletion for item {ItemId} due to {Count} keep requests (threshold: {Threshold})",
+                        itemId, keepCount, threshold);
+
+                    return Ok(new
+                    {
+                        Success = true,
+                        Message = "Request submitted. Deletion has been automatically cancelled!",
+                        AutoCancelled = true,
+                        KeepRequestCount = keepCount
+                    });
+                }
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "Request submitted successfully",
+                    AutoCancelled = false,
+                    KeepRequestCount = keepCount
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error submitting keep request for item {ItemId}", itemId);
                 return StatusCode(500, "Internal server error");
             }
         }

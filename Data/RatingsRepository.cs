@@ -36,6 +36,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _moderatorActionsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _userStyleOverridesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _keepRequestsWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
@@ -51,6 +52,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private List<ModeratorAction> _moderatorActions;
         private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
         private Dictionary<Guid, MediaQuota> _mediaQuotas;
+        private List<KeepRequest> _keepRequests;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -76,6 +78,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _moderatorActions = new List<ModeratorAction>();
             _userStyleOverrides = new Dictionary<Guid, UserStyleOverride>();
             _mediaQuotas = new Dictionary<Guid, MediaQuota>();
+            _keepRequests = new List<KeepRequest>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -96,6 +99,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadModeratorActions();
             LoadUserStyleOverrides();
             LoadMediaQuotas();
+            LoadKeepRequests();
         }
 
         /// <summary>
@@ -822,6 +826,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <returns>True if cancelled, false if not found.</returns>
         public async Task<bool> CancelDeletionAsync(Guid itemId)
         {
+            bool found;
             lock (_lock)
             {
                 if (_scheduledDeletions.ContainsKey(itemId))
@@ -830,11 +835,21 @@ namespace Jellyfin.Plugin.Ratings.Data
                     deletion.IsCancelled = true;
                     deletion.CancelledAt = DateTime.UtcNow;
                     _ = SaveScheduledDeletionsAsync();
-                    return true;
+                    found = true;
                 }
-
-                return false;
+                else
+                {
+                    found = false;
+                }
             }
+
+            // Clean up keep requests when deletion is cancelled
+            if (found)
+            {
+                await RemoveKeepRequestsForItemAsync(itemId).ConfigureAwait(false);
+            }
+
+            return found;
         }
 
         /// <summary>
@@ -892,16 +907,207 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <returns>True if removed, false if not found.</returns>
         public async Task<bool> RemoveDeletionAsync(Guid itemId)
         {
+            bool found;
             lock (_lock)
             {
                 if (_scheduledDeletions.ContainsKey(itemId))
                 {
                     _scheduledDeletions.Remove(itemId);
                     _ = SaveScheduledDeletionsAsync();
-                    return true;
+                    found = true;
+                }
+                else
+                {
+                    found = false;
+                }
+            }
+
+            // Clean up keep requests when deletion is removed
+            if (found)
+            {
+                await RemoveKeepRequestsForItemAsync(itemId).ConfigureAwait(false);
+            }
+
+            return found;
+        }
+
+        // Keep Request Methods (for "Ask to not delete" feature)
+
+        /// <summary>
+        /// Loads keep requests from disk.
+        /// </summary>
+        private void LoadKeepRequests()
+        {
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "keep_requests.json");
+                if (File.Exists(filePath))
+                {
+                    var json = File.ReadAllText(filePath);
+                    var requests = JsonSerializer.Deserialize<List<KeepRequest>>(json);
+                    if (requests != null)
+                    {
+                        _keepRequests = requests;
+                        _logger.LogInformation("Loaded {Count} keep requests from disk", _keepRequests.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading keep requests from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves keep requests to disk.
+        /// </summary>
+        private async Task SaveKeepRequestsAsync()
+        {
+            await _keepRequestsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "keep_requests.json");
+                List<KeepRequest> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _keepRequests.ToList();
                 }
 
-                return false;
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} keep requests to disk", snapshot.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving keep requests to disk");
+            }
+            finally
+            {
+                _keepRequestsWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Adds a keep request for an item.
+        /// </summary>
+        /// <param name="request">The keep request.</param>
+        /// <returns>The created keep request, or null if user already requested today.</returns>
+        public async Task<KeepRequest?> AddKeepRequestAsync(KeepRequest request)
+        {
+            lock (_lock)
+            {
+                // Check if user already requested for this item today
+                var today = DateTime.UtcNow.Date;
+                var existingToday = _keepRequests.Any(r =>
+                    r.ItemId == request.ItemId &&
+                    r.UserId == request.UserId &&
+                    r.RequestedAt.Date == today);
+
+                if (existingToday)
+                {
+                    return null; // User already requested today
+                }
+
+                _keepRequests.Add(request);
+            }
+
+            _ = SaveKeepRequestsAsync();
+            return request;
+        }
+
+        /// <summary>
+        /// Gets the count of keep requests for an item.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Number of keep requests.</returns>
+        public int GetKeepRequestCount(Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _keepRequests.Count(r => r.ItemId == itemId);
+            }
+        }
+
+        /// <summary>
+        /// Gets all keep requests for an item.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>List of keep requests.</returns>
+        public List<KeepRequest> GetKeepRequestsForItem(Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _keepRequests.Where(r => r.ItemId == itemId).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user has already requested to keep an item today.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>True if user already requested today.</returns>
+        public bool HasUserRequestedKeepToday(Guid itemId, Guid userId)
+        {
+            lock (_lock)
+            {
+                var today = DateTime.UtcNow.Date;
+                return _keepRequests.Any(r =>
+                    r.ItemId == itemId &&
+                    r.UserId == userId &&
+                    r.RequestedAt.Date == today);
+            }
+        }
+
+        /// <summary>
+        /// Checks if a user has ever requested to keep an item.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>True if user has requested.</returns>
+        public bool HasUserRequestedKeep(Guid itemId, Guid userId)
+        {
+            lock (_lock)
+            {
+                return _keepRequests.Any(r => r.ItemId == itemId && r.UserId == userId);
+            }
+        }
+
+        /// <summary>
+        /// Removes all keep requests for an item (when deletion is cancelled or executed).
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Number of requests removed.</returns>
+        public async Task<int> RemoveKeepRequestsForItemAsync(Guid itemId)
+        {
+            int removed;
+            lock (_lock)
+            {
+                removed = _keepRequests.RemoveAll(r => r.ItemId == itemId);
+            }
+
+            if (removed > 0)
+            {
+                _ = SaveKeepRequestsAsync();
+            }
+
+            return removed;
+        }
+
+        /// <summary>
+        /// Gets keep request counts for multiple items.
+        /// </summary>
+        /// <returns>Dictionary of item IDs to request counts.</returns>
+        public Dictionary<Guid, int> GetAllKeepRequestCounts()
+        {
+            lock (_lock)
+            {
+                return _keepRequests
+                    .GroupBy(r => r.ItemId)
+                    .ToDictionary(g => g.Key, g => g.Count());
             }
         }
 

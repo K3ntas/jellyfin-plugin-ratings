@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.97.0",
+        "changelog": "Ask to keep feature in Leaving Soon tab - users can request to keep media from deletion",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.97.0/jellyfin-plugin-ratings_2.0.97.0.zip",
+        "checksum": "9f5ac0c28ae0702713dc9d07b6dbacb8",
+        "timestamp": "2026-03-28T18:00:00Z"
+      },
+      {
         "version": "2.0.96.0",
         "changelog": "Final icon sizing (42px button, 28px icon), cleaned up debug logs",
         "targetAbi": "10.11.0.0",

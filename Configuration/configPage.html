@@ -244,6 +244,12 @@
                                 <div class="fieldDescription">Default number of days before scheduled deletions are executed (default: 7)</div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtAutoCancelDeletionThreshold">Auto-Cancel Deletion Threshold</label>
+                                <input id="txtAutoCancelDeletionThreshold" type="number" is="emby-input" min="0" max="100" step="1" />
+                                <div class="fieldDescription">Number of "keep" requests needed to auto-cancel a scheduled deletion. Set to 0 to disable (default: 0)</div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1058,6 +1064,7 @@
                     // Media management settings
                     document.querySelector('#chkEnableMediaManagement').checked = config.EnableMediaManagement !== false;
                     document.querySelector('#txtDefaultDeletionDelayDays').value = config.DefaultDeletionDelayDays || 7;
+                    document.querySelector('#txtAutoCancelDeletionThreshold').value = config.AutoCancelDeletionThreshold || 0;
 
                     // Request system settings
                     document.querySelector('#chkEnableAdminRequests').checked = config.EnableAdminRequests;
@@ -1156,6 +1163,7 @@
                     // Media management settings
                     config.EnableMediaManagement = document.querySelector('#chkEnableMediaManagement').checked;
                     config.DefaultDeletionDelayDays = parseInt(document.querySelector('#txtDefaultDeletionDelayDays').value) || 7;
+                    config.AutoCancelDeletionThreshold = parseInt(document.querySelector('#txtAutoCancelDeletionThreshold').value) || 0;
 
                     // Request system settings
                     config.EnableAdminRequests = document.querySelector('#chkEnableAdminRequests').checked;
