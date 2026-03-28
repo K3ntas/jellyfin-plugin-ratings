@@ -87,6 +87,9 @@
                 createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
                 leavingSoon: 'Leaving Soon', leavingSoonEmpty: 'No media scheduled for deletion', leavingSoonLoading: 'Loading...', timeLeft: 'left',
                 askToKeep: 'Ask to keep', alreadyAsked: 'Already asked', keepRequests: 'keep requests', keepRequestSent: 'Request sent!', keepRequestAutoCancelled: 'Deletion cancelled!',
+                askToKeepTooltip: 'Click to request that this media is not deleted. If enough users request, deletion will be cancelled automatically.',
+                alreadyAskedTooltip: 'You have already requested to keep this media. Your vote has been counted.',
+                keepCounterTooltip: '{current} of {threshold} requests needed to cancel deletion',
                 sortHighest: 'Highest rated first', sortLowest: 'Lowest rated first',
                 newEpisode: '+1 episode', newEpisodes: '+{count} episodes', typeMovie: 'Movie', typeSeries: 'Series', typeAnime: 'Anime', typeOther: 'Other',
                 timeAgo: 'ago', timeJustNow: 'just now', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
@@ -140,6 +143,9 @@
                 createRequest: 'Crear Solicitud', latestMedia: 'Contenido Reciente', latestMediaLoading: 'Cargando...', latestMediaEmpty: 'No hay contenido reciente', latestMediaError: 'Error al cargar',
                 leavingSoon: 'Por Eliminar', leavingSoonEmpty: 'Sin contenido programado para eliminar', leavingSoonLoading: 'Cargando...', timeLeft: 'restante',
                 askToKeep: 'Pedir conservar', alreadyAsked: 'Ya solicitado', keepRequests: 'solicitudes', keepRequestSent: 'Solicitud enviada!', keepRequestAutoCancelled: 'Eliminación cancelada!',
+                askToKeepTooltip: 'Haz clic para solicitar que este contenido no se elimine. Si suficientes usuarios lo solicitan, la eliminación se cancelará automáticamente.',
+                alreadyAskedTooltip: 'Ya has solicitado conservar este contenido. Tu voto ha sido contado.',
+                keepCounterTooltip: '{current} de {threshold} solicitudes necesarias para cancelar la eliminación',
                 sortHighest: 'Mayor calificación primero', sortLowest: 'Menor calificación primero',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodios', typeMovie: 'Película', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Otro',
                 timeAgo: 'hace', timeJustNow: 'ahora mismo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
@@ -188,6 +194,9 @@
                 createRequest: '创建请求', latestMedia: '最新媒体', latestMediaLoading: '加载中...', latestMediaEmpty: '没有最近的媒体', latestMediaError: '加载失败',
                 leavingSoon: '即将删除', leavingSoonEmpty: '没有计划删除的媒体', leavingSoonLoading: '加载中...', timeLeft: '剩余',
                 askToKeep: '请求保留', alreadyAsked: '已请求', keepRequests: '个请求', keepRequestSent: '请求已发送!', keepRequestAutoCancelled: '删除已取消!',
+                askToKeepTooltip: '点击请求保留此媒体。如果足够多的用户请求，删除将自动取消。',
+                alreadyAskedTooltip: '您已请求保留此媒体。您的投票已被计入。',
+                keepCounterTooltip: '取消删除需要 {current}/{threshold} 个请求',
                 sortHighest: '最高评分优先', sortLowest: '最低评分优先',
                 newEpisode: '+1 集', newEpisodes: '+{count} 集', typeMovie: '电影', typeSeries: '剧集', typeAnime: '动漫', typeOther: '其他',
                 timeAgo: '前', timeJustNow: '刚刚', timeMinutes: '分钟', timeHours: '小时', timeDays: '天',
@@ -236,6 +245,9 @@
                 createRequest: 'Criar Solicitação', latestMedia: 'Mídia Recente', latestMediaLoading: 'Carregando...', latestMediaEmpty: 'Nenhuma mídia recente', latestMediaError: 'Falha ao carregar',
                 leavingSoon: 'Saindo em Breve', leavingSoonEmpty: 'Nenhuma mídia agendada para exclusão', leavingSoonLoading: 'Carregando...', timeLeft: 'restante',
                 askToKeep: 'Pedir para manter', alreadyAsked: 'Já solicitado', keepRequests: 'pedidos', keepRequestSent: 'Pedido enviado!', keepRequestAutoCancelled: 'Exclusão cancelada!',
+                askToKeepTooltip: 'Clique para solicitar que esta mídia não seja excluída. Se usuários suficientes solicitarem, a exclusão será cancelada automaticamente.',
+                alreadyAskedTooltip: 'Você já solicitou manter esta mídia. Seu voto foi contabilizado.',
+                keepCounterTooltip: '{current} de {threshold} pedidos necessários para cancelar a exclusão',
                 sortHighest: 'Melhor avaliados primeiro', sortLowest: 'Pior avaliados primeiro',
                 newEpisode: '+1 episódio', newEpisodes: '+{count} episódios', typeMovie: 'Filme', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Outro',
                 timeAgo: 'atrás', timeJustNow: 'agora mesmo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
@@ -284,6 +296,9 @@
                 createRequest: 'Создать Запрос', latestMedia: 'Последние Добавления', latestMediaLoading: 'Загрузка...', latestMediaEmpty: 'Нет недавних медиа', latestMediaError: 'Ошибка загрузки',
                 leavingSoon: 'Скоро Удалится', leavingSoonEmpty: 'Нет запланированных удалений', leavingSoonLoading: 'Загрузка...', timeLeft: 'осталось',
                 askToKeep: 'Попросить оставить', alreadyAsked: 'Уже запрошено', keepRequests: 'запросов', keepRequestSent: 'Запрос отправлен!', keepRequestAutoCancelled: 'Удаление отменено!',
+                askToKeepTooltip: 'Нажмите, чтобы запросить сохранение этого медиа. Если достаточно пользователей запросят, удаление будет отменено автоматически.',
+                alreadyAskedTooltip: 'Вы уже запросили сохранение этого медиа. Ваш голос учтён.',
+                keepCounterTooltip: '{current} из {threshold} запросов для отмены удаления',
                 sortHighest: 'Высший рейтинг первым', sortLowest: 'Низший рейтинг первым',
                 newEpisode: '+1 эпизод', newEpisodes: '+{count} эпизодов', typeMovie: 'Фильм', typeSeries: 'Сериал', typeAnime: 'Аниме', typeOther: 'Другое',
                 timeAgo: 'назад', timeJustNow: 'только что', timeMinutes: 'мин', timeHours: 'ч', timeDays: 'д',
@@ -332,6 +347,9 @@
                 createRequest: 'リクエスト作成', latestMedia: '最新メディア', latestMediaLoading: '読み込み中...', latestMediaEmpty: '最近のメディアなし', latestMediaError: '読み込み失敗',
                 leavingSoon: 'まもなく削除', leavingSoonEmpty: '削除予定のメディアはありません', leavingSoonLoading: '読み込み中...', timeLeft: '残り',
                 askToKeep: '保持を依頼', alreadyAsked: '依頼済み', keepRequests: '件のリクエスト', keepRequestSent: 'リクエスト送信!', keepRequestAutoCancelled: '削除がキャンセル!',
+                askToKeepTooltip: 'クリックしてこのメディアの削除をキャンセルするようリクエストします。十分なユーザーがリクエストすると、削除は自動的にキャンセルされます。',
+                alreadyAskedTooltip: 'このメディアの保持をすでにリクエスト済みです。あなたの投票はカウントされています。',
+                keepCounterTooltip: '削除キャンセルに必要なリクエスト: {current}/{threshold}',
                 sortHighest: '高評価順', sortLowest: '低評価順',
                 newEpisode: '+1 エピソード', newEpisodes: '+{count} エピソード', typeMovie: '映画', typeSeries: 'シリーズ', typeAnime: 'アニメ', typeOther: 'その他',
                 timeAgo: '前', timeJustNow: 'たった今', timeMinutes: '分', timeHours: '時間', timeDays: '日',
@@ -380,6 +398,9 @@
                 createRequest: 'Anfrage Erstellen', latestMedia: 'Neueste Medien', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Keine neuen Medien', latestMediaError: 'Laden fehlgeschlagen',
                 leavingSoon: 'Bald Gelöscht', leavingSoonEmpty: 'Keine geplanten Löschungen', leavingSoonLoading: 'Laden...', timeLeft: 'übrig',
                 askToKeep: 'Behalten anfragen', alreadyAsked: 'Bereits angefragt', keepRequests: 'Anfragen', keepRequestSent: 'Anfrage gesendet!', keepRequestAutoCancelled: 'Löschung abgebrochen!',
+                askToKeepTooltip: 'Klicken Sie, um anzufragen, dass dieses Medium nicht gelöscht wird. Wenn genügend Benutzer anfragen, wird die Löschung automatisch abgebrochen.',
+                alreadyAskedTooltip: 'Sie haben bereits angefragt, dieses Medium zu behalten. Ihre Stimme wurde gezählt.',
+                keepCounterTooltip: '{current} von {threshold} Anfragen zum Abbrechen der Löschung',
                 sortHighest: 'Höchste Bewertung zuerst', sortLowest: 'Niedrigste Bewertung zuerst',
                 newEpisode: '+1 Episode', newEpisodes: '+{count} Episoden', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Sonstiges',
                 timeAgo: 'vor', timeJustNow: 'gerade eben', timeMinutes: 'Min', timeHours: 'Std', timeDays: 'T',
@@ -428,6 +449,9 @@
                 createRequest: 'Créer Demande', latestMedia: 'Derniers Médias', latestMediaLoading: 'Chargement...', latestMediaEmpty: 'Pas de médias récents', latestMediaError: 'Échec du chargement',
                 leavingSoon: 'Bientôt Supprimé', leavingSoonEmpty: 'Aucun média prévu pour suppression', leavingSoonLoading: 'Chargement...', timeLeft: 'restant',
                 askToKeep: 'Demander à garder', alreadyAsked: 'Déjà demandé', keepRequests: 'demandes', keepRequestSent: 'Demande envoyée!', keepRequestAutoCancelled: 'Suppression annulée!',
+                askToKeepTooltip: 'Cliquez pour demander que ce média ne soit pas supprimé. Si suffisamment d\'utilisateurs le demandent, la suppression sera annulée automatiquement.',
+                alreadyAskedTooltip: 'Vous avez déjà demandé à garder ce média. Votre vote a été compté.',
+                keepCounterTooltip: '{current} sur {threshold} demandes nécessaires pour annuler la suppression',
                 sortHighest: 'Mieux notés en premier', sortLowest: 'Moins bien notés en premier',
                 newEpisode: '+1 épisode', newEpisodes: '+{count} épisodes', typeMovie: 'Film', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Autre',
                 timeAgo: 'il y a', timeJustNow: 'à l\'instant', timeMinutes: 'min', timeHours: 'h', timeDays: 'j',
@@ -476,6 +500,9 @@
                 createRequest: '요청 생성', latestMedia: '최신 미디어', latestMediaLoading: '로딩 중...', latestMediaEmpty: '최근 미디어 없음', latestMediaError: '로딩 실패',
                 leavingSoon: '곧 삭제됨', leavingSoonEmpty: '삭제 예정 미디어 없음', leavingSoonLoading: '로딩 중...', timeLeft: '남음',
                 askToKeep: '유지 요청', alreadyAsked: '이미 요청함', keepRequests: '요청', keepRequestSent: '요청 전송됨!', keepRequestAutoCancelled: '삭제 취소됨!',
+                askToKeepTooltip: '이 미디어가 삭제되지 않도록 요청하려면 클릭하세요. 충분한 사용자가 요청하면 삭제가 자동으로 취소됩니다.',
+                alreadyAskedTooltip: '이미 이 미디어 유지를 요청했습니다. 투표가 집계되었습니다.',
+                keepCounterTooltip: '삭제 취소에 필요한 요청: {current}/{threshold}',
                 sortHighest: '높은 평점순', sortLowest: '낮은 평점순',
                 newEpisode: '+1 에피소드', newEpisodes: '+{count} 에피소드', typeMovie: '영화', typeSeries: '시리즈', typeAnime: '애니메이션', typeOther: '기타',
                 timeAgo: '전', timeJustNow: '방금', timeMinutes: '분', timeHours: '시간', timeDays: '일',
@@ -524,6 +551,9 @@
                 createRequest: 'Crea Richiesta', latestMedia: 'Ultimi Media', latestMediaLoading: 'Caricamento...', latestMediaEmpty: 'Nessun media recente', latestMediaError: 'Caricamento fallito',
                 leavingSoon: 'In Scadenza', leavingSoonEmpty: 'Nessun media in eliminazione', leavingSoonLoading: 'Caricamento...', timeLeft: 'rimanente',
                 askToKeep: 'Chiedi di mantenere', alreadyAsked: 'Già richiesto', keepRequests: 'richieste', keepRequestSent: 'Richiesta inviata!', keepRequestAutoCancelled: 'Eliminazione annullata!',
+                askToKeepTooltip: 'Clicca per richiedere che questo media non venga eliminato. Se abbastanza utenti lo richiedono, l\'eliminazione verrà annullata automaticamente.',
+                alreadyAskedTooltip: 'Hai già richiesto di mantenere questo media. Il tuo voto è stato conteggiato.',
+                keepCounterTooltip: '{current} di {threshold} richieste necessarie per annullare l\'eliminazione',
                 sortHighest: 'Più votati per primi', sortLowest: 'Meno votati per primi',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodi', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Altro',
                 timeAgo: 'fa', timeJustNow: 'adesso', timeMinutes: 'min', timeHours: 'h', timeDays: 'g',
@@ -572,6 +602,9 @@
                 createRequest: 'İstek Oluştur', latestMedia: 'Son Medya', latestMediaLoading: 'Yükleniyor...', latestMediaEmpty: 'Son medya yok', latestMediaError: 'Yükleme başarısız',
                 leavingSoon: 'Yakında Silinecek', leavingSoonEmpty: 'Silinmek üzere medya yok', leavingSoonLoading: 'Yükleniyor...', timeLeft: 'kaldı',
                 askToKeep: 'Tutulmasını iste', alreadyAsked: 'Zaten istendi', keepRequests: 'istek', keepRequestSent: 'İstek gönderildi!', keepRequestAutoCancelled: 'Silme iptal edildi!',
+                askToKeepTooltip: 'Bu medyanın silinmemesini istemek için tıklayın. Yeterli kullanıcı isterse, silme otomatik olarak iptal edilir.',
+                alreadyAskedTooltip: 'Bu medyayı tutmak için zaten istek gönderdiniz. Oyunuz sayıldı.',
+                keepCounterTooltip: 'Silmeyi iptal etmek için gereken: {current}/{threshold} istek',
                 sortHighest: 'En yüksek puan önce', sortLowest: 'En düşük puan önce',
                 newEpisode: '+1 bölüm', newEpisodes: '+{count} bölüm', typeMovie: 'Film', typeSeries: 'Dizi', typeAnime: 'Anime', typeOther: 'Diğer',
                 timeAgo: 'önce', timeJustNow: 'şimdi', timeMinutes: 'dk', timeHours: 'sa', timeDays: 'g',
@@ -620,6 +653,9 @@
                 createRequest: 'Utwórz Prośbę', latestMedia: 'Najnowsze Media', latestMediaLoading: 'Ładowanie...', latestMediaEmpty: 'Brak nowych mediów', latestMediaError: 'Błąd ładowania',
                 leavingSoon: 'Wkrótce Usunięte', leavingSoonEmpty: 'Brak zaplanowanych usunięć', leavingSoonLoading: 'Ładowanie...', timeLeft: 'pozostało',
                 askToKeep: 'Poproś o zachowanie', alreadyAsked: 'Już poproszono', keepRequests: 'próśb', keepRequestSent: 'Prośba wysłana!', keepRequestAutoCancelled: 'Usunięcie anulowane!',
+                askToKeepTooltip: 'Kliknij, aby poprosić o zachowanie tego medium. Jeśli wystarczająca liczba użytkowników poprosi, usunięcie zostanie automatycznie anulowane.',
+                alreadyAskedTooltip: 'Już poprosiłeś o zachowanie tego medium. Twój głos został policzony.',
+                keepCounterTooltip: '{current} z {threshold} próśb potrzebnych do anulowania usunięcia',
                 sortHighest: 'Najwyżej ocenione', sortLowest: 'Najniżej ocenione',
                 newEpisode: '+1 odcinek', newEpisodes: '+{count} odcinków', typeMovie: 'Film', typeSeries: 'Serial', typeAnime: 'Anime', typeOther: 'Inne',
                 timeAgo: 'temu', timeJustNow: 'przed chwilą', timeMinutes: 'min', timeHours: 'godz', timeDays: 'dni',
@@ -668,6 +704,9 @@
                 createRequest: 'Verzoek Maken', latestMedia: 'Laatste Media', latestMediaLoading: 'Laden...', latestMediaEmpty: 'Geen recente media', latestMediaError: 'Laden mislukt',
                 leavingSoon: 'Binnenkort Verwijderd', leavingSoonEmpty: 'Geen geplande verwijderingen', leavingSoonLoading: 'Laden...', timeLeft: 'over',
                 askToKeep: 'Vraag te behouden', alreadyAsked: 'Al gevraagd', keepRequests: 'verzoeken', keepRequestSent: 'Verzoek verzonden!', keepRequestAutoCancelled: 'Verwijdering geannuleerd!',
+                askToKeepTooltip: 'Klik om te vragen dat deze media niet wordt verwijderd. Als genoeg gebruikers vragen, wordt de verwijdering automatisch geannuleerd.',
+                alreadyAskedTooltip: 'Je hebt al gevraagd om deze media te behouden. Je stem is geteld.',
+                keepCounterTooltip: '{current} van {threshold} verzoeken nodig om verwijdering te annuleren',
                 sortHighest: 'Hoogst beoordeeld eerst', sortLowest: 'Laagst beoordeeld eerst',
                 newEpisode: '+1 aflevering', newEpisodes: '+{count} afleveringen', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Anders',
                 timeAgo: 'geleden', timeJustNow: 'zojuist', timeMinutes: 'min', timeHours: 'u', timeDays: 'd',
@@ -716,6 +755,9 @@
                 createRequest: 'إنشاء طلب', latestMedia: 'أحدث الوسائط', latestMediaLoading: 'جاري التحميل...', latestMediaEmpty: 'لا توجد وسائط حديثة', latestMediaError: 'فشل التحميل',
                 leavingSoon: 'ستتم إزالتها قريباً', leavingSoonEmpty: 'لا توجد وسائط مجدولة للحذف', leavingSoonLoading: 'جاري التحميل...', timeLeft: 'متبقي',
                 askToKeep: 'اطلب الاحتفاظ', alreadyAsked: 'تم الطلب', keepRequests: 'طلبات', keepRequestSent: 'تم إرسال الطلب!', keepRequestAutoCancelled: 'تم إلغاء الحذف!',
+                askToKeepTooltip: 'انقر لطلب عدم حذف هذا المحتوى. إذا طلب عدد كافٍ من المستخدمين، سيتم إلغاء الحذف تلقائياً.',
+                alreadyAskedTooltip: 'لقد طلبت بالفعل الاحتفاظ بهذا المحتوى. تم احتساب صوتك.',
+                keepCounterTooltip: '{current} من {threshold} طلبات مطلوبة لإلغاء الحذف',
                 sortHighest: 'الأعلى تقييماً أولاً', sortLowest: 'الأدنى تقييماً أولاً',
                 newEpisode: '+1 حلقة', newEpisodes: '+{count} حلقات', typeMovie: 'فيلم', typeSeries: 'مسلسل', typeAnime: 'أنمي', typeOther: 'أخرى',
                 timeAgo: 'مضت', timeJustNow: 'الآن', timeMinutes: 'دقيقة', timeHours: 'ساعة', timeDays: 'يوم',
@@ -764,6 +806,9 @@
                 createRequest: 'अनुरोध बनाएं', latestMedia: 'नवीनतम मीडिया', latestMediaLoading: 'लोड हो रहा है...', latestMediaEmpty: 'कोई हालिया मीडिया नहीं', latestMediaError: 'लोड विफल',
                 leavingSoon: 'जल्द हटाया जाएगा', leavingSoonEmpty: 'हटाने के लिए कोई मीडिया निर्धारित नहीं', leavingSoonLoading: 'लोड हो रहा है...', timeLeft: 'बाकी',
                 askToKeep: 'रखने का अनुरोध करें', alreadyAsked: 'पहले ही अनुरोध किया', keepRequests: 'अनुरोध', keepRequestSent: 'अनुरोध भेजा गया!', keepRequestAutoCancelled: 'हटाना रद्द!',
+                askToKeepTooltip: 'इस मीडिया को न हटाने का अनुरोध करने के लिए क्लिक करें। यदि पर्याप्त उपयोगकर्ता अनुरोध करते हैं, तो हटाना स्वचालित रूप से रद्द हो जाएगा।',
+                alreadyAskedTooltip: 'आपने इस मीडिया को रखने का अनुरोध पहले ही कर दिया है। आपका वोट गिना गया है।',
+                keepCounterTooltip: 'हटाना रद्द करने के लिए आवश्यक: {current}/{threshold} अनुरोध',
                 sortHighest: 'उच्चतम रेटिंग पहले', sortLowest: 'निम्नतम रेटिंग पहले',
                 newEpisode: '+1 एपिसोड', newEpisodes: '+{count} एपिसोड', typeMovie: 'फिल्म', typeSeries: 'श्रृंखला', typeAnime: 'एनीमे', typeOther: 'अन्य',
                 timeAgo: 'पहले', timeJustNow: 'अभी', timeMinutes: 'मिनट', timeHours: 'घंटे', timeDays: 'दिन',
@@ -812,6 +857,9 @@
                 createRequest: 'Sukurti Užklausą', latestMedia: 'Naujausia Medija', latestMediaLoading: 'Kraunama...', latestMediaEmpty: 'Naujų medijų nerasta', latestMediaError: 'Nepavyko įkelti',
                 leavingSoon: 'Greitai Bus Ištrinta', leavingSoonEmpty: 'Nėra suplanuotų ištrynimų', leavingSoonLoading: 'Kraunama...', timeLeft: 'liko',
                 askToKeep: 'Prašyti palikti', alreadyAsked: 'Jau paprašyta', keepRequests: 'prašymų', keepRequestSent: 'Prašymas išsiųstas!', keepRequestAutoCancelled: 'Ištrynimas atšauktas!',
+                askToKeepTooltip: 'Spustelėkite, kad paprašytumėte neištrinti šios medijos. Jei pakankamai vartotojų paprašys, ištrynimas bus automatiškai atšauktas.',
+                alreadyAskedTooltip: 'Jūs jau paprašėte palikti šią mediją. Jūsų balsas suskaičiuotas.',
+                keepCounterTooltip: '{current} iš {threshold} prašymų reikia ištrynimui atšaukti',
                 sortHighest: 'Aukščiausiai įvertinti', sortLowest: 'Žemiausiai įvertinti',
                 newEpisode: '+1 serija', newEpisodes: '+{count} serijos', typeMovie: 'Filmas', typeSeries: 'Serialas', typeAnime: 'Anime', typeOther: 'Kita',
                 timeAgo: 'prieš', timeJustNow: 'ką tik', timeMinutes: 'min', timeHours: 'val', timeDays: 'd',
@@ -10143,20 +10191,21 @@
                     // Build keep request counter display (shown to everyone if threshold > 0)
                     let keepCounterHtml = '';
                     if (autoCancelThreshold > 0) {
-                        keepCounterHtml = `<span class="keep-counter">${keepRequestCount}/${autoCancelThreshold}</span>`;
+                        const counterTooltip = self.t('keepCounterTooltip').replace('{current}', keepRequestCount).replace('{threshold}', autoCancelThreshold);
+                        keepCounterHtml = `<span class="keep-counter" title="${counterTooltip}">${keepRequestCount}/${autoCancelThreshold}</span>`;
                     }
 
                     // Build keep button
                     let keepButtonHtml = '';
                     if (userHasRequested) {
                         // User already asked - show disabled button
-                        keepButtonHtml = `<button class="keep-btn asked" disabled title="${self.t('alreadyAsked')}">${self.t('alreadyAsked')}</button>`;
+                        keepButtonHtml = `<button class="keep-btn asked" disabled title="${self.t('alreadyAskedTooltip')}">${self.t('alreadyAsked')}</button>`;
                     } else if (userCanRequestToday) {
                         // User can request today
-                        keepButtonHtml = `<button class="keep-btn" data-item-id="${itemId}" data-threshold="${autoCancelThreshold}">${self.t('askToKeep')}</button>`;
+                        keepButtonHtml = `<button class="keep-btn" data-item-id="${itemId}" data-threshold="${autoCancelThreshold}" title="${self.t('askToKeepTooltip')}">${self.t('askToKeep')}</button>`;
                     } else {
                         // User already requested today but can request again tomorrow
-                        keepButtonHtml = `<button class="keep-btn asked" disabled title="${self.t('alreadyAsked')}">${self.t('alreadyAsked')}</button>`;
+                        keepButtonHtml = `<button class="keep-btn asked" disabled title="${self.t('alreadyAskedTooltip')}">${self.t('alreadyAsked')}</button>`;
                     }
 
                     html += `

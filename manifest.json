@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.98.0",
+        "changelog": "Add descriptive tooltips on hover for keep button and counter",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.98.0/jellyfin-plugin-ratings_2.0.98.0.zip",
+        "checksum": "e2fc0f04658f281b3a965d0415189255",
+        "timestamp": "2026-03-28T18:30:00Z"
+      },
+      {
         "version": "2.0.97.0",
         "changelog": "Ask to keep feature in Leaving Soon tab - users can request to keep media from deletion",
         "targetAbi": "10.11.0.0",
