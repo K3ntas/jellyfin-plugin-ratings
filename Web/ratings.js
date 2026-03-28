@@ -1131,6 +1131,51 @@
 
             // Initialize playback ban interceptor
             this.initPlaybackBanInterceptor();
+
+            // Initialize social features debug
+            this.initSocialDebug();
+        },
+
+        /**
+         * Initialize social features and log debug info to console.
+         * This allows verification that social system is working even without UI.
+         */
+        initSocialDebug: function () {
+            const self = this;
+            var attempts = 0;
+
+            var tryInit = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryInit, 1000);
+                    }
+                    return;
+                }
+
+                var baseUrl = ApiClient.serverAddress();
+                fetch(baseUrl + '/Social/Debug', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Social API returned ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (debugInfo) {
+                    console.log('%c[Social] System initialized', 'color: #4CAF50; font-weight: bold;');
+                    console.log('%c[Social] Debug Info:', 'color: #2196F3;', debugInfo);
+                    console.log('%c[Social] Profiles: ' + debugInfo.ProfileCount + ', Requests: ' + debugInfo.FriendRequestCount + ', Friendships: ' + debugInfo.FriendshipCount, 'color: #9C27B0;');
+                })
+                .catch(function (error) {
+                    console.warn('[Social] Failed to initialize:', error.message);
+                });
+            };
+
+            tryInit();
         },
 
         /**

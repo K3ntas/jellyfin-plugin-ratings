@@ -17,6 +17,9 @@ namespace Jellyfin.Plugin.Ratings
             // Register RatingsRepository as a singleton
             serviceCollection.AddSingleton<RatingsRepository>();
 
+            // Register SocialRepository for social features (friends, profiles, etc.)
+            serviceCollection.AddSingleton<SocialRepository>();
+
             // Register middleware startup filter for script injection (works without file permissions)
             serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();
 
