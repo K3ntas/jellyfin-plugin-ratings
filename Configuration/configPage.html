@@ -168,6 +168,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkNotificationsEnabledByDefault" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Notifications by Default</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When enabled, notifications are on by default for users. Users can still toggle off using the bell icon.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkShowLatestMediaButton" type="checkbox" is="emby-checkbox" />
                                     <span>Show Latest Media Button</span>
                                 </label>
@@ -1042,6 +1052,7 @@
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
+                    document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
 
                     // Media management settings
@@ -1139,6 +1150,7 @@
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
+                    config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
 
                     // Media management settings

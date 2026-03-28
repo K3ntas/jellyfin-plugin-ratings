@@ -62,3 +62,6 @@ plan-*.md
 
 # Release artifacts (upload to GitHub releases, not repo)
 jellyfin-plugin-ratings_*.zip
+
+# Wiki (local reference only, not tracked in repo)
+wiki/

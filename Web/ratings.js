@@ -9251,10 +9251,10 @@
                     fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
                         .then(response => response.json())
                         .then(config => {
-                            if (config.EnableNewMediaNotifications === false) {
+                            if (config.ShowNotificationToggle === false) {
                                 return; // Don't create notification toggle
                             }
-                            createNotificationToggle();
+                            createNotificationToggle(config);
                         })
                         .catch(() => {
                             // Default to showing if config fails
@@ -9262,7 +9262,7 @@
                         });
                 };
 
-                const createNotificationToggle = () => {
+                const createNotificationToggle = (config) => {
                     try {
                         // Check if already exists
                         if (document.getElementById('notificationToggle')) {
@@ -9283,9 +9283,10 @@
                         tooltip.id = 'notificationTooltip';
                         tooltip.textContent = 'Enable/disable new media notifications';
 
-                        // Get saved preference (default to enabled)
+                        // Get saved preference (default to config setting or true)
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
-                        const isEnabled = savedPref === null ? true : savedPref === 'true';
+                        const defaultEnabled = config && config.NotificationsEnabledByDefault !== undefined ? config.NotificationsEnabledByDefault : true;
+                        const isEnabled = savedPref === null ? defaultEnabled : savedPref === 'true';
 
                         // Update visual state - toggle red cross lines via disabled class
                         const updateToggleState = (enabled) => {
