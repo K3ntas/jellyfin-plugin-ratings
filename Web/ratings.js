@@ -1041,6 +1041,9 @@
             // Initialize Netflix view if enabled
             this.initNetflixView();
 
+            // Initialize library sort buttons for non-Netflix view
+            this.initLibrarySortButtons();
+
             // Initialize new media notifications
             this.initNotifications();
 
@@ -3928,6 +3931,61 @@
 
                 .netflix-sort-btn.active:hover {
                     background: rgba(229, 9, 20, 1);
+                }
+
+                /* Library View Sort Buttons (non-Netflix view) */
+                .library-sort-container {
+                    display: inline-flex;
+                    gap: 4px;
+                    margin-left: 8px;
+                    vertical-align: middle;
+                }
+
+                /* Library sort buttons - match Jellyfin's paper-icon-button-light style */
+                .library-sort-container {
+                    display: inline-flex;
+                    align-items: center;
+                    margin: 0;
+                }
+
+                .library-sort-btn {
+                    background: transparent;
+                    border: none;
+                    color: rgba(255, 255, 255, 0.5);
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: color 0.2s ease;
+                    padding: 0;
+                    margin: 0;
+                    outline: none;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .library-sort-btn svg {
+                    width: 28px;
+                    height: 28px;
+                    fill: currentColor;
+                }
+
+                .library-sort-btn:hover {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+
+                .library-sort-btn:focus {
+                    outline: none;
+                }
+
+                .library-sort-btn.active {
+                    color: #00a4dc;
+                }
+
+                .library-sort-btn.active:hover {
+                    color: #00a4dc;
                 }
 
                 .netflix-row-wrapper {
@@ -16151,6 +16209,390 @@
                     observer.observe(placeholder);
                 });
             });
+        },
+
+        /**
+         * Initialize library sort buttons observer for non-Netflix view
+         */
+        initLibrarySortButtons: function () {
+            const self = this;
+            let lastUrl = '';
+
+            const checkLibraryPage = () => {
+                const url = window.location.href;
+                const hash = window.location.hash;
+
+                // Skip Netflix view pages - they have their own sort buttons
+                if (self.netflixViewEnabled && self.isNetflixViewPage()) {
+                    // Remove any existing library sort buttons
+                    const existing = document.getElementById('librarySortContainer');
+                    if (existing) existing.remove();
+                    return;
+                }
+
+                // Check if we're on a library page (movies, tv, etc.)
+                const isLibraryPage = hash.includes('#/movies') ||
+                                     hash.includes('#/tv') ||
+                                     hash.includes('#/music') ||
+                                     hash.includes('#/list') ||
+                                     hash.includes('collectionType=');
+
+                if (!isLibraryPage) {
+                    // Remove sort buttons when leaving library
+                    const existing = document.getElementById('librarySortContainer');
+                    if (existing) existing.remove();
+                    return;
+                }
+
+                // Don't re-inject on same URL
+                if (url === lastUrl && document.getElementById('librarySortContainer')) {
+                    return;
+                }
+                lastUrl = url;
+
+                // Wait for Jellyfin's controls to appear, then inject our buttons
+                self.injectLibrarySortButtons();
+            };
+
+            // Listen for navigation events
+            window.addEventListener('hashchange', () => setTimeout(checkLibraryPage, 300));
+            window.addEventListener('popstate', () => setTimeout(checkLibraryPage, 300));
+
+            // Periodic check as fallback
+            setInterval(checkLibraryPage, 2000);
+
+            // Initial check
+            setTimeout(checkLibraryPage, 1000);
+        },
+
+        /**
+         * Inject sort buttons into library view header
+         */
+        injectLibrarySortButtons: function () {
+            const self = this;
+
+            // Don't inject if already exists
+            if (document.getElementById('librarySortContainer')) return;
+
+            // Find Jellyfin's view controls container
+            // Look for the container with pagination and view buttons
+            const viewControls = document.querySelector('.listTopPaging, .viewControls, .flex.align-items-center.justify-content-center');
+
+            // Alternative: find the filter button and insert before it
+            const filterBtn = document.querySelector('button[title="Filter"], button[data-action="filter"], .btnFilter');
+            const sortBtn = document.querySelector('button[title="Sort"], button[data-action="sort"], .btnSort, button.paper-icon-button-light[title]');
+
+            // Find any button in the header controls area
+            const headerControls = document.querySelector('.listHeader, .sectionTitleContainer');
+
+            let targetContainer = null;
+            let insertBefore = null;
+
+            if (filterBtn && filterBtn.parentElement) {
+                targetContainer = filterBtn.parentElement;
+                insertBefore = filterBtn;
+            } else if (sortBtn && sortBtn.parentElement) {
+                targetContainer = sortBtn.parentElement;
+                insertBefore = sortBtn;
+            } else if (viewControls) {
+                targetContainer = viewControls;
+            } else if (headerControls) {
+                // Find the flex container with buttons
+                const flexContainer = headerControls.querySelector('.flex, [style*="display: flex"], [style*="display:flex"]');
+                if (flexContainer) {
+                    targetContainer = flexContainer;
+                }
+            }
+
+            // Last resort: find by looking for the button group
+            if (!targetContainer) {
+                const allButtons = document.querySelectorAll('button.paper-icon-button-light');
+                for (const btn of allButtons) {
+                    const parent = btn.parentElement;
+                    if (parent && parent.querySelectorAll('button').length >= 3) {
+                        targetContainer = parent;
+                        break;
+                    }
+                }
+            }
+
+            if (!targetContainer) {
+                // Retry after a delay
+                setTimeout(() => self.injectLibrarySortButtons(), 500);
+                return;
+            }
+
+            // Create sort buttons container
+            const container = document.createElement('span');
+            container.id = 'librarySortContainer';
+            container.className = 'library-sort-container';
+            // Star icons with up/down arrow inside
+            container.innerHTML = `
+                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
+                        <path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/>
+                    </svg>
+                </button>
+                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
+                        <path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/>
+                    </svg>
+                </button>
+            `;
+
+            // Insert into container
+            if (insertBefore) {
+                targetContainer.insertBefore(container, insertBefore);
+            } else {
+                targetContainer.appendChild(container);
+            }
+
+            // Attach click handlers
+            container.querySelectorAll('.library-sort-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const sortDirection = btn.getAttribute('data-sort');
+                    const currentActive = container.querySelector('.library-sort-btn.active');
+                    const wasActive = btn.classList.contains('active');
+
+                    // Remove active from all
+                    container.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
+
+                    if (wasActive) {
+                        // Clicking same button again - restore original order
+                        self.restoreLibraryCardsOrder();
+                    } else {
+                        // Sort cards
+                        btn.classList.add('active');
+                        self.sortLibraryCards(sortDirection);
+                    }
+                });
+            });
+        },
+
+        /**
+         * Sort library cards by custom ratings
+         */
+        sortLibraryCards: function (direction) {
+            const self = this;
+
+            // Media types we want to sort
+            const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
+
+            // Find the items container that has actual media cards (not library folders)
+            // There can be multiple .itemsContainer on the page - find the one with MOST media cards
+            let itemsContainer = null;
+            let cards = [];
+            let maxMediaCards = 0;
+
+            // Try multiple container selectors
+            const containerSelectors = [
+                '.itemsContainer.vertical-wrap',
+                '.itemsContainer.padded-left.padded-right',
+                '.itemsContainer:not(.scrollSlider)',
+                '.itemsContainer'
+            ];
+
+            let allContainers = [];
+            for (const selector of containerSelectors) {
+                allContainers = document.querySelectorAll(selector);
+                if (allContainers.length > 0) break;
+            }
+
+            for (const container of allContainers) {
+                // Get cards from this container - try multiple selectors
+                let containerCards = Array.from(container.querySelectorAll('.card[data-id]'));
+                if (containerCards.length === 0) {
+                    containerCards = Array.from(container.querySelectorAll('[data-id].card'));
+                }
+                if (containerCards.length === 0) {
+                    containerCards = Array.from(container.querySelectorAll('.card'));
+                }
+                if (containerCards.length === 0) {
+                    containerCards = Array.from(container.children).filter(el => el.classList.contains('card') || el.hasAttribute('data-id'));
+                }
+
+                // Filter to only media types
+                const mediaCards = containerCards.filter(card => {
+                    const dataType = card.getAttribute('data-type');
+                    return mediaTypes.includes(dataType);
+                });
+
+                // Use the container with the MOST media cards
+                if (mediaCards.length > maxMediaCards) {
+                    maxMediaCards = mediaCards.length;
+                    itemsContainer = container;
+                    cards = mediaCards;
+                }
+            }
+
+            if (!itemsContainer || cards.length === 0) {
+                return;
+            }
+
+            // Store original order if not already stored
+            if (!itemsContainer.dataset.originalOrder) {
+                const originalIds = cards.map(card => card.getAttribute('data-id') || '').join(',');
+                itemsContainer.dataset.originalOrder = originalIds;
+            }
+
+            // Collect item IDs that need ratings fetched
+            const itemIds = [];
+            cards.forEach(card => {
+                // Try data-id first, then fallback
+                const itemId = card.getAttribute('data-id') || self.getItemIdFromCard(card);
+                if (itemId && self.ratingsCache[itemId] === undefined) {
+                    itemIds.push(itemId);
+                }
+            });
+
+            // If we need to fetch ratings, do it first then sort
+            if (itemIds.length > 0) {
+                self.fetchRatingsForItems(itemIds).then(() => {
+                    self.performLibrarySort(itemsContainer, cards, direction);
+                });
+            } else {
+                // All ratings cached, sort immediately
+                self.performLibrarySort(itemsContainer, cards, direction);
+            }
+        },
+
+        /**
+         * Fetch ratings for multiple items in batch
+         */
+        fetchRatingsForItems: function (itemIds) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Fetch ratings in parallel (limit concurrent requests)
+            const batchSize = 20;
+            const batches = [];
+            for (let i = 0; i < itemIds.length; i += batchSize) {
+                batches.push(itemIds.slice(i, i + batchSize));
+            }
+
+            const fetchBatch = (ids) => {
+                return Promise.all(ids.map(itemId => {
+                    const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
+                    return fetch(url, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Emby-Authorization': authHeader
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(stats => {
+                        if (stats.TotalRatings > 0) {
+                            self.ratingsCache[itemId] = stats;
+                        } else {
+                            self.ratingsCache[itemId] = null;
+                        }
+                    })
+                    .catch(() => {
+                        self.ratingsCache[itemId] = null;
+                    });
+                }));
+            };
+
+            // Process batches sequentially to avoid overwhelming the server
+            return batches.reduce((promise, batch) => {
+                return promise.then(() => fetchBatch(batch));
+            }, Promise.resolve());
+        },
+
+        /**
+         * Perform the actual sorting of library cards
+         */
+        performLibrarySort: function (itemsContainer, cards, direction) {
+            const self = this;
+
+            // Sort cards by rating
+            const sortedCards = [...cards].sort((a, b) => {
+                // Try data-id first, then fallback to getItemIdFromCard
+                const idA = a.getAttribute('data-id') || self.getItemIdFromCard(a);
+                const idB = b.getAttribute('data-id') || self.getItemIdFromCard(b);
+
+                const ratingA = self.ratingsCache[idA] && self.ratingsCache[idA] !== null ? self.ratingsCache[idA].AverageRating : -1;
+                const ratingB = self.ratingsCache[idB] && self.ratingsCache[idB] !== null ? self.ratingsCache[idB].AverageRating : -1;
+
+                // Items without ratings go to the end
+                if (ratingA === -1 && ratingB === -1) return 0;
+                if (ratingA === -1) return 1;
+                if (ratingB === -1) return -1;
+
+                // Sort by direction
+                if (direction === 'desc') {
+                    return ratingB - ratingA; // Highest first
+                } else {
+                    return ratingA - ratingB; // Lowest first
+                }
+            });
+
+            // Temporarily disable transitions for instant reorder
+            const originalTransition = itemsContainer.style.transition;
+            itemsContainer.style.transition = 'none';
+
+            // Re-append cards in sorted order
+            sortedCards.forEach(card => {
+                itemsContainer.appendChild(card);
+            });
+
+            // Force reflow to ensure DOM changes are applied
+            void itemsContainer.offsetHeight;
+
+            // Restore transitions
+            itemsContainer.style.transition = originalTransition;
+        },
+
+        /**
+         * Restore original order of library cards
+         */
+        restoreLibraryCardsOrder: function () {
+            const itemsContainer = document.querySelector('.itemsContainer');
+            if (!itemsContainer || !itemsContainer.dataset.originalOrder) return;
+
+            const originalIds = itemsContainer.dataset.originalOrder.split(',');
+            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
+
+            // Create a map of id to card
+            const cardMap = new Map();
+            cards.forEach(card => {
+                const id = card.getAttribute('data-id') || '';
+                cardMap.set(id, card);
+            });
+
+            // Re-append in original order
+            originalIds.forEach(id => {
+                const card = cardMap.get(id);
+                if (card) {
+                    itemsContainer.appendChild(card);
+                }
+            });
+
+            // Clear stored order
+            delete itemsContainer.dataset.originalOrder;
         },
 
         /**
