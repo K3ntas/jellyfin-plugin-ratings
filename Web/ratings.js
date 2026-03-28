@@ -3952,8 +3952,8 @@
                     background: transparent;
                     border: none;
                     color: rgba(255, 255, 255, 0.5);
-                    width: 30px;
-                    height: 30px;
+                    width: 36px;
+                    height: 36px;
                     border-radius: 50%;
                     cursor: pointer;
                     display: inline-flex;
@@ -3967,8 +3967,8 @@
                 }
 
                 .library-sort-btn svg {
-                    width: 20px;
-                    height: 20px;
+                    width: 24px;
+                    height: 24px;
                     fill: currentColor;
                 }
 
@@ -16326,18 +16326,18 @@
             const container = document.createElement('span');
             container.id = 'librarySortContainer';
             container.className = 'library-sort-container';
-            // Simple star icons with small arrow indicator
+            // Star icons with up/down arrow inside
             container.innerHTML = `
                 <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 6l2 4h-4l2-4z" opacity="0.7"/>
+                        <path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/>
                     </svg>
                 </button>
                 <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 14l2-4h-4l2 4z" opacity="0.7"/>
+                        <path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/>
                     </svg>
                 </button>
             `;
