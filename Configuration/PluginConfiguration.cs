@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowLanguageSwitch = true;
             ShowSearchButton = true;
             ShowNotificationToggle = true;
+            NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
 
             // Media management settings
@@ -150,6 +151,13 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the notification toggle is shown in the header.
         /// </summary>
         public bool ShowNotificationToggle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether notifications are enabled by default for users.
+        /// When true, notifications are on by default (users can toggle off with bell icon).
+        /// When false, notifications are off by default (users can toggle on with bell icon).
+        /// </summary>
+        public bool NotificationsEnabledByDefault { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the Latest Media button is shown in the header.
