@@ -31,6 +31,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Media management settings
             EnableMediaManagement = true;
             DefaultDeletionDelayDays = 7;
+            AutoCancelDeletionThreshold = 0;
 
             // Request system settings
             EnableAdminRequests = false;
@@ -174,6 +175,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the default delay in days for scheduled deletions.
         /// </summary>
         public int DefaultDeletionDelayDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of "keep" requests needed to auto-cancel a scheduled deletion.
+        /// Set to 0 to disable auto-cancellation.
+        /// </summary>
+        public int AutoCancelDeletionThreshold { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether admins can create requests like normal users.
