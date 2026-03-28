@@ -69,6 +69,56 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Searches for users by username.
+        /// </summary>
+        /// <param name="query">Search query.</param>
+        /// <param name="limit">Max results.</param>
+        /// <returns>List of matching users.</returns>
+        [HttpGet("SearchUsers")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> SearchUsers([FromQuery] string query, [FromQuery] int limit = 10)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            {
+                return Ok(new { users = new object[0] });
+            }
+
+            // Get all users and filter
+            var allUsers = _userManager.Users;
+            var queryLower = query.ToLowerInvariant();
+
+            var results = allUsers
+                .Where(u => u.Id != userId.Value && u.Username.ToLowerInvariant().Contains(queryLower))
+                .Take(limit)
+                .Select(u => {
+                    var isFriend = _socialRepository.AreFriends(userId.Value, u.Id);
+                    var hasPendingRequest = _socialRepository.HasPendingRequest(userId.Value, u.Id);
+                    var hasIncomingRequest = _socialRepository.HasPendingRequest(u.Id, userId.Value);
+                    var profile = _socialRepository.GetProfile(u.Id);
+                    var allowsRequests = profile == null || profile.Privacy.AllowFriendRequests != "Nobody";
+
+                    return new {
+                        userId = u.Id,
+                        username = u.Username,
+                        isFriend,
+                        hasPendingRequest,
+                        hasIncomingRequest,
+                        canSendRequest = !isFriend && !hasPendingRequest && !hasIncomingRequest && allowsRequests
+                    };
+                })
+                .ToList();
+
+            return Ok(new { users = results });
+        }
+
+        /// <summary>
         /// Gets the current user's profile.
         /// </summary>
         /// <returns>The user's profile.</returns>

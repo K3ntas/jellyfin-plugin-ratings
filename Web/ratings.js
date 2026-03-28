@@ -1384,6 +1384,25 @@
 
                 // Initial load of data
                 self.loadFriendsData();
+
+                // Setup visibility check - hide on login page
+                setInterval(function () {
+                    try {
+                        var friendsBtn = document.getElementById('social-friends-btn');
+                        var friendsPanel = document.getElementById('social-friends-panel');
+                        if (!friendsBtn) return;
+
+                        var isLoginPage = self.isOnLoginPage();
+                        var hasToken = window.ApiClient && ApiClient.accessToken();
+
+                        if (isLoginPage || !hasToken) {
+                            friendsBtn.style.display = 'none';
+                            if (friendsPanel) friendsPanel.classList.remove('open');
+                        } else {
+                            friendsBtn.style.display = '';
+                        }
+                    } catch (e) {}
+                }, 500);
             };
 
             tryInit();
@@ -1411,6 +1430,9 @@
                     <button class="social-panel-tab" data-tab="notifications">
                         <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
                         <span class="tab-badge" id="notifications-badge" style="display:none">0</span>
+                    </button>
+                    <button class="social-panel-tab" data-tab="addFriend">
+                        <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </button>
                 </div>
                 <div class="social-panel-search">
@@ -1501,6 +1523,9 @@
                     .catch(function () {
                         content.innerHTML = '<div class="social-empty-state">Failed to load notifications</div>';
                     });
+            } else if (tab === 'addFriend') {
+                // Show search UI for adding friends
+                self.renderAddFriendSearch();
             }
 
             // Also update notification badge count (for any tab)
@@ -1727,6 +1752,171 @@
             fetch(baseUrl + '/Social/Notifications/ReadAll', { method: 'POST', credentials: 'include', headers: headers })
                 .then(function () {
                     self.loadFriendsData('notifications');
+                });
+        },
+
+        /**
+         * Render the add friend search UI
+         */
+        renderAddFriendSearch: function () {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            content.innerHTML = `
+                <div style="padding: 10px;">
+                    <div style="margin-bottom: 10px; color: #888; font-size: 12px;">Search for users to add as friends</div>
+                    <input type="text" id="social-user-search" placeholder="Enter username..." style="width:100%;padding:10px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#fff;font-size:14px;">
+                    <div id="social-user-results" style="margin-top: 10px;"></div>
+                </div>
+            `;
+
+            var searchInput = document.getElementById('social-user-search');
+            var searchTimeout;
+
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                var query = searchInput.value.trim();
+
+                if (query.length < 2) {
+                    document.getElementById('social-user-results').innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Type at least 2 characters</div>';
+                    return;
+                }
+
+                searchTimeout = setTimeout(function () {
+                    self.searchUsersForFriend(query);
+                }, 300);
+            });
+
+            searchInput.focus();
+        },
+
+        /**
+         * Search for users to add as friend
+         */
+        searchUsersForFriend: function (query) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var resultsDiv = document.getElementById('social-user-results');
+
+            resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Searching...</div>';
+
+            fetch(baseUrl + '/Social/SearchUsers?query=' + encodeURIComponent(query) + '&limit=10', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                self.renderUserSearchResults(data.users || []);
+            })
+            .catch(function () {
+                resultsDiv.innerHTML = '<div style="color:#f44;font-size:12px;padding:10px;">Search failed</div>';
+            });
+        },
+
+        /**
+         * Render user search results
+         */
+        renderUserSearchResults: function (users) {
+            var self = this;
+            var resultsDiv = document.getElementById('social-user-results');
+            if (!resultsDiv) return;
+
+            if (users.length === 0) {
+                resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">No users found</div>';
+                return;
+            }
+
+            var html = '';
+            users.forEach(function (user) {
+                var initial = (user.username || '?')[0].toUpperCase();
+                var buttonHtml;
+
+                if (user.isFriend) {
+                    buttonHtml = '<span style="color:#4caf50;font-size:12px;">Already friends</span>';
+                } else if (user.hasPendingRequest) {
+                    buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
+                } else if (user.hasIncomingRequest) {
+                    buttonHtml = '<button onclick="RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                } else if (user.canSendRequest) {
+                    buttonHtml = '<button onclick="RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                } else {
+                    buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
+                }
+
+                html += '<div class="social-friend-item" style="justify-content:space-between;">' +
+                    '<div style="display:flex;align-items:center;">' +
+                    '<div class="social-friend-avatar">' + initial + '</div>' +
+                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
+                    '</div>' +
+                    '<div>' + buttonHtml + '</div>' +
+                    '</div>';
+            });
+
+            resultsDiv.innerHTML = html;
+        },
+
+        /**
+         * Send friend request from search results
+         */
+        sendFriendRequestFromSearch: function (userId, btn) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + userId, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    btn.textContent = 'Sent!';
+                    btn.style.background = '#4caf50';
+                } else {
+                    btn.textContent = data.error || 'Failed';
+                    btn.style.background = '#f44336';
+                }
+            })
+            .catch(function () {
+                btn.textContent = 'Error';
+                btn.style.background = '#f44336';
+            });
+        },
+
+        /**
+         * Accept incoming request from search results
+         */
+        acceptIncomingFromSearch: function (userId) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            // Find the request ID for this user
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var request = (data.requests || []).find(function (r) { return r.fromUserId === userId; });
+                    if (request) {
+                        self.acceptFriendRequest(request.id);
+                        // Refresh search results
+                        var searchInput = document.getElementById('social-user-search');
+                        if (searchInput && searchInput.value) {
+                            self.searchUsersForFriend(searchInput.value);
+                        }
+                    }
                 });
         },
 
