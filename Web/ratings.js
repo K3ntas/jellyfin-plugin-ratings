@@ -16385,39 +16385,47 @@
             const self = this;
             console.log('[Ratings] sortLibraryCards called with direction:', direction);
 
-            // Find the items container
-            const itemsContainer = document.querySelector('.itemsContainer');
-            console.log('[Ratings] itemsContainer:', itemsContainer);
-            if (!itemsContainer) {
-                console.log('[Ratings] No itemsContainer found!');
-                return;
-            }
-
-            // Get all cards - try multiple selectors
-            let cards = Array.from(itemsContainer.querySelectorAll('.card[data-id]'));
-            if (cards.length === 0) {
-                cards = Array.from(itemsContainer.querySelectorAll('.card'));
-            }
-            if (cards.length === 0) {
-                cards = Array.from(itemsContainer.querySelectorAll('[data-id]'));
-            }
-
-            // Filter out non-media cards (CollectionFolders, etc.) - only sort actual media
+            // Media types we want to sort
             const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
-            cards = cards.filter(card => {
-                const dataType = card.getAttribute('data-type');
-                // Include if no type specified or if it's a media type
-                return !dataType || mediaTypes.includes(dataType);
-            });
 
-            console.log('[Ratings] Found media cards:', cards.length);
-            if (cards.length > 0) {
-                console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].getAttribute('data-type'));
+            // Find the items container that has actual media cards (not library folders)
+            // There can be multiple .itemsContainer on the page - find the one with media
+            let itemsContainer = null;
+            let cards = [];
+
+            const allContainers = document.querySelectorAll('.itemsContainer');
+            console.log('[Ratings] Found containers:', allContainers.length);
+
+            for (const container of allContainers) {
+                // Get cards from this container
+                let containerCards = Array.from(container.querySelectorAll('.card[data-id]'));
+                if (containerCards.length === 0) {
+                    containerCards = Array.from(container.querySelectorAll('.card'));
+                }
+
+                // Filter to only media types
+                const mediaCards = containerCards.filter(card => {
+                    const dataType = card.getAttribute('data-type');
+                    return mediaTypes.includes(dataType);
+                });
+
+                console.log('[Ratings] Container check - total cards:', containerCards.length, 'media cards:', mediaCards.length);
+
+                // Use this container if it has media cards
+                if (mediaCards.length > 0) {
+                    itemsContainer = container;
+                    cards = mediaCards;
+                    break;
+                }
             }
-            if (cards.length === 0) {
+
+            if (!itemsContainer || cards.length === 0) {
                 console.log('[Ratings] No media cards found to sort!');
                 return;
             }
+
+            console.log('[Ratings] Found media cards:', cards.length);
+            console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].getAttribute('data-type'));
 
             // Store original order if not already stored
             if (!itemsContainer.dataset.originalOrder) {
