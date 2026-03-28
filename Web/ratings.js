@@ -1507,6 +1507,10 @@
                 fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
+                        console.log('[Social] Incoming requests data:', JSON.stringify(data, null, 2));
+                        if (data.requests && data.requests.length > 0) {
+                            console.log('[Social] First request keys:', Object.keys(data.requests[0]));
+                        }
                         self.renderRequestsList(data.requests || []);
                         self.updateRequestsBadge(data.requests ? data.requests.length : 0);
                     })

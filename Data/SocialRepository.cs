@@ -153,7 +153,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var profiles = JsonSerializer.Deserialize<List<UserProfile>>(json);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var profiles = JsonSerializer.Deserialize<List<UserProfile>>(json, options);
                     if (profiles != null)
                     {
                         _profiles = profiles.ToDictionary(p => p.UserId);
@@ -321,11 +322,16 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var requests = JsonSerializer.Deserialize<List<FriendRequest>>(json);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var requests = JsonSerializer.Deserialize<List<FriendRequest>>(json, options);
                     if (requests != null)
                     {
                         _friendRequests = requests;
                         _logger.LogInformation("[Social] Loaded {Count} friend requests from disk", _friendRequests.Count);
+                        foreach (var r in _friendRequests)
+                        {
+                            _logger.LogDebug("[Social] Loaded request: {From} -> {To}", r.FromUsername, r.ToUsername);
+                        }
                     }
                 }
             }
@@ -462,7 +468,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var friendships = JsonSerializer.Deserialize<List<Friendship>>(json);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var friendships = JsonSerializer.Deserialize<List<Friendship>>(json, options);
                     if (friendships != null)
                     {
                         _friendships = friendships;
@@ -688,7 +695,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var notifications = JsonSerializer.Deserialize<List<SocialNotification>>(json);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var notifications = JsonSerializer.Deserialize<List<SocialNotification>>(json, options);
                     if (notifications != null)
                     {
                         _notifications = notifications;
