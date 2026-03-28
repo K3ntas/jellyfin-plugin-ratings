@@ -16401,12 +16401,21 @@
             if (cards.length === 0) {
                 cards = Array.from(itemsContainer.querySelectorAll('[data-id]'));
             }
-            console.log('[Ratings] Found cards:', cards.length);
+
+            // Filter out non-media cards (CollectionFolders, etc.) - only sort actual media
+            const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
+            cards = cards.filter(card => {
+                const dataType = card.getAttribute('data-type');
+                // Include if no type specified or if it's a media type
+                return !dataType || mediaTypes.includes(dataType);
+            });
+
+            console.log('[Ratings] Found media cards:', cards.length);
             if (cards.length > 0) {
-                console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].outerHTML.substring(0, 200));
+                console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].getAttribute('data-type'));
             }
             if (cards.length === 0) {
-                console.log('[Ratings] No cards found! Container HTML:', itemsContainer.innerHTML.substring(0, 500));
+                console.log('[Ratings] No media cards found to sort!');
                 return;
             }
 
@@ -16548,10 +16557,22 @@
             });
 
             console.log('[Ratings] Sorted, re-appending cards...');
+
+            // Temporarily disable transitions for instant reorder
+            const originalTransition = itemsContainer.style.transition;
+            itemsContainer.style.transition = 'none';
+
             // Re-append cards in sorted order
             sortedCards.forEach(card => {
                 itemsContainer.appendChild(card);
             });
+
+            // Force reflow to ensure DOM changes are applied
+            void itemsContainer.offsetHeight;
+
+            // Restore transitions
+            itemsContainer.style.transition = originalTransition;
+
             console.log('[Ratings] Sort complete!');
         },
 

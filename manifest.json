@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.91.0",
+        "changelog": "Fix rating sort - filter non-media cards, force visual reflow",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.91.0/jellyfin-plugin-ratings_2.0.91.0.zip",
+        "checksum": "aaee794e5203252ccdd10863b91e4cf6",
+        "timestamp": "2026-03-28T14:00:00Z"
+      },
+      {
         "version": "2.0.90.0",
         "changelog": "Improved rating sort buttons styling to match Jellyfin native toolbar",
         "targetAbi": "10.11.0.0",
