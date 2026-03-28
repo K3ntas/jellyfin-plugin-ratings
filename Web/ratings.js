@@ -3941,25 +3941,44 @@
                     vertical-align: middle;
                 }
 
+                /* Library sort buttons - match Jellyfin's paper-icon-button-light style */
+                .library-sort-container {
+                    display: inline-flex;
+                    align-items: center;
+                    margin: 0 2px;
+                }
+
                 .library-sort-btn {
                     background: transparent;
                     border: none;
-                    color: rgba(255, 255, 255, 0.7);
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 4px;
+                    color: rgba(255, 255, 255, 0.5);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
                     cursor: pointer;
-                    font-size: 16px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     transition: all 0.2s ease;
-                    padding: 0;
+                    padding: 8px;
+                    margin: 0;
+                    outline: none;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .library-sort-btn svg {
+                    width: 24px;
+                    height: 24px;
+                    fill: currentColor;
                 }
 
                 .library-sort-btn:hover {
-                    color: #fff;
+                    color: rgba(255, 255, 255, 0.8);
                     background: rgba(255, 255, 255, 0.1);
+                }
+
+                .library-sort-btn:focus {
+                    outline: none;
                 }
 
                 .library-sort-btn.active {
@@ -3968,7 +3987,7 @@
 
                 .library-sort-btn.active:hover {
                     color: #00a4dc;
-                    background: rgba(0, 164, 220, 0.2);
+                    background: rgba(0, 164, 220, 0.15);
                 }
 
                 .netflix-row-wrapper {
@@ -16309,9 +16328,20 @@
             const container = document.createElement('span');
             container.id = 'librarySortContainer';
             container.className = 'library-sort-container';
+            // SVG icons: star with up/down arrow for rating sort
             container.innerHTML = `
-                <button class="library-sort-btn" data-sort="desc" title="${self.t('sortHighest')}">▲</button>
-                <button class="library-sort-btn" data-sort="asc" title="${self.t('sortLowest')}">▼</button>
+                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>
+                        <path d="M20 2v6h-2V4.8l-1.3 1.3-1.4-1.4L17.2 3H14V1h6v1z"/>
+                    </svg>
+                </button>
+                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>
+                        <path d="M20 8V2h-2v3.2l-1.3-1.3-1.4 1.4L17.2 7H14v2h6V8z"/>
+                    </svg>
+                </button>
             `;
 
             // Insert into container

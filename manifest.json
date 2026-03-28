@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.90.0",
+        "changelog": "Improved rating sort buttons styling to match Jellyfin native toolbar",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.90.0/jellyfin-plugin-ratings_2.0.90.0.zip",
+        "checksum": "d5e8e92046ff687bc59a3bafe7a438ad",
+        "timestamp": "2026-03-28T13:00:00Z"
+      },
+      {
         "version": "2.0.89.0",
         "changelog": "Fix all non-admin request errors (badge, viewed marking, admin tabs)",
         "targetAbi": "10.11.0.0",
