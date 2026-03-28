@@ -16389,18 +16389,48 @@
             const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
 
             // Find the items container that has actual media cards (not library folders)
-            // There can be multiple .itemsContainer on the page - find the one with media
+            // There can be multiple .itemsContainer on the page - find the one with MOST media cards
             let itemsContainer = null;
             let cards = [];
+            let maxMediaCards = 0;
 
-            const allContainers = document.querySelectorAll('.itemsContainer');
-            console.log('[Ratings] Found containers:', allContainers.length);
+            // Try multiple container selectors
+            const containerSelectors = [
+                '.itemsContainer.vertical-wrap',
+                '.itemsContainer.padded-left.padded-right',
+                '.itemsContainer:not(.scrollSlider)',
+                '.itemsContainer'
+            ];
+
+            let allContainers = [];
+            for (const selector of containerSelectors) {
+                allContainers = document.querySelectorAll(selector);
+                if (allContainers.length > 0) {
+                    console.log('[Ratings] Using selector:', selector, 'found:', allContainers.length);
+                    break;
+                }
+            }
+
+            // Also log all elements with data-type to debug
+            const allDataTypeElements = document.querySelectorAll('[data-type]');
+            const typeCount = {};
+            allDataTypeElements.forEach(el => {
+                const t = el.getAttribute('data-type');
+                typeCount[t] = (typeCount[t] || 0) + 1;
+            });
+            console.log('[Ratings] All data-type elements on page:', typeCount);
 
             for (const container of allContainers) {
-                // Get cards from this container
+                // Get cards from this container - try multiple selectors
                 let containerCards = Array.from(container.querySelectorAll('.card[data-id]'));
                 if (containerCards.length === 0) {
+                    containerCards = Array.from(container.querySelectorAll('[data-id].card'));
+                }
+                if (containerCards.length === 0) {
                     containerCards = Array.from(container.querySelectorAll('.card'));
+                }
+                if (containerCards.length === 0) {
+                    containerCards = Array.from(container.children).filter(el => el.classList.contains('card') || el.hasAttribute('data-id'));
                 }
 
                 // Filter to only media types
@@ -16409,22 +16439,28 @@
                     return mediaTypes.includes(dataType);
                 });
 
-                console.log('[Ratings] Container check - total cards:', containerCards.length, 'media cards:', mediaCards.length);
+                console.log('[Ratings] Container:', container.className.substring(0, 50), '- total:', containerCards.length, 'media:', mediaCards.length);
 
-                // Use this container if it has media cards
-                if (mediaCards.length > 0) {
+                // Use the container with the MOST media cards
+                if (mediaCards.length > maxMediaCards) {
+                    maxMediaCards = mediaCards.length;
                     itemsContainer = container;
                     cards = mediaCards;
-                    break;
                 }
             }
 
             if (!itemsContainer || cards.length === 0) {
                 console.log('[Ratings] No media cards found to sort!');
+                // Debug: log first few elements in body with card class
+                const allCards = document.querySelectorAll('.card');
+                console.log('[Ratings] Total .card elements on page:', allCards.length);
+                if (allCards.length > 0) {
+                    console.log('[Ratings] First card sample:', allCards[0].className, allCards[0].getAttribute('data-type'));
+                }
                 return;
             }
 
-            console.log('[Ratings] Found media cards:', cards.length);
+            console.log('[Ratings] Found media cards:', cards.length, 'in container:', itemsContainer.className.substring(0, 50));
             console.log('[Ratings] First card:', cards[0].className, cards[0].getAttribute('data-id'), cards[0].getAttribute('data-type'));
 
             // Store original order if not already stored
