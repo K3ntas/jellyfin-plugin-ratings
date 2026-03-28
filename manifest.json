@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.103.0",
+        "changelog": "Phase 3: Notifications - bell icon, unread badges, mark read, auto-notify on friend events. Fix: hide button on login page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.103.0/jellyfin-plugin-ratings_2.0.103.0.zip",
+        "checksum": "2d390ebd77356873b8037a6e264abc77",
+        "timestamp": "2026-03-28T22:00:00Z"
+      },
+      {
         "version": "2.0.102.0",
         "changelog": "Step 2.7-2.10: Friends UI - draggable floating button, friends panel with tabs, accept/reject requests",
         "targetAbi": "10.11.0.0",

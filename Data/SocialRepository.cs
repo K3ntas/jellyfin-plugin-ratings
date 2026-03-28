@@ -25,11 +25,13 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _profilesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _friendRequestsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _friendshipsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _notificationsWriteLock = new(1, 1);
 
         // In-memory storage
         private Dictionary<Guid, UserProfile> _profiles;
         private List<FriendRequest> _friendRequests;
         private List<Friendship> _friendships;
+        private List<SocialNotification> _notifications;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialRepository"/> class.
@@ -44,6 +46,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _profiles = new Dictionary<Guid, UserProfile>();
             _friendRequests = new List<FriendRequest>();
             _friendships = new List<Friendship>();
+            _notifications = new List<SocialNotification>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -54,9 +57,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadProfiles();
             LoadFriendRequests();
             LoadFriendships();
+            LoadNotifications();
 
-            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}",
-                _profiles.Count, _friendRequests.Count, _friendships.Count);
+            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, Notifications: {Notifications}",
+                _profiles.Count, _friendRequests.Count, _friendships.Count, _notifications.Count);
         }
 
         /// <summary>
@@ -494,6 +498,232 @@ namespace Jellyfin.Plugin.Ratings.Data
             finally
             {
                 _friendshipsWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Notifications
+
+        /// <summary>
+        /// Creates a notification for a user.
+        /// </summary>
+        /// <param name="notification">The notification.</param>
+        /// <returns>The created notification.</returns>
+        public async Task<SocialNotification> CreateNotificationAsync(SocialNotification notification)
+        {
+            lock (_lock)
+            {
+                _notifications.Add(notification);
+            }
+
+            await SaveNotificationsAsync().ConfigureAwait(false);
+            _logger.LogDebug("[Social] Notification created for user {UserId}: {Type}", notification.UserId, notification.Type);
+            return notification;
+        }
+
+        /// <summary>
+        /// Creates a friend request notification.
+        /// </summary>
+        /// <param name="toUserId">Target user ID.</param>
+        /// <param name="fromUsername">Sender username.</param>
+        /// <param name="fromUserId">Sender user ID.</param>
+        /// <returns>Task.</returns>
+        public async Task CreateFriendRequestNotificationAsync(Guid toUserId, string fromUsername, Guid fromUserId)
+        {
+            var notification = new SocialNotification
+            {
+                UserId = toUserId,
+                Type = "FriendRequest",
+                Title = "Friend Request",
+                Message = $"{fromUsername} sent you a friend request"
+            };
+            notification.Data["fromUserId"] = fromUserId.ToString();
+            notification.Data["fromUsername"] = fromUsername;
+
+            await CreateNotificationAsync(notification).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Creates a friend accepted notification.
+        /// </summary>
+        /// <param name="toUserId">Original sender user ID.</param>
+        /// <param name="accepterUsername">Username of who accepted.</param>
+        /// <param name="accepterUserId">User ID of who accepted.</param>
+        /// <returns>Task.</returns>
+        public async Task CreateFriendAcceptedNotificationAsync(Guid toUserId, string accepterUsername, Guid accepterUserId)
+        {
+            var notification = new SocialNotification
+            {
+                UserId = toUserId,
+                Type = "FriendAccepted",
+                Title = "Friend Request Accepted",
+                Message = $"{accepterUsername} accepted your friend request"
+            };
+            notification.Data["userId"] = accepterUserId.ToString();
+            notification.Data["username"] = accepterUsername;
+
+            await CreateNotificationAsync(notification).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Gets notifications for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="unreadOnly">Only return unread notifications.</param>
+        /// <param name="limit">Maximum number to return.</param>
+        /// <param name="offset">Offset for pagination.</param>
+        /// <returns>List of notifications.</returns>
+        public List<SocialNotification> GetNotifications(Guid userId, bool unreadOnly = false, int limit = 20, int offset = 0)
+        {
+            lock (_lock)
+            {
+                var query = _notifications.Where(n => n.UserId == userId);
+
+                if (unreadOnly)
+                {
+                    query = query.Where(n => !n.IsRead);
+                }
+
+                return query
+                    .OrderByDescending(n => n.CreatedAt)
+                    .Skip(offset)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets unread notification count for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Unread count.</returns>
+        public int GetUnreadNotificationCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _notifications.Count(n => n.UserId == userId && !n.IsRead);
+            }
+        }
+
+        /// <summary>
+        /// Marks a notification as read.
+        /// </summary>
+        /// <param name="notificationId">The notification ID.</param>
+        /// <param name="userId">The user ID (for validation).</param>
+        /// <returns>True if marked, false if not found or unauthorized.</returns>
+        public async Task<bool> MarkNotificationAsReadAsync(Guid notificationId, Guid userId)
+        {
+            bool found = false;
+            lock (_lock)
+            {
+                var notification = _notifications.FirstOrDefault(n => n.Id == notificationId && n.UserId == userId);
+                if (notification != null)
+                {
+                    notification.IsRead = true;
+                    found = true;
+                }
+            }
+
+            if (found)
+            {
+                await SaveNotificationsAsync().ConfigureAwait(false);
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Marks all notifications as read for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Number of notifications marked.</returns>
+        public async Task<int> MarkAllNotificationsAsReadAsync(Guid userId)
+        {
+            int count = 0;
+            lock (_lock)
+            {
+                foreach (var n in _notifications.Where(n => n.UserId == userId && !n.IsRead))
+                {
+                    n.IsRead = true;
+                    count++;
+                }
+            }
+
+            if (count > 0)
+            {
+                await SaveNotificationsAsync().ConfigureAwait(false);
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Deletes a notification.
+        /// </summary>
+        /// <param name="notificationId">The notification ID.</param>
+        /// <param name="userId">The user ID (for validation).</param>
+        /// <returns>True if deleted.</returns>
+        public async Task<bool> DeleteNotificationAsync(Guid notificationId, Guid userId)
+        {
+            int removed;
+            lock (_lock)
+            {
+                removed = _notifications.RemoveAll(n => n.Id == notificationId && n.UserId == userId);
+            }
+
+            if (removed > 0)
+            {
+                await SaveNotificationsAsync().ConfigureAwait(false);
+            }
+
+            return removed > 0;
+        }
+
+        private void LoadNotifications()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "notifications.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var notifications = JsonSerializer.Deserialize<List<SocialNotification>>(json);
+                    if (notifications != null)
+                    {
+                        _notifications = notifications;
+                        _logger.LogInformation("[Social] Loaded {Count} notifications from disk", _notifications.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading notifications from disk");
+            }
+        }
+
+        private async Task SaveNotificationsAsync()
+        {
+            await _notificationsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "notifications.json");
+                List<SocialNotification> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _notifications.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving notifications to disk");
+            }
+            finally
+            {
+                _notificationsWriteLock.Release();
             }
         }
 

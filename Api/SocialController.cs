@@ -287,6 +287,9 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             var created = await _socialRepository.CreateFriendRequestAsync(request);
 
+            // Create notification for target user
+            await _socialRepository.CreateFriendRequestNotificationAsync(targetUserId, currentUser.Username, userId.Value);
+
             _logger.LogInformation("[Social] Friend request sent: {From} -> {To}", currentUser.Username, targetUser.Username);
 
             return Ok(new
@@ -378,6 +381,13 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             // Create friendship
             await _socialRepository.CreateFriendshipAsync(request.FromUserId, request.ToUserId);
+
+            // Notify the original sender that their request was accepted
+            var currentUser = _userManager.GetUserById(userId.Value);
+            if (currentUser != null)
+            {
+                await _socialRepository.CreateFriendAcceptedNotificationAsync(request.FromUserId, currentUser.Username, userId.Value);
+            }
 
             _logger.LogInformation("[Social] Friend request accepted: {From} <-> {To}", request.FromUsername, request.ToUsername);
 
@@ -557,6 +567,130 @@ namespace Jellyfin.Plugin.Ratings.Api
                 success = true,
                 message = $"Removed {friendUser?.Username ?? "user"} from friends"
             });
+        }
+
+        #endregion
+
+        #region Notifications
+
+        /// <summary>
+        /// Gets notifications for the current user.
+        /// </summary>
+        /// <param name="unreadOnly">Only return unread notifications.</param>
+        /// <param name="limit">Maximum number to return.</param>
+        /// <param name="offset">Offset for pagination.</param>
+        /// <returns>List of notifications.</returns>
+        [HttpGet("Notifications")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetNotifications([FromQuery] bool unreadOnly = false, [FromQuery] int limit = 20, [FromQuery] int offset = 0)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var notifications = _socialRepository.GetNotifications(userId.Value, unreadOnly, limit, offset);
+            var unreadCount = _socialRepository.GetUnreadNotificationCount(userId.Value);
+
+            return Ok(new
+            {
+                notifications,
+                unreadCount
+            });
+        }
+
+        /// <summary>
+        /// Gets unread notification count.
+        /// </summary>
+        /// <returns>Unread count.</returns>
+        [HttpGet("Notifications/UnreadCount")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetUnreadNotificationCount()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var count = _socialRepository.GetUnreadNotificationCount(userId.Value);
+
+            return Ok(new { unreadCount = count });
+        }
+
+        /// <summary>
+        /// Marks a notification as read.
+        /// </summary>
+        /// <param name="notificationId">The notification ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpPost("Notifications/{notificationId}/Read")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<object>> MarkNotificationAsRead([FromRoute] [Required] Guid notificationId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var success = await _socialRepository.MarkNotificationAsReadAsync(notificationId, userId.Value);
+            if (!success)
+            {
+                return NotFound(new { success = false, error = "Notification not found" });
+            }
+
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Marks all notifications as read.
+        /// </summary>
+        /// <returns>Number marked.</returns>
+        [HttpPost("Notifications/ReadAll")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> MarkAllNotificationsAsRead()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var count = await _socialRepository.MarkAllNotificationsAsReadAsync(userId.Value);
+
+            return Ok(new { success = true, markedCount = count });
+        }
+
+        /// <summary>
+        /// Deletes a notification.
+        /// </summary>
+        /// <param name="notificationId">The notification ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Notifications/{notificationId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<object>> DeleteNotification([FromRoute] [Required] Guid notificationId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var success = await _socialRepository.DeleteNotificationAsync(notificationId, userId.Value);
+            if (!success)
+            {
+                return NotFound(new { success = false, error = "Notification not found" });
+            }
+
+            return Ok(new { success = true });
         }
 
         #endregion

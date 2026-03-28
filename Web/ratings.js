@@ -1275,6 +1275,36 @@
                     return;
                 }
 
+                // Don't show if not logged in or on login/startup pages
+                var currentPath = window.location.hash || window.location.pathname;
+                var isLoginPage = currentPath.includes('login') ||
+                                  currentPath.includes('startup') ||
+                                  currentPath.includes('selectserver') ||
+                                  currentPath.includes('addserver') ||
+                                  currentPath === '' ||
+                                  currentPath === '#' ||
+                                  currentPath === '#!/startup/selectserver.html' ||
+                                  currentPath === '#!/startup/login.html';
+
+                if (!ApiClient.accessToken() || isLoginPage) {
+                    // Hide existing button if present
+                    var existingBtn = document.getElementById('social-friends-btn');
+                    var existingPanel = document.getElementById('social-friends-panel');
+                    if (existingBtn) existingBtn.style.display = 'none';
+                    if (existingPanel) existingPanel.classList.remove('open');
+
+                    // Check again later (user might log in)
+                    setTimeout(tryInit, 2000);
+                    return;
+                }
+
+                // Show button if it was hidden
+                var hiddenBtn = document.getElementById('social-friends-btn');
+                if (hiddenBtn) {
+                    hiddenBtn.style.display = '';
+                    return;
+                }
+
                 // Don't create if already exists
                 if (document.getElementById('social-friends-btn')) {
                     return;
@@ -1377,7 +1407,11 @@
                 </div>
                 <div class="social-panel-tabs">
                     <button class="social-panel-tab active" data-tab="friends">Friends</button>
-                    <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" style="display:none">0</span></button>
+                    <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
+                    <button class="social-panel-tab" data-tab="notifications">
+                        <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+                        <span class="tab-badge" id="notifications-badge" style="display:none">0</span>
+                    </button>
                 </div>
                 <div class="social-panel-search">
                     <input type="text" placeholder="Search..." id="social-search-input">
@@ -1457,7 +1491,25 @@
                     .catch(function () {
                         content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
                     });
+            } else if (tab === 'notifications') {
+                fetch(baseUrl + '/Social/Notifications', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderNotificationsList(data.notifications || []);
+                        self.updateNotificationsBadge(data.unreadCount || 0);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load notifications</div>';
+                    });
             }
+
+            // Also update notification badge count (for any tab)
+            fetch(baseUrl + '/Social/Notifications/UnreadCount', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    self.updateNotificationsBadge(data.unreadCount || 0);
+                })
+                .catch(function () {});
         },
 
         /**
@@ -1555,18 +1607,127 @@
          * Update the requests badge count
          */
         updateRequestsBadge: function (count) {
-            var btn = document.getElementById('social-friends-btn');
-            var badge = btn ? btn.querySelector('.badge') : null;
-            var tabBadge = document.querySelector('.social-panel-tab[data-tab="requests"] .tab-badge');
-
-            if (badge) {
-                badge.textContent = count;
-                badge.classList.toggle('hidden', count === 0);
-            }
+            var tabBadge = document.getElementById('requests-badge');
             if (tabBadge) {
                 tabBadge.textContent = count;
                 tabBadge.style.display = count > 0 ? 'inline' : 'none';
             }
+            this.updateMainBadge();
+        },
+
+        /**
+         * Update the notifications badge count
+         */
+        updateNotificationsBadge: function (count) {
+            var tabBadge = document.getElementById('notifications-badge');
+            if (tabBadge) {
+                tabBadge.textContent = count;
+                tabBadge.style.display = count > 0 ? 'inline' : 'none';
+            }
+            this.updateMainBadge();
+        },
+
+        /**
+         * Update the main floating button badge (combined count)
+         */
+        updateMainBadge: function () {
+            var btn = document.getElementById('social-friends-btn');
+            var badge = btn ? btn.querySelector('.badge') : null;
+            if (!badge) return;
+
+            var requestsBadge = document.getElementById('requests-badge');
+            var notificationsBadge = document.getElementById('notifications-badge');
+
+            var requestsCount = requestsBadge ? parseInt(requestsBadge.textContent) || 0 : 0;
+            var notificationsCount = notificationsBadge ? parseInt(notificationsBadge.textContent) || 0 : 0;
+            var total = requestsCount + notificationsCount;
+
+            badge.textContent = total;
+            badge.classList.toggle('hidden', total === 0);
+        },
+
+        /**
+         * Render the notifications list
+         */
+        renderNotificationsList: function (notifications) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (notifications.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div>No notifications</div></div>';
+                return;
+            }
+
+            var html = '<div style="padding:4px 8px;text-align:right"><button onclick="RatingsPlugin.markAllNotificationsRead()" style="background:none;border:none;color:#00a4dc;cursor:pointer;font-size:12px">Mark all read</button></div>';
+
+            notifications.forEach(function (notif) {
+                var icon = notif.type === 'FriendRequest' ? 'M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' :
+                           notif.type === 'FriendAccepted' ? 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z' :
+                           'M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z';
+
+                var unreadClass = notif.isRead ? '' : 'unread';
+                var timeAgo = self.formatTimeAgo(notif.createdAt);
+
+                html += '<div class="social-notification-item ' + unreadClass + '" data-id="' + notif.id + '" onclick="RatingsPlugin.markNotificationRead(\'' + notif.id + '\')">' +
+                    '<div class="social-notification-icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="' + icon + '"/></svg></div>' +
+                    '<div class="social-notification-content">' +
+                    '<div class="social-notification-message">' + self.escapeHtml(notif.message) + '</div>' +
+                    '<div class="social-notification-time">' + timeAgo + '</div>' +
+                    '</div></div>';
+            });
+
+            content.innerHTML = html;
+        },
+
+        /**
+         * Format timestamp as time ago
+         */
+        formatTimeAgo: function (timestamp) {
+            var date = new Date(timestamp);
+            var now = new Date();
+            var seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
+            return date.toLocaleDateString();
+        },
+
+        /**
+         * Mark a notification as read
+         */
+        markNotificationRead: function (notificationId) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Notifications/' + notificationId + '/Read', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function () {
+                    // Update UI
+                    var item = document.querySelector('.social-notification-item[data-id="' + notificationId + '"]');
+                    if (item) item.classList.remove('unread');
+                    self.loadFriendsData('notifications');
+                });
+        },
+
+        /**
+         * Mark all notifications as read
+         */
+        markAllNotificationsRead: function () {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Notifications/ReadAll', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function () {
+                    self.loadFriendsData('notifications');
+                });
         },
 
         /**
@@ -8615,6 +8776,59 @@
                     height: 48px;
                     fill: #444;
                     margin-bottom: 12px;
+                }
+
+                /* Notification items */
+                .social-notification-item {
+                    display: flex;
+                    align-items: flex-start;
+                    padding: 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    margin-bottom: 4px;
+                }
+                .social-notification-item:hover {
+                    background: #252525;
+                }
+                .social-notification-item.unread {
+                    background: rgba(0, 164, 220, 0.1);
+                    border-left: 3px solid #00a4dc;
+                }
+                .social-notification-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #333;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 10px;
+                    flex-shrink: 0;
+                }
+                .social-notification-icon svg {
+                    width: 18px;
+                    height: 18px;
+                }
+                .social-notification-item.unread .social-notification-icon {
+                    background: #00a4dc;
+                }
+                .social-notification-item.unread .social-notification-icon svg {
+                    fill: white;
+                }
+                .social-notification-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .social-notification-message {
+                    font-size: 13px;
+                    color: #ddd;
+                    line-height: 1.4;
+                }
+                .social-notification-time {
+                    font-size: 11px;
+                    color: #666;
+                    margin-top: 2px;
                 }
             `;
 
