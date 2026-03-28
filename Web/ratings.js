@@ -3945,36 +3945,35 @@
                 .library-sort-container {
                     display: inline-flex;
                     align-items: center;
-                    margin: 0 2px;
+                    margin: 0;
                 }
 
                 .library-sort-btn {
                     background: transparent;
                     border: none;
                     color: rgba(255, 255, 255, 0.5);
-                    width: 40px;
-                    height: 40px;
+                    width: 30px;
+                    height: 30px;
                     border-radius: 50%;
                     cursor: pointer;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    transition: all 0.2s ease;
-                    padding: 8px;
+                    transition: color 0.2s ease;
+                    padding: 0;
                     margin: 0;
                     outline: none;
                     -webkit-tap-highlight-color: transparent;
                 }
 
                 .library-sort-btn svg {
-                    width: 24px;
-                    height: 24px;
+                    width: 20px;
+                    height: 20px;
                     fill: currentColor;
                 }
 
                 .library-sort-btn:hover {
                     color: rgba(255, 255, 255, 0.8);
-                    background: rgba(255, 255, 255, 0.1);
                 }
 
                 .library-sort-btn:focus {
@@ -3987,7 +3986,6 @@
 
                 .library-sort-btn.active:hover {
                     color: #00a4dc;
-                    background: rgba(0, 164, 220, 0.15);
                 }
 
                 .netflix-row-wrapper {
@@ -16328,18 +16326,18 @@
             const container = document.createElement('span');
             container.id = 'librarySortContainer';
             container.className = 'library-sort-container';
-            // SVG icons: star with up/down arrow for rating sort
+            // Simple star icons with small arrow indicator
             container.innerHTML = `
                 <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>
-                        <path d="M20 2v6h-2V4.8l-1.3 1.3-1.4-1.4L17.2 3H14V1h6v1z"/>
+                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
+                        <path d="M12 6l2 4h-4l2-4z" opacity="0.7"/>
                     </svg>
                 </button>
                 <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 6l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>
-                        <path d="M20 8V2h-2v3.2l-1.3-1.3-1.4 1.4L17.2 7H14v2h6V8z"/>
+                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
+                        <path d="M12 14l2-4h-4l2 4z" opacity="0.7"/>
                     </svg>
                 </button>
             `;
