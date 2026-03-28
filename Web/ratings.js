@@ -1154,10 +1154,90 @@
                 }
 
                 var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+                // Expose testing functions to window.Social for console testing
+                window.Social = {
+                    // Get debug info
+                    debug: function() {
+                        return fetch(baseUrl + '/Social/Debug', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Debug:', data); return data; });
+                    },
+                    // Get my profile
+                    myProfile: function() {
+                        return fetch(baseUrl + '/Social/MyProfile', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] My Profile:', data); return data; });
+                    },
+                    // Send friend request (pass user ID)
+                    sendRequest: function(userId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Send Request:', data); return data; });
+                    },
+                    // Get incoming requests
+                    incoming: function() {
+                        return fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Incoming Requests:', data); return data; });
+                    },
+                    // Get outgoing requests
+                    outgoing: function() {
+                        return fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Outgoing Requests:', data); return data; });
+                    },
+                    // Accept friend request (pass request ID)
+                    accept: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Accept:', data); return data; });
+                    },
+                    // Reject friend request (pass request ID)
+                    reject: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Reject:', data); return data; });
+                    },
+                    // Cancel outgoing request (pass request ID)
+                    cancel: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Cancel:', data); return data; });
+                    },
+                    // Get friends list
+                    friends: function() {
+                        return fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Friends:', data); return data; });
+                    },
+                    // Remove friend (pass user ID)
+                    unfriend: function(userId) {
+                        return fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Unfriend:', data); return data; });
+                    },
+                    // Show help
+                    help: function() {
+                        console.log('%c[Social] Console Testing Commands:', 'color: #FF9800; font-weight: bold;');
+                        console.log('  Social.debug()              - Show system status');
+                        console.log('  Social.myProfile()          - Get your profile');
+                        console.log('  Social.sendRequest(userId)  - Send friend request');
+                        console.log('  Social.incoming()           - List incoming requests');
+                        console.log('  Social.outgoing()           - List outgoing requests');
+                        console.log('  Social.accept(requestId)    - Accept a request');
+                        console.log('  Social.reject(requestId)    - Reject a request');
+                        console.log('  Social.cancel(requestId)    - Cancel outgoing request');
+                        console.log('  Social.friends()            - List your friends');
+                        console.log('  Social.unfriend(userId)     - Remove a friend');
+                    }
+                };
+
                 fetch(baseUrl + '/Social/Debug', {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    headers: headers
                 })
                 .then(function (response) {
                     if (!response.ok) {
@@ -1169,6 +1249,7 @@
                     console.log('%c[Social] System initialized', 'color: #4CAF50; font-weight: bold;');
                     console.log('%c[Social] Debug Info:', 'color: #2196F3;', debugInfo);
                     console.log('%c[Social] Profiles: ' + debugInfo.ProfileCount + ', Requests: ' + debugInfo.FriendRequestCount + ', Friendships: ' + debugInfo.FriendshipCount, 'color: #9C27B0;');
+                    console.log('%c[Social] Type Social.help() for testing commands', 'color: #FF9800;');
                 })
                 .catch(function (error) {
                     console.warn('[Social] Failed to initialize:', error.message);
