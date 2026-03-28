@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.99.0",
+        "changelog": "Step 1.1: Add social data models (UserProfile, FriendRequest, Friendship, UserPrivacySettings)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.99.0/jellyfin-plugin-ratings_2.0.99.0.zip",
+        "checksum": "d754e60089778d206e4ddd2e6c7f3139",
+        "timestamp": "2026-03-28T20:00:00Z"
+      },
+      {
         "version": "2.0.98.0",
         "changelog": "Add descriptive tooltips on hover for keep button and counter",
         "targetAbi": "10.11.0.0",
