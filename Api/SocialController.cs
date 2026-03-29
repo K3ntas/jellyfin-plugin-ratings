@@ -27,7 +27,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<SocialController> _logger;
-        private readonly SocialWebSocketHandler _webSocketHandler;
+        private readonly SocialWebSocketListener _webSocketListener;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialController"/> class.
@@ -36,19 +36,19 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userManager">User manager.</param>
         /// <param name="sessionManager">Session manager.</param>
         /// <param name="logger">Logger instance.</param>
-        /// <param name="webSocketHandler">WebSocket handler for real-time updates.</param>
+        /// <param name="webSocketListener">WebSocket listener for real-time updates.</param>
         public SocialController(
             SocialRepository socialRepository,
             IUserManager userManager,
             ISessionManager sessionManager,
             ILogger<SocialController> logger,
-            SocialWebSocketHandler webSocketHandler)
+            SocialWebSocketListener webSocketListener)
         {
             _socialRepository = socialRepository;
             _userManager = userManager;
             _sessionManager = sessionManager;
             _logger = logger;
-            _webSocketHandler = webSocketHandler;
+            _webSocketListener = webSocketListener;
         }
 
         /// <summary>
@@ -818,7 +818,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
             {
-                _ = _webSocketHandler.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, watching);
+                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, watching);
             }
 
             return Ok(new

@@ -1735,9 +1735,11 @@
 
         // Cache for friends status
         _friendsStatusCache: {},
+        _socialWebSocket: null,
+        _wsConnected: false,
 
         /**
-         * Start heartbeat and polling for online status
+         * Start heartbeat and WebSocket for online status
          */
         startHeartbeat: function () {
             var self = this;
@@ -1755,13 +1757,113 @@
             // Hook into playback events for instant watching updates
             self.setupPlaybackHooks();
 
-            // Fast polling for friends status when panel is open (every 3 seconds)
+            // Connect to Jellyfin WebSocket for real-time updates
+            self.connectSocialWebSocket();
+
+            // Fallback: Fast polling when WebSocket not connected
             self._fastPollInterval = null;
             self.startFastPolling();
         },
 
         /**
-         * Start fast polling when friends panel is open
+         * Connect to Jellyfin's WebSocket for social updates
+         */
+        connectSocialWebSocket: function () {
+            var self = this;
+
+            if (!window.ApiClient || !ApiClient.accessToken()) {
+                setTimeout(function () { self.connectSocialWebSocket(); }, 3000);
+                return;
+            }
+
+            if (self.isOnLoginPage()) return;
+
+            // Don't reconnect if already connected
+            if (self._socialWebSocket && self._socialWebSocket.readyState === WebSocket.OPEN) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+            wsUrl += '/socket?api_key=' + encodeURIComponent(ApiClient.accessToken());
+
+            try {
+                self._socialWebSocket = new WebSocket(wsUrl);
+
+                self._socialWebSocket.onopen = function () {
+                    console.log('[Social] WebSocket connected to Jellyfin');
+                    self._wsConnected = true;
+                    self._wsReconnectAttempts = 0;
+                };
+
+                self._socialWebSocket.onmessage = function (event) {
+                    try {
+                        var message = JSON.parse(event.data);
+                        // Check if this is a social message (KeepAlive with SocialType in Data)
+                        if (message.Data && message.Data.SocialType) {
+                            self.handleSocialWebSocketMessage(message.Data);
+                        }
+                    } catch (e) {
+                        // Not JSON or not our message, ignore
+                    }
+                };
+
+                self._socialWebSocket.onclose = function (event) {
+                    console.log('[Social] WebSocket closed:', event.code);
+                    self._socialWebSocket = null;
+                    self._wsConnected = false;
+                    // Reconnect after delay
+                    setTimeout(function () {
+                        if (!self.isOnLoginPage()) {
+                            self.connectSocialWebSocket();
+                        }
+                    }, 5000);
+                };
+
+                self._socialWebSocket.onerror = function (error) {
+                    console.log('[Social] WebSocket error');
+                    self._wsConnected = false;
+                };
+            } catch (e) {
+                console.error('[Social] WebSocket connection failed:', e);
+                self._wsConnected = false;
+            }
+        },
+
+        /**
+         * Handle incoming social WebSocket message
+         */
+        handleSocialWebSocketMessage: function (data) {
+            var self = this;
+
+            switch (data.SocialType) {
+                case 'SocialInitialStatus':
+                    // Full status of all friends
+                    if (data.SocialData && data.SocialData.friends) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        data.SocialData.friends.forEach(function (friend) {
+                            self._friendsStatusCache[friend.userId] = friend;
+                        });
+                        self.updateFriendsUIFromCache();
+                    }
+                    break;
+
+                case 'SocialStatusUpdate':
+                    // Single friend status update
+                    if (data.SocialData) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        var existing = self._friendsStatusCache[data.SocialData.userId] || {};
+                        self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
+                        self.updateFriendElement(data.SocialData);
+                    }
+                    break;
+            }
+        },
+
+        /**
+         * Start fast polling when friends panel is open (fallback for WebSocket)
          */
         startFastPolling: function () {
             var self = this;
@@ -1772,14 +1874,17 @@
                 var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
                 var shouldPoll = panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends';
 
-                if (shouldPoll && !self._fastPollInterval) {
+                // Only poll if WebSocket is not connected
+                var needsFallback = !self._wsConnected;
+
+                if (shouldPoll && needsFallback && !self._fastPollInterval) {
                     // Start fast polling
                     self._fastPollInterval = setInterval(function () {
                         self.pollFriendsStatus();
                     }, 3000);
                     // Poll immediately
                     self.pollFriendsStatus();
-                } else if (!shouldPoll && self._fastPollInterval) {
+                } else if ((!shouldPoll || !needsFallback) && self._fastPollInterval) {
                     // Stop fast polling
                     clearInterval(self._fastPollInterval);
                     self._fastPollInterval = null;

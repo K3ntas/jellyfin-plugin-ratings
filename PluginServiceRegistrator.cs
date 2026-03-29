@@ -1,6 +1,7 @@
 using Jellyfin.Plugin.Ratings.Api;
 using Jellyfin.Plugin.Ratings.Data;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,8 +22,9 @@ namespace Jellyfin.Plugin.Ratings
             // Register SocialRepository for social features (friends, profiles, etc.)
             serviceCollection.AddSingleton<SocialRepository>();
 
-            // Register WebSocket handler for real-time social updates
-            serviceCollection.AddSingleton<SocialWebSocketHandler>();
+            // Register WebSocket listener for real-time social updates (Jellyfin's IWebSocketListener)
+            serviceCollection.AddSingleton<SocialWebSocketListener>();
+            serviceCollection.AddSingleton<IWebSocketListener>(sp => sp.GetRequiredService<SocialWebSocketListener>());
 
             // Register middleware startup filter for script injection (works without file permissions)
             serviceCollection.AddSingleton<IStartupFilter, ScriptInjectionStartupFilter>();

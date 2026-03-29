@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.115.0",
+        "changelog": "Proper WebSocket using Jellyfin IWebSocketListener - real-time friend status updates",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.115.0/jellyfin-plugin-ratings_2.0.115.0.zip",
+        "checksum": "48214f594bfa44bb68b1cdf61d8a1c46",
+        "timestamp": "2026-03-29T04:30:00Z"
+      },
+      {
         "version": "2.0.114.0",
         "changelog": "Fast polling for real-time status updates (3s interval when panel open)",
         "targetAbi": "10.11.0.0",
