@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.120.0",
+        "changelog": "Fix profile - show correct username, joined date, last seen from Jellyfin data",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.120.0/jellyfin-plugin-ratings_2.0.120.0.zip",
+        "checksum": "f9f15d37779660fb19f64d2e3c5c0ca8",
+        "timestamp": "2026-03-29T07:00:00Z"
+      },
+      {
         "version": "2.0.119.0",
         "changelog": "Fix profile page - use modal overlay instead of URL routing to avoid Jellyfin 'Page not found'",
         "targetAbi": "10.11.0.0",

@@ -159,7 +159,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<UserProfile> GetProfile([FromRoute] [Required] Guid userId)
+        public async Task<ActionResult<UserProfile>> GetProfile([FromRoute] [Required] Guid userId)
         {
             var currentUserId = GetCurrentUserId();
             if (currentUserId == null)
@@ -167,11 +167,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
-            var profile = _socialRepository.GetProfile(userId);
-            if (profile == null)
+            // Get user from Jellyfin to ensure they exist and get current username
+            var user = _userManager.GetUserById(userId);
+            if (user == null)
             {
-                return NotFound(new { error = "Profile not found" });
+                return NotFound(new { error = "User not found" });
             }
+
+            // Get or create profile
+            var profile = await _socialRepository.GetOrCreateProfileAsync(userId, user.Username);
 
             // Check privacy settings
             if (profile.Privacy.ProfileVisibility == "Private" && profile.UserId != currentUserId)
@@ -185,6 +189,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     return NotFound(new { error = "Profile is friends-only" });
                 }
+            }
+
+            // Always return current username from Jellyfin (in case it changed)
+            profile.Username = user.Username;
+
+            // Get last seen from online status
+            var onlineStatus = _socialRepository.GetOnlineStatus(userId);
+            if (onlineStatus != null)
+            {
+                profile.UpdatedAt = onlineStatus.LastSeen;
             }
 
             return Ok(profile);

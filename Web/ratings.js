@@ -10173,7 +10173,8 @@
             var initial = username[0].toUpperCase();
             var bio = profile.bio || 'No bio yet.';
             var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown';
-            var lastSeen = profile.lastSeen ? this.formatTimeAgo(new Date(profile.lastSeen)) : 'Unknown';
+            var lastSeenDate = profile.updatedAt || profile.lastSeen;
+            var lastSeen = lastSeenDate ? this.formatTimeAgo(new Date(lastSeenDate)) : (status.onlineStatus === 'Online' ? 'now' : 'Unknown');
             var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
             var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
 
