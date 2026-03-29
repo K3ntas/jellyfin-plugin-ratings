@@ -895,6 +895,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Heartbeat ONLY updates online status, NOT watching
             var status = await _socialRepository.UpdateHeartbeatOnlyAsync(userId.Value);
 
+            // DEBUG: Log heartbeat call
+            _logger.LogWarning("[DEBUG-API] Heartbeat called for {UserId}: status.Status={Status}, GetEffective={Effective}, Watching={Watching}",
+                userId.Value, status.Status, status.GetEffectiveStatus(), status.Watching?.Title ?? "null");
+
             // Broadcast status update (with current watching info from repository)
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
@@ -931,6 +935,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 StartedAt = DateTime.UtcNow
             };
 
+            // DEBUG: Log watching call
+            _logger.LogWarning("[DEBUG-API] SetWatching called for {UserId}: title={Title}", userId.Value, currentWatching.Title);
+
             // ONLY update watching - this does NOT affect online status
             await _socialRepository.SetWatchingOnlyAsync(userId.Value, currentWatching);
 
@@ -957,6 +964,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+
+            // DEBUG: Log stop watching
+            _logger.LogWarning("[DEBUG-API] StopWatching called for {UserId}", userId.Value);
 
             // ONLY clear watching - this does NOT affect online status
             await _socialRepository.ClearWatchingOnlyAsync(userId.Value);
@@ -1008,7 +1018,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             return Ok(new
             {
-                status = status.GetEffectiveStatus(),
+                status = status.Status,
                 watching = watching != null ? new
                 {
                     title = watching.Title,
@@ -1036,6 +1046,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+
+            // DEBUG: Log offline call
+            _logger.LogWarning("[DEBUG-API] GoOffline called for {UserId}", userId.Value);
 
             // Set user's status to offline
             var status = _socialRepository.SetUserOffline(userId.Value);
@@ -1090,7 +1103,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     (profile.Privacy.ShowCurrentlyWatching == "Friends" && _socialRepository.AreFriends(userId.Value, friendId));
 
                 // Handle Invisible - appears as Offline
-                var effectiveStatus = friendStatus?.GetEffectiveStatus() ?? "Offline";
+                var effectiveStatus = friendStatus?.Status ?? "Offline";
                 if (effectiveStatus == "Invisible")
                 {
                     effectiveStatus = "Offline";

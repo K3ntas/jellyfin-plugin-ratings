@@ -144,7 +144,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     profile.Privacy.ShowCurrentlyWatching == "Everyone" ||
                     profile.Privacy.ShowCurrentlyWatching == "Friends";
 
-                var effectiveStatus = friendStatus?.GetEffectiveStatus() ?? "Offline";
+                var effectiveStatus = friendStatus?.Status ?? "Offline";
                 if (effectiveStatus == "Invisible") effectiveStatus = "Offline";
 
                 friendStatuses.Add(new
@@ -183,7 +183,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
             _lastBroadcast[userId] = DateTime.UtcNow;
 
-            _logger.LogDebug("[SocialWS] Broadcasting status update for {UserId}: {Status}", userId, status.Status);
+            // DEBUG: Log all status info to find why it goes Offline
+            _logger.LogWarning("[DEBUG-STATUS] BroadcastStatusUpdate for {UserId}: status.Status={Status}, GetEffectiveStatus={Effective}, Watching={Watching}, ForceOffline={ForceOffline}",
+                userId, status.Status, status.GetEffectiveStatus(), status.Watching?.Title ?? "null", status.ForceOffline);
 
             // Get user's privacy settings
             var profile = _socialRepository.GetProfile(userId);
@@ -191,9 +193,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get all friends
             var friendIds = _socialRepository.GetFriendIds(userId);
 
-            // Build the update message
+            // Build the update message - USE GetEffectiveStatus() not cached Status
             var effectiveStatus = status.GetEffectiveStatus();
             if (effectiveStatus == "Invisible") effectiveStatus = "Offline";
+
+            _logger.LogWarning("[DEBUG-STATUS] Broadcasting effectiveStatus={EffectiveStatus} to friends", effectiveStatus);
             var updateData = new
             {
                 userId = userId,
@@ -396,6 +400,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         public async Task BroadcastWatchingUpdateAsync(Guid userId, string username, CurrentlyWatching? watching)
         {
+            // DEBUG: Log watching update
+            _logger.LogWarning("[DEBUG-WATCHING] BroadcastWatchingUpdate for {UserId}: watching={Watching}",
+                userId, watching?.Title ?? "CLEARED");
+
             // Get all friends
             var friendIds = _socialRepository.GetFriendIds(userId);
 
