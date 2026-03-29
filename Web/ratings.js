@@ -1566,7 +1566,8 @@
                     var watchTitle = friend.watching.seriesName
                         ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                         : friend.watching.title;
-                    watchingHtml = '<div class="social-friend-watching">' +
+                    var itemId = friend.watching.itemId;
+                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
                         '<span class="watching-icon">&#9654;</span> ' +
                         self.escapeHtml(watchTitle) +
                         ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
@@ -1741,14 +1742,14 @@
                 }
             }, 60000);
 
-            // Also refresh friends list periodically to see status updates (every 30 seconds)
+            // Refresh friends list frequently when panel is open (every 10 seconds for real-time feel)
             setInterval(function () {
                 var panel = document.getElementById('social-friends-panel');
                 var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
                 if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
                     self.loadFriendsData('friends');
                 }
-            }, 30000);
+            }, 10000);
         },
 
         /**
@@ -1767,6 +1768,27 @@
             }).catch(function () {
                 // Silently fail - heartbeat is not critical
             });
+        },
+
+        /**
+         * Navigate to a media item (when clicking on what friend is watching)
+         */
+        goToMedia: function (itemId) {
+            if (!itemId) return;
+
+            // Close the friends panel
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) panel.classList.remove('open');
+
+            // Navigate to the media item using Jellyfin's router
+            if (window.Emby && Emby.Page) {
+                Emby.Page.showItem(itemId);
+            } else if (window.Dashboard) {
+                Dashboard.navigate('details?id=' + itemId);
+            } else {
+                // Fallback: direct URL navigation
+                window.location.hash = '#!/details?id=' + itemId;
+            }
         },
 
         /**
@@ -8940,6 +8962,16 @@
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                }
+                .social-friend-watching.clickable {
+                    cursor: pointer;
+                    padding: 2px 4px;
+                    margin: 2px -4px 0;
+                    border-radius: 4px;
+                    transition: background 0.2s;
+                }
+                .social-friend-watching.clickable:hover {
+                    background: rgba(0, 164, 220, 0.15);
                 }
                 .social-friend-watching .watching-icon {
                     font-size: 8px;
