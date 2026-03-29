@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.119.0",
+        "changelog": "Fix profile page - use modal overlay instead of URL routing to avoid Jellyfin 'Page not found'",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.119.0/jellyfin-plugin-ratings_2.0.119.0.zip",
+        "checksum": "22efbc7ce13427f7bc9a5a2e980e53ed",
+        "timestamp": "2026-03-29T06:30:00Z"
+      },
+      {
         "version": "2.0.118.0",
         "changelog": "Phase 7 Step 7.1: User Profile Page route - view profiles via #!/social/user/{id}, clickable usernames",
         "targetAbi": "10.11.0.0",

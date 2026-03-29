@@ -10057,15 +10057,8 @@
             // Close chat window and moderator panel on page navigation
             this.closeChatOnPageChange();
 
-            // Check for profile route
-            var profileUserId = this.getProfileUserIdFromUrl();
-            if (profileUserId) {
-                this.showProfilePage(profileUserId);
-                return;
-            } else {
-                // Close profile page if open and navigating away
-                this.closeProfilePage();
-            }
+            // Close profile page on navigation
+            this.closeProfilePage();
 
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
@@ -10075,20 +10068,15 @@
         },
 
         /**
-         * Get user ID from profile route (#!/social/user/{userId})
-         */
-        getProfileUserIdFromUrl: function () {
-            var hash = window.location.hash;
-            var match = hash.match(/^#!\/social\/user\/([a-f0-9-]+)/i);
-            return match ? match[1] : null;
-        },
-
-        /**
-         * Navigate to a user's profile page
+         * Navigate to a user's profile page (opens as modal overlay)
          */
         navigateToProfile: function (userId) {
             if (!userId) return;
-            window.location.hash = '#!/social/user/' + userId;
+            // Close friends panel when opening profile
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) panel.classList.remove('open');
+            // Show profile as modal
+            this.showProfilePage(userId);
         },
 
         /**
@@ -10169,7 +10157,7 @@
         renderProfileError: function (page, message) {
             var container = page.querySelector('.social-profile-container');
             if (container) {
-                container.innerHTML = '<div class="social-profile-back" onclick="history.back()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
+                container.innerHTML = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
@@ -10210,7 +10198,7 @@
                     '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
             }
 
-            var html = '<div class="social-profile-back" onclick="history.back()">' +
+            var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
                 '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
                 '<div class="social-profile-header">' +
                 '<div class="social-profile-avatar-large">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
