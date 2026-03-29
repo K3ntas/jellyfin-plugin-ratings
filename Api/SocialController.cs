@@ -70,10 +70,26 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
-            var debugInfo = _socialRepository.GetDebugInfo();
+            var repoDebugInfo = _socialRepository.GetDebugInfo();
             _logger.LogInformation("[Social] Debug info requested by user {UserId}", userId);
 
-            return Ok(debugInfo);
+            var connectedUserIds = _webSocketListener.GetConnectedUserIds();
+            var connectedUserNames = connectedUserIds
+                .Select(id => _userManager.GetUserById(id)?.Username ?? id.ToString())
+                .ToList();
+
+            return Ok(new
+            {
+                Repository = repoDebugInfo,
+                WebSocket = new
+                {
+                    ConnectedUsers = _webSocketListener.GetConnectedUserCount(),
+                    TotalConnections = _webSocketListener.GetTotalConnectionCount(),
+                    ConnectedUserNames = connectedUserNames
+                },
+                CurrentUserId = userId.Value,
+                IsCurrentUserConnected = connectedUserIds.Contains(userId.Value)
+            });
         }
 
         /// <summary>

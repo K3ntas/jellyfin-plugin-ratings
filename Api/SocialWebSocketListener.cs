@@ -405,6 +405,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         public int GetTotalConnectionCount() => _userConnections.Values.Sum(bag => bag.Count);
 
         /// <summary>
+        /// Gets list of connected user IDs for debugging.
+        /// </summary>
+        public List<Guid> GetConnectedUserIds() => _userConnections.Keys.ToList();
+
+        /// <summary>
         /// Registers that a user is viewing a profile.
         /// </summary>
         public void RegisterProfileViewer(Guid viewerId, Guid profileUserId)
