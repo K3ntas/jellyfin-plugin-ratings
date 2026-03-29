@@ -768,9 +768,17 @@ namespace Jellyfin.Plugin.Ratings.Data
                 }
                 else
                 {
+                    // If ForceOffline is set and no watching info, ignore this heartbeat
+                    // (likely a stray heartbeat during page unload)
+                    if (status.ForceOffline && watching == null)
+                    {
+                        _logger.LogDebug("[Social] Ignoring heartbeat for {UserId} - ForceOffline is set", userId);
+                        return status;
+                    }
+
                     status.LastHeartbeat = DateTime.UtcNow;
                     status.LastSeen = DateTime.UtcNow;
-                    // Clear ForceOffline flag - user is back online
+                    // Clear ForceOffline flag - user is actively sending heartbeats
                     status.ForceOffline = false;
                 }
 

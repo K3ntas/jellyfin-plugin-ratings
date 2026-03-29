@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.127.0",
+        "changelog": "Fix offline status when closing browser during playback",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.127.0/jellyfin-plugin-ratings_2.0.127.0.zip",
+        "checksum": "b86f0ea9bf0960a73b4c013241975150",
+        "timestamp": "2026-03-29T10:30:00Z"
+      },
+      {
         "version": "2.0.126.0",
         "changelog": "Fix profile click, real-time status updates, debug logging",
         "targetAbi": "10.11.0.0",
