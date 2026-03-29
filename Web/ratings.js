@@ -1149,13 +1149,11 @@
         registerOfflineHandler: function () {
             var self = this;
             var offlineCallMade = false;
-            self._pendingOfflineTimer = null;
-            self._playbackActive = false; // Track if playback is starting
 
             var goOffline = function () {
-                // Don't go offline if playback is active (user pressed play)
-                if (self._playbackActive) {
-                    console.log('[Social] Offline skipped - playback active');
+                // Don't go offline if watching something
+                if (self._currentWatching) {
+                    console.log('[Social] Offline skipped - watching active');
                     return;
                 }
                 if (offlineCallMade) return;
@@ -1168,50 +1166,23 @@
                 offlineCallMade = true;
                 console.log('[Social] Going offline...');
 
-                // Use fetch with keepalive for reliability
-                try {
-                    fetch(baseUrl + '/Social/Offline', {
-                        method: 'POST',
-                        headers: {
-                            'X-Emby-Token': token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: '{}',
-                        keepalive: true
-                    }).catch(function() {});
-                } catch (e) {
-                    // Fallback to sendBeacon
-                    if (navigator.sendBeacon) {
-                        var blob = new Blob(['{}'], { type: 'application/json' });
-                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
-                    }
+                // Use sendBeacon - works even when page is closing
+                if (navigator.sendBeacon) {
+                    var blob = new Blob(['{}'], { type: 'application/json' });
+                    navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
                 }
             };
 
-            // Called when playback starts - prevents offline
-            self.setPlaybackActive = function (active) {
-                self._playbackActive = active;
-                if (active) {
-                    offlineCallMade = false; // Reset so we can go offline later
-                    console.log('[Social] Playback active - offline disabled');
-                }
-            };
-
-            // Handle page unload (close tab/window, navigate away)
-            window.addEventListener('beforeunload', goOffline);
-            window.addEventListener('pagehide', function (e) {
-                // pagehide with persisted=false means page is being destroyed
-                if (!e.persisted) {
+            // visibilitychange - fires when tab hidden/closed, NOT during internal navigation
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') {
                     goOffline();
                 }
             });
 
-            // Handle Jellyfin logout - immediate offline
+            // Handle Jellyfin logout
             if (window.Events) {
-                Events.on(ApiClient, 'logout', function () {
-                    self._playbackActive = false; // Clear flag on logout
-                    goOffline();
-                });
+                Events.on(ApiClient, 'logout', goOffline);
             }
         },
 
@@ -2637,11 +2608,6 @@
          * Send watching info to server (separate from heartbeat/online status)
          */
         sendWatching: function (watching) {
-            // Mark playback as active - prevents offline during SPA navigation
-            if (this.setPlaybackActive) {
-                this.setPlaybackActive(true);
-            }
-
             if (!window.ApiClient || !ApiClient.accessToken()) return;
 
             var baseUrl = ApiClient.serverAddress();
@@ -2666,11 +2632,6 @@
          * Send stop watching to server (separate from heartbeat/online status)
          */
         sendStopWatching: function () {
-            // Clear playback active flag - allow offline again
-            if (this.setPlaybackActive) {
-                this.setPlaybackActive(false);
-            }
-
             if (!window.ApiClient || !ApiClient.accessToken()) return;
 
             var baseUrl = ApiClient.serverAddress();

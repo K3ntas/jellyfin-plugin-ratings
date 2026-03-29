@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.136.0",
+        "changelog": "Use visibilitychange only - no beforeunload/pagehide, check _currentWatching",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.136.0/jellyfin-plugin-ratings_2.0.136.0.zip",
+        "checksum": "29eb22f097391c6fe48dbd32c14c56f1",
+        "timestamp": "2026-03-29T16:30:00Z"
+      },
+      {
         "version": "2.0.135.0",
         "changelog": "Restore working offline detection with playbackActive flag to prevent offline during play",
         "targetAbi": "10.11.0.0",
