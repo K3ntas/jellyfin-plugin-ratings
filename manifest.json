@@ -13,7 +13,7 @@
         "changelog": "Phase 7 Step 7.1: User Profile Page route - view profiles via #!/social/user/{id}, clickable usernames",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.118.0/jellyfin-plugin-ratings_2.0.118.0.zip",
-        "checksum": "PLACEHOLDER",
+        "checksum": "8d2c1cfaf7d4324c6369da12a821b602",
         "timestamp": "2026-03-29T06:00:00Z"
       },
       {
