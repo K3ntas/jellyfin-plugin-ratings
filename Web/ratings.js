@@ -2037,7 +2037,43 @@
                         self.updateFriendElement(data.SocialData);
                     }
                     break;
+
+                case 'SocialProfileStatsUpdate':
+                    // Profile stats update - update stats if we're viewing this profile
+                    if (data.SocialData && data.SocialData.profileUserId) {
+                        var viewingProfileId = self._viewingProfileUserId;
+                        if (viewingProfileId && viewingProfileId === data.SocialData.profileUserId) {
+                            // Update the stats display
+                            self.updateProfileStatsFromWebSocket(data.SocialData.stats);
+                        }
+                    }
+                    break;
             }
+        },
+
+        /**
+         * Update profile stats from WebSocket message
+         */
+        updateProfileStatsFromWebSocket: function (stats) {
+            var content = document.getElementById('socialProfileContent');
+            if (!content) return;
+
+            // Find stat cards and update values
+            var statCards = content.querySelectorAll('.social-stat-card');
+            statCards.forEach(function (card) {
+                var label = card.querySelector('.social-stat-label');
+                var value = card.querySelector('.social-stat-value');
+                if (!label || !value) return;
+
+                var labelText = label.textContent.toLowerCase();
+                if (labelText.includes('ratings') && stats.ratingsCount !== undefined) {
+                    value.textContent = stats.ratingsCount;
+                } else if (labelText.includes('avg') && stats.averageRating !== undefined) {
+                    value.innerHTML = stats.averageRating + '<span class="social-stat-star">★</span>';
+                } else if (labelText.includes('friends') && stats.friendsCount !== undefined) {
+                    value.textContent = stats.friendsCount;
+                }
+            });
         },
 
         /**
@@ -10123,6 +10159,18 @@
                 existing.remove();
             }
 
+            // Track which profile we're viewing
+            self._viewingProfileUserId = userId;
+
+            // Register as viewer for real-time updates
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Social/Profile/' + userId + '/View', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () { /* ignore errors */ });
+
             // Create profile page container
             var page = document.createElement('div');
             page.id = 'socialProfilePage';
@@ -10331,9 +10379,22 @@
          * Close the profile page
          */
         closeProfilePage: function () {
+            var self = this;
             var page = document.getElementById('socialProfilePage');
             if (page) {
                 page.remove();
+            }
+
+            // Unregister as viewer
+            if (self._viewingProfileUserId) {
+                self._viewingProfileUserId = null;
+                var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                fetch(baseUrl + '/Social/Profile/View', {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: headers
+                }).catch(function () { /* ignore errors */ });
             }
         },
 

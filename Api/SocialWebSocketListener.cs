@@ -29,6 +29,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         // Track connected users and their WebSocket connections
         private static readonly ConcurrentDictionary<Guid, ConcurrentBag<IWebSocketConnection>> _userConnections = new();
 
+        // Track who is viewing which profile (viewerId -> profileUserId)
+        private static readonly ConcurrentDictionary<Guid, Guid> _profileViewers = new();
+
         // Rate limiting for broadcasts
         private static readonly ConcurrentDictionary<Guid, DateTime> _lastBroadcast = new();
         private static readonly TimeSpan _minBroadcastInterval = TimeSpan.FromSeconds(2);
@@ -293,6 +296,99 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets the total connection count.
         /// </summary>
         public int GetTotalConnectionCount() => _userConnections.Values.Sum(bag => bag.Count);
+
+        /// <summary>
+        /// Registers that a user is viewing a profile.
+        /// </summary>
+        public void RegisterProfileViewer(Guid viewerId, Guid profileUserId)
+        {
+            _profileViewers[viewerId] = profileUserId;
+            _logger.LogDebug("[SocialWS] User {ViewerId} viewing profile {ProfileId}", viewerId, profileUserId);
+        }
+
+        /// <summary>
+        /// Unregisters a profile viewer.
+        /// </summary>
+        public void UnregisterProfileViewer(Guid viewerId)
+        {
+            _profileViewers.TryRemove(viewerId, out _);
+        }
+
+        /// <summary>
+        /// Broadcasts profile stats update to all users viewing that profile.
+        /// </summary>
+        public async Task BroadcastProfileStatsUpdateAsync(Guid profileUserId, object stats)
+        {
+            var updateData = new
+            {
+                profileUserId = profileUserId,
+                stats = stats
+            };
+
+            // Find all users viewing this profile
+            var viewers = _profileViewers.Where(kvp => kvp.Value == profileUserId).Select(kvp => kvp.Key).ToList();
+
+            foreach (var viewerId in viewers)
+            {
+                if (_userConnections.TryGetValue(viewerId, out var viewerConnections))
+                {
+                    var activeConnections = viewerConnections.Where(c => c.State == WebSocketState.Open).ToList();
+                    foreach (var conn in activeConnections)
+                    {
+                        try
+                        {
+                            await SendMessageAsync(conn, "SocialProfileStatsUpdate", updateData).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "[SocialWS] Failed to send stats update to {ViewerId}", viewerId);
+                        }
+                    }
+                }
+            }
+
+            // Also send to the profile owner themselves (in case they're viewing their own profile)
+            if (_userConnections.TryGetValue(profileUserId, out var ownerConnections))
+            {
+                var activeOwnerConnections = ownerConnections.Where(c => c.State == WebSocketState.Open).ToList();
+                foreach (var conn in activeOwnerConnections)
+                {
+                    try
+                    {
+                        await SendMessageAsync(conn, "SocialProfileStatsUpdate", updateData).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "[SocialWS] Failed to send stats update to owner {OwnerId}", profileUserId);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts a generic social event to specific users.
+        /// </summary>
+        public async Task BroadcastToUsersAsync(IEnumerable<Guid> userIds, string messageType, object data)
+        {
+            foreach (var userId in userIds)
+            {
+                if (_userConnections.TryGetValue(userId, out var connections))
+                {
+                    var activeConnections = connections.Where(c => c.State == WebSocketState.Open).ToList();
+                    foreach (var conn in activeConnections)
+                    {
+                        try
+                        {
+                            await SendMessageAsync(conn, messageType, data).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "[SocialWS] Failed to broadcast to {UserId}", userId);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

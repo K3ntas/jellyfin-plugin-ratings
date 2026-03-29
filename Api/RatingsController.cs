@@ -38,6 +38,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserDataManager _userDataManager;
         private readonly IApplicationPaths _appPaths;
         private readonly ILogger<RatingsController> _logger;
+        private readonly SocialWebSocketListener _socialWebSocketListener;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsController"/> class.
@@ -49,6 +50,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userDataManager">User data manager.</param>
         /// <param name="appPaths">Application paths.</param>
         /// <param name="logger">Logger instance.</param>
+        /// <param name="socialWebSocketListener">Social WebSocket listener.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
@@ -56,7 +58,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             ISessionManager sessionManager,
             IUserDataManager userDataManager,
             IApplicationPaths appPaths,
-            ILogger<RatingsController> logger)
+            ILogger<RatingsController> logger,
+            SocialWebSocketListener socialWebSocketListener)
         {
             _repository = repository;
             _userManager = userManager;
@@ -65,6 +68,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _userDataManager = userDataManager;
             _appPaths = appPaths;
             _logger = logger;
+            _socialWebSocketListener = socialWebSocketListener;
         }
 
         /// <summary>
@@ -203,6 +207,27 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 var result = await _repository.SetRatingAsync(userId, itemId, rating).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
+
+                // Broadcast profile stats update via WebSocket
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var userRatings = _repository.GetUserRatings(userId);
+                        var ratingsCount = userRatings.Count;
+                        var averageRating = ratingsCount > 0 ? Math.Round(userRatings.Average(r => r.Rating), 1) : 0;
+
+                        await _socialWebSocketListener.BroadcastProfileStatsUpdateAsync(userId, new
+                        {
+                            ratingsCount,
+                            averageRating
+                        }).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to broadcast stats update");
+                    }
+                });
 
                 return Ok(result);
             }

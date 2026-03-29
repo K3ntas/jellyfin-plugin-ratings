@@ -270,6 +270,45 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Registers that the current user is viewing a profile (for real-time updates).
+        /// </summary>
+        /// <param name="userId">The profile user ID being viewed.</param>
+        /// <returns>Success status.</returns>
+        [HttpPost("Profile/{userId}/View")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult RegisterProfileView([FromRoute] [Required] Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            _webSocketListener.RegisterProfileViewer(currentUserId.Value, userId);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Unregisters profile view (when closing profile modal).
+        /// </summary>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Profile/View")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult UnregisterProfileView()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            _webSocketListener.UnregisterProfileViewer(currentUserId.Value);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
         /// Updates the current user's profile.
         /// </summary>
         /// <param name="request">The profile update request.</param>
