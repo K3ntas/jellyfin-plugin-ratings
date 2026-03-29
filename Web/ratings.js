@@ -1137,6 +1137,42 @@
 
             // Initialize friends button
             this.initFriendsButton();
+
+            // Register offline handler for when user leaves
+            this.registerOfflineHandler();
+        },
+
+        /**
+         * Register handler to mark user offline when leaving the page.
+         */
+        registerOfflineHandler: function () {
+            var offlineCallMade = false;
+
+            var goOffline = function () {
+                if (offlineCallMade) return;
+                offlineCallMade = true;
+
+                if (!window.ApiClient) return;
+
+                var baseUrl = ApiClient.serverAddress();
+                var token = ApiClient.accessToken();
+
+                // Use sendBeacon for reliability on page unload
+                if (navigator.sendBeacon) {
+                    var blob = new Blob(['{}'], { type: 'application/json' });
+                    navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
+                } else {
+                    // Fallback to sync XHR (deprecated but works)
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', baseUrl + '/Social/Offline', false);
+                    xhr.setRequestHeader('X-Emby-Token', token);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    try { xhr.send('{}'); } catch (e) { /* ignore */ }
+                }
+            };
+
+            window.addEventListener('beforeunload', goOffline);
+            window.addEventListener('pagehide', goOffline);
         },
 
         /**
@@ -2048,6 +2084,57 @@
                         }
                     }
                     break;
+
+                case 'SocialProfileStatusUpdate':
+                    // Online status update for profile we're viewing
+                    if (data.SocialData && data.SocialData.userId) {
+                        var viewingId = self._viewingProfileUserId;
+                        if (viewingId && viewingId === data.SocialData.userId) {
+                            self.updateProfileStatusFromWebSocket(data.SocialData);
+                        }
+                    }
+                    break;
+            }
+        },
+
+        /**
+         * Update profile online status from WebSocket
+         */
+        updateProfileStatusFromWebSocket: function (statusData) {
+            var page = document.getElementById('socialProfilePage');
+            if (!page) return;
+
+            // Update the status dot
+            var statusDot = page.querySelector('.social-profile-avatar-large .social-status-dot');
+            if (statusDot) {
+                var status = statusData.status || 'Offline';
+                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update the status text in meta
+            var metaSpans = page.querySelectorAll('.social-profile-meta span');
+            metaSpans.forEach(function (span) {
+                var svg = span.querySelector('svg');
+                if (svg && span.textContent.includes('Online') || span.textContent.includes('Offline') ||
+                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb')) {
+                    var status = statusData.status || 'Offline';
+                    var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+                    span.innerHTML = svg.outerHTML + statusText;
+                }
+            });
+
+            // Update last seen
+            if (statusData.lastSeen) {
+                var lastSeenText = statusData.status === 'Online' ? 'now' : this.formatTimeAgo(new Date(statusData.lastSeen));
+                metaSpans.forEach(function (span) {
+                    if (span.textContent.includes('Last seen')) {
+                        var svg = span.querySelector('svg');
+                        if (svg) {
+                            span.innerHTML = svg.outerHTML + 'Last seen ' + lastSeenText;
+                        }
+                    }
+                });
             }
         },
 

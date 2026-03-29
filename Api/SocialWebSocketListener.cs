@@ -235,6 +235,29 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
             }
 
+            // Also send to anyone viewing this user's profile
+            var profileViewers = _profileViewers.Where(kvp => kvp.Value == userId).Select(kvp => kvp.Key).ToList();
+            foreach (var viewerId in profileViewers)
+            {
+                if (viewerId == userId) continue; // Don't send to self (already handled above if friend)
+
+                if (_userConnections.TryGetValue(viewerId, out var viewerConnections))
+                {
+                    var activeConnections = viewerConnections.Where(c => c.State == WebSocketState.Open).ToList();
+                    foreach (var conn in activeConnections)
+                    {
+                        try
+                        {
+                            await SendMessageAsync(conn, "SocialProfileStatusUpdate", updateData).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "[SocialWS] Failed to send profile status to viewer {ViewerId}", viewerId);
+                        }
+                    }
+                }
+            }
+
             // Clean up dead connections
             CleanupDeadConnections();
         }

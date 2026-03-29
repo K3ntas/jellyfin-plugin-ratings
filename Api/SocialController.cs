@@ -963,6 +963,34 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Marks the user as offline (called on logout or page unload).
+        /// </summary>
+        /// <returns>Success status.</returns>
+        [HttpPost("Offline")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> GoOffline()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Set user's status to offline
+            var status = _socialRepository.SetUserOffline(userId.Value);
+
+            // Broadcast offline status to friends and profile viewers
+            var user = _userManager.GetUserById(userId.Value);
+            if (user != null && status != null)
+            {
+                await _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, null);
+            }
+
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
         /// Gets online status for all friends.
         /// </summary>
         /// <returns>Friends' online statuses.</returns>

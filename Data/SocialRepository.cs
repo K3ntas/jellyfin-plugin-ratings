@@ -781,6 +781,28 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Sets a user's status to offline (called on logout).
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The updated online status.</returns>
+        public UserOnlineStatus? SetUserOffline(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_onlineStatuses.TryGetValue(userId, out var status))
+                {
+                    // Set heartbeat to old time so GetEffectiveStatus returns Offline
+                    status.LastHeartbeat = DateTime.UtcNow.AddMinutes(-10);
+                    status.Watching = null;
+                    status.Status = "Offline";
+                    return status;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets a user's online status.
         /// </summary>
         /// <param name="userId">The user ID.</param>
