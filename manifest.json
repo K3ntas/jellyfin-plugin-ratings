@@ -9,20 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "2.0.132.2",
-        "changelog": "DEBUG: Browser console logging - look for [DEBUG-] in console",
+        "version": "2.0.139.0",
+        "changelog": "Fix: SetWatching now broadcasts status update - fixes Offline when pressing play",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.132.2/jellyfin-plugin-ratings_2.0.132.2.zip",
-        "checksum": "9e69d230612b585b03555c975cfd422a",
-        "timestamp": "2026-03-29T17:00:00Z"
-      },
-      {
-        "version": "2.0.132.1",
-        "changelog": "DEBUG: Added logging to track status changes - check Jellyfin logs",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.132.1/jellyfin-plugin-ratings_2.0.132.1.zip",
-        "checksum": "32326bbca34e62d1d9d8190cd2ccc851",
-        "timestamp": "2026-03-29T16:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.139.0/jellyfin-plugin-ratings_2.0.139.0.zip",
+        "checksum": "2bcc087f19313ab50f0bd5f5db19745a",
+        "timestamp": "2026-03-29T17:30:00Z"
       },
       {
         "version": "2.0.132.0",

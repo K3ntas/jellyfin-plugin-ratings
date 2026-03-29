@@ -56,8 +56,13 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <returns>The effective status string.</returns>
         public string GetEffectiveStatus()
         {
-            // Force offline takes highest priority (browser closed, logout)
-            // Sticky for 10 seconds to prevent race conditions
+            // If watching media, user MUST be Online - highest priority
+            if (Watching != null)
+            {
+                return "Online";
+            }
+
+            // Force offline (browser closed, logout)
             if (ForceOffline && (DateTime.UtcNow - ForceOfflineAt).TotalSeconds < 10)
             {
                 return "Offline";
@@ -66,7 +71,6 @@ namespace Jellyfin.Plugin.Ratings.Models
             // Manual status overrides automatic
             if (!string.IsNullOrEmpty(ManualStatus))
             {
-                // Invisible appears as Offline to others
                 return ManualStatus;
             }
 
