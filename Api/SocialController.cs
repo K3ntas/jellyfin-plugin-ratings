@@ -884,7 +884,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpPost("Heartbeat")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<object>> Heartbeat([FromBody] HeartbeatRequest? request = null)
+        public async Task<ActionResult<object>> Heartbeat()
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -892,12 +892,98 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
-            // Use client-provided watching info for instant updates, or fall back to session manager
-            CurrentlyWatching? watching = null;
+            // Heartbeat ONLY updates online status, NOT watching
+            var status = await _socialRepository.UpdateHeartbeatOnlyAsync(userId.Value);
 
+            // Broadcast status update (with current watching info from repository)
+            var user = _userManager.GetUserById(userId.Value);
+            if (user != null)
+            {
+                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, status.Watching);
+            }
+
+            return Ok(new { status = status.Status });
+        }
+
+        /// <summary>
+        /// Sets what the user is currently watching. Separate from online status.
+        /// </summary>
+        [HttpPost("Watching")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> SetWatching([FromBody] WatchingInfo watching)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var currentWatching = new CurrentlyWatching
+            {
+                ItemId = watching.ItemId,
+                Title = watching.Title ?? "Unknown",
+                Type = watching.Type ?? "Video",
+                SeriesName = watching.SeriesName,
+                EpisodeInfo = watching.EpisodeInfo,
+                PositionTicks = watching.PositionTicks,
+                DurationTicks = watching.DurationTicks,
+                StartedAt = DateTime.UtcNow
+            };
+
+            var status = await _socialRepository.SetWatchingAsync(userId.Value, currentWatching);
+
+            // Broadcast watching update
+            var user = _userManager.GetUserById(userId.Value);
+            if (user != null)
+            {
+                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, currentWatching);
+            }
+
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Clears what the user is watching. Separate from online status.
+        /// </summary>
+        [HttpPost("StopWatching")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> StopWatching()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var status = await _socialRepository.ClearWatchingAsync(userId.Value);
+
+            // Broadcast that user stopped watching
+            var user = _userManager.GetUserById(userId.Value);
+            if (user != null)
+            {
+                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, null);
+            }
+
+            return Ok(new { success = true });
+        }
+
+        // Legacy endpoint for backwards compatibility - redirects to new endpoints
+        [HttpPost("HeartbeatLegacy")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> HeartbeatLegacy([FromBody] HeartbeatRequest? request = null)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            CurrentlyWatching? watching = null;
             if (request?.Watching != null)
             {
-                // Client sent watching info directly - use it for instant updates
                 watching = new CurrentlyWatching
                 {
                     ItemId = request.Watching.ItemId,
@@ -910,36 +996,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     StartedAt = DateTime.UtcNow
                 };
             }
-            else if (request?.Stopped != true)
-            {
-                // No client data and not explicitly stopped - check session manager as fallback
-                var sessions = _sessionManager.Sessions
-                    .Where(s => s.UserId == userId.Value && s.NowPlayingItem != null)
-                    .FirstOrDefault();
-
-                if (sessions?.NowPlayingItem != null)
-                {
-                    var item = sessions.NowPlayingItem;
-                    watching = new CurrentlyWatching
-                    {
-                        ItemId = item.Id,
-                        Title = item.Name ?? "Unknown",
-                        Type = item.MediaType.ToString(),
-                        SeriesName = item.SeriesName,
-                        EpisodeInfo = item.ParentIndexNumber.HasValue && item.IndexNumber.HasValue
-                            ? $"S{item.ParentIndexNumber:D2}E{item.IndexNumber:D2}"
-                            : null,
-                        PositionTicks = sessions.PlayState?.PositionTicks ?? 0,
-                        DurationTicks = item.RunTimeTicks ?? 0,
-                        StartedAt = DateTime.UtcNow
-                    };
-                }
-            }
-            // If request.Stopped == true, watching stays null (user stopped playback)
 
             var status = await _socialRepository.UpdateHeartbeatAsync(userId.Value, watching);
-
-            // Broadcast status update to all connected friends via WebSocket
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
             {

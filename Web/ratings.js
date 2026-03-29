@@ -2327,7 +2327,7 @@
                 durationTicks: item.RunTimeTicks || 0
             };
 
-            self.sendHeartbeat({ watching: self._currentWatching });
+            self.sendWatching(self._currentWatching);
         },
 
         /**
@@ -2349,7 +2349,7 @@
                     positionTicks: options.PositionTicks || 0,
                     durationTicks: item.RunTimeTicks || 0
                 };
-                self.sendHeartbeat({ watching: self._currentWatching });
+                self.sendWatching(self._currentWatching);
             } else {
                 // We have ItemId but no details - fetch them
                 ApiClient.getItem(ApiClient.getCurrentUserId(), options.ItemId).then(function (item) {
@@ -2362,7 +2362,7 @@
                         positionTicks: options.PositionTicks || 0,
                         durationTicks: item.RunTimeTicks || 0
                     };
-                    self.sendHeartbeat({ watching: self._currentWatching });
+                    self.sendWatching(self._currentWatching);
                 }).catch(function () {
                     // Fallback: send minimal info
                     self._currentWatching = {
@@ -2372,7 +2372,7 @@
                         positionTicks: options.PositionTicks || 0,
                         durationTicks: 0
                     };
-                    self.sendHeartbeat({ watching: self._currentWatching });
+                    self.sendWatching(self._currentWatching);
                 });
             }
         },
@@ -2391,7 +2391,7 @@
 
             if (self._currentWatching && options) {
                 self._currentWatching.positionTicks = options.PositionTicks || self._currentWatching.positionTicks;
-                self.sendHeartbeat({ watching: self._currentWatching });
+                self.sendWatching(self._currentWatching);
             }
         },
 
@@ -2401,7 +2401,7 @@
         onPlaybackStop: function () {
             var self = this;
             self._currentWatching = null;
-            self.sendHeartbeat({ stopped: true });
+            self.sendStopWatching();
         },
 
         /**
@@ -2513,19 +2513,60 @@
                 'Content-Type': 'application/json'
             };
 
-            var body = null;
-            if (options) {
-                body = JSON.stringify(options);
-                console.log('[Social] Sending heartbeat:', options.watching ? 'watching ' + options.watching.title : (options.stopped ? 'stopped' : 'ping'));
-            }
-
+            // Heartbeat is now simple - just a ping for online status
             fetch(baseUrl + '/Social/Heartbeat', {
                 method: 'POST',
                 credentials: 'include',
-                headers: headers,
-                body: body
+                headers: headers
             }).catch(function () {
                 // Silently fail - heartbeat is not critical
+            });
+        },
+
+        /**
+         * Send watching info to server (separate from heartbeat/online status)
+         */
+        sendWatching: function (watching) {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            console.log('[Social] Sending watching:', watching.title);
+
+            fetch(baseUrl + '/Social/Watching', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify(watching)
+            }).catch(function () {
+                // Silently fail
+            });
+        },
+
+        /**
+         * Send stop watching to server (separate from heartbeat/online status)
+         */
+        sendStopWatching: function () {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            console.log('[Social] Sending stop watching');
+
+            fetch(baseUrl + '/Social/StopWatching', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () {
+                // Silently fail
             });
         },
 

@@ -788,6 +788,108 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Updates heartbeat ONLY - does not touch watching info.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The updated online status.</returns>
+        public async Task<UserOnlineStatus> UpdateHeartbeatOnlyAsync(Guid userId)
+        {
+            UserOnlineStatus status;
+
+            lock (_lock)
+            {
+                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                {
+                    status = new UserOnlineStatus
+                    {
+                        UserId = userId,
+                        LastSeen = DateTime.UtcNow,
+                        LastHeartbeat = DateTime.UtcNow
+                    };
+                    _onlineStatuses[userId] = status;
+                }
+                else
+                {
+                    status.LastHeartbeat = DateTime.UtcNow;
+                    status.LastSeen = DateTime.UtcNow;
+
+                    // Clear ForceOffline only if it's been more than 10 seconds
+                    if (status.ForceOffline && (DateTime.UtcNow - status.ForceOfflineAt).TotalSeconds >= 10)
+                    {
+                        status.ForceOffline = false;
+                    }
+                }
+
+                // Don't touch Watching - keep whatever was there
+                status.Status = status.GetEffectiveStatus();
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+            return status;
+        }
+
+        /// <summary>
+        /// Sets what the user is currently watching. Does not affect online status.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watching">The watching info.</param>
+        /// <returns>The updated online status.</returns>
+        public async Task<UserOnlineStatus> SetWatchingAsync(Guid userId, CurrentlyWatching watching)
+        {
+            UserOnlineStatus status;
+
+            lock (_lock)
+            {
+                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                {
+                    status = new UserOnlineStatus
+                    {
+                        UserId = userId,
+                        LastSeen = DateTime.UtcNow,
+                        LastHeartbeat = DateTime.UtcNow
+                    };
+                    _onlineStatuses[userId] = status;
+                }
+
+                // Only update watching, don't touch heartbeat or status
+                status.Watching = watching;
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+            return status;
+        }
+
+        /// <summary>
+        /// Clears what the user is watching. Does not affect online status.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The updated online status.</returns>
+        public async Task<UserOnlineStatus> ClearWatchingAsync(Guid userId)
+        {
+            UserOnlineStatus status;
+
+            lock (_lock)
+            {
+                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                {
+                    status = new UserOnlineStatus
+                    {
+                        UserId = userId,
+                        LastSeen = DateTime.UtcNow,
+                        LastHeartbeat = DateTime.UtcNow
+                    };
+                    _onlineStatuses[userId] = status;
+                }
+
+                // Only clear watching, don't touch heartbeat or status
+                status.Watching = null;
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+            return status;
+        }
+
+        /// <summary>
         /// Sets a user's status to offline (called on logout).
         /// </summary>
         /// <param name="userId">The user ID.</param>
@@ -882,24 +984,6 @@ namespace Jellyfin.Plugin.Ratings.Data
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
             _logger.LogInformation("[Social] User {UserId} set manual status to {Status}", userId, status ?? "auto");
-        }
-
-        /// <summary>
-        /// Clears currently watching for a user.
-        /// </summary>
-        /// <param name="userId">The user ID.</param>
-        /// <returns>Task.</returns>
-        public async Task ClearWatchingAsync(Guid userId)
-        {
-            lock (_lock)
-            {
-                if (_onlineStatuses.TryGetValue(userId, out var status))
-                {
-                    status.Watching = null;
-                }
-            }
-
-            await SaveOnlineStatusesAsync().ConfigureAwait(false);
         }
 
         private void LoadOnlineStatuses()
