@@ -754,11 +754,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Updates the user's heartbeat (marks them as online).
         /// </summary>
+        /// <param name="request">Optional watching info from client for instant updates.</param>
         /// <returns>Current status info.</returns>
         [HttpPost("Heartbeat")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<object>> Heartbeat()
+        public async Task<ActionResult<object>> Heartbeat([FromBody] HeartbeatRequest? request = null)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -766,29 +767,50 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
-            // Check if user is currently playing something
+            // Use client-provided watching info for instant updates, or fall back to session manager
             CurrentlyWatching? watching = null;
-            var sessions = _sessionManager.Sessions
-                .Where(s => s.UserId == userId.Value && s.NowPlayingItem != null)
-                .FirstOrDefault();
 
-            if (sessions?.NowPlayingItem != null)
+            if (request?.Watching != null)
             {
-                var item = sessions.NowPlayingItem;
+                // Client sent watching info directly - use it for instant updates
                 watching = new CurrentlyWatching
                 {
-                    ItemId = item.Id,
-                    Title = item.Name ?? "Unknown",
-                    Type = item.MediaType.ToString(),
-                    SeriesName = item.SeriesName,
-                    EpisodeInfo = item.ParentIndexNumber.HasValue && item.IndexNumber.HasValue
-                        ? $"S{item.ParentIndexNumber:D2}E{item.IndexNumber:D2}"
-                        : null,
-                    PositionTicks = sessions.PlayState?.PositionTicks ?? 0,
-                    DurationTicks = item.RunTimeTicks ?? 0,
+                    ItemId = request.Watching.ItemId,
+                    Title = request.Watching.Title ?? "Unknown",
+                    Type = request.Watching.Type ?? "Video",
+                    SeriesName = request.Watching.SeriesName,
+                    EpisodeInfo = request.Watching.EpisodeInfo,
+                    PositionTicks = request.Watching.PositionTicks,
+                    DurationTicks = request.Watching.DurationTicks,
                     StartedAt = DateTime.UtcNow
                 };
             }
+            else if (request?.Stopped != true)
+            {
+                // No client data and not explicitly stopped - check session manager as fallback
+                var sessions = _sessionManager.Sessions
+                    .Where(s => s.UserId == userId.Value && s.NowPlayingItem != null)
+                    .FirstOrDefault();
+
+                if (sessions?.NowPlayingItem != null)
+                {
+                    var item = sessions.NowPlayingItem;
+                    watching = new CurrentlyWatching
+                    {
+                        ItemId = item.Id,
+                        Title = item.Name ?? "Unknown",
+                        Type = item.MediaType.ToString(),
+                        SeriesName = item.SeriesName,
+                        EpisodeInfo = item.ParentIndexNumber.HasValue && item.IndexNumber.HasValue
+                            ? $"S{item.ParentIndexNumber:D2}E{item.IndexNumber:D2}"
+                            : null,
+                        PositionTicks = sessions.PlayState?.PositionTicks ?? 0,
+                        DurationTicks = item.RunTimeTicks ?? 0,
+                        StartedAt = DateTime.UtcNow
+                    };
+                }
+            }
+            // If request.Stopped == true, watching stays null (user stopped playback)
 
             var status = await _socialRepository.UpdateHeartbeatAsync(userId.Value, watching);
 

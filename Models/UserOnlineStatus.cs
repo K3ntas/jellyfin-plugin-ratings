@@ -142,4 +142,62 @@ namespace Jellyfin.Plugin.Ratings.Models
             return $"{span.Minutes}:{span.Seconds:D2}";
         }
     }
+
+    /// <summary>
+    /// Request model for heartbeat endpoint with optional watching info.
+    /// </summary>
+    public class HeartbeatRequest
+    {
+        /// <summary>
+        /// Gets or sets the watching info sent from client for instant updates.
+        /// </summary>
+        public WatchingInfo? Watching { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether playback was explicitly stopped.
+        /// When true, watching status will be cleared immediately.
+        /// </summary>
+        public bool Stopped { get; set; }
+    }
+
+    /// <summary>
+    /// Watching info sent from client (simpler than CurrentlyWatching).
+    /// </summary>
+    public class WatchingInfo
+    {
+        /// <summary>
+        /// Gets or sets the media item ID.
+        /// </summary>
+        public Guid ItemId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the media title.
+        /// </summary>
+        public string? Title { get; set; }
+
+        /// <summary>
+        /// Gets or sets the media type.
+        /// </summary>
+        public string? Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets the series name (for episodes).
+        /// </summary>
+        public string? SeriesName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the season/episode info.
+        /// </summary>
+        public string? EpisodeInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current position in ticks.
+        /// </summary>
+        public long PositionTicks { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total duration in ticks.
+        /// </summary>
+        public long DurationTicks { get; set; }
+    }
 }

@@ -1749,6 +1749,9 @@
                 }
             }, 60000);
 
+            // Hook into playback events for instant watching updates
+            self.setupPlaybackHooks();
+
             // Connect WebSocket for real-time updates
             self.connectWebSocket();
 
@@ -1763,6 +1766,173 @@
                     }
                 }
             }, 30000);
+        },
+
+        /**
+         * Setup hooks for playback events to send instant watching updates
+         */
+        setupPlaybackHooks: function () {
+            var self = this;
+            self._lastPlaybackUpdate = 0;
+            self._playbackUpdateInterval = 10000; // Update every 10 seconds during playback
+
+            // Hook into Jellyfin's Events system
+            if (window.Events) {
+                // Playback started
+                Events.on(window.MediaController || window, 'playbackstart', function (e, player, state) {
+                    self.onPlaybackStart(state);
+                });
+
+                // Playback stopped
+                Events.on(window.MediaController || window, 'playbackstop', function (e, info) {
+                    self.onPlaybackStop();
+                });
+            }
+
+            // Alternative: Hook into document events (Jellyfin Web)
+            document.addEventListener('playbackstart', function (e) {
+                if (e.detail) {
+                    self.onPlaybackStart(e.detail);
+                }
+            });
+
+            document.addEventListener('playbackstop', function () {
+                self.onPlaybackStop();
+            });
+
+            // Also try hooking into the ApiClient playback reporting
+            if (window.ApiClient) {
+                var originalReportPlaybackStart = ApiClient.reportPlaybackStart;
+                if (originalReportPlaybackStart) {
+                    ApiClient.reportPlaybackStart = function (options) {
+                        self.onPlaybackStartFromApi(options);
+                        return originalReportPlaybackStart.apply(this, arguments);
+                    };
+                }
+
+                var originalReportPlaybackStopped = ApiClient.reportPlaybackStopped;
+                if (originalReportPlaybackStopped) {
+                    ApiClient.reportPlaybackStopped = function (options) {
+                        self.onPlaybackStop();
+                        return originalReportPlaybackStopped.apply(this, arguments);
+                    };
+                }
+
+                var originalReportPlaybackProgress = ApiClient.reportPlaybackProgress;
+                if (originalReportPlaybackProgress) {
+                    ApiClient.reportPlaybackProgress = function (options) {
+                        self.onPlaybackProgress(options);
+                        return originalReportPlaybackProgress.apply(this, arguments);
+                    };
+                }
+            }
+        },
+
+        /**
+         * Handle playback start event
+         */
+        onPlaybackStart: function (state) {
+            var self = this;
+            if (!state || !state.NowPlayingItem) return;
+
+            var item = state.NowPlayingItem;
+            self._currentWatching = {
+                itemId: item.Id,
+                title: item.Name || 'Unknown',
+                type: item.MediaType || item.Type || 'Video',
+                seriesName: item.SeriesName || null,
+                episodeInfo: self.formatEpisodeInfo(item),
+                positionTicks: state.PlayState?.PositionTicks || 0,
+                durationTicks: item.RunTimeTicks || 0
+            };
+
+            self.sendHeartbeat({ watching: self._currentWatching });
+        },
+
+        /**
+         * Handle playback start from ApiClient.reportPlaybackStart
+         */
+        onPlaybackStartFromApi: function (options) {
+            var self = this;
+            if (!options || !options.ItemId) return;
+
+            // Fetch item details if needed
+            if (options.Item) {
+                var item = options.Item;
+                self._currentWatching = {
+                    itemId: item.Id,
+                    title: item.Name || 'Unknown',
+                    type: item.MediaType || item.Type || 'Video',
+                    seriesName: item.SeriesName || null,
+                    episodeInfo: self.formatEpisodeInfo(item),
+                    positionTicks: options.PositionTicks || 0,
+                    durationTicks: item.RunTimeTicks || 0
+                };
+                self.sendHeartbeat({ watching: self._currentWatching });
+            } else {
+                // We have ItemId but no details - fetch them
+                ApiClient.getItem(ApiClient.getCurrentUserId(), options.ItemId).then(function (item) {
+                    self._currentWatching = {
+                        itemId: item.Id,
+                        title: item.Name || 'Unknown',
+                        type: item.MediaType || item.Type || 'Video',
+                        seriesName: item.SeriesName || null,
+                        episodeInfo: self.formatEpisodeInfo(item),
+                        positionTicks: options.PositionTicks || 0,
+                        durationTicks: item.RunTimeTicks || 0
+                    };
+                    self.sendHeartbeat({ watching: self._currentWatching });
+                }).catch(function () {
+                    // Fallback: send minimal info
+                    self._currentWatching = {
+                        itemId: options.ItemId,
+                        title: 'Unknown',
+                        type: 'Video',
+                        positionTicks: options.PositionTicks || 0,
+                        durationTicks: 0
+                    };
+                    self.sendHeartbeat({ watching: self._currentWatching });
+                });
+            }
+        },
+
+        /**
+         * Handle playback progress - throttled to every 10 seconds
+         */
+        onPlaybackProgress: function (options) {
+            var self = this;
+            var now = Date.now();
+
+            if (now - self._lastPlaybackUpdate < self._playbackUpdateInterval) {
+                return; // Throttle updates
+            }
+            self._lastPlaybackUpdate = now;
+
+            if (self._currentWatching && options) {
+                self._currentWatching.positionTicks = options.PositionTicks || self._currentWatching.positionTicks;
+                self.sendHeartbeat({ watching: self._currentWatching });
+            }
+        },
+
+        /**
+         * Handle playback stop event
+         */
+        onPlaybackStop: function () {
+            var self = this;
+            self._currentWatching = null;
+            self.sendHeartbeat({ stopped: true });
+        },
+
+        /**
+         * Format episode info from item
+         */
+        formatEpisodeInfo: function (item) {
+            if (item.ParentIndexNumber != null && item.IndexNumber != null) {
+                var season = ('0' + item.ParentIndexNumber).slice(-2);
+                var episode = ('0' + item.IndexNumber).slice(-2);
+                return 'S' + season + 'E' + episode;
+            }
+            return null;
         },
 
         /**
@@ -1892,18 +2062,28 @@
         },
 
         /**
-         * Send heartbeat to server
+         * Send heartbeat to server with optional watching info for instant updates
+         * @param {object} options - Optional: { watching: {...}, stopped: true/false }
          */
-        sendHeartbeat: function () {
+        sendHeartbeat: function (options) {
             if (!window.ApiClient || !ApiClient.accessToken()) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var body = null;
+            if (options) {
+                body = JSON.stringify(options);
+            }
 
             fetch(baseUrl + '/Social/Heartbeat', {
                 method: 'POST',
                 credentials: 'include',
-                headers: headers
+                headers: headers,
+                body: body
             }).catch(function () {
                 // Silently fail - heartbeat is not critical
             });
