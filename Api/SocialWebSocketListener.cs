@@ -399,11 +399,12 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get all friends
             var friendIds = _socialRepository.GetFriendIds(userId);
 
-            // Build watching-only update
+            // Build watching update - always include status as Online (if watching, user is online)
             var updateData = new
             {
                 userId = userId,
                 username = username,
+                status = watching != null ? "Online" : null,
                 watching = watching != null ? new
                 {
                     itemId = watching.ItemId,
