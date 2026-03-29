@@ -931,14 +931,18 @@ namespace Jellyfin.Plugin.Ratings.Api
                 StartedAt = DateTime.UtcNow
             };
 
-            // ONLY update watching - this does NOT affect online status
+            // Update watching
             await _socialRepository.SetWatchingOnlyAsync(userId.Value, currentWatching);
 
-            // Broadcast ONLY the watching update, not status
+            // Get the status (which will now be Online because Watching is set)
+            var status = _socialRepository.GetOnlineStatus(userId.Value);
+
+            // Broadcast BOTH status and watching - status must be Online when watching
             var user = _userManager.GetUserById(userId.Value);
-            if (user != null)
+            if (user != null && status != null)
             {
-                _ = _webSocketListener.BroadcastWatchingUpdateAsync(userId.Value, user.Username, currentWatching);
+                // Broadcast status update (includes watching info)
+                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, currentWatching);
             }
 
             return Ok(new { success = true });

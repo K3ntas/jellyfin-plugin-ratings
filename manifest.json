@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.136.0",
+        "changelog": "Broadcast status update when watching is set - ensures Online status is sent with watching info",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.136.0/jellyfin-plugin-ratings_2.0.136.0.zip",
+        "checksum": "21b01dafbf8dca24c0fb4667011b3512",
+        "timestamp": "2026-03-29T15:00:00Z"
+      },
+      {
         "version": "2.0.135.0",
         "changelog": "Fix all status reads to use GetEffectiveStatus() - ensures Watching forces Online everywhere",
         "targetAbi": "10.11.0.0",
