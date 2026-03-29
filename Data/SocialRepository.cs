@@ -770,6 +770,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 {
                     status.LastHeartbeat = DateTime.UtcNow;
                     status.LastSeen = DateTime.UtcNow;
+                    // Clear ForceOffline flag - user is back online
+                    status.ForceOffline = false;
                 }
 
                 status.Watching = watching;
@@ -791,10 +793,11 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 if (_onlineStatuses.TryGetValue(userId, out var status))
                 {
-                    // Set heartbeat to old time so GetEffectiveStatus returns Offline
-                    status.LastHeartbeat = DateTime.UtcNow.AddMinutes(-10);
+                    // Set ForceOffline flag - this takes priority over heartbeat
+                    status.ForceOffline = true;
                     status.Watching = null;
                     status.Status = "Offline";
+                    _logger.LogInformation("[Social] User {UserId} set to ForceOffline", userId);
                     return status;
                 }
 

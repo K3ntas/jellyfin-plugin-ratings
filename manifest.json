@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.125.0",
+        "changelog": "Fix real-time offline status - ForceOffline flag persists correctly",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.125.0/jellyfin-plugin-ratings_2.0.125.0.zip",
+        "checksum": "dd2b93489edfd9aa91961aa99e8d0b28",
+        "timestamp": "2026-03-29T09:30:00Z"
+      },
+      {
         "version": "2.0.124.0",
         "changelog": "Real-time online status - user goes offline immediately when closing browser",
         "targetAbi": "10.11.0.0",

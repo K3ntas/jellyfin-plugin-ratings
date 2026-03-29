@@ -40,11 +40,23 @@ namespace Jellyfin.Plugin.Ratings.Models
         public CurrentlyWatching? Watching { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the user explicitly went offline (browser closed, logout).
+        /// This flag takes priority over heartbeat-based status.
+        /// </summary>
+        public bool ForceOffline { get; set; }
+
+        /// <summary>
         /// Calculates the effective status based on heartbeat and manual override.
         /// </summary>
         /// <returns>The effective status string.</returns>
         public string GetEffectiveStatus()
         {
+            // Force offline takes highest priority (browser closed, logout)
+            if (ForceOffline)
+            {
+                return "Offline";
+            }
+
             // Manual status overrides automatic
             if (!string.IsNullOrEmpty(ManualStatus))
             {

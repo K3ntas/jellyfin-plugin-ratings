@@ -1147,32 +1147,61 @@
          */
         registerOfflineHandler: function () {
             var offlineCallMade = false;
+            var lastVisibilityState = document.visibilityState;
 
             var goOffline = function () {
                 if (offlineCallMade) return;
-                offlineCallMade = true;
-
                 if (!window.ApiClient) return;
 
                 var baseUrl = ApiClient.serverAddress();
                 var token = ApiClient.accessToken();
+                if (!token) return;
 
-                // Use sendBeacon for reliability on page unload
-                if (navigator.sendBeacon) {
-                    var blob = new Blob(['{}'], { type: 'application/json' });
-                    navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
-                } else {
-                    // Fallback to sync XHR (deprecated but works)
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', baseUrl + '/Social/Offline', false);
-                    xhr.setRequestHeader('X-Emby-Token', token);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    try { xhr.send('{}'); } catch (e) { /* ignore */ }
+                offlineCallMade = true;
+                console.log('[Social] Going offline...');
+
+                // Use fetch with keepalive for reliability
+                try {
+                    fetch(baseUrl + '/Social/Offline', {
+                        method: 'POST',
+                        headers: {
+                            'X-Emby-Token': token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: '{}',
+                        keepalive: true
+                    }).catch(function() { /* ignore errors on page unload */ });
+                } catch (e) {
+                    // Fallback to sendBeacon
+                    if (navigator.sendBeacon) {
+                        var blob = new Blob(['{}'], { type: 'application/json' });
+                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
+                    }
                 }
             };
 
+            // Handle page visibility changes (tab switch, minimize)
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden' && lastVisibilityState === 'visible') {
+                    // Don't go offline immediately on tab switch, just log
+                    console.log('[Social] Tab hidden');
+                }
+                lastVisibilityState = document.visibilityState;
+            });
+
+            // Handle page unload (close tab/window, navigate away)
             window.addEventListener('beforeunload', goOffline);
-            window.addEventListener('pagehide', goOffline);
+            window.addEventListener('pagehide', function (e) {
+                // pagehide with persisted=false means page is being destroyed
+                if (!e.persisted) {
+                    goOffline();
+                }
+            });
+
+            // Handle Jellyfin logout
+            if (window.Events) {
+                Events.on(ApiClient, 'logout', goOffline);
+            }
         },
 
         /**
