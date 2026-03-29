@@ -1661,6 +1661,7 @@
             menu.id = 'social-friend-menu';
             menu.className = 'social-friend-menu';
             menu.innerHTML = `
+                <button onclick="RatingsPlugin.navigateToProfile('${userId}')">View Profile</button>
                 <button onclick="RatingsPlugin.unfriendUser('${userId}', '${username.replace(/'/g, "\\'")}')">Unfriend</button>
                 <button onclick="RatingsPlugin.blockUser('${userId}')" style="color:#e74c3c;">Block</button>
             `;
@@ -1756,9 +1757,9 @@
                 }
 
                 html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
-                    '<div class="social-friend-avatar">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
                     '<div class="social-friend-info">' +
-                    '<div class="social-friend-name">' + self.escapeHtml(friend.username) + '</div>' +
+                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
                     '<div class="social-friend-status">' + statusText + '</div>' +
                     watchingHtml +
                     '</div>' +
@@ -9562,6 +9563,13 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
+                .social-friend-name.clickable {
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+                .social-friend-name.clickable:hover {
+                    color: #00a4dc;
+                }
                 .social-friend-status {
                     font-size: 12px;
                     color: #888;
@@ -9770,6 +9778,212 @@
                     color: #666;
                     margin-top: 2px;
                 }
+
+                /* User Profile Page */
+                .social-profile-page {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: #101010;
+                    z-index: 99999;
+                    overflow-y: auto;
+                    animation: profileFadeIn 0.2s ease;
+                }
+                @keyframes profileFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .social-profile-container {
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .social-profile-back {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #888;
+                    font-size: 14px;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                    margin-bottom: 20px;
+                }
+                .social-profile-back:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                }
+                .social-profile-back svg {
+                    width: 20px;
+                    height: 20px;
+                    fill: currentColor;
+                }
+                .social-profile-header {
+                    display: flex;
+                    gap: 24px;
+                    padding: 30px;
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    margin-bottom: 20px;
+                }
+                .social-profile-avatar-large {
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00a4dc, #0077b6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 48px;
+                    font-weight: 600;
+                    color: #fff;
+                    flex-shrink: 0;
+                    position: relative;
+                }
+                .social-profile-avatar-large .social-status-dot {
+                    position: absolute;
+                    bottom: 8px;
+                    right: 8px;
+                    width: 20px;
+                    height: 20px;
+                    border: 3px solid #1a1a1a;
+                }
+                .social-profile-info {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                .social-profile-username {
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 8px;
+                }
+                .social-profile-bio {
+                    color: #888;
+                    font-size: 15px;
+                    margin-bottom: 12px;
+                    max-width: 400px;
+                }
+                .social-profile-meta {
+                    display: flex;
+                    gap: 20px;
+                    color: #666;
+                    font-size: 13px;
+                }
+                .social-profile-meta span {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .social-profile-meta svg {
+                    width: 16px;
+                    height: 16px;
+                    fill: currentColor;
+                }
+                .social-profile-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    justify-content: center;
+                }
+                .social-profile-btn {
+                    padding: 10px 24px;
+                    border-radius: 6px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                    min-width: 140px;
+                }
+                .social-profile-btn.primary {
+                    background: #00a4dc;
+                    color: #fff;
+                }
+                .social-profile-btn.primary:hover {
+                    background: #008ec4;
+                }
+                .social-profile-btn.secondary {
+                    background: #333;
+                    color: #fff;
+                }
+                .social-profile-btn.secondary:hover {
+                    background: #444;
+                }
+                .social-profile-btn.danger {
+                    background: #d32f2f;
+                    color: #fff;
+                }
+                .social-profile-btn.danger:hover {
+                    background: #b71c1c;
+                }
+                .social-profile-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                .social-profile-tabs {
+                    display: flex;
+                    gap: 0;
+                    border-bottom: 1px solid #333;
+                    margin-bottom: 20px;
+                }
+                .social-profile-tab {
+                    padding: 12px 24px;
+                    color: #888;
+                    font-size: 14px;
+                    cursor: pointer;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.2s;
+                }
+                .social-profile-tab:hover {
+                    color: #fff;
+                }
+                .social-profile-tab.active {
+                    color: #00a4dc;
+                    border-bottom-color: #00a4dc;
+                }
+                .social-profile-content {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 20px;
+                    min-height: 200px;
+                }
+                .social-profile-loading {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 60px;
+                    color: #666;
+                }
+                .social-profile-error {
+                    text-align: center;
+                    padding: 40px;
+                    color: #888;
+                }
+                @media (max-width: 768px) {
+                    .social-profile-header {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                    }
+                    .social-profile-bio {
+                        max-width: none;
+                    }
+                    .social-profile-meta {
+                        justify-content: center;
+                        flex-wrap: wrap;
+                    }
+                    .social-profile-actions {
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        justify-content: center;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -9843,11 +10057,312 @@
             // Close chat window and moderator panel on page navigation
             this.closeChatOnPageChange();
 
+            // Check for profile route
+            var profileUserId = this.getProfileUserIdFromUrl();
+            if (profileUserId) {
+                this.showProfilePage(profileUserId);
+                return;
+            } else {
+                // Close profile page if open and navigating away
+                this.closeProfilePage();
+            }
+
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
             }
+        },
+
+        /**
+         * Get user ID from profile route (#!/social/user/{userId})
+         */
+        getProfileUserIdFromUrl: function () {
+            var hash = window.location.hash;
+            var match = hash.match(/^#!\/social\/user\/([a-f0-9-]+)/i);
+            return match ? match[1] : null;
+        },
+
+        /**
+         * Navigate to a user's profile page
+         */
+        navigateToProfile: function (userId) {
+            if (!userId) return;
+            window.location.hash = '#!/social/user/' + userId;
+        },
+
+        /**
+         * Show the profile page for a user
+         */
+        showProfilePage: function (userId) {
+            var self = this;
+            var existing = document.getElementById('socialProfilePage');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create profile page container
+            var page = document.createElement('div');
+            page.id = 'socialProfilePage';
+            page.className = 'social-profile-page';
+            page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
+            document.body.appendChild(page);
+
+            // Fetch profile data
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            Promise.all([
+                fetch(baseUrl + '/Social/Profile/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/Block/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasBlocked: false, isBlockedBy: false }; }),
+                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+            ]).then(function (results) {
+                var profile = results[0];
+                var friendsData = results[1];
+                var outgoingRequests = results[2];
+                var incomingRequests = results[3];
+                var blockStatus = results[4];
+                var onlineData = results[5];
+
+                if (!profile) {
+                    self.renderProfileError(page, 'User not found');
+                    return;
+                }
+
+                // Determine relationship status
+                var isSelf = profile.userId === ApiClient.getCurrentUserId();
+                var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
+                var hasPendingOutgoing = (outgoingRequests.requests || []).some(function (r) { return (r.ToUserId || r.toUserId) === userId; });
+                var hasPendingIncoming = (incomingRequests.requests || []).find(function (r) { return (r.FromUserId || r.fromUserId) === userId; });
+                var hasBlocked = blockStatus.hasBlocked || false;
+                var isBlockedBy = blockStatus.isBlockedBy || false;
+
+                // Get online status
+                var onlineStatus = 'Offline';
+                var friendStatus = (onlineData.friends || []).find(function (f) { return f.userId === userId; });
+                if (friendStatus) {
+                    onlineStatus = friendStatus.status || 'Offline';
+                }
+
+                self.renderProfilePage(page, profile, {
+                    isSelf: isSelf,
+                    isFriend: isFriend,
+                    hasPendingOutgoing: hasPendingOutgoing,
+                    hasPendingIncoming: hasPendingIncoming,
+                    incomingRequestId: hasPendingIncoming ? (hasPendingIncoming.Id || hasPendingIncoming.id) : null,
+                    hasBlocked: hasBlocked,
+                    isBlockedBy: isBlockedBy,
+                    onlineStatus: onlineStatus
+                });
+            }).catch(function (err) {
+                console.error('[Social] Profile load failed:', err);
+                self.renderProfileError(page, 'Failed to load profile');
+            });
+        },
+
+        /**
+         * Render profile page error
+         */
+        renderProfileError: function (page, message) {
+            var container = page.querySelector('.social-profile-container');
+            if (container) {
+                container.innerHTML = '<div class="social-profile-back" onclick="history.back()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
+            }
+        },
+
+        /**
+         * Render the full profile page
+         */
+        renderProfilePage: function (page, profile, status) {
+            var self = this;
+            var container = page.querySelector('.social-profile-container');
+            if (!container) return;
+
+            var username = profile.username || 'Unknown';
+            var initial = username[0].toUpperCase();
+            var bio = profile.bio || 'No bio yet.';
+            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown';
+            var lastSeen = profile.lastSeen ? this.formatTimeAgo(new Date(profile.lastSeen)) : 'Unknown';
+            var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
+
+            // Build action buttons based on relationship
+            var actionsHtml = '';
+            if (status.isSelf) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
+            } else if (status.hasBlocked) {
+                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + profile.userId + '\')">Unblock</button>';
+            } else if (status.isBlockedBy) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
+            } else if (status.isFriend) {
+                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + profile.userId + '\', \'' + self.escapeHtml(username).replace(/'/g, "\\'") + '\')">Remove Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+            } else if (status.hasPendingOutgoing) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
+            } else if (status.hasPendingIncoming) {
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + status.incomingRequestId + '\')">Accept Request</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + status.incomingRequestId + '\')">Reject</button>';
+            } else {
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + profile.userId + '\')">Add Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+            }
+
+            var html = '<div class="social-profile-back" onclick="history.back()">' +
+                '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="social-profile-header">' +
+                '<div class="social-profile-avatar-large">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                '<div class="social-profile-info">' +
+                '<div class="social-profile-username">' + self.escapeHtml(username) + '</div>' +
+                '<div class="social-profile-bio">' + self.escapeHtml(bio) + '</div>' +
+                '<div class="social-profile-meta">' +
+                '<span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' + statusText + '</span>' +
+                '<span><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>Joined ' + memberSince + '</span>' +
+                '<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>Last seen ' + lastSeen + '</span>' +
+                '</div></div>' +
+                '<div class="social-profile-actions">' + actionsHtml + '</div></div>' +
+                '<div class="social-profile-tabs">' +
+                '<div class="social-profile-tab active" data-tab="overview">Overview</div>' +
+                '</div>' +
+                '<div class="social-profile-content" id="socialProfileContent">' +
+                '<div style="color: #888; text-align: center; padding: 40px;">Profile overview coming soon...</div>' +
+                '</div>';
+
+            container.innerHTML = html;
+        },
+
+        /**
+         * Format time ago for profile
+         */
+        formatTimeAgo: function (date) {
+            var now = new Date();
+            var diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+            return date.toLocaleDateString();
+        },
+
+        /**
+         * Close the profile page
+         */
+        closeProfilePage: function () {
+            var page = document.getElementById('socialProfilePage');
+            if (page) {
+                page.remove();
+            }
+        },
+
+        /**
+         * Profile page action: Send friend request
+         */
+        profileSendRequest: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        // Refresh the profile page
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Accept friend request
+         */
+        profileAcceptRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = self.getProfileUserIdFromUrl();
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success && userId) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Reject friend request
+         */
+        profileRejectRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = self.getProfileUserIdFromUrl();
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success && userId) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Remove friend
+         */
+        profileRemoveFriend: function (userId, username) {
+            var self = this;
+            if (!confirm('Remove ' + username + ' from your friends list?')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Block user
+         */
+        profileBlockUser: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Unblock user
+         */
+        profileUnblockUser: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
         },
 
         /**
