@@ -1147,43 +1147,43 @@
          * Uses visibilitychange to avoid false triggers during internal Jellyfin navigation.
          */
         registerOfflineHandler: function () {
-            var self = this;
+            var offlineCallMade = false;
 
             var goOffline = function () {
+                if (offlineCallMade) return;
                 if (!window.ApiClient) return;
 
                 var baseUrl = ApiClient.serverAddress();
                 var token = ApiClient.accessToken();
                 if (!token) return;
 
-                console.log('[Social] Going offline via visibilitychange...');
+                offlineCallMade = true;
+                console.log('[Social] Going offline...');
 
-                // Use fetch with keepalive - more reliable than sendBeacon
-                fetch(baseUrl + '/Social/Offline', {
-                    method: 'POST',
-                    headers: {
-                        'X-Emby-Token': token,
-                        'Content-Type': 'application/json'
-                    },
-                    body: '{}',
-                    keepalive: true
-                }).catch(function() {});
+                // Use fetch with keepalive for reliability
+                try {
+                    fetch(baseUrl + '/Social/Offline', {
+                        method: 'POST',
+                        headers: {
+                            'X-Emby-Token': token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: '{}',
+                        keepalive: true
+                    }).catch(function() {});
+                } catch (e) {
+                    // Fallback to sendBeacon
+                    if (navigator.sendBeacon) {
+                        var blob = new Blob(['{}'], { type: 'application/json' });
+                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
+                    }
+                }
             };
 
-            // visibilitychange - fires when tab hidden/closed, NOT on internal SPA nav
-            document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'hidden') {
-                    // Skip if watching
-                    if (self._currentWatching) {
-                        console.log('[Social] Tab hidden but watching - skip offline');
-                        return;
-                    }
-                    goOffline();
-                } else {
-                    // Tab visible - send heartbeat
-                    self.sendHeartbeat();
-                }
-            });
+            // Handle page unload (close tab/window, navigate away)
+            window.addEventListener('beforeunload', goOffline);
+            window.addEventListener('pagehide', goOffline);
+            window.addEventListener('unload', goOffline);
 
             // Handle Jellyfin logout
             if (window.Events) {

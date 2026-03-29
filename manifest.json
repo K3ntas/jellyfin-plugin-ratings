@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.140.0",
+        "changelog": "Fix offline status - use beforeunload for browser close, clear ForceOffline on playback start",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.140.0/jellyfin-plugin-ratings_2.0.140.0.zip",
+        "checksum": "e2d211831104d9695370457896aaf537d088e87aff39cc7ce1a7a00d009ca44a",
+        "timestamp": "2026-03-29T19:00:00Z"
+      },
+      {
         "version": "2.0.139.0",
         "changelog": "Clean visibilitychange approach - no beforeunload, fetch with keepalive",
         "targetAbi": "10.11.0.0",

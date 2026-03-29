@@ -829,7 +829,8 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
-        /// Sets what the user is currently watching. Does NOT affect online status at all.
+        /// Sets what the user is currently watching.
+        /// Also clears ForceOffline and sets user Online (handles race condition with beforeunload).
         /// </summary>
         /// <param name="userId">The user ID.</param>
         /// <param name="watching">The watching info.</param>
@@ -849,8 +850,15 @@ namespace Jellyfin.Plugin.Ratings.Data
                     _onlineStatuses[userId] = status;
                 }
 
-                // ONLY update watching - never touch Status or heartbeat
+                // Update watching
                 status.Watching = watching;
+
+                // Clear ForceOffline - user is actively watching, not offline
+                // This handles the race condition where beforeunload fires during navigation to player
+                status.ForceOffline = false;
+                status.LastHeartbeat = DateTime.UtcNow;
+                status.LastSeen = DateTime.UtcNow;
+                status.Status = "Online";
             }
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
