@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.139.0",
+        "changelog": "Clean visibilitychange approach - no beforeunload, fetch with keepalive",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.139.0/jellyfin-plugin-ratings_2.0.139.0.zip",
+        "checksum": "74174b436addd78fd8a20a77adb24fa3",
+        "timestamp": "2026-03-29T18:00:00Z"
+      },
+      {
         "version": "2.0.138.0",
         "changelog": "Fix browser close offline - use beforeunload with heartbeat recovery on playback",
         "targetAbi": "10.11.0.0",

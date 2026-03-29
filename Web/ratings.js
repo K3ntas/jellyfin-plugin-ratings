@@ -1148,57 +1148,39 @@
          */
         registerOfflineHandler: function () {
             var self = this;
-            var offlineSent = false;
 
             var goOffline = function () {
-                if (offlineSent) return;
                 if (!window.ApiClient) return;
 
                 var baseUrl = ApiClient.serverAddress();
                 var token = ApiClient.accessToken();
                 if (!token) return;
 
-                offlineSent = true;
-                console.log('[Social] Going offline...');
+                console.log('[Social] Going offline via visibilitychange...');
 
-                // Try fetch with keepalive first (supports headers)
-                try {
-                    fetch(baseUrl + '/Social/Offline', {
-                        method: 'POST',
-                        headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
-                        body: '{}',
-                        keepalive: true
-                    }).catch(function() {});
-                } catch (e) {
-                    // Fallback to sendBeacon (uses query param auth)
-                    if (navigator.sendBeacon) {
-                        var blob = new Blob(['{}'], { type: 'application/json' });
-                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
-                    }
-                }
+                // Use fetch with keepalive - more reliable than sendBeacon
+                fetch(baseUrl + '/Social/Offline', {
+                    method: 'POST',
+                    headers: {
+                        'X-Emby-Token': token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: '{}',
+                    keepalive: true
+                }).catch(function() {});
             };
 
-            // beforeunload - fires when browser/tab closes
-            window.addEventListener('beforeunload', function () {
-                // Only skip if actively watching
-                if (self._currentWatching) {
-                    console.log('[Social] beforeunload skipped - watching');
-                    return;
-                }
-                console.log('[Social] beforeunload - going offline');
-                goOffline();
-            });
-
-            // pagehide - backup for mobile browsers
-            window.addEventListener('pagehide', function () {
-                if (self._currentWatching) return;
-                goOffline();
-            });
-
-            // visibilitychange - restore online when tab visible again
+            // visibilitychange - fires when tab hidden/closed, NOT on internal SPA nav
             document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'visible') {
-                    offlineSent = false;
+                if (document.visibilityState === 'hidden') {
+                    // Skip if watching
+                    if (self._currentWatching) {
+                        console.log('[Social] Tab hidden but watching - skip offline');
+                        return;
+                    }
+                    goOffline();
+                } else {
+                    // Tab visible - send heartbeat
                     self.sendHeartbeat();
                 }
             });
@@ -2352,9 +2334,6 @@
             var self = this;
             if (!state || !state.NowPlayingItem) return;
 
-            // Send heartbeat immediately to override any offline from beforeunload
-            self.sendHeartbeat();
-
             var item = state.NowPlayingItem;
             self._currentWatching = {
                 itemId: item.Id,
@@ -2375,9 +2354,6 @@
         onPlaybackStartFromApi: function (options) {
             var self = this;
             if (!options || !options.ItemId) return;
-
-            // Send heartbeat immediately to override any offline from beforeunload
-            self.sendHeartbeat();
 
             // Fetch item details if needed
             if (options.Item) {
