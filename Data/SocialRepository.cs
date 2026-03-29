@@ -829,68 +829,49 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
-        /// Sets what the user is currently watching. Does not affect online status.
+        /// Sets what the user is currently watching. Does NOT affect online status at all.
         /// </summary>
         /// <param name="userId">The user ID.</param>
         /// <param name="watching">The watching info.</param>
-        /// <returns>The updated online status.</returns>
-        public async Task<UserOnlineStatus> SetWatchingAsync(Guid userId, CurrentlyWatching watching)
+        public async Task SetWatchingOnlyAsync(Guid userId, CurrentlyWatching watching)
         {
-            UserOnlineStatus status;
-
             lock (_lock)
             {
-                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                if (!_onlineStatuses.TryGetValue(userId, out var status))
                 {
                     status = new UserOnlineStatus
                     {
                         UserId = userId,
                         LastSeen = DateTime.UtcNow,
-                        LastHeartbeat = DateTime.UtcNow
+                        LastHeartbeat = DateTime.UtcNow,
+                        Status = "Online"
                     };
                     _onlineStatuses[userId] = status;
                 }
 
-                // Only update watching
+                // ONLY update watching - never touch Status or heartbeat
                 status.Watching = watching;
-                // Refresh the status field to reflect current state
-                status.Status = status.GetEffectiveStatus();
             }
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
-            return status;
         }
 
         /// <summary>
-        /// Clears what the user is watching. Does not affect online status.
+        /// Clears what the user is watching. Does NOT affect online status at all.
         /// </summary>
         /// <param name="userId">The user ID.</param>
-        /// <returns>The updated online status.</returns>
-        public async Task<UserOnlineStatus> ClearWatchingAsync(Guid userId)
+        public async Task ClearWatchingOnlyAsync(Guid userId)
         {
-            UserOnlineStatus status;
-
             lock (_lock)
             {
-                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                if (_onlineStatuses.TryGetValue(userId, out var status))
                 {
-                    status = new UserOnlineStatus
-                    {
-                        UserId = userId,
-                        LastSeen = DateTime.UtcNow,
-                        LastHeartbeat = DateTime.UtcNow
-                    };
-                    _onlineStatuses[userId] = status;
+                    // ONLY clear watching - never touch Status or heartbeat
+                    status.Watching = null;
                 }
-
-                // Only clear watching
-                status.Watching = null;
-                // Refresh the status field to reflect current state
-                status.Status = status.GetEffectiveStatus();
             }
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
-            return status;
         }
 
         /// <summary>

@@ -2078,16 +2078,33 @@
                     break;
 
                 case 'SocialStatusUpdate':
-                    // Single friend status update
+                    // Single friend STATUS update (online/offline only)
                     console.log('[Social] Status update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existing = self._friendsStatusCache[data.SocialData.userId] || {};
+                        // Merge but preserve watching if not provided
                         self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
-                        var updated = self.updateFriendElement(data.SocialData);
-                        console.log('[Social] Friend element updated:', updated);
+                        self.updateFriendStatusOnly(data.SocialData);
+                    }
+                    break;
+
+                case 'SocialWatchingUpdate':
+                    // Single friend WATCHING update (movie title only, no status change)
+                    console.log('[Social] Watching update received:', data.SocialData);
+                    if (data.SocialData) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
+                        // ONLY update watching, keep existing status
+                        existingFriend.watching = data.SocialData.watching;
+                        existingFriend.username = data.SocialData.username;
+                        existingFriend.userId = data.SocialData.userId;
+                        self._friendsStatusCache[data.SocialData.userId] = existingFriend;
+                        self.updateFriendWatchingOnly(data.SocialData);
                     }
                     break;
 
@@ -2501,8 +2518,76 @@
         },
 
         /**
-         * Send heartbeat to server with optional watching info for instant updates
-         * @param {object} options - Optional: { watching: {...}, stopped: true/false }
+         * Update ONLY the status (online/offline) for a friend - does NOT touch watching
+         */
+        updateFriendStatusOnly: function (data) {
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + data.userId + '"]');
+            if (!friendEl) return false;
+
+            var status = data.status || 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+            // Update status dot ONLY
+            var statusDot = friendEl.querySelector('.social-status-dot');
+            if (statusDot) {
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update status text ONLY
+            var statusDiv = friendEl.querySelector('.social-friend-status');
+            if (statusDiv) {
+                statusDiv.textContent = statusText;
+            }
+
+            console.log('[Social] Updated status only for', data.userId, 'to', status);
+            return true;
+        },
+
+        /**
+         * Update ONLY the watching info for a friend - does NOT touch status
+         */
+        updateFriendWatchingOnly: function (data) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + data.userId + '"]');
+            if (!friendEl) return false;
+
+            var infoDiv = friendEl.querySelector('.social-friend-info');
+            var existingWatching = friendEl.querySelector('.social-friend-watching');
+
+            if (data.watching) {
+                var watchTitle = data.watching.seriesName
+                    ? data.watching.seriesName + ' ' + data.watching.episodeInfo
+                    : data.watching.title;
+                var itemId = data.watching.itemId;
+                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    '<span class="watching-icon">&#9654;</span> ' +
+                    self.escapeHtml(watchTitle) +
+                    ' <span class="watching-progress">(' + data.watching.position + '/' + data.watching.duration + ')</span>' +
+                    '</div>';
+
+                if (existingWatching) {
+                    existingWatching.outerHTML = watchingHtml;
+                } else if (infoDiv) {
+                    infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
+                }
+                console.log('[Social] Updated watching for', data.userId, 'to', watchTitle);
+            } else if (existingWatching) {
+                existingWatching.remove();
+                console.log('[Social] Cleared watching for', data.userId);
+            }
+
+            return true;
+        },
+
+        /**
+         * Send heartbeat to server - ONLY for online status
          */
         sendHeartbeat: function (options) {
             if (!window.ApiClient || !ApiClient.accessToken()) return;

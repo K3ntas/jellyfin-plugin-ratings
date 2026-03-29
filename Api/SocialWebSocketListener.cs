@@ -390,6 +390,54 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Broadcasts ONLY watching update to friends. Does NOT include status.
+        /// This is completely separate from status updates.
+        /// </summary>
+        public async Task BroadcastWatchingUpdateAsync(Guid userId, string username, CurrentlyWatching? watching)
+        {
+            // Get all friends
+            var friendIds = _socialRepository.GetFriendIds(userId);
+
+            // Build watching-only update
+            var updateData = new
+            {
+                userId = userId,
+                username = username,
+                watching = watching != null ? new
+                {
+                    itemId = watching.ItemId,
+                    title = watching.Title,
+                    type = watching.Type,
+                    seriesName = watching.SeriesName,
+                    episodeInfo = watching.EpisodeInfo,
+                    position = watching.FormattedPosition,
+                    duration = watching.FormattedDuration,
+                    progress = watching.ProgressPercent
+                } : null
+            };
+
+            // Send to each friend
+            foreach (var friendId in friendIds)
+            {
+                if (_userConnections.TryGetValue(friendId, out var friendConnections))
+                {
+                    var activeConnections = friendConnections.Where(c => c.State == WebSocketState.Open).ToList();
+                    foreach (var conn in activeConnections)
+                    {
+                        try
+                        {
+                            await SendMessageAsync(conn, "SocialWatchingUpdate", updateData).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "[SocialWS] Failed to send watching update to {FriendId}", friendId);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Broadcasts a generic social event to specific users.
         /// </summary>
         public async Task BroadcastToUsersAsync(IEnumerable<Guid> userIds, string messageType, object data)

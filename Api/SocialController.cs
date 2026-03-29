@@ -906,7 +906,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Sets what the user is currently watching. Separate from online status.
+        /// Sets what the user is currently watching. Completely separate from online status.
         /// </summary>
         [HttpPost("Watching")]
         [Authorize]
@@ -931,20 +931,21 @@ namespace Jellyfin.Plugin.Ratings.Api
                 StartedAt = DateTime.UtcNow
             };
 
-            var status = await _socialRepository.SetWatchingAsync(userId.Value, currentWatching);
+            // ONLY update watching - this does NOT affect online status
+            await _socialRepository.SetWatchingOnlyAsync(userId.Value, currentWatching);
 
-            // Broadcast watching update
+            // Broadcast ONLY the watching update, not status
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
             {
-                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, currentWatching);
+                _ = _webSocketListener.BroadcastWatchingUpdateAsync(userId.Value, user.Username, currentWatching);
             }
 
             return Ok(new { success = true });
         }
 
         /// <summary>
-        /// Clears what the user is watching. Separate from online status.
+        /// Clears what the user is watching. Completely separate from online status.
         /// </summary>
         [HttpPost("StopWatching")]
         [Authorize]
@@ -957,13 +958,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
-            var status = await _socialRepository.ClearWatchingAsync(userId.Value);
+            // ONLY clear watching - this does NOT affect online status
+            await _socialRepository.ClearWatchingOnlyAsync(userId.Value);
 
-            // Broadcast that user stopped watching
+            // Broadcast ONLY the watching update (cleared), not status
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
             {
-                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, null);
+                _ = _webSocketListener.BroadcastWatchingUpdateAsync(userId.Value, user.Username, null);
             }
 
             return Ok(new { success = true });
