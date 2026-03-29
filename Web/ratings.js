@@ -1504,19 +1504,19 @@
                         content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
                     });
             } else if (tab === 'requests') {
-                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        console.log('[Social] Incoming requests data:', JSON.stringify(data, null, 2));
-                        if (data.requests && data.requests.length > 0) {
-                            console.log('[Social] First request keys:', Object.keys(data.requests[0]));
-                        }
-                        self.renderRequestsList(data.requests || []);
-                        self.updateRequestsBadge(data.requests ? data.requests.length : 0);
-                    })
-                    .catch(function () {
-                        content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
-                    });
+                // Fetch both incoming and outgoing requests
+                Promise.all([
+                    fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
+                    fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); })
+                ]).then(function (results) {
+                    var incoming = results[0].requests || [];
+                    var outgoing = results[1].requests || [];
+                    console.log('[Social] Incoming:', incoming.length, 'Outgoing:', outgoing.length);
+                    self.renderRequestsList(incoming, outgoing);
+                    self.updateRequestsBadge(incoming.length);
+                }).catch(function () {
+                    content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
+                });
             } else if (tab === 'notifications') {
                 fetch(baseUrl + '/Social/Notifications', { method: 'GET', credentials: 'include', headers: headers })
                     .then(function (r) { return r.json(); })
@@ -1568,33 +1568,65 @@
         },
 
         /**
-         * Render the requests list
+         * Render the requests list (incoming and outgoing)
          */
-        renderRequestsList: function (requests) {
+        renderRequestsList: function (incoming, outgoing) {
             var content = document.getElementById('social-panel-content');
             var self = this;
             if (!content) return;
 
-            if (requests.length === 0) {
+            outgoing = outgoing || [];
+
+            if (incoming.length === 0 && outgoing.length === 0) {
                 content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No pending requests</div></div>';
                 return;
             }
 
             var html = '';
-            requests.forEach(function (req) {
-                var initial = (req.fromUsername || '?')[0].toUpperCase();
-                html += '<div class="social-request-item" data-requestid="' + req.id + '">' +
-                    '<div class="social-request-info">' +
-                    '<div class="social-friend-avatar">' + initial + '</div>' +
-                    '<div class="social-friend-info">' +
-                    '<div class="social-friend-name">' + self.escapeHtml(req.fromUsername) + '</div>' +
-                    '<div class="social-friend-status">Wants to be friends</div>' +
-                    '</div></div>' +
-                    '<div class="social-request-actions">' +
-                    '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + req.id + '\')">Accept</button>' +
-                    '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + req.id + '\')">Reject</button>' +
-                    '</div></div>';
-            });
+
+            // Incoming requests section
+            if (incoming.length > 0) {
+                html += '<div class="social-requests-section"><div class="social-section-title">Incoming Requests</div>';
+                incoming.forEach(function (req) {
+                    var username = req.FromUsername || req.fromUsername || '?';
+                    var id = req.Id || req.id;
+                    var initial = username[0].toUpperCase();
+                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                        '<div class="social-request-info">' +
+                        '<div class="social-friend-avatar">' + initial + '</div>' +
+                        '<div class="social-friend-info">' +
+                        '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
+                        '<div class="social-friend-status">Wants to be friends</div>' +
+                        '</div></div>' +
+                        '<div class="social-request-actions">' +
+                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + id + '\')">Accept</button>' +
+                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + id + '\')">Reject</button>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            // Outgoing requests section
+            if (outgoing.length > 0) {
+                html += '<div class="social-requests-section"><div class="social-section-title">Sent Requests</div>';
+                outgoing.forEach(function (req) {
+                    var username = req.ToUsername || req.toUsername || '?';
+                    var id = req.Id || req.id;
+                    var initial = username[0].toUpperCase();
+                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                        '<div class="social-request-info">' +
+                        '<div class="social-friend-avatar">' + initial + '</div>' +
+                        '<div class="social-friend-info">' +
+                        '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
+                        '<div class="social-friend-status">Request pending</div>' +
+                        '</div></div>' +
+                        '<div class="social-request-actions">' +
+                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + id + '\')">Cancel</button>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+            }
+
             content.innerHTML = html;
         },
 
@@ -1624,6 +1656,23 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Cancel an outgoing friend request
+         */
+        cancelFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {
@@ -8959,6 +9008,29 @@
                 .social-btn-reject {
                     background: #666;
                     color: white;
+                }
+                .social-btn-cancel {
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    padding: 6px 14px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .social-btn-cancel:hover {
+                    background: #d32f2f;
+                }
+                .social-section-title {
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #888;
+                    text-transform: uppercase;
+                    padding: 8px 12px 4px;
+                    letter-spacing: 0.5px;
+                }
+                .social-requests-section {
+                    margin-bottom: 10px;
                 }
                 .social-empty-state {
                     text-align: center;

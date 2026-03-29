@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.106.0",
+        "changelog": "Fix friend requests: show username correctly, show sent requests with cancel option",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.106.0/jellyfin-plugin-ratings_2.0.106.0.zip",
+        "checksum": "d1439a42cd422a176d89a1458274296c",
+        "timestamp": "2026-03-29T00:00:00Z"
+      },
+      {
         "version": "2.0.105.0",
         "changelog": "Fix username not displaying in friend requests (case-insensitive JSON deserialization)",
         "targetAbi": "10.11.0.0",
