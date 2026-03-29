@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.135.0",
+        "changelog": "Restore working offline detection with playbackActive flag to prevent offline during play",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.135.0/jellyfin-plugin-ratings_2.0.135.0.zip",
+        "checksum": "dc74cf51575ac36df3d14cfd5f266a22",
+        "timestamp": "2026-03-29T16:00:00Z"
+      },
+      {
         "version": "2.0.134.0",
         "changelog": "Fix instant offline when closing browser - use sendBeacon with tabHidden check",
         "targetAbi": "10.11.0.0",
