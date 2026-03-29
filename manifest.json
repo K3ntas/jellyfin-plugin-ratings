@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.108.0",
+        "changelog": "Phase 4: Online Status - heartbeat, status indicators (Online/Away/DND/Offline), currently watching display",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.108.0/jellyfin-plugin-ratings_2.0.108.0.zip",
+        "checksum": "40169e83c818baa425ee2aea1171fbcb",
+        "timestamp": "2026-03-29T01:00:00Z"
+      },
+      {
         "version": "2.0.107.0",
         "changelog": "Remove notifications tab, simplify friends panel UI",
         "targetAbi": "10.11.0.0",

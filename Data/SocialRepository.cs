@@ -26,12 +26,14 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _friendRequestsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _friendshipsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _notificationsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _onlineStatusWriteLock = new(1, 1);
 
         // In-memory storage
         private Dictionary<Guid, UserProfile> _profiles;
         private List<FriendRequest> _friendRequests;
         private List<Friendship> _friendships;
         private List<SocialNotification> _notifications;
+        private Dictionary<Guid, UserOnlineStatus> _onlineStatuses;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialRepository"/> class.
@@ -47,6 +49,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _friendRequests = new List<FriendRequest>();
             _friendships = new List<Friendship>();
             _notifications = new List<SocialNotification>();
+            _onlineStatuses = new Dictionary<Guid, UserOnlineStatus>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -58,9 +61,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadFriendRequests();
             LoadFriendships();
             LoadNotifications();
+            LoadOnlineStatuses();
 
-            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, Notifications: {Notifications}",
-                _profiles.Count, _friendRequests.Count, _friendships.Count, _notifications.Count);
+            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, OnlineStatuses: {OnlineStatuses}",
+                _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count);
         }
 
         /// <summary>
@@ -732,6 +736,185 @@ namespace Jellyfin.Plugin.Ratings.Data
             finally
             {
                 _notificationsWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Online Status
+
+        /// <summary>
+        /// Updates a user's heartbeat (marks them as online).
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watching">Optional currently watching info.</param>
+        /// <returns>The updated online status.</returns>
+        public async Task<UserOnlineStatus> UpdateHeartbeatAsync(Guid userId, CurrentlyWatching? watching = null)
+        {
+            UserOnlineStatus status;
+
+            lock (_lock)
+            {
+                if (!_onlineStatuses.TryGetValue(userId, out status!))
+                {
+                    status = new UserOnlineStatus
+                    {
+                        UserId = userId,
+                        LastSeen = DateTime.UtcNow,
+                        LastHeartbeat = DateTime.UtcNow
+                    };
+                    _onlineStatuses[userId] = status;
+                }
+                else
+                {
+                    status.LastHeartbeat = DateTime.UtcNow;
+                    status.LastSeen = DateTime.UtcNow;
+                }
+
+                status.Watching = watching;
+                status.Status = status.GetEffectiveStatus();
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+            return status;
+        }
+
+        /// <summary>
+        /// Gets a user's online status.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The online status or null if not found.</returns>
+        public UserOnlineStatus? GetOnlineStatus(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_onlineStatuses.TryGetValue(userId, out var status))
+                {
+                    // Update the effective status before returning
+                    status.Status = status.GetEffectiveStatus();
+                    return status;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets online statuses for multiple users (friends).
+        /// </summary>
+        /// <param name="userIds">List of user IDs.</param>
+        /// <returns>Dictionary of user ID to online status.</returns>
+        public Dictionary<Guid, UserOnlineStatus> GetOnlineStatuses(IEnumerable<Guid> userIds)
+        {
+            var result = new Dictionary<Guid, UserOnlineStatus>();
+
+            lock (_lock)
+            {
+                foreach (var userId in userIds)
+                {
+                    if (_onlineStatuses.TryGetValue(userId, out var status))
+                    {
+                        status.Status = status.GetEffectiveStatus();
+                        result[userId] = status;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Sets a user's manual status override.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="status">The status to set (Online, Away, DoNotDisturb, Invisible) or null to clear.</param>
+        /// <returns>Task.</returns>
+        public async Task SetManualStatusAsync(Guid userId, string? status)
+        {
+            lock (_lock)
+            {
+                if (!_onlineStatuses.TryGetValue(userId, out var onlineStatus))
+                {
+                    onlineStatus = new UserOnlineStatus
+                    {
+                        UserId = userId,
+                        LastSeen = DateTime.UtcNow,
+                        LastHeartbeat = DateTime.UtcNow
+                    };
+                    _onlineStatuses[userId] = onlineStatus;
+                }
+
+                onlineStatus.ManualStatus = status;
+                onlineStatus.Status = onlineStatus.GetEffectiveStatus();
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] User {UserId} set manual status to {Status}", userId, status ?? "auto");
+        }
+
+        /// <summary>
+        /// Clears currently watching for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Task.</returns>
+        public async Task ClearWatchingAsync(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_onlineStatuses.TryGetValue(userId, out var status))
+                {
+                    status.Watching = null;
+                }
+            }
+
+            await SaveOnlineStatusesAsync().ConfigureAwait(false);
+        }
+
+        private void LoadOnlineStatuses()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "online_statuses.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var statuses = JsonSerializer.Deserialize<List<UserOnlineStatus>>(json, options);
+                    if (statuses != null)
+                    {
+                        _onlineStatuses = statuses.ToDictionary(s => s.UserId);
+                        _logger.LogInformation("[Social] Loaded {Count} online statuses from disk", _onlineStatuses.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading online statuses from disk");
+            }
+        }
+
+        private async Task SaveOnlineStatusesAsync()
+        {
+            await _onlineStatusWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "online_statuses.json");
+                List<UserOnlineStatus> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _onlineStatuses.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving online statuses to disk");
+            }
+            finally
+            {
+                _onlineStatusWriteLock.Release();
             }
         }
 

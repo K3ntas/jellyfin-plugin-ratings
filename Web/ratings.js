@@ -1403,6 +1403,9 @@
                         }
                     } catch (e) {}
                 }, 500);
+
+                // Start heartbeat for online status
+                self.startHeartbeat();
             };
 
             tryInit();
@@ -1491,14 +1494,32 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
             if (tab === 'friends') {
-                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        self.renderFriendsList(data.friends || []);
-                    })
-                    .catch(function () {
-                        content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
+                // Fetch both friends list and online statuses
+                Promise.all([
+                    fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
+                    fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+                ]).then(function (results) {
+                    var friendsData = results[0].friends || [];
+                    var statusData = results[1].friends || [];
+
+                    // Merge status info into friends data
+                    var statusMap = {};
+                    statusData.forEach(function (s) { statusMap[s.userId] = s; });
+
+                    friendsData.forEach(function (friend) {
+                        var status = statusMap[friend.userId];
+                        if (status) {
+                            friend.status = status.status;
+                            friend.watching = status.watching;
+                        } else {
+                            friend.status = 'Offline';
+                        }
                     });
+
+                    self.renderFriendsList(friendsData);
+                }).catch(function () {
+                    content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
+                });
             } else if (tab === 'requests') {
                 // Fetch both incoming and outgoing requests
                 Promise.all([
@@ -1535,11 +1556,29 @@
             var html = '';
             friends.forEach(function (friend) {
                 var initial = (friend.username || '?')[0].toUpperCase();
+                var status = friend.status || 'Offline';
+                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+                var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+                // Build watching info if available
+                var watchingHtml = '';
+                if (friend.watching && status !== 'Offline') {
+                    var watchTitle = friend.watching.seriesName
+                        ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
+                        : friend.watching.title;
+                    watchingHtml = '<div class="social-friend-watching">' +
+                        '<span class="watching-icon">&#9654;</span> ' +
+                        self.escapeHtml(watchTitle) +
+                        ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                        '</div>';
+                }
+
                 html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
-                    '<div class="social-friend-avatar">' + initial + '<span class="social-status-dot offline"></span></div>' +
+                    '<div class="social-friend-avatar">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
                     '<div class="social-friend-info">' +
                     '<div class="social-friend-name">' + self.escapeHtml(friend.username) + '</div>' +
-                    '<div class="social-friend-status">Offline</div>' +
+                    '<div class="social-friend-status">' + statusText + '</div>' +
+                    watchingHtml +
                     '</div></div>';
             });
             content.innerHTML = html;
@@ -1684,6 +1723,50 @@
 
             badge.textContent = count;
             badge.classList.toggle('hidden', count === 0);
+        },
+
+        /**
+         * Start heartbeat for online status
+         */
+        startHeartbeat: function () {
+            var self = this;
+
+            // Send initial heartbeat
+            self.sendHeartbeat();
+
+            // Send heartbeat every 60 seconds
+            setInterval(function () {
+                if (window.ApiClient && ApiClient.accessToken() && !self.isOnLoginPage()) {
+                    self.sendHeartbeat();
+                }
+            }, 60000);
+
+            // Also refresh friends list periodically to see status updates (every 30 seconds)
+            setInterval(function () {
+                var panel = document.getElementById('social-friends-panel');
+                var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
+                if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
+                    self.loadFriendsData('friends');
+                }
+            }, 30000);
+        },
+
+        /**
+         * Send heartbeat to server
+         */
+        sendHeartbeat: function () {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Heartbeat', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () {
+                // Silently fail - heartbeat is not critical
+            });
         },
 
         /**
@@ -8849,6 +8932,21 @@
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                }
+                .social-friend-watching {
+                    font-size: 11px;
+                    color: #00a4dc;
+                    margin-top: 2px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-friend-watching .watching-icon {
+                    font-size: 8px;
+                }
+                .social-friend-watching .watching-progress {
+                    color: #666;
+                    font-size: 10px;
                 }
                 .social-request-item {
                     display: flex;

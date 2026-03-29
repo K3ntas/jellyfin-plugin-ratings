@@ -745,6 +745,170 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         #endregion
 
+        #region Online Status
+
+        /// <summary>
+        /// Updates the user's heartbeat (marks them as online).
+        /// </summary>
+        /// <returns>Current status info.</returns>
+        [HttpPost("Heartbeat")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> Heartbeat()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Check if user is currently playing something
+            CurrentlyWatching? watching = null;
+            var sessions = _sessionManager.Sessions
+                .Where(s => s.UserId == userId.Value && s.NowPlayingItem != null)
+                .FirstOrDefault();
+
+            if (sessions?.NowPlayingItem != null)
+            {
+                var item = sessions.NowPlayingItem;
+                watching = new CurrentlyWatching
+                {
+                    ItemId = item.Id,
+                    Title = item.Name ?? "Unknown",
+                    Type = item.MediaType.ToString(),
+                    SeriesName = item.SeriesName,
+                    EpisodeInfo = item.ParentIndexNumber.HasValue && item.IndexNumber.HasValue
+                        ? $"S{item.ParentIndexNumber:D2}E{item.IndexNumber:D2}"
+                        : null,
+                    PositionTicks = sessions.PlayState?.PositionTicks ?? 0,
+                    DurationTicks = item.RunTimeTicks ?? 0,
+                    StartedAt = DateTime.UtcNow
+                };
+            }
+
+            var status = await _socialRepository.UpdateHeartbeatAsync(userId.Value, watching);
+
+            return Ok(new
+            {
+                status = status.Status,
+                watching = watching != null ? new
+                {
+                    title = watching.Title,
+                    type = watching.Type,
+                    seriesName = watching.SeriesName,
+                    episodeInfo = watching.EpisodeInfo,
+                    position = watching.FormattedPosition,
+                    duration = watching.FormattedDuration,
+                    progress = watching.ProgressPercent
+                } : null
+            });
+        }
+
+        /// <summary>
+        /// Gets online status for all friends.
+        /// </summary>
+        /// <returns>Friends' online statuses.</returns>
+        [HttpGet("OnlineStatus")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetOnlineStatus()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get friend IDs
+            var friendIds = _socialRepository.GetFriendIds(userId.Value);
+
+            // Get their online statuses
+            var statuses = _socialRepository.GetOnlineStatuses(friendIds);
+
+            // Build response respecting privacy settings
+            var friends = new System.Collections.Generic.List<object>();
+
+            foreach (var friendId in friendIds)
+            {
+                var user = _userManager.GetUserById(friendId);
+                var profile = _socialRepository.GetProfile(friendId);
+                statuses.TryGetValue(friendId, out var friendStatus);
+
+                // Check privacy - respect ShowOnlineStatus and ShowCurrentlyWatching
+                var showStatus = profile == null ||
+                    profile.Privacy.ShowOnlineStatus == "Everyone" ||
+                    (profile.Privacy.ShowOnlineStatus == "Friends" && _socialRepository.AreFriends(userId.Value, friendId));
+
+                var showWatching = profile == null ||
+                    profile.Privacy.ShowCurrentlyWatching == "Everyone" ||
+                    (profile.Privacy.ShowCurrentlyWatching == "Friends" && _socialRepository.AreFriends(userId.Value, friendId));
+
+                // Handle Invisible - appears as Offline
+                var effectiveStatus = friendStatus?.Status ?? "Offline";
+                if (effectiveStatus == "Invisible")
+                {
+                    effectiveStatus = "Offline";
+                }
+
+                friends.Add(new
+                {
+                    userId = friendId,
+                    username = user?.Username ?? "Unknown",
+                    status = showStatus ? effectiveStatus : "Offline",
+                    lastSeen = showStatus ? friendStatus?.LastSeen : null,
+                    watching = showWatching && effectiveStatus != "Offline" && friendStatus?.Watching != null ? new
+                    {
+                        itemId = friendStatus.Watching.ItemId,
+                        title = friendStatus.Watching.Title,
+                        type = friendStatus.Watching.Type,
+                        seriesName = friendStatus.Watching.SeriesName,
+                        episodeInfo = friendStatus.Watching.EpisodeInfo,
+                        position = friendStatus.Watching.FormattedPosition,
+                        duration = friendStatus.Watching.FormattedDuration,
+                        progress = friendStatus.Watching.ProgressPercent
+                    } : null
+                });
+            }
+
+            return Ok(new { friends });
+        }
+
+        /// <summary>
+        /// Sets the user's manual status.
+        /// </summary>
+        /// <param name="request">Status request.</param>
+        /// <returns>Success status.</returns>
+        [HttpPost("Status")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> SetStatus([FromBody] SetStatusRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Validate status value
+            var validStatuses = new[] { "Online", "Away", "DoNotDisturb", "Invisible", null };
+            if (!validStatuses.Contains(request.Status))
+            {
+                return BadRequest(new { success = false, error = "Invalid status. Valid values: Online, Away, DoNotDisturb, Invisible, or null to clear." });
+            }
+
+            await _socialRepository.SetManualStatusAsync(userId.Value, request.Status);
+
+            return Ok(new
+            {
+                success = true,
+                status = request.Status ?? "auto",
+                message = request.Status == null ? "Status set to automatic" : $"Status set to {request.Status}"
+            });
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private Guid? GetCurrentUserId()
@@ -811,5 +975,16 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets or sets the privacy settings.
         /// </summary>
         public UserPrivacySettings? Privacy { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for setting status.
+    /// </summary>
+    public class SetStatusRequest
+    {
+        /// <summary>
+        /// Gets or sets the status. Valid values: Online, Away, DoNotDisturb, Invisible, or null to clear.
+        /// </summary>
+        public string? Status { get; set; }
     }
 }
