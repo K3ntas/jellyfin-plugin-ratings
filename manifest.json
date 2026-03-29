@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.128.0",
+        "changelog": "Fix playback status race conditions, better offline handling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.128.0/jellyfin-plugin-ratings_2.0.128.0.zip",
+        "checksum": "a21b4a447b4c991e513765cb28f465be",
+        "timestamp": "2026-03-29T11:00:00Z"
+      },
+      {
         "version": "2.0.127.0",
         "changelog": "Fix offline status when closing browser during playback",
         "targetAbi": "10.11.0.0",
