@@ -1149,6 +1149,7 @@
         registerOfflineHandler: function () {
             var self = this;
             var offlineCallMade = false;
+            var tabHidden = false; // Track if visibilitychange fired
             self._pendingOfflineTimer = null;
 
             var doOffline = function () {
@@ -1162,21 +1163,22 @@
                 offlineCallMade = true;
                 console.log('[Social] Going offline...');
 
-                try {
-                    fetch(baseUrl + '/Social/Offline', {
-                        method: 'POST',
-                        headers: {
-                            'X-Emby-Token': token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: '{}',
-                        keepalive: true
-                    }).catch(function() {});
-                } catch (e) {
-                    if (navigator.sendBeacon) {
-                        var blob = new Blob(['{}'], { type: 'application/json' });
-                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
-                    }
+                // Use sendBeacon for reliability when page is closing
+                if (navigator.sendBeacon) {
+                    var blob = new Blob(['{}'], { type: 'application/json' });
+                    navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
+                } else {
+                    try {
+                        fetch(baseUrl + '/Social/Offline', {
+                            method: 'POST',
+                            headers: {
+                                'X-Emby-Token': token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: '{}',
+                            keepalive: true
+                        }).catch(function() {});
+                    } catch (e) {}
                 }
             };
 
@@ -1187,17 +1189,35 @@
                     self._pendingOfflineTimer = null;
                     console.log('[Social] Cancelled pending offline - user still active');
                 }
+                tabHidden = false; // Reset flag when playback cancels
             };
 
-            // visibilitychange only fires when tab is actually hidden, not during internal navigation
+            // visibilitychange fires when tab becomes hidden (minimized, switched, closing)
             document.addEventListener('visibilitychange', function () {
                 if (document.visibilityState === 'hidden') {
+                    tabHidden = true;
                     // Tab hidden - wait 2 seconds before going offline
                     // Allows playback to cancel it if user is starting media
                     self._pendingOfflineTimer = setTimeout(doOffline, 2000);
                 } else {
                     // Tab visible again - cancel pending offline
+                    tabHidden = false;
                     self.cancelPendingOffline();
+                }
+            });
+
+            // pagehide fires when page is being unloaded (browser close, tab close, navigation)
+            // Only go offline immediately if tab was already hidden (browser/tab closing)
+            // For SPA navigation, tab stays visible so tabHidden will be false
+            window.addEventListener('pagehide', function () {
+                if (tabHidden && !self._currentWatching) {
+                    // Tab was hidden AND not playing - browser is closing
+                    // Clear timer and go offline immediately
+                    if (self._pendingOfflineTimer) {
+                        clearTimeout(self._pendingOfflineTimer);
+                        self._pendingOfflineTimer = null;
+                    }
+                    doOffline();
                 }
             });
 

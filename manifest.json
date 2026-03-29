@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.134.0",
+        "changelog": "Fix instant offline when closing browser - use sendBeacon with tabHidden check",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.134.0/jellyfin-plugin-ratings_2.0.134.0.zip",
+        "checksum": "fce8949b53f12c6965a578fd938f6188",
+        "timestamp": "2026-03-29T15:30:00Z"
+      },
+      {
         "version": "2.0.133.0",
         "changelog": "Fix status going offline when pressing play - use visibilitychange instead of beforeunload",
         "targetAbi": "10.11.0.0",
