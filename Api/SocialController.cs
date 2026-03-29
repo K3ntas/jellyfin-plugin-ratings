@@ -191,17 +191,22 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
             }
 
-            // Always return current username from Jellyfin (in case it changed)
-            profile.Username = user.Username;
-
             // Get last seen from online status
             var onlineStatus = _socialRepository.GetOnlineStatus(userId);
-            if (onlineStatus != null)
-            {
-                profile.UpdatedAt = onlineStatus.LastSeen;
-            }
+            var lastSeen = onlineStatus?.LastSeen ?? profile.UpdatedAt;
 
-            return Ok(profile);
+            // Return explicit object to ensure correct data
+            return Ok(new
+            {
+                id = profile.Id,
+                userId = profile.UserId,
+                username = user.Username,  // Always from Jellyfin
+                bio = profile.Bio,
+                avatarUrl = profile.AvatarUrl,
+                createdAt = profile.CreatedAt,
+                updatedAt = lastSeen,
+                privacy = profile.Privacy
+            });
         }
 
         /// <summary>

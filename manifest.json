@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.121.0",
+        "changelog": "Fix profile API - return explicit object with correct username from Jellyfin",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.121.0/jellyfin-plugin-ratings_2.0.121.0.zip",
+        "checksum": "b7f8f59a0d7423abc4b829ebb8d79fbf",
+        "timestamp": "2026-03-29T07:30:00Z"
+      },
+      {
         "version": "2.0.120.0",
         "changelog": "Fix profile - show correct username, joined date, last seen from Jellyfin data",
         "targetAbi": "10.11.0.0",
