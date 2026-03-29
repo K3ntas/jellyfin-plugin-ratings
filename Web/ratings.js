@@ -1148,22 +1148,14 @@
          */
         registerOfflineHandler: function () {
             var self = this;
-            var offlineCallMade = false;
 
             var goOffline = function () {
-                // Don't go offline if watching something
-                if (self._currentWatching) {
-                    console.log('[Social] Offline skipped - watching active');
-                    return;
-                }
-                if (offlineCallMade) return;
                 if (!window.ApiClient) return;
 
                 var baseUrl = ApiClient.serverAddress();
                 var token = ApiClient.accessToken();
                 if (!token) return;
 
-                offlineCallMade = true;
                 console.log('[Social] Going offline...');
 
                 // Use sendBeacon - works even when page is closing
@@ -1173,14 +1165,22 @@
                 }
             };
 
-            // visibilitychange - fires when tab hidden/closed, NOT during internal navigation
+            // visibilitychange - fires when tab hidden/closed
             document.addEventListener('visibilitychange', function () {
                 if (document.visibilityState === 'hidden') {
+                    // Don't go offline if watching something
+                    if (self._currentWatching) {
+                        console.log('[Social] Tab hidden but watching - skip offline');
+                        return;
+                    }
                     goOffline();
+                } else {
+                    // Tab visible again - send heartbeat to mark online
+                    self.sendHeartbeat();
                 }
             });
 
-            // Handle Jellyfin logout
+            // Handle Jellyfin logout - immediate
             if (window.Events) {
                 Events.on(ApiClient, 'logout', goOffline);
             }
