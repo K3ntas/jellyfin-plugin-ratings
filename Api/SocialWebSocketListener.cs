@@ -174,21 +174,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Broadcasts a status update to all friends of a user.
         /// Called from SocialController when heartbeat is received.
         /// </summary>
-        public async Task BroadcastStatusUpdateAsync(Guid userId, string username, UserOnlineStatus status, CurrentlyWatching? watching)
+        public async Task BroadcastStatusUpdateAsync(Guid userId, string username, UserOnlineStatus status, CurrentlyWatching? watching, bool skipRateLimit = false)
         {
-            // Rate limiting
-            if (_lastBroadcast.TryGetValue(userId, out var lastTime) && DateTime.UtcNow - lastTime < _minBroadcastInterval)
+            // Rate limiting (skip for important events like going offline)
+            if (!skipRateLimit && _lastBroadcast.TryGetValue(userId, out var lastTime) && DateTime.UtcNow - lastTime < _minBroadcastInterval)
             {
                 return;
             }
             _lastBroadcast[userId] = DateTime.UtcNow;
+
+            _logger.LogDebug("[SocialWS] Broadcasting status update for {UserId}: {Status}", userId, status.Status);
 
             // Get user's privacy settings
             var profile = _socialRepository.GetProfile(userId);
 
             // Get all friends
             var friendIds = _socialRepository.GetFriendIds(userId);
-            if (friendIds.Count == 0) return;
 
             // Build the update message
             var effectiveStatus = status.Status == "Invisible" ? "Offline" : status.Status;

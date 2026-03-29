@@ -980,11 +980,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Set user's status to offline
             var status = _socialRepository.SetUserOffline(userId.Value);
 
-            // Broadcast offline status to friends and profile viewers
+            // Broadcast offline status to friends and profile viewers (skip rate limit for immediate update)
             var user = _userManager.GetUserById(userId.Value);
             if (user != null && status != null)
             {
-                await _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, null);
+                await _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, null, skipRateLimit: true);
             }
 
             return Ok(new { success = true });

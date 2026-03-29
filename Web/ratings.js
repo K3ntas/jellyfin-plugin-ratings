@@ -2093,18 +2093,21 @@
 
                 case 'SocialStatusUpdate':
                     // Single friend status update
+                    console.log('[Social] Status update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existing = self._friendsStatusCache[data.SocialData.userId] || {};
                         self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
-                        self.updateFriendElement(data.SocialData);
+                        var updated = self.updateFriendElement(data.SocialData);
+                        console.log('[Social] Friend element updated:', updated);
                     }
                     break;
 
                 case 'SocialProfileStatsUpdate':
                     // Profile stats update - update stats if we're viewing this profile
+                    console.log('[Social] Profile stats update received:', data.SocialData);
                     if (data.SocialData && data.SocialData.profileUserId) {
                         var viewingProfileId = self._viewingProfileUserId;
                         if (viewingProfileId && viewingProfileId === data.SocialData.profileUserId) {
@@ -2116,8 +2119,10 @@
 
                 case 'SocialProfileStatusUpdate':
                     // Online status update for profile we're viewing
+                    console.log('[Social] Profile status update received:', data.SocialData);
                     if (data.SocialData && data.SocialData.userId) {
                         var viewingId = self._viewingProfileUserId;
+                        console.log('[Social] Viewing profile:', viewingId, 'Update for:', data.SocialData.userId);
                         if (viewingId && viewingId === data.SocialData.userId) {
                             self.updateProfileStatusFromWebSocket(data.SocialData);
                         }
@@ -24122,11 +24127,11 @@
         }
     };
 
-    // Make plugin accessible globally for avatar caching
+    // Make plugin accessible globally (MUST be before init for onclick handlers)
     window.ratingsPlugin = RatingsPlugin;
+    window.RatingsPlugin = RatingsPlugin;
 
     // Initialize when DOM is ready
-
     function initPlugin() {
         RatingsPlugin.init();
     }
@@ -24140,7 +24145,4 @@
 
     // Also try after a delay to ensure Jellyfin is fully loaded
     setTimeout(initPlugin, 2000);
-
-    // Make it globally available
-    window.RatingsPlugin = RatingsPlugin;
 })();
