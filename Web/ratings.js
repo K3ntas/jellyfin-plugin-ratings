@@ -9965,6 +9965,40 @@
                     padding: 40px;
                     color: #888;
                 }
+                .social-profile-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: 16px;
+                    padding: 10px;
+                }
+                .social-stat-card {
+                    background: #252525;
+                    border-radius: 10px;
+                    padding: 20px;
+                    text-align: center;
+                    transition: transform 0.2s, background 0.2s;
+                }
+                .social-stat-card:hover {
+                    background: #2a2a2a;
+                    transform: translateY(-2px);
+                }
+                .social-stat-value {
+                    font-size: 32px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 8px;
+                }
+                .social-stat-star {
+                    color: #ffd700;
+                    font-size: 24px;
+                    margin-left: 4px;
+                }
+                .social-stat-label {
+                    font-size: 13px;
+                    color: #888;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
                 @media (max-width: 768px) {
                     .social-profile-header {
                         flex-direction: column;
@@ -10216,10 +10250,68 @@
                 '<div class="social-profile-tab active" data-tab="overview">Overview</div>' +
                 '</div>' +
                 '<div class="social-profile-content" id="socialProfileContent">' +
-                '<div style="color: #888; text-align: center; padding: 40px;">Profile overview coming soon...</div>' +
+                '<div class="social-profile-loading">Loading stats...</div>' +
                 '</div>';
 
             container.innerHTML = html;
+
+            // Fetch and render stats
+            self.loadProfileStats(profile.userId);
+        },
+
+        /**
+         * Load and render profile stats
+         */
+        loadProfileStats: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (stats) {
+                self.renderProfileStats(stats);
+            })
+            .catch(function (err) {
+                console.error('[Social] Failed to load stats:', err);
+                var content = document.getElementById('socialProfileContent');
+                if (content) {
+                    content.innerHTML = '<div class="social-profile-error">Failed to load stats</div>';
+                }
+            });
+        },
+
+        /**
+         * Render profile stats in the Overview tab
+         */
+        renderProfileStats: function (stats) {
+            var content = document.getElementById('socialProfileContent');
+            if (!content) return;
+
+            var html = '<div class="social-profile-stats-grid">' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.friendsCount || 0) + '</div>' +
+                '<div class="social-stat-label">Friends</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.ratingsCount || 0) + '</div>' +
+                '<div class="social-stat-label">Ratings Given</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.averageRating || 0) + '<span class="social-stat-star">★</span></div>' +
+                '<div class="social-stat-label">Avg Rating</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.memberDays || 0) + '</div>' +
+                '<div class="social-stat-label">Days Member</div>' +
+                '</div>' +
+                '</div>';
+
+            content.innerHTML = html;
         },
 
         /**

@@ -24,6 +24,7 @@ namespace Jellyfin.Plugin.Ratings.Api
     public class SocialController : ControllerBase
     {
         private readonly SocialRepository _socialRepository;
+        private readonly RatingsRepository _ratingsRepository;
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<SocialController> _logger;
@@ -33,18 +34,21 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Initializes a new instance of the <see cref="SocialController"/> class.
         /// </summary>
         /// <param name="socialRepository">Social repository.</param>
+        /// <param name="ratingsRepository">Ratings repository.</param>
         /// <param name="userManager">User manager.</param>
         /// <param name="sessionManager">Session manager.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="webSocketListener">WebSocket listener for real-time updates.</param>
         public SocialController(
             SocialRepository socialRepository,
+            RatingsRepository ratingsRepository,
             IUserManager userManager,
             ISessionManager sessionManager,
             ILogger<SocialController> logger,
             SocialWebSocketListener webSocketListener)
         {
             _socialRepository = socialRepository;
+            _ratingsRepository = ratingsRepository;
             _userManager = userManager;
             _sessionManager = sessionManager;
             _logger = logger;
@@ -206,6 +210,62 @@ namespace Jellyfin.Plugin.Ratings.Api
                 createdAt = profile.CreatedAt,
                 updatedAt = lastSeen,
                 privacy = profile.Privacy
+            });
+        }
+
+        /// <summary>
+        /// Gets a user's profile statistics.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The user's stats.</returns>
+        [HttpGet("Profile/{userId}/Stats")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<object> GetProfileStats([FromRoute] [Required] Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get user from Jellyfin
+            var user = _userManager.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            // Get friends count
+            var friendIds = _socialRepository.GetFriendIds(userId);
+            var friendsCount = friendIds.Count;
+
+            // Get ratings data
+            var userRatings = _ratingsRepository.GetUserRatings(userId);
+            var ratingsCount = userRatings.Count;
+            var averageRating = ratingsCount > 0
+                ? Math.Round(userRatings.Average(r => r.Rating), 1)
+                : 0;
+
+            // Get how many ratings this user received (ratings on their reviews - not implemented yet)
+            // For now, we can skip this or show 0
+
+            // Calculate member duration
+            var profile = _socialRepository.GetProfile(userId);
+            var memberSince = profile?.CreatedAt ?? DateTime.UtcNow;
+            var memberDays = (int)(DateTime.UtcNow - memberSince).TotalDays;
+
+            return Ok(new
+            {
+                friendsCount,
+                ratingsCount,
+                averageRating,
+                memberDays,
+                // Future stats placeholders
+                moviesWatched = 0,  // Would need Jellyfin API
+                seriesWatched = 0,  // Would need Jellyfin API
+                totalWatchHours = 0 // Would need Jellyfin API
             });
         }
 

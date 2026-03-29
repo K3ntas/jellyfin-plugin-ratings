@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.122.0",
+        "changelog": "Step 7.3: Profile Stats - friends count, ratings given, average rating, member days",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.122.0/jellyfin-plugin-ratings_2.0.122.0.zip",
+        "checksum": "cd225c2a03451c0e954e9ac1aba0e808",
+        "timestamp": "2026-03-29T08:00:00Z"
+      },
+      {
         "version": "2.0.121.0",
         "changelog": "Fix profile API - return explicit object with correct username from Jellyfin",
         "targetAbi": "10.11.0.0",
