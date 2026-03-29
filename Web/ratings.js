@@ -1503,11 +1503,31 @@
          * Toggle the friends panel open/closed
          */
         toggleFriendsPanel: function () {
+            var self = this;
             var panel = document.getElementById('social-friends-panel');
             if (panel) {
                 panel.classList.toggle('open');
                 if (panel.classList.contains('open')) {
                     this.loadFriendsData();
+                    // Start periodic refresh every 10 seconds while panel is open
+                    if (!self._friendsRefreshInterval) {
+                        self._friendsRefreshInterval = setInterval(function () {
+                            var p = document.getElementById('social-friends-panel');
+                            if (p && p.classList.contains('open')) {
+                                var activeTab = p.querySelector('.social-tab.active');
+                                var tab = activeTab ? activeTab.getAttribute('data-tab') : 'friends';
+                                if (tab === 'friends') {
+                                    self.loadFriendsData('friends');
+                                }
+                            }
+                        }, 10000);
+                    }
+                } else {
+                    // Stop refresh when panel closed
+                    if (self._friendsRefreshInterval) {
+                        clearInterval(self._friendsRefreshInterval);
+                        self._friendsRefreshInterval = null;
+                    }
                 }
             }
         },
