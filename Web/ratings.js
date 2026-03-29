@@ -1506,6 +1506,11 @@
                     var statusMap = {};
                     statusData.forEach(function (s) { statusMap[s.userId] = s; });
 
+                    // Initialize cache if needed
+                    if (!self._friendsStatusCache) {
+                        self._friendsStatusCache = {};
+                    }
+
                     friendsData.forEach(function (friend) {
                         var status = statusMap[friend.userId];
                         if (status) {
@@ -1514,6 +1519,8 @@
                         } else {
                             friend.status = 'Offline';
                         }
+                        // Store in cache for WebSocket updates
+                        self._friendsStatusCache[friend.userId] = friend;
                     });
 
                     self.renderFriendsList(friendsData);
@@ -2018,11 +2025,14 @@
 
             switch (message.Type) {
                 case 'InitialStatus':
-                    // Full status of all friends received
+                    // Full status of all friends received - merge with existing cache
                     if (message.Data && message.Data.friends) {
-                        self._friendsStatusCache = {};
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
                         message.Data.friends.forEach(function (friend) {
-                            self._friendsStatusCache[friend.userId] = friend;
+                            var existing = self._friendsStatusCache[friend.userId] || {};
+                            self._friendsStatusCache[friend.userId] = Object.assign({}, existing, friend);
                         });
                         // Update UI if panel is open
                         self.updateFriendsUIFromCache();
@@ -2030,9 +2040,14 @@
                     break;
 
                 case 'StatusUpdate':
-                    // Single friend status update
+                    // Single friend status update - merge with existing data
                     if (message.Data) {
-                        self._friendsStatusCache[message.Data.userId] = message.Data;
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        var existingFriend = self._friendsStatusCache[message.Data.userId] || {};
+                        // Merge: keep existing data, update status and watching
+                        self._friendsStatusCache[message.Data.userId] = Object.assign({}, existingFriend, message.Data);
                         // Update UI if panel is open
                         self.updateFriendsUIFromCache();
                     }
@@ -2046,6 +2061,7 @@
 
         /**
          * Update friends UI from cache (for WebSocket updates)
+         * Updates individual friend elements without re-rendering the whole list
          */
         updateFriendsUIFromCache: function () {
             var self = this;
@@ -2053,12 +2069,79 @@
             var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
 
             if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
-                // Convert cache to array and render
-                var friends = Object.values(self._friendsStatusCache);
-                if (friends.length > 0) {
-                    self.renderFriendsList(friends);
+                var content = document.getElementById('social-panel-content');
+                // Check if friends list is rendered (has friend items)
+                var hasFriendItems = content && content.querySelector('.social-friend-item');
+
+                if (!hasFriendItems && Object.keys(self._friendsStatusCache).length > 0) {
+                    // No friend items in DOM but we have cache data - render full list
+                    self.renderFriendsList(Object.values(self._friendsStatusCache));
+                } else {
+                    // Update each friend in cache by finding their element
+                    Object.values(self._friendsStatusCache).forEach(function (friend) {
+                        self.updateFriendElement(friend);
+                    });
                 }
             }
+        },
+
+        /**
+         * Update a single friend's element in the DOM
+         * @returns {boolean} True if element was found and updated
+         */
+        updateFriendElement: function (friend) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + friend.userId + '"]');
+            if (!friendEl) {
+                // Friend not in DOM
+                return false;
+            }
+
+            var status = friend.status || 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+            // Update status dot
+            var statusDot = friendEl.querySelector('.social-status-dot');
+            if (statusDot) {
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update status text
+            var statusDiv = friendEl.querySelector('.social-friend-status');
+            if (statusDiv) {
+                statusDiv.textContent = statusText;
+            }
+
+            // Update or add/remove watching info
+            var infoDiv = friendEl.querySelector('.social-friend-info');
+            var existingWatching = friendEl.querySelector('.social-friend-watching');
+
+            if (friend.watching && status !== 'Offline') {
+                var watchTitle = friend.watching.seriesName
+                    ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
+                    : friend.watching.title;
+                var itemId = friend.watching.itemId;
+                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    '<span class="watching-icon">&#9654;</span> ' +
+                    self.escapeHtml(watchTitle) +
+                    ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                    '</div>';
+
+                if (existingWatching) {
+                    existingWatching.outerHTML = watchingHtml;
+                } else if (infoDiv) {
+                    infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
+                }
+            } else if (existingWatching) {
+                // Remove watching info if user stopped
+                existingWatching.remove();
+            }
+
+            return true;
         },
 
         /**
