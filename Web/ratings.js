@@ -2577,6 +2577,17 @@
                 } else if (infoDiv) {
                     infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
                 }
+
+                // If watching media, user MUST be Online - update status dot
+                var statusDot = friendEl.querySelector('.social-status-dot');
+                if (statusDot) {
+                    statusDot.className = 'social-status-dot online';
+                }
+                var statusDiv = friendEl.querySelector('.social-friend-status');
+                if (statusDiv) {
+                    statusDiv.textContent = 'Online';
+                }
+
                 console.log('[Social] Updated watching for', data.userId, 'to', watchTitle);
             } else if (existingWatching) {
                 existingWatching.remove();

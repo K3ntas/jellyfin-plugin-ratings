@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.138.0",
+        "changelog": "Frontend fix: when movie title shows, also show Online status dot",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.138.0/jellyfin-plugin-ratings_2.0.138.0.zip",
+        "checksum": "a6815672a42caca7b65a856094534218",
+        "timestamp": "2026-03-29T16:00:00Z"
+      },
+      {
         "version": "2.0.135.0",
         "changelog": "Fix all status reads to use GetEffectiveStatus() - ensures Watching forces Online everywhere",
         "targetAbi": "10.11.0.0",
