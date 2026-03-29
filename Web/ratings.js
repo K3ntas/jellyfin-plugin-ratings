@@ -2092,26 +2092,19 @@
                     break;
 
                 case 'SocialWatchingUpdate':
-                    // Watching update - includes status (Online when watching)
+                    // Single friend WATCHING update (movie title only, no status change)
                     console.log('[Social] Watching update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
+                        // ONLY update watching, keep existing status
                         existingFriend.watching = data.SocialData.watching;
                         existingFriend.username = data.SocialData.username;
                         existingFriend.userId = data.SocialData.userId;
-                        // Update status if provided (will be Online when watching)
-                        if (data.SocialData.status) {
-                            existingFriend.status = data.SocialData.status;
-                        }
                         self._friendsStatusCache[data.SocialData.userId] = existingFriend;
-                        // Update both watching AND status
                         self.updateFriendWatchingOnly(data.SocialData);
-                        if (data.SocialData.status) {
-                            self.updateFriendStatusOnly(data.SocialData);
-                        }
                     }
                     break;
 
