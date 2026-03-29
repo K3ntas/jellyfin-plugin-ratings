@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.114.0",
+        "changelog": "Fast polling for real-time status updates (3s interval when panel open)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.114.0/jellyfin-plugin-ratings_2.0.114.0.zip",
+        "checksum": "0db64a010df014b94ae4b0160f0d0b4c",
+        "timestamp": "2026-03-29T04:00:00Z"
+      },
+      {
         "version": "2.0.113.0",
         "changelog": "Real-time UI updates - friends list updates instantly via WebSocket without refresh",
         "targetAbi": "10.11.0.0",

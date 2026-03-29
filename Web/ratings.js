@@ -1733,15 +1733,11 @@
             badge.classList.toggle('hidden', count === 0);
         },
 
-        // WebSocket connection for real-time updates
-        _socialWebSocket: null,
-        _wsReconnectAttempts: 0,
-        _wsMaxReconnectAttempts: 5,
-        _wsReconnectDelay: 3000,
+        // Cache for friends status
         _friendsStatusCache: {},
 
         /**
-         * Start heartbeat and WebSocket for online status
+         * Start heartbeat and polling for online status
          */
         startHeartbeat: function () {
             var self = this;
@@ -1759,20 +1755,72 @@
             // Hook into playback events for instant watching updates
             self.setupPlaybackHooks();
 
-            // Connect WebSocket for real-time updates
-            self.connectWebSocket();
+            // Fast polling for friends status when panel is open (every 3 seconds)
+            self._fastPollInterval = null;
+            self.startFastPolling();
+        },
 
-            // Fallback: Refresh friends list every 30 seconds if WebSocket is not connected
+        /**
+         * Start fast polling when friends panel is open
+         */
+        startFastPolling: function () {
+            var self = this;
+
+            // Check every 500ms if we need to poll
             setInterval(function () {
                 var panel = document.getElementById('social-friends-panel');
                 var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
-                if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
-                    // Only poll if WebSocket is not connected
-                    if (!self._socialWebSocket || self._socialWebSocket.readyState !== WebSocket.OPEN) {
-                        self.loadFriendsData('friends');
-                    }
+                var shouldPoll = panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends';
+
+                if (shouldPoll && !self._fastPollInterval) {
+                    // Start fast polling
+                    self._fastPollInterval = setInterval(function () {
+                        self.pollFriendsStatus();
+                    }, 3000);
+                    // Poll immediately
+                    self.pollFriendsStatus();
+                } else if (!shouldPoll && self._fastPollInterval) {
+                    // Stop fast polling
+                    clearInterval(self._fastPollInterval);
+                    self._fastPollInterval = null;
                 }
-            }, 30000);
+            }, 500);
+        },
+
+        /**
+         * Poll friends status from server
+         */
+        pollFriendsStatus: function () {
+            var self = this;
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/OnlineStatus', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var statusData = data.friends || [];
+                // Update cache and UI
+                statusData.forEach(function (friend) {
+                    if (!self._friendsStatusCache) {
+                        self._friendsStatusCache = {};
+                    }
+                    var existing = self._friendsStatusCache[friend.userId] || {};
+                    self._friendsStatusCache[friend.userId] = Object.assign({}, existing, friend);
+                });
+                // Update UI elements
+                statusData.forEach(function (friend) {
+                    self.updateFriendElement(friend);
+                });
+            })
+            .catch(function () {
+                // Silently fail
+            });
         },
 
         /**
@@ -1941,126 +1989,8 @@
             }
             return null;
         },
-
         /**
-         * Connect to WebSocket for real-time status updates
-         */
-        connectWebSocket: function () {
-            var self = this;
-
-            if (!window.ApiClient || !ApiClient.accessToken()) {
-                // Retry in a bit
-                setTimeout(function () { self.connectWebSocket(); }, 5000);
-                return;
-            }
-
-            if (self.isOnLoginPage()) return;
-
-            // Don't reconnect if already connected
-            if (self._socialWebSocket && self._socialWebSocket.readyState === WebSocket.OPEN) return;
-
-            var baseUrl = ApiClient.serverAddress();
-            var wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
-            wsUrl += '/Social/WebSocket?token=' + encodeURIComponent(ApiClient.accessToken());
-
-            try {
-                self._socialWebSocket = new WebSocket(wsUrl);
-
-                self._socialWebSocket.onopen = function () {
-                    console.log('[Social] WebSocket connected');
-                    self._wsReconnectAttempts = 0;
-                };
-
-                self._socialWebSocket.onmessage = function (event) {
-                    try {
-                        var message = JSON.parse(event.data);
-                        self.handleWebSocketMessage(message);
-                    } catch (e) {
-                        console.error('[Social] WebSocket message parse error:', e);
-                    }
-                };
-
-                self._socialWebSocket.onclose = function (event) {
-                    console.log('[Social] WebSocket closed:', event.code, event.reason);
-                    self._socialWebSocket = null;
-                    self.scheduleWebSocketReconnect();
-                };
-
-                self._socialWebSocket.onerror = function (error) {
-                    console.error('[Social] WebSocket error:', error);
-                };
-            } catch (e) {
-                console.error('[Social] WebSocket connection failed:', e);
-                self.scheduleWebSocketReconnect();
-            }
-        },
-
-        /**
-         * Schedule WebSocket reconnection with exponential backoff
-         */
-        scheduleWebSocketReconnect: function () {
-            var self = this;
-
-            if (self._wsReconnectAttempts >= self._wsMaxReconnectAttempts) {
-                console.log('[Social] Max reconnect attempts reached, falling back to polling');
-                return;
-            }
-
-            self._wsReconnectAttempts++;
-            var delay = self._wsReconnectDelay * Math.pow(2, self._wsReconnectAttempts - 1);
-            console.log('[Social] Reconnecting WebSocket in ' + delay + 'ms (attempt ' + self._wsReconnectAttempts + ')');
-
-            setTimeout(function () {
-                if (!self.isOnLoginPage() && window.ApiClient && ApiClient.accessToken()) {
-                    self.connectWebSocket();
-                }
-            }, delay);
-        },
-
-        /**
-         * Handle incoming WebSocket message
-         */
-        handleWebSocketMessage: function (message) {
-            var self = this;
-
-            switch (message.Type) {
-                case 'InitialStatus':
-                    // Full status of all friends received - merge with existing cache
-                    if (message.Data && message.Data.friends) {
-                        if (!self._friendsStatusCache) {
-                            self._friendsStatusCache = {};
-                        }
-                        message.Data.friends.forEach(function (friend) {
-                            var existing = self._friendsStatusCache[friend.userId] || {};
-                            self._friendsStatusCache[friend.userId] = Object.assign({}, existing, friend);
-                        });
-                        // Update UI if panel is open
-                        self.updateFriendsUIFromCache();
-                    }
-                    break;
-
-                case 'StatusUpdate':
-                    // Single friend status update - merge with existing data
-                    if (message.Data) {
-                        if (!self._friendsStatusCache) {
-                            self._friendsStatusCache = {};
-                        }
-                        var existingFriend = self._friendsStatusCache[message.Data.userId] || {};
-                        // Merge: keep existing data, update status and watching
-                        self._friendsStatusCache[message.Data.userId] = Object.assign({}, existingFriend, message.Data);
-                        // Update UI if panel is open
-                        self.updateFriendsUIFromCache();
-                    }
-                    break;
-
-                case 'Pong':
-                    // Server responded to ping
-                    break;
-            }
-        },
-
-        /**
-         * Update friends UI from cache (for WebSocket updates)
+         * Update friends UI from cache
          * Updates individual friend elements without re-rendering the whole list
          */
         updateFriendsUIFromCache: function () {
