@@ -56,7 +56,14 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <returns>The effective status string.</returns>
         public string GetEffectiveStatus()
         {
-            // Force offline takes highest priority (browser closed, logout)
+            // If user is watching media, they MUST be Online
+            // This takes highest priority - can't be offline while actively watching
+            if (Watching != null)
+            {
+                return "Online";
+            }
+
+            // Force offline (browser closed, logout)
             // Sticky for 10 seconds to prevent race conditions
             if (ForceOffline && (DateTime.UtcNow - ForceOfflineAt).TotalSeconds < 10)
             {

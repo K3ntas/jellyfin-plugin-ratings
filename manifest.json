@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.134.0",
+        "changelog": "Force Online when watching media - if Watching is set, user MUST be Online",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.134.0/jellyfin-plugin-ratings_2.0.134.0.zip",
+        "checksum": "7dad294167aeb79d2edbf0e9bbc96c00",
+        "timestamp": "2026-03-29T14:00:00Z"
+      },
+      {
         "version": "2.0.133.0",
         "changelog": "Fix status going Offline when pressing play - update heartbeat in SetWatchingOnly",
         "targetAbi": "10.11.0.0",
