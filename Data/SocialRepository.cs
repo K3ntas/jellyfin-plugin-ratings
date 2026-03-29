@@ -851,8 +851,10 @@ namespace Jellyfin.Plugin.Ratings.Data
                     _onlineStatuses[userId] = status;
                 }
 
-                // Only update watching, don't touch heartbeat or status
+                // Only update watching
                 status.Watching = watching;
+                // Refresh the status field to reflect current state
+                status.Status = status.GetEffectiveStatus();
             }
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
@@ -881,8 +883,10 @@ namespace Jellyfin.Plugin.Ratings.Data
                     _onlineStatuses[userId] = status;
                 }
 
-                // Only clear watching, don't touch heartbeat or status
+                // Only clear watching
                 status.Watching = null;
+                // Refresh the status field to reflect current state
+                status.Status = status.GetEffectiveStatus();
             }
 
             await SaveOnlineStatusesAsync().ConfigureAwait(false);
