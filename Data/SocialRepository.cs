@@ -829,7 +829,8 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
-        /// Sets what the user is currently watching. Does NOT affect online status at all.
+        /// Sets what the user is currently watching.
+        /// Also updates heartbeat because if user is setting watching, they're clearly online.
         /// </summary>
         /// <param name="userId">The user ID.</param>
         /// <param name="watching">The watching info.</param>
@@ -848,8 +849,16 @@ namespace Jellyfin.Plugin.Ratings.Data
                     };
                     _onlineStatuses[userId] = status;
                 }
+                else
+                {
+                    // User is actively setting watching = they're online
+                    // Update heartbeat to ensure they stay Online
+                    status.LastHeartbeat = DateTime.UtcNow;
+                    status.LastSeen = DateTime.UtcNow;
+                    status.ForceOffline = false; // Clear any offline flag
+                    status.Status = "Online"; // They're clearly online
+                }
 
-                // ONLY update watching - never touch Status or heartbeat
                 status.Watching = watching;
             }
 
