@@ -768,18 +768,15 @@ namespace Jellyfin.Plugin.Ratings.Data
                 }
                 else
                 {
-                    // If ForceOffline is set and no watching info, ignore this heartbeat
-                    // (likely a stray heartbeat during page unload)
-                    if (status.ForceOffline && watching == null)
-                    {
-                        _logger.LogDebug("[Social] Ignoring heartbeat for {UserId} - ForceOffline is set", userId);
-                        return status;
-                    }
-
                     status.LastHeartbeat = DateTime.UtcNow;
                     status.LastSeen = DateTime.UtcNow;
-                    // Clear ForceOffline flag - user is actively sending heartbeats
-                    status.ForceOffline = false;
+
+                    // Clear ForceOffline only if it's been more than 10 seconds
+                    // This prevents race conditions during page unload
+                    if (status.ForceOffline && (DateTime.UtcNow - status.ForceOfflineAt).TotalSeconds >= 10)
+                    {
+                        status.ForceOffline = false;
+                    }
                 }
 
                 status.Watching = watching;
@@ -801,8 +798,9 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 if (_onlineStatuses.TryGetValue(userId, out var status))
                 {
-                    // Set ForceOffline flag - this takes priority over heartbeat
+                    // Set ForceOffline flag with timestamp - sticky for 10 seconds
                     status.ForceOffline = true;
+                    status.ForceOfflineAt = DateTime.UtcNow;
                     status.Watching = null;
                     status.Status = "Offline";
                     _logger.LogInformation("[Social] User {UserId} set to ForceOffline", userId);

@@ -46,13 +46,19 @@ namespace Jellyfin.Plugin.Ratings.Models
         public bool ForceOffline { get; set; }
 
         /// <summary>
+        /// Gets or sets when the ForceOffline was set. Used to make it sticky for a period.
+        /// </summary>
+        public DateTime ForceOfflineAt { get; set; }
+
+        /// <summary>
         /// Calculates the effective status based on heartbeat and manual override.
         /// </summary>
         /// <returns>The effective status string.</returns>
         public string GetEffectiveStatus()
         {
             // Force offline takes highest priority (browser closed, logout)
-            if (ForceOffline)
+            // Sticky for 10 seconds to prevent race conditions
+            if (ForceOffline && (DateTime.UtcNow - ForceOfflineAt).TotalSeconds < 10)
             {
                 return "Offline";
             }

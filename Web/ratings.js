@@ -1146,9 +1146,7 @@
          * Register handler to mark user offline when leaving the page.
          */
         registerOfflineHandler: function () {
-            var self = this;
             var offlineCallMade = false;
-            var lastVisibilityState = document.visibilityState;
 
             var goOffline = function () {
                 if (offlineCallMade) return;
@@ -1158,8 +1156,6 @@
                 var token = ApiClient.accessToken();
                 if (!token) return;
 
-                // Set flag to prevent playback stop from sending heartbeat
-                self._pageUnloading = true;
                 offlineCallMade = true;
                 console.log('[Social] Going offline...');
 
@@ -1183,23 +1179,10 @@
                 }
             };
 
-            // Handle page visibility changes (tab switch, minimize)
-            document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'hidden' && lastVisibilityState === 'visible') {
-                    // Don't go offline immediately on tab switch, just log
-                    console.log('[Social] Tab hidden');
-                }
-                lastVisibilityState = document.visibilityState;
-            });
-
             // Handle page unload (close tab/window, navigate away)
             window.addEventListener('beforeunload', goOffline);
-            window.addEventListener('pagehide', function (e) {
-                // pagehide with persisted=false means page is being destroyed
-                if (!e.persisted) {
-                    goOffline();
-                }
-            });
+            window.addEventListener('pagehide', goOffline);
+            window.addEventListener('unload', goOffline);
 
             // Handle Jellyfin logout
             if (window.Events) {
@@ -2333,12 +2316,6 @@
             var self = this;
             if (!state || !state.NowPlayingItem) return;
 
-            // Cancel any pending stop heartbeat
-            if (self._pendingStopHeartbeat) {
-                clearTimeout(self._pendingStopHeartbeat);
-                self._pendingStopHeartbeat = null;
-            }
-
             var item = state.NowPlayingItem;
             self._currentWatching = {
                 itemId: item.Id,
@@ -2359,12 +2336,6 @@
         onPlaybackStartFromApi: function (options) {
             var self = this;
             if (!options || !options.ItemId) return;
-
-            // Cancel any pending stop heartbeat
-            if (self._pendingStopHeartbeat) {
-                clearTimeout(self._pendingStopHeartbeat);
-                self._pendingStopHeartbeat = null;
-            }
 
             // Fetch item details if needed
             if (options.Item) {
@@ -2430,21 +2401,7 @@
         onPlaybackStop: function () {
             var self = this;
             self._currentWatching = null;
-            // Don't send stopped heartbeat if page is unloading (goOffline handles it)
-            if (self._pageUnloading) {
-                console.log('[Social] Playback stopped but page unloading, skipping heartbeat');
-                return;
-            }
-
-            // Delay the stopped heartbeat slightly to avoid race with playbackstart
-            // (when switching videos, stop fires before start)
-            self._pendingStopHeartbeat = setTimeout(function () {
-                self._pendingStopHeartbeat = null;
-                if (!self._currentWatching && !self._pageUnloading) {
-                    console.log('[Social] Playback stopped, sending heartbeat');
-                    self.sendHeartbeat({ stopped: true });
-                }
-            }, 500);
+            self.sendHeartbeat({ stopped: true });
         },
 
         /**

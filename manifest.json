@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.129.0",
+        "changelog": "Simplified offline handling - ForceOffline sticky for 10 seconds",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.129.0/jellyfin-plugin-ratings_2.0.129.0.zip",
+        "checksum": "d9e5c74b538f1b56fb943ed6143df9fd",
+        "timestamp": "2026-03-29T11:30:00Z"
+      },
+      {
         "version": "2.0.128.0",
         "changelog": "Fix playback status race conditions, better offline handling",
         "targetAbi": "10.11.0.0",
