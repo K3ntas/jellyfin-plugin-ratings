@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.132.2",
+        "changelog": "DEBUG: Browser console logging - look for [DEBUG-] in console",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.132.2/jellyfin-plugin-ratings_2.0.132.2.zip",
+        "checksum": "9e69d230612b585b03555c975cfd422a",
+        "timestamp": "2026-03-29T17:00:00Z"
+      },
+      {
         "version": "2.0.132.1",
         "changelog": "DEBUG: Added logging to track status changes - check Jellyfin logs",
         "targetAbi": "10.11.0.0",

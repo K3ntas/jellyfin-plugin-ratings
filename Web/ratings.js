@@ -2079,31 +2079,35 @@
 
                 case 'SocialStatusUpdate':
                     // Single friend STATUS update (online/offline only)
-                    console.log('[Social] Status update received:', data.SocialData);
+                    console.warn('[DEBUG-STATUS] Received SocialStatusUpdate:', JSON.stringify(data.SocialData));
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existing = self._friendsStatusCache[data.SocialData.userId] || {};
+                        console.warn('[DEBUG-STATUS] Before merge - cached status:', existing.status, 'new status:', data.SocialData.status);
                         // Merge but preserve watching if not provided
                         self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
+                        console.warn('[DEBUG-STATUS] After merge - final status:', self._friendsStatusCache[data.SocialData.userId].status);
                         self.updateFriendStatusOnly(data.SocialData);
                     }
                     break;
 
                 case 'SocialWatchingUpdate':
                     // Single friend WATCHING update (movie title only, no status change)
-                    console.log('[Social] Watching update received:', data.SocialData);
+                    console.warn('[DEBUG-WATCHING] Received SocialWatchingUpdate:', JSON.stringify(data.SocialData));
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
+                        console.warn('[DEBUG-WATCHING] Before - cached status:', existingFriend.status, 'watching:', existingFriend.watching?.title);
                         // ONLY update watching, keep existing status
                         existingFriend.watching = data.SocialData.watching;
                         existingFriend.username = data.SocialData.username;
                         existingFriend.userId = data.SocialData.userId;
                         self._friendsStatusCache[data.SocialData.userId] = existingFriend;
+                        console.warn('[DEBUG-WATCHING] After - status stays:', existingFriend.status, 'watching:', data.SocialData.watching?.title || 'CLEARED');
                         self.updateFriendWatchingOnly(data.SocialData);
                     }
                     break;
@@ -2534,16 +2538,20 @@
             // Update status dot ONLY
             var statusDot = friendEl.querySelector('.social-status-dot');
             if (statusDot) {
+                var oldClass = statusDot.className;
                 statusDot.className = 'social-status-dot ' + statusClass;
+                console.warn('[DEBUG-DOM] Status dot changed from', oldClass, 'to', statusDot.className);
             }
 
             // Update status text ONLY
             var statusDiv = friendEl.querySelector('.social-friend-status');
             if (statusDiv) {
+                var oldText = statusDiv.textContent;
                 statusDiv.textContent = statusText;
+                console.warn('[DEBUG-DOM] Status text changed from', oldText, 'to', statusText);
             }
 
-            console.log('[Social] Updated status only for', data.userId, 'to', status);
+            console.warn('[DEBUG-STATUS] updateFriendStatusOnly DONE for', data.userId, '-> status:', status);
             return true;
         },
 
