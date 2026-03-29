@@ -902,7 +902,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, status.Watching);
             }
 
-            return Ok(new { status = status.Status });
+            return Ok(new { status = status.GetEffectiveStatus() });
         }
 
         /// <summary>
@@ -1008,7 +1008,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             return Ok(new
             {
-                status = status.Status,
+                status = status.GetEffectiveStatus(),
                 watching = watching != null ? new
                 {
                     title = watching.Title,
@@ -1090,7 +1090,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     (profile.Privacy.ShowCurrentlyWatching == "Friends" && _socialRepository.AreFriends(userId.Value, friendId));
 
                 // Handle Invisible - appears as Offline
-                var effectiveStatus = friendStatus?.Status ?? "Offline";
+                var effectiveStatus = friendStatus?.GetEffectiveStatus() ?? "Offline";
                 if (effectiveStatus == "Invisible")
                 {
                     effectiveStatus = "Offline";

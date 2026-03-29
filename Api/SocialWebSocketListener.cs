@@ -144,7 +144,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     profile.Privacy.ShowCurrentlyWatching == "Everyone" ||
                     profile.Privacy.ShowCurrentlyWatching == "Friends";
 
-                var effectiveStatus = friendStatus?.Status ?? "Offline";
+                var effectiveStatus = friendStatus?.GetEffectiveStatus() ?? "Offline";
                 if (effectiveStatus == "Invisible") effectiveStatus = "Offline";
 
                 friendStatuses.Add(new
@@ -192,7 +192,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             var friendIds = _socialRepository.GetFriendIds(userId);
 
             // Build the update message
-            var effectiveStatus = status.Status == "Invisible" ? "Offline" : status.Status;
+            var effectiveStatus = status.GetEffectiveStatus();
+            if (effectiveStatus == "Invisible") effectiveStatus = "Offline";
             var updateData = new
             {
                 userId = userId,
