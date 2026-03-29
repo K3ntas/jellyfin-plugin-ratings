@@ -1430,6 +1430,7 @@
                 <div class="social-panel-tabs">
                     <button class="social-panel-tab active" data-tab="friends">Friends</button>
                     <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
+                    <button class="social-panel-tab" data-tab="blocked">Blocked</button>
                     <button class="social-panel-tab" data-tab="addFriend">
                         <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </button>
@@ -1544,7 +1545,180 @@
             } else if (tab === 'addFriend') {
                 // Show search UI for adding friends
                 self.renderAddFriendSearch();
+            } else if (tab === 'blocked') {
+                // Fetch blocked users list
+                fetch(baseUrl + '/Social/Blocked', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderBlockedList(data.blockedUsers || []);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load blocked users</div>';
+                    });
             }
+        },
+
+        /**
+         * Render the blocked users list
+         */
+        renderBlockedList: function (blockedUsers) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (blockedUsers.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg><div>No blocked users</div></div>';
+                return;
+            }
+
+            var html = '<div style="padding: 5px 0;">';
+            blockedUsers.forEach(function (user) {
+                var initial = (user.username || '?')[0].toUpperCase();
+                html += '<div class="social-friend-item" style="justify-content:space-between;">' +
+                    '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div class="social-friend-avatar" style="background:#666;">' + initial + '</div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
+                    '<div class="social-friend-status" style="color:#888;">Blocked</div>' +
+                    '</div></div>' +
+                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + user.userId + '\')">Unblock</button>' +
+                    '</div>';
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Block a user
+         */
+        blockUser: function (userId) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            if (!confirm('Are you sure you want to block this user? This will also remove them from your friends list.')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh friends list
+                    self.loadFriendsData('friends');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Block failed:', err);
+            });
+        },
+
+        /**
+         * Unblock a user
+         */
+        unblockUser: function (userId) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh blocked list
+                    self.loadFriendsData('blocked');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Unblock failed:', err);
+            });
+        },
+
+        /**
+         * Show friend context menu
+         */
+        showFriendMenu: function (event, userId, username) {
+            var self = this;
+            event.stopPropagation();
+
+            // Remove any existing menu
+            var existingMenu = document.getElementById('social-friend-menu');
+            if (existingMenu) existingMenu.remove();
+
+            var menu = document.createElement('div');
+            menu.id = 'social-friend-menu';
+            menu.className = 'social-friend-menu';
+            menu.innerHTML = `
+                <button onclick="RatingsPlugin.unfriendUser('${userId}', '${username.replace(/'/g, "\\'")}')">Unfriend</button>
+                <button onclick="RatingsPlugin.blockUser('${userId}')" style="color:#e74c3c;">Block</button>
+            `;
+
+            // Position near the button
+            var rect = event.target.getBoundingClientRect();
+            menu.style.position = 'fixed';
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.left = (rect.left - 80) + 'px';
+            menu.style.zIndex = '100002';
+
+            document.body.appendChild(menu);
+
+            // Close menu when clicking elsewhere
+            var closeMenu = function (e) {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+            setTimeout(function () {
+                document.addEventListener('click', closeMenu);
+            }, 10);
+        },
+
+        /**
+         * Unfriend a user
+         */
+        unfriendUser: function (userId, username) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            // Close menu
+            var menu = document.getElementById('social-friend-menu');
+            if (menu) menu.remove();
+
+            if (!confirm('Remove ' + username + ' from your friends list?')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Friend/' + userId, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh friends list
+                    self.loadFriendsData('friends');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Unfriend failed:', err);
+            });
         },
 
         /**
@@ -1587,6 +1761,9 @@
                     '<div class="social-friend-name">' + self.escapeHtml(friend.username) + '</div>' +
                     '<div class="social-friend-status">' + statusText + '</div>' +
                     watchingHtml +
+                    '</div>' +
+                    '<div class="social-friend-actions">' +
+                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + friend.userId + '\', \'' + self.escapeHtml(friend.username).replace(/'/g, "\\'") + '\')" title="More actions">&#8942;</button>' +
                     '</div></div>';
             });
             content.innerHTML = html;
@@ -9465,6 +9642,58 @@
                 }
                 .social-btn-cancel:hover {
                     background: #d32f2f;
+                }
+                .social-btn-unblock {
+                    background: #2196F3;
+                    color: white;
+                    border: none;
+                    padding: 6px 14px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .social-btn-unblock:hover {
+                    background: #1976D2;
+                }
+                .social-friend-actions {
+                    display: flex;
+                    align-items: center;
+                    margin-left: auto;
+                }
+                .social-action-btn {
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    cursor: pointer;
+                    font-size: 18px;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                }
+                .social-action-btn:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                }
+                .social-friend-menu {
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    overflow: hidden;
+                    min-width: 100px;
+                }
+                .social-friend-menu button {
+                    display: block;
+                    width: 100%;
+                    padding: 10px 15px;
+                    background: transparent;
+                    border: none;
+                    color: #fff;
+                    text-align: left;
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+                .social-friend-menu button:hover {
+                    background: rgba(255,255,255,0.1);
                 }
                 .social-section-title {
                     font-size: 11px;
