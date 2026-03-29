@@ -302,6 +302,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest(new { success = false, error = "User not found" });
             }
 
+            // Validation: Check if either user has blocked the other
+            if (_socialRepository.IsBlockedEitherWay(userId.Value, targetUserId))
+            {
+                _logger.LogWarning("[Social] User {From} tried to send friend request to {To} but blocked", currentUser.Username, targetUser.Username);
+                return BadRequest(new { success = false, error = "Cannot send friend request to this user" });
+            }
+
             // Validation: Check if already friends
             if (_socialRepository.AreFriends(userId.Value, targetUserId))
             {
@@ -989,6 +996,147 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static bool IsValidAllowSetting(string? value)
         {
             return value == "Everyone" || value == "Nobody";
+        }
+
+        #endregion
+
+        #region Block System
+
+        /// <summary>
+        /// Blocks a user.
+        /// </summary>
+        /// <param name="userId">The user to block.</param>
+        /// <returns>Result of the operation.</returns>
+        [HttpPost("Block/{userId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> BlockUser(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (userId == currentUserId.Value)
+            {
+                return BadRequest(new { message = "Cannot block yourself" });
+            }
+
+            // Check if target user exists
+            var targetUser = _userManager.GetUserById(userId);
+            if (targetUser == null)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
+            var block = await _socialRepository.BlockUserAsync(currentUserId.Value, userId).ConfigureAwait(false);
+
+            _logger.LogInformation("[Social] User {UserId} blocked {BlockedUserId}", currentUserId, userId);
+
+            return Ok(new
+            {
+                success = true,
+                message = "User blocked",
+                blockedUser = new
+                {
+                    userId = userId,
+                    username = targetUser.Username,
+                    blockedAt = block.CreatedAt
+                }
+            });
+        }
+
+        /// <summary>
+        /// Unblocks a user.
+        /// </summary>
+        /// <param name="userId">The user to unblock.</param>
+        /// <returns>Result of the operation.</returns>
+        [HttpDelete("Block/{userId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<object>> UnblockUser(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var unblocked = await _socialRepository.UnblockUserAsync(currentUserId.Value, userId).ConfigureAwait(false);
+
+            if (!unblocked)
+            {
+                return NotFound(new { message = "User was not blocked" });
+            }
+
+            _logger.LogInformation("[Social] User {UserId} unblocked {BlockedUserId}", currentUserId, userId);
+
+            return Ok(new
+            {
+                success = true,
+                message = "User unblocked"
+            });
+        }
+
+        /// <summary>
+        /// Gets the list of blocked users.
+        /// </summary>
+        /// <returns>List of blocked users.</returns>
+        [HttpGet("Blocked")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetBlockedUsers()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var blockedUsers = _socialRepository.GetBlockedUsers(userId.Value);
+
+            var result = blockedUsers.Select(b =>
+            {
+                var user = _userManager.GetUserById(b.BlockedUserId);
+                return new
+                {
+                    userId = b.BlockedUserId,
+                    username = user?.Username ?? "Unknown",
+                    blockedAt = b.CreatedAt
+                };
+            }).ToList();
+
+            return Ok(new { blockedUsers = result, count = result.Count });
+        }
+
+        /// <summary>
+        /// Checks if a user is blocked.
+        /// </summary>
+        /// <param name="userId">The user to check.</param>
+        /// <returns>Block status.</returns>
+        [HttpGet("Block/{userId}/Status")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetBlockStatus(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var iBlocked = _socialRepository.HasBlocked(currentUserId.Value, userId);
+            var theyBlocked = _socialRepository.HasBlocked(userId, currentUserId.Value);
+
+            return Ok(new
+            {
+                iBlockedThem = iBlocked,
+                theyBlockedMe = theyBlocked,
+                isBlockedEitherWay = iBlocked || theyBlocked
+            });
         }
 
         #endregion

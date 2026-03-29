@@ -62,9 +62,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadFriendships();
             LoadNotifications();
             LoadOnlineStatuses();
+            LoadBlockedUsers();
 
-            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, OnlineStatuses: {OnlineStatuses}",
-                _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count);
+            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, OnlineStatuses: {OnlineStatuses}, BlockedUsers: {BlockedUsers}",
+                _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count, _blockedUsers.Count);
         }
 
         /// <summary>
@@ -916,6 +917,158 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 _onlineStatusWriteLock.Release();
             }
+        }
+
+        #endregion
+
+        #region Block System
+
+        private List<BlockedUser> _blockedUsers = new();
+        private readonly string _blockedUsersFile;
+        private readonly SemaphoreSlim _blockedUsersLock = new(1, 1);
+
+        /// <summary>
+        /// Loads blocked users from disk.
+        /// </summary>
+        private void LoadBlockedUsers()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "blocked_users.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    _blockedUsers = JsonSerializer.Deserialize<List<BlockedUser>>(json, options) ?? new List<BlockedUser>();
+                    _logger.LogInformation("[Social] Loaded {Count} blocked user entries", _blockedUsers.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading blocked users");
+                _blockedUsers = new List<BlockedUser>();
+            }
+        }
+
+        /// <summary>
+        /// Saves blocked users to disk.
+        /// </summary>
+        private async Task SaveBlockedUsersAsync()
+        {
+            await _blockedUsersLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "blocked_users.json");
+                var json = JsonSerializer.Serialize(_blockedUsers, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            finally
+            {
+                _blockedUsersLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Blocks a user.
+        /// </summary>
+        /// <param name="userId">The user who is blocking.</param>
+        /// <param name="blockedUserId">The user to block.</param>
+        /// <returns>The block record.</returns>
+        public async Task<BlockedUser> BlockUserAsync(Guid userId, Guid blockedUserId)
+        {
+            // Check if already blocked
+            var existing = _blockedUsers.FirstOrDefault(b => b.UserId == userId && b.BlockedUserId == blockedUserId);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var block = new BlockedUser
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                BlockedUserId = blockedUserId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _blockedUsers.Add(block);
+            await SaveBlockedUsersAsync().ConfigureAwait(false);
+
+            // Also remove any existing friendship
+            await DeleteFriendshipAsync(userId, blockedUserId).ConfigureAwait(false);
+
+            // Delete any pending friend requests between them
+            var requests = _friendRequests.Where(r =>
+                (r.FromUserId == userId && r.ToUserId == blockedUserId) ||
+                (r.FromUserId == blockedUserId && r.ToUserId == userId)).ToList();
+
+            foreach (var req in requests)
+            {
+                _friendRequests.Remove(req);
+            }
+
+            if (requests.Count > 0)
+            {
+                await SaveFriendRequestsAsync().ConfigureAwait(false);
+            }
+
+            _logger.LogInformation("[Social] User {UserId} blocked {BlockedUserId}", userId, blockedUserId);
+            return block;
+        }
+
+        /// <summary>
+        /// Unblocks a user.
+        /// </summary>
+        /// <param name="userId">The user who is unblocking.</param>
+        /// <param name="blockedUserId">The user to unblock.</param>
+        /// <returns>True if unblocked, false if wasn't blocked.</returns>
+        public async Task<bool> UnblockUserAsync(Guid userId, Guid blockedUserId)
+        {
+            var block = _blockedUsers.FirstOrDefault(b => b.UserId == userId && b.BlockedUserId == blockedUserId);
+            if (block == null)
+            {
+                return false;
+            }
+
+            _blockedUsers.Remove(block);
+            await SaveBlockedUsersAsync().ConfigureAwait(false);
+
+            _logger.LogInformation("[Social] User {UserId} unblocked {BlockedUserId}", userId, blockedUserId);
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the list of users blocked by a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of blocked user records.</returns>
+        public List<BlockedUser> GetBlockedUsers(Guid userId)
+        {
+            return _blockedUsers.Where(b => b.UserId == userId).ToList();
+        }
+
+        /// <summary>
+        /// Checks if a user has blocked another user.
+        /// </summary>
+        /// <param name="userId">The user who may have blocked.</param>
+        /// <param name="targetUserId">The user who may be blocked.</param>
+        /// <returns>True if blocked.</returns>
+        public bool HasBlocked(Guid userId, Guid targetUserId)
+        {
+            return _blockedUsers.Any(b => b.UserId == userId && b.BlockedUserId == targetUserId);
+        }
+
+        /// <summary>
+        /// Checks if either user has blocked the other.
+        /// </summary>
+        /// <param name="userId1">First user.</param>
+        /// <param name="userId2">Second user.</param>
+        /// <returns>True if either has blocked the other.</returns>
+        public bool IsBlockedEitherWay(Guid userId1, Guid userId2)
+        {
+            return _blockedUsers.Any(b =>
+                (b.UserId == userId1 && b.BlockedUserId == userId2) ||
+                (b.UserId == userId2 && b.BlockedUserId == userId1));
         }
 
         #endregion
