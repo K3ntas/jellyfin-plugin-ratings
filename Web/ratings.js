@@ -1742,14 +1742,14 @@
                 }
             }, 60000);
 
-            // Refresh friends list frequently when panel is open (every 10 seconds for real-time feel)
+            // Refresh friends list frequently when panel is open (every 5 seconds for near-real-time feel)
             setInterval(function () {
                 var panel = document.getElementById('social-friends-panel');
                 var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
                 if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
                     self.loadFriendsData('friends');
                 }
-            }, 10000);
+            }, 5000);
         },
 
         /**

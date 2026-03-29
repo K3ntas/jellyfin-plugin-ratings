@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.110.0",
+        "changelog": "Faster polling (5s) for near-real-time status updates when panel is open",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.110.0/jellyfin-plugin-ratings_2.0.110.0.zip",
+        "checksum": "920306248de9a7db231cad4013dc1751",
+        "timestamp": "2026-03-29T02:00:00Z"
+      },
+      {
         "version": "2.0.109.0",
         "changelog": "Auto-refresh friends list every 10s, clickable watching items to navigate to media",
         "targetAbi": "10.11.0.0",
