@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.143.0",
+        "changelog": "Reduce refresh interval to 30s for better scalability",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.143.0/jellyfin-plugin-ratings_2.0.143.0.zip",
+        "checksum": "3a025fe30e723d6704849b4044f60939",
+        "timestamp": "2026-03-29T20:30:00Z"
+      },
+      {
         "version": "2.0.142.0",
         "changelog": "Add periodic refresh to friends list for reliable status updates",
         "targetAbi": "10.11.0.0",

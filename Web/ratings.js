@@ -1509,7 +1509,7 @@
                 panel.classList.toggle('open');
                 if (panel.classList.contains('open')) {
                     this.loadFriendsData();
-                    // Start periodic refresh every 10 seconds while panel is open
+                    // Start periodic refresh every 30 seconds while panel is open (backup for WebSocket)
                     if (!self._friendsRefreshInterval) {
                         self._friendsRefreshInterval = setInterval(function () {
                             var p = document.getElementById('social-friends-panel');
@@ -1520,7 +1520,7 @@
                                     self.loadFriendsData('friends');
                                 }
                             }
-                        }, 10000);
+                        }, 30000);
                     }
                 } else {
                     // Stop refresh when panel closed
