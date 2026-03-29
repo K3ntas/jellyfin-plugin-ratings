@@ -1143,51 +1143,29 @@
         },
 
         /**
-         * Register handler to mark user offline when leaving the page.
-         * Uses visibilitychange to avoid false triggers during internal Jellyfin navigation.
+         * Register handler to mark user offline on logout only.
+         * WebSocket disconnection on server side handles browser/tab close.
+         * No beforeunload/pagehide handlers - they fire during internal SPA navigation.
          */
         registerOfflineHandler: function () {
-            var offlineCallMade = false;
+            // Handle Jellyfin logout only - server detects browser close via WebSocket
+            if (window.Events) {
+                Events.on(ApiClient, 'logout', function () {
+                    if (!window.ApiClient) return;
+                    var baseUrl = ApiClient.serverAddress();
+                    var token = ApiClient.accessToken();
+                    if (!token) return;
 
-            var goOffline = function () {
-                if (offlineCallMade) return;
-                if (!window.ApiClient) return;
-
-                var baseUrl = ApiClient.serverAddress();
-                var token = ApiClient.accessToken();
-                if (!token) return;
-
-                offlineCallMade = true;
-                console.log('[Social] Going offline...');
-
-                // Use fetch with keepalive for reliability
-                try {
+                    console.log('[Social] Logout - going offline...');
                     fetch(baseUrl + '/Social/Offline', {
                         method: 'POST',
                         headers: {
                             'X-Emby-Token': token,
                             'Content-Type': 'application/json'
                         },
-                        body: '{}',
-                        keepalive: true
+                        body: '{}'
                     }).catch(function() {});
-                } catch (e) {
-                    // Fallback to sendBeacon
-                    if (navigator.sendBeacon) {
-                        var blob = new Blob(['{}'], { type: 'application/json' });
-                        navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
-                    }
-                }
-            };
-
-            // Handle page unload (close tab/window, navigate away)
-            window.addEventListener('beforeunload', goOffline);
-            window.addEventListener('pagehide', goOffline);
-            window.addEventListener('unload', goOffline);
-
-            // Handle Jellyfin logout
-            if (window.Events) {
-                Events.on(ApiClient, 'logout', goOffline);
+                });
             }
         },
 

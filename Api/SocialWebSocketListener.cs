@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
@@ -20,14 +21,19 @@ namespace Jellyfin.Plugin.Ratings.Api
     /// WebSocket listener for real-time social status updates.
     /// Implements Jellyfin's IWebSocketListener to hook into the main /socket endpoint.
     /// </summary>
-    public class SocialWebSocketListener : IWebSocketListener
+    public class SocialWebSocketListener : IWebSocketListener, IDisposable
     {
         private readonly ILogger<SocialWebSocketListener> _logger;
         private readonly SocialRepository _socialRepository;
         private readonly IUserManager _userManager;
+        private readonly Timer _disconnectionCheckTimer;
+        private bool _disposed;
 
         // Track connected users and their WebSocket connections
         private static readonly ConcurrentDictionary<Guid, ConcurrentBag<IWebSocketConnection>> _userConnections = new();
+
+        // Track users who were connected (to detect disconnection)
+        private static readonly ConcurrentDictionary<Guid, DateTime> _lastSeenConnected = new();
 
         // Track who is viewing which profile (viewerId -> profileUserId)
         private static readonly ConcurrentDictionary<Guid, Guid> _profileViewers = new();
@@ -47,26 +53,103 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger = logger;
             _socialRepository = socialRepository;
             _userManager = userManager;
+
+            // Start timer to check for disconnected users every 5 seconds
+            _disconnectionCheckTimer = new Timer(
+                CheckForDisconnectedUsers,
+                null,
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromSeconds(5));
         }
 
         /// <summary>
         /// Called when a WebSocket client connects.
         /// </summary>
-        public Task ProcessWebSocketConnectedAsync(IWebSocketConnection connection, HttpContext httpContext)
+        public async Task ProcessWebSocketConnectedAsync(IWebSocketConnection connection, HttpContext httpContext)
         {
             var userId = connection.AuthorizationInfo?.UserId ?? Guid.Empty;
             if (userId == Guid.Empty)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             // Add connection to user's connection bag
             var connections = _userConnections.GetOrAdd(userId, _ => new ConcurrentBag<IWebSocketConnection>());
             connections.Add(connection);
 
-            _logger.LogDebug("[SocialWS] User {UserId} connected", userId);
+            // Track that user is connected
+            _lastSeenConnected[userId] = DateTime.UtcNow;
 
-            return Task.CompletedTask;
+            _logger.LogInformation("[SocialWS] User {UserId} WebSocket connected - marking online", userId);
+
+            // Mark user as online via heartbeat (this creates/updates their status)
+            var user = _userManager.GetUserById(userId);
+            var username = user?.Username ?? "Unknown";
+            var status = await _socialRepository.UpdateHeartbeatOnlyAsync(userId).ConfigureAwait(false);
+
+            // Broadcast to friends that user is now online
+            if (status != null)
+            {
+                await BroadcastStatusUpdateAsync(userId, username, status, status.Watching, skipRateLimit: true).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Periodically checks for users whose WebSocket connections have closed.
+        /// When all connections for a user close, marks them offline.
+        /// </summary>
+        private async void CheckForDisconnectedUsers(object? state)
+        {
+            try
+            {
+                var usersToMarkOffline = new List<Guid>();
+
+                foreach (var kvp in _userConnections)
+                {
+                    var userId = kvp.Key;
+                    var connections = kvp.Value;
+
+                    // Check if all connections are closed
+                    var activeConnections = connections.Where(c => c.State == WebSocketState.Open).ToList();
+
+                    if (activeConnections.Count == 0)
+                    {
+                        // User had connections but now has none - mark for offline
+                        if (_lastSeenConnected.TryRemove(userId, out _))
+                        {
+                            usersToMarkOffline.Add(userId);
+                        }
+
+                        // Clean up the empty connection bag
+                        _userConnections.TryRemove(userId, out _);
+                    }
+                    else if (activeConnections.Count != connections.Count)
+                    {
+                        // Some connections closed, update the bag with only active ones
+                        _userConnections[userId] = new ConcurrentBag<IWebSocketConnection>(activeConnections);
+                    }
+                }
+
+                // Mark disconnected users as offline
+                foreach (var userId in usersToMarkOffline)
+                {
+                    _logger.LogInformation("[SocialWS] User {UserId} WebSocket disconnected - marking offline", userId);
+
+                    var offlineStatus = _socialRepository.SetUserOffline(userId);
+                    if (offlineStatus != null)
+                    {
+                        var user = _userManager.GetUserById(userId);
+                        var username = user?.Username ?? "Unknown";
+
+                        // Broadcast offline status to friends
+                        await BroadcastStatusUpdateAsync(userId, username, offlineStatus, null, skipRateLimit: true).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[SocialWS] Error in disconnection check");
+            }
         }
 
         /// <summary>
@@ -460,6 +543,33 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Disposes the timer.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes managed resources.
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _disconnectionCheckTimer?.Dispose();
+            }
+
+            _disposed = true;
         }
     }
 
