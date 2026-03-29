@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "2.0.139.0",
-        "changelog": "Fix: SetWatching now broadcasts status update - fixes Offline when pressing play",
+        "version": "2.0.133.0",
+        "changelog": "Fix status going offline when pressing play - use visibilitychange instead of beforeunload",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.139.0/jellyfin-plugin-ratings_2.0.139.0.zip",
-        "checksum": "2bcc087f19313ab50f0bd5f5db19745a",
-        "timestamp": "2026-03-29T17:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.133.0/jellyfin-plugin-ratings_2.0.133.0.zip",
+        "checksum": "a00272c968827e12bd01428c7d6e4068",
+        "timestamp": "2026-03-29T15:00:00Z"
       },
       {
         "version": "2.0.132.0",

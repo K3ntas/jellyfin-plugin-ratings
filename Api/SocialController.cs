@@ -895,10 +895,6 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Heartbeat ONLY updates online status, NOT watching
             var status = await _socialRepository.UpdateHeartbeatOnlyAsync(userId.Value);
 
-            // DEBUG: Log heartbeat call
-            _logger.LogWarning("[DEBUG-API] Heartbeat called for {UserId}: status.Status={Status}, GetEffective={Effective}, Watching={Watching}",
-                userId.Value, status.Status, status.GetEffectiveStatus(), status.Watching?.Title ?? "null");
-
             // Broadcast status update (with current watching info from repository)
             var user = _userManager.GetUserById(userId.Value);
             if (user != null)
@@ -906,7 +902,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, status.Watching);
             }
 
-            return Ok(new { status = status.GetEffectiveStatus() });
+            return Ok(new { status = status.Status });
         }
 
         /// <summary>
@@ -935,20 +931,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 StartedAt = DateTime.UtcNow
             };
 
-            // DEBUG: Log watching call
-            _logger.LogWarning("[DEBUG-API] SetWatching called for {UserId}: title={Title}", userId.Value, currentWatching.Title);
-
-            // Update watching (this also clears ForceOffline and sets status to Online)
+            // ONLY update watching - this does NOT affect online status
             await _socialRepository.SetWatchingOnlyAsync(userId.Value, currentWatching);
 
-            // Get the updated status (will be Online because Watching is set)
-            var status = _socialRepository.GetOnlineStatus(userId.Value);
-
+            // Broadcast ONLY the watching update, not status
             var user = _userManager.GetUserById(userId.Value);
-            if (user != null && status != null)
+            if (user != null)
             {
-                // Broadcast BOTH status AND watching - status must be Online when watching
-                _ = _webSocketListener.BroadcastStatusUpdateAsync(userId.Value, user.Username, status, currentWatching);
+                _ = _webSocketListener.BroadcastWatchingUpdateAsync(userId.Value, user.Username, currentWatching);
             }
 
             return Ok(new { success = true });
@@ -967,9 +957,6 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
-
-            // DEBUG: Log stop watching
-            _logger.LogWarning("[DEBUG-API] StopWatching called for {UserId}", userId.Value);
 
             // ONLY clear watching - this does NOT affect online status
             await _socialRepository.ClearWatchingOnlyAsync(userId.Value);
@@ -1049,9 +1036,6 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
-
-            // DEBUG: Log offline call
-            _logger.LogWarning("[DEBUG-API] GoOffline called for {UserId}", userId.Value);
 
             // Set user's status to offline
             var status = _socialRepository.SetUserOffline(userId.Value);

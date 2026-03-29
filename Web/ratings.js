@@ -1144,11 +1144,14 @@
 
         /**
          * Register handler to mark user offline when leaving the page.
+         * Uses visibilitychange to avoid false triggers during internal Jellyfin navigation.
          */
         registerOfflineHandler: function () {
+            var self = this;
             var offlineCallMade = false;
+            self._pendingOfflineTimer = null;
 
-            var goOffline = function () {
+            var doOffline = function () {
                 if (offlineCallMade) return;
                 if (!window.ApiClient) return;
 
@@ -1159,7 +1162,6 @@
                 offlineCallMade = true;
                 console.log('[Social] Going offline...');
 
-                // Use fetch with keepalive for reliability
                 try {
                     fetch(baseUrl + '/Social/Offline', {
                         method: 'POST',
@@ -1169,9 +1171,8 @@
                         },
                         body: '{}',
                         keepalive: true
-                    }).catch(function() { /* ignore errors on page unload */ });
+                    }).catch(function() {});
                 } catch (e) {
-                    // Fallback to sendBeacon
                     if (navigator.sendBeacon) {
                         var blob = new Blob(['{}'], { type: 'application/json' });
                         navigator.sendBeacon(baseUrl + '/Social/Offline?api_key=' + token, blob);
@@ -1179,14 +1180,30 @@
                 }
             };
 
-            // Handle page unload (close tab/window, navigate away)
-            window.addEventListener('beforeunload', goOffline);
-            window.addEventListener('pagehide', goOffline);
-            window.addEventListener('unload', goOffline);
+            // Cancel pending offline - called when playback starts
+            self.cancelPendingOffline = function () {
+                if (self._pendingOfflineTimer) {
+                    clearTimeout(self._pendingOfflineTimer);
+                    self._pendingOfflineTimer = null;
+                    console.log('[Social] Cancelled pending offline - user still active');
+                }
+            };
 
-            // Handle Jellyfin logout
+            // visibilitychange only fires when tab is actually hidden, not during internal navigation
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') {
+                    // Tab hidden - wait 2 seconds before going offline
+                    // Allows playback to cancel it if user is starting media
+                    self._pendingOfflineTimer = setTimeout(doOffline, 2000);
+                } else {
+                    // Tab visible again - cancel pending offline
+                    self.cancelPendingOffline();
+                }
+            });
+
+            // Handle Jellyfin logout - immediate offline
             if (window.Events) {
-                Events.on(ApiClient, 'logout', goOffline);
+                Events.on(ApiClient, 'logout', doOffline);
             }
         },
 
@@ -2079,35 +2096,31 @@
 
                 case 'SocialStatusUpdate':
                     // Single friend STATUS update (online/offline only)
-                    console.warn('[DEBUG-STATUS] Received SocialStatusUpdate:', JSON.stringify(data.SocialData));
+                    console.log('[Social] Status update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existing = self._friendsStatusCache[data.SocialData.userId] || {};
-                        console.warn('[DEBUG-STATUS] Before merge - cached status:', existing.status, 'new status:', data.SocialData.status);
                         // Merge but preserve watching if not provided
                         self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
-                        console.warn('[DEBUG-STATUS] After merge - final status:', self._friendsStatusCache[data.SocialData.userId].status);
                         self.updateFriendStatusOnly(data.SocialData);
                     }
                     break;
 
                 case 'SocialWatchingUpdate':
                     // Single friend WATCHING update (movie title only, no status change)
-                    console.warn('[DEBUG-WATCHING] Received SocialWatchingUpdate:', JSON.stringify(data.SocialData));
+                    console.log('[Social] Watching update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
                         }
                         var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
-                        console.warn('[DEBUG-WATCHING] Before - cached status:', existingFriend.status, 'watching:', existingFriend.watching?.title);
                         // ONLY update watching, keep existing status
                         existingFriend.watching = data.SocialData.watching;
                         existingFriend.username = data.SocialData.username;
                         existingFriend.userId = data.SocialData.userId;
                         self._friendsStatusCache[data.SocialData.userId] = existingFriend;
-                        console.warn('[DEBUG-WATCHING] After - status stays:', existingFriend.status, 'watching:', data.SocialData.watching?.title || 'CLEARED');
                         self.updateFriendWatchingOnly(data.SocialData);
                     }
                     break;
@@ -2538,20 +2551,16 @@
             // Update status dot ONLY
             var statusDot = friendEl.querySelector('.social-status-dot');
             if (statusDot) {
-                var oldClass = statusDot.className;
                 statusDot.className = 'social-status-dot ' + statusClass;
-                console.warn('[DEBUG-DOM] Status dot changed from', oldClass, 'to', statusDot.className);
             }
 
             // Update status text ONLY
             var statusDiv = friendEl.querySelector('.social-friend-status');
             if (statusDiv) {
-                var oldText = statusDiv.textContent;
                 statusDiv.textContent = statusText;
-                console.warn('[DEBUG-DOM] Status text changed from', oldText, 'to', statusText);
             }
 
-            console.warn('[DEBUG-STATUS] updateFriendStatusOnly DONE for', data.userId, '-> status:', status);
+            console.log('[Social] Updated status only for', data.userId, 'to', status);
             return true;
         },
 
@@ -2620,6 +2629,11 @@
          * Send watching info to server (separate from heartbeat/online status)
          */
         sendWatching: function (watching) {
+            // Cancel any pending offline timer - user is actively playing media
+            if (this.cancelPendingOffline) {
+                this.cancelPendingOffline();
+            }
+
             if (!window.ApiClient || !ApiClient.accessToken()) return;
 
             var baseUrl = ApiClient.serverAddress();
