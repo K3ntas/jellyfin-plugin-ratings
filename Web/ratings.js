@@ -19493,14 +19493,21 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Don't inject if already exists and is connected
+            // Don't inject if already exists and is properly connected
             const existing = document.getElementById('librarySortContainer');
-            if (existing && existing.isConnected) return true;
-            if (existing) existing.remove(); // Clean up orphaned element
+            if (existing) {
+                const inBody = document.body.contains(existing);
+                console.log('[Ratings] Existing container found, isConnected:', existing.isConnected, 'inBody:', inBody);
+                if (existing.isConnected && inBody) {
+                    return true; // Already properly injected
+                }
+                existing.remove(); // Clean up orphaned/detached element
+            }
 
             // Must have the toolbar pagination element before we inject
             const listTopPaging = document.querySelector('.listTopPaging');
             if (!listTopPaging) {
+                console.log('[Ratings] No .listTopPaging found');
                 return false; // Toolbar not ready yet
             }
 
@@ -19510,18 +19517,34 @@
 
             // Find buttons in the same container as listTopPaging
             const toolbarArea = listTopPaging.parentElement;
-            if (toolbarArea) {
-                const buttons = toolbarArea.querySelectorAll('button.paper-icon-button-light');
-                if (buttons.length >= 2) {
-                    // Insert before the last button (usually filter)
-                    const lastBtn = buttons[buttons.length - 1];
-                    targetContainer = lastBtn.parentElement;
-                    insertBefore = lastBtn;
-                    strategyUsed = 'toolbarButtons';
+            const buttons = toolbarArea ? toolbarArea.querySelectorAll('button.paper-icon-button-light') : [];
+            console.log('[Ratings] listTopPaging found, toolbarArea:', !!toolbarArea, 'buttons:', buttons.length);
+
+            if (buttons.length >= 2) {
+                // Insert before the last button (usually filter)
+                const lastBtn = buttons[buttons.length - 1];
+                targetContainer = lastBtn.parentElement;
+                insertBefore = lastBtn;
+                strategyUsed = 'toolbarButtons';
+            }
+
+            // Fallback: look for buttons anywhere in document if toolbar area has none
+            if (!targetContainer) {
+                const allButtons = document.querySelectorAll('.listTopPaging ~ button.paper-icon-button-light, button.paper-icon-button-light');
+                console.log('[Ratings] Fallback: found', allButtons.length, 'buttons in document');
+                for (const btn of allButtons) {
+                    const parent = btn.parentElement;
+                    if (parent && parent.querySelectorAll('button').length >= 3) {
+                        targetContainer = parent;
+                        insertBefore = parent.querySelector('button:last-of-type');
+                        strategyUsed = 'fallbackButtons';
+                        break;
+                    }
                 }
             }
 
             if (!targetContainer) {
+                console.log('[Ratings] No suitable container found');
                 return false;
             }
 
