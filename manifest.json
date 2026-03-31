@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.175.0",
+        "changelog": "Debug: Check for multiple .btnSort elements",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.175.0/jellyfin-plugin-ratings_2.0.175.0.zip",
+        "checksum": "626ff385505380d2a7634d4c1d825a4c",
+        "timestamp": "2026-03-31T18:50:00Z"
+      },
+      {
         "version": "2.0.174.0",
         "changelog": "Fix sort buttons: Verify toolbar is visible before injection",
         "targetAbi": "10.11.0.0",

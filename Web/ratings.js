@@ -19512,12 +19512,18 @@
                                   hash.includes('collectionType=') || hash.includes('parentId=');
                 if (!isLibrary) return;
 
+                const allBtnSort = document.querySelectorAll('.btnSort');
                 const btnSort = document.querySelector('.btnSort');
                 if (!btnSort) return;
 
                 // Check if container exists IN THE SAME TOOLBAR as btnSort
                 const toolbar = btnSort.parentElement;
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+                // Log if multiple btnSort found
+                if (allBtnSort.length > 1) {
+                    console.log('[SortBtn] WARNING: Multiple .btnSort found:', allBtnSort.length);
+                }
 
                 // Log every 50th mutation to avoid spam
                 mutationCount++;
@@ -19577,15 +19583,16 @@
             let strategy = '';
 
             // Strategy 1: Find .btnSort button and insert after it (before filter)
+            const allBtnSort = document.querySelectorAll('.btnSort');
             const sortBtn = document.querySelector('.btnSort');
-            console.log('[SortBtn] inject: Strategy 1 - .btnSort:', !!sortBtn);
+            console.log('[SortBtn] inject: Strategy 1 - .btnSort count:', allBtnSort.length, 'first:', !!sortBtn);
             if (sortBtn) {
                 targetContainer = sortBtn.parentElement;
                 // Insert after sort button - find the filter wrapper or filter button
                 const filterWrapper = document.querySelector('.btnFilter-wrapper');
                 insertBefore = filterWrapper || document.querySelector('.btnFilter');
                 strategy = 'btnSort';
-                console.log('[SortBtn] inject: Strategy 1 success - parent:', !!targetContainer, 'insertBefore:', !!insertBefore);
+                console.log('[SortBtn] inject: Strategy 1 success - parent class:', targetContainer?.className?.substring(0, 50));
             }
 
             // Strategy 2: Find paging element (.listPaging or .listTopPaging) and look for sibling buttons
