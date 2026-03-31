@@ -19459,33 +19459,23 @@
                 self.injectLibrarySortButtons();
             };
 
-            // Retry injection multiple times after navigation
-            const retryInjection = () => {
-                checkLibraryPage();
-                setTimeout(checkLibraryPage, 200);
+            // Listen for navigation events - wait for Jellyfin to finish loading
+            const onNavigate = () => {
+                // Wait for Jellyfin to settle, then inject
                 setTimeout(checkLibraryPage, 500);
                 setTimeout(checkLibraryPage, 1000);
-                setTimeout(checkLibraryPage, 2000);
+                setTimeout(checkLibraryPage, 1500);
+                setTimeout(checkLibraryPage, 2500);
             };
 
-            // Listen for navigation events
-            window.addEventListener('hashchange', () => setTimeout(retryInjection, 100));
-            window.addEventListener('popstate', () => setTimeout(retryInjection, 100));
+            window.addEventListener('hashchange', onNavigate);
+            window.addEventListener('popstate', onNavigate);
 
-            // MutationObserver to detect when toolbar elements are added or our buttons removed
-            const observer = new MutationObserver(() => {
-                if (!document.getElementById('librarySortContainer')) {
-                    checkLibraryPage();
-                }
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
-
-            // Frequent periodic check - Jellyfin may refresh content area
-            setInterval(checkLibraryPage, 500);
+            // Periodic check - but not too frequent to avoid fighting with Jellyfin
+            setInterval(checkLibraryPage, 1000);
 
             // Initial check
-            setTimeout(retryInjection, 300);
+            setTimeout(checkLibraryPage, 1000);
         },
 
         /**
@@ -19568,7 +19558,11 @@
             }
 
             if (!targetContainer) {
-                console.log('[Ratings] Sort buttons: No container found');
+                return false;
+            }
+
+            // Verify we're on a page with the proper toolbar (has listTopPaging)
+            if (!document.querySelector('.listTopPaging')) {
                 return false;
             }
 
