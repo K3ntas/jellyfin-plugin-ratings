@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.154.0",
+        "changelog": "Fix: Library sort buttons load more reliably on navigation",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.154.0/jellyfin-plugin-ratings_2.0.154.0.zip",
+        "checksum": "3d07c2b98eab702d38f1fe642e82a02f",
+        "timestamp": "2026-03-31T20:30:00Z"
+      },
+      {
         "version": "2.0.153.0",
         "changelog": "Fix: Collection stars now show average rating visually",
         "targetAbi": "10.11.0.0",

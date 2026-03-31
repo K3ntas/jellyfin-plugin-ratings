@@ -19209,8 +19209,10 @@
         initLibrarySortButtons: function () {
             const self = this;
             let lastUrl = '';
+            let retryCount = 0;
+            const maxRetries = 10;
 
-            const checkLibraryPage = () => {
+            const checkLibraryPage = (isRetry) => {
                 const url = window.location.href;
                 const hash = window.location.hash;
 
@@ -19219,6 +19221,7 @@
                     // Remove any existing library sort buttons
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    retryCount = 0;
                     return;
                 }
 
@@ -19233,38 +19236,51 @@
                     // Remove sort buttons when leaving library
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    retryCount = 0;
                     return;
                 }
 
-                // Don't re-inject on same URL
+                // Reset retry count on new URL
+                if (url !== lastUrl) {
+                    retryCount = 0;
+                }
+
+                // Don't re-inject on same URL if already exists
                 if (url === lastUrl && document.getElementById('librarySortContainer')) {
                     return;
                 }
                 lastUrl = url;
 
-                // Wait for Jellyfin's controls to appear, then inject our buttons
-                self.injectLibrarySortButtons();
+                // Try to inject buttons
+                const success = self.injectLibrarySortButtons();
+
+                // If injection failed (container not found), retry with quick polling
+                if (!success && retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(() => checkLibraryPage(true), 200);
+                }
             };
 
             // Listen for navigation events
-            window.addEventListener('hashchange', () => setTimeout(checkLibraryPage, 300));
-            window.addEventListener('popstate', () => setTimeout(checkLibraryPage, 300));
+            window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
+            window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // Periodic check as fallback
-            setInterval(checkLibraryPage, 2000);
+            // Periodic check as fallback (less frequent since we have quick retry)
+            setInterval(() => checkLibraryPage(false), 3000);
 
             // Initial check
-            setTimeout(checkLibraryPage, 1000);
+            setTimeout(() => checkLibraryPage(false), 500);
         },
 
         /**
          * Inject sort buttons into library view header
+         * @returns {boolean} true if injection succeeded, false if container not found
          */
         injectLibrarySortButtons: function () {
             const self = this;
 
             // Don't inject if already exists
-            if (document.getElementById('librarySortContainer')) return;
+            if (document.getElementById('librarySortContainer')) return true;
 
             // Find Jellyfin's view controls container
             // Look for the container with pagination and view buttons
@@ -19309,9 +19325,8 @@
             }
 
             if (!targetContainer) {
-                // Retry after a delay
-                setTimeout(() => self.injectLibrarySortButtons(), 500);
-                return;
+                // Return false to signal caller to retry
+                return false;
             }
 
             // Create sort buttons container
@@ -19364,6 +19379,8 @@
                     }
                 });
             });
+
+            return true;
         },
 
         /**
