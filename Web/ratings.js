@@ -19479,34 +19479,21 @@
             window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
             window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // MutationObserver to catch DOM changes - most reliable method
-            const observer = new MutationObserver((mutations) => {
-                // Only check if we're on a library page and container doesn't exist
+            // MutationObserver - inject immediately when .btnSort appears
+            const observer = new MutationObserver(() => {
                 const hash = window.location.hash;
                 const isLibrary = hash.includes('#/movies') || hash.includes('#/tv') ||
                                   hash.includes('collectionType=') || hash.includes('parentId=');
                 if (!isLibrary) return;
-                if (document.getElementById('librarySortContainer')) return;
 
-                // Check if any mutation added toolbar elements
-                for (const mutation of mutations) {
-                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                        for (const node of mutation.addedNodes) {
-                            if (node.nodeType === 1) { // Element node
-                                if (node.classList?.contains('btnSort') ||
-                                    node.classList?.contains('btnFilter-wrapper') ||
-                                    node.querySelector?.('.btnSort, .btnFilter-wrapper')) {
-                                    setTimeout(() => checkLibraryPage(false), 50);
-                                    return;
-                                }
-                            }
-                        }
-                    }
+                // If .btnSort exists but our container doesn't, inject now
+                if (document.querySelector('.btnSort') && !document.getElementById('librarySortContainer')) {
+                    self.injectLibrarySortButtons();
                 }
             });
             observer.observe(document.body, { childList: true, subtree: true });
 
-            // Periodic check as fallback (less frequent since we have observer)
+            // Periodic check as fallback
             setInterval(() => checkLibraryPage(false), 2000);
 
             // Initial check
