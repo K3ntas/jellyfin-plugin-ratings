@@ -19470,8 +19470,15 @@
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 if (containerInToolbar) {
-                    console.log('[SortBtn] Container exists in current toolbar, skipping');
-                    return;
+                    const isVisible = containerInToolbar.isConnected && document.body.contains(containerInToolbar);
+                    console.log('[SortBtn] Container in toolbar, visible:', isVisible, '- skipping');
+                    if (!isVisible) {
+                        // Container exists but not visible - remove and reinject
+                        console.log('[SortBtn] Container not visible, will reinject');
+                        containerInToolbar.remove();
+                    } else {
+                        return;
+                    }
                 }
 
                 // Try to inject buttons
@@ -19520,7 +19527,12 @@
 
                 // If toolbar doesn't have our container, inject now
                 if (!containerInToolbar) {
-                    console.log('[SortBtn] MutationObserver: toolbar missing container - INJECTING');
+                    // Make sure toolbar is actually visible in the document
+                    if (!toolbar.isConnected || !document.body.contains(toolbar)) {
+                        console.log('[SortBtn] MutationObserver: toolbar not connected, skipping');
+                        return;
+                    }
+                    console.log('[SortBtn] MutationObserver: toolbar missing container - INJECTING, hash:', hash);
                     // Remove any orphaned container first
                     const orphaned = document.getElementById('librarySortContainer');
                     if (orphaned) orphaned.remove();
@@ -19671,7 +19683,10 @@
                 });
             });
 
-            console.log('[SortBtn] inject: SUCCESS - buttons injected');
+            // Verify injection worked
+            const verifyContainer = document.getElementById('librarySortContainer');
+            const isVisible = verifyContainer && verifyContainer.isConnected && document.body.contains(verifyContainer);
+            console.log('[SortBtn] inject: SUCCESS - buttons injected, verified visible:', isVisible);
             return true;
         },
 
