@@ -19429,8 +19429,9 @@
                 const hash = window.location.hash;
                 console.log('[Ratings] checkLibraryPage called, hash:', hash);
 
-                // Skip Netflix view pages - they have their own sort buttons
-                if (self.netflixViewEnabled && self.isNetflixViewPage()) {
+                // Skip ONLY if Netflix view is actually rendered (not just enabled)
+                const netflixContainer = document.querySelector('.netflix-view-container');
+                if (netflixContainer && netflixContainer.isConnected) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     return;

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.168.0",
+        "changelog": "Fix sort buttons: Only skip if Netflix view is actually rendered",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.168.0/jellyfin-plugin-ratings_2.0.168.0.zip",
+        "checksum": "4262897e02a1f5ca9fd20df1b15aa451",
+        "timestamp": "2026-03-31T17:30:00Z"
+      },
+      {
         "version": "2.0.167.0",
         "changelog": "Debug: Add comprehensive logging for sort buttons injection",
         "targetAbi": "10.11.0.0",
