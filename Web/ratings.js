@@ -19425,13 +19425,15 @@
             let retryCount = 0;
             const maxRetries = 30;
 
-            const checkLibraryPage = (isRetry) => {
+            const checkLibraryPage = (isRetry, source) => {
                 const url = window.location.href;
                 const hash = window.location.hash;
+                console.log('[SortBtn] checkLibraryPage called, source:', source, 'hash:', hash, 'isRetry:', isRetry);
 
                 // Skip ONLY if Netflix view is actually rendered
                 const netflixContainer = document.querySelector('.netflix-view-container');
                 if (netflixContainer && netflixContainer.isConnected) {
+                    console.log('[SortBtn] Netflix view detected, skipping');
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
@@ -19448,6 +19450,7 @@
                                      hash.includes('parentId=');
 
                 if (!isLibraryPage) {
+                    console.log('[SortBtn] Not library page, skipping');
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
@@ -19456,48 +19459,71 @@
 
                 // Reset retry count on new URL
                 if (url !== lastUrl) {
+                    console.log('[SortBtn] New URL detected, resetting retries');
                     retryCount = 0;
                 }
 
                 // Don't re-inject on same URL if already exists
-                if (url === lastUrl && document.getElementById('librarySortContainer')) {
+                const containerExists = document.getElementById('librarySortContainer');
+                if (url === lastUrl && containerExists) {
+                    console.log('[SortBtn] Same URL and container exists, skipping');
                     return;
                 }
                 lastUrl = url;
 
                 // Try to inject buttons
+                console.log('[SortBtn] Attempting injection...');
                 const success = self.injectLibrarySortButtons();
+                console.log('[SortBtn] Injection result:', success);
 
                 // If injection failed, retry with quick polling
                 if (!success && retryCount < maxRetries) {
                     retryCount++;
-                    setTimeout(() => checkLibraryPage(true), 100);
+                    console.log('[SortBtn] Scheduling retry', retryCount);
+                    setTimeout(() => checkLibraryPage(true, 'retry'), 100);
                 }
             };
 
             // Listen for navigation events
-            window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
-            window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
+            window.addEventListener('hashchange', () => {
+                console.log('[SortBtn] >>> HASHCHANGE EVENT <<<');
+                setTimeout(() => checkLibraryPage(false, 'hashchange'), 100);
+            });
+            window.addEventListener('popstate', () => {
+                console.log('[SortBtn] >>> POPSTATE EVENT <<<');
+                setTimeout(() => checkLibraryPage(false, 'popstate'), 100);
+            });
 
             // MutationObserver - inject immediately when .btnSort appears
+            let mutationCount = 0;
             const observer = new MutationObserver(() => {
                 const hash = window.location.hash;
                 const isLibrary = hash.includes('#/movies') || hash.includes('#/tv') ||
                                   hash.includes('collectionType=') || hash.includes('parentId=');
                 if (!isLibrary) return;
 
+                const btnSort = document.querySelector('.btnSort');
+                const container = document.getElementById('librarySortContainer');
+
+                // Log every 50th mutation to avoid spam
+                mutationCount++;
+                if (mutationCount % 50 === 0) {
+                    console.log('[SortBtn] MutationObserver check #' + mutationCount + ', btnSort:', !!btnSort, 'container:', !!container);
+                }
+
                 // If .btnSort exists but our container doesn't, inject now
-                if (document.querySelector('.btnSort') && !document.getElementById('librarySortContainer')) {
+                if (btnSort && !container) {
+                    console.log('[SortBtn] MutationObserver: btnSort found, container missing - INJECTING');
                     self.injectLibrarySortButtons();
                 }
             });
             observer.observe(document.body, { childList: true, subtree: true });
 
             // Periodic check as fallback
-            setInterval(() => checkLibraryPage(false), 2000);
+            setInterval(() => checkLibraryPage(false, 'interval'), 2000);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false), 300);
+            setTimeout(() => checkLibraryPage(false, 'initial'), 300);
         },
 
         /**
@@ -19511,21 +19537,27 @@
             const existing = document.getElementById('librarySortContainer');
             if (existing) {
                 if (existing.isConnected && document.body.contains(existing)) {
+                    console.log('[SortBtn] inject: container already exists and connected');
                     return true; // Already properly injected
                 }
+                console.log('[SortBtn] inject: removing orphaned container');
                 existing.remove(); // Clean up orphaned/detached element
             }
 
             let targetContainer = null;
             let insertBefore = null;
+            let strategy = '';
 
             // Strategy 1: Find .btnSort button and insert after it (before filter)
             const sortBtn = document.querySelector('.btnSort');
+            console.log('[SortBtn] inject: Strategy 1 - .btnSort:', !!sortBtn);
             if (sortBtn) {
                 targetContainer = sortBtn.parentElement;
                 // Insert after sort button - find the filter wrapper or filter button
                 const filterWrapper = document.querySelector('.btnFilter-wrapper');
                 insertBefore = filterWrapper || document.querySelector('.btnFilter');
+                strategy = 'btnSort';
+                console.log('[SortBtn] inject: Strategy 1 success - parent:', !!targetContainer, 'insertBefore:', !!insertBefore);
             }
 
             // Strategy 2: Find paging element (.listPaging or .listTopPaging) and look for sibling buttons
@@ -19564,8 +19596,11 @@
             }
 
             if (!targetContainer) {
+                console.log('[SortBtn] inject: No targetContainer found, returning false');
                 return false;
             }
+
+            console.log('[SortBtn] inject: Creating container, strategy:', strategy);
 
             // Create sort buttons container
             const container = document.createElement('span');
@@ -19590,8 +19625,10 @@
             // Insert into container
             if (insertBefore) {
                 targetContainer.insertBefore(container, insertBefore);
+                console.log('[SortBtn] inject: Inserted before filter');
             } else {
                 targetContainer.appendChild(container);
+                console.log('[SortBtn] inject: Appended to container');
             }
 
             // Attach click handlers
@@ -19618,6 +19655,7 @@
                 });
             });
 
+            console.log('[SortBtn] inject: SUCCESS - buttons injected');
             return true;
         },
 

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.172.0",
+        "changelog": "Diagnostic: Add logging to debug sort buttons navigation issue",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.172.0/jellyfin-plugin-ratings_2.0.172.0.zip",
+        "checksum": "13434e9ad23dbe08ecca1c4e84a6a430",
+        "timestamp": "2026-03-31T18:20:00Z"
+      },
+      {
         "version": "2.0.171.0",
         "changelog": "Fix sort buttons: Simplified MutationObserver - inject when .btnSort appears",
         "targetAbi": "10.11.0.0",
