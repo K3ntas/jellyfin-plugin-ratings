@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.146.0",
+        "changelog": "Fix: Rating badges now show on collection page movie cards",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.146.0/jellyfin-plugin-ratings_2.0.146.0.zip",
+        "checksum": "49c4aa38c101da5f8b48cc6fa1f9ed46",
+        "timestamp": "2026-03-31T13:00:00Z"
+      },
+      {
         "version": "2.0.145.0",
         "changelog": "Enhanced profile stats: movies watched, series watched, total watch hours from Jellyfin data",
         "targetAbi": "10.11.0.0",

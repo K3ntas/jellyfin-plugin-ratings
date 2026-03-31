@@ -11336,10 +11336,21 @@
                 rootMargin: '50px' // Start loading slightly before card comes into view
             });
 
+            // Comprehensive card selector for all page types including collections
+            const cardSelector = [
+                '.card:not(.card .card)',
+                '.portraitCard',
+                '.squareCard',
+                '.overflowPortraitCard',
+                '.overflowSquareCard',
+                '.overflowBackdropCard',
+                '.itemTile'
+            ].join(', ');
+
             // Create MutationObserver to watch for new cards being added to DOM
             const mutationObserver = new MutationObserver(() => {
                 // Find all cards that aren't being observed yet
-                const cards = document.querySelectorAll('.card:not(.card .card)');
+                const cards = document.querySelectorAll(cardSelector);
                 cards.forEach(card => {
                     // Only observe if not already being watched
                     if (!card.dataset.ratingsObserved) {
@@ -11357,7 +11368,7 @@
 
             // Initial scan for existing cards
             setTimeout(() => {
-                const cards = document.querySelectorAll('.card:not(.card .card)');
+                const cards = document.querySelectorAll(cardSelector);
                 cards.forEach(card => {
                     card.dataset.ratingsObserved = 'true';
                     intersectionObserver.observe(card);
