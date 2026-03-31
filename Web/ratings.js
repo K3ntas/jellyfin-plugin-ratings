@@ -19662,7 +19662,7 @@
             console.log('[SortBtn] inject: Creating container, strategy:', strategy);
 
             // Create buttons directly (no wrapper - flex parent doesn't like span wrapper)
-            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0; margin: 0;';
+            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0; margin: 0; pointer-events: auto !important; position: relative; z-index: 1;';
 
             const btn1 = document.createElement('button');
             btn1.id = 'librarySortDesc';
@@ -19703,6 +19703,7 @@
             // Attach click handlers
             [btn1, btn2].forEach(btn => {
                 btn.addEventListener('click', function (e) {
+                    console.log('[SortBtn] Button clicked:', btn.getAttribute('data-sort'));
                     e.preventDefault();
                     e.stopPropagation();
 
