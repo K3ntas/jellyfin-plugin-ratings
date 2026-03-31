@@ -8,7 +8,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <Version>2.0.155.0</Version>
+    <Version>2.0.156.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.156.0",
+        "changelog": "Cleanup: Remove debug logs, stable library sort buttons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.156.0/jellyfin-plugin-ratings_2.0.156.0.zip",
+        "checksum": "cdd7ecda03a366760334639f16a0e5ae",
+        "timestamp": "2026-03-31T21:30:00Z"
+      },
+      {
         "version": "2.0.155.0",
         "changelog": "Fix: Improved library sort buttons detection for all page types",
         "targetAbi": "10.11.0.0",
