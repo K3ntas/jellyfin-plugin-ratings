@@ -19661,17 +19661,15 @@
 
             console.log('[SortBtn] inject: Creating container, strategy:', strategy);
 
-            // Create buttons directly (no wrapper - flex parent doesn't like span wrapper)
-            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0; margin: 0; pointer-events: auto !important; position: relative; z-index: 1;';
-
+            // Create buttons - minimal inline styles, let CSS handle hover/active
             const btn1 = document.createElement('button');
             btn1.id = 'librarySortDesc';
             btn1.className = 'library-sort-btn paper-icon-button-light autoSize';
             btn1.setAttribute('data-sort', 'desc');
             btn1.setAttribute('title', self.t('sortHighest'));
             btn1.setAttribute('is', 'paper-icon-button-light');
-            btn1.style.cssText = btnStyle;
-            btn1.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/></svg>`;
+            btn1.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
+            btn1.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/></svg>`;
 
             const btn2 = document.createElement('button');
             btn2.id = 'librarySortAsc';
@@ -19679,8 +19677,8 @@
             btn2.setAttribute('data-sort', 'asc');
             btn2.setAttribute('title', self.t('sortLowest'));
             btn2.setAttribute('is', 'paper-icon-button-light');
-            btn2.style.cssText = btnStyle;
-            btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
+            btn2.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
+            btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
 
             // Create a marker span to track if our buttons exist (for detection)
             const marker = document.createElement('span');

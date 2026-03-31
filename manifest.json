@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.180.0",
+        "changelog": "Fix sort buttons: Minimal inline styles, CSS handles hover/active",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.180.0/jellyfin-plugin-ratings_2.0.180.0.zip",
+        "checksum": "b57df4f69b77e19c5d6b68798e9dc62b",
+        "timestamp": "2026-03-31T19:40:00Z"
+      },
+      {
         "version": "2.0.179.0",
         "changelog": "Fix sort buttons: Add pointer-events and z-index for clickability",
         "targetAbi": "10.11.0.0",
