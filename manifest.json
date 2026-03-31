@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.163.0",
+        "changelog": "Fix sort buttons: Check element is actually connected to DOM",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.163.0/jellyfin-plugin-ratings_2.0.163.0.zip",
+        "checksum": "e801fb39a85af4da01722eeda1ee8b03",
+        "timestamp": "2026-04-01T01:00:00Z"
+      },
+      {
         "version": "2.0.162.0",
         "changelog": "Fix sort buttons: Wait for Jellyfin to finish loading before injection",
         "targetAbi": "10.11.0.0",

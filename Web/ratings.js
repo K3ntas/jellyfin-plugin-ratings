@@ -19450,9 +19450,14 @@
                     return;
                 }
 
-                // Always check if container exists - Jellyfin may have removed it
-                if (document.getElementById('librarySortContainer')) {
-                    return; // Already injected and still there
+                // Check if container exists AND is connected to DOM (Jellyfin may have removed it)
+                const existing = document.getElementById('librarySortContainer');
+                if (existing && existing.isConnected && document.body.contains(existing)) {
+                    return; // Already injected and still visible
+                }
+                // Remove orphaned container if it exists but is disconnected
+                if (existing) {
+                    existing.remove();
                 }
 
                 // Try to inject buttons
@@ -19485,8 +19490,10 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Don't inject if already exists
-            if (document.getElementById('librarySortContainer')) return true;
+            // Don't inject if already exists and is connected
+            const existing = document.getElementById('librarySortContainer');
+            if (existing && existing.isConnected) return true;
+            if (existing) existing.remove(); // Clean up orphaned element
 
             let targetContainer = null;
             let insertBefore = null;
