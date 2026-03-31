@@ -19423,7 +19423,7 @@
             const self = this;
             let lastUrl = '';
             let retryCount = 0;
-            const maxRetries = 20;
+            const maxRetries = 30;
 
             const checkLibraryPage = (isRetry) => {
                 const url = window.location.href;
@@ -19471,7 +19471,7 @@
                 // If injection failed, retry with quick polling
                 if (!success && retryCount < maxRetries) {
                     retryCount++;
-                    setTimeout(() => checkLibraryPage(true), 200);
+                    setTimeout(() => checkLibraryPage(true), 100);
                 }
             };
 
@@ -19479,11 +19479,38 @@
             window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
             window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // Periodic check as fallback
-            setInterval(() => checkLibraryPage(false), 3000);
+            // MutationObserver to catch DOM changes - most reliable method
+            const observer = new MutationObserver((mutations) => {
+                // Only check if we're on a library page and container doesn't exist
+                const hash = window.location.hash;
+                const isLibrary = hash.includes('#/movies') || hash.includes('#/tv') ||
+                                  hash.includes('collectionType=') || hash.includes('parentId=');
+                if (!isLibrary) return;
+                if (document.getElementById('librarySortContainer')) return;
+
+                // Check if any mutation added toolbar elements
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.classList?.contains('btnSort') ||
+                                    node.classList?.contains('btnFilter-wrapper') ||
+                                    node.querySelector?.('.btnSort, .btnFilter-wrapper')) {
+                                    setTimeout(() => checkLibraryPage(false), 50);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // Periodic check as fallback (less frequent since we have observer)
+            setInterval(() => checkLibraryPage(false), 2000);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false), 500);
+            setTimeout(() => checkLibraryPage(false), 300);
         },
 
         /**
