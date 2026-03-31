@@ -292,15 +292,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Check if this is a collection (BoxSet) - calculate average from child items
-                if (item is MediaBrowser.Controller.Entities.Movies.BoxSet)
+                if (item is MediaBrowser.Controller.Entities.Movies.BoxSet boxSet)
                 {
-                    var childQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
-                    {
-                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
-                        AncestorIds = new[] { itemId },
-                        Recursive = true
-                    };
-                    var childItems = _libraryManager.GetItemList(childQuery);
+                    // BoxSet uses LinkedChildren, not AncestorIds
+                    var childItems = boxSet.GetLinkedChildren();
                     var childRatings = new List<double>();
 
                     foreach (var child in childItems)
