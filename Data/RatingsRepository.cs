@@ -195,8 +195,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="rating">Rating value.</param>
         /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
+        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
         /// <returns>The created or updated rating.</returns>
-        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null)
+        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
         {
             lock (_lock)
             {
@@ -212,6 +213,11 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (existing == null && !string.IsNullOrEmpty(imdbId))
                 {
                     existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
+                }
+
+                if (existing == null && !string.IsNullOrEmpty(aniDbId))
+                {
+                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.AniDbId == aniDbId);
                 }
 
                 if (existing != null)
@@ -235,6 +241,11 @@ namespace Jellyfin.Plugin.Ratings.Data
                         existing.ImdbId = imdbId;
                     }
 
+                    if (string.IsNullOrEmpty(existing.AniDbId) && !string.IsNullOrEmpty(aniDbId))
+                    {
+                        existing.AniDbId = aniDbId;
+                    }
+
                     _ = SaveRatingsAsync();
                     return existing;
                 }
@@ -245,7 +256,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                     ItemId = itemId,
                     Rating = rating,
                     TmdbId = tmdbId,
-                    ImdbId = imdbId
+                    ImdbId = imdbId,
+                    AniDbId = aniDbId
                 };
 
                 _ratings[newRating.Id] = newRating;
@@ -261,8 +273,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="itemId">Item ID.</param>
         /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
+        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
         /// <returns>The user's rating or null if not found.</returns>
-        public UserRating? GetUserRating(Guid userId, Guid itemId, string? tmdbId = null, string? imdbId = null)
+        public UserRating? GetUserRating(Guid userId, Guid itemId, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
         {
             lock (_lock)
             {
@@ -278,6 +291,11 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (rating == null && !string.IsNullOrEmpty(imdbId))
                 {
                     rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
+                }
+
+                if (rating == null && !string.IsNullOrEmpty(aniDbId))
+                {
+                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.AniDbId == aniDbId);
                 }
 
                 // Auto-migrate ItemId if found by provider ID
@@ -297,8 +315,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="itemId">Item ID.</param>
         /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
+        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
         /// <returns>List of ratings for the item.</returns>
-        public List<UserRating> GetItemRatings(Guid itemId, string? tmdbId = null, string? imdbId = null)
+        public List<UserRating> GetItemRatings(Guid itemId, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
         {
             lock (_lock)
             {
@@ -313,6 +332,11 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
                 {
                     ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
+                }
+
+                if (ratings.Count == 0 && !string.IsNullOrEmpty(aniDbId))
+                {
+                    ratings = _ratings.Values.Where(r => r.AniDbId == aniDbId).ToList();
                 }
 
                 // Auto-migrate ItemIds for ratings found by provider ID
@@ -335,7 +359,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Internal helper for GetItemRatings without lock (for use within already-locked methods).
         /// </summary>
-        private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId)
+        private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId, string? aniDbId = null)
         {
             var ratings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
 
@@ -348,6 +372,11 @@ namespace Jellyfin.Plugin.Ratings.Data
             if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
             {
                 ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
+            }
+
+            if (ratings.Count == 0 && !string.IsNullOrEmpty(aniDbId))
+            {
+                ratings = _ratings.Values.Where(r => r.AniDbId == aniDbId).ToList();
             }
 
             // Auto-migrate ItemIds for ratings found by provider ID
@@ -389,13 +418,14 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="userId">Optional user ID to include user's rating.</param>
         /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
+        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
         /// <returns>Rating statistics.</returns>
-        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null, string? tmdbId = null, string? imdbId = null)
+        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
         {
             lock (_lock)
             {
                 // Use GetItemRatings which already handles provider ID fallback
-                var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId);
+                var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
                 var stats = new RatingStats
                 {
                     ItemId = itemId,

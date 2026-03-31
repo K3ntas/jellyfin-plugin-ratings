@@ -33,6 +33,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string? ImdbId { get; set; }
 
         /// <summary>
+        /// Gets or sets the AniDB ID for fallback lookup when item ID changes (anime libraries).
+        /// </summary>
+        public string? AniDbId { get; set; }
+
+        /// <summary>
         /// Gets or sets the rating value (1-10).
         /// </summary>
         public int Rating { get; set; }

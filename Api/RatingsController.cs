@@ -208,13 +208,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Extract provider IDs for fallback lookup (handles replaced media files)
                 string? tmdbId = null;
                 string? imdbId = null;
+                string? aniDbId = null;
                 if (item.ProviderIds != null)
                 {
                     item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
                     item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                    item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                 }
 
-                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId).ConfigureAwait(false);
+                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
 
                 // Broadcast profile stats update via WebSocket
@@ -301,13 +303,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         string? childTmdbId = null;
                         string? childImdbId = null;
+                        string? childAniDbId = null;
                         if (child.ProviderIds != null)
                         {
                             child.ProviderIds.TryGetValue("Tmdb", out childTmdbId);
                             child.ProviderIds.TryGetValue("Imdb", out childImdbId);
+                            child.ProviderIds.TryGetValue("AniDB", out childAniDbId);
                         }
 
-                        var childStats = _repository.GetRatingStats(child.Id, null, childTmdbId, childImdbId);
+                        var childStats = _repository.GetRatingStats(child.Id, null, childTmdbId, childImdbId, childAniDbId);
                         if (childStats.TotalRatings > 0)
                         {
                             childRatings.Add(childStats.AverageRating);
@@ -327,13 +331,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Extract provider IDs for fallback lookup (handles replaced media files)
                 string? tmdbId = null;
                 string? imdbId = null;
+                string? aniDbId = null;
                 if (item.ProviderIds != null)
                 {
                     item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
                     item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                    item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                 }
 
-                var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null, tmdbId, imdbId);
+                var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null, tmdbId, imdbId, aniDbId);
 
                 return Ok(stats);
             }

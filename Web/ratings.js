@@ -19423,7 +19423,7 @@
             const self = this;
             let lastUrl = '';
             let retryCount = 0;
-            const maxRetries = 10;
+            const maxRetries = 20;
 
             const checkLibraryPage = (isRetry) => {
                 const url = window.location.href;
@@ -19474,7 +19474,7 @@
                 // If injection failed (container not found), retry with quick polling
                 if (!success && retryCount < maxRetries) {
                     retryCount++;
-                    setTimeout(() => checkLibraryPage(true), 200);
+                    setTimeout(() => checkLibraryPage(true), 150);
                 }
             };
 
@@ -19482,11 +19482,35 @@
             window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
             window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // Periodic check as fallback (less frequent since we have quick retry)
-            setInterval(() => checkLibraryPage(false), 3000);
+            // MutationObserver to detect when toolbar elements are added
+            const observer = new MutationObserver((mutations) => {
+                // Only check if we don't have sort buttons yet
+                if (document.getElementById('librarySortContainer')) return;
+
+                // Check if any mutation added relevant elements
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === 1) { // Element node
+                                // Check if this or children contain toolbar elements
+                                if (node.classList && (node.classList.contains('listTopPaging') ||
+                                    node.querySelector && node.querySelector('.listTopPaging, button.paper-icon-button-light'))) {
+                                    setTimeout(() => checkLibraryPage(false), 50);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // Periodic check as fallback
+            setInterval(() => checkLibraryPage(false), 1500);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false), 500);
+            setTimeout(() => checkLibraryPage(false), 300);
         },
 
         /**
