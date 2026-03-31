@@ -19425,15 +19425,13 @@
             let retryCount = 0;
             const maxRetries = 30;
 
-            const checkLibraryPage = (isRetry, source) => {
+            const checkLibraryPage = (isRetry) => {
                 const url = window.location.href;
                 const hash = window.location.hash;
-                console.log('[SortBtn] checkLibraryPage called, source:', source, 'hash:', hash, 'isRetry:', isRetry);
 
-                // Skip ONLY if Netflix view is actually rendered
+                // Skip if Netflix view is rendered
                 const netflixContainer = document.querySelector('.netflix-view-container');
                 if (netflixContainer && netflixContainer.isConnected) {
-                    console.log('[SortBtn] Netflix view detected, skipping');
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
@@ -19450,7 +19448,6 @@
                                      hash.includes('parentId=');
 
                 if (!isLibraryPage) {
-                    console.log('[SortBtn] Not library page, skipping');
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
@@ -19459,7 +19456,6 @@
 
                 // Reset retry count on new URL
                 if (url !== lastUrl) {
-                    console.log('[SortBtn] New URL detected, resetting retries');
                     retryCount = 0;
                 }
                 lastUrl = url;
@@ -19478,51 +19474,35 @@
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 if (containerInToolbar) {
-                    const isVisible = containerInToolbar.isConnected && document.body.contains(containerInToolbar);
-                    console.log('[SortBtn] Container in toolbar, visible:', isVisible, '- skipping');
-                    if (!isVisible) {
-                        // Container exists but not visible - remove and reinject
-                        console.log('[SortBtn] Container not visible, will reinject');
-                        containerInToolbar.remove();
-                    } else {
-                        return;
+                    if (containerInToolbar.isConnected && document.body.contains(containerInToolbar)) {
+                        return; // Already exists and visible
                     }
+                    containerInToolbar.remove(); // Remove orphaned
                 }
 
                 // Try to inject buttons
-                console.log('[SortBtn] Attempting injection...');
                 const success = self.injectLibrarySortButtons();
-                console.log('[SortBtn] Injection result:', success);
 
-                // If injection failed, retry with quick polling
+                // If injection failed, retry
                 if (!success && retryCount < maxRetries) {
                     retryCount++;
-                    console.log('[SortBtn] Scheduling retry', retryCount);
-                    setTimeout(() => checkLibraryPage(true, 'retry'), 100);
+                    setTimeout(() => checkLibraryPage(true), 100);
                 }
             };
 
             // Listen for navigation events
-            window.addEventListener('hashchange', () => {
-                console.log('[SortBtn] >>> HASHCHANGE EVENT <<<');
-                setTimeout(() => checkLibraryPage(false, 'hashchange'), 100);
-            });
-            window.addEventListener('popstate', () => {
-                console.log('[SortBtn] >>> POPSTATE EVENT <<<');
-                setTimeout(() => checkLibraryPage(false, 'popstate'), 100);
-            });
+            window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
+            window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // MutationObserver - inject immediately when .btnSort appears
-            let mutationCount = 0;
+            // MutationObserver - inject when visible .btnSort appears
             const observer = new MutationObserver(() => {
                 const hash = window.location.hash;
                 const isLibrary = hash.includes('#/movies') || hash.includes('#/tv') ||
                                   hash.includes('collectionType=') || hash.includes('parentId=');
                 if (!isLibrary) return;
 
+                // Find the VISIBLE .btnSort
                 const allBtnSort = document.querySelectorAll('.btnSort');
-
-                // Find the VISIBLE .btnSort (one with non-zero dimensions)
                 let btnSort = null;
                 for (const btn of allBtnSort) {
                     const rect = btn.getBoundingClientRect();
@@ -19533,30 +19513,10 @@
                 }
                 if (!btnSort) return;
 
-                // Check if container exists IN THE SAME TOOLBAR as btnSort
                 const toolbar = btnSort.parentElement;
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
-                // Log if multiple btnSort found
-                if (allBtnSort.length > 1) {
-                    console.log('[SortBtn] WARNING: Multiple .btnSort found:', allBtnSort.length, 'using visible one');
-                }
-
-                // Log every 50th mutation to avoid spam
-                mutationCount++;
-                if (mutationCount % 50 === 0) {
-                    console.log('[SortBtn] MutationObserver check #' + mutationCount + ', btnSort:', !!btnSort, 'containerInToolbar:', !!containerInToolbar);
-                }
-
-                // If toolbar doesn't have our container, inject now
-                if (!containerInToolbar) {
-                    // Make sure toolbar is actually visible in the document
-                    if (!toolbar.isConnected || !document.body.contains(toolbar)) {
-                        console.log('[SortBtn] MutationObserver: toolbar not connected, skipping');
-                        return;
-                    }
-                    console.log('[SortBtn] MutationObserver: toolbar missing container - INJECTING, hash:', hash);
-                    // Remove any orphaned container first
+                if (!containerInToolbar && toolbar.isConnected) {
                     const orphaned = document.getElementById('librarySortContainer');
                     if (orphaned) orphaned.remove();
                     self.injectLibrarySortButtons();
@@ -19565,10 +19525,10 @@
             observer.observe(document.body, { childList: true, subtree: true });
 
             // Periodic check as fallback
-            setInterval(() => checkLibraryPage(false, 'interval'), 2000);
+            setInterval(() => checkLibraryPage(false), 2000);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false, 'initial'), 300);
+            setTimeout(() => checkLibraryPage(false), 300);
         },
 
         /**
@@ -19579,44 +19539,32 @@
             const self = this;
 
             // Check if container exists IN THE CURRENT TOOLBAR
-            const btnSort = document.querySelector('.btnSort');
-            const toolbar = btnSort ? btnSort.parentElement : null;
-            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
-
-            if (containerInToolbar) {
-                console.log('[SortBtn] inject: container already in current toolbar');
-                return true;
-            }
-
-            // Remove any orphaned container from old DOM
-            const orphaned = document.getElementById('librarySortContainer');
-            if (orphaned) {
-                console.log('[SortBtn] inject: removing orphaned container');
-                orphaned.remove();
-            }
-
-            let targetContainer = null;
-            let insertBefore = null;
-            let strategy = '';
-
-            // Strategy 1: Find the VISIBLE .btnSort button (one with non-zero dimensions)
             const allBtnSort = document.querySelectorAll('.btnSort');
-            let sortBtn = null;
+            let visibleBtnSort = null;
             for (const btn of allBtnSort) {
                 const rect = btn.getBoundingClientRect();
                 if (rect.width > 0 && rect.height > 0) {
-                    sortBtn = btn;
+                    visibleBtnSort = btn;
                     break;
                 }
             }
-            console.log('[SortBtn] inject: Strategy 1 - .btnSort count:', allBtnSort.length, 'visible:', !!sortBtn);
-            if (sortBtn) {
-                targetContainer = sortBtn.parentElement;
-                // Find filter wrapper in the SAME container
+            const toolbar = visibleBtnSort ? visibleBtnSort.parentElement : null;
+            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+            if (containerInToolbar) return true;
+
+            // Remove any orphaned container from old DOM
+            const orphaned = document.getElementById('librarySortContainer');
+            if (orphaned) orphaned.remove();
+
+            let targetContainer = null;
+            let insertBefore = null;
+
+            // Strategy 1: Find the VISIBLE .btnSort button
+            if (visibleBtnSort) {
+                targetContainer = visibleBtnSort.parentElement;
                 const filterWrapper = targetContainer.querySelector('.btnFilter-wrapper');
                 insertBefore = filterWrapper || targetContainer.querySelector('.btnFilter');
-                strategy = 'btnSort';
-                console.log('[SortBtn] inject: Strategy 1 success - parent class:', targetContainer?.className?.substring(0, 50));
             }
 
             // Strategy 2: Find paging element (.listPaging or .listTopPaging) and look for sibling buttons
@@ -19654,12 +19602,7 @@
                 }
             }
 
-            if (!targetContainer) {
-                console.log('[SortBtn] inject: No targetContainer found, returning false');
-                return false;
-            }
-
-            console.log('[SortBtn] inject: Creating container, strategy:', strategy);
+            if (!targetContainer) return false;
 
             // Create buttons - minimal inline styles, let CSS handle hover/active
             const btn1 = document.createElement('button');
@@ -19690,43 +19633,33 @@
                 targetContainer.insertBefore(marker, insertBefore);
                 targetContainer.insertBefore(btn2, insertBefore);
                 targetContainer.insertBefore(btn1, btn2);
-                console.log('[SortBtn] inject: Inserted before filter');
             } else {
                 targetContainer.appendChild(marker);
                 targetContainer.appendChild(btn1);
                 targetContainer.appendChild(btn2);
-                console.log('[SortBtn] inject: Appended to container');
             }
 
             // Attach click handlers
             [btn1, btn2].forEach(btn => {
                 btn.addEventListener('click', function (e) {
-                    console.log('[SortBtn] Button clicked:', btn.getAttribute('data-sort'));
                     e.preventDefault();
                     e.stopPropagation();
 
                     const sortDirection = btn.getAttribute('data-sort');
                     const wasActive = btn.classList.contains('active');
 
-                    // Remove active from all
                     btn1.classList.remove('active');
                     btn2.classList.remove('active');
 
                     if (wasActive) {
-                        // Clicking same button again - restore original order
                         self.restoreLibraryCardsOrder();
                     } else {
-                        // Sort cards
                         btn.classList.add('active');
                         self.sortLibraryCards(sortDirection);
                     }
                 });
             });
 
-            // Verify injection worked
-            const verifyContainer = document.getElementById('librarySortContainer');
-            const isVisible = verifyContainer && verifyContainer.isConnected && document.body.contains(verifyContainer);
-            console.log('[SortBtn] inject: SUCCESS - buttons injected, verified visible:', isVisible);
             return true;
         },
 
