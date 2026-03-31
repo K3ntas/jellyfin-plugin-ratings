@@ -19425,8 +19425,9 @@
             let retryCount = 0;
             const maxRetries = 20;
 
-            const checkLibraryPage = (isRetry) => {
+            const checkLibraryPage = () => {
                 const hash = window.location.hash;
+                console.log('[Ratings] checkLibraryPage called, hash:', hash);
 
                 // Skip Netflix view pages - they have their own sort buttons
                 if (self.netflixViewEnabled && self.isNetflixViewPage()) {
@@ -19447,12 +19448,14 @@
                 if (!isLibraryPage) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    console.log('[Ratings] Not a library page, skipping');
                     return;
                 }
 
                 // Check if container exists AND is connected to DOM (Jellyfin may have removed it)
                 const existing = document.getElementById('librarySortContainer');
                 if (existing && existing.isConnected && document.body.contains(existing)) {
+                    console.log('[Ratings] Container exists and is connected, skipping');
                     return; // Already injected and still visible
                 }
                 // Remove orphaned container if it exists but is disconnected

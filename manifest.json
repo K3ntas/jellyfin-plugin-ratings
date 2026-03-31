@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.164.0",
+        "changelog": "Debug: More logging for sort buttons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.164.0/jellyfin-plugin-ratings_2.0.164.0.zip",
+        "checksum": "d583c3770ed1c18d035085d41d5b4c77",
+        "timestamp": "2026-04-01T01:30:00Z"
+      },
+      {
         "version": "2.0.163.0",
         "changelog": "Fix sort buttons: Check element is actually connected to DOM",
         "targetAbi": "10.11.0.0",
