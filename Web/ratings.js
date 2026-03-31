@@ -1149,8 +1149,8 @@
          */
         registerOfflineHandler: function () {
             // Handle Jellyfin logout only - server detects browser close via WebSocket
-            if (window.Events) {
-                Events.on(ApiClient, 'logout', function () {
+            if (window.Events && window.ApiClient) {
+                Events.on(window.ApiClient, 'logout', function () {
                     if (!window.ApiClient) return;
                     var baseUrl = ApiClient.serverAddress();
                     var token = ApiClient.accessToken();

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.151.0",
+        "changelog": "Fix JS error: ApiClient not defined on init, collection ratings",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.151.0/jellyfin-plugin-ratings_2.0.151.0.zip",
+        "checksum": "3fd48cb6c8aa1e2e0f3065dffc906950",
+        "timestamp": "2026-03-31T18:00:00Z"
+      },
+      {
         "version": "2.0.150.0",
         "changelog": "Fix collections: Use GetLinkedChildren for proper child item resolution",
         "targetAbi": "10.11.0.0",
