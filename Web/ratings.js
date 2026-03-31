@@ -16456,34 +16456,31 @@
             const self = this;
             let lastUrl = '';
             let retryCount = 0;
-            const maxRetries = 10;
+            const maxRetries = 30;
 
             const checkLibraryPage = (isRetry) => {
                 const url = window.location.href;
                 const hash = window.location.hash;
 
-                // Skip Netflix view pages - they have their own sort buttons
-                if (self.netflixViewEnabled && self.isNetflixViewPage()) {
-                    // Remove any existing library sort buttons
+                // Skip if Netflix view is rendered
+                const netflixContainer = document.querySelector('.netflix-view-container');
+                if (netflixContainer && netflixContainer.isConnected) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
                     return;
                 }
 
-                // Check if we're on a library page (movies, tv, etc.)
-                // Include generic library URLs and specific library type URLs
+                // Check if we're on a library page
                 const isLibraryPage = hash.includes('#/movies') ||
                                      hash.includes('#/tv') ||
                                      hash.includes('#/music') ||
                                      hash.includes('#/list') ||
                                      hash.includes('#/livetv') ||
                                      hash.includes('collectionType=') ||
-                                     hash.includes('parentId=') ||
-                                     (hash.includes('#/') && hash.includes('?') && document.querySelector('.listTopPaging'));
+                                     hash.includes('parentId=');
 
                 if (!isLibraryPage) {
-                    // Remove sort buttons when leaving library
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
                     retryCount = 0;
@@ -16494,20 +16491,35 @@
                 if (url !== lastUrl) {
                     retryCount = 0;
                 }
-
-                // Don't re-inject on same URL if already exists
-                if (url === lastUrl && document.getElementById('librarySortContainer')) {
-                    return;
-                }
                 lastUrl = url;
+
+                // Find the VISIBLE .btnSort and check its toolbar
+                const allBtnSort = document.querySelectorAll('.btnSort');
+                let btnSort = null;
+                for (const btn of allBtnSort) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        btnSort = btn;
+                        break;
+                    }
+                }
+                const toolbar = btnSort ? btnSort.parentElement : null;
+                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+                if (containerInToolbar) {
+                    if (containerInToolbar.isConnected && document.body.contains(containerInToolbar)) {
+                        return; // Already exists and visible
+                    }
+                    containerInToolbar.remove(); // Remove orphaned
+                }
 
                 // Try to inject buttons
                 const success = self.injectLibrarySortButtons();
 
-                // If injection failed (container not found), retry with quick polling
+                // If injection failed, retry
                 if (!success && retryCount < maxRetries) {
                     retryCount++;
-                    setTimeout(() => checkLibraryPage(true), 200);
+                    setTimeout(() => checkLibraryPage(true), 100);
                 }
             };
 
@@ -16515,11 +16527,41 @@
             window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
             window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            // Periodic check as fallback (less frequent since we have quick retry)
-            setInterval(() => checkLibraryPage(false), 3000);
+            // MutationObserver - inject when visible .btnSort appears
+            const observer = new MutationObserver(() => {
+                const hash = window.location.hash;
+                const isLibrary = hash.includes('#/movies') || hash.includes('#/tv') ||
+                                  hash.includes('collectionType=') || hash.includes('parentId=');
+                if (!isLibrary) return;
+
+                // Find the VISIBLE .btnSort
+                const allBtnSort = document.querySelectorAll('.btnSort');
+                let btnSort = null;
+                for (const btn of allBtnSort) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        btnSort = btn;
+                        break;
+                    }
+                }
+                if (!btnSort) return;
+
+                const toolbar = btnSort.parentElement;
+                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+                if (!containerInToolbar && toolbar.isConnected) {
+                    const orphaned = document.getElementById('librarySortContainer');
+                    if (orphaned) orphaned.remove();
+                    self.injectLibrarySortButtons();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // Periodic check as fallback
+            setInterval(() => checkLibraryPage(false), 2000);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false), 500);
+            setTimeout(() => checkLibraryPage(false), 300);
         },
 
         /**
@@ -16529,145 +16571,118 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Don't inject if already exists
-            if (document.getElementById('librarySortContainer')) return true;
+            // Check if container exists IN THE CURRENT TOOLBAR
+            const allBtnSort = document.querySelectorAll('.btnSort');
+            let visibleBtnSort = null;
+            for (const btn of allBtnSort) {
+                const rect = btn.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    visibleBtnSort = btn;
+                    break;
+                }
+            }
+            const toolbar = visibleBtnSort ? visibleBtnSort.parentElement : null;
+            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+            if (containerInToolbar) return true;
+
+            // Remove any orphaned container from old DOM
+            const orphaned = document.getElementById('librarySortContainer');
+            if (orphaned) orphaned.remove();
 
             let targetContainer = null;
             let insertBefore = null;
 
-            // Strategy 1: Find filter button by various attributes
-            const filterSelectors = [
-                'button[title="Filter"]',
-                'button[title="Filtern"]',
-                'button[title="Filtrer"]',
-                'button[title="Filtrar"]',
-                '.btnFilter',
-                'button[data-action="filter"]',
-                // SVG filter icon button
-                'button.paper-icon-button-light svg path[d*="M14,12V19.88C14.04"]'
-            ];
+            // Strategy 1: Find the VISIBLE .btnSort button
+            if (visibleBtnSort) {
+                targetContainer = visibleBtnSort.parentElement;
+                const filterWrapper = targetContainer.querySelector('.btnFilter-wrapper');
+                insertBefore = filterWrapper || targetContainer.querySelector('.btnFilter');
+            }
 
-            let filterBtn = null;
-            for (const selector of filterSelectors) {
-                filterBtn = document.querySelector(selector);
-                if (filterBtn) {
-                    // If we matched an SVG path, get the button parent
-                    if (filterBtn.tagName === 'path') {
-                        filterBtn = filterBtn.closest('button');
+            // Strategy 2: Find paging element (.listPaging or .listTopPaging) and look for sibling buttons
+            if (!targetContainer) {
+                const paging = document.querySelector('.listPaging, .listTopPaging, .paging');
+                if (paging) {
+                    // Go up to find the flex container with buttons
+                    let container = paging.parentElement;
+                    while (container && !container.classList.contains('flex')) {
+                        container = container.parentElement;
                     }
-                    break;
+                    if (container) {
+                        const buttons = container.querySelectorAll(':scope > button.paper-icon-button-light');
+                        if (buttons.length >= 2) {
+                            targetContainer = container;
+                            // Insert before the last button or filter wrapper
+                            const filterWrapper = container.querySelector('.btnFilter-wrapper');
+                            insertBefore = filterWrapper || buttons[buttons.length - 1];
+                        }
+                    }
                 }
             }
 
-            // Strategy 2: Find the listTopPaging and look for sibling buttons
-            const listTopPaging = document.querySelector('.listTopPaging');
-            if (listTopPaging) {
-                // The buttons should be siblings or nearby
-                const parent = listTopPaging.parentElement;
-                if (parent) {
-                    // Look for button container within same parent
+            // Strategy 3: Find any flex container with play/shuffle/sort buttons
+            if (!targetContainer) {
+                const playBtn = document.querySelector('.btnPlayAll, .btnShuffle');
+                if (playBtn && playBtn.parentElement) {
+                    const parent = playBtn.parentElement;
                     const buttons = parent.querySelectorAll('button.paper-icon-button-light');
-                    if (buttons.length >= 2) {
-                        // Found the button area - use the last button's parent as container
-                        const lastBtn = buttons[buttons.length - 1];
-                        if (lastBtn.parentElement) {
-                            targetContainer = lastBtn.parentElement;
-                            // Insert before the filter button (usually last)
-                            insertBefore = lastBtn;
-                        }
-                    }
-                }
-            }
-
-            // Strategy 3: Use filter button's parent
-            if (!targetContainer && filterBtn && filterBtn.parentElement) {
-                targetContainer = filterBtn.parentElement;
-                insertBefore = filterBtn;
-            }
-
-            // Strategy 4: Find sort button (AZ icon)
-            if (!targetContainer) {
-                const sortBtn = document.querySelector('button[title="Sort"], button[title="Sortieren"], .btnSort');
-                if (sortBtn && sortBtn.parentElement) {
-                    targetContainer = sortBtn.parentElement;
-                    insertBefore = sortBtn;
-                }
-            }
-
-            // Strategy 5: Find any flex container with multiple buttons near pagination
-            if (!targetContainer && listTopPaging) {
-                // Look in ancestors for a flex container with buttons
-                let searchElement = listTopPaging;
-                for (let i = 0; i < 5 && searchElement; i++) {
-                    searchElement = searchElement.parentElement;
-                    if (searchElement) {
-                        const btns = searchElement.querySelectorAll('button.paper-icon-button-light');
-                        if (btns.length >= 2) {
-                            targetContainer = btns[0].parentElement;
-                            insertBefore = btns[btns.length - 1]; // Insert before last button
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Strategy 6: Last resort - find button group anywhere
-            if (!targetContainer) {
-                const allButtons = document.querySelectorAll('button.paper-icon-button-light');
-                for (const btn of allButtons) {
-                    const parent = btn.parentElement;
-                    if (parent && parent.querySelectorAll('button').length >= 2) {
+                    if (buttons.length >= 3) {
                         targetContainer = parent;
-                        insertBefore = parent.querySelector('button:last-of-type');
-                        break;
+                        const filterWrapper = parent.querySelector('.btnFilter-wrapper');
+                        insertBefore = filterWrapper || buttons[buttons.length - 1];
                     }
                 }
             }
 
-            if (!targetContainer) {
-                // Return false to signal caller to retry
-                return false;
-            }
+            if (!targetContainer) return false;
 
-            // Create sort buttons container
-            const container = document.createElement('span');
-            container.id = 'librarySortContainer';
-            container.className = 'library-sort-container';
-            // Star icons with up/down arrow inside
-            container.innerHTML = `
-                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/>
-                    </svg>
-                </button>
-                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/>
-                    </svg>
-                </button>
-            `;
+            // Create buttons - minimal inline styles, let CSS handle hover/active
+            const btn1 = document.createElement('button');
+            btn1.id = 'librarySortDesc';
+            btn1.className = 'library-sort-btn paper-icon-button-light autoSize';
+            btn1.setAttribute('data-sort', 'desc');
+            btn1.setAttribute('title', self.t('sortHighest'));
+            btn1.setAttribute('is', 'paper-icon-button-light');
+            btn1.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
+            btn1.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/></svg>`;
 
-            // Insert into container
+            const btn2 = document.createElement('button');
+            btn2.id = 'librarySortAsc';
+            btn2.className = 'library-sort-btn paper-icon-button-light autoSize';
+            btn2.setAttribute('data-sort', 'asc');
+            btn2.setAttribute('title', self.t('sortLowest'));
+            btn2.setAttribute('is', 'paper-icon-button-light');
+            btn2.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
+            btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
+
+            // Create a marker span to track if our buttons exist (for detection)
+            const marker = document.createElement('span');
+            marker.id = 'librarySortContainer';
+            marker.style.cssText = 'display:none;';
+
+            // Insert buttons directly into toolbar
             if (insertBefore) {
-                targetContainer.insertBefore(container, insertBefore);
+                targetContainer.insertBefore(marker, insertBefore);
+                targetContainer.insertBefore(btn2, insertBefore);
+                targetContainer.insertBefore(btn1, btn2);
             } else {
-                targetContainer.appendChild(container);
+                targetContainer.appendChild(marker);
+                targetContainer.appendChild(btn1);
+                targetContainer.appendChild(btn2);
             }
 
             // Attach click handlers
-            container.querySelectorAll('.library-sort-btn').forEach(btn => {
+            [btn1, btn2].forEach(btn => {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
 
                     const sortDirection = btn.getAttribute('data-sort');
-                    const currentActive = container.querySelector('.library-sort-btn.active');
                     const wasActive = btn.classList.contains('active');
 
-                    // Remove active from all
-                    container.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
+                    // Remove active from both buttons
+                    document.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
 
                     if (wasActive) {
                         // Clicking same button again - restore original order
