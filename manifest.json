@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.160.0",
+        "changelog": "Fix library sort buttons - more aggressive retry and frequent checks",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.160.0/jellyfin-plugin-ratings_2.0.160.0.zip",
+        "checksum": "7470e40e8f31fb222cebd3a598e23655",
+        "timestamp": "2026-03-31T23:30:00Z"
+      },
+      {
         "version": "2.0.159.0",
         "changelog": "Add AniDB fallback for anime libraries, fix library sort buttons loading",
         "targetAbi": "10.11.0.0",

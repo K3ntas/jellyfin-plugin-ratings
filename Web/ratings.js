@@ -19426,91 +19426,66 @@
             const maxRetries = 20;
 
             const checkLibraryPage = (isRetry) => {
-                const url = window.location.href;
                 const hash = window.location.hash;
 
                 // Skip Netflix view pages - they have their own sort buttons
                 if (self.netflixViewEnabled && self.isNetflixViewPage()) {
-                    // Remove any existing library sort buttons
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
-                    retryCount = 0;
                     return;
                 }
 
                 // Check if we're on a library page (movies, tv, etc.)
-                // Include generic library URLs and specific library type URLs
                 const isLibraryPage = hash.includes('#/movies') ||
                                      hash.includes('#/tv') ||
                                      hash.includes('#/music') ||
                                      hash.includes('#/list') ||
                                      hash.includes('#/livetv') ||
                                      hash.includes('collectionType=') ||
-                                     hash.includes('parentId=') ||
-                                     (hash.includes('#/') && hash.includes('?') && document.querySelector('.listTopPaging'));
+                                     hash.includes('parentId=');
 
                 if (!isLibraryPage) {
-                    // Remove sort buttons when leaving library
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
-                    retryCount = 0;
                     return;
                 }
 
-                // Reset retry count on new URL
-                if (url !== lastUrl) {
-                    retryCount = 0;
+                // Always check if container exists - Jellyfin may have removed it
+                if (document.getElementById('librarySortContainer')) {
+                    return; // Already injected and still there
                 }
-
-                // Don't re-inject on same URL if already exists
-                if (url === lastUrl && document.getElementById('librarySortContainer')) {
-                    return;
-                }
-                lastUrl = url;
 
                 // Try to inject buttons
-                const success = self.injectLibrarySortButtons();
+                self.injectLibrarySortButtons();
+            };
 
-                // If injection failed (container not found), retry with quick polling
-                if (!success && retryCount < maxRetries) {
-                    retryCount++;
-                    setTimeout(() => checkLibraryPage(true), 150);
-                }
+            // Retry injection multiple times after navigation
+            const retryInjection = () => {
+                checkLibraryPage();
+                setTimeout(checkLibraryPage, 200);
+                setTimeout(checkLibraryPage, 500);
+                setTimeout(checkLibraryPage, 1000);
+                setTimeout(checkLibraryPage, 2000);
             };
 
             // Listen for navigation events
-            window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
-            window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
+            window.addEventListener('hashchange', () => setTimeout(retryInjection, 100));
+            window.addEventListener('popstate', () => setTimeout(retryInjection, 100));
 
-            // MutationObserver to detect when toolbar elements are added
-            const observer = new MutationObserver((mutations) => {
-                // Only check if we don't have sort buttons yet
-                if (document.getElementById('librarySortContainer')) return;
-
-                // Check if any mutation added relevant elements
-                for (const mutation of mutations) {
-                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                        for (const node of mutation.addedNodes) {
-                            if (node.nodeType === 1) { // Element node
-                                // Check if this or children contain toolbar elements
-                                if (node.classList && (node.classList.contains('listTopPaging') ||
-                                    node.querySelector && node.querySelector('.listTopPaging, button.paper-icon-button-light'))) {
-                                    setTimeout(() => checkLibraryPage(false), 50);
-                                    return;
-                                }
-                            }
-                        }
-                    }
+            // MutationObserver to detect when toolbar elements are added or our buttons removed
+            const observer = new MutationObserver(() => {
+                if (!document.getElementById('librarySortContainer')) {
+                    checkLibraryPage();
                 }
             });
 
             observer.observe(document.body, { childList: true, subtree: true });
 
-            // Periodic check as fallback
-            setInterval(() => checkLibraryPage(false), 1500);
+            // Frequent periodic check - Jellyfin may refresh content area
+            setInterval(checkLibraryPage, 500);
 
             // Initial check
-            setTimeout(() => checkLibraryPage(false), 300);
+            setTimeout(retryInjection, 300);
         },
 
         /**
