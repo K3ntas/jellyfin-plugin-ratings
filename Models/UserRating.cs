@@ -23,6 +23,16 @@ namespace Jellyfin.Plugin.Ratings.Models
         public Guid ItemId { get; set; }
 
         /// <summary>
+        /// Gets or sets the TMDB ID for fallback lookup when item ID changes.
+        /// </summary>
+        public string? TmdbId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the IMDB ID for fallback lookup when item ID changes.
+        /// </summary>
+        public string? ImdbId { get; set; }
+
+        /// <summary>
         /// Gets or sets the rating value (1-10).
         /// </summary>
         public int Rating { get; set; }

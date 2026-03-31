@@ -193,17 +193,48 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="userId">User ID.</param>
         /// <param name="itemId">Item ID.</param>
         /// <param name="rating">Rating value.</param>
+        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
+        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <returns>The created or updated rating.</returns>
-        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating)
+        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null)
         {
             lock (_lock)
             {
+                // First try exact ItemId match
                 var existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
+
+                // If not found by ItemId, try provider ID fallback (handles replaced media)
+                if (existing == null && !string.IsNullOrEmpty(tmdbId))
+                {
+                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.TmdbId == tmdbId);
+                }
+
+                if (existing == null && !string.IsNullOrEmpty(imdbId))
+                {
+                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
+                }
 
                 if (existing != null)
                 {
                     existing.Rating = rating;
                     existing.UpdatedAt = DateTime.UtcNow;
+                    // Update ItemId if it changed (media was replaced)
+                    if (existing.ItemId != itemId)
+                    {
+                        existing.ItemId = itemId;
+                    }
+
+                    // Update provider IDs if they were missing
+                    if (string.IsNullOrEmpty(existing.TmdbId) && !string.IsNullOrEmpty(tmdbId))
+                    {
+                        existing.TmdbId = tmdbId;
+                    }
+
+                    if (string.IsNullOrEmpty(existing.ImdbId) && !string.IsNullOrEmpty(imdbId))
+                    {
+                        existing.ImdbId = imdbId;
+                    }
+
                     _ = SaveRatingsAsync();
                     return existing;
                 }
@@ -212,7 +243,9 @@ namespace Jellyfin.Plugin.Ratings.Data
                 {
                     UserId = userId,
                     ItemId = itemId,
-                    Rating = rating
+                    Rating = rating,
+                    TmdbId = tmdbId,
+                    ImdbId = imdbId
                 };
 
                 _ratings[newRating.Id] = newRating;
@@ -226,12 +259,35 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         /// <param name="userId">User ID.</param>
         /// <param name="itemId">Item ID.</param>
+        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
+        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <returns>The user's rating or null if not found.</returns>
-        public UserRating? GetUserRating(Guid userId, Guid itemId)
+        public UserRating? GetUserRating(Guid userId, Guid itemId, string? tmdbId = null, string? imdbId = null)
         {
             lock (_lock)
             {
-                return _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
+                // First try exact ItemId match
+                var rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
+
+                // Fallback to provider ID lookup (handles replaced media)
+                if (rating == null && !string.IsNullOrEmpty(tmdbId))
+                {
+                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.TmdbId == tmdbId);
+                }
+
+                if (rating == null && !string.IsNullOrEmpty(imdbId))
+                {
+                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
+                }
+
+                // Auto-migrate ItemId if found by provider ID
+                if (rating != null && rating.ItemId != itemId)
+                {
+                    rating.ItemId = itemId;
+                    _ = SaveRatingsAsync();
+                }
+
+                return rating;
             }
         }
 
@@ -239,12 +295,40 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// Gets all ratings for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
+        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
+        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <returns>List of ratings for the item.</returns>
-        public List<UserRating> GetItemRatings(Guid itemId)
+        public List<UserRating> GetItemRatings(Guid itemId, string? tmdbId = null, string? imdbId = null)
         {
             lock (_lock)
             {
-                return _ratings.Values.Where(r => r.ItemId == itemId).ToList();
+                var ratings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
+
+                // If no ratings by ItemId, try provider ID fallback
+                if (ratings.Count == 0 && !string.IsNullOrEmpty(tmdbId))
+                {
+                    ratings = _ratings.Values.Where(r => r.TmdbId == tmdbId).ToList();
+                }
+
+                if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
+                {
+                    ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
+                }
+
+                // Auto-migrate ItemIds for ratings found by provider ID
+                bool needsSave = false;
+                foreach (var rating in ratings.Where(r => r.ItemId != itemId))
+                {
+                    rating.ItemId = itemId;
+                    needsSave = true;
+                }
+
+                if (needsSave)
+                {
+                    _ = SaveRatingsAsync();
+                }
+
+                return ratings;
             }
         }
 
@@ -269,12 +353,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         /// <param name="itemId">Item ID.</param>
         /// <param name="userId">Optional user ID to include user's rating.</param>
+        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
+        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <returns>Rating statistics.</returns>
-        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null)
+        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null, string? tmdbId = null, string? imdbId = null)
         {
             lock (_lock)
             {
-                var itemRatings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
+                // Use internal method for provider ID fallback
+                var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId);
                 var stats = new RatingStats
                 {
                     ItemId = itemId,
@@ -300,6 +387,40 @@ namespace Jellyfin.Plugin.Ratings.Data
 
                 return stats;
             }
+        }
+
+        /// <summary>
+        /// Internal helper for GetItemRatings without lock (for use within already-locked methods).
+        /// </summary>
+        private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId)
+        {
+            var ratings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
+
+            // If no ratings by ItemId, try provider ID fallback
+            if (ratings.Count == 0 && !string.IsNullOrEmpty(tmdbId))
+            {
+                ratings = _ratings.Values.Where(r => r.TmdbId == tmdbId).ToList();
+            }
+
+            if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
+            {
+                ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
+            }
+
+            // Auto-migrate ItemIds for ratings found by provider ID
+            bool needsSave = false;
+            foreach (var rating in ratings.Where(r => r.ItemId != itemId))
+            {
+                rating.ItemId = itemId;
+                needsSave = true;
+            }
+
+            if (needsSave)
+            {
+                _ = SaveRatingsAsync();
+            }
+
+            return ratings;
         }
 
         /// <summary>
