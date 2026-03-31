@@ -205,7 +205,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
                 }
 
-                var result = await _repository.SetRatingAsync(userId, itemId, rating).ConfigureAwait(false);
+                // Extract provider IDs for fallback lookup (handles replaced media files)
+                string? tmdbId = null;
+                string? imdbId = null;
+                if (item.ProviderIds != null)
+                {
+                    item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
+                    item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                }
+
+                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
 
                 // Broadcast profile stats update via WebSocket
@@ -282,7 +291,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null);
+                // Extract provider IDs for fallback lookup (handles replaced media files)
+                string? tmdbId = null;
+                string? imdbId = null;
+                if (item.ProviderIds != null)
+                {
+                    item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
+                    item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                }
+
+                var stats = _repository.GetRatingStats(itemId, userId != Guid.Empty ? userId : null, tmdbId, imdbId);
 
                 return Ok(stats);
             }
