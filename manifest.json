@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.150.0",
+        "changelog": "Fix collections: Use GetLinkedChildren for proper child item resolution",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.150.0/jellyfin-plugin-ratings_2.0.150.0.zip",
+        "checksum": "a3590afa0e67a57ac10fddef15ed7e3a",
+        "timestamp": "2026-03-31T17:30:00Z"
+      },
+      {
         "version": "2.0.149.0",
         "changelog": "Fix collections: Use GetLinkedChildren for proper child item resolution",
         "targetAbi": "10.11.0.0",
