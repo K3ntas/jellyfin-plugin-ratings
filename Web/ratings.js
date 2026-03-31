@@ -19637,20 +19637,22 @@
 
             console.log('[SortBtn] inject: Creating container, strategy:', strategy);
 
-            // Create sort buttons container
+            // Create sort buttons container with inline styles as fallback
             const container = document.createElement('span');
             container.id = 'librarySortContainer';
             container.className = 'library-sort-container';
+            container.style.cssText = 'display: inline-flex !important; align-items: center; gap: 4px; visibility: visible !important; opacity: 1 !important;';
             // Star icons with up/down arrow inside
+            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); visibility: visible !important; opacity: 1 !important;';
             container.innerHTML = `
-                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}" style="${btnStyle}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;">
                         <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
                         <path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/>
                     </svg>
                 </button>
-                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}" style="${btnStyle}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;">
                         <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
                         <path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/>
                     </svg>
