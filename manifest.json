@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.157.0",
+        "changelog": "Add Privacy Settings API endpoints for social features",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.157.0/jellyfin-plugin-ratings_2.0.157.0.zip",
+        "checksum": "b011f906b8bc0b422e85ca163e232957",
+        "timestamp": "2026-03-31T22:00:00Z"
+      },
+      {
         "version": "2.0.156.0",
         "changelog": "Cleanup: Remove debug logs, stable library sort buttons",
         "targetAbi": "10.11.0.0",
