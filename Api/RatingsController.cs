@@ -294,8 +294,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Check if this is a collection (BoxSet) - calculate average from child items
                 if (item is MediaBrowser.Controller.Entities.Movies.BoxSet boxSet)
                 {
+                    _logger.LogInformation("[Ratings] BoxSet detected: {Name}, ID: {Id}", boxSet.Name, itemId);
+
                     // BoxSet uses LinkedChildren, not AncestorIds
                     var childItems = boxSet.GetLinkedChildren();
+                    _logger.LogInformation("[Ratings] BoxSet has {Count} linked children", childItems.Count);
+
                     var childRatings = new List<double>();
 
                     foreach (var child in childItems)
@@ -309,6 +313,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                         }
 
                         var childStats = _repository.GetRatingStats(child.Id, null, childTmdbId, childImdbId);
+                        _logger.LogInformation("[Ratings] Child {Name} (ID: {Id}): TotalRatings={Total}, Avg={Avg}", child.Name, child.Id, childStats.TotalRatings, childStats.AverageRating);
+
                         if (childStats.TotalRatings > 0)
                         {
                             childRatings.Add(childStats.AverageRating);
@@ -322,6 +328,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                         AverageRating = childRatings.Count > 0 ? Math.Round(childRatings.Average(), 2) : 0
                     };
 
+                    _logger.LogInformation("[Ratings] Collection result: TotalRatings={Total}, AverageRating={Avg}", collectionStats.TotalRatings, collectionStats.AverageRating);
                     return Ok(collectionStats);
                 }
 
