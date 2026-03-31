@@ -13,7 +13,7 @@
         "changelog": "Add Privacy Settings UI with presets and individual controls",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.158.0/jellyfin-plugin-ratings_2.0.158.0.zip",
-        "checksum": "d24baf1423b636c8cbdaf6e55697e5c7",
+        "checksum": "9d1ead73e678fa2f51a70a933b0bf017",
         "timestamp": "2026-03-31T22:30:00Z"
       },
       {
