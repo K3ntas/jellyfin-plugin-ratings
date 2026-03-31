@@ -11051,7 +11051,10 @@
                 .then(stats => {
                     // Track user's current rating for toggle-off feature
                     self.currentUserRating = stats.UserRating || 0;
-                    self.updateStarDisplay(stats.UserRating || 0);
+
+                    // For collections (no UserRating), show average in stars; otherwise show user's rating
+                    var displayRating = stats.UserRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
+                    self.updateStarDisplay(displayRating);
 
                     let statsHtml = '';
                     if (stats.TotalRatings > 0) {
