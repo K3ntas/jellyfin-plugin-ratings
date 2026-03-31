@@ -19571,12 +19571,7 @@
                 return false;
             }
 
-            // Verify we're on a page with the proper toolbar (has listTopPaging)
-            if (!document.querySelector('.listTopPaging')) {
-                return false;
-            }
-
-            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed);
+            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed, 'listTopPaging:', !!document.querySelector('.listTopPaging'));
 
             // Create sort buttons container
             const container = document.createElement('span');
