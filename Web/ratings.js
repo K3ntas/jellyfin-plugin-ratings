@@ -19637,49 +19637,57 @@
 
             console.log('[SortBtn] inject: Creating container, strategy:', strategy);
 
-            // Create sort buttons container with inline styles as fallback
-            const container = document.createElement('span');
-            container.id = 'librarySortContainer';
-            container.className = 'library-sort-container';
-            container.style.cssText = 'display: inline-flex !important; align-items: center; gap: 4px; visibility: visible !important; opacity: 1 !important;';
-            // Star icons with up/down arrow inside
-            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); visibility: visible !important; opacity: 1 !important;';
-            container.innerHTML = `
-                <button class="library-sort-btn paper-icon-button-light" data-sort="desc" title="${self.t('sortHighest')}" style="${btnStyle}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;">
-                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/>
-                    </svg>
-                </button>
-                <button class="library-sort-btn paper-icon-button-light" data-sort="asc" title="${self.t('sortLowest')}" style="${btnStyle}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px;height:28px;fill:currentColor;">
-                        <path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/>
-                        <path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/>
-                    </svg>
-                </button>
-            `;
+            // Create buttons directly (no wrapper - flex parent doesn't like span wrapper)
+            const btnStyle = 'display: inline-flex !important; align-items: center; justify-content: center; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0; margin: 0;';
 
-            // Insert into container
+            const btn1 = document.createElement('button');
+            btn1.id = 'librarySortDesc';
+            btn1.className = 'library-sort-btn paper-icon-button-light autoSize';
+            btn1.setAttribute('data-sort', 'desc');
+            btn1.setAttribute('title', self.t('sortHighest'));
+            btn1.setAttribute('is', 'paper-icon-button-light');
+            btn1.style.cssText = btnStyle;
+            btn1.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 8l3 5h-6l3-5z" fill="#000" opacity="0.6"/></svg>`;
+
+            const btn2 = document.createElement('button');
+            btn2.id = 'librarySortAsc';
+            btn2.className = 'library-sort-btn paper-icon-button-light autoSize';
+            btn2.setAttribute('data-sort', 'asc');
+            btn2.setAttribute('title', self.t('sortLowest'));
+            btn2.setAttribute('is', 'paper-icon-button-light');
+            btn2.style.cssText = btnStyle;
+            btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
+
+            // Create a marker span to track if our buttons exist (for detection)
+            const marker = document.createElement('span');
+            marker.id = 'librarySortContainer';
+            marker.style.cssText = 'display:none;';
+
+            // Insert buttons directly into toolbar
             if (insertBefore) {
-                targetContainer.insertBefore(container, insertBefore);
+                targetContainer.insertBefore(marker, insertBefore);
+                targetContainer.insertBefore(btn2, insertBefore);
+                targetContainer.insertBefore(btn1, btn2);
                 console.log('[SortBtn] inject: Inserted before filter');
             } else {
-                targetContainer.appendChild(container);
+                targetContainer.appendChild(marker);
+                targetContainer.appendChild(btn1);
+                targetContainer.appendChild(btn2);
                 console.log('[SortBtn] inject: Appended to container');
             }
 
             // Attach click handlers
-            container.querySelectorAll('.library-sort-btn').forEach(btn => {
+            [btn1, btn2].forEach(btn => {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
 
                     const sortDirection = btn.getAttribute('data-sort');
-                    const currentActive = container.querySelector('.library-sort-btn.active');
                     const wasActive = btn.classList.contains('active');
 
                     // Remove active from all
-                    container.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
+                    btn1.classList.remove('active');
+                    btn2.classList.remove('active');
 
                     if (wasActive) {
                         // Clicking same button again - restore original order
