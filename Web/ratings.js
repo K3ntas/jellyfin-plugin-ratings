@@ -19464,8 +19464,16 @@
                 }
                 lastUrl = url;
 
-                // Check if container exists IN THE CURRENT TOOLBAR (not orphaned)
-                const btnSort = document.querySelector('.btnSort');
+                // Find the VISIBLE .btnSort and check its toolbar
+                const allBtnSort = document.querySelectorAll('.btnSort');
+                let btnSort = null;
+                for (const btn of allBtnSort) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        btnSort = btn;
+                        break;
+                    }
+                }
                 const toolbar = btnSort ? btnSort.parentElement : null;
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
@@ -19513,7 +19521,16 @@
                 if (!isLibrary) return;
 
                 const allBtnSort = document.querySelectorAll('.btnSort');
-                const btnSort = document.querySelector('.btnSort');
+
+                // Find the VISIBLE .btnSort (one with non-zero dimensions)
+                let btnSort = null;
+                for (const btn of allBtnSort) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        btnSort = btn;
+                        break;
+                    }
+                }
                 if (!btnSort) return;
 
                 // Check if container exists IN THE SAME TOOLBAR as btnSort
@@ -19522,7 +19539,7 @@
 
                 // Log if multiple btnSort found
                 if (allBtnSort.length > 1) {
-                    console.log('[SortBtn] WARNING: Multiple .btnSort found:', allBtnSort.length);
+                    console.log('[SortBtn] WARNING: Multiple .btnSort found:', allBtnSort.length, 'using visible one');
                 }
 
                 // Log every 50th mutation to avoid spam
@@ -19582,15 +19599,22 @@
             let insertBefore = null;
             let strategy = '';
 
-            // Strategy 1: Find .btnSort button and insert after it (before filter)
+            // Strategy 1: Find the VISIBLE .btnSort button (one with non-zero dimensions)
             const allBtnSort = document.querySelectorAll('.btnSort');
-            const sortBtn = document.querySelector('.btnSort');
-            console.log('[SortBtn] inject: Strategy 1 - .btnSort count:', allBtnSort.length, 'first:', !!sortBtn);
+            let sortBtn = null;
+            for (const btn of allBtnSort) {
+                const rect = btn.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    sortBtn = btn;
+                    break;
+                }
+            }
+            console.log('[SortBtn] inject: Strategy 1 - .btnSort count:', allBtnSort.length, 'visible:', !!sortBtn);
             if (sortBtn) {
                 targetContainer = sortBtn.parentElement;
-                // Insert after sort button - find the filter wrapper or filter button
-                const filterWrapper = document.querySelector('.btnFilter-wrapper');
-                insertBefore = filterWrapper || document.querySelector('.btnFilter');
+                // Find filter wrapper in the SAME container
+                const filterWrapper = targetContainer.querySelector('.btnFilter-wrapper');
+                insertBefore = filterWrapper || targetContainer.querySelector('.btnFilter');
                 strategy = 'btnSort';
                 console.log('[SortBtn] inject: Strategy 1 success - parent class:', targetContainer?.className?.substring(0, 50));
             }

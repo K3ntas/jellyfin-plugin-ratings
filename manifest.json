@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.178.0",
+        "changelog": "Fix sort buttons: Find VISIBLE .btnSort (4 exist, only 1 visible)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.178.0/jellyfin-plugin-ratings_2.0.178.0.zip",
+        "checksum": "98a9c860cba9af58eb4de243db1fea14",
+        "timestamp": "2026-03-31T19:20:00Z"
+      },
+      {
         "version": "2.0.177.0",
         "changelog": "Fix sort buttons: Inject buttons directly without span wrapper",
         "targetAbi": "10.11.0.0",
