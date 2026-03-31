@@ -1316,6 +1316,207 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         #endregion
 
+        #region Privacy Settings
+
+        /// <summary>
+        /// Gets the current user's privacy settings.
+        /// </summary>
+        /// <returns>Privacy settings.</returns>
+        [HttpGet("Settings")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetSettings()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var profile = _socialRepository.GetProfile(userId.Value);
+            var settings = profile?.Privacy ?? new UserPrivacySettings();
+
+            return Ok(new
+            {
+                profileVisibility = settings.ProfileVisibility,
+                showOnlineStatus = settings.ShowOnlineStatus,
+                showWatchedHistory = settings.ShowWatchedHistory,
+                showFriendsList = settings.ShowFriendsList,
+                showCurrentlyWatching = settings.ShowCurrentlyWatching,
+                allowFriendRequests = settings.AllowFriendRequests,
+                allowMessages = settings.AllowMessages
+            });
+        }
+
+        /// <summary>
+        /// Updates the current user's privacy settings.
+        /// </summary>
+        /// <param name="request">The settings to update.</param>
+        /// <returns>Updated settings.</returns>
+        [HttpPost("Settings")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> UpdateSettings([FromBody] PrivacySettingsRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var profile = _socialRepository.GetProfile(userId.Value);
+            if (profile == null)
+            {
+                // Create profile if it doesn't exist
+                var user = _userManager.GetUserById(userId.Value);
+                profile = new UserProfile
+                {
+                    UserId = userId.Value,
+                    Username = user?.Username ?? "Unknown"
+                };
+            }
+
+            // Update individual settings if provided and valid
+            if (request.ProfileVisibility != null && IsValidPrivacySetting(request.ProfileVisibility))
+            {
+                profile.Privacy.ProfileVisibility = request.ProfileVisibility;
+            }
+            if (request.ShowOnlineStatus != null && IsValidVisibilitySetting(request.ShowOnlineStatus))
+            {
+                profile.Privacy.ShowOnlineStatus = request.ShowOnlineStatus;
+            }
+            if (request.ShowWatchedHistory != null && IsValidVisibilitySetting(request.ShowWatchedHistory))
+            {
+                profile.Privacy.ShowWatchedHistory = request.ShowWatchedHistory;
+            }
+            if (request.ShowFriendsList != null && IsValidVisibilitySetting(request.ShowFriendsList))
+            {
+                profile.Privacy.ShowFriendsList = request.ShowFriendsList;
+            }
+            if (request.ShowCurrentlyWatching != null && IsValidVisibilitySetting(request.ShowCurrentlyWatching))
+            {
+                profile.Privacy.ShowCurrentlyWatching = request.ShowCurrentlyWatching;
+            }
+            if (request.AllowFriendRequests != null && IsValidAllowSetting(request.AllowFriendRequests))
+            {
+                profile.Privacy.AllowFriendRequests = request.AllowFriendRequests;
+            }
+            if (request.AllowMessages != null && IsValidVisibilitySetting(request.AllowMessages))
+            {
+                profile.Privacy.AllowMessages = request.AllowMessages;
+            }
+
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
+
+            _logger.LogInformation("[Social] User {UserId} updated privacy settings", userId);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Settings updated",
+                settings = new
+                {
+                    profileVisibility = profile.Privacy.ProfileVisibility,
+                    showOnlineStatus = profile.Privacy.ShowOnlineStatus,
+                    showWatchedHistory = profile.Privacy.ShowWatchedHistory,
+                    showFriendsList = profile.Privacy.ShowFriendsList,
+                    showCurrentlyWatching = profile.Privacy.ShowCurrentlyWatching,
+                    allowFriendRequests = profile.Privacy.AllowFriendRequests,
+                    allowMessages = profile.Privacy.AllowMessages
+                }
+            });
+        }
+
+        /// <summary>
+        /// Applies a privacy preset.
+        /// </summary>
+        /// <param name="preset">The preset name: Public, FriendsOnly, or Private.</param>
+        /// <returns>Updated settings.</returns>
+        [HttpPost("Settings/Preset/{preset}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> ApplyPreset(string preset)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var profile = _socialRepository.GetProfile(userId.Value);
+            if (profile == null)
+            {
+                var user = _userManager.GetUserById(userId.Value);
+                profile = new UserProfile
+                {
+                    UserId = userId.Value,
+                    Username = user?.Username ?? "Unknown"
+                };
+            }
+
+            switch (preset.ToLowerInvariant())
+            {
+                case "public":
+                    profile.Privacy.ProfileVisibility = "Public";
+                    profile.Privacy.ShowOnlineStatus = "Everyone";
+                    profile.Privacy.ShowWatchedHistory = "Everyone";
+                    profile.Privacy.ShowFriendsList = "Everyone";
+                    profile.Privacy.ShowCurrentlyWatching = "Everyone";
+                    profile.Privacy.AllowFriendRequests = "Everyone";
+                    profile.Privacy.AllowMessages = "Everyone";
+                    break;
+
+                case "friendsonly":
+                case "friends":
+                    profile.Privacy.ProfileVisibility = "Friends";
+                    profile.Privacy.ShowOnlineStatus = "Friends";
+                    profile.Privacy.ShowWatchedHistory = "Friends";
+                    profile.Privacy.ShowFriendsList = "Friends";
+                    profile.Privacy.ShowCurrentlyWatching = "Friends";
+                    profile.Privacy.AllowFriendRequests = "Everyone";
+                    profile.Privacy.AllowMessages = "Friends";
+                    break;
+
+                case "private":
+                    profile.Privacy.ProfileVisibility = "Private";
+                    profile.Privacy.ShowOnlineStatus = "Nobody";
+                    profile.Privacy.ShowWatchedHistory = "Nobody";
+                    profile.Privacy.ShowFriendsList = "Nobody";
+                    profile.Privacy.ShowCurrentlyWatching = "Nobody";
+                    profile.Privacy.AllowFriendRequests = "Nobody";
+                    profile.Privacy.AllowMessages = "Nobody";
+                    break;
+
+                default:
+                    return BadRequest(new { message = "Invalid preset. Use: Public, FriendsOnly, or Private" });
+            }
+
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
+
+            _logger.LogInformation("[Social] User {UserId} applied privacy preset: {Preset}", userId, preset);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Applied '{preset}' preset",
+                settings = new
+                {
+                    profileVisibility = profile.Privacy.ProfileVisibility,
+                    showOnlineStatus = profile.Privacy.ShowOnlineStatus,
+                    showWatchedHistory = profile.Privacy.ShowWatchedHistory,
+                    showFriendsList = profile.Privacy.ShowFriendsList,
+                    showCurrentlyWatching = profile.Privacy.ShowCurrentlyWatching,
+                    allowFriendRequests = profile.Privacy.AllowFriendRequests,
+                    allowMessages = profile.Privacy.AllowMessages
+                }
+            });
+        }
+
+        #endregion
+
         #region Block System
 
         /// <summary>
@@ -1483,5 +1684,46 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets or sets the status. Valid values: Online, Away, DoNotDisturb, Invisible, or null to clear.
         /// </summary>
         public string? Status { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for updating privacy settings.
+    /// </summary>
+    public class PrivacySettingsRequest
+    {
+        /// <summary>
+        /// Gets or sets profile visibility. Values: Public, Friends, Private.
+        /// </summary>
+        public string? ProfileVisibility { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can see online status. Values: Everyone, Friends, Nobody.
+        /// </summary>
+        public string? ShowOnlineStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can see watched history. Values: Everyone, Friends, Nobody.
+        /// </summary>
+        public string? ShowWatchedHistory { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can see friends list. Values: Everyone, Friends, Nobody.
+        /// </summary>
+        public string? ShowFriendsList { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can see currently watching. Values: Everyone, Friends, Nobody.
+        /// </summary>
+        public string? ShowCurrentlyWatching { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can send friend requests. Values: Everyone, Nobody.
+        /// </summary>
+        public string? AllowFriendRequests { get; set; }
+
+        /// <summary>
+        /// Gets or sets who can send messages. Values: Everyone, Friends, Nobody.
+        /// </summary>
+        public string? AllowMessages { get; set; }
     }
 }
