@@ -19462,14 +19462,17 @@
                     console.log('[SortBtn] New URL detected, resetting retries');
                     retryCount = 0;
                 }
+                lastUrl = url;
 
-                // Don't re-inject on same URL if already exists
-                const containerExists = document.getElementById('librarySortContainer');
-                if (url === lastUrl && containerExists) {
-                    console.log('[SortBtn] Same URL and container exists, skipping');
+                // Check if container exists IN THE CURRENT TOOLBAR (not orphaned)
+                const btnSort = document.querySelector('.btnSort');
+                const toolbar = btnSort ? btnSort.parentElement : null;
+                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+                if (containerInToolbar) {
+                    console.log('[SortBtn] Container exists in current toolbar, skipping');
                     return;
                 }
-                lastUrl = url;
 
                 // Try to inject buttons
                 console.log('[SortBtn] Attempting injection...');
@@ -19503,17 +19506,24 @@
                 if (!isLibrary) return;
 
                 const btnSort = document.querySelector('.btnSort');
-                const container = document.getElementById('librarySortContainer');
+                if (!btnSort) return;
+
+                // Check if container exists IN THE SAME TOOLBAR as btnSort
+                const toolbar = btnSort.parentElement;
+                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 // Log every 50th mutation to avoid spam
                 mutationCount++;
                 if (mutationCount % 50 === 0) {
-                    console.log('[SortBtn] MutationObserver check #' + mutationCount + ', btnSort:', !!btnSort, 'container:', !!container);
+                    console.log('[SortBtn] MutationObserver check #' + mutationCount + ', btnSort:', !!btnSort, 'containerInToolbar:', !!containerInToolbar);
                 }
 
-                // If .btnSort exists but our container doesn't, inject now
-                if (btnSort && !container) {
-                    console.log('[SortBtn] MutationObserver: btnSort found, container missing - INJECTING');
+                // If toolbar doesn't have our container, inject now
+                if (!containerInToolbar) {
+                    console.log('[SortBtn] MutationObserver: toolbar missing container - INJECTING');
+                    // Remove any orphaned container first
+                    const orphaned = document.getElementById('librarySortContainer');
+                    if (orphaned) orphaned.remove();
                     self.injectLibrarySortButtons();
                 }
             });
@@ -19533,15 +19543,21 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Don't inject if already exists and is properly connected
-            const existing = document.getElementById('librarySortContainer');
-            if (existing) {
-                if (existing.isConnected && document.body.contains(existing)) {
-                    console.log('[SortBtn] inject: container already exists and connected');
-                    return true; // Already properly injected
-                }
+            // Check if container exists IN THE CURRENT TOOLBAR
+            const btnSort = document.querySelector('.btnSort');
+            const toolbar = btnSort ? btnSort.parentElement : null;
+            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+
+            if (containerInToolbar) {
+                console.log('[SortBtn] inject: container already in current toolbar');
+                return true;
+            }
+
+            // Remove any orphaned container from old DOM
+            const orphaned = document.getElementById('librarySortContainer');
+            if (orphaned) {
                 console.log('[SortBtn] inject: removing orphaned container');
-                existing.remove(); // Clean up orphaned/detached element
+                orphaned.remove();
             }
 
             let targetContainer = null;
