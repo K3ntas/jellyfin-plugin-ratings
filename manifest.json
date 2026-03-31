@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.145.0",
+        "changelog": "Enhanced profile stats: movies watched, series watched, total watch hours from Jellyfin data",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.145.0/jellyfin-plugin-ratings_2.0.145.0.zip",
+        "checksum": "7a2047c1a445f9a7ee804623d4314012",
+        "timestamp": "2026-03-31T12:00:00Z"
+      },
+      {
         "version": "2.0.144.0",
         "changelog": "WebSocket-only updates, debug endpoint for connection tracking",
         "targetAbi": "10.11.0.0",

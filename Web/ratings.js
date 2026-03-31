@@ -10556,6 +10556,18 @@
 
             var html = '<div class="social-profile-stats-grid">' +
                 '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.moviesWatched || 0) + '</div>' +
+                '<div class="social-stat-label">Movies Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.seriesWatched || 0) + '</div>' +
+                '<div class="social-stat-label">Series Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.totalWatchHours || 0) + '</div>' +
+                '<div class="social-stat-label">Hours Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
                 '<div class="social-stat-value">' + (stats.friendsCount || 0) + '</div>' +
                 '<div class="social-stat-label">Friends</div>' +
                 '</div>' +
@@ -10566,10 +10578,6 @@
                 '<div class="social-stat-card">' +
                 '<div class="social-stat-value">' + (stats.averageRating || 0) + '<span class="social-stat-star">★</span></div>' +
                 '<div class="social-stat-label">Avg Rating</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.memberDays || 0) + '</div>' +
-                '<div class="social-stat-label">Days Member</div>' +
                 '</div>' +
                 '</div>';
 

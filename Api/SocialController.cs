@@ -3,10 +3,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mime;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
+using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Session;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +30,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly RatingsRepository _ratingsRepository;
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
+        private readonly ILibraryManager _libraryManager;
+        private readonly IUserDataManager _userDataManager;
         private readonly ILogger<SocialController> _logger;
         private readonly SocialWebSocketListener _webSocketListener;
 
@@ -37,6 +42,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="ratingsRepository">Ratings repository.</param>
         /// <param name="userManager">User manager.</param>
         /// <param name="sessionManager">Session manager.</param>
+        /// <param name="libraryManager">Library manager.</param>
+        /// <param name="userDataManager">User data manager.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="webSocketListener">WebSocket listener for real-time updates.</param>
         public SocialController(
@@ -44,6 +51,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             RatingsRepository ratingsRepository,
             IUserManager userManager,
             ISessionManager sessionManager,
+            ILibraryManager libraryManager,
+            IUserDataManager userDataManager,
             ILogger<SocialController> logger,
             SocialWebSocketListener webSocketListener)
         {
@@ -51,6 +60,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             _ratingsRepository = ratingsRepository;
             _userManager = userManager;
             _sessionManager = sessionManager;
+            _libraryManager = libraryManager;
+            _userDataManager = userDataManager;
             _logger = logger;
             _webSocketListener = webSocketListener;
         }
@@ -272,16 +283,99 @@ namespace Jellyfin.Plugin.Ratings.Api
             var memberSince = profile?.CreatedAt ?? DateTime.UtcNow;
             var memberDays = (int)(DateTime.UtcNow - memberSince).TotalDays;
 
+            // Get Jellyfin watch statistics
+            int moviesWatched = 0;
+            int seriesWatched = 0;
+            long totalWatchTicks = 0;
+
+            try
+            {
+                // Get movies watched
+                var movieQuery = new InternalItemsQuery(user)
+                {
+                    IncludeItemTypes = new[] { BaseItemKind.Movie },
+                    IsPlayed = true,
+                    Recursive = true
+                };
+                var playedMovies = _libraryManager.GetItemList(movieQuery);
+                moviesWatched = playedMovies?.Count ?? 0;
+
+                // Sum up movie watch time (use runtime as approximation)
+                if (playedMovies != null)
+                {
+                    foreach (var movie in playedMovies)
+                    {
+                        if (movie.RunTimeTicks.HasValue)
+                        {
+                            totalWatchTicks += movie.RunTimeTicks.Value;
+                        }
+                    }
+                }
+
+                // Get series watched (series with at least one played episode)
+                var seriesQuery = new InternalItemsQuery(user)
+                {
+                    IncludeItemTypes = new[] { BaseItemKind.Series },
+                    Recursive = true
+                };
+                var allSeries = _libraryManager.GetItemList(seriesQuery);
+
+                if (allSeries != null)
+                {
+                    foreach (var series in allSeries)
+                    {
+                        var episodeQuery = new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = new[] { BaseItemKind.Episode },
+                            AncestorIds = new[] { series.Id },
+                            IsPlayed = true,
+                            Recursive = true,
+                            Limit = 1
+                        };
+                        var playedEpisodes = _libraryManager.GetItemList(episodeQuery);
+                        if (playedEpisodes != null && playedEpisodes.Count > 0)
+                        {
+                            seriesWatched++;
+                        }
+                    }
+
+                    // Get all played episodes for watch time calculation
+                    var allPlayedEpisodesQuery = new InternalItemsQuery(user)
+                    {
+                        IncludeItemTypes = new[] { BaseItemKind.Episode },
+                        IsPlayed = true,
+                        Recursive = true
+                    };
+                    var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
+                    if (allPlayedEpisodes != null)
+                    {
+                        foreach (var episode in allPlayedEpisodes)
+                        {
+                            if (episode.RunTimeTicks.HasValue)
+                            {
+                                totalWatchTicks += episode.RunTimeTicks.Value;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get Jellyfin watch stats for user {UserId}", userId);
+            }
+
+            // Convert ticks to hours (1 tick = 100 nanoseconds, 10,000,000 ticks = 1 second)
+            var totalWatchHours = (int)(totalWatchTicks / TimeSpan.TicksPerHour);
+
             return Ok(new
             {
                 friendsCount,
                 ratingsCount,
                 averageRating,
                 memberDays,
-                // Future stats placeholders
-                moviesWatched = 0,  // Would need Jellyfin API
-                seriesWatched = 0,  // Would need Jellyfin API
-                totalWatchHours = 0 // Would need Jellyfin API
+                moviesWatched,
+                seriesWatched,
+                totalWatchHours
             });
         }
 
