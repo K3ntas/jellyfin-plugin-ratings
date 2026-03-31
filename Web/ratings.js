@@ -19500,84 +19500,60 @@
 
             let targetContainer = null;
             let insertBefore = null;
+            let strategyUsed = '';
 
-            // Strategy 1: Find filter button by various attributes
-            const filterSelectors = [
-                'button[title="Filter"]',
-                'button[title="Filtern"]',
-                'button[title="Filtrer"]',
-                'button[title="Filtrar"]',
-                '.btnFilter',
-                'button[data-action="filter"]',
-                // SVG filter icon button
-                'button.paper-icon-button-light svg path[d*="M14,12V19.88C14.04"]'
-            ];
-
-            let filterBtn = null;
-            for (const selector of filterSelectors) {
-                filterBtn = document.querySelector(selector);
-                if (filterBtn) {
-                    // If we matched an SVG path, get the button parent
-                    if (filterBtn.tagName === 'path') {
-                        filterBtn = filterBtn.closest('button');
-                    }
-                    break;
-                }
+            // Primary strategy: Find the alphaPicker button (AZ) which is always present
+            const alphaPickerBtn = document.querySelector('.btnSortAlpha, button.paper-icon-button-light[title*="lpha"], button.paper-icon-button-light[title="Sort"]');
+            if (alphaPickerBtn && alphaPickerBtn.parentElement) {
+                targetContainer = alphaPickerBtn.parentElement;
+                // Insert after alphaPicker (find next sibling or append)
+                insertBefore = alphaPickerBtn.nextElementSibling;
+                strategyUsed = 'alphaPicker';
             }
 
-            // Strategy 2: Find the listTopPaging and look for sibling buttons
-            const listTopPaging = document.querySelector('.listTopPaging');
-            if (listTopPaging) {
-                // The buttons should be siblings or nearby
-                const parent = listTopPaging.parentElement;
-                if (parent) {
-                    // Look for button container within same parent
-                    const buttons = parent.querySelectorAll('button.paper-icon-button-light');
-                    if (buttons.length >= 2) {
-                        // Found the button area - use the last button's parent as container
-                        const lastBtn = buttons[buttons.length - 1];
-                        if (lastBtn.parentElement) {
-                            targetContainer = lastBtn.parentElement;
-                            // Insert before the filter button (usually last)
-                            insertBefore = lastBtn;
-                        }
-                    }
-                }
-            }
-
-            // Strategy 3: Use filter button's parent
-            if (!targetContainer && filterBtn && filterBtn.parentElement) {
-                targetContainer = filterBtn.parentElement;
-                insertBefore = filterBtn;
-            }
-
-            // Strategy 4: Find sort button (AZ icon)
+            // Fallback: Find filter button
             if (!targetContainer) {
-                const sortBtn = document.querySelector('button[title="Sort"], button[title="Sortieren"], .btnSort');
-                if (sortBtn && sortBtn.parentElement) {
-                    targetContainer = sortBtn.parentElement;
-                    insertBefore = sortBtn;
+                const filterSelectors = [
+                    'button[title="Filter"]',
+                    'button[title="Filtern"]',
+                    'button[title="Filtrer"]',
+                    'button[title="Filtrar"]',
+                    '.btnFilter'
+                ];
+
+                let filterBtn = null;
+                for (const selector of filterSelectors) {
+                    filterBtn = document.querySelector(selector);
+                    if (filterBtn) break;
+                }
+
+                if (filterBtn && filterBtn.parentElement) {
+                    targetContainer = filterBtn.parentElement;
+                    insertBefore = filterBtn;
+                    strategyUsed = 'filterBtn';
                 }
             }
 
-            // Strategy 5: Find any flex container with multiple buttons near pagination
-            if (!targetContainer && listTopPaging) {
-                // Look in ancestors for a flex container with buttons
-                let searchElement = listTopPaging;
-                for (let i = 0; i < 5 && searchElement; i++) {
-                    searchElement = searchElement.parentElement;
-                    if (searchElement) {
-                        const btns = searchElement.querySelectorAll('button.paper-icon-button-light');
-                        if (btns.length >= 2) {
-                            targetContainer = btns[0].parentElement;
-                            insertBefore = btns[btns.length - 1]; // Insert before last button
-                            break;
+            // Fallback 2: Find listTopPaging and nearby buttons
+            if (!targetContainer) {
+                const listTopPaging = document.querySelector('.listTopPaging');
+                if (listTopPaging) {
+                    const parent = listTopPaging.parentElement;
+                    if (parent) {
+                        const buttons = parent.querySelectorAll('button.paper-icon-button-light');
+                        if (buttons.length >= 2) {
+                            const lastBtn = buttons[buttons.length - 1];
+                            if (lastBtn.parentElement) {
+                                targetContainer = lastBtn.parentElement;
+                                insertBefore = lastBtn;
+                                strategyUsed = 'listTopPaging';
+                            }
                         }
                     }
                 }
             }
 
-            // Strategy 6: Last resort - find button group anywhere
+            // Fallback 3: Any flex container with buttons
             if (!targetContainer) {
                 const allButtons = document.querySelectorAll('button.paper-icon-button-light');
                 for (const btn of allButtons) {
@@ -19585,15 +19561,18 @@
                     if (parent && parent.querySelectorAll('button').length >= 2) {
                         targetContainer = parent;
                         insertBefore = parent.querySelector('button:last-of-type');
+                        strategyUsed = 'anyFlexContainer';
                         break;
                     }
                 }
             }
 
             if (!targetContainer) {
-                // Return false to signal caller to retry
+                console.log('[Ratings] Sort buttons: No container found');
                 return false;
             }
+
+            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed);
 
             // Create sort buttons container
             const container = document.createElement('span');
