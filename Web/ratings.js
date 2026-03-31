@@ -19498,72 +19498,26 @@
             if (existing && existing.isConnected) return true;
             if (existing) existing.remove(); // Clean up orphaned element
 
+            // Must have the toolbar pagination element before we inject
+            const listTopPaging = document.querySelector('.listTopPaging');
+            if (!listTopPaging) {
+                return false; // Toolbar not ready yet
+            }
+
             let targetContainer = null;
             let insertBefore = null;
             let strategyUsed = '';
 
-            // Primary strategy: Find the alphaPicker button (AZ) which is always present
-            const alphaPickerBtn = document.querySelector('.btnSortAlpha, button.paper-icon-button-light[title*="lpha"], button.paper-icon-button-light[title="Sort"]');
-            if (alphaPickerBtn && alphaPickerBtn.parentElement) {
-                targetContainer = alphaPickerBtn.parentElement;
-                // Insert after alphaPicker (find next sibling or append)
-                insertBefore = alphaPickerBtn.nextElementSibling;
-                strategyUsed = 'alphaPicker';
-            }
-
-            // Fallback: Find filter button
-            if (!targetContainer) {
-                const filterSelectors = [
-                    'button[title="Filter"]',
-                    'button[title="Filtern"]',
-                    'button[title="Filtrer"]',
-                    'button[title="Filtrar"]',
-                    '.btnFilter'
-                ];
-
-                let filterBtn = null;
-                for (const selector of filterSelectors) {
-                    filterBtn = document.querySelector(selector);
-                    if (filterBtn) break;
-                }
-
-                if (filterBtn && filterBtn.parentElement) {
-                    targetContainer = filterBtn.parentElement;
-                    insertBefore = filterBtn;
-                    strategyUsed = 'filterBtn';
-                }
-            }
-
-            // Fallback 2: Find listTopPaging and nearby buttons
-            if (!targetContainer) {
-                const listTopPaging = document.querySelector('.listTopPaging');
-                if (listTopPaging) {
-                    const parent = listTopPaging.parentElement;
-                    if (parent) {
-                        const buttons = parent.querySelectorAll('button.paper-icon-button-light');
-                        if (buttons.length >= 2) {
-                            const lastBtn = buttons[buttons.length - 1];
-                            if (lastBtn.parentElement) {
-                                targetContainer = lastBtn.parentElement;
-                                insertBefore = lastBtn;
-                                strategyUsed = 'listTopPaging';
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fallback 3: Any flex container with buttons
-            if (!targetContainer) {
-                const allButtons = document.querySelectorAll('button.paper-icon-button-light');
-                for (const btn of allButtons) {
-                    const parent = btn.parentElement;
-                    if (parent && parent.querySelectorAll('button').length >= 2) {
-                        targetContainer = parent;
-                        insertBefore = parent.querySelector('button:last-of-type');
-                        strategyUsed = 'anyFlexContainer';
-                        break;
-                    }
+            // Find buttons in the same container as listTopPaging
+            const toolbarArea = listTopPaging.parentElement;
+            if (toolbarArea) {
+                const buttons = toolbarArea.querySelectorAll('button.paper-icon-button-light');
+                if (buttons.length >= 2) {
+                    // Insert before the last button (usually filter)
+                    const lastBtn = buttons[buttons.length - 1];
+                    targetContainer = lastBtn.parentElement;
+                    insertBefore = lastBtn;
+                    strategyUsed = 'toolbarButtons';
                 }
             }
 
@@ -19571,7 +19525,7 @@
                 return false;
             }
 
-            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed, 'listTopPaging:', !!document.querySelector('.listTopPaging'));
+            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed);
 
             // Create sort buttons container
             const container = document.createElement('span');

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.166.0",
+        "changelog": "Fix sort buttons: Require toolbar before injection, only inject in toolbar area",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.166.0/jellyfin-plugin-ratings_2.0.166.0.zip",
+        "checksum": "9ff5b5e70ee5ce8ee40510975a2c5e57",
+        "timestamp": "2026-04-01T02:30:00Z"
+      },
+      {
         "version": "2.0.165.0",
         "changelog": "Fix sort buttons: Remove strict listTopPaging check",
         "targetAbi": "10.11.0.0",
