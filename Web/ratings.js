@@ -8297,7 +8297,10 @@
                 .then(stats => {
                     // Track user's current rating for toggle-off feature
                     self.currentUserRating = stats.UserRating || 0;
-                    self.updateStarDisplay(stats.UserRating || 0);
+
+                    // For collections (no UserRating), show average in stars; otherwise show user's rating
+                    var displayRating = stats.UserRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
+                    self.updateStarDisplay(displayRating);
 
                     let statsHtml = '';
                     if (stats.TotalRatings > 0) {
@@ -8590,7 +8593,8 @@
                 '.overflowPortraitCard',
                 '.overflowSquareCard',
                 '.overflowBackdropCard',
-                '.itemTile'
+                '.itemTile',
+                '[data-type="BoxSet"]'
             ].join(', ');
 
             // Create MutationObserver to watch for new cards being added to DOM
@@ -8637,10 +8641,11 @@
                     return null; // Skip folders
                 }
 
-                // Allow Series, Movie, Episode, etc. even if data-isfolder="true"
+                // Allow Series, Movie, Episode, BoxSet, etc. even if data-isfolder="true"
                 // (Series items have isfolder=true but are actual media items)
                 if (dataType === 'Series' || dataType === 'Movie' || dataType === 'Episode' ||
-                    dataType === 'Audio' || dataType === 'MusicAlbum' || dataType === 'Video') {
+                    dataType === 'Audio' || dataType === 'MusicAlbum' || dataType === 'Video' ||
+                    dataType === 'BoxSet') {
                     return dataId;
                 }
 
