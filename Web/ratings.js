@@ -123,7 +123,16 @@
                 // DM translations
                 chatPublic: 'Public', chatDM: 'Direct Messages', chatStartDM: 'Start a private conversation',
                 chatSearchUsers: 'Search users...', chatNoUsers: 'No users found', chatNewMessage: 'New message from',
-                chatNoDMs: 'No private messages yet', chatTypeSlash: 'Type / to start a DM'
+                chatNoDMs: 'No private messages yet', chatTypeSlash: 'Type / to start a DM',
+                // Privacy Settings translations
+                privacySettings: 'Privacy Settings', privacyPresets: 'Quick Presets',
+                privacyPublic: 'Public', privacyFriendsOnly: 'Friends Only', privacyPrivate: 'Private',
+                privacyProfileVisibility: 'Profile Visibility', privacyShowOnlineStatus: 'Online Status',
+                privacyShowWatchedHistory: 'Watched History', privacyShowFriendsList: 'Friends List',
+                privacyShowCurrentlyWatching: 'Currently Watching', privacyAllowFriendRequests: 'Friend Requests',
+                privacyAllowMessages: 'Direct Messages',
+                privacyEveryone: 'Everyone', privacyFriends: 'Friends', privacyNobody: 'Nobody',
+                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -1464,6 +1473,9 @@
                     <button class="social-panel-tab" data-tab="addFriend">
                         <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </button>
+                    <button class="social-panel-tab" data-tab="settings">
+                        <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                    </button>
                 </div>
                 <div class="social-panel-search">
                     <input type="text" placeholder="Search..." id="social-search-input">
@@ -1586,6 +1598,16 @@
                     .catch(function () {
                         content.innerHTML = '<div class="social-empty-state">Failed to load blocked users</div>';
                     });
+            } else if (tab === 'settings') {
+                // Fetch privacy settings
+                fetch(baseUrl + '/Social/Settings', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderPrivacySettings(data);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load settings</div>';
+                    });
             }
         },
 
@@ -1617,6 +1639,126 @@
             });
             html += '</div>';
             content.innerHTML = html;
+        },
+
+        /**
+         * Render the privacy settings panel
+         */
+        renderPrivacySettings: function (settings) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!content) return;
+
+            // Setting definitions with their options
+            var settingsDef = [
+                { key: 'profileVisibility', label: t.privacyProfileVisibility || 'Profile Visibility', options: ['Public', 'Friends', 'Private'] },
+                { key: 'showOnlineStatus', label: t.privacyShowOnlineStatus || 'Online Status', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showWatchedHistory', label: t.privacyShowWatchedHistory || 'Watched History', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showFriendsList', label: t.privacyShowFriendsList || 'Friends List', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showCurrentlyWatching', label: t.privacyShowCurrentlyWatching || 'Currently Watching', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'allowFriendRequests', label: t.privacyAllowFriendRequests || 'Friend Requests', options: ['Everyone', 'Nobody'] },
+                { key: 'allowMessages', label: t.privacyAllowMessages || 'Direct Messages', options: ['Everyone', 'Friends', 'Nobody'] }
+            ];
+
+            var html = '<div class="privacy-settings-container">';
+
+            // Quick presets section
+            html += '<div class="privacy-presets-section">' +
+                '<div class="privacy-section-title">' + (t.privacyPresets || 'Quick Presets') + '</div>' +
+                '<div class="privacy-presets-buttons">' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'Public\')">' + (t.privacyPublic || 'Public') + '</button>' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'FriendsOnly\')">' + (t.privacyFriendsOnly || 'Friends Only') + '</button>' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'Private\')">' + (t.privacyPrivate || 'Private') + '</button>' +
+                '</div></div>';
+
+            // Individual settings
+            html += '<div class="privacy-section-title">' + (t.privacySettings || 'Privacy Settings') + '</div>';
+
+            settingsDef.forEach(function (setting) {
+                var currentValue = settings[setting.key] || setting.options[0];
+                html += '<div class="privacy-setting-row">' +
+                    '<label class="privacy-setting-label">' + setting.label + '</label>' +
+                    '<select class="privacy-setting-select" data-setting="' + setting.key + '" onchange="RatingsPlugin.savePrivacySetting(\'' + setting.key + '\', this.value)">';
+
+                setting.options.forEach(function (opt) {
+                    var optLabel = opt === 'Everyone' ? (t.privacyEveryone || 'Everyone') :
+                                   opt === 'Friends' ? (t.privacyFriends || 'Friends') :
+                                   opt === 'Nobody' ? (t.privacyNobody || 'Nobody') :
+                                   opt === 'Public' ? (t.privacyPublic || 'Public') :
+                                   opt === 'Private' ? (t.privacyPrivate || 'Private') : opt;
+                    var selected = currentValue === opt ? ' selected' : '';
+                    html += '<option value="' + opt + '"' + selected + '>' + optLabel + '</option>';
+                });
+
+                html += '</select></div>';
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Save a single privacy setting
+         */
+        savePrivacySetting: function (key, value) {
+            var self = this;
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var body = {};
+            body[key] = value;
+
+            fetch(baseUrl + '/Social/Settings', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify(body)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.showToast(t.privacySaved || 'Settings saved', 'success');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Save setting failed:', err);
+            });
+        },
+
+        /**
+         * Apply a privacy preset
+         */
+        applyPrivacyPreset: function (preset) {
+            var self = this;
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Settings/Preset/' + preset, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.showToast(t.privacyPresetApplied || 'Preset applied', 'success');
+                    // Reload settings to reflect changes
+                    self.loadFriendsData('settings');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Apply preset failed:', err);
+            });
         },
 
         /**
@@ -9974,6 +10116,77 @@
                     height: 48px;
                     fill: #444;
                     margin-bottom: 12px;
+                }
+
+                /* Privacy Settings */
+                .privacy-settings-container {
+                    padding: 8px 4px;
+                }
+                .privacy-presets-section {
+                    margin-bottom: 16px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #333;
+                }
+                .privacy-section-title {
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #888;
+                    text-transform: uppercase;
+                    padding: 8px 4px 8px;
+                    letter-spacing: 0.5px;
+                }
+                .privacy-presets-buttons {
+                    display: flex;
+                    gap: 8px;
+                    padding: 0 4px;
+                }
+                .privacy-preset-btn {
+                    flex: 1;
+                    padding: 10px 8px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #252525;
+                    color: #fff;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .privacy-preset-btn:hover {
+                    background: #333;
+                    border-color: #00a4dc;
+                    color: #00a4dc;
+                }
+                .privacy-setting-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 8px;
+                    border-radius: 6px;
+                    margin-bottom: 4px;
+                }
+                .privacy-setting-row:hover {
+                    background: #252525;
+                }
+                .privacy-setting-label {
+                    font-size: 13px;
+                    color: #ddd;
+                }
+                .privacy-setting-select {
+                    padding: 6px 12px;
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    font-size: 12px;
+                    cursor: pointer;
+                    min-width: 100px;
+                }
+                .privacy-setting-select:hover {
+                    border-color: #555;
+                }
+                .privacy-setting-select:focus {
+                    outline: none;
+                    border-color: #00a4dc;
                 }
 
                 /* Notification items */
