@@ -291,6 +291,45 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
+                // Check if this is a collection (BoxSet) - calculate average from child items
+                if (item is MediaBrowser.Controller.Entities.Movies.BoxSet)
+                {
+                    var childQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
+                        AncestorIds = new[] { itemId },
+                        Recursive = true
+                    };
+                    var childItems = _libraryManager.GetItemList(childQuery);
+                    var childRatings = new List<double>();
+
+                    foreach (var child in childItems)
+                    {
+                        string? childTmdbId = null;
+                        string? childImdbId = null;
+                        if (child.ProviderIds != null)
+                        {
+                            child.ProviderIds.TryGetValue("Tmdb", out childTmdbId);
+                            child.ProviderIds.TryGetValue("Imdb", out childImdbId);
+                        }
+
+                        var childStats = _repository.GetRatingStats(child.Id, null, childTmdbId, childImdbId);
+                        if (childStats.TotalRatings > 0)
+                        {
+                            childRatings.Add(childStats.AverageRating);
+                        }
+                    }
+
+                    var collectionStats = new RatingStats
+                    {
+                        ItemId = itemId,
+                        TotalRatings = childRatings.Count,
+                        AverageRating = childRatings.Count > 0 ? Math.Round(childRatings.Average(), 2) : 0
+                    };
+
+                    return Ok(collectionStats);
+                }
+
                 // Extract provider IDs for fallback lookup (handles replaced media files)
                 string? tmdbId = null;
                 string? imdbId = null;

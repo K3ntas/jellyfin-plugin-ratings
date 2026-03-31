@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.148.0",
+        "changelog": "Collections: Show average rating from child items, fix collection card badges in library",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.148.0/jellyfin-plugin-ratings_2.0.148.0.zip",
+        "checksum": "67624c8fa7e52513571976927ea19185",
+        "timestamp": "2026-03-31T16:00:00Z"
+      },
+      {
         "version": "2.0.147.0",
         "changelog": "Fix: Ratings persist when media files are replaced (uses TMDB/IMDB ID fallback)",
         "targetAbi": "10.11.0.0",

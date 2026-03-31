@@ -11344,7 +11344,8 @@
                 '.overflowPortraitCard',
                 '.overflowSquareCard',
                 '.overflowBackdropCard',
-                '.itemTile'
+                '.itemTile',
+                '[data-type="BoxSet"]'
             ].join(', ');
 
             // Create MutationObserver to watch for new cards being added to DOM
@@ -11391,10 +11392,11 @@
                     return null; // Skip folders
                 }
 
-                // Allow Series, Movie, Episode, etc. even if data-isfolder="true"
+                // Allow Series, Movie, Episode, BoxSet, etc. even if data-isfolder="true"
                 // (Series items have isfolder=true but are actual media items)
                 if (dataType === 'Series' || dataType === 'Movie' || dataType === 'Episode' ||
-                    dataType === 'Audio' || dataType === 'MusicAlbum' || dataType === 'Video') {
+                    dataType === 'Audio' || dataType === 'MusicAlbum' || dataType === 'Video' ||
+                    dataType === 'BoxSet') {
                     return dataId;
                 }
 
