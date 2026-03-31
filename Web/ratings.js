@@ -19425,19 +19425,20 @@
             let retryCount = 0;
             const maxRetries = 20;
 
-            const checkLibraryPage = () => {
+            const checkLibraryPage = (isRetry) => {
+                const url = window.location.href;
                 const hash = window.location.hash;
-                console.log('[Ratings] checkLibraryPage called, hash:', hash);
 
-                // Skip ONLY if Netflix view is actually rendered (not just enabled)
+                // Skip ONLY if Netflix view is actually rendered
                 const netflixContainer = document.querySelector('.netflix-view-container');
                 if (netflixContainer && netflixContainer.isConnected) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    retryCount = 0;
                     return;
                 }
 
-                // Check if we're on a library page (movies, tv, etc.)
+                // Check if we're on a library page
                 const isLibraryPage = hash.includes('#/movies') ||
                                      hash.includes('#/tv') ||
                                      hash.includes('#/music') ||
@@ -19449,42 +19450,40 @@
                 if (!isLibraryPage) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
-                    console.log('[Ratings] Not a library page, skipping');
+                    retryCount = 0;
                     return;
                 }
 
-                // Check if container exists AND is connected to DOM (Jellyfin may have removed it)
-                const existing = document.getElementById('librarySortContainer');
-                if (existing && existing.isConnected && document.body.contains(existing)) {
-                    console.log('[Ratings] Container exists and is connected, skipping');
-                    return; // Already injected and still visible
+                // Reset retry count on new URL
+                if (url !== lastUrl) {
+                    retryCount = 0;
                 }
-                // Remove orphaned container if it exists but is disconnected
-                if (existing) {
-                    existing.remove();
+
+                // Don't re-inject on same URL if already exists
+                if (url === lastUrl && document.getElementById('librarySortContainer')) {
+                    return;
                 }
+                lastUrl = url;
 
                 // Try to inject buttons
-                self.injectLibrarySortButtons();
+                const success = self.injectLibrarySortButtons();
+
+                // If injection failed, retry with quick polling
+                if (!success && retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(() => checkLibraryPage(true), 200);
+                }
             };
 
-            // Listen for navigation events - wait for Jellyfin to finish loading
-            const onNavigate = () => {
-                // Wait for Jellyfin to settle, then inject
-                setTimeout(checkLibraryPage, 500);
-                setTimeout(checkLibraryPage, 1000);
-                setTimeout(checkLibraryPage, 1500);
-                setTimeout(checkLibraryPage, 2500);
-            };
+            // Listen for navigation events
+            window.addEventListener('hashchange', () => setTimeout(() => checkLibraryPage(false), 100));
+            window.addEventListener('popstate', () => setTimeout(() => checkLibraryPage(false), 100));
 
-            window.addEventListener('hashchange', onNavigate);
-            window.addEventListener('popstate', onNavigate);
-
-            // Periodic check - but not too frequent to avoid fighting with Jellyfin
-            setInterval(checkLibraryPage, 1000);
+            // Periodic check as fallback
+            setInterval(() => checkLibraryPage(false), 3000);
 
             // Initial check
-            setTimeout(checkLibraryPage, 1000);
+            setTimeout(() => checkLibraryPage(false), 500);
         },
 
         /**
@@ -19497,59 +19496,62 @@
             // Don't inject if already exists and is properly connected
             const existing = document.getElementById('librarySortContainer');
             if (existing) {
-                const inBody = document.body.contains(existing);
-                console.log('[Ratings] Existing container found, isConnected:', existing.isConnected, 'inBody:', inBody);
-                if (existing.isConnected && inBody) {
+                if (existing.isConnected && document.body.contains(existing)) {
                     return true; // Already properly injected
                 }
                 existing.remove(); // Clean up orphaned/detached element
             }
 
-            // Must have the toolbar pagination element before we inject
-            const listTopPaging = document.querySelector('.listTopPaging');
-            if (!listTopPaging) {
-                console.log('[Ratings] No .listTopPaging found');
-                return false; // Toolbar not ready yet
-            }
-
             let targetContainer = null;
             let insertBefore = null;
-            let strategyUsed = '';
 
-            // Find buttons in the same container as listTopPaging
-            const toolbarArea = listTopPaging.parentElement;
-            const buttons = toolbarArea ? toolbarArea.querySelectorAll('button.paper-icon-button-light') : [];
-            console.log('[Ratings] listTopPaging found, toolbarArea:', !!toolbarArea, 'buttons:', buttons.length);
-
-            if (buttons.length >= 2) {
-                // Insert before the last button (usually filter)
-                const lastBtn = buttons[buttons.length - 1];
-                targetContainer = lastBtn.parentElement;
-                insertBefore = lastBtn;
-                strategyUsed = 'toolbarButtons';
+            // Strategy 1: Find .btnSort button and insert after it (before filter)
+            const sortBtn = document.querySelector('.btnSort');
+            if (sortBtn) {
+                targetContainer = sortBtn.parentElement;
+                // Insert after sort button - find the filter wrapper or filter button
+                const filterWrapper = document.querySelector('.btnFilter-wrapper');
+                insertBefore = filterWrapper || document.querySelector('.btnFilter');
             }
 
-            // Fallback: look for buttons anywhere in document if toolbar area has none
+            // Strategy 2: Find paging element (.listPaging or .listTopPaging) and look for sibling buttons
             if (!targetContainer) {
-                const allButtons = document.querySelectorAll('.listTopPaging ~ button.paper-icon-button-light, button.paper-icon-button-light');
-                console.log('[Ratings] Fallback: found', allButtons.length, 'buttons in document');
-                for (const btn of allButtons) {
-                    const parent = btn.parentElement;
-                    if (parent && parent.querySelectorAll('button').length >= 3) {
+                const paging = document.querySelector('.listPaging, .listTopPaging, .paging');
+                if (paging) {
+                    // Go up to find the flex container with buttons
+                    let container = paging.parentElement;
+                    while (container && !container.classList.contains('flex')) {
+                        container = container.parentElement;
+                    }
+                    if (container) {
+                        const buttons = container.querySelectorAll(':scope > button.paper-icon-button-light');
+                        if (buttons.length >= 2) {
+                            targetContainer = container;
+                            // Insert before the last button or filter wrapper
+                            const filterWrapper = container.querySelector('.btnFilter-wrapper');
+                            insertBefore = filterWrapper || buttons[buttons.length - 1];
+                        }
+                    }
+                }
+            }
+
+            // Strategy 3: Find any flex container with play/shuffle/sort buttons
+            if (!targetContainer) {
+                const playBtn = document.querySelector('.btnPlayAll, .btnShuffle');
+                if (playBtn && playBtn.parentElement) {
+                    const parent = playBtn.parentElement;
+                    const buttons = parent.querySelectorAll('button.paper-icon-button-light');
+                    if (buttons.length >= 3) {
                         targetContainer = parent;
-                        insertBefore = parent.querySelector('button:last-of-type');
-                        strategyUsed = 'fallbackButtons';
-                        break;
+                        const filterWrapper = parent.querySelector('.btnFilter-wrapper');
+                        insertBefore = filterWrapper || buttons[buttons.length - 1];
                     }
                 }
             }
 
             if (!targetContainer) {
-                console.log('[Ratings] No suitable container found');
                 return false;
             }
-
-            console.log('[Ratings] Sort buttons: Injecting via', strategyUsed);
 
             // Create sort buttons container
             const container = document.createElement('span');
