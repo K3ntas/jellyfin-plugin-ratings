@@ -1073,6 +1073,12 @@
          * Initialize the ratings plugin
          */
         init: function () {
+            // Prevent multiple initializations
+            if (this._initialized) {
+                return;
+            }
+            this._initialized = true;
+
             var self = this;
 
             // Load saved language preference or fetch from server config
@@ -24546,18 +24552,67 @@
     window.ratingsPlugin = RatingsPlugin;
     window.RatingsPlugin = RatingsPlugin;
 
-    // Initialize when DOM is ready
-    function initPlugin() {
+    // Check if user is authenticated
+    function isUserAuthenticated() {
+        try {
+            // Check if ApiClient exists and has a current user
+            if (typeof ApiClient !== 'undefined' && ApiClient.getCurrentUserId && ApiClient.getCurrentUserId()) {
+                return true;
+            }
+            // Also check window.ApiClient
+            if (window.ApiClient && window.ApiClient.getCurrentUserId && window.ApiClient.getCurrentUserId()) {
+                return true;
+            }
+        } catch (e) {
+            return false;
+        }
+        return false;
+    }
+
+    // Check if on login page
+    function isLoginPage() {
+        var hash = window.location.hash || '';
+        return hash.includes('login') || hash.includes('Login') || hash === '' || hash === '#' || hash === '#!/login.html';
+    }
+
+    // Initialize only when authenticated
+    function initPluginWhenReady() {
+        // Skip if on login page
+        if (isLoginPage()) {
+            return;
+        }
+
+        // Skip if not authenticated
+        if (!isUserAuthenticated()) {
+            return;
+        }
+
+        // Already initialized check
+        if (RatingsPlugin._initialized) {
+            return;
+        }
+
         RatingsPlugin.init();
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPlugin);
-    } else {
-        // Try immediate init
-        initPlugin();
+    // Poll for authentication (checks every 500ms until authenticated)
+    function waitForAuth() {
+        if (isUserAuthenticated() && !isLoginPage()) {
+            initPluginWhenReady();
+        } else {
+            setTimeout(waitForAuth, 500);
+        }
     }
 
-    // Also try after a delay to ensure Jellyfin is fully loaded
-    setTimeout(initPlugin, 2000);
+    // Start waiting for authentication
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForAuth);
+    } else {
+        waitForAuth();
+    }
+
+    // Also listen for hash changes (user might navigate from login to home)
+    window.addEventListener('hashchange', function() {
+        setTimeout(initPluginWhenReady, 300);
+    });
 })();
