@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.193.0",
+        "changelog": "Better resize handle icon, insights.md updated",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.193.0/jellyfin-plugin-ratings_2.0.193.0.zip",
+        "checksum": "26facb2b7b7d48defbfaa0e5bb380580",
+        "timestamp": "2026-04-01T15:30:00Z"
+      },
+      {
         "version": "2.0.192.0",
         "changelog": "Friends panel draggable by header, position saved, resize from bottom-left",
         "targetAbi": "10.11.0.0",

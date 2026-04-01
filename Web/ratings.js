@@ -10008,13 +10008,39 @@
                 }
                 .social-panel-resize {
                     position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 16px;
-                    height: 16px;
+                    bottom: 2px;
+                    left: 2px;
+                    width: 14px;
+                    height: 14px;
                     cursor: sw-resize;
-                    background: linear-gradient(135deg, transparent 50%, #444 50%);
-                    border-radius: 0 0 0 12px;
+                    opacity: 0.5;
+                    transition: opacity 0.2s;
+                }
+                .social-panel-resize:hover {
+                    opacity: 1;
+                }
+                .social-panel-resize::before,
+                .social-panel-resize::after {
+                    content: '';
+                    position: absolute;
+                    background: #666;
+                    border-radius: 1px;
+                }
+                .social-panel-resize::before {
+                    width: 10px;
+                    height: 2px;
+                    bottom: 2px;
+                    left: 0;
+                    transform: rotate(-45deg);
+                    transform-origin: left bottom;
+                }
+                .social-panel-resize::after {
+                    width: 6px;
+                    height: 2px;
+                    bottom: 2px;
+                    left: 0;
+                    transform: rotate(-45deg) translateX(4px);
+                    transform-origin: left bottom;
                 }
                 .social-friends-panel.open {
                     display: flex;
