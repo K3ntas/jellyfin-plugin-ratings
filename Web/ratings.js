@@ -1493,7 +1493,7 @@
                         <div>No friends yet</div>
                     </div>
                 </div>
-                <div class="social-panel-resize"></div>
+                <div class="social-panel-resize"><div class="social-panel-resize-lines"><span></span><span></span><span></span></div></div>
             `;
 
             // Close button
@@ -10008,39 +10008,46 @@
                 }
                 .social-panel-resize {
                     position: absolute;
-                    bottom: 2px;
-                    left: 2px;
-                    width: 14px;
-                    height: 14px;
+                    bottom: 0;
+                    left: 0;
+                    width: 16px;
+                    height: 16px;
                     cursor: sw-resize;
-                    opacity: 0.5;
+                    opacity: 0.4;
                     transition: opacity 0.2s;
+                    overflow: hidden;
                 }
                 .social-panel-resize:hover {
-                    opacity: 1;
+                    opacity: 0.8;
                 }
-                .social-panel-resize::before,
-                .social-panel-resize::after {
-                    content: '';
+                .social-panel-resize-lines {
                     position: absolute;
-                    background: #666;
-                    border-radius: 1px;
+                    bottom: 3px;
+                    left: 3px;
+                    width: 12px;
+                    height: 12px;
                 }
-                .social-panel-resize::before {
-                    width: 10px;
-                    height: 2px;
-                    bottom: 2px;
-                    left: 0;
+                .social-panel-resize-lines span {
+                    position: absolute;
+                    background: #888;
+                    height: 1px;
                     transform: rotate(-45deg);
-                    transform-origin: left bottom;
+                    transform-origin: left center;
                 }
-                .social-panel-resize::after {
-                    width: 6px;
-                    height: 2px;
-                    bottom: 2px;
-                    left: 0;
-                    transform: rotate(-45deg) translateX(4px);
-                    transform-origin: left bottom;
+                .social-panel-resize-lines span:nth-child(1) {
+                    width: 4px;
+                    bottom: 1px;
+                    left: 1px;
+                }
+                .social-panel-resize-lines span:nth-child(2) {
+                    width: 7px;
+                    bottom: 4px;
+                    left: 1px;
+                }
+                .social-panel-resize-lines span:nth-child(3) {
+                    width: 10px;
+                    bottom: 7px;
+                    left: 1px;
                 }
                 .social-friends-panel.open {
                     display: flex;
