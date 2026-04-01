@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.188.0",
+        "changelog": "Online tab shows only online users, Add Friend search clickable",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.188.0/jellyfin-plugin-ratings_2.0.188.0.zip",
+        "checksum": "6456ce95f9b369c97d976148963c4cc4",
+        "timestamp": "2026-04-01T13:00:00Z"
+      },
+      {
         "version": "2.0.187.0",
         "changelog": "Online tab: compact layout, click to open profile",
         "targetAbi": "10.11.0.0",

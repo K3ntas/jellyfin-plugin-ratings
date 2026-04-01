@@ -2936,14 +2936,14 @@
                 } else if (user.hasPendingRequest) {
                     buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
                 } else if (user.hasIncomingRequest) {
-                    buttonHtml = '<button onclick="RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
                 } else if (user.canSendRequest) {
-                    buttonHtml = '<button onclick="RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
                 } else {
                     buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
                 }
 
-                html += '<div class="social-friend-item" style="justify-content:space-between;">' +
+                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="justify-content:space-between;cursor:pointer;">' +
                     '<div style="display:flex;align-items:center;">' +
                     '<div class="social-friend-avatar">' + initial + '</div>' +
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +

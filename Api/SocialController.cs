@@ -1293,11 +1293,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     effectiveStatus = "Offline";
                 }
 
-                // Only show if online/away (not offline) or always show if friend
+                // Only show users who are Online (skip Away and Offline)
                 var displayStatus = showStatus ? effectiveStatus : "Offline";
-                if (displayStatus == "Offline" && !isFriend)
+                if (displayStatus != "Online")
                 {
-                    continue; // Skip offline non-friends
+                    continue; // Skip non-online users
                 }
 
                 users.Add(new
@@ -1310,10 +1310,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 });
             }
 
-            // Sort: Online first, then Away, then by username
+            // Sort by username
             var sortedUsers = users
-                .OrderBy(u => ((dynamic)u).status == "Online" ? 0 : ((dynamic)u).status == "Away" ? 1 : 2)
-                .ThenBy(u => ((dynamic)u).username)
+                .OrderBy(u => ((dynamic)u).username)
                 .ToList();
 
             return Ok(new { users = sortedUsers });
