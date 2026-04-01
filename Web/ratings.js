@@ -1675,24 +1675,19 @@
             users.forEach(function (user) {
                 var statusColor = user.status === 'Online' ? '#4CAF50' :
                                   user.status === 'Away' ? '#FFC107' : '#888';
-                var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:5px;">★ Friend</span>' : '';
+                var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:4px;">★</span>' : '';
+                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
 
-                html += '<div class="social-friend-item" data-userid="' + user.userId + '">' +
-                    '<div class="social-friend-row">' +
-                    '<div class="social-friend-avatar" style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:14px;">' +
+                html += '<div class="social-friend-item social-online-item" data-userid="' + user.userId + '" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
+                    '<div style="position:relative;flex-shrink:0;">' +
+                    '<div style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;">' +
                     self.escapeHtml(user.username.charAt(0).toUpperCase()) + '</div>' +
-                    '<div class="social-status-dot" style="background:' + statusColor + ';width:10px;height:10px;border-radius:50%;position:absolute;bottom:0;right:0;border:2px solid #1a1a1a;"></div>' +
-                    '<div class="social-friend-info">' +
-                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + friendBadge + '</div>' +
-                    '<div class="social-friend-status" style="color:' + statusColor + ';">' + user.status + '</div>' +
-                    '</div></div>';
-
-                // Add action buttons for non-friends
-                if (!user.isFriend) {
-                    html += '<button class="social-btn-add-friend" onclick="RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:4px 8px;font-size:11px;">Add Friend</button>';
-                }
-
-                html += '</div>';
+                    '<div style="background:' + statusColor + ';width:8px;height:8px;border-radius:50%;position:absolute;bottom:0;right:0;border:2px solid #1a1a1a;"></div>' +
+                    '</div>' +
+                    '<span style="margin-left:8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + self.escapeHtml(user.username) + friendBadge + '</span>' +
+                    '<span style="margin-left:6px;font-size:11px;color:' + statusColor + ';">' + user.status + '</span>' +
+                    addBtn +
+                    '</div>';
             });
             html += '</div>';
             content.innerHTML = html;
