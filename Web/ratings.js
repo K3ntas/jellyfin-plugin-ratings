@@ -19539,6 +19539,23 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
+            // Prevent concurrent injections
+            if (self._injectingSortButtons) return false;
+
+            // Check if buttons already exist globally - if visible, skip
+            const existingBtn = document.getElementById('librarySortDesc');
+            if (existingBtn) {
+                const rect = existingBtn.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    return true; // Already exists and visible
+                }
+            }
+
+            self._injectingSortButtons = true;
+
+            // Remove ALL existing sort buttons globally (prevents duplicates)
+            document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+
             // Find the VISIBLE .btnSort
             const allBtnSort = document.querySelectorAll('.btnSort');
             let visibleBtnSort = null;
@@ -19550,13 +19567,6 @@
                 }
             }
             const toolbar = visibleBtnSort ? visibleBtnSort.parentElement : null;
-
-            // Check if our buttons already exist in the current visible toolbar
-            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
-            if (containerInToolbar && containerInToolbar.isConnected) return true;
-
-            // Remove ALL existing sort buttons globally (prevents duplicates)
-            document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
 
             let targetContainer = null;
             let insertBefore = null;
@@ -19603,7 +19613,10 @@
                 }
             }
 
-            if (!targetContainer) return false;
+            if (!targetContainer) {
+                self._injectingSortButtons = false;
+                return false;
+            }
 
             // Create buttons - minimal inline styles, let CSS handle hover/active
             const btn1 = document.createElement('button');
@@ -19661,6 +19674,7 @@
                 });
             });
 
+            self._injectingSortButtons = false;
             return true;
         },
 
