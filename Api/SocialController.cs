@@ -264,9 +264,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return NotFound(new { error = "User not found" });
             }
 
-            // Get friends count
-            var friendIds = _socialRepository.GetFriendIds(userId);
-            var friendsCount = friendIds.Count;
+            // Get profile for privacy settings
+            var profile = _socialRepository.GetProfile(userId);
+            var isOwnProfile = currentUserId.Value == userId;
+            var areFriends = !isOwnProfile && _socialRepository.AreFriends(currentUserId.Value, userId);
+
+            // Check privacy for friends list visibility
+            var canSeeFriendsList = isOwnProfile ||
+                profile?.Privacy.ShowFriendsList == "Everyone" ||
+                (profile?.Privacy.ShowFriendsList == "Friends" && areFriends);
+
+            // Check privacy for watch history visibility
+            var canSeeWatchHistory = isOwnProfile ||
+                profile?.Privacy.ShowWatchedHistory == "Everyone" ||
+                (profile?.Privacy.ShowWatchedHistory == "Friends" && areFriends);
+
+            // Get friends count (respect privacy)
+            int friendsCount = 0;
+            if (canSeeFriendsList)
+            {
+                var friendIds = _socialRepository.GetFriendIds(userId);
+                friendsCount = friendIds.Count;
+            }
 
             // Get ratings data
             var userRatings = _ratingsRepository.GetUserRatings(userId);
@@ -279,89 +298,91 @@ namespace Jellyfin.Plugin.Ratings.Api
             // For now, we can skip this or show 0
 
             // Calculate member duration
-            var profile = _socialRepository.GetProfile(userId);
             var memberSince = profile?.CreatedAt ?? DateTime.UtcNow;
             var memberDays = (int)(DateTime.UtcNow - memberSince).TotalDays;
 
-            // Get Jellyfin watch statistics
+            // Get Jellyfin watch statistics (respect ShowWatchedHistory privacy)
             int moviesWatched = 0;
             int seriesWatched = 0;
             long totalWatchTicks = 0;
 
-            try
+            if (canSeeWatchHistory)
             {
-                // Get movies watched
-                var movieQuery = new InternalItemsQuery(user)
+                try
                 {
-                    IncludeItemTypes = new[] { BaseItemKind.Movie },
-                    IsPlayed = true,
-                    Recursive = true
-                };
-                var playedMovies = _libraryManager.GetItemList(movieQuery);
-                moviesWatched = playedMovies?.Count ?? 0;
-
-                // Sum up movie watch time (use runtime as approximation)
-                if (playedMovies != null)
-                {
-                    foreach (var movie in playedMovies)
+                    // Get movies watched
+                    var movieQuery = new InternalItemsQuery(user)
                     {
-                        if (movie.RunTimeTicks.HasValue)
-                        {
-                            totalWatchTicks += movie.RunTimeTicks.Value;
-                        }
-                    }
-                }
-
-                // Get series watched (series with at least one played episode)
-                var seriesQuery = new InternalItemsQuery(user)
-                {
-                    IncludeItemTypes = new[] { BaseItemKind.Series },
-                    Recursive = true
-                };
-                var allSeries = _libraryManager.GetItemList(seriesQuery);
-
-                if (allSeries != null)
-                {
-                    foreach (var series in allSeries)
-                    {
-                        var episodeQuery = new InternalItemsQuery(user)
-                        {
-                            IncludeItemTypes = new[] { BaseItemKind.Episode },
-                            AncestorIds = new[] { series.Id },
-                            IsPlayed = true,
-                            Recursive = true,
-                            Limit = 1
-                        };
-                        var playedEpisodes = _libraryManager.GetItemList(episodeQuery);
-                        if (playedEpisodes != null && playedEpisodes.Count > 0)
-                        {
-                            seriesWatched++;
-                        }
-                    }
-
-                    // Get all played episodes for watch time calculation
-                    var allPlayedEpisodesQuery = new InternalItemsQuery(user)
-                    {
-                        IncludeItemTypes = new[] { BaseItemKind.Episode },
+                        IncludeItemTypes = new[] { BaseItemKind.Movie },
                         IsPlayed = true,
                         Recursive = true
                     };
-                    var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
-                    if (allPlayedEpisodes != null)
+                    var playedMovies = _libraryManager.GetItemList(movieQuery);
+                    moviesWatched = playedMovies?.Count ?? 0;
+
+                    // Sum up movie watch time (use runtime as approximation)
+                    if (playedMovies != null)
                     {
-                        foreach (var episode in allPlayedEpisodes)
+                        foreach (var movie in playedMovies)
                         {
-                            if (episode.RunTimeTicks.HasValue)
+                            if (movie.RunTimeTicks.HasValue)
                             {
-                                totalWatchTicks += episode.RunTimeTicks.Value;
+                                totalWatchTicks += movie.RunTimeTicks.Value;
+                            }
+                        }
+                    }
+
+                    // Get series watched (series with at least one played episode)
+                    var seriesQuery = new InternalItemsQuery(user)
+                    {
+                        IncludeItemTypes = new[] { BaseItemKind.Series },
+                        Recursive = true
+                    };
+                    var allSeries = _libraryManager.GetItemList(seriesQuery);
+
+                    if (allSeries != null)
+                    {
+                        foreach (var series in allSeries)
+                        {
+                            var episodeQuery = new InternalItemsQuery(user)
+                            {
+                                IncludeItemTypes = new[] { BaseItemKind.Episode },
+                                AncestorIds = new[] { series.Id },
+                                IsPlayed = true,
+                                Recursive = true,
+                                Limit = 1
+                            };
+                            var playedEpisodes = _libraryManager.GetItemList(episodeQuery);
+                            if (playedEpisodes != null && playedEpisodes.Count > 0)
+                            {
+                                seriesWatched++;
+                            }
+                        }
+
+                        // Get all played episodes for watch time calculation
+                        var allPlayedEpisodesQuery = new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = new[] { BaseItemKind.Episode },
+                            IsPlayed = true,
+                            Recursive = true
+                        };
+                        var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
+                        if (allPlayedEpisodes != null)
+                        {
+                            foreach (var episode in allPlayedEpisodes)
+                            {
+                                if (episode.RunTimeTicks.HasValue)
+                                {
+                                    totalWatchTicks += episode.RunTimeTicks.Value;
+                                }
                             }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to get Jellyfin watch stats for user {UserId}", userId);
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get Jellyfin watch stats for user {UserId}", userId);
+                }
             }
 
             // Convert ticks to hours (1 tick = 100 nanoseconds, 10,000,000 ticks = 1 second)
