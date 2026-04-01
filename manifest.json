@@ -12,7 +12,7 @@
         "version": "2.0.194.0",
         "changelog": "Proper resize grip icon (3 diagonal lines)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.194.0/jellyfin-plugin-ratings_2.0.194.0.zip",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.194.0/Jellyfin.Plugin.Ratings_2.0.194.0.zip",
         "checksum": "789f7a6d2c7d1b27159c519ebaa35368",
         "timestamp": "2026-04-01T16:00:00Z"
       },
