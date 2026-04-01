@@ -1493,6 +1493,7 @@
                         <div>No friends yet</div>
                     </div>
                 </div>
+                <div class="social-panel-resize"></div>
             `;
 
             // Close button
@@ -1515,7 +1516,134 @@
                 self.filterFriendsList(e.target.value);
             });
 
+            // Make panel draggable by header
+            var header = panel.querySelector('.social-panel-header');
+            var isDragging = false;
+            var dragOffsetX = 0;
+            var dragOffsetY = 0;
+
+            header.style.cursor = 'move';
+
+            header.addEventListener('mousedown', function (e) {
+                if (e.target.classList.contains('social-panel-close')) return;
+                isDragging = true;
+                dragOffsetX = e.clientX - panel.offsetLeft;
+                dragOffsetY = e.clientY - panel.offsetTop;
+                panel.style.transition = 'none';
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isDragging) return;
+                var newX = e.clientX - dragOffsetX;
+                var newY = e.clientY - dragOffsetY;
+
+                // Keep panel within viewport
+                newX = Math.max(0, Math.min(newX, window.innerWidth - panel.offsetWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - panel.offsetHeight));
+
+                panel.style.left = newX + 'px';
+                panel.style.top = newY + 'px';
+                panel.style.right = 'auto';
+                panel.style.bottom = 'auto';
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.style.transition = '';
+                    // Save position
+                    self.saveFriendsPanelPosition();
+                }
+                if (isResizing) {
+                    isResizing = false;
+                    panel.style.transition = '';
+                    self.saveFriendsPanelPosition();
+                }
+            });
+
+            // Resize from bottom-left corner
+            var resizeHandle = panel.querySelector('.social-panel-resize');
+            var isResizing = false;
+            var startX, startY, startWidth, startHeight, startLeft;
+
+            resizeHandle.addEventListener('mousedown', function (e) {
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = panel.offsetWidth;
+                startHeight = panel.offsetHeight;
+                startLeft = panel.offsetLeft;
+                panel.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isResizing) return;
+
+                // Calculate new dimensions (bottom-left resize)
+                var deltaX = startX - e.clientX;
+                var deltaY = e.clientY - startY;
+
+                var newWidth = Math.max(280, Math.min(500, startWidth + deltaX));
+                var newHeight = Math.max(300, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
+                var newLeft = startLeft - (newWidth - startWidth);
+
+                // Keep within bounds
+                if (newLeft < 0) {
+                    newLeft = 0;
+                    newWidth = startLeft + startWidth;
+                }
+
+                panel.style.width = newWidth + 'px';
+                panel.style.height = newHeight + 'px';
+                panel.style.left = newLeft + 'px';
+                panel.style.right = 'auto';
+            });
+
+            // Load saved position
+            this.loadFriendsPanelPosition(panel);
+
             document.body.appendChild(panel);
+        },
+
+        /**
+         * Save friends panel position to localStorage
+         */
+        saveFriendsPanelPosition: function () {
+            var panel = document.getElementById('social-friends-panel');
+            if (!panel) return;
+
+            var pos = {
+                left: panel.style.left,
+                top: panel.style.top,
+                width: panel.style.width,
+                height: panel.style.height
+            };
+            try {
+                localStorage.setItem('socialPanelPosition', JSON.stringify(pos));
+            } catch (e) {}
+        },
+
+        /**
+         * Load friends panel position from localStorage
+         */
+        loadFriendsPanelPosition: function (panel) {
+            try {
+                var saved = localStorage.getItem('socialPanelPosition');
+                if (saved) {
+                    var pos = JSON.parse(saved);
+                    if (pos.left) {
+                        panel.style.left = pos.left;
+                        panel.style.right = 'auto';
+                    }
+                    if (pos.top) {
+                        panel.style.top = pos.top;
+                        panel.style.bottom = 'auto';
+                    }
+                    if (pos.width) panel.style.width = pos.width;
+                    if (pos.height) panel.style.height = pos.height;
+                }
+            } catch (e) {}
         },
 
         /**
@@ -9877,7 +10005,16 @@
                     flex-direction: column;
                     overflow: hidden;
                     border: 1px solid #333;
-                    resize: both;
+                }
+                .social-panel-resize {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 16px;
+                    height: 16px;
+                    cursor: sw-resize;
+                    background: linear-gradient(135deg, transparent 50%, #444 50%);
+                    border-radius: 0 0 0 12px;
                 }
                 .social-friends-panel.open {
                     display: flex;
