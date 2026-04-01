@@ -1064,6 +1064,12 @@
          * Initialize the ratings plugin
          */
         init: function () {
+            // Prevent multiple initializations
+            if (this._initialized) {
+                return;
+            }
+            this._initialized = true;
+
             var self = this;
 
             // Load saved language preference or fetch from server config
@@ -4621,6 +4627,7 @@
 
                 #latestMediaDropdown .latest-item-wrapper .latest-item {
                     flex: 1 !important;
+                    min-width: 0 !important;
                     border-bottom: none !important;
                 }
 
@@ -4748,10 +4755,12 @@
                     color: #e0e0e0 !important;
                     font-size: 12px !important;
                     font-weight: 500 !important;
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
                     line-height: 1.3 !important;
+                    display: -webkit-box !important;
+                    -webkit-line-clamp: 2 !important;
+                    -webkit-box-orient: vertical !important;
+                    overflow: hidden !important;
+                    word-break: break-word !important;
                 }
 
                 #latestMediaDropdown .latest-item-meta {
@@ -21577,25 +21586,71 @@
         }
     };
 
-    // Make plugin accessible globally for avatar caching
+    // Make plugin accessible globally (MUST be before init for onclick handlers)
     window.ratingsPlugin = RatingsPlugin;
+    window.RatingsPlugin = RatingsPlugin;
 
-    // Initialize when DOM is ready
+    // Check if user is authenticated
+    function isUserAuthenticated() {
+        try {
+            // Check if ApiClient exists and has a current user
+            if (typeof ApiClient !== 'undefined' && ApiClient.getCurrentUserId && ApiClient.getCurrentUserId()) {
+                return true;
+            }
+            // Also check window.ApiClient
+            if (window.ApiClient && window.ApiClient.getCurrentUserId && window.ApiClient.getCurrentUserId()) {
+                return true;
+            }
+        } catch (e) {
+            return false;
+        }
+        return false;
+    }
 
-    function initPlugin() {
+    // Check if on login page
+    function isLoginPage() {
+        var hash = window.location.hash || '';
+        return hash.includes('login') || hash.includes('Login') || hash === '' || hash === '#' || hash === '#!/login.html';
+    }
+
+    // Initialize only when authenticated
+    function initPluginWhenReady() {
+        // Skip if on login page
+        if (isLoginPage()) {
+            return;
+        }
+
+        // Skip if not authenticated
+        if (!isUserAuthenticated()) {
+            return;
+        }
+
+        // Already initialized check
+        if (RatingsPlugin._initialized) {
+            return;
+        }
+
         RatingsPlugin.init();
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPlugin);
-    } else {
-        // Try immediate init
-        initPlugin();
+    // Poll for authentication (checks every 500ms until authenticated)
+    function waitForAuth() {
+        if (isUserAuthenticated() && !isLoginPage()) {
+            initPluginWhenReady();
+        } else {
+            setTimeout(waitForAuth, 500);
+        }
     }
 
-    // Also try after a delay to ensure Jellyfin is fully loaded
-    setTimeout(initPlugin, 2000);
+    // Start waiting for authentication
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForAuth);
+    } else {
+        waitForAuth();
+    }
 
-    // Make it globally available
-    window.RatingsPlugin = RatingsPlugin;
+    // Also listen for hash changes (user might navigate from login to home)
+    window.addEventListener('hashchange', function() {
+        setTimeout(initPluginWhenReady, 300);
+    });
 })();
