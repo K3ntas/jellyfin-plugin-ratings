@@ -9864,7 +9864,11 @@
                     bottom: 80px;
                     right: 20px;
                     width: 320px;
-                    max-height: 450px;
+                    height: 450px;
+                    min-width: 280px;
+                    min-height: 300px;
+                    max-width: 500px;
+                    max-height: 80vh;
                     background: #1a1a1a;
                     border-radius: 12px;
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -9873,6 +9877,7 @@
                     flex-direction: column;
                     overflow: hidden;
                     border: 1px solid #333;
+                    resize: both;
                 }
                 .social-friends-panel.open {
                     display: flex;
@@ -9906,17 +9911,20 @@
                 .social-panel-tabs {
                     display: flex;
                     border-bottom: 1px solid #333;
+                    flex-shrink: 0;
+                    overflow-x: auto;
                 }
                 .social-panel-tab {
-                    flex: 1;
-                    padding: 10px;
+                    flex: 0 0 auto;
+                    padding: 8px 10px;
                     background: none;
                     border: none;
                     color: #888;
-                    font-size: 13px;
+                    font-size: 12px;
                     cursor: pointer;
                     position: relative;
                     transition: color 0.2s, background 0.2s;
+                    white-space: nowrap;
                 }
                 .social-panel-tab:hover {
                     background: #252525;
@@ -9927,17 +9935,23 @@
                     border-bottom: 2px solid #00a4dc;
                 }
                 .social-panel-tab .tab-badge {
+                    display: inline-block;
                     background: #e91e63;
                     color: white;
                     font-size: 10px;
-                    padding: 1px 5px;
-                    border-radius: 8px;
-                    margin-left: 4px;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    margin-left: 2px;
+                    vertical-align: middle;
+                    min-width: 16px;
+                    text-align: center;
                 }
                 .social-panel-content {
                     flex: 1;
                     overflow-y: auto;
+                    overflow-x: hidden;
                     padding: 8px;
+                    min-height: 200px;
                 }
                 .social-panel-search {
                     padding: 8px;
