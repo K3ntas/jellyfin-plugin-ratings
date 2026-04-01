@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.183.0",
+        "changelog": "Initialize plugin only after user login - no flash on login page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.183.0/jellyfin-plugin-ratings_2.0.183.0.zip",
+        "checksum": "c54ac1ba97b47179e3e4060b32138a7d",
+        "timestamp": "2026-04-01T01:00:00Z"
+      },
+      {
         "version": "2.0.182.0",
         "changelog": "Fix duplicate sort buttons on navigation",
         "targetAbi": "10.11.0.0",
