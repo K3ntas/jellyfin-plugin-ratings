@@ -19477,7 +19477,8 @@
                     if (containerInToolbar.isConnected && document.body.contains(containerInToolbar)) {
                         return; // Already exists and visible
                     }
-                    containerInToolbar.remove(); // Remove orphaned
+                    // Remove ALL orphaned sort buttons
+                    document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                 }
 
                 // Try to inject buttons
@@ -19517,8 +19518,8 @@
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 if (!containerInToolbar && toolbar.isConnected) {
-                    const orphaned = document.getElementById('librarySortContainer');
-                    if (orphaned) orphaned.remove();
+                    // Remove ALL existing sort buttons globally before injecting
+                    document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                     self.injectLibrarySortButtons();
                 }
             });
@@ -19538,7 +19539,7 @@
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Check if container exists IN THE CURRENT TOOLBAR
+            // Find the VISIBLE .btnSort
             const allBtnSort = document.querySelectorAll('.btnSort');
             let visibleBtnSort = null;
             for (const btn of allBtnSort) {
@@ -19549,13 +19550,13 @@
                 }
             }
             const toolbar = visibleBtnSort ? visibleBtnSort.parentElement : null;
+
+            // Check if our buttons already exist in the current visible toolbar
             const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+            if (containerInToolbar && containerInToolbar.isConnected) return true;
 
-            if (containerInToolbar) return true;
-
-            // Remove any orphaned container from old DOM
-            const orphaned = document.getElementById('librarySortContainer');
-            if (orphaned) orphaned.remove();
+            // Remove ALL existing sort buttons globally (prevents duplicates)
+            document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
 
             let targetContainer = null;
             let insertBefore = null;
