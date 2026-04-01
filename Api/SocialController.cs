@@ -1251,6 +1251,75 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets all online users (for testing/discovery).
+        /// </summary>
+        /// <returns>All users with online status.</returns>
+        [HttpGet("AllOnlineUsers")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetAllOnlineUsers()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get all users except current user
+            var allUsers = _userManager.Users.Where(u => u.Id != userId.Value).ToList();
+            var userIds = allUsers.Select(u => u.Id).ToList();
+
+            // Get their online statuses
+            var statuses = _socialRepository.GetOnlineStatuses(userIds);
+
+            // Build response
+            var users = new System.Collections.Generic.List<object>();
+
+            foreach (var user in allUsers)
+            {
+                var profile = _socialRepository.GetProfile(user.Id);
+                statuses.TryGetValue(user.Id, out var userStatus);
+                var isFriend = _socialRepository.AreFriends(userId.Value, user.Id);
+
+                // Check privacy - respect ShowOnlineStatus
+                var showStatus = profile == null ||
+                    profile.Privacy.ShowOnlineStatus == "Everyone" ||
+                    (profile.Privacy.ShowOnlineStatus == "Friends" && isFriend);
+
+                // Handle Invisible - appears as Offline
+                var effectiveStatus = userStatus?.Status ?? "Offline";
+                if (effectiveStatus == "Invisible")
+                {
+                    effectiveStatus = "Offline";
+                }
+
+                // Only show if online/away (not offline) or always show if friend
+                var displayStatus = showStatus ? effectiveStatus : "Offline";
+                if (displayStatus == "Offline" && !isFriend)
+                {
+                    continue; // Skip offline non-friends
+                }
+
+                users.Add(new
+                {
+                    userId = user.Id,
+                    username = user.Username,
+                    status = displayStatus,
+                    isFriend,
+                    lastSeen = showStatus ? userStatus?.LastSeen : null
+                });
+            }
+
+            // Sort: Online first, then Away, then by username
+            var sortedUsers = users
+                .OrderBy(u => ((dynamic)u).status == "Online" ? 0 : ((dynamic)u).status == "Away" ? 1 : 2)
+                .ThenBy(u => ((dynamic)u).username)
+                .ToList();
+
+            return Ok(new { users = sortedUsers });
+        }
+
+        /// <summary>
         /// Sets the user's manual status.
         /// </summary>
         /// <param name="request">Status request.</param>

@@ -1476,6 +1476,7 @@
                     <button class="social-panel-tab active" data-tab="friends">Friends</button>
                     <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
                     <button class="social-panel-tab" data-tab="blocked">Blocked</button>
+                    <button class="social-panel-tab" data-tab="online">Online</button>
                     <button class="social-panel-tab" data-tab="addFriend">
                         <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </button>
@@ -1604,6 +1605,16 @@
                     .catch(function () {
                         content.innerHTML = '<div class="social-empty-state">Failed to load blocked users</div>';
                     });
+            } else if (tab === 'online') {
+                // Fetch all online users
+                fetch(baseUrl + '/Social/AllOnlineUsers', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderOnlineUsersList(data.users || []);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load online users</div>';
+                    });
             } else if (tab === 'settings') {
                 // Fetch privacy settings
                 fetch(baseUrl + '/Social/Settings', { method: 'GET', credentials: 'include', headers: headers })
@@ -1642,6 +1653,46 @@
                     '</div></div>' +
                     '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + user.userId + '\')">Unblock</button>' +
                     '</div>';
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render the online users list
+         */
+        renderOnlineUsersList: function (users) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (users.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No online users</div></div>';
+                return;
+            }
+
+            var html = '<div class="social-friends-list">';
+            users.forEach(function (user) {
+                var statusColor = user.status === 'Online' ? '#4CAF50' :
+                                  user.status === 'Away' ? '#FFC107' : '#888';
+                var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:5px;">★ Friend</span>' : '';
+
+                html += '<div class="social-friend-item" data-userid="' + user.userId + '">' +
+                    '<div class="social-friend-row">' +
+                    '<div class="social-friend-avatar" style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:14px;">' +
+                    self.escapeHtml(user.username.charAt(0).toUpperCase()) + '</div>' +
+                    '<div class="social-status-dot" style="background:' + statusColor + ';width:10px;height:10px;border-radius:50%;position:absolute;bottom:0;right:0;border:2px solid #1a1a1a;"></div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + friendBadge + '</div>' +
+                    '<div class="social-friend-status" style="color:' + statusColor + ';">' + user.status + '</div>' +
+                    '</div></div>';
+
+                // Add action buttons for non-friends
+                if (!user.isFriend) {
+                    html += '<button class="social-btn-add-friend" onclick="RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:4px 8px;font-size:11px;">Add Friend</button>';
+                }
+
+                html += '</div>';
             });
             html += '</div>';
             content.innerHTML = html;
