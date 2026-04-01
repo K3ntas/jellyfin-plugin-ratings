@@ -9,14 +9,6 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "2.0.183.0",
-        "changelog": "Fix duplicate sort buttons - guard flag prevents concurrent injections",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.183.0/jellyfin-plugin-ratings_2.0.183.0.zip",
-        "checksum": "570dab0b21b5bf76d5a83a1c6d42dcb5",
-        "timestamp": "2026-04-01T00:30:00Z"
-      },
-      {
         "version": "2.0.182.0",
         "changelog": "Fix duplicate sort buttons on navigation",
         "targetAbi": "10.11.0.0",
