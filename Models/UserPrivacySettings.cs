@@ -15,22 +15,22 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets who can see online status. Values: Everyone, Friends, Nobody.
         /// </summary>
-        public string ShowOnlineStatus { get; set; } = "Friends";
+        public string ShowOnlineStatus { get; set; } = "Everyone";
 
         /// <summary>
         /// Gets or sets who can see watched history. Values: Everyone, Friends, Nobody.
         /// </summary>
-        public string ShowWatchedHistory { get; set; } = "Friends";
+        public string ShowWatchedHistory { get; set; } = "Everyone";
 
         /// <summary>
         /// Gets or sets who can see friends list. Values: Everyone, Friends, Nobody.
         /// </summary>
-        public string ShowFriendsList { get; set; } = "Friends";
+        public string ShowFriendsList { get; set; } = "Everyone";
 
         /// <summary>
         /// Gets or sets who can see currently watching. Values: Everyone, Friends, Nobody.
         /// </summary>
-        public string ShowCurrentlyWatching { get; set; } = "Friends";
+        public string ShowCurrentlyWatching { get; set; } = "Everyone";
 
         /// <summary>
         /// Gets or sets who can send friend requests. Values: Everyone, Nobody.
@@ -40,7 +40,7 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets who can send messages. Values: Everyone, Friends, Nobody.
         /// </summary>
-        public string AllowMessages { get; set; } = "Friends";
+        public string AllowMessages { get; set; } = "Everyone";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserPrivacySettings"/> class with secure defaults.

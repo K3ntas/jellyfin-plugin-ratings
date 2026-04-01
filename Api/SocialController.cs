@@ -1272,9 +1272,6 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get their online statuses
             var statuses = _socialRepository.GetOnlineStatuses(userIds);
 
-            _logger.LogInformation("[AllOnlineUsers] Total users: {Count}, Statuses found: {StatusCount}",
-                allUsers.Count, statuses.Count);
-
             // Build response
             var users = new System.Collections.Generic.List<object>();
 
@@ -1295,9 +1292,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     effectiveStatus = "Offline";
                 }
-
-                _logger.LogInformation("[AllOnlineUsers] User {Username}: hasStatus={HasStatus}, effectiveStatus={Status}, lastHeartbeat={LastHeartbeat}",
-                    user.Username, userStatus != null, effectiveStatus, userStatus?.LastHeartbeat);
 
                 // Only show users who are Online (skip Away and Offline)
                 var displayStatus = showStatus ? effectiveStatus : "Offline";
@@ -1549,6 +1543,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     UserId = userId.Value,
                     Username = user?.Username ?? "Unknown"
                 };
+            }
+
+            // Ensure Privacy is initialized
+            if (profile.Privacy == null)
+            {
+                profile.Privacy = new UserPrivacySettings();
             }
 
             switch (preset.ToLowerInvariant())
