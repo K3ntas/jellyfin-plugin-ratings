@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.184.0",
+        "changelog": "Fix long titles in Leaving Soon pushing button off screen",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.184.0/jellyfin-plugin-ratings_2.0.184.0.zip",
+        "checksum": "3453eaeadf79c6c058fccb0aa2d4a373",
+        "timestamp": "2026-04-01T02:00:00Z"
+      },
+      {
         "version": "2.0.183.0",
         "changelog": "Initialize plugin only after user login - no flash on login page",
         "targetAbi": "10.11.0.0",

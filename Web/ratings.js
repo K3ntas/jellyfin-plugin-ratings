@@ -6481,6 +6481,7 @@
 
                 #latestMediaDropdown .latest-item-wrapper .latest-item {
                     flex: 1 !important;
+                    min-width: 0 !important;
                     border-bottom: none !important;
                 }
 
@@ -6608,10 +6609,12 @@
                     color: #e0e0e0 !important;
                     font-size: 12px !important;
                     font-weight: 500 !important;
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
                     line-height: 1.3 !important;
+                    display: -webkit-box !important;
+                    -webkit-line-clamp: 2 !important;
+                    -webkit-box-orient: vertical !important;
+                    overflow: hidden !important;
+                    word-break: break-word !important;
                 }
 
                 #latestMediaDropdown .latest-item-meta {
