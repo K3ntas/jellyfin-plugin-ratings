@@ -12590,7 +12590,12 @@
                 const buttonGroup = document.createElement('div');
                 buttonGroup.id = 'ratingsButtonGroup';
 
-                // Do NOT move native Jellyfin buttons - only our custom buttons go in group
+                // Find and move the Media button (folder icon) into the group
+                const mediaBtn = headerRight.querySelector('button[title="Media"], .headerMediaButton, button[data-type="media"]');
+                if (mediaBtn) {
+                    mediaBtn.classList.add('ratingsGroupBtn');
+                    buttonGroup.appendChild(mediaBtn);
+                }
 
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
