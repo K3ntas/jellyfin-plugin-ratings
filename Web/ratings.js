@@ -1105,10 +1105,10 @@
             // Initialize unified button group container first
             this.initButtonGroup();
 
-            // Initialize buttons in order: bell, +, search (all go into button group)
+            // Initialize buttons in order: search first, then others
+            this.initSearchField();
             this.initNotificationToggle();
             this.initRequestButtonWithRetry();
-            this.initSearchField();
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
@@ -12589,6 +12589,20 @@
                 // Create the container
                 const buttonGroup = document.createElement('div');
                 buttonGroup.id = 'ratingsButtonGroup';
+
+                // Move existing native buttons into the group
+                const existingButtons = headerRight.querySelectorAll('.headerButton, .paper-icon-button-light');
+                existingButtons.forEach(btn => {
+                    // Skip certain system buttons we don't want to move
+                    if (btn.classList.contains('headerUserButton') ||
+                        btn.classList.contains('headerCastButton') ||
+                        btn.classList.contains('headerSearchButton') ||
+                        btn.classList.contains('headerAudioPlayerButton')) {
+                        return;
+                    }
+                    btn.classList.add('ratingsGroupBtn');
+                    buttonGroup.appendChild(btn);
+                });
 
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
