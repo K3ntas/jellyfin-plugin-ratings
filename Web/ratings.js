@@ -3586,7 +3586,8 @@
 
                     #latestMediaBtn,
                     #chatBtn,
-                    #requestMediaBtn {
+                    #requestMediaBtn,
+                    #notificationToggle {
                         padding: 6px !important;
                         height: 36px !important;
                         width: 36px !important;
@@ -3596,36 +3597,29 @@
 
                     #latestMediaBtn svg,
                     #chatBtn svg,
-                    #requestMediaBtn svg {
+                    #requestMediaBtn svg,
+                    #notificationToggleIcon svg {
                         width: 20px !important;
                         height: 20px !important;
                     }
-
-                    /* Notification toggle bell - move left and up on mobile */
-                    #notificationToggleIcon {
-                        margin-right: 8px !important;
-                        margin-top: -5px !important;
-                    }
                 }
 
-                /* Search Field in Header */
+                /* Search Field in Header - Part of headerRight */
                 #headerSearchField {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 480px !important;
-                    z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
-                    background: rgba(60, 60, 60, 0.9) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    border-radius: 25px !important;
-                    padding: 8px 16px !important;
-                    transition: all 0.3s ease !important;
+                    background: rgba(60, 60, 60, 0.7) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 20px !important;
+                    padding: 4px 12px !important;
+                    margin: 0 4px !important;
+                    transition: all 0.2s ease !important;
                 }
 
-                #headerSearchField:hover {
-                    background: rgba(70, 70, 70, 0.95) !important;
-                    border-color: rgba(255, 255, 255, 0.4) !important;
+                #headerSearchField:hover,
+                #headerSearchField:focus-within {
+                    background: rgba(70, 70, 70, 0.9) !important;
+                    border-color: rgba(255, 255, 255, 0.3) !important;
                 }
 
                 #headerSearchField.hidden {
@@ -3633,11 +3627,11 @@
                 }
 
                 #headerSearchIcon {
-                    font-size: 18px !important;
-                    margin-right: 8px !important;
+                    font-size: 14px !important;
+                    margin-right: 6px !important;
                     cursor: pointer !important;
-                    opacity: 0.8 !important;
-                    transition: opacity 0.3s ease !important;
+                    opacity: 0.7 !important;
+                    transition: opacity 0.2s ease !important;
                 }
 
                 #headerSearchIcon:hover {
@@ -3650,10 +3644,10 @@
                     border: none !important;
                     outline: none !important;
                     color: #fff !important;
-                    font-size: 14px !important;
+                    font-size: 13px !important;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                    width: 200px !important;
-                    padding: 4px 0 !important;
+                    width: 140px !important;
+                    padding: 2px 0 !important;
                     -webkit-appearance: none !important;
                     -moz-appearance: none !important;
                     appearance: none !important;
@@ -3679,22 +3673,26 @@
                     color: rgba(255, 255, 255, 0.5) !important;
                 }
 
-                /* Mobile Responsive for Search Field - Dynamic scaling handled by JavaScript */
-                @media screen and (max-width: 925px) {
+                /* Mobile Responsive for Search Field */
+                @media screen and (max-width: 768px) {
                     #headerSearchField {
-                        left: 6px !important;
-                        right: auto !important;
-                        padding: 8px 16px !important;
+                        padding: 4px 8px !important;
                     }
 
                     #headerSearchInput {
-                        width: 100px !important;
-                        font-size: 14px !important;
+                        width: 80px !important;
+                        font-size: 12px !important;
                     }
 
                     #headerSearchIcon {
-                        font-size: 18px !important;
-                        margin-right: 8px !important;
+                        font-size: 12px !important;
+                        margin-right: 4px !important;
+                    }
+                }
+
+                @media screen and (max-width: 500px) {
+                    #headerSearchField {
+                        display: none !important;
                     }
                 }
 
@@ -3813,27 +3811,22 @@
                     }
                 }
 
-                /* Notification Toggle Styles - Positioned LEFT of search field */
-                /* Search field: right:480px, ~258px wide = ends at ~738px from right */
-                /* Toggle must be at right:750px+ to be LEFT of search */
+                /* Notification Toggle - Header Button Style */
                 #notificationToggle {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 755px !important;
-                    z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
-                    padding: 4px !important;
                     cursor: pointer !important;
-                    overflow: visible !important;
-                    transition: opacity 0.2s ease !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
                 }
 
                 #notificationToggle:hover {
-                    opacity: 0.7 !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 #notificationToggle.hidden {
@@ -3841,9 +3834,15 @@
                 }
 
                 #notificationToggleIcon {
-                    font-size: 25px !important;
-                    opacity: 0.8 !important;
-                    position: relative !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+
+                #notificationToggleIcon svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
                 }
 
                 /* Red cross lines when notifications disabled */
@@ -3853,12 +3852,11 @@
                     position: absolute !important;
                     top: 50% !important;
                     left: 50% !important;
-                    width: 3px !important;
-                    height: 34px !important;
+                    width: 2px !important;
+                    height: 24px !important;
                     background: #ff1744 !important;
                     border-radius: 2px !important;
                     pointer-events: none !important;
-                    box-shadow: 0 0 4px rgba(255, 23, 68, 0.6) !important;
                 }
 
                 #notificationToggle.disabled::before {
@@ -3892,42 +3890,20 @@
                     visibility: visible !important;
                 }
 
-                /* Mobile Responsive for Notification Toggle - LEFT of Request button */
-                @media screen and (max-width: 925px) {
+                /* Mobile Responsive for Notification Toggle */
+                @media screen and (max-width: 768px) {
                     #notificationToggle {
-                        position: absolute !important;
-                        top: 60px !important;
-                        left: auto !important;
-                        right: 150px !important;
-                    }
-                }
-
-                @media screen and (max-width: 590px) {
-                    #notificationToggle {
-                        position: absolute !important;
-                        top: 62px !important;
-                        right: 130px !important;
+                        padding: 6px !important;
                     }
 
-                    #notificationToggleIcon {
-                        font-size: 16px !important;
+                    #notificationToggleIcon svg {
+                        width: 20px !important;
+                        height: 20px !important;
                     }
 
                     #notificationToggle.disabled::before,
                     #notificationToggle.disabled::after {
-                        height: 20px !important;
-                    }
-                }
-
-                @media screen and (max-width: 470px) {
-                    #notificationToggle {
-                        position: absolute !important;
-                        top: 16px !important;
-                        right: 180px !important;
-                    }
-
-                    #notificationToggleIcon {
-                        font-size: 16px !important;
+                        height: 18px !important;
                     }
                 }
 
@@ -12285,11 +12261,17 @@
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
 
-                        // Append to header container so it scrolls with header
-                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                        if (headerContainer) {
-                            headerContainer.style.position = 'relative';
-                            headerContainer.appendChild(searchContainer);
+                        // Append to headerRight - after notification toggle if exists
+                        const headerRight = document.querySelector('.headerRight');
+                        if (headerRight) {
+                            const notificationToggle = document.getElementById('notificationToggle');
+                            if (notificationToggle && notificationToggle.nextSibling) {
+                                headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
+                            } else if (notificationToggle) {
+                                headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
+                            } else {
+                                headerRight.insertBefore(searchContainer, headerRight.firstChild);
+                            }
                         } else {
                             document.body.appendChild(searchContainer);
                         }
@@ -12519,14 +12501,27 @@
                             return;
                         }
 
-                        // Create toggle container
-                        const toggleContainer = document.createElement('div');
-                        toggleContainer.id = 'notificationToggle';
+                        const headerRight = document.querySelector('.headerRight');
+                        if (!headerRight) {
+                            // Retry later
+                            setTimeout(() => createNotificationToggle(config), 1000);
+                            return;
+                        }
 
-                        // Create bell icon (always shows bell)
+                        // Create toggle container as header button
+                        const toggleContainer = document.createElement('button');
+                        toggleContainer.id = 'notificationToggle';
+                        toggleContainer.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        toggleContainer.setAttribute('type', 'button');
+                        toggleContainer.setAttribute('title', 'Enable/disable new media notifications');
+                        toggleContainer.style.position = 'relative';
+
+                        // Create bell icon SVG
                         const bellIcon = document.createElement('span');
                         bellIcon.id = 'notificationToggleIcon';
-                        bellIcon.innerHTML = '🔔';
+                        bellIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                        </svg>`;
 
                         // Create tooltip
                         const tooltip = document.createElement('div');
@@ -12594,14 +12589,8 @@
                             tooltipTimer = null;
                         });
 
-                        // Append to header container
-                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                        if (headerContainer) {
-                            headerContainer.style.position = 'relative';
-                            headerContainer.appendChild(toggleContainer);
-                        } else {
-                            document.body.appendChild(toggleContainer);
-                        }
+                        // Insert into headerRight - at the beginning (leftmost)
+                        headerRight.insertBefore(toggleContainer, headerRight.firstChild);
 
                         // Hide during video playback and on login page
                         setInterval(() => {
