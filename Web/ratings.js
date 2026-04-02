@@ -1493,7 +1493,7 @@
                         <div>No friends yet</div>
                     </div>
                 </div>
-                <div class="social-panel-resize"><div class="social-panel-resize-lines"><span></span><span></span><span></span></div></div>
+                <div class="social-panel-resize">⋰</div>
             `;
 
             // Close button
@@ -10008,46 +10008,21 @@
                 }
                 .social-panel-resize {
                     position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 16px;
-                    height: 16px;
+                    bottom: 2px;
+                    left: 2px;
+                    width: 14px;
+                    height: 14px;
                     cursor: sw-resize;
-                    opacity: 0.4;
-                    transition: opacity 0.2s;
-                    overflow: hidden;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: flex-start;
+                    font-size: 10px;
+                    color: #666;
+                    line-height: 1;
+                    transform: scaleX(-1);
                 }
                 .social-panel-resize:hover {
-                    opacity: 0.8;
-                }
-                .social-panel-resize-lines {
-                    position: absolute;
-                    bottom: 3px;
-                    left: 3px;
-                    width: 12px;
-                    height: 12px;
-                }
-                .social-panel-resize-lines span {
-                    position: absolute;
-                    background: #888;
-                    height: 1px;
-                    transform: rotate(-45deg);
-                    transform-origin: left center;
-                }
-                .social-panel-resize-lines span:nth-child(1) {
-                    width: 4px;
-                    bottom: 1px;
-                    left: 1px;
-                }
-                .social-panel-resize-lines span:nth-child(2) {
-                    width: 7px;
-                    bottom: 4px;
-                    left: 1px;
-                }
-                .social-panel-resize-lines span:nth-child(3) {
-                    width: 10px;
-                    bottom: 7px;
-                    left: 1px;
+                    color: #999;
                 }
                 .social-friends-panel.open {
                     display: flex;
