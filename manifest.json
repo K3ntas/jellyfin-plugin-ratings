@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.201.0",
+        "changelog": "Move + button to left of search field",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.201.0/Jellyfin.Plugin.Ratings_2.0.201.0.zip",
+        "checksum": "21f37193a0db4e07c081fe7e35ec08ed",
+        "timestamp": "2026-04-02T12:00:00Z"
+      },
+      {
         "version": "2.0.200.0",
         "changelog": "Fix mobile responsive for header icons",
         "targetAbi": "10.11.0.0",

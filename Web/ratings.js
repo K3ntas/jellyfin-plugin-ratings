@@ -12024,15 +12024,13 @@
                     </div>
                 `;
 
-                // Insert into headerRight - after chatBtn if exists, else after latestMediaBtn
-                const chatBtn = document.getElementById('chatBtn');
-                const latestMediaBtn = document.getElementById('latestMediaBtn');
-                if (chatBtn && chatBtn.nextSibling) {
-                    headerRight.insertBefore(btn, chatBtn.nextSibling);
-                } else if (chatBtn) {
-                    headerRight.appendChild(btn);
-                } else if (latestMediaBtn && latestMediaBtn.nextSibling) {
-                    headerRight.insertBefore(btn, latestMediaBtn.nextSibling);
+                // Insert into headerRight - after notificationToggle (before search field)
+                const notificationToggle = document.getElementById('notificationToggle');
+                const searchField = document.getElementById('headerSearchField');
+                if (notificationToggle && notificationToggle.nextSibling) {
+                    headerRight.insertBefore(btn, notificationToggle.nextSibling);
+                } else if (searchField) {
+                    headerRight.insertBefore(btn, searchField);
                 } else {
                     headerRight.insertBefore(btn, headerRight.firstChild);
                 }
