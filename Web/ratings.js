@@ -12590,13 +12590,6 @@
                 const buttonGroup = document.createElement('div');
                 buttonGroup.id = 'ratingsButtonGroup';
 
-                // Find and move the Media button (folder icon) into the group
-                const mediaBtn = headerRight.querySelector('button[title="Media"], .headerMediaButton, button[data-type="media"]');
-                if (mediaBtn) {
-                    mediaBtn.classList.add('ratingsGroupBtn');
-                    buttonGroup.appendChild(mediaBtn);
-                }
-
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
             };
@@ -13610,7 +13603,7 @@
                         // Create the media management button
                         const btn = document.createElement('button');
                         btn.id = 'mediaManagementBtn';
-                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
                         btn.setAttribute('title', self.t('mediaManagement'));
                         // Folder icon for media management
@@ -13625,16 +13618,15 @@
                             self.openMediaManagementModal();
                         });
 
-                        // Insert button in header - try to find headerRight or similar container
-                        const headerRight = document.querySelector('.headerRight');
-                        if (headerRight) {
-                            // Insert at the beginning of headerRight
-                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        // Insert button into button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: find skinHeader and append
-                            const skinHeader = document.querySelector('.skinHeader');
-                            if (skinHeader) {
-                                skinHeader.appendChild(btn);
+                            // Fallback: insert into headerRight
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(btn, headerRight.firstChild);
                             } else {
                                 document.body.appendChild(btn);
                             }
