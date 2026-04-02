@@ -12803,12 +12803,6 @@
                             return;
                         }
 
-                        // Find and hide the Sync Play button
-                        const syncPlayBtn = document.querySelector('.headerSyncButton');
-                        if (syncPlayBtn) {
-                            syncPlayBtn.style.display = 'none';
-                        }
-
                         // Create the latest media button
                         const btn = document.createElement('button');
                         btn.id = 'latestMediaBtn';
@@ -12891,15 +12885,6 @@
                                 self.triggerResponsiveUpdate();
                             }
                         }, 100);
-
-                        // Observe for Sync Play button appearing later (SPA navigation)
-                        const observer = new MutationObserver(() => {
-                            const syncBtn = document.querySelector('.headerSyncButton');
-                            if (syncBtn && syncBtn.style.display !== 'none') {
-                                syncBtn.style.display = 'none';
-                            }
-                        });
-                        observer.observe(document.body, { childList: true, subtree: true });
 
                         // Hide during video playback and on login page
                         setInterval(() => {
