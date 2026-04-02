@@ -10017,27 +10017,27 @@
                 .social-panel-resize::after {
                     content: '';
                     position: absolute;
-                    bottom: 0;
+                    bottom: 10px;
                     left: 0;
                     width: 3px;
                     height: 3px;
                     border-radius: 50%;
                     background: #666;
                     box-shadow:
-                        5px 0 0 #666,
-                        10px 0 0 #666,
-                        5px -5px 0 #666,
-                        10px -5px 0 #666,
-                        10px -10px 0 #666;
+                        0 5px 0 #666,
+                        5px 5px 0 #666,
+                        0 10px 0 #666,
+                        5px 10px 0 #666,
+                        10px 10px 0 #666;
                 }
                 .social-panel-resize:hover::after {
                     background: #999;
                     box-shadow:
-                        5px 0 0 #999,
-                        10px 0 0 #999,
-                        5px -5px 0 #999,
-                        10px -5px 0 #999,
-                        10px -10px 0 #999;
+                        0 5px 0 #999,
+                        5px 5px 0 #999,
+                        0 10px 0 #999,
+                        5px 10px 0 #999,
+                        10px 10px 0 #999;
                 }
                 .social-friends-panel.open {
                     display: flex;

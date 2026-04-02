@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.197.0",
+        "changelog": "Fix resize grip direction for bottom-left",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.197.0/Jellyfin.Plugin.Ratings_2.0.197.0.zip",
+        "checksum": "1edd43483bf4d31dd3cee1738f9f00ce",
+        "timestamp": "2026-04-02T10:20:00Z"
+      },
+      {
         "version": "2.0.196.0",
         "changelog": "Proper 6-dot triangular resize grip",
         "targetAbi": "10.11.0.0",
