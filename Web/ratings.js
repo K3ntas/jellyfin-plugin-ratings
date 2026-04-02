@@ -12024,14 +12024,17 @@
                     </div>
                 `;
 
-                // Insert into headerRight - after notificationToggle (before search field)
+                // Insert into headerRight - after notification toggle (before search field)
                 const notificationToggle = document.getElementById('notificationToggle');
-                const searchField = document.getElementById('headerSearchField');
-                if (notificationToggle && notificationToggle.nextSibling) {
-                    headerRight.insertBefore(btn, notificationToggle.nextSibling);
-                } else if (searchField) {
-                    headerRight.insertBefore(btn, searchField);
+                if (notificationToggle) {
+                    // Insert right after notification toggle
+                    if (notificationToggle.nextSibling) {
+                        headerRight.insertBefore(btn, notificationToggle.nextSibling);
+                    } else {
+                        headerRight.appendChild(btn);
+                    }
                 } else {
+                    // No notification toggle, insert at beginning
                     headerRight.insertBefore(btn, headerRight.firstChild);
                 }
                 document.body.appendChild(modal);
@@ -12340,14 +12343,27 @@
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
 
-                        // Append to headerRight - after notification toggle if exists
+                        // Append to headerRight - after request button if exists, else after notification toggle
                         const headerRight = document.querySelector('.headerRight');
                         if (headerRight) {
+                            const requestBtn = document.getElementById('requestMediaBtn');
                             const notificationToggle = document.getElementById('notificationToggle');
-                            if (notificationToggle && notificationToggle.nextSibling) {
-                                headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
+                            if (requestBtn && requestBtn.nextSibling) {
+                                headerRight.insertBefore(searchContainer, requestBtn.nextSibling);
+                            } else if (requestBtn) {
+                                // Insert after requestBtn
+                                if (requestBtn.nextSibling) {
+                                    headerRight.insertBefore(searchContainer, requestBtn.nextSibling);
+                                } else {
+                                    headerRight.appendChild(searchContainer);
+                                }
                             } else if (notificationToggle) {
-                                headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
+                                // Insert after notification toggle
+                                if (notificationToggle.nextSibling) {
+                                    headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
+                                } else {
+                                    headerRight.appendChild(searchContainer);
+                                }
                             } else {
                                 headerRight.insertBefore(searchContainer, headerRight.firstChild);
                             }

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.202.0",
+        "changelog": "Fix button order: bell > + > search",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.202.0/Jellyfin.Plugin.Ratings_2.0.202.0.zip",
+        "checksum": "9455eda82a59597ed97e1342378731f7",
+        "timestamp": "2026-04-02T12:15:00Z"
+      },
+      {
         "version": "2.0.201.0",
         "changelog": "Move + button to left of search field",
         "targetAbi": "10.11.0.0",
