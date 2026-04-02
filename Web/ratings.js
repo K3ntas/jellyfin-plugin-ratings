@@ -12590,19 +12590,7 @@
                 const buttonGroup = document.createElement('div');
                 buttonGroup.id = 'ratingsButtonGroup';
 
-                // Move existing native buttons into the group
-                const existingButtons = headerRight.querySelectorAll('.headerButton, .paper-icon-button-light');
-                existingButtons.forEach(btn => {
-                    // Skip certain system buttons we don't want to move
-                    if (btn.classList.contains('headerUserButton') ||
-                        btn.classList.contains('headerCastButton') ||
-                        btn.classList.contains('headerSearchButton') ||
-                        btn.classList.contains('headerAudioPlayerButton')) {
-                        return;
-                    }
-                    btn.classList.add('ratingsGroupBtn');
-                    buttonGroup.appendChild(btn);
-                });
+                // Do NOT move native Jellyfin buttons - only our custom buttons go in group
 
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
