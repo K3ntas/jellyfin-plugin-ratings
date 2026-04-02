@@ -3633,28 +3633,31 @@
                     }
                 }
 
-                /* Mobile - Second header row */
+                /* Mobile - Second header row - Full width bar */
                 @media screen and (max-width: 600px) {
                     #ratingsButtonGroup {
                         position: fixed !important;
                         top: 56px !important;
-                        left: 50% !important;
-                        right: auto !important;
-                        transform: translateX(-50%) !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        transform: none !important;
                         margin: 0 !important;
-                        border-radius: 25px !important;
+                        border-radius: 0 !important;
                         justify-content: center !important;
-                        background: rgba(40, 40, 40, 0.95) !important;
-                        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                        padding: 4px 10px !important;
-                        gap: 4px !important;
+                        background: rgba(30, 30, 30, 0.98) !important;
+                        border: none !important;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        padding: 8px 12px !important;
+                        gap: 8px !important;
                         z-index: 999 !important;
-                        width: auto !important;
-                        max-width: calc(100% - 20px) !important;
+                        width: 100% !important;
+                        max-width: none !important;
+                        box-sizing: border-box !important;
                     }
 
                     #ratingsButtonGroup > button,
                     #ratingsButtonGroup > .ratingsGroupBtn,
+                    #ratingsButtonGroup > div,
                     #ratingsButtonGroup #notificationToggle,
                     #ratingsButtonGroup #requestMediaBtn,
                     #ratingsButtonGroup #latestMediaBtn,
@@ -3670,30 +3673,47 @@
                     }
 
                     #ratingsButtonGroup svg {
-                        width: 20px !important;
-                        height: 20px !important;
+                        width: 22px !important;
+                        height: 22px !important;
                     }
 
                     #headerSearchField {
-                        flex: 0 0 auto !important;
-                        max-width: 120px !important;
+                        flex: 1 1 auto !important;
+                        max-width: 150px !important;
+                        background: rgba(255, 255, 255, 0.1) !important;
+                        border-radius: 15px !important;
                     }
 
                     #headerSearchInput {
-                        width: 80px !important;
+                        width: 100% !important;
                     }
 
-                    /* Add padding to main content to account for second header */
-                    .mainAnimatedPages, .view {
-                        padding-top: 50px !important;
+                    /* Push ALL content down to account for second header bar */
+                    .skinBody {
+                        padding-top: 48px !important;
+                    }
+
+                    .mainAnimatedPages {
+                        margin-top: 48px !important;
+                    }
+
+                    .view, .page {
+                        padding-top: 48px !important;
+                    }
+
+                    /* Also push library tabs down */
+                    .libraryPage .pageTabContent,
+                    .libraryPage .sectionTabs,
+                    .homePage .sectionTabs {
+                        margin-top: 48px !important;
                     }
                 }
 
                 /* Very small mobile */
                 @media screen and (max-width: 450px) {
                     #ratingsButtonGroup {
-                        padding: 3px 8px !important;
-                        gap: 2px !important;
+                        padding: 6px 8px !important;
+                        gap: 4px !important;
                     }
 
                     #ratingsButtonGroup > button,
@@ -3702,17 +3722,16 @@
                     }
 
                     #ratingsButtonGroup svg {
-                        width: 18px !important;
-                        height: 18px !important;
+                        width: 20px !important;
+                        height: 20px !important;
                     }
 
                     #headerSearchField {
-                        max-width: 90px !important;
-                        background: transparent !important;
+                        max-width: 100px !important;
                     }
 
                     #headerSearchInput {
-                        width: 60px !important;
+                        width: 70px !important;
                     }
                 }
 
@@ -3731,15 +3750,6 @@
                 #headerSearchField:hover,
                 #headerSearchField:focus-within {
                     background: rgba(255, 255, 255, 0.2) !important;
-                }
-
-                /* Mobile: Make search field blend into group */
-                @media screen and (max-width: 600px) {
-                    #headerSearchField {
-                        background: rgba(255, 255, 255, 0.1) !important;
-                        border-radius: 12px !important;
-                        padding: 3px 8px !important;
-                    }
                 }
 
                 #headerSearchField.hidden {
