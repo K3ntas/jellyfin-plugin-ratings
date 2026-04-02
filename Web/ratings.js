@@ -1493,7 +1493,7 @@
                         <div>No friends yet</div>
                     </div>
                 </div>
-                <div class="social-panel-resize">⋰</div>
+                <div class="social-panel-resize"></div>
             `;
 
             // Close button
@@ -10008,21 +10008,36 @@
                 }
                 .social-panel-resize {
                     position: absolute;
-                    bottom: 2px;
-                    left: 2px;
-                    width: 14px;
-                    height: 14px;
+                    bottom: 4px;
+                    left: 4px;
+                    width: 12px;
+                    height: 12px;
                     cursor: sw-resize;
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: flex-start;
-                    font-size: 10px;
-                    color: #666;
-                    line-height: 1;
-                    transform: scaleX(-1);
                 }
-                .social-panel-resize:hover {
-                    color: #999;
+                .social-panel-resize::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 3px;
+                    height: 3px;
+                    border-radius: 50%;
+                    background: #666;
+                    box-shadow:
+                        5px 0 0 #666,
+                        10px 0 0 #666,
+                        5px -5px 0 #666,
+                        10px -5px 0 #666,
+                        10px -10px 0 #666;
+                }
+                .social-panel-resize:hover::after {
+                    background: #999;
+                    box-shadow:
+                        5px 0 0 #999,
+                        10px 0 0 #999,
+                        5px -5px 0 #999,
+                        10px -5px 0 #999,
+                        10px -10px 0 #999;
                 }
                 .social-friends-panel.open {
                     display: flex;
