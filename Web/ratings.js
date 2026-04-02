@@ -3523,23 +3523,41 @@
                 #ratingsButtonGroup {
                     display: flex !important;
                     align-items: center !important;
-                    background: rgba(40, 40, 40, 0.9) !important;
+                    background: rgba(40, 40, 40, 0.95) !important;
                     border-radius: 25px !important;
-                    padding: 4px 8px !important;
-                    gap: 2px !important;
-                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    padding: 4px 10px !important;
+                    gap: 4px !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
                     margin-right: 8px !important;
                 }
 
-                #ratingsButtonGroup > button,
-                #ratingsButtonGroup > #headerSearchField {
+                /* Button style inside group */
+                .ratingsGroupBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    position: relative !important;
                 }
 
-                #ratingsButtonGroup > button:hover {
+                .ratingsGroupBtn:hover {
                     background: rgba(255, 255, 255, 0.15) !important;
-                    border-radius: 50% !important;
+                }
+
+                .ratingsGroupBtn svg {
+                    width: 22px !important;
+                    height: 22px !important;
+                    fill: currentColor !important;
+                }
+
+                .ratingsGroupBtn.hidden {
+                    display: none !important;
                 }
 
                 /* Request Media Button - Header Button Style */
@@ -12794,7 +12812,7 @@
                         // Create the latest media button
                         const btn = document.createElement('button');
                         btn.id = 'latestMediaBtn';
-                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
                         btn.setAttribute('title', self.t('latestMedia'));
                         btn.style.position = 'relative';
@@ -12855,18 +12873,15 @@
                             }
                         });
 
-                        // Insert button in header - try to find headerRight or similar container
-                        const headerRight = document.querySelector('.headerRight');
-                        if (headerRight) {
-                            // Insert at the beginning of headerRight
-                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        // Insert button into button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: find skinHeader and append
-                            const skinHeader = document.querySelector('.skinHeader');
-                            if (skinHeader) {
-                                skinHeader.appendChild(btn);
-                            } else {
-                                document.body.appendChild(btn);
+                            // Fallback: insert into headerRight
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(btn, headerRight.firstChild);
                             }
                         }
 
@@ -20299,11 +20314,12 @@
                 attempts++;
                 const headerRight = document.querySelector('.headerRight');
 
-                if (headerRight && !document.getElementById('chatBtn')) {
+                const buttonGroup = document.getElementById('ratingsButtonGroup');
+                if (buttonGroup && !document.getElementById('chatBtn')) {
                     // Create chat button - same structure as Latest Media button
                     const chatBtn = document.createElement('button');
                     chatBtn.id = 'chatBtn';
-                    chatBtn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                    chatBtn.className = 'ratingsGroupBtn';
                     chatBtn.setAttribute('type', 'button');
                     chatBtn.setAttribute('title', self.t('liveChat'));
                     chatBtn.style.position = 'relative';
@@ -20315,16 +20331,8 @@
                         self.toggleChat();
                     };
 
-                    // Insert after latestMediaBtn if it exists, otherwise at beginning
-                    const latestMediaBtn = document.getElementById('latestMediaBtn');
-                    if (latestMediaBtn && latestMediaBtn.nextSibling) {
-                        headerRight.insertBefore(chatBtn, latestMediaBtn.nextSibling);
-                    } else if (latestMediaBtn) {
-                        headerRight.appendChild(chatBtn);
-                    } else {
-                        // Insert at beginning if no latestMediaBtn
-                        headerRight.insertBefore(chatBtn, headerRight.firstChild);
-                    }
+                    // Insert into button group
+                    buttonGroup.appendChild(chatBtn);
 
                     return;
                 }
