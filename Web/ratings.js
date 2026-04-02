@@ -3520,106 +3520,55 @@
                     font-weight: 600;
                 }
 
-                /* Request Media Button - Aligned with Header */
+                /* Request Media Button - Header Button Style */
                 #requestMediaBtn {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 260px !important;
-                    background: rgba(60, 60, 60, 0.9) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    padding: 12px 48px !important;
-                    border-radius: 25px !important;
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
                     cursor: pointer !important;
-                    z-index: 999999 !important;
-                    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease !important;
-                    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                    -webkit-animation: pulseButton 2s ease-in-out infinite !important;
-                    -moz-animation: pulseButton 2s ease-in-out infinite !important;
-                    -o-animation: pulseButton 2s ease-in-out infinite !important;
-                    animation: pulseButton 2s ease-in-out infinite !important;
-                }
-
-                #requestMediaBtn .btn-text {
-                    background: linear-gradient(to right, #9f9f9f 0%, #fff 10%, #868686 20%) !important;
-                    background-size: 200% auto !important;
-                    -webkit-background-clip: text !important;
-                    -webkit-text-fill-color: transparent !important;
-                    background-clip: text !important;
-                    -webkit-text-size-adjust: none !important;
-                    display: inline-block !important;
-                    -webkit-animation: shine 3s linear infinite !important;
-                    -moz-animation: shine 3s linear infinite !important;
-                    -o-animation: shine 3s linear infinite !important;
-                    animation: shine 3s linear infinite !important;
-                }
-
-                @keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @-webkit-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @-moz-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @-o-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @keyframes pulseButton {
-                    0%, 100% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(102, 126, 234, 0.7);
-                    }
-                    50% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(102, 126, 234, 0);
-                    }
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    font-size: 24px !important;
                 }
 
                 #requestMediaBtn:hover {
-                    background: rgba(70, 70, 70, 0.95) !important;
-                    border-color: rgba(255, 255, 255, 0.3) !important;
-                    transform: scale(1.05) !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 #requestMediaBtn.hidden {
                     display: none !important;
+                }
+
+                #requestMediaBtn svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
+                }
+
+                /* Request Media Badge */
+                .request-media-badge {
+                    position: absolute !important;
+                    top: 2px !important;
+                    right: 2px !important;
+                    background: #e91e63 !important;
+                    color: #fff !important;
+                    font-size: 9px !important;
+                    font-weight: 700 !important;
+                    min-width: 16px !important;
+                    height: 16px !important;
+                    border-radius: 8px !important;
+                    display: none !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 0 4px !important;
+                }
+
+                .request-media-badge.visible {
+                    display: flex !important;
                 }
 
                 /* Mobile Responsive - Dynamic scaling handled by JavaScript */
@@ -3635,27 +3584,9 @@
                         margin: 0 !important;
                     }
 
-                    #requestMediaBtn {
-                        padding: 8px 16px !important;
-                        font-size: 16px !important;
-                        border-radius: 55px !important;
-                        right: 6px !important;
-                    }
-
-                    #requestMediaBtn .btn-text {
-                        font-size: 16px !important;
-                    }
-
-                    .request-badge {
-                        width: 16px !important;
-                        height: 16px !important;
-                        font-size: 9px !important;
-                        top: -5px !important;
-                        right: -5px !important;
-                    }
-
                     #latestMediaBtn,
-                    #chatBtn {
+                    #chatBtn,
+                    #requestMediaBtn {
                         padding: 6px !important;
                         height: 36px !important;
                         width: 36px !important;
@@ -3664,7 +3595,8 @@
                     }
 
                     #latestMediaBtn svg,
-                    #chatBtn svg {
+                    #chatBtn svg,
+                    #requestMediaBtn svg {
                         width: 20px !important;
                         height: 20px !important;
                     }
@@ -3674,57 +3606,6 @@
                         margin-right: 8px !important;
                         margin-top: -5px !important;
                     }
-                }
-
-                /* Notification Badge */
-                .request-badge {
-                    position: absolute !important;
-                    top: -8px !important;
-                    right: -8px !important;
-                    background: #ff4444 !important;
-                    color: white !important;
-                    border-radius: 50% !important;
-                    width: 22px !important;
-                    height: 22px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    font-size: 11px !important;
-                    font-weight: 700 !important;
-                    border: 2px solid #1e1e1e !important;
-                    animation: badgePulse 1.5s ease-in-out infinite !important;
-                }
-
-                @keyframes badgePulse {
-                    0%, 100% {
-                        transform: scale(1);
-                    }
-                    50% {
-                        transform: scale(1.1);
-                    }
-                }
-
-                /* Button Tooltip */
-                #requestMediaBtn::after {
-                    content: attr(data-tooltip) !important;
-                    position: absolute !important;
-                    bottom: -45px !important;
-                    left: 50% !important;
-                    transform: translateX(-50%) !important;
-                    background: rgba(0, 0, 0, 0.95) !important;
-                    color: #fff !important;
-                    padding: 8px 12px !important;
-                    border-radius: 6px !important;
-                    font-size: 12px !important;
-                    white-space: nowrap !important;
-                    opacity: 0 !important;
-                    pointer-events: none !important;
-                    transition: opacity 0.3s ease !important;
-                    z-index: 10000000 !important;
-                }
-
-                #requestMediaBtn:hover::after {
-                    opacity: 1 !important;
                 }
 
                 /* Search Field in Header */
@@ -12050,13 +11931,24 @@
                     return;
                 }
 
-                // Create button with position relative for badge
+                const headerRight = document.querySelector('.headerRight');
+                if (!headerRight) {
+                    // Retry later if headerRight not found
+                    setTimeout(() => self.initRequestButton(), 1000);
+                    return;
+                }
+
+                // Create button matching header button style (like latestMediaBtn, chatBtn)
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
-                btn.style.position = 'relative';
-                btn.innerHTML = '<span class="btn-text">' + self.t('requestMedia') + '</span>';
+                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
                 btn.setAttribute('type', 'button');
-                btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
+                btn.setAttribute('title', self.t('requestMedia'));
+                btn.style.position = 'relative';
+                // Plus/request icon - movie reel with plus
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg><span id="requestMediaBadge" class="request-media-badge"></span>`;
 
                 // Update badge periodically
                 self.updateRequestBadge(btn);
@@ -12075,14 +11967,17 @@
                     </div>
                 `;
 
-                // Add to DOM - append to header container so they scroll with header
-                const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                if (headerContainer) {
-                    // Make header container position relative so absolute positioning works
-                    headerContainer.style.position = 'relative';
-                    headerContainer.appendChild(btn);
+                // Insert into headerRight - after chatBtn if exists, else after latestMediaBtn
+                const chatBtn = document.getElementById('chatBtn');
+                const latestMediaBtn = document.getElementById('latestMediaBtn');
+                if (chatBtn && chatBtn.nextSibling) {
+                    headerRight.insertBefore(btn, chatBtn.nextSibling);
+                } else if (chatBtn) {
+                    headerRight.appendChild(btn);
+                } else if (latestMediaBtn && latestMediaBtn.nextSibling) {
+                    headerRight.insertBefore(btn, latestMediaBtn.nextSibling);
                 } else {
-                    document.body.appendChild(btn);
+                    headerRight.insertBefore(btn, headerRight.firstChild);
                 }
                 document.body.appendChild(modal);
 
@@ -18239,18 +18134,16 @@
                             count = doneRequests.filter(r => !viewedRequests.includes(r.Id)).length;
                         }
 
-                        // Remove existing badge
-                        const existingBadge = btn.querySelector('.request-badge');
-                        if (existingBadge) {
-                            existingBadge.remove();
-                        }
-
-                        // Add badge if count > 0
-                        if (count > 0) {
-                            const badge = document.createElement('span');
-                            badge.className = 'request-badge';
-                            badge.textContent = count;
-                            btn.appendChild(badge);
+                        // Update badge
+                        const badge = document.getElementById('requestMediaBadge');
+                        if (badge) {
+                            if (count > 0) {
+                                badge.textContent = count;
+                                badge.classList.add('visible');
+                            } else {
+                                badge.textContent = '';
+                                badge.classList.remove('visible');
+                            }
                         }
                     }).catch(err => {
                         console.error('Error updating request badge:', err);
