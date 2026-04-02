@@ -1102,14 +1102,13 @@
             this.observeDetailPages();
             this.observeHomePageCards();
 
-            // Initialize request button with multiple attempts for reliability
-            this.initRequestButtonWithRetry();
+            // Initialize unified button group container first
+            this.initButtonGroup();
 
-            // Initialize search field in header
-            this.initSearchField();
-
-            // Initialize notification toggle in header
+            // Initialize buttons in order: bell, +, search (all go into button group)
             this.initNotificationToggle();
+            this.initRequestButtonWithRetry();
+            this.initSearchField();
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
@@ -3520,6 +3519,29 @@
                     font-weight: 600;
                 }
 
+                /* Unified Button Group Container */
+                #ratingsButtonGroup {
+                    display: flex !important;
+                    align-items: center !important;
+                    background: rgba(40, 40, 40, 0.9) !important;
+                    border-radius: 25px !important;
+                    padding: 4px 8px !important;
+                    gap: 2px !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    margin-right: 8px !important;
+                }
+
+                #ratingsButtonGroup > button,
+                #ratingsButtonGroup > #headerSearchField {
+                    background: transparent !important;
+                    border: none !important;
+                }
+
+                #ratingsButtonGroup > button:hover {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 50% !important;
+                }
+
                 /* Request Media Button - Header Button Style */
                 #requestMediaBtn {
                     display: flex !important;
@@ -3536,7 +3558,7 @@
                 }
 
                 #requestMediaBtn:hover {
-                    background: rgba(255, 255, 255, 0.1) !important;
+                    background: rgba(255, 255, 255, 0.15) !important;
                 }
 
                 #requestMediaBtn.hidden {
@@ -3571,103 +3593,100 @@
                     display: flex !important;
                 }
 
-                /* Mobile Responsive - Dynamic scaling handled by JavaScript */
+                /* Mobile Responsive */
                 @media screen and (max-width: 925px) {
-                    /* Reduce spacing between header buttons on mobile */
-                    .headerRight {
-                        gap: 2px !important;
+                    #ratingsButtonGroup {
+                        padding: 3px 6px !important;
+                        gap: 1px !important;
+                        margin-right: 4px !important;
                     }
 
-                    .headerRight > button,
-                    .headerRight > .paper-icon-button-light,
-                    .headerRight > div {
-                        padding: 6px !important;
-                        margin: 0 2px !important;
+                    #ratingsButtonGroup > button {
+                        padding: 5px !important;
                     }
 
-                    #latestMediaBtn,
-                    #chatBtn,
-                    #requestMediaBtn,
-                    #notificationToggle {
-                        padding: 6px !important;
-                        height: 36px !important;
-                        width: 36px !important;
-                        min-width: 36px !important;
-                    }
-
-                    #latestMediaBtn svg,
-                    #chatBtn svg,
-                    #requestMediaBtn svg,
-                    #notificationToggleIcon svg {
+                    #ratingsButtonGroup svg {
                         width: 20px !important;
                         height: 20px !important;
                     }
+
+                    #headerSearchInput {
+                        width: 100px !important;
+                    }
                 }
 
-                /* Small mobile - even smaller buttons */
+                /* Mobile - Second header row */
                 @media screen and (max-width: 600px) {
-                    .headerRight {
-                        gap: 0 !important;
+                    #ratingsButtonGroup {
+                        position: fixed !important;
+                        top: 56px !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        margin: 0 !important;
+                        border-radius: 0 !important;
+                        justify-content: center !important;
+                        background: rgba(30, 30, 30, 0.98) !important;
+                        border: none !important;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        padding: 6px 12px !important;
+                        z-index: 999 !important;
                     }
 
-                    #latestMediaBtn,
-                    #chatBtn,
-                    #requestMediaBtn,
-                    #notificationToggle {
-                        padding: 4px !important;
-                        height: 32px !important;
-                        width: 32px !important;
-                        min-width: 32px !important;
-                        margin: 0 1px !important;
+                    #ratingsButtonGroup > button {
+                        padding: 6px !important;
                     }
 
-                    #latestMediaBtn svg,
-                    #chatBtn svg,
-                    #requestMediaBtn svg,
-                    #notificationToggleIcon svg {
-                        width: 18px !important;
-                        height: 18px !important;
+                    #ratingsButtonGroup svg {
+                        width: 22px !important;
+                        height: 22px !important;
+                    }
+
+                    #headerSearchField {
+                        flex: 1 !important;
+                        max-width: 200px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 100% !important;
+                    }
+
+                    /* Add padding to main content to account for second header */
+                    .mainAnimatedPages, .view {
+                        padding-top: 44px !important;
                     }
                 }
 
                 /* Very small mobile */
-                @media screen and (max-width: 450px) {
-                    #latestMediaBtn,
-                    #chatBtn,
-                    #requestMediaBtn,
-                    #notificationToggle {
-                        padding: 3px !important;
-                        height: 28px !important;
-                        width: 28px !important;
-                        min-width: 28px !important;
-                        margin: 0 !important;
+                @media screen and (max-width: 400px) {
+                    #ratingsButtonGroup > button {
+                        padding: 5px !important;
                     }
 
-                    #latestMediaBtn svg,
-                    #chatBtn svg,
-                    #requestMediaBtn svg,
-                    #notificationToggleIcon svg {
-                        width: 16px !important;
-                        height: 16px !important;
+                    #ratingsButtonGroup svg {
+                        width: 20px !important;
+                        height: 20px !important;
+                    }
+
+                    #headerSearchField {
+                        max-width: 120px !important;
                     }
                 }
 
-                /* Search Field in Header - Part of headerRight */
+                /* Search Field in Header - Part of button group */
                 #headerSearchField {
                     display: flex !important;
                     align-items: center !important;
-                    background: rgba(60, 60, 60, 0.7) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                    border-radius: 20px !important;
-                    padding: 4px 12px !important;
-                    margin: 0 4px !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    border: none !important;
+                    border-radius: 15px !important;
+                    padding: 4px 10px !important;
+                    margin: 0 2px !important;
                     transition: all 0.2s ease !important;
                 }
 
                 #headerSearchField:hover,
                 #headerSearchField:focus-within {
-                    background: rgba(70, 70, 70, 0.9) !important;
-                    border-color: rgba(255, 255, 255, 0.3) !important;
+                    background: rgba(255, 255, 255, 0.2) !important;
                 }
 
                 #headerSearchField.hidden {
@@ -11988,17 +12007,17 @@
                     return;
                 }
 
-                const headerRight = document.querySelector('.headerRight');
-                if (!headerRight) {
-                    // Retry later if headerRight not found
-                    setTimeout(() => self.initRequestButton(), 1000);
+                const buttonGroup = document.getElementById('ratingsButtonGroup');
+                if (!buttonGroup) {
+                    // Retry later if button group not found
+                    setTimeout(() => self.initRequestButton(), 500);
                     return;
                 }
 
-                // Create button matching header button style (like latestMediaBtn, chatBtn)
+                // Create button matching header button style
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
-                btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                btn.className = 'ratingsGroupBtn';
                 btn.setAttribute('type', 'button');
                 btn.setAttribute('title', self.t('requestMedia'));
                 btn.style.position = 'relative';
@@ -12024,19 +12043,8 @@
                     </div>
                 `;
 
-                // Insert into headerRight - after notification toggle (before search field)
-                const notificationToggle = document.getElementById('notificationToggle');
-                if (notificationToggle) {
-                    // Insert right after notification toggle
-                    if (notificationToggle.nextSibling) {
-                        headerRight.insertBefore(btn, notificationToggle.nextSibling);
-                    } else {
-                        headerRight.appendChild(btn);
-                    }
-                } else {
-                    // No notification toggle, insert at beginning
-                    headerRight.insertBefore(btn, headerRight.firstChild);
-                }
+                // Insert into button group
+                buttonGroup.appendChild(btn);
                 document.body.appendChild(modal);
 
                 // Button click - wrapped in try-catch
@@ -12343,32 +12351,18 @@
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
 
-                        // Append to headerRight - after request button if exists, else after notification toggle
-                        const headerRight = document.querySelector('.headerRight');
-                        if (headerRight) {
-                            const requestBtn = document.getElementById('requestMediaBtn');
-                            const notificationToggle = document.getElementById('notificationToggle');
-                            if (requestBtn && requestBtn.nextSibling) {
-                                headerRight.insertBefore(searchContainer, requestBtn.nextSibling);
-                            } else if (requestBtn) {
-                                // Insert after requestBtn
-                                if (requestBtn.nextSibling) {
-                                    headerRight.insertBefore(searchContainer, requestBtn.nextSibling);
-                                } else {
-                                    headerRight.appendChild(searchContainer);
-                                }
-                            } else if (notificationToggle) {
-                                // Insert after notification toggle
-                                if (notificationToggle.nextSibling) {
-                                    headerRight.insertBefore(searchContainer, notificationToggle.nextSibling);
-                                } else {
-                                    headerRight.appendChild(searchContainer);
-                                }
-                            } else {
-                                headerRight.insertBefore(searchContainer, headerRight.firstChild);
-                            }
+                        // Append to button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(searchContainer);
                         } else {
-                            document.body.appendChild(searchContainer);
+                            // Fallback to headerRight if button group doesn't exist
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(searchContainer, headerRight.firstChild);
+                            } else {
+                                document.body.appendChild(searchContainer);
+                            }
                         }
 
                         // Trigger responsive scaling after element is added (fixes mobile positioning)
@@ -12558,6 +12552,34 @@
         },
 
         /**
+         * Initialize unified button group container
+         */
+        initButtonGroup: function () {
+            const self = this;
+
+            const tryCreate = () => {
+                if (document.getElementById('ratingsButtonGroup')) {
+                    return; // Already exists
+                }
+
+                const headerRight = document.querySelector('.headerRight');
+                if (!headerRight) {
+                    setTimeout(tryCreate, 500);
+                    return;
+                }
+
+                // Create the container
+                const buttonGroup = document.createElement('div');
+                buttonGroup.id = 'ratingsButtonGroup';
+
+                // Insert at the beginning of headerRight
+                headerRight.insertBefore(buttonGroup, headerRight.firstChild);
+            };
+
+            setTimeout(tryCreate, 500);
+        },
+
+        /**
          * Initialize notification toggle in header
          */
         initNotificationToggle: function () {
@@ -12596,17 +12618,17 @@
                             return;
                         }
 
-                        const headerRight = document.querySelector('.headerRight');
-                        if (!headerRight) {
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (!buttonGroup) {
                             // Retry later
-                            setTimeout(() => createNotificationToggle(config), 1000);
+                            setTimeout(() => createNotificationToggle(config), 500);
                             return;
                         }
 
                         // Create toggle container as header button
                         const toggleContainer = document.createElement('button');
                         toggleContainer.id = 'notificationToggle';
-                        toggleContainer.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        toggleContainer.className = 'ratingsGroupBtn';
                         toggleContainer.setAttribute('type', 'button');
                         toggleContainer.setAttribute('title', 'Enable/disable new media notifications');
                         toggleContainer.style.position = 'relative';
@@ -12684,8 +12706,8 @@
                             tooltipTimer = null;
                         });
 
-                        // Insert into headerRight - at the beginning (leftmost)
-                        headerRight.insertBefore(toggleContainer, headerRight.firstChild);
+                        // Insert into button group
+                        buttonGroup.appendChild(toggleContainer);
 
                         // Hide during video playback and on login page
                         setInterval(() => {
