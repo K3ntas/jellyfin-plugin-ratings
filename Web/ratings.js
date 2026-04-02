@@ -3579,9 +3579,10 @@
                     }
 
                     .headerRight > button,
-                    .headerRight > .paper-icon-button-light {
+                    .headerRight > .paper-icon-button-light,
+                    .headerRight > div {
                         padding: 6px !important;
-                        margin: 0 !important;
+                        margin: 0 2px !important;
                     }
 
                     #latestMediaBtn,
@@ -3592,7 +3593,6 @@
                         height: 36px !important;
                         width: 36px !important;
                         min-width: 36px !important;
-                        margin-right: 2px !important;
                     }
 
                     #latestMediaBtn svg,
@@ -3601,6 +3601,54 @@
                     #notificationToggleIcon svg {
                         width: 20px !important;
                         height: 20px !important;
+                    }
+                }
+
+                /* Small mobile - even smaller buttons */
+                @media screen and (max-width: 600px) {
+                    .headerRight {
+                        gap: 0 !important;
+                    }
+
+                    #latestMediaBtn,
+                    #chatBtn,
+                    #requestMediaBtn,
+                    #notificationToggle {
+                        padding: 4px !important;
+                        height: 32px !important;
+                        width: 32px !important;
+                        min-width: 32px !important;
+                        margin: 0 1px !important;
+                    }
+
+                    #latestMediaBtn svg,
+                    #chatBtn svg,
+                    #requestMediaBtn svg,
+                    #notificationToggleIcon svg {
+                        width: 18px !important;
+                        height: 18px !important;
+                    }
+                }
+
+                /* Very small mobile */
+                @media screen and (max-width: 450px) {
+                    #latestMediaBtn,
+                    #chatBtn,
+                    #requestMediaBtn,
+                    #notificationToggle {
+                        padding: 3px !important;
+                        height: 28px !important;
+                        width: 28px !important;
+                        min-width: 28px !important;
+                        margin: 0 !important;
+                    }
+
+                    #latestMediaBtn svg,
+                    #chatBtn svg,
+                    #requestMediaBtn svg,
+                    #notificationToggleIcon svg {
+                        width: 16px !important;
+                        height: 16px !important;
                     }
                 }
 
@@ -3677,6 +3725,7 @@
                 @media screen and (max-width: 768px) {
                     #headerSearchField {
                         padding: 4px 8px !important;
+                        margin: 0 2px !important;
                     }
 
                     #headerSearchInput {
@@ -3690,7 +3739,39 @@
                     }
                 }
 
+                @media screen and (max-width: 600px) {
+                    #headerSearchField {
+                        padding: 3px 6px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 60px !important;
+                        font-size: 11px !important;
+                    }
+
+                    #headerSearchIcon {
+                        font-size: 11px !important;
+                        margin-right: 3px !important;
+                    }
+                }
+
                 @media screen and (max-width: 500px) {
+                    #headerSearchField {
+                        padding: 2px 5px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 50px !important;
+                        font-size: 10px !important;
+                    }
+
+                    #headerSearchIcon {
+                        font-size: 10px !important;
+                        margin-right: 2px !important;
+                    }
+                }
+
+                @media screen and (max-width: 400px) {
                     #headerSearchField {
                         display: none !important;
                     }
