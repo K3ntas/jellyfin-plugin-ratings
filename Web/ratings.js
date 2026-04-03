@@ -20667,6 +20667,10 @@
             // Input events
             const input = document.getElementById('chatInput');
             input.onkeydown = function (e) {
+                // Stop propagation to prevent video player from receiving keyboard events
+                // This fixes spacebar pausing video while typing in chat
+                e.stopPropagation();
+
                 // Handle autocomplete keyboard navigation
                 if (self.handleAutocompleteKeydown(e)) {
                     return;
@@ -20675,6 +20679,14 @@
                     e.preventDefault();
                     self.sendCurrentMessage();
                 }
+            };
+
+            // Also stop propagation on keyup and keypress to fully isolate chat input
+            input.onkeyup = function (e) {
+                e.stopPropagation();
+            };
+            input.onkeypress = function (e) {
+                e.stopPropagation();
             };
             input.oninput = function () {
                 // Check for DM autocomplete trigger (/)
