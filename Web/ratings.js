@@ -123,7 +123,16 @@
                 // DM translations
                 chatPublic: 'Public', chatDM: 'Direct Messages', chatStartDM: 'Start a private conversation',
                 chatSearchUsers: 'Search users...', chatNoUsers: 'No users found', chatNewMessage: 'New message from',
-                chatNoDMs: 'No private messages yet', chatTypeSlash: 'Type / to start a DM'
+                chatNoDMs: 'No private messages yet', chatTypeSlash: 'Type / to start a DM',
+                // Privacy Settings translations
+                privacySettings: 'Privacy Settings', privacyPresets: 'Quick Presets',
+                privacyPublic: 'Public', privacyFriendsOnly: 'Friends Only', privacyPrivate: 'Private',
+                privacyProfileVisibility: 'Profile Visibility', privacyShowOnlineStatus: 'Online Status',
+                privacyShowWatchedHistory: 'Watched History', privacyShowFriendsList: 'Friends List',
+                privacyShowCurrentlyWatching: 'Currently Watching', privacyAllowFriendRequests: 'Friend Requests',
+                privacyAllowMessages: 'Direct Messages',
+                privacyEveryone: 'Everyone', privacyFriends: 'Friends', privacyNobody: 'Nobody',
+                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -1093,14 +1102,13 @@
             this.observeDetailPages();
             this.observeHomePageCards();
 
-            // Initialize request button with multiple attempts for reliability
-            this.initRequestButtonWithRetry();
+            // Initialize unified button group container first
+            this.initButtonGroup();
 
-            // Initialize search field in header
+            // Initialize buttons in order: search first, then others
             this.initSearchField();
-
-            // Initialize notification toggle in header
             this.initNotificationToggle();
+            this.initRequestButtonWithRetry();
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
@@ -1137,6 +1145,2021 @@
 
             // Initialize playback ban interceptor
             this.initPlaybackBanInterceptor();
+
+            // Social features disabled in stable release
+            // this.initSocialDebug();
+            // this.initFriendsButton();
+            // this.registerOfflineHandler();
+        },
+
+        /**
+         * Register handler to mark user offline on logout only.
+         * WebSocket disconnection on server side handles browser/tab close.
+         * No beforeunload/pagehide handlers - they fire during internal SPA navigation.
+         */
+        registerOfflineHandler: function () {
+            // Handle Jellyfin logout only - server detects browser close via WebSocket
+            if (window.Events && window.ApiClient) {
+                Events.on(window.ApiClient, 'logout', function () {
+                    if (!window.ApiClient) return;
+                    var baseUrl = ApiClient.serverAddress();
+                    var token = ApiClient.accessToken();
+                    if (!token) return;
+
+                    console.log('[Social] Logout - going offline...');
+                    fetch(baseUrl + '/Social/Offline', {
+                        method: 'POST',
+                        headers: {
+                            'X-Emby-Token': token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: '{}'
+                    }).catch(function() {});
+                });
+            }
+        },
+
+        /**
+         * Initialize social features and log debug info to console.
+         * This allows verification that social system is working even without UI.
+         */
+        initSocialDebug: function () {
+            const self = this;
+            var attempts = 0;
+
+            var tryInit = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryInit, 1000);
+                    }
+                    return;
+                }
+
+                var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+                // Expose testing functions to window.Social for console testing
+                window.Social = {
+                    // Get debug info
+                    debug: function() {
+                        return fetch(baseUrl + '/Social/Debug', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Debug:', data); return data; });
+                    },
+                    // Get my profile
+                    myProfile: function() {
+                        return fetch(baseUrl + '/Social/MyProfile', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] My Profile:', data); return data; });
+                    },
+                    // Send friend request (pass user ID)
+                    sendRequest: function(userId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Send Request:', data); return data; });
+                    },
+                    // Get incoming requests
+                    incoming: function() {
+                        return fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Incoming Requests:', data); return data; });
+                    },
+                    // Get outgoing requests
+                    outgoing: function() {
+                        return fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Outgoing Requests:', data); return data; });
+                    },
+                    // Accept friend request (pass request ID)
+                    accept: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Accept:', data); return data; });
+                    },
+                    // Reject friend request (pass request ID)
+                    reject: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Reject:', data); return data; });
+                    },
+                    // Cancel outgoing request (pass request ID)
+                    cancel: function(requestId) {
+                        return fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Cancel:', data); return data; });
+                    },
+                    // Get friends list
+                    friends: function() {
+                        return fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Friends:', data); return data; });
+                    },
+                    // Remove friend (pass user ID)
+                    unfriend: function(userId) {
+                        return fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { console.log('[Social] Unfriend:', data); return data; });
+                    },
+                    // Show help
+                    help: function() {
+                        console.log('%c[Social] Console Testing Commands:', 'color: #FF9800; font-weight: bold;');
+                        console.log('  Social.debug()              - Show system status');
+                        console.log('  Social.myProfile()          - Get your profile');
+                        console.log('  Social.sendRequest(userId)  - Send friend request');
+                        console.log('  Social.incoming()           - List incoming requests');
+                        console.log('  Social.outgoing()           - List outgoing requests');
+                        console.log('  Social.accept(requestId)    - Accept a request');
+                        console.log('  Social.reject(requestId)    - Reject a request');
+                        console.log('  Social.cancel(requestId)    - Cancel outgoing request');
+                        console.log('  Social.friends()            - List your friends');
+                        console.log('  Social.unfriend(userId)     - Remove a friend');
+                    }
+                };
+
+                fetch(baseUrl + '/Social/Debug', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: headers
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Social API returned ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (debugInfo) {
+                    // Debug logs removed for production - use Social.debug() in console if needed
+                })
+                .catch(function (error) {
+                    console.warn('[Social] Failed to initialize:', error.message);
+                });
+            };
+
+            tryInit();
+        },
+
+        /**
+         * Initialize the friends floating button and panel
+         */
+        initFriendsButton: function () {
+            const self = this;
+            var attempts = 0;
+
+            var tryInit = function () {
+                attempts++;
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryInit, 1000);
+                    }
+                    return;
+                }
+
+                // Don't show if not logged in or on login/startup pages
+                var currentPath = window.location.hash || window.location.pathname;
+                var isLoginPage = currentPath.includes('login') ||
+                                  currentPath.includes('startup') ||
+                                  currentPath.includes('selectserver') ||
+                                  currentPath.includes('addserver') ||
+                                  currentPath === '' ||
+                                  currentPath === '#' ||
+                                  currentPath === '#!/startup/selectserver.html' ||
+                                  currentPath === '#!/startup/login.html';
+
+                if (!ApiClient.accessToken() || isLoginPage) {
+                    // Hide existing button if present
+                    var existingBtn = document.getElementById('social-friends-btn');
+                    var existingPanel = document.getElementById('social-friends-panel');
+                    if (existingBtn) existingBtn.style.display = 'none';
+                    if (existingPanel) existingPanel.classList.remove('open');
+
+                    // Check again later (user might log in)
+                    setTimeout(tryInit, 2000);
+                    return;
+                }
+
+                // Show button if it was hidden
+                var hiddenBtn = document.getElementById('social-friends-btn');
+                if (hiddenBtn) {
+                    hiddenBtn.style.display = '';
+                    return;
+                }
+
+                // Don't create if already exists
+                if (document.getElementById('social-friends-btn')) {
+                    return;
+                }
+
+                // Create floating button
+                var btn = document.createElement('button');
+                btn.id = 'social-friends-btn';
+                btn.className = 'social-friends-btn';
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span class="badge hidden">0</span>';
+                btn.title = 'Friends';
+
+                // Load saved position
+                var savedPos = localStorage.getItem('socialFriendsBtnPos');
+                if (savedPos) {
+                    try {
+                        var pos = JSON.parse(savedPos);
+                        btn.style.bottom = pos.bottom + 'px';
+                        btn.style.right = pos.right + 'px';
+                    } catch (e) {}
+                }
+
+                // Make draggable
+                var isDragging = false;
+                var startX, startY, startRight, startBottom;
+
+                btn.addEventListener('mousedown', function (e) {
+                    if (e.button !== 0) return;
+                    isDragging = false;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startRight = parseInt(btn.style.right) || 20;
+                    startBottom = parseInt(btn.style.bottom) || 20;
+
+                    var onMouseMove = function (e) {
+                        var dx = startX - e.clientX;
+                        var dy = startY - e.clientY;
+                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                            isDragging = true;
+                            btn.classList.add('dragging');
+                        }
+                        if (isDragging) {
+                            var newRight = Math.max(10, Math.min(window.innerWidth - 60, startRight + dx));
+                            var newBottom = Math.max(10, Math.min(window.innerHeight - 60, startBottom + dy));
+                            btn.style.right = newRight + 'px';
+                            btn.style.bottom = newBottom + 'px';
+                        }
+                    };
+
+                    var onMouseUp = function () {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        btn.classList.remove('dragging');
+                        if (isDragging) {
+                            // Save position
+                            localStorage.setItem('socialFriendsBtnPos', JSON.stringify({
+                                right: parseInt(btn.style.right) || 20,
+                                bottom: parseInt(btn.style.bottom) || 20
+                            }));
+                        }
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                btn.addEventListener('click', function (e) {
+                    if (!isDragging) {
+                        self.toggleFriendsPanel();
+                    }
+                });
+
+                document.body.appendChild(btn);
+
+                // Create panel
+                self.createFriendsPanel();
+
+                // Initial load of data
+                self.loadFriendsData();
+
+                // Setup visibility check - hide on login page
+                setInterval(function () {
+                    try {
+                        var friendsBtn = document.getElementById('social-friends-btn');
+                        var friendsPanel = document.getElementById('social-friends-panel');
+                        if (!friendsBtn) return;
+
+                        var isLoginPage = self.isOnLoginPage();
+                        var hasToken = window.ApiClient && ApiClient.accessToken();
+
+                        if (isLoginPage || !hasToken) {
+                            friendsBtn.style.display = 'none';
+                            if (friendsPanel) friendsPanel.classList.remove('open');
+                        } else {
+                            friendsBtn.style.display = '';
+                        }
+                    } catch (e) {}
+                }, 500);
+
+                // Start heartbeat for online status
+                self.startHeartbeat();
+            };
+
+            tryInit();
+        },
+
+        /**
+         * Create the friends panel HTML
+         */
+        createFriendsPanel: function () {
+            if (document.getElementById('social-friends-panel')) {
+                return;
+            }
+
+            var panel = document.createElement('div');
+            panel.id = 'social-friends-panel';
+            panel.className = 'social-friends-panel';
+            panel.innerHTML = `
+                <div class="social-panel-header">
+                    <h3>Friends</h3>
+                    <button class="social-panel-close">&times;</button>
+                </div>
+                <div class="social-panel-tabs">
+                    <button class="social-panel-tab active" data-tab="friends">Friends</button>
+                    <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
+                    <button class="social-panel-tab" data-tab="blocked">Blocked</button>
+                    <button class="social-panel-tab" data-tab="online">Online</button>
+                    <button class="social-panel-tab" data-tab="addFriend">
+                        <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </button>
+                    <button class="social-panel-tab" data-tab="settings">
+                        <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                    </button>
+                </div>
+                <div class="social-panel-search">
+                    <input type="text" placeholder="Search..." id="social-search-input">
+                </div>
+                <div class="social-panel-content" id="social-panel-content">
+                    <div class="social-empty-state">
+                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                        <div>No friends yet</div>
+                    </div>
+                </div>
+                <div class="social-panel-resize"></div>
+            `;
+
+            // Close button
+            panel.querySelector('.social-panel-close').addEventListener('click', function () {
+                panel.classList.remove('open');
+            });
+
+            // Tab switching
+            var self = this;
+            panel.querySelectorAll('.social-panel-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    panel.querySelectorAll('.social-panel-tab').forEach(function (t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    self.loadFriendsData(tab.dataset.tab);
+                });
+            });
+
+            // Search
+            panel.querySelector('#social-search-input').addEventListener('input', function (e) {
+                self.filterFriendsList(e.target.value);
+            });
+
+            // Make panel draggable by header
+            var header = panel.querySelector('.social-panel-header');
+            var isDragging = false;
+            var dragOffsetX = 0;
+            var dragOffsetY = 0;
+
+            header.style.cursor = 'move';
+
+            header.addEventListener('mousedown', function (e) {
+                if (e.target.classList.contains('social-panel-close')) return;
+                isDragging = true;
+                dragOffsetX = e.clientX - panel.offsetLeft;
+                dragOffsetY = e.clientY - panel.offsetTop;
+                panel.style.transition = 'none';
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isDragging) return;
+                var newX = e.clientX - dragOffsetX;
+                var newY = e.clientY - dragOffsetY;
+
+                // Keep panel within viewport
+                newX = Math.max(0, Math.min(newX, window.innerWidth - panel.offsetWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - panel.offsetHeight));
+
+                panel.style.left = newX + 'px';
+                panel.style.top = newY + 'px';
+                panel.style.right = 'auto';
+                panel.style.bottom = 'auto';
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.style.transition = '';
+                    // Save position
+                    self.saveFriendsPanelPosition();
+                }
+                if (isResizing) {
+                    isResizing = false;
+                    panel.style.transition = '';
+                    self.saveFriendsPanelPosition();
+                }
+            });
+
+            // Resize from bottom-left corner
+            var resizeHandle = panel.querySelector('.social-panel-resize');
+            var isResizing = false;
+            var startX, startY, startWidth, startHeight, startLeft;
+
+            resizeHandle.addEventListener('mousedown', function (e) {
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = panel.offsetWidth;
+                startHeight = panel.offsetHeight;
+                startLeft = panel.offsetLeft;
+                panel.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isResizing) return;
+
+                // Calculate new dimensions (bottom-left resize)
+                var deltaX = startX - e.clientX;
+                var deltaY = e.clientY - startY;
+
+                var newWidth = Math.max(280, Math.min(500, startWidth + deltaX));
+                var newHeight = Math.max(300, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
+                var newLeft = startLeft - (newWidth - startWidth);
+
+                // Keep within bounds
+                if (newLeft < 0) {
+                    newLeft = 0;
+                    newWidth = startLeft + startWidth;
+                }
+
+                panel.style.width = newWidth + 'px';
+                panel.style.height = newHeight + 'px';
+                panel.style.left = newLeft + 'px';
+                panel.style.right = 'auto';
+            });
+
+            // Load saved position
+            this.loadFriendsPanelPosition(panel);
+
+            document.body.appendChild(panel);
+        },
+
+        /**
+         * Save friends panel position to localStorage
+         */
+        saveFriendsPanelPosition: function () {
+            var panel = document.getElementById('social-friends-panel');
+            if (!panel) return;
+
+            var pos = {
+                left: panel.style.left,
+                top: panel.style.top,
+                width: panel.style.width,
+                height: panel.style.height
+            };
+            try {
+                localStorage.setItem('socialPanelPosition', JSON.stringify(pos));
+            } catch (e) {}
+        },
+
+        /**
+         * Load friends panel position from localStorage
+         */
+        loadFriendsPanelPosition: function (panel) {
+            try {
+                var saved = localStorage.getItem('socialPanelPosition');
+                if (saved) {
+                    var pos = JSON.parse(saved);
+                    if (pos.left) {
+                        panel.style.left = pos.left;
+                        panel.style.right = 'auto';
+                    }
+                    if (pos.top) {
+                        panel.style.top = pos.top;
+                        panel.style.bottom = 'auto';
+                    }
+                    if (pos.width) panel.style.width = pos.width;
+                    if (pos.height) panel.style.height = pos.height;
+                }
+            } catch (e) {}
+        },
+
+        /**
+         * Toggle the friends panel open/closed
+         */
+        toggleFriendsPanel: function () {
+            var self = this;
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    this.loadFriendsData();
+                }
+            }
+        },
+
+        /**
+         * Load friends or requests data
+         */
+        loadFriendsData: function (tab) {
+            tab = tab || 'friends';
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content || !window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            if (tab === 'friends') {
+                // Fetch both friends list and online statuses
+                Promise.all([
+                    fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
+                    fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+                ]).then(function (results) {
+                    var friendsData = results[0].friends || [];
+                    var statusData = results[1].friends || [];
+
+                    // Merge status info into friends data
+                    var statusMap = {};
+                    statusData.forEach(function (s) { statusMap[s.userId] = s; });
+
+                    // Initialize cache if needed
+                    if (!self._friendsStatusCache) {
+                        self._friendsStatusCache = {};
+                    }
+
+                    friendsData.forEach(function (friend) {
+                        var status = statusMap[friend.userId];
+                        if (status) {
+                            friend.status = status.status;
+                            friend.watching = status.watching;
+                        } else {
+                            friend.status = 'Offline';
+                        }
+                        // Store in cache for WebSocket updates
+                        self._friendsStatusCache[friend.userId] = friend;
+                    });
+
+                    self.renderFriendsList(friendsData);
+                }).catch(function () {
+                    content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
+                });
+            } else if (tab === 'requests') {
+                // Fetch both incoming and outgoing requests
+                Promise.all([
+                    fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
+                    fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); })
+                ]).then(function (results) {
+                    var incoming = results[0].requests || [];
+                    var outgoing = results[1].requests || [];
+                    console.log('[Social] Incoming:', incoming.length, 'Outgoing:', outgoing.length);
+                    self.renderRequestsList(incoming, outgoing);
+                    self.updateRequestsBadge(incoming.length);
+                }).catch(function () {
+                    content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
+                });
+            } else if (tab === 'addFriend') {
+                // Show search UI for adding friends
+                self.renderAddFriendSearch();
+            } else if (tab === 'blocked') {
+                // Fetch blocked users list
+                fetch(baseUrl + '/Social/Blocked', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderBlockedList(data.blockedUsers || []);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load blocked users</div>';
+                    });
+            } else if (tab === 'online') {
+                // Fetch all online users
+                fetch(baseUrl + '/Social/AllOnlineUsers', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderOnlineUsersList(data.users || []);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load online users</div>';
+                    });
+            } else if (tab === 'settings') {
+                // Fetch privacy settings
+                fetch(baseUrl + '/Social/Settings', { method: 'GET', credentials: 'include', headers: headers })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        self.renderPrivacySettings(data);
+                    })
+                    .catch(function () {
+                        content.innerHTML = '<div class="social-empty-state">Failed to load settings</div>';
+                    });
+            }
+        },
+
+        /**
+         * Render the blocked users list
+         */
+        renderBlockedList: function (blockedUsers) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (blockedUsers.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg><div>No blocked users</div></div>';
+                return;
+            }
+
+            var html = '<div style="padding: 5px 0;">';
+            blockedUsers.forEach(function (user) {
+                var initial = (user.username || '?')[0].toUpperCase();
+                html += '<div class="social-friend-item" style="justify-content:space-between;">' +
+                    '<div style="display:flex;align-items:center;gap:10px;">' +
+                    '<div class="social-friend-avatar" style="background:#666;">' + initial + '</div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
+                    '<div class="social-friend-status" style="color:#888;">Blocked</div>' +
+                    '</div></div>' +
+                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + user.userId + '\')">Unblock</button>' +
+                    '</div>';
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render the online users list
+         */
+        renderOnlineUsersList: function (users) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (users.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No online users</div></div>';
+                return;
+            }
+
+            var html = '<div class="social-friends-list">';
+            users.forEach(function (user) {
+                var statusColor = user.status === 'Online' ? '#4CAF50' :
+                                  user.status === 'Away' ? '#FFC107' : '#888';
+                var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:4px;">★</span>' : '';
+                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
+
+                html += '<div class="social-friend-item social-online-item" data-userid="' + user.userId + '" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
+                    '<div style="position:relative;flex-shrink:0;">' +
+                    '<div style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;">' +
+                    self.escapeHtml(user.username.charAt(0).toUpperCase()) + '</div>' +
+                    '<div style="background:' + statusColor + ';width:8px;height:8px;border-radius:50%;position:absolute;bottom:0;right:0;border:2px solid #1a1a1a;"></div>' +
+                    '</div>' +
+                    '<span style="margin-left:8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + self.escapeHtml(user.username) + friendBadge + '</span>' +
+                    '<span style="margin-left:6px;font-size:11px;color:' + statusColor + ';">' + user.status + '</span>' +
+                    addBtn +
+                    '</div>';
+            });
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render the privacy settings panel
+         */
+        renderPrivacySettings: function (settings) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!content) return;
+
+            // Setting definitions with their options
+            var settingsDef = [
+                { key: 'profileVisibility', label: t.privacyProfileVisibility || 'Profile Visibility', options: ['Public', 'Friends', 'Private'] },
+                { key: 'showOnlineStatus', label: t.privacyShowOnlineStatus || 'Online Status', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showWatchedHistory', label: t.privacyShowWatchedHistory || 'Watched History', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showFriendsList', label: t.privacyShowFriendsList || 'Friends List', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'showCurrentlyWatching', label: t.privacyShowCurrentlyWatching || 'Currently Watching', options: ['Everyone', 'Friends', 'Nobody'] },
+                { key: 'allowFriendRequests', label: t.privacyAllowFriendRequests || 'Friend Requests', options: ['Everyone', 'Nobody'] },
+                { key: 'allowMessages', label: t.privacyAllowMessages || 'Direct Messages', options: ['Everyone', 'Friends', 'Nobody'] }
+            ];
+
+            var html = '<div class="privacy-settings-container">';
+
+            // Quick presets section
+            html += '<div class="privacy-presets-section">' +
+                '<div class="privacy-section-title">' + (t.privacyPresets || 'Quick Presets') + '</div>' +
+                '<div class="privacy-presets-buttons">' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'Public\')">' + (t.privacyPublic || 'Public') + '</button>' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'FriendsOnly\')">' + (t.privacyFriendsOnly || 'Friends Only') + '</button>' +
+                '<button class="privacy-preset-btn" onclick="RatingsPlugin.applyPrivacyPreset(\'Private\')">' + (t.privacyPrivate || 'Private') + '</button>' +
+                '</div></div>';
+
+            // Individual settings
+            html += '<div class="privacy-section-title">' + (t.privacySettings || 'Privacy Settings') + '</div>';
+
+            settingsDef.forEach(function (setting) {
+                var currentValue = settings[setting.key] || setting.options[0];
+                html += '<div class="privacy-setting-row">' +
+                    '<label class="privacy-setting-label">' + setting.label + '</label>' +
+                    '<select class="privacy-setting-select" data-setting="' + setting.key + '" onchange="RatingsPlugin.savePrivacySetting(\'' + setting.key + '\', this.value)">';
+
+                setting.options.forEach(function (opt) {
+                    var optLabel = opt === 'Everyone' ? (t.privacyEveryone || 'Everyone') :
+                                   opt === 'Friends' ? (t.privacyFriends || 'Friends') :
+                                   opt === 'Nobody' ? (t.privacyNobody || 'Nobody') :
+                                   opt === 'Public' ? (t.privacyPublic || 'Public') :
+                                   opt === 'Private' ? (t.privacyPrivate || 'Private') : opt;
+                    var selected = currentValue === opt ? ' selected' : '';
+                    html += '<option value="' + opt + '"' + selected + '>' + optLabel + '</option>';
+                });
+
+                html += '</select></div>';
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        },
+
+        /**
+         * Save a single privacy setting
+         */
+        savePrivacySetting: function (key, value) {
+            var self = this;
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var body = {};
+            body[key] = value;
+
+            fetch(baseUrl + '/Social/Settings', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify(body)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.showToast(t.privacySaved || 'Settings saved', 'success');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Save setting failed:', err);
+            });
+        },
+
+        /**
+         * Apply a privacy preset
+         */
+        applyPrivacyPreset: function (preset) {
+            var self = this;
+            var t = this.translations[this.currentLanguage] || this.translations.en;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Settings/Preset/' + preset, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.showToast(t.privacyPresetApplied || 'Preset applied', 'success');
+                    // Reload settings to reflect changes
+                    self.loadFriendsData('settings');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Apply preset failed:', err);
+            });
+        },
+
+        /**
+         * Block a user
+         */
+        blockUser: function (userId) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            if (!confirm('Are you sure you want to block this user? This will also remove them from your friends list.')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh friends list
+                    self.loadFriendsData('friends');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Block failed:', err);
+            });
+        },
+
+        /**
+         * Unblock a user
+         */
+        unblockUser: function (userId) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh blocked list
+                    self.loadFriendsData('blocked');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Unblock failed:', err);
+            });
+        },
+
+        /**
+         * Show friend context menu
+         */
+        showFriendMenu: function (event, userId, username) {
+            var self = this;
+            event.stopPropagation();
+
+            // Remove any existing menu
+            var existingMenu = document.getElementById('social-friend-menu');
+            if (existingMenu) existingMenu.remove();
+
+            var menu = document.createElement('div');
+            menu.id = 'social-friend-menu';
+            menu.className = 'social-friend-menu';
+            menu.innerHTML = `
+                <button onclick="RatingsPlugin.navigateToProfile('${userId}')">View Profile</button>
+                <button onclick="RatingsPlugin.unfriendUser('${userId}', '${username.replace(/'/g, "\\'")}')">Unfriend</button>
+                <button onclick="RatingsPlugin.blockUser('${userId}')" style="color:#e74c3c;">Block</button>
+            `;
+
+            // Position near the button
+            var rect = event.target.getBoundingClientRect();
+            menu.style.position = 'fixed';
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.left = (rect.left - 80) + 'px';
+            menu.style.zIndex = '100002';
+
+            document.body.appendChild(menu);
+
+            // Close menu when clicking elsewhere
+            var closeMenu = function (e) {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+            setTimeout(function () {
+                document.addEventListener('click', closeMenu);
+            }, 10);
+        },
+
+        /**
+         * Unfriend a user
+         */
+        unfriendUser: function (userId, username) {
+            var self = this;
+            if (!window.ApiClient || !userId) return;
+
+            // Close menu
+            var menu = document.getElementById('social-friend-menu');
+            if (menu) menu.remove();
+
+            if (!confirm('Remove ' + username + ' from your friends list?')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Friend/' + userId, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh friends list
+                    self.loadFriendsData('friends');
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Unfriend failed:', err);
+            });
+        },
+
+        /**
+         * Render the friends list
+         */
+        renderFriendsList: function (friends) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            if (friends.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><div>No friends yet</div></div>';
+                return;
+            }
+
+            var html = '';
+            friends.forEach(function (friend) {
+                var initial = (friend.username || '?')[0].toUpperCase();
+                var status = friend.status || 'Offline';
+                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+                var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+                // Build watching info if available
+                var watchingHtml = '';
+                if (friend.watching && status !== 'Offline') {
+                    var watchTitle = friend.watching.seriesName
+                        ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
+                        : friend.watching.title;
+                    var itemId = friend.watching.itemId;
+                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                        '<span class="watching-icon">&#9654;</span> ' +
+                        self.escapeHtml(watchTitle) +
+                        ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                        '</div>';
+                }
+
+                html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
+                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                    '<div class="social-friend-info">' +
+                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
+                    '<div class="social-friend-status">' + statusText + '</div>' +
+                    watchingHtml +
+                    '</div>' +
+                    '<div class="social-friend-actions">' +
+                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + friend.userId + '\', \'' + self.escapeHtml(friend.username).replace(/'/g, "\\'") + '\')" title="More actions">&#8942;</button>' +
+                    '</div></div>';
+            });
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render the requests list (incoming and outgoing)
+         */
+        renderRequestsList: function (incoming, outgoing) {
+            var content = document.getElementById('social-panel-content');
+            var self = this;
+            if (!content) return;
+
+            outgoing = outgoing || [];
+
+            if (incoming.length === 0 && outgoing.length === 0) {
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No pending requests</div></div>';
+                return;
+            }
+
+            var html = '';
+
+            // Incoming requests section
+            if (incoming.length > 0) {
+                html += '<div class="social-requests-section"><div class="social-section-title">Incoming Requests</div>';
+                incoming.forEach(function (req) {
+                    var username = req.FromUsername || req.fromUsername || '?';
+                    var id = req.Id || req.id;
+                    var initial = username[0].toUpperCase();
+                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                        '<div class="social-request-info">' +
+                        '<div class="social-friend-avatar">' + initial + '</div>' +
+                        '<div class="social-friend-info">' +
+                        '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
+                        '<div class="social-friend-status">Wants to be friends</div>' +
+                        '</div></div>' +
+                        '<div class="social-request-actions">' +
+                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + id + '\')">Accept</button>' +
+                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + id + '\')">Reject</button>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            // Outgoing requests section
+            if (outgoing.length > 0) {
+                html += '<div class="social-requests-section"><div class="social-section-title">Sent Requests</div>';
+                outgoing.forEach(function (req) {
+                    var username = req.ToUsername || req.toUsername || '?';
+                    var id = req.Id || req.id;
+                    var initial = username[0].toUpperCase();
+                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                        '<div class="social-request-info">' +
+                        '<div class="social-friend-avatar">' + initial + '</div>' +
+                        '<div class="social-friend-info">' +
+                        '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
+                        '<div class="social-friend-status">Request pending</div>' +
+                        '</div></div>' +
+                        '<div class="social-request-actions">' +
+                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + id + '\')">Cancel</button>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            content.innerHTML = html;
+        },
+
+        /**
+         * Accept a friend request
+         */
+        acceptFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Reject a friend request
+         */
+        rejectFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Cancel an outgoing friend request
+         */
+        cancelFriendRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.loadFriendsData('requests');
+                    }
+                });
+        },
+
+        /**
+         * Update the requests badge count
+         */
+        updateRequestsBadge: function (count) {
+            var tabBadge = document.getElementById('requests-badge');
+            if (tabBadge) {
+                tabBadge.textContent = count;
+                tabBadge.style.display = count > 0 ? 'inline' : 'none';
+            }
+            this.updateMainBadge();
+        },
+
+        /**
+         * Update the main floating button badge (requests count)
+         */
+        updateMainBadge: function () {
+            var btn = document.getElementById('social-friends-btn');
+            var badge = btn ? btn.querySelector('.badge') : null;
+            if (!badge) return;
+
+            var requestsBadge = document.getElementById('requests-badge');
+            var count = requestsBadge ? parseInt(requestsBadge.textContent) || 0 : 0;
+
+            badge.textContent = count;
+            badge.classList.toggle('hidden', count === 0);
+        },
+
+        // Cache for friends status
+        _friendsStatusCache: {},
+        _socialWebSocket: null,
+        _wsConnected: false,
+
+        /**
+         * Start heartbeat and WebSocket for online status
+         */
+        startHeartbeat: function () {
+            var self = this;
+
+            // Send initial heartbeat
+            self.sendHeartbeat();
+
+            // Send heartbeat every 60 seconds
+            setInterval(function () {
+                if (window.ApiClient && ApiClient.accessToken() && !self.isOnLoginPage()) {
+                    self.sendHeartbeat();
+                }
+            }, 60000);
+
+            // Hook into playback events for instant watching updates
+            self.setupPlaybackHooks();
+
+            // Connect to Jellyfin WebSocket for real-time updates
+            self.connectSocialWebSocket();
+
+            // Fallback: Fast polling when WebSocket not connected
+            self._fastPollInterval = null;
+            self.startFastPolling();
+        },
+
+        /**
+         * Connect to Jellyfin's WebSocket for social updates
+         */
+        connectSocialWebSocket: function () {
+            var self = this;
+
+            if (!window.ApiClient || !ApiClient.accessToken()) {
+                setTimeout(function () { self.connectSocialWebSocket(); }, 3000);
+                return;
+            }
+
+            if (self.isOnLoginPage()) return;
+
+            // Don't reconnect if already connected
+            if (self._socialWebSocket && self._socialWebSocket.readyState === WebSocket.OPEN) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+            wsUrl += '/socket?api_key=' + encodeURIComponent(ApiClient.accessToken());
+
+            try {
+                self._socialWebSocket = new WebSocket(wsUrl);
+
+                self._socialWebSocket.onopen = function () {
+                    console.log('[Social] WebSocket connected to Jellyfin');
+                    self._wsConnected = true;
+                    self._wsReconnectAttempts = 0;
+                };
+
+                self._socialWebSocket.onmessage = function (event) {
+                    try {
+                        var message = JSON.parse(event.data);
+                        // Check if this is a social message (KeepAlive with SocialType in Data)
+                        if (message.Data && message.Data.SocialType) {
+                            self.handleSocialWebSocketMessage(message.Data);
+                        }
+                    } catch (e) {
+                        // Not JSON or not our message, ignore
+                    }
+                };
+
+                self._socialWebSocket.onclose = function (event) {
+                    console.log('[Social] WebSocket closed:', event.code);
+                    self._socialWebSocket = null;
+                    self._wsConnected = false;
+                    // Reconnect after delay
+                    setTimeout(function () {
+                        if (!self.isOnLoginPage()) {
+                            self.connectSocialWebSocket();
+                        }
+                    }, 5000);
+                };
+
+                self._socialWebSocket.onerror = function (error) {
+                    console.log('[Social] WebSocket error');
+                    self._wsConnected = false;
+                };
+            } catch (e) {
+                console.error('[Social] WebSocket connection failed:', e);
+                self._wsConnected = false;
+            }
+        },
+
+        /**
+         * Handle incoming social WebSocket message
+         */
+        handleSocialWebSocketMessage: function (data) {
+            var self = this;
+
+            switch (data.SocialType) {
+                case 'SocialInitialStatus':
+                    // Full status of all friends
+                    if (data.SocialData && data.SocialData.friends) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        data.SocialData.friends.forEach(function (friend) {
+                            self._friendsStatusCache[friend.userId] = friend;
+                        });
+                        self.updateFriendsUIFromCache();
+                    }
+                    break;
+
+                case 'SocialStatusUpdate':
+                    // Single friend STATUS update (online/offline only)
+                    console.log('[Social] Status update received:', data.SocialData);
+                    if (data.SocialData) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        var existing = self._friendsStatusCache[data.SocialData.userId] || {};
+                        // Merge but preserve watching if not provided
+                        self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
+                        self.updateFriendStatusOnly(data.SocialData);
+                    }
+                    break;
+
+                case 'SocialWatchingUpdate':
+                    // Single friend WATCHING update (movie title only, no status change)
+                    console.log('[Social] Watching update received:', data.SocialData);
+                    if (data.SocialData) {
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = {};
+                        }
+                        var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
+                        // ONLY update watching, keep existing status
+                        existingFriend.watching = data.SocialData.watching;
+                        existingFriend.username = data.SocialData.username;
+                        existingFriend.userId = data.SocialData.userId;
+                        self._friendsStatusCache[data.SocialData.userId] = existingFriend;
+                        self.updateFriendWatchingOnly(data.SocialData);
+                    }
+                    break;
+
+                case 'SocialProfileStatsUpdate':
+                    // Profile stats update - update stats if we're viewing this profile
+                    console.log('[Social] Profile stats update received:', data.SocialData);
+                    if (data.SocialData && data.SocialData.profileUserId) {
+                        var viewingProfileId = self._viewingProfileUserId;
+                        if (viewingProfileId && viewingProfileId === data.SocialData.profileUserId) {
+                            // Update the stats display
+                            self.updateProfileStatsFromWebSocket(data.SocialData.stats);
+                        }
+                    }
+                    break;
+
+                case 'SocialProfileStatusUpdate':
+                    // Online status update for profile we're viewing
+                    console.log('[Social] Profile status update received:', data.SocialData);
+                    if (data.SocialData && data.SocialData.userId) {
+                        var viewingId = self._viewingProfileUserId;
+                        console.log('[Social] Viewing profile:', viewingId, 'Update for:', data.SocialData.userId);
+                        if (viewingId && viewingId === data.SocialData.userId) {
+                            self.updateProfileStatusFromWebSocket(data.SocialData);
+                        }
+                    }
+                    break;
+            }
+        },
+
+        /**
+         * Update profile online status from WebSocket
+         */
+        updateProfileStatusFromWebSocket: function (statusData) {
+            var page = document.getElementById('socialProfilePage');
+            if (!page) return;
+
+            // Update the status dot
+            var statusDot = page.querySelector('.social-profile-avatar-large .social-status-dot');
+            if (statusDot) {
+                var status = statusData.status || 'Offline';
+                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update the status text in meta
+            var metaSpans = page.querySelectorAll('.social-profile-meta span');
+            metaSpans.forEach(function (span) {
+                var svg = span.querySelector('svg');
+                if (svg && span.textContent.includes('Online') || span.textContent.includes('Offline') ||
+                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb')) {
+                    var status = statusData.status || 'Offline';
+                    var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+                    span.innerHTML = svg.outerHTML + statusText;
+                }
+            });
+
+            // Update last seen
+            if (statusData.lastSeen) {
+                var lastSeenText = statusData.status === 'Online' ? 'now' : this.formatTimeAgo(new Date(statusData.lastSeen));
+                metaSpans.forEach(function (span) {
+                    if (span.textContent.includes('Last seen')) {
+                        var svg = span.querySelector('svg');
+                        if (svg) {
+                            span.innerHTML = svg.outerHTML + 'Last seen ' + lastSeenText;
+                        }
+                    }
+                });
+            }
+        },
+
+        /**
+         * Update profile stats from WebSocket message
+         */
+        updateProfileStatsFromWebSocket: function (stats) {
+            var content = document.getElementById('socialProfileContent');
+            if (!content) return;
+
+            // Find stat cards and update values
+            var statCards = content.querySelectorAll('.social-stat-card');
+            statCards.forEach(function (card) {
+                var label = card.querySelector('.social-stat-label');
+                var value = card.querySelector('.social-stat-value');
+                if (!label || !value) return;
+
+                var labelText = label.textContent.toLowerCase();
+                if (labelText.includes('ratings') && stats.ratingsCount !== undefined) {
+                    value.textContent = stats.ratingsCount;
+                } else if (labelText.includes('avg') && stats.averageRating !== undefined) {
+                    value.innerHTML = stats.averageRating + '<span class="social-stat-star">★</span>';
+                } else if (labelText.includes('friends') && stats.friendsCount !== undefined) {
+                    value.textContent = stats.friendsCount;
+                }
+            });
+        },
+
+        /**
+         * Start fast polling when friends panel is open (fallback for WebSocket)
+         */
+        startFastPolling: function () {
+            var self = this;
+
+            // Check every 500ms if we need to poll
+            setInterval(function () {
+                var panel = document.getElementById('social-friends-panel');
+                var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
+                var shouldPoll = panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends';
+
+                // Only poll if WebSocket is not connected
+                var needsFallback = !self._wsConnected;
+
+                if (shouldPoll && needsFallback && !self._fastPollInterval) {
+                    // Start fast polling
+                    self._fastPollInterval = setInterval(function () {
+                        self.pollFriendsStatus();
+                    }, 3000);
+                    // Poll immediately
+                    self.pollFriendsStatus();
+                } else if ((!shouldPoll || !needsFallback) && self._fastPollInterval) {
+                    // Stop fast polling
+                    clearInterval(self._fastPollInterval);
+                    self._fastPollInterval = null;
+                }
+            }, 500);
+        },
+
+        /**
+         * Poll friends status from server
+         */
+        pollFriendsStatus: function () {
+            var self = this;
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/OnlineStatus', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var statusData = data.friends || [];
+                // Update cache and UI
+                statusData.forEach(function (friend) {
+                    if (!self._friendsStatusCache) {
+                        self._friendsStatusCache = {};
+                    }
+                    var existing = self._friendsStatusCache[friend.userId] || {};
+                    self._friendsStatusCache[friend.userId] = Object.assign({}, existing, friend);
+                });
+                // Update UI elements
+                statusData.forEach(function (friend) {
+                    self.updateFriendElement(friend);
+                });
+            })
+            .catch(function () {
+                // Silently fail
+            });
+        },
+
+        /**
+         * Setup hooks for playback events to send instant watching updates
+         */
+        setupPlaybackHooks: function () {
+            var self = this;
+            self._lastPlaybackUpdate = 0;
+            self._playbackUpdateInterval = 10000; // Update every 10 seconds during playback
+
+            // Hook into Jellyfin's Events system
+            if (window.Events) {
+                // Playback started
+                Events.on(window.MediaController || window, 'playbackstart', function (e, player, state) {
+                    self.onPlaybackStart(state);
+                });
+
+                // Playback stopped
+                Events.on(window.MediaController || window, 'playbackstop', function (e, info) {
+                    self.onPlaybackStop();
+                });
+            }
+
+            // Alternative: Hook into document events (Jellyfin Web)
+            document.addEventListener('playbackstart', function (e) {
+                if (e.detail) {
+                    self.onPlaybackStart(e.detail);
+                }
+            });
+
+            document.addEventListener('playbackstop', function () {
+                self.onPlaybackStop();
+            });
+
+            // Also try hooking into the ApiClient playback reporting
+            if (window.ApiClient) {
+                var originalReportPlaybackStart = ApiClient.reportPlaybackStart;
+                if (originalReportPlaybackStart) {
+                    ApiClient.reportPlaybackStart = function (options) {
+                        self.onPlaybackStartFromApi(options);
+                        return originalReportPlaybackStart.apply(this, arguments);
+                    };
+                }
+
+                var originalReportPlaybackStopped = ApiClient.reportPlaybackStopped;
+                if (originalReportPlaybackStopped) {
+                    ApiClient.reportPlaybackStopped = function (options) {
+                        self.onPlaybackStop();
+                        return originalReportPlaybackStopped.apply(this, arguments);
+                    };
+                }
+
+                var originalReportPlaybackProgress = ApiClient.reportPlaybackProgress;
+                if (originalReportPlaybackProgress) {
+                    ApiClient.reportPlaybackProgress = function (options) {
+                        self.onPlaybackProgress(options);
+                        return originalReportPlaybackProgress.apply(this, arguments);
+                    };
+                }
+            }
+        },
+
+        /**
+         * Handle playback start event
+         */
+        onPlaybackStart: function (state) {
+            var self = this;
+            if (!state || !state.NowPlayingItem) return;
+
+            var item = state.NowPlayingItem;
+            self._currentWatching = {
+                itemId: item.Id,
+                title: item.Name || 'Unknown',
+                type: item.MediaType || item.Type || 'Video',
+                seriesName: item.SeriesName || null,
+                episodeInfo: self.formatEpisodeInfo(item),
+                positionTicks: state.PlayState?.PositionTicks || 0,
+                durationTicks: item.RunTimeTicks || 0
+            };
+
+            self.sendWatching(self._currentWatching);
+        },
+
+        /**
+         * Handle playback start from ApiClient.reportPlaybackStart
+         */
+        onPlaybackStartFromApi: function (options) {
+            var self = this;
+            if (!options || !options.ItemId) return;
+
+            // Fetch item details if needed
+            if (options.Item) {
+                var item = options.Item;
+                self._currentWatching = {
+                    itemId: item.Id,
+                    title: item.Name || 'Unknown',
+                    type: item.MediaType || item.Type || 'Video',
+                    seriesName: item.SeriesName || null,
+                    episodeInfo: self.formatEpisodeInfo(item),
+                    positionTicks: options.PositionTicks || 0,
+                    durationTicks: item.RunTimeTicks || 0
+                };
+                self.sendWatching(self._currentWatching);
+            } else {
+                // We have ItemId but no details - fetch them
+                ApiClient.getItem(ApiClient.getCurrentUserId(), options.ItemId).then(function (item) {
+                    self._currentWatching = {
+                        itemId: item.Id,
+                        title: item.Name || 'Unknown',
+                        type: item.MediaType || item.Type || 'Video',
+                        seriesName: item.SeriesName || null,
+                        episodeInfo: self.formatEpisodeInfo(item),
+                        positionTicks: options.PositionTicks || 0,
+                        durationTicks: item.RunTimeTicks || 0
+                    };
+                    self.sendWatching(self._currentWatching);
+                }).catch(function () {
+                    // Fallback: send minimal info
+                    self._currentWatching = {
+                        itemId: options.ItemId,
+                        title: 'Unknown',
+                        type: 'Video',
+                        positionTicks: options.PositionTicks || 0,
+                        durationTicks: 0
+                    };
+                    self.sendWatching(self._currentWatching);
+                });
+            }
+        },
+
+        /**
+         * Handle playback progress - throttled to every 10 seconds
+         */
+        onPlaybackProgress: function (options) {
+            var self = this;
+            var now = Date.now();
+
+            if (now - self._lastPlaybackUpdate < self._playbackUpdateInterval) {
+                return; // Throttle updates
+            }
+            self._lastPlaybackUpdate = now;
+
+            if (self._currentWatching && options) {
+                self._currentWatching.positionTicks = options.PositionTicks || self._currentWatching.positionTicks;
+                self.sendWatching(self._currentWatching);
+            }
+        },
+
+        /**
+         * Handle playback stop event
+         */
+        onPlaybackStop: function () {
+            var self = this;
+            self._currentWatching = null;
+            self.sendStopWatching();
+        },
+
+        /**
+         * Format episode info from item
+         */
+        formatEpisodeInfo: function (item) {
+            if (item.ParentIndexNumber != null && item.IndexNumber != null) {
+                var season = ('0' + item.ParentIndexNumber).slice(-2);
+                var episode = ('0' + item.IndexNumber).slice(-2);
+                return 'S' + season + 'E' + episode;
+            }
+            return null;
+        },
+        /**
+         * Update friends UI from cache
+         * Updates individual friend elements without re-rendering the whole list
+         */
+        updateFriendsUIFromCache: function () {
+            var self = this;
+            var panel = document.getElementById('social-friends-panel');
+            var activeTab = panel ? panel.querySelector('.social-panel-tab.active') : null;
+
+            if (panel && panel.classList.contains('open') && activeTab && activeTab.dataset.tab === 'friends') {
+                var content = document.getElementById('social-panel-content');
+                // Check if friends list is rendered (has friend items)
+                var hasFriendItems = content && content.querySelector('.social-friend-item');
+
+                if (!hasFriendItems && Object.keys(self._friendsStatusCache).length > 0) {
+                    // No friend items in DOM but we have cache data - render full list
+                    self.renderFriendsList(Object.values(self._friendsStatusCache));
+                } else {
+                    // Update each friend in cache by finding their element
+                    Object.values(self._friendsStatusCache).forEach(function (friend) {
+                        self.updateFriendElement(friend);
+                    });
+                }
+            }
+        },
+
+        /**
+         * Update a single friend's element in the DOM
+         * @returns {boolean} True if element was found and updated
+         */
+        updateFriendElement: function (friend) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + friend.userId + '"]');
+            if (!friendEl) {
+                // Friend not in DOM
+                return false;
+            }
+
+            var status = friend.status || 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+            // Update status dot
+            var statusDot = friendEl.querySelector('.social-status-dot');
+            if (statusDot) {
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update status text
+            var statusDiv = friendEl.querySelector('.social-friend-status');
+            if (statusDiv) {
+                statusDiv.textContent = statusText;
+            }
+
+            // Update or add/remove watching info
+            var infoDiv = friendEl.querySelector('.social-friend-info');
+            var existingWatching = friendEl.querySelector('.social-friend-watching');
+
+            if (friend.watching && status !== 'Offline') {
+                var watchTitle = friend.watching.seriesName
+                    ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
+                    : friend.watching.title;
+                var itemId = friend.watching.itemId;
+                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    '<span class="watching-icon">&#9654;</span> ' +
+                    self.escapeHtml(watchTitle) +
+                    ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                    '</div>';
+
+                if (existingWatching) {
+                    existingWatching.outerHTML = watchingHtml;
+                } else if (infoDiv) {
+                    infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
+                }
+            } else if (existingWatching) {
+                // Remove watching info if user stopped
+                existingWatching.remove();
+            }
+
+            return true;
+        },
+
+        /**
+         * Update ONLY the status (online/offline) for a friend - does NOT touch watching
+         */
+        updateFriendStatusOnly: function (data) {
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + data.userId + '"]');
+            if (!friendEl) return false;
+
+            var status = data.status || 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+
+            // Update status dot ONLY
+            var statusDot = friendEl.querySelector('.social-status-dot');
+            if (statusDot) {
+                statusDot.className = 'social-status-dot ' + statusClass;
+            }
+
+            // Update status text ONLY
+            var statusDiv = friendEl.querySelector('.social-friend-status');
+            if (statusDiv) {
+                statusDiv.textContent = statusText;
+            }
+
+            console.log('[Social] Updated status only for', data.userId, 'to', status);
+            return true;
+        },
+
+        /**
+         * Update ONLY the watching info for a friend - does NOT touch status
+         */
+        updateFriendWatchingOnly: function (data) {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return false;
+
+            var friendEl = content.querySelector('.social-friend-item[data-userid="' + data.userId + '"]');
+            if (!friendEl) return false;
+
+            var infoDiv = friendEl.querySelector('.social-friend-info');
+            var existingWatching = friendEl.querySelector('.social-friend-watching');
+
+            if (data.watching) {
+                var watchTitle = data.watching.seriesName
+                    ? data.watching.seriesName + ' ' + data.watching.episodeInfo
+                    : data.watching.title;
+                var itemId = data.watching.itemId;
+                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    '<span class="watching-icon">&#9654;</span> ' +
+                    self.escapeHtml(watchTitle) +
+                    ' <span class="watching-progress">(' + data.watching.position + '/' + data.watching.duration + ')</span>' +
+                    '</div>';
+
+                if (existingWatching) {
+                    existingWatching.outerHTML = watchingHtml;
+                } else if (infoDiv) {
+                    infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
+                }
+                console.log('[Social] Updated watching for', data.userId, 'to', watchTitle);
+            } else if (existingWatching) {
+                existingWatching.remove();
+                console.log('[Social] Cleared watching for', data.userId);
+            }
+
+            return true;
+        },
+
+        /**
+         * Send heartbeat to server - ONLY for online status
+         */
+        sendHeartbeat: function (options) {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            // Heartbeat is now simple - just a ping for online status
+            fetch(baseUrl + '/Social/Heartbeat', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () {
+                // Silently fail - heartbeat is not critical
+            });
+        },
+
+        /**
+         * Send watching info to server (separate from heartbeat/online status)
+         */
+        sendWatching: function (watching) {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            console.log('[Social] Sending watching:', watching.title);
+
+            fetch(baseUrl + '/Social/Watching', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify(watching)
+            }).catch(function () {
+                // Silently fail
+            });
+        },
+
+        /**
+         * Send stop watching to server (separate from heartbeat/online status)
+         */
+        sendStopWatching: function () {
+            if (!window.ApiClient || !ApiClient.accessToken()) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            console.log('[Social] Sending stop watching');
+
+            fetch(baseUrl + '/Social/StopWatching', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () {
+                // Silently fail
+            });
+        },
+
+        /**
+         * Navigate to a media item (when clicking on what friend is watching)
+         */
+        goToMedia: function (itemId) {
+            if (!itemId) return;
+
+            // Close the friends panel
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) panel.classList.remove('open');
+
+            // Navigate to the media item using Jellyfin's router
+            if (window.Emby && Emby.Page) {
+                Emby.Page.showItem(itemId);
+            } else if (window.Dashboard) {
+                Dashboard.navigate('details?id=' + itemId);
+            } else {
+                // Fallback: direct URL navigation
+                window.location.hash = '#!/details?id=' + itemId;
+            }
+        },
+
+        /**
+         * Render the add friend search UI
+         */
+        renderAddFriendSearch: function () {
+            var self = this;
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+
+            content.innerHTML = `
+                <div style="padding: 10px;">
+                    <div style="margin-bottom: 10px; color: #888; font-size: 12px;">Search for users to add as friends</div>
+                    <input type="text" id="social-user-search" placeholder="Enter username..." style="width:100%;padding:10px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#fff;font-size:14px;">
+                    <div id="social-user-results" style="margin-top: 10px;"></div>
+                </div>
+            `;
+
+            var searchInput = document.getElementById('social-user-search');
+            var searchTimeout;
+
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                var query = searchInput.value.trim();
+
+                if (query.length < 2) {
+                    document.getElementById('social-user-results').innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Type at least 2 characters</div>';
+                    return;
+                }
+
+                searchTimeout = setTimeout(function () {
+                    self.searchUsersForFriend(query);
+                }, 300);
+            });
+
+            searchInput.focus();
+        },
+
+        /**
+         * Search for users to add as friend
+         */
+        searchUsersForFriend: function (query) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var resultsDiv = document.getElementById('social-user-results');
+
+            resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Searching...</div>';
+
+            fetch(baseUrl + '/Social/SearchUsers?query=' + encodeURIComponent(query) + '&limit=10', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                self.renderUserSearchResults(data.users || []);
+            })
+            .catch(function () {
+                resultsDiv.innerHTML = '<div style="color:#f44;font-size:12px;padding:10px;">Search failed</div>';
+            });
+        },
+
+        /**
+         * Render user search results
+         */
+        renderUserSearchResults: function (users) {
+            var self = this;
+            var resultsDiv = document.getElementById('social-user-results');
+            if (!resultsDiv) return;
+
+            if (users.length === 0) {
+                resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">No users found</div>';
+                return;
+            }
+
+            var html = '';
+            users.forEach(function (user) {
+                var initial = (user.username || '?')[0].toUpperCase();
+                var buttonHtml;
+
+                if (user.isFriend) {
+                    buttonHtml = '<span style="color:#4caf50;font-size:12px;">Already friends</span>';
+                } else if (user.hasPendingRequest) {
+                    buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
+                } else if (user.hasIncomingRequest) {
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                } else if (user.canSendRequest) {
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                } else {
+                    buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
+                }
+
+                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="justify-content:space-between;cursor:pointer;">' +
+                    '<div style="display:flex;align-items:center;">' +
+                    '<div class="social-friend-avatar">' + initial + '</div>' +
+                    '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
+                    '</div>' +
+                    '<div>' + buttonHtml + '</div>' +
+                    '</div>';
+            });
+
+            resultsDiv.innerHTML = html;
+        },
+
+        /**
+         * Send friend request from search results
+         */
+        sendFriendRequestFromSearch: function (userId, btn) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + userId, {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    btn.textContent = 'Sent!';
+                    btn.style.background = '#4caf50';
+                } else {
+                    btn.textContent = data.error || 'Failed';
+                    btn.style.background = '#f44336';
+                }
+            })
+            .catch(function () {
+                btn.textContent = 'Error';
+                btn.style.background = '#f44336';
+            });
+        },
+
+        /**
+         * Accept incoming request from search results
+         */
+        acceptIncomingFromSearch: function (userId) {
+            var self = this;
+            if (!window.ApiClient) return;
+
+            // Find the request ID for this user
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var request = (data.requests || []).find(function (r) { return r.fromUserId === userId; });
+                    if (request) {
+                        self.acceptFriendRequest(request.id);
+                        // Refresh search results
+                        var searchInput = document.getElementById('social-user-search');
+                        if (searchInput && searchInput.value) {
+                            self.searchUsersForFriend(searchInput.value);
+                        }
+                    }
+                });
+        },
+
+        /**
+         * Filter friends list by search term
+         */
+        filterFriendsList: function (term) {
+            var items = document.querySelectorAll('.social-friend-item, .social-request-item');
+            term = term.toLowerCase();
+            items.forEach(function (item) {
+                var name = item.querySelector('.social-friend-name');
+                if (name) {
+                    var match = name.textContent.toLowerCase().includes(term);
+                    item.style.display = match ? '' : 'none';
+                }
+            });
+        },
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        escapeHtml: function (text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         },
 
         /**
@@ -1492,231 +3515,240 @@
                     font-weight: 600;
                 }
 
-                /* Request Media Button - Aligned with Header */
-                #requestMediaBtn {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 260px !important;
-                    background: rgba(60, 60, 60, 0.9) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    padding: 12px 48px !important;
+                /* Unified Button Group Container */
+                #ratingsButtonGroup {
+                    display: flex !important;
+                    align-items: center !important;
+                    background: rgba(40, 40, 40, 0.95) !important;
                     border-radius: 25px !important;
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
+                    padding: 4px 10px !important;
+                    gap: 4px !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    margin-right: 8px !important;
+                }
+
+                /* Button style inside group */
+                .ratingsGroupBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
                     cursor: pointer !important;
-                    z-index: 999999 !important;
-                    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease !important;
-                    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                    -webkit-animation: pulseButton 2s ease-in-out infinite !important;
-                    -moz-animation: pulseButton 2s ease-in-out infinite !important;
-                    -o-animation: pulseButton 2s ease-in-out infinite !important;
-                    animation: pulseButton 2s ease-in-out infinite !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    position: relative !important;
                 }
 
-                #requestMediaBtn .btn-text {
-                    background: linear-gradient(to right, #9f9f9f 0%, #fff 10%, #868686 20%) !important;
-                    background-size: 200% auto !important;
-                    -webkit-background-clip: text !important;
-                    -webkit-text-fill-color: transparent !important;
-                    background-clip: text !important;
-                    -webkit-text-size-adjust: none !important;
-                    display: inline-block !important;
-                    -webkit-animation: shine 3s linear infinite !important;
-                    -moz-animation: shine 3s linear infinite !important;
-                    -o-animation: shine 3s linear infinite !important;
-                    animation: shine 3s linear infinite !important;
+                .ratingsGroupBtn:hover {
+                    background: rgba(255, 255, 255, 0.15) !important;
                 }
 
-                @keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
+                .ratingsGroupBtn svg {
+                    width: 22px !important;
+                    height: 22px !important;
+                    fill: currentColor !important;
                 }
 
-                @-webkit-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
+                .ratingsGroupBtn.hidden {
+                    display: none !important;
                 }
 
-                @-moz-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @-o-keyframes shine {
-                    0% {
-                        background-position: 0;
-                    }
-                    60% {
-                        background-position: 180px;
-                    }
-                    100% {
-                        background-position: 180px;
-                    }
-                }
-
-                @keyframes pulseButton {
-                    0%, 100% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(102, 126, 234, 0.7);
-                    }
-                    50% {
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 8px rgba(102, 126, 234, 0);
-                    }
+                /* Request Media Button - Header Button Style */
+                #requestMediaBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    font-size: 24px !important;
                 }
 
                 #requestMediaBtn:hover {
-                    background: rgba(70, 70, 70, 0.95) !important;
-                    border-color: rgba(255, 255, 255, 0.3) !important;
-                    transform: scale(1.05) !important;
+                    background: rgba(255, 255, 255, 0.15) !important;
                 }
 
                 #requestMediaBtn.hidden {
                     display: none !important;
                 }
 
-                /* Mobile Responsive - Dynamic scaling handled by JavaScript */
+                #requestMediaBtn svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
+                }
+
+                /* Request Media Badge */
+                .request-media-badge {
+                    position: absolute !important;
+                    top: 2px !important;
+                    right: 2px !important;
+                    background: #e91e63 !important;
+                    color: #fff !important;
+                    font-size: 9px !important;
+                    font-weight: 700 !important;
+                    min-width: 16px !important;
+                    height: 16px !important;
+                    border-radius: 8px !important;
+                    display: none !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 0 4px !important;
+                }
+
+                .request-media-badge.visible {
+                    display: flex !important;
+                }
+
+                /* Mobile Responsive */
                 @media screen and (max-width: 925px) {
-                    /* Reduce spacing between header buttons on mobile */
-                    .headerRight {
-                        gap: 2px !important;
+                    #ratingsButtonGroup {
+                        padding: 3px 6px !important;
+                        gap: 1px !important;
+                        margin-right: 4px !important;
                     }
 
-                    .headerRight > button,
-                    .headerRight > .paper-icon-button-light {
-                        padding: 6px !important;
-                        margin: 0 !important;
+                    #ratingsButtonGroup > button {
+                        padding: 5px !important;
                     }
 
-                    #requestMediaBtn {
-                        padding: 8px 16px !important;
-                        font-size: 16px !important;
-                        border-radius: 55px !important;
-                        right: 6px !important;
-                    }
-
-                    #requestMediaBtn .btn-text {
-                        font-size: 16px !important;
-                    }
-
-                    .request-badge {
-                        width: 16px !important;
-                        height: 16px !important;
-                        font-size: 9px !important;
-                        top: -5px !important;
-                        right: -5px !important;
-                    }
-
-                    #latestMediaBtn,
-                    #chatBtn {
-                        padding: 6px !important;
-                        height: 36px !important;
-                        width: 36px !important;
-                        min-width: 36px !important;
-                        margin-right: 2px !important;
-                    }
-
-                    #latestMediaBtn svg,
-                    #chatBtn svg {
+                    #ratingsButtonGroup svg {
                         width: 20px !important;
                         height: 20px !important;
                     }
 
-                    /* Notification toggle bell - move left and up on mobile */
-                    #notificationToggleIcon {
-                        margin-right: 8px !important;
-                        margin-top: -5px !important;
+                    #headerSearchInput {
+                        width: 100px !important;
                     }
                 }
 
-                /* Notification Badge */
-                .request-badge {
-                    position: absolute !important;
-                    top: -8px !important;
-                    right: -8px !important;
-                    background: #ff4444 !important;
-                    color: white !important;
-                    border-radius: 50% !important;
-                    width: 22px !important;
-                    height: 22px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    font-size: 11px !important;
-                    font-weight: 700 !important;
-                    border: 2px solid #1e1e1e !important;
-                    animation: badgePulse 1.5s ease-in-out infinite !important;
-                }
-
-                @keyframes badgePulse {
-                    0%, 100% {
-                        transform: scale(1);
+                /* Mobile - Second header row - Full width bar */
+                @media screen and (max-width: 600px) {
+                    #ratingsButtonGroup {
+                        position: fixed !important;
+                        top: 56px !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        transform: none !important;
+                        margin: 0 !important;
+                        border-radius: 0 !important;
+                        justify-content: center !important;
+                        background: rgba(30, 30, 30, 0.98) !important;
+                        border: none !important;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        padding: 8px 12px !important;
+                        gap: 8px !important;
+                        z-index: 999 !important;
+                        width: 100% !important;
+                        max-width: none !important;
+                        box-sizing: border-box !important;
                     }
-                    50% {
-                        transform: scale(1.1);
+
+                    #ratingsButtonGroup > button,
+                    #ratingsButtonGroup > .ratingsGroupBtn,
+                    #ratingsButtonGroup > div,
+                    #ratingsButtonGroup #notificationToggle,
+                    #ratingsButtonGroup #requestMediaBtn,
+                    #ratingsButtonGroup #latestMediaBtn,
+                    #ratingsButtonGroup #mediaManagementBtn,
+                    #ratingsButtonGroup #chatBtn {
+                        padding: 6px !important;
+                        position: relative !important;
+                        left: auto !important;
+                        right: auto !important;
+                        top: auto !important;
+                        bottom: auto !important;
+                        transform: none !important;
+                    }
+
+                    #ratingsButtonGroup svg {
+                        width: 22px !important;
+                        height: 22px !important;
+                    }
+
+                    #headerSearchField {
+                        flex: 1 1 auto !important;
+                        max-width: 150px !important;
+                        background: rgba(255, 255, 255, 0.1) !important;
+                        border-radius: 15px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 100% !important;
+                    }
+
+                    /* Push ALL content down to account for second header bar */
+                    .skinBody {
+                        padding-top: 48px !important;
+                    }
+
+                    .mainAnimatedPages {
+                        margin-top: 48px !important;
+                    }
+
+                    .view, .page {
+                        padding-top: 48px !important;
+                    }
+
+                    /* Push Home/Favorites tabs container down - use padding on parent */
+                    .tabs-viewmenubar.emby-tabs {
+                        padding-top: 56px !important;
+                    }
+
+                    /* Reset any extra margins on slider */
+                    .emby-tabs-slider {
+                        margin-top: 0 !important;
                     }
                 }
 
-                /* Button Tooltip */
-                #requestMediaBtn::after {
-                    content: attr(data-tooltip) !important;
-                    position: absolute !important;
-                    bottom: -45px !important;
-                    left: 50% !important;
-                    transform: translateX(-50%) !important;
-                    background: rgba(0, 0, 0, 0.95) !important;
-                    color: #fff !important;
-                    padding: 8px 12px !important;
-                    border-radius: 6px !important;
-                    font-size: 12px !important;
-                    white-space: nowrap !important;
-                    opacity: 0 !important;
-                    pointer-events: none !important;
-                    transition: opacity 0.3s ease !important;
-                    z-index: 10000000 !important;
+                /* Very small mobile */
+                @media screen and (max-width: 450px) {
+                    #ratingsButtonGroup {
+                        padding: 6px 8px !important;
+                        gap: 4px !important;
+                    }
+
+                    #ratingsButtonGroup > button,
+                    #ratingsButtonGroup > .ratingsGroupBtn {
+                        padding: 5px !important;
+                    }
+
+                    #ratingsButtonGroup svg {
+                        width: 20px !important;
+                        height: 20px !important;
+                    }
+
+                    #headerSearchField {
+                        max-width: 100px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 70px !important;
+                    }
                 }
 
-                #requestMediaBtn:hover::after {
-                    opacity: 1 !important;
-                }
-
-                /* Search Field in Header */
+                /* Search Field in Header - Part of button group */
                 #headerSearchField {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 480px !important;
-                    z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
-                    background: rgba(60, 60, 60, 0.9) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                    border-radius: 25px !important;
-                    padding: 8px 16px !important;
-                    transition: all 0.3s ease !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    border: none !important;
+                    border-radius: 15px !important;
+                    padding: 4px 10px !important;
+                    margin: 0 2px !important;
+                    transition: all 0.2s ease !important;
                 }
 
-                #headerSearchField:hover {
-                    background: rgba(70, 70, 70, 0.95) !important;
-                    border-color: rgba(255, 255, 255, 0.4) !important;
+                #headerSearchField:hover,
+                #headerSearchField:focus-within {
+                    background: rgba(255, 255, 255, 0.2) !important;
                 }
 
                 #headerSearchField.hidden {
@@ -1724,11 +3756,11 @@
                 }
 
                 #headerSearchIcon {
-                    font-size: 18px !important;
-                    margin-right: 8px !important;
+                    font-size: 14px !important;
+                    margin-right: 6px !important;
                     cursor: pointer !important;
-                    opacity: 0.8 !important;
-                    transition: opacity 0.3s ease !important;
+                    opacity: 0.7 !important;
+                    transition: opacity 0.2s ease !important;
                 }
 
                 #headerSearchIcon:hover {
@@ -1741,10 +3773,10 @@
                     border: none !important;
                     outline: none !important;
                     color: #fff !important;
-                    font-size: 14px !important;
+                    font-size: 13px !important;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                    width: 200px !important;
-                    padding: 4px 0 !important;
+                    width: 140px !important;
+                    padding: 2px 0 !important;
                     -webkit-appearance: none !important;
                     -moz-appearance: none !important;
                     appearance: none !important;
@@ -1770,22 +3802,59 @@
                     color: rgba(255, 255, 255, 0.5) !important;
                 }
 
-                /* Mobile Responsive for Search Field - Dynamic scaling handled by JavaScript */
-                @media screen and (max-width: 925px) {
+                /* Mobile Responsive for Search Field */
+                @media screen and (max-width: 768px) {
                     #headerSearchField {
-                        left: 6px !important;
-                        right: auto !important;
-                        padding: 8px 16px !important;
+                        padding: 4px 8px !important;
+                        margin: 0 2px !important;
                     }
 
                     #headerSearchInput {
-                        width: 100px !important;
-                        font-size: 14px !important;
+                        width: 80px !important;
+                        font-size: 12px !important;
                     }
 
                     #headerSearchIcon {
-                        font-size: 18px !important;
-                        margin-right: 8px !important;
+                        font-size: 12px !important;
+                        margin-right: 4px !important;
+                    }
+                }
+
+                @media screen and (max-width: 600px) {
+                    #headerSearchField {
+                        padding: 3px 6px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 60px !important;
+                        font-size: 11px !important;
+                    }
+
+                    #headerSearchIcon {
+                        font-size: 11px !important;
+                        margin-right: 3px !important;
+                    }
+                }
+
+                @media screen and (max-width: 500px) {
+                    #headerSearchField {
+                        padding: 2px 5px !important;
+                    }
+
+                    #headerSearchInput {
+                        width: 50px !important;
+                        font-size: 10px !important;
+                    }
+
+                    #headerSearchIcon {
+                        font-size: 10px !important;
+                        margin-right: 2px !important;
+                    }
+                }
+
+                @media screen and (max-width: 400px) {
+                    #headerSearchField {
+                        display: none !important;
                     }
                 }
 
@@ -1904,27 +3973,22 @@
                     }
                 }
 
-                /* Notification Toggle Styles - Positioned LEFT of search field */
-                /* Search field: right:480px, ~258px wide = ends at ~738px from right */
-                /* Toggle must be at right:750px+ to be LEFT of search */
+                /* Notification Toggle - Header Button Style */
                 #notificationToggle {
-                    position: absolute !important;
-                    top: 8px;
-                    right: 755px !important;
-                    z-index: 999998 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
-                    padding: 4px !important;
                     cursor: pointer !important;
-                    overflow: visible !important;
-                    transition: opacity 0.2s ease !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
                 }
 
                 #notificationToggle:hover {
-                    opacity: 0.7 !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 #notificationToggle.hidden {
@@ -1932,9 +3996,15 @@
                 }
 
                 #notificationToggleIcon {
-                    font-size: 25px !important;
-                    opacity: 0.8 !important;
-                    position: relative !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+
+                #notificationToggleIcon svg {
+                    width: 24px !important;
+                    height: 24px !important;
+                    fill: currentColor !important;
                 }
 
                 /* Red cross lines when notifications disabled */
@@ -1944,12 +4014,11 @@
                     position: absolute !important;
                     top: 50% !important;
                     left: 50% !important;
-                    width: 3px !important;
-                    height: 34px !important;
+                    width: 2px !important;
+                    height: 24px !important;
                     background: #ff1744 !important;
                     border-radius: 2px !important;
                     pointer-events: none !important;
-                    box-shadow: 0 0 4px rgba(255, 23, 68, 0.6) !important;
                 }
 
                 #notificationToggle.disabled::before {
@@ -1983,42 +4052,20 @@
                     visibility: visible !important;
                 }
 
-                /* Mobile Responsive for Notification Toggle - LEFT of Request button */
-                @media screen and (max-width: 925px) {
+                /* Mobile Responsive for Notification Toggle */
+                @media screen and (max-width: 768px) {
                     #notificationToggle {
-                        position: absolute !important;
-                        top: 60px !important;
-                        left: auto !important;
-                        right: 150px !important;
-                    }
-                }
-
-                @media screen and (max-width: 590px) {
-                    #notificationToggle {
-                        position: absolute !important;
-                        top: 62px !important;
-                        right: 130px !important;
+                        padding: 6px !important;
                     }
 
-                    #notificationToggleIcon {
-                        font-size: 16px !important;
+                    #notificationToggleIcon svg {
+                        width: 20px !important;
+                        height: 20px !important;
                     }
 
                     #notificationToggle.disabled::before,
                     #notificationToggle.disabled::after {
-                        height: 20px !important;
-                    }
-                }
-
-                @media screen and (max-width: 470px) {
-                    #notificationToggle {
-                        position: absolute !important;
-                        top: 16px !important;
-                        right: 180px !important;
-                    }
-
-                    #notificationToggleIcon {
-                        font-size: 16px !important;
+                        height: 18px !important;
                     }
                 }
 
@@ -7904,6 +9951,784 @@
                     color: #666 !important;
                     font-size: 14px !important;
                 }
+
+                /* Friends Button - Floating */
+                .social-friends-btn {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00a4dc 0%, #0078a8 100%);
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                    z-index: 9999;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    touch-action: none;
+                }
+                .social-friends-btn:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+                }
+                .social-friends-btn.dragging {
+                    cursor: grabbing;
+                    transform: scale(1.05);
+                    opacity: 0.9;
+                }
+                .social-friends-btn svg {
+                    width: 26px;
+                    height: 26px;
+                    fill: white;
+                }
+                .social-friends-btn .badge {
+                    position: absolute;
+                    top: -4px;
+                    right: -4px;
+                    background: #e91e63;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: bold;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0 4px;
+                }
+                .social-friends-btn .badge.hidden {
+                    display: none;
+                }
+
+                /* Friends Panel */
+                .social-friends-panel {
+                    position: fixed;
+                    bottom: 80px;
+                    right: 20px;
+                    width: 320px;
+                    height: 450px;
+                    min-width: 280px;
+                    min-height: 300px;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                    z-index: 9998;
+                    display: none;
+                    flex-direction: column;
+                    overflow: hidden;
+                    border: 1px solid #333;
+                }
+                .social-panel-resize {
+                    position: absolute;
+                    bottom: 4px;
+                    left: 4px;
+                    width: 12px;
+                    height: 12px;
+                    cursor: sw-resize;
+                }
+                .social-panel-resize::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 10px;
+                    left: 0;
+                    width: 3px;
+                    height: 3px;
+                    border-radius: 50%;
+                    background: #666;
+                    box-shadow:
+                        0 5px 0 #666,
+                        5px 5px 0 #666,
+                        0 10px 0 #666,
+                        5px 10px 0 #666,
+                        10px 10px 0 #666;
+                }
+                .social-panel-resize:hover::after {
+                    background: #999;
+                    box-shadow:
+                        0 5px 0 #999,
+                        5px 5px 0 #999,
+                        0 10px 0 #999,
+                        5px 10px 0 #999,
+                        10px 10px 0 #999;
+                }
+                .social-friends-panel.open {
+                    display: flex;
+                }
+                .social-panel-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 16px;
+                    background: #252525;
+                    border-bottom: 1px solid #333;
+                }
+                .social-panel-header h3 {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .social-panel-close {
+                    background: none;
+                    border: none;
+                    color: #888;
+                    font-size: 20px;
+                    cursor: pointer;
+                    padding: 0;
+                    line-height: 1;
+                }
+                .social-panel-close:hover {
+                    color: #fff;
+                }
+                .social-panel-tabs {
+                    display: flex;
+                    border-bottom: 1px solid #333;
+                    flex-shrink: 0;
+                    overflow-x: auto;
+                }
+                .social-panel-tab {
+                    flex: 0 0 auto;
+                    padding: 8px 10px;
+                    background: none;
+                    border: none;
+                    color: #888;
+                    font-size: 12px;
+                    cursor: pointer;
+                    position: relative;
+                    transition: color 0.2s, background 0.2s;
+                    white-space: nowrap;
+                }
+                .social-panel-tab:hover {
+                    background: #252525;
+                    color: #fff;
+                }
+                .social-panel-tab.active {
+                    color: #00a4dc;
+                    border-bottom: 2px solid #00a4dc;
+                }
+                .social-panel-tab .tab-badge {
+                    display: inline-block;
+                    background: #e91e63;
+                    color: white;
+                    font-size: 10px;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    margin-left: 2px;
+                    vertical-align: middle;
+                    min-width: 16px;
+                    text-align: center;
+                }
+                .social-panel-content {
+                    flex: 1;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    padding: 8px;
+                    min-height: 200px;
+                }
+                .social-panel-search {
+                    padding: 8px;
+                    border-bottom: 1px solid #333;
+                }
+                .social-panel-search input {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    font-size: 13px;
+                }
+                .social-panel-search input::placeholder {
+                    color: #666;
+                }
+                .social-friend-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .social-friend-item:hover {
+                    background: #252525;
+                }
+                .social-friend-avatar {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    background: #444;
+                    margin-right: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    color: #888;
+                    position: relative;
+                }
+                .social-friend-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                }
+                .social-status-dot {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    border: 2px solid #1a1a1a;
+                }
+                .social-status-dot.online { background: #4caf50; }
+                .social-status-dot.away { background: #ff9800; }
+                .social-status-dot.dnd { background: #f44336; }
+                .social-status-dot.offline { background: #666; }
+                .social-friend-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .social-friend-name {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #fff;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-friend-name.clickable {
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+                .social-friend-name.clickable:hover {
+                    color: #00a4dc;
+                }
+                .social-friend-status {
+                    font-size: 12px;
+                    color: #888;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-friend-watching {
+                    font-size: 11px;
+                    color: #00a4dc;
+                    margin-top: 2px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .social-friend-watching.clickable {
+                    cursor: pointer;
+                    padding: 2px 4px;
+                    margin: 2px -4px 0;
+                    border-radius: 4px;
+                    transition: background 0.2s;
+                }
+                .social-friend-watching.clickable:hover {
+                    background: rgba(0, 164, 220, 0.15);
+                }
+                .social-friend-watching .watching-icon {
+                    font-size: 8px;
+                }
+                .social-friend-watching .watching-progress {
+                    color: #666;
+                    font-size: 10px;
+                }
+                .social-request-item {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 10px;
+                    border-radius: 8px;
+                    background: #252525;
+                    margin-bottom: 8px;
+                }
+                .social-request-info {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 8px;
+                }
+                .social-request-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .social-request-actions button {
+                    flex: 1;
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                }
+                .social-request-actions button:hover {
+                    opacity: 0.9;
+                }
+                .social-btn-accept {
+                    background: #4caf50;
+                    color: white;
+                }
+                .social-btn-reject {
+                    background: #666;
+                    color: white;
+                }
+                .social-btn-cancel {
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    padding: 6px 14px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .social-btn-cancel:hover {
+                    background: #d32f2f;
+                }
+                .social-btn-unblock {
+                    background: #2196F3;
+                    color: white;
+                    border: none;
+                    padding: 6px 14px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .social-btn-unblock:hover {
+                    background: #1976D2;
+                }
+                .social-friend-actions {
+                    display: flex;
+                    align-items: center;
+                    margin-left: auto;
+                }
+                .social-action-btn {
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    cursor: pointer;
+                    font-size: 18px;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                }
+                .social-action-btn:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                }
+                .social-friend-menu {
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    overflow: hidden;
+                    min-width: 100px;
+                }
+                .social-friend-menu button {
+                    display: block;
+                    width: 100%;
+                    padding: 10px 15px;
+                    background: transparent;
+                    border: none;
+                    color: #fff;
+                    text-align: left;
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+                .social-friend-menu button:hover {
+                    background: rgba(255,255,255,0.1);
+                }
+                .social-section-title {
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #888;
+                    text-transform: uppercase;
+                    padding: 8px 12px 4px;
+                    letter-spacing: 0.5px;
+                }
+                .social-requests-section {
+                    margin-bottom: 10px;
+                }
+                .social-empty-state {
+                    text-align: center;
+                    padding: 30px 20px;
+                    color: #666;
+                }
+                .social-empty-state svg {
+                    width: 48px;
+                    height: 48px;
+                    fill: #444;
+                    margin-bottom: 12px;
+                }
+
+                /* Privacy Settings */
+                .privacy-settings-container {
+                    padding: 8px 4px;
+                }
+                .privacy-presets-section {
+                    margin-bottom: 16px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #333;
+                }
+                .privacy-section-title {
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #888;
+                    text-transform: uppercase;
+                    padding: 8px 4px 8px;
+                    letter-spacing: 0.5px;
+                }
+                .privacy-presets-buttons {
+                    display: flex;
+                    gap: 8px;
+                    padding: 0 4px;
+                }
+                .privacy-preset-btn {
+                    flex: 1;
+                    padding: 10px 8px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #252525;
+                    color: #fff;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .privacy-preset-btn:hover {
+                    background: #333;
+                    border-color: #00a4dc;
+                    color: #00a4dc;
+                }
+                .privacy-setting-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 8px;
+                    border-radius: 6px;
+                    margin-bottom: 4px;
+                }
+                .privacy-setting-row:hover {
+                    background: #252525;
+                }
+                .privacy-setting-label {
+                    font-size: 13px;
+                    color: #ddd;
+                }
+                .privacy-setting-select {
+                    padding: 6px 12px;
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    font-size: 12px;
+                    cursor: pointer;
+                    min-width: 100px;
+                }
+                .privacy-setting-select:hover {
+                    border-color: #555;
+                }
+                .privacy-setting-select:focus {
+                    outline: none;
+                    border-color: #00a4dc;
+                }
+
+                /* Notification items */
+                .social-notification-item {
+                    display: flex;
+                    align-items: flex-start;
+                    padding: 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    margin-bottom: 4px;
+                }
+                .social-notification-item:hover {
+                    background: #252525;
+                }
+                .social-notification-item.unread {
+                    background: rgba(0, 164, 220, 0.1);
+                    border-left: 3px solid #00a4dc;
+                }
+                .social-notification-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #333;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 10px;
+                    flex-shrink: 0;
+                }
+                .social-notification-icon svg {
+                    width: 18px;
+                    height: 18px;
+                }
+                .social-notification-item.unread .social-notification-icon {
+                    background: #00a4dc;
+                }
+                .social-notification-item.unread .social-notification-icon svg {
+                    fill: white;
+                }
+                .social-notification-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .social-notification-message {
+                    font-size: 13px;
+                    color: #ddd;
+                    line-height: 1.4;
+                }
+                .social-notification-time {
+                    font-size: 11px;
+                    color: #666;
+                    margin-top: 2px;
+                }
+
+                /* User Profile Page */
+                .social-profile-page {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: #101010;
+                    z-index: 99999;
+                    overflow-y: auto;
+                    animation: profileFadeIn 0.2s ease;
+                }
+                @keyframes profileFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .social-profile-container {
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .social-profile-back {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #888;
+                    font-size: 14px;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                    margin-bottom: 20px;
+                }
+                .social-profile-back:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                }
+                .social-profile-back svg {
+                    width: 20px;
+                    height: 20px;
+                    fill: currentColor;
+                }
+                .social-profile-header {
+                    display: flex;
+                    gap: 24px;
+                    padding: 30px;
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    margin-bottom: 20px;
+                }
+                .social-profile-avatar-large {
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00a4dc, #0077b6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 48px;
+                    font-weight: 600;
+                    color: #fff;
+                    flex-shrink: 0;
+                    position: relative;
+                }
+                .social-profile-avatar-large .social-status-dot {
+                    position: absolute;
+                    bottom: 8px;
+                    right: 8px;
+                    width: 20px;
+                    height: 20px;
+                    border: 3px solid #1a1a1a;
+                }
+                .social-profile-info {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                .social-profile-username {
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 8px;
+                }
+                .social-profile-bio {
+                    color: #888;
+                    font-size: 15px;
+                    margin-bottom: 12px;
+                    max-width: 400px;
+                }
+                .social-profile-meta {
+                    display: flex;
+                    gap: 20px;
+                    color: #666;
+                    font-size: 13px;
+                }
+                .social-profile-meta span {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .social-profile-meta svg {
+                    width: 16px;
+                    height: 16px;
+                    fill: currentColor;
+                }
+                .social-profile-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    justify-content: center;
+                }
+                .social-profile-btn {
+                    padding: 10px 24px;
+                    border-radius: 6px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                    min-width: 140px;
+                }
+                .social-profile-btn.primary {
+                    background: #00a4dc;
+                    color: #fff;
+                }
+                .social-profile-btn.primary:hover {
+                    background: #008ec4;
+                }
+                .social-profile-btn.secondary {
+                    background: #333;
+                    color: #fff;
+                }
+                .social-profile-btn.secondary:hover {
+                    background: #444;
+                }
+                .social-profile-btn.danger {
+                    background: #d32f2f;
+                    color: #fff;
+                }
+                .social-profile-btn.danger:hover {
+                    background: #b71c1c;
+                }
+                .social-profile-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                .social-profile-tabs {
+                    display: flex;
+                    gap: 0;
+                    border-bottom: 1px solid #333;
+                    margin-bottom: 20px;
+                }
+                .social-profile-tab {
+                    padding: 12px 24px;
+                    color: #888;
+                    font-size: 14px;
+                    cursor: pointer;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.2s;
+                }
+                .social-profile-tab:hover {
+                    color: #fff;
+                }
+                .social-profile-tab.active {
+                    color: #00a4dc;
+                    border-bottom-color: #00a4dc;
+                }
+                .social-profile-content {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 20px;
+                    min-height: 200px;
+                }
+                .social-profile-loading {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 60px;
+                    color: #666;
+                }
+                .social-profile-error {
+                    text-align: center;
+                    padding: 40px;
+                    color: #888;
+                }
+                .social-profile-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: 16px;
+                    padding: 10px;
+                }
+                .social-stat-card {
+                    background: #252525;
+                    border-radius: 10px;
+                    padding: 20px;
+                    text-align: center;
+                    transition: transform 0.2s, background 0.2s;
+                }
+                .social-stat-card:hover {
+                    background: #2a2a2a;
+                    transform: translateY(-2px);
+                }
+                .social-stat-value {
+                    font-size: 32px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 8px;
+                }
+                .social-stat-star {
+                    color: #ffd700;
+                    font-size: 24px;
+                    margin-left: 4px;
+                }
+                .social-stat-label {
+                    font-size: 13px;
+                    color: #888;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                @media (max-width: 768px) {
+                    .social-profile-header {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                    }
+                    .social-profile-bio {
+                        max-width: none;
+                    }
+                    .social-profile-meta {
+                        justify-content: center;
+                        flex-wrap: wrap;
+                    }
+                    .social-profile-actions {
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        justify-content: center;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -7977,11 +10802,392 @@
             // Close chat window and moderator panel on page navigation
             this.closeChatOnPageChange();
 
+            // Close profile page on navigation
+            this.closeProfilePage();
+
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
             }
+        },
+
+        /**
+         * Navigate to a user's profile page (opens as modal overlay)
+         */
+        navigateToProfile: function (userId) {
+            if (!userId) return;
+            // Close friends panel when opening profile
+            var panel = document.getElementById('social-friends-panel');
+            if (panel) panel.classList.remove('open');
+            // Show profile as modal
+            this.showProfilePage(userId);
+        },
+
+        /**
+         * Show the profile page for a user
+         */
+        showProfilePage: function (userId) {
+            var self = this;
+            var existing = document.getElementById('socialProfilePage');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Track which profile we're viewing
+            self._viewingProfileUserId = userId;
+
+            // Register as viewer for real-time updates
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Social/Profile/' + userId + '/View', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () { /* ignore errors */ });
+
+            // Create profile page container
+            var page = document.createElement('div');
+            page.id = 'socialProfilePage';
+            page.className = 'social-profile-page';
+            page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
+            document.body.appendChild(page);
+
+            // Fetch profile data
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            Promise.all([
+                fetch(baseUrl + '/Social/Profile/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/Block/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasBlocked: false, isBlockedBy: false }; }),
+                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+            ]).then(function (results) {
+                var profile = results[0];
+                var friendsData = results[1];
+                var outgoingRequests = results[2];
+                var incomingRequests = results[3];
+                var blockStatus = results[4];
+                var onlineData = results[5];
+
+                if (!profile) {
+                    self.renderProfileError(page, 'User not found');
+                    return;
+                }
+
+                // Determine relationship status
+                var isSelf = profile.userId === ApiClient.getCurrentUserId();
+                var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
+                var hasPendingOutgoing = (outgoingRequests.requests || []).some(function (r) { return (r.ToUserId || r.toUserId) === userId; });
+                var hasPendingIncoming = (incomingRequests.requests || []).find(function (r) { return (r.FromUserId || r.fromUserId) === userId; });
+                var hasBlocked = blockStatus.hasBlocked || false;
+                var isBlockedBy = blockStatus.isBlockedBy || false;
+
+                // Get online status
+                var onlineStatus = 'Offline';
+                var friendStatus = (onlineData.friends || []).find(function (f) { return f.userId === userId; });
+                if (friendStatus) {
+                    onlineStatus = friendStatus.status || 'Offline';
+                }
+
+                self.renderProfilePage(page, profile, {
+                    isSelf: isSelf,
+                    isFriend: isFriend,
+                    hasPendingOutgoing: hasPendingOutgoing,
+                    hasPendingIncoming: hasPendingIncoming,
+                    incomingRequestId: hasPendingIncoming ? (hasPendingIncoming.Id || hasPendingIncoming.id) : null,
+                    hasBlocked: hasBlocked,
+                    isBlockedBy: isBlockedBy,
+                    onlineStatus: onlineStatus
+                });
+            }).catch(function (err) {
+                console.error('[Social] Profile load failed:', err);
+                self.renderProfileError(page, 'Failed to load profile');
+            });
+        },
+
+        /**
+         * Render profile page error
+         */
+        renderProfileError: function (page, message) {
+            var container = page.querySelector('.social-profile-container');
+            if (container) {
+                container.innerHTML = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
+            }
+        },
+
+        /**
+         * Render the full profile page
+         */
+        renderProfilePage: function (page, profile, status) {
+            var self = this;
+            var container = page.querySelector('.social-profile-container');
+            if (!container) return;
+
+            var username = profile.username || 'Unknown';
+            var initial = username[0].toUpperCase();
+            var bio = profile.bio || 'No bio yet.';
+            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown';
+            var lastSeenDate = profile.updatedAt || profile.lastSeen;
+            var lastSeen = lastSeenDate ? this.formatTimeAgo(new Date(lastSeenDate)) : (status.onlineStatus === 'Online' ? 'now' : 'Unknown');
+            var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
+
+            // Build action buttons based on relationship
+            var actionsHtml = '';
+            if (status.isSelf) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
+            } else if (status.hasBlocked) {
+                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + profile.userId + '\')">Unblock</button>';
+            } else if (status.isBlockedBy) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
+            } else if (status.isFriend) {
+                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + profile.userId + '\', \'' + self.escapeHtml(username).replace(/'/g, "\\'") + '\')">Remove Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+            } else if (status.hasPendingOutgoing) {
+                actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
+            } else if (status.hasPendingIncoming) {
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + status.incomingRequestId + '\')">Accept Request</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + status.incomingRequestId + '\')">Reject</button>';
+            } else {
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + profile.userId + '\')">Add Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+            }
+
+            var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
+                '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="social-profile-header">' +
+                '<div class="social-profile-avatar-large">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                '<div class="social-profile-info">' +
+                '<div class="social-profile-username">' + self.escapeHtml(username) + '</div>' +
+                '<div class="social-profile-bio">' + self.escapeHtml(bio) + '</div>' +
+                '<div class="social-profile-meta">' +
+                '<span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' + statusText + '</span>' +
+                '<span><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>Joined ' + memberSince + '</span>' +
+                '<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>Last seen ' + lastSeen + '</span>' +
+                '</div></div>' +
+                '<div class="social-profile-actions">' + actionsHtml + '</div></div>' +
+                '<div class="social-profile-tabs">' +
+                '<div class="social-profile-tab active" data-tab="overview">Overview</div>' +
+                '</div>' +
+                '<div class="social-profile-content" id="socialProfileContent">' +
+                '<div class="social-profile-loading">Loading stats...</div>' +
+                '</div>';
+
+            container.innerHTML = html;
+
+            // Fetch and render stats
+            self.loadProfileStats(profile.userId);
+        },
+
+        /**
+         * Load and render profile stats
+         */
+        loadProfileStats: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (stats) {
+                self.renderProfileStats(stats);
+            })
+            .catch(function (err) {
+                console.error('[Social] Failed to load stats:', err);
+                var content = document.getElementById('socialProfileContent');
+                if (content) {
+                    content.innerHTML = '<div class="social-profile-error">Failed to load stats</div>';
+                }
+            });
+        },
+
+        /**
+         * Render profile stats in the Overview tab
+         */
+        renderProfileStats: function (stats) {
+            var content = document.getElementById('socialProfileContent');
+            if (!content) return;
+
+            var html = '<div class="social-profile-stats-grid">' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.moviesWatched || 0) + '</div>' +
+                '<div class="social-stat-label">Movies Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.seriesWatched || 0) + '</div>' +
+                '<div class="social-stat-label">Series Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.totalWatchHours || 0) + '</div>' +
+                '<div class="social-stat-label">Hours Watched</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.friendsCount || 0) + '</div>' +
+                '<div class="social-stat-label">Friends</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.ratingsCount || 0) + '</div>' +
+                '<div class="social-stat-label">Ratings Given</div>' +
+                '</div>' +
+                '<div class="social-stat-card">' +
+                '<div class="social-stat-value">' + (stats.averageRating || 0) + '<span class="social-stat-star">★</span></div>' +
+                '<div class="social-stat-label">Avg Rating</div>' +
+                '</div>' +
+                '</div>';
+
+            content.innerHTML = html;
+        },
+
+        /**
+         * Format time ago for profile
+         */
+        formatTimeAgo: function (date) {
+            var now = new Date();
+            var diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+            return date.toLocaleDateString();
+        },
+
+        /**
+         * Close the profile page
+         */
+        closeProfilePage: function () {
+            var self = this;
+            var page = document.getElementById('socialProfilePage');
+            if (page) {
+                page.remove();
+            }
+
+            // Unregister as viewer
+            if (self._viewingProfileUserId) {
+                self._viewingProfileUserId = null;
+                var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                fetch(baseUrl + '/Social/Profile/View', {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: headers
+                }).catch(function () { /* ignore errors */ });
+            }
+        },
+
+        /**
+         * Profile page action: Send friend request
+         */
+        profileSendRequest: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        // Refresh the profile page
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Accept friend request
+         */
+        profileAcceptRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = self.getProfileUserIdFromUrl();
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success && userId) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Reject friend request
+         */
+        profileRejectRequest: function (requestId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = self.getProfileUserIdFromUrl();
+
+            fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success && userId) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Remove friend
+         */
+        profileRemoveFriend: function (userId, username) {
+            var self = this;
+            if (!confirm('Remove ' + username + ' from your friends list?')) {
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Block user
+         */
+        profileBlockUser: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
+        },
+
+        /**
+         * Profile page action: Unblock user
+         */
+        profileUnblockUser: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Block/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        self.showProfilePage(userId);
+                    }
+                });
         },
 
         /**
@@ -8863,13 +12069,24 @@
                     return;
                 }
 
-                // Create button with position relative for badge
+                const buttonGroup = document.getElementById('ratingsButtonGroup');
+                if (!buttonGroup) {
+                    // Retry later if button group not found
+                    setTimeout(() => self.initRequestButton(), 500);
+                    return;
+                }
+
+                // Create button matching header button style
                 const btn = document.createElement('button');
                 btn.id = 'requestMediaBtn';
-                btn.style.position = 'relative';
-                btn.innerHTML = '<span class="btn-text">' + self.t('requestMedia') + '</span>';
+                btn.className = 'ratingsGroupBtn';
                 btn.setAttribute('type', 'button');
-                btn.setAttribute('data-tooltip', 'Request movies or TV series from admin');
+                btn.setAttribute('title', self.t('requestMedia'));
+                btn.style.position = 'relative';
+                // Plus/request icon - movie reel with plus
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg><span id="requestMediaBadge" class="request-media-badge"></span>`;
 
                 // Update badge periodically
                 self.updateRequestBadge(btn);
@@ -8888,15 +12105,8 @@
                     </div>
                 `;
 
-                // Add to DOM - append to header container so they scroll with header
-                const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                if (headerContainer) {
-                    // Make header container position relative so absolute positioning works
-                    headerContainer.style.position = 'relative';
-                    headerContainer.appendChild(btn);
-                } else {
-                    document.body.appendChild(btn);
-                }
+                // Insert into button group
+                buttonGroup.appendChild(btn);
                 document.body.appendChild(modal);
 
                 // Button click - wrapped in try-catch
@@ -9203,13 +12413,18 @@
                         searchContainer.appendChild(searchIcon);
                         searchContainer.appendChild(searchInput);
 
-                        // Append to header container so it scrolls with header
-                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                        if (headerContainer) {
-                            headerContainer.style.position = 'relative';
-                            headerContainer.appendChild(searchContainer);
+                        // Append to button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(searchContainer);
                         } else {
-                            document.body.appendChild(searchContainer);
+                            // Fallback to headerRight if button group doesn't exist
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(searchContainer, headerRight.firstChild);
+                            } else {
+                                document.body.appendChild(searchContainer);
+                            }
                         }
 
                         // Trigger responsive scaling after element is added (fixes mobile positioning)
@@ -9399,6 +12614,34 @@
         },
 
         /**
+         * Initialize unified button group container
+         */
+        initButtonGroup: function () {
+            const self = this;
+
+            const tryCreate = () => {
+                if (document.getElementById('ratingsButtonGroup')) {
+                    return; // Already exists
+                }
+
+                const headerRight = document.querySelector('.headerRight');
+                if (!headerRight) {
+                    setTimeout(tryCreate, 500);
+                    return;
+                }
+
+                // Create the container
+                const buttonGroup = document.createElement('div');
+                buttonGroup.id = 'ratingsButtonGroup';
+
+                // Insert at the beginning of headerRight
+                headerRight.insertBefore(buttonGroup, headerRight.firstChild);
+            };
+
+            setTimeout(tryCreate, 500);
+        },
+
+        /**
          * Initialize notification toggle in header
          */
         initNotificationToggle: function () {
@@ -9437,14 +12680,27 @@
                             return;
                         }
 
-                        // Create toggle container
-                        const toggleContainer = document.createElement('div');
-                        toggleContainer.id = 'notificationToggle';
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (!buttonGroup) {
+                            // Retry later
+                            setTimeout(() => createNotificationToggle(config), 500);
+                            return;
+                        }
 
-                        // Create bell icon (always shows bell)
+                        // Create toggle container as header button
+                        const toggleContainer = document.createElement('button');
+                        toggleContainer.id = 'notificationToggle';
+                        toggleContainer.className = 'ratingsGroupBtn';
+                        toggleContainer.setAttribute('type', 'button');
+                        toggleContainer.setAttribute('title', 'Enable/disable new media notifications');
+                        toggleContainer.style.position = 'relative';
+
+                        // Create bell icon SVG
                         const bellIcon = document.createElement('span');
                         bellIcon.id = 'notificationToggleIcon';
-                        bellIcon.innerHTML = '🔔';
+                        bellIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                        </svg>`;
 
                         // Create tooltip
                         const tooltip = document.createElement('div');
@@ -9512,14 +12768,8 @@
                             tooltipTimer = null;
                         });
 
-                        // Append to header container
-                        const headerContainer = document.querySelector('.headerTabs, .skinHeader');
-                        if (headerContainer) {
-                            headerContainer.style.position = 'relative';
-                            headerContainer.appendChild(toggleContainer);
-                        } else {
-                            document.body.appendChild(toggleContainer);
-                        }
+                        // Insert into button group
+                        buttonGroup.appendChild(toggleContainer);
 
                         // Hide during video playback and on login page
                         setInterval(() => {
@@ -9597,16 +12847,10 @@
                             return;
                         }
 
-                        // Find and hide the Sync Play button
-                        const syncPlayBtn = document.querySelector('.headerSyncButton');
-                        if (syncPlayBtn) {
-                            syncPlayBtn.style.display = 'none';
-                        }
-
                         // Create the latest media button
                         const btn = document.createElement('button');
                         btn.id = 'latestMediaBtn';
-                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
                         btn.setAttribute('title', self.t('latestMedia'));
                         btn.style.position = 'relative';
@@ -9667,18 +12911,15 @@
                             }
                         });
 
-                        // Insert button in header - try to find headerRight or similar container
-                        const headerRight = document.querySelector('.headerRight');
-                        if (headerRight) {
-                            // Insert at the beginning of headerRight
-                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        // Insert button into button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: find skinHeader and append
-                            const skinHeader = document.querySelector('.skinHeader');
-                            if (skinHeader) {
-                                skinHeader.appendChild(btn);
-                            } else {
-                                document.body.appendChild(btn);
+                            // Fallback: insert into headerRight
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(btn, headerRight.firstChild);
                             }
                         }
 
@@ -9688,15 +12929,6 @@
                                 self.triggerResponsiveUpdate();
                             }
                         }, 100);
-
-                        // Observe for Sync Play button appearing later (SPA navigation)
-                        const observer = new MutationObserver(() => {
-                            const syncBtn = document.querySelector('.headerSyncButton');
-                            if (syncBtn && syncBtn.style.display !== 'none') {
-                                syncBtn.style.display = 'none';
-                            }
-                        });
-                        observer.observe(document.body, { childList: true, subtree: true });
 
                         // Hide during video playback and on login page
                         setInterval(() => {
@@ -10400,7 +13632,7 @@
                         // Create the media management button
                         const btn = document.createElement('button');
                         btn.id = 'mediaManagementBtn';
-                        btn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                        btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
                         btn.setAttribute('title', self.t('mediaManagement'));
                         // Folder icon for media management
@@ -10415,16 +13647,15 @@
                             self.openMediaManagementModal();
                         });
 
-                        // Insert button in header - try to find headerRight or similar container
-                        const headerRight = document.querySelector('.headerRight');
-                        if (headerRight) {
-                            // Insert at the beginning of headerRight
-                            headerRight.insertBefore(btn, headerRight.firstChild);
+                        // Insert button into button group
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (buttonGroup) {
+                            buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: find skinHeader and append
-                            const skinHeader = document.querySelector('.skinHeader');
-                            if (skinHeader) {
-                                skinHeader.appendChild(btn);
+                            // Fallback: insert into headerRight
+                            const headerRight = document.querySelector('.headerRight');
+                            if (headerRight) {
+                                headerRight.insertBefore(btn, headerRight.firstChild);
                             } else {
                                 document.body.appendChild(btn);
                             }
@@ -11769,41 +15000,13 @@
                     });
                 });
 
-                const searchField = document.getElementById('headerSearchField');
+                // Adjust search input width based on viewport
                 const searchInput = document.getElementById('headerSearchInput');
-                const requestBtn = document.getElementById('requestMediaBtn');
-
-                if (searchField) {
-                    if (width <= 925) {
-                        searchField.style.transform = `scale(${scale})`;
-                        searchField.style.transformOrigin = 'left center';
-                        searchField.style.top = topPosition;
-                    } else {
-                        searchField.style.transform = '';
-                        searchField.style.top = '';
-                    }
-                }
-
                 if (searchInput) {
                     if (width <= 925) {
                         searchInput.style.width = `${searchWidth}px`;
                     } else {
                         searchInput.style.width = '';
-                    }
-                }
-
-                if (requestBtn) {
-                    if (width <= 925) {
-                        requestBtn.style.transform = `scale(${scale})`;
-                        requestBtn.style.transformOrigin = 'right center';
-                        requestBtn.style.paddingLeft = `${btnPaddingH}px`;
-                        requestBtn.style.paddingRight = `${btnPaddingH}px`;
-                        requestBtn.style.top = topPosition;
-                    } else {
-                        requestBtn.style.transform = '';
-                        requestBtn.style.paddingLeft = '';
-                        requestBtn.style.paddingRight = '';
-                        requestBtn.style.top = '';
                     }
                 }
             };
@@ -15052,18 +18255,16 @@
                             count = doneRequests.filter(r => !viewedRequests.includes(r.Id)).length;
                         }
 
-                        // Remove existing badge
-                        const existingBadge = btn.querySelector('.request-badge');
-                        if (existingBadge) {
-                            existingBadge.remove();
-                        }
-
-                        // Add badge if count > 0
-                        if (count > 0) {
-                            const badge = document.createElement('span');
-                            badge.className = 'request-badge';
-                            badge.textContent = count;
-                            btn.appendChild(badge);
+                        // Update badge
+                        const badge = document.getElementById('requestMediaBadge');
+                        if (badge) {
+                            if (count > 0) {
+                                badge.textContent = count;
+                                badge.classList.add('visible');
+                            } else {
+                                badge.textContent = '';
+                                badge.classList.remove('visible');
+                            }
                         }
                     }).catch(err => {
                         console.error('Error updating request badge:', err);
@@ -16691,14 +19892,12 @@
                     const sortDirection = btn.getAttribute('data-sort');
                     const wasActive = btn.classList.contains('active');
 
-                    // Remove active from both buttons
-                    document.querySelectorAll('.library-sort-btn').forEach(b => b.classList.remove('active'));
+                    btn1.classList.remove('active');
+                    btn2.classList.remove('active');
 
                     if (wasActive) {
-                        // Clicking same button again - restore original order
                         self.restoreLibraryCardsOrder();
                     } else {
-                        // Sort cards
                         btn.classList.add('active');
                         self.sortLibraryCards(sortDirection);
                     }
@@ -17115,11 +20314,12 @@
                 attempts++;
                 const headerRight = document.querySelector('.headerRight');
 
-                if (headerRight && !document.getElementById('chatBtn')) {
+                const buttonGroup = document.getElementById('ratingsButtonGroup');
+                if (buttonGroup && !document.getElementById('chatBtn')) {
                     // Create chat button - same structure as Latest Media button
                     const chatBtn = document.createElement('button');
                     chatBtn.id = 'chatBtn';
-                    chatBtn.className = 'headerButton headerButtonRight paper-icon-button-light';
+                    chatBtn.className = 'ratingsGroupBtn';
                     chatBtn.setAttribute('type', 'button');
                     chatBtn.setAttribute('title', self.t('liveChat'));
                     chatBtn.style.position = 'relative';
@@ -17131,16 +20331,8 @@
                         self.toggleChat();
                     };
 
-                    // Insert after latestMediaBtn if it exists, otherwise at beginning
-                    const latestMediaBtn = document.getElementById('latestMediaBtn');
-                    if (latestMediaBtn && latestMediaBtn.nextSibling) {
-                        headerRight.insertBefore(chatBtn, latestMediaBtn.nextSibling);
-                    } else if (latestMediaBtn) {
-                        headerRight.appendChild(chatBtn);
-                    } else {
-                        // Insert at beginning if no latestMediaBtn
-                        headerRight.insertBefore(chatBtn, headerRight.firstChild);
-                    }
+                    // Insert into button group
+                    buttonGroup.appendChild(chatBtn);
 
                     return;
                 }
@@ -17471,6 +20663,10 @@
             // Input events
             const input = document.getElementById('chatInput');
             input.onkeydown = function (e) {
+                // Stop propagation to prevent video player from receiving keyboard events
+                // This fixes spacebar pausing video while typing in chat
+                e.stopPropagation();
+
                 // Handle autocomplete keyboard navigation
                 if (self.handleAutocompleteKeydown(e)) {
                     return;
@@ -17479,6 +20675,14 @@
                     e.preventDefault();
                     self.sendCurrentMessage();
                 }
+            };
+
+            // Also stop propagation on keyup and keypress to fully isolate chat input
+            input.onkeyup = function (e) {
+                e.stopPropagation();
+            };
+            input.onkeypress = function (e) {
+                e.stopPropagation();
             };
             input.oninput = function () {
                 // Check for DM autocomplete trigger (/)
