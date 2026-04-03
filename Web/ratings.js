@@ -15001,41 +15001,13 @@
                     });
                 });
 
-                const searchField = document.getElementById('headerSearchField');
+                // Adjust search input width based on viewport
                 const searchInput = document.getElementById('headerSearchInput');
-                const requestBtn = document.getElementById('requestMediaBtn');
-
-                if (searchField) {
-                    if (width <= 925) {
-                        searchField.style.transform = `scale(${scale})`;
-                        searchField.style.transformOrigin = 'left center';
-                        searchField.style.top = topPosition;
-                    } else {
-                        searchField.style.transform = '';
-                        searchField.style.top = '';
-                    }
-                }
-
                 if (searchInput) {
                     if (width <= 925) {
                         searchInput.style.width = `${searchWidth}px`;
                     } else {
                         searchInput.style.width = '';
-                    }
-                }
-
-                if (requestBtn) {
-                    if (width <= 925) {
-                        requestBtn.style.transform = `scale(${scale})`;
-                        requestBtn.style.transformOrigin = 'right center';
-                        requestBtn.style.paddingLeft = `${btnPaddingH}px`;
-                        requestBtn.style.paddingRight = `${btnPaddingH}px`;
-                        requestBtn.style.top = topPosition;
-                    } else {
-                        requestBtn.style.transform = '';
-                        requestBtn.style.paddingLeft = '';
-                        requestBtn.style.paddingRight = '';
-                        requestBtn.style.top = '';
                     }
                 }
             };
