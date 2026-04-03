@@ -3703,7 +3703,7 @@
 
                     /* Push Home/Favorites tabs container down - use padding on parent */
                     .tabs-viewmenubar.emby-tabs {
-                        padding-top: 48px !important;
+                        padding-top: 56px !important;
                     }
 
                     /* Reset any extra margins on slider */
