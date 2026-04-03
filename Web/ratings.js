@@ -3701,22 +3701,13 @@
                         padding-top: 48px !important;
                     }
 
-                    /* Push Home/Favorites tabs down */
+                    /* Push Home/Favorites tabs container down - use padding on parent */
+                    .tabs-viewmenubar.emby-tabs {
+                        padding-top: 48px !important;
+                    }
+
+                    /* Reset any extra margins on slider */
                     .emby-tabs-slider {
-                        margin-top: 48px !important;
-                    }
-
-                    /* Also push library tabs down */
-                    .libraryPage .pageTabContent,
-                    .libraryPage .sectionTabs,
-                    .homePage .sectionTabs,
-                    .sectionTabs {
-                        margin-top: 48px !important;
-                    }
-
-                    /* Push section headers and content */
-                    .homePageSection,
-                    .verticalSection {
                         margin-top: 0 !important;
                     }
                 }
