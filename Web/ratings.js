@@ -3701,11 +3701,23 @@
                         padding-top: 48px !important;
                     }
 
+                    /* Push Home/Favorites tabs down */
+                    .emby-tabs-slider {
+                        margin-top: 48px !important;
+                    }
+
                     /* Also push library tabs down */
                     .libraryPage .pageTabContent,
                     .libraryPage .sectionTabs,
-                    .homePage .sectionTabs {
+                    .homePage .sectionTabs,
+                    .sectionTabs {
                         margin-top: 48px !important;
+                    }
+
+                    /* Push section headers and content */
+                    .homePageSection,
+                    .verticalSection {
+                        margin-top: 0 !important;
                     }
                 }
 
