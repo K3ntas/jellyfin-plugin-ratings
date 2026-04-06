@@ -15098,7 +15098,7 @@
                 const baseUrl = ApiClient.serverAddress();
 
                 // Use Jellyfin's search hints API
-                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode&Limit=50`;
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode,Audio,MusicAlbum,MusicArtist&Limit=50`;
 
                 const response = await fetch(searchUrl, {
                     headers: {
@@ -15264,7 +15264,7 @@
                 const baseUrl = ApiClient.serverAddress();
 
                 // Use Jellyfin's search hints API - search entire library
-                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series&Limit=20`;
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode,Audio,MusicAlbum,MusicArtist&Limit=20`;
 
                 const response = await fetch(searchUrl, {
                     headers: {
