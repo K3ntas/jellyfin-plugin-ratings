@@ -3719,6 +3719,11 @@
                     border-color: #ffd700;
                     color: #ffd700;
                 }
+                .ratings-list-votes {
+                    font-size: 0.85em;
+                    color: #888;
+                    min-width: 70px;
+                }
                 .ratings-list-empty {
                     text-align: center;
                     color: #999;
@@ -12296,6 +12301,9 @@
                     const hasReview = rating.HasReview;
                     const reviewIconClass = hasReview ? 'ratings-list-review-icon' : 'ratings-list-review-icon no-review';
                     const reviewIcon = hasReview ? '💬' : '—';
+                    const likeCount = rating.LikeCount || 0;
+                    const dislikeCount = rating.DislikeCount || 0;
+                    const hasVotes = likeCount > 0 || dislikeCount > 0;
 
                     html += `
                         <div class="ratings-list-item" data-user-id="${rating.UserId}">
@@ -12305,6 +12313,7 @@
                             </span>
                             <span class="ratings-list-rating">${rating.Rating}/10</span>
                             <span class="${reviewIconClass}" data-has-review="${hasReview}" data-user-id="${rating.UserId}" data-item-id="${itemId}" title="${hasReview ? 'View review' : 'No review'}">${reviewIcon}</span>
+                            ${hasReview ? '<span class="ratings-list-votes">' + (hasVotes ? '👍' + likeCount + ' 👎' + dislikeCount : '') + '</span>' : ''}
                             ${isMe ? '<button class="ratings-list-edit-btn" data-item-id="' + itemId + '">Edit</button>' : ''}
                         </div>
                     `;
