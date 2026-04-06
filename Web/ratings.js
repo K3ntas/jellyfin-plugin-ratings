@@ -1361,14 +1361,26 @@
                 btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span class="badge hidden">0</span>';
                 btn.title = 'Friends';
 
-                // Load saved position
+                // Load saved position with bounds checking
                 var savedPos = localStorage.getItem('socialFriendsBtnPos');
                 if (savedPos) {
                     try {
                         var pos = JSON.parse(savedPos);
-                        btn.style.bottom = pos.bottom + 'px';
-                        btn.style.right = pos.right + 'px';
-                    } catch (e) {}
+                        var maxBottom = window.innerHeight - 60;
+                        var maxRight = window.innerWidth - 60;
+                        // Reset to default if off-screen
+                        if (pos.bottom > maxBottom || pos.right > maxRight || pos.bottom < 10 || pos.right < 10) {
+                            localStorage.removeItem('socialFriendsBtnPos');
+                            btn.style.bottom = '20px';
+                            btn.style.right = '20px';
+                        } else {
+                            btn.style.bottom = pos.bottom + 'px';
+                            btn.style.right = pos.right + 'px';
+                        }
+                    } catch (e) {
+                        btn.style.bottom = '20px';
+                        btn.style.right = '20px';
+                    }
                 }
 
                 // Make draggable
@@ -1450,6 +1462,24 @@
 
                 // Start heartbeat for online status
                 self.startHeartbeat();
+
+                // Reposition button on window resize if off-screen
+                window.addEventListener('resize', function () {
+                    var friendsBtn = document.getElementById('social-friends-btn');
+                    if (!friendsBtn) return;
+                    var bottom = parseInt(friendsBtn.style.bottom) || 20;
+                    var right = parseInt(friendsBtn.style.right) || 20;
+                    var maxBottom = window.innerHeight - 60;
+                    var maxRight = window.innerWidth - 60;
+                    if (bottom > maxBottom || right > maxRight) {
+                        friendsBtn.style.bottom = Math.min(bottom, maxBottom) + 'px';
+                        friendsBtn.style.right = Math.min(right, maxRight) + 'px';
+                        localStorage.setItem('socialFriendsBtnPos', JSON.stringify({
+                            bottom: Math.min(bottom, maxBottom),
+                            right: Math.min(right, maxRight)
+                        }));
+                    }
+                });
             };
 
             tryInit();
