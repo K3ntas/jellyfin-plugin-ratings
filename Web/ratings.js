@@ -3521,6 +3521,282 @@
                     font-style: italic;
                 }
 
+                /* Clickable ratings count */
+                .ratings-plugin-count-link {
+                    cursor: pointer;
+                    text-decoration: underline;
+                    color: #bbb;
+                    transition: color 0.2s ease;
+                }
+                .ratings-plugin-count-link:hover {
+                    color: #fff;
+                }
+
+                /* Rating Modal (for submitting rating with review) */
+                .ratings-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 100000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .ratings-modal {
+                    background: #1a1a1a;
+                    border: 1px solid #444;
+                    border-radius: 12px;
+                    padding: 1.5em;
+                    min-width: 350px;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                }
+                .ratings-modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1em;
+                    border-bottom: 1px solid #444;
+                    padding-bottom: 0.8em;
+                }
+                .ratings-modal-title {
+                    font-size: 1.2em;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .ratings-modal-close {
+                    background: transparent;
+                    border: none;
+                    color: #999;
+                    font-size: 1.5em;
+                    cursor: pointer;
+                    padding: 0;
+                    line-height: 1;
+                }
+                .ratings-modal-close:hover {
+                    color: #fff;
+                }
+                .ratings-modal-stars {
+                    display: flex;
+                    justify-content: center;
+                    gap: 0.3em;
+                    margin: 1em 0;
+                }
+                .ratings-modal-star {
+                    font-size: 2em;
+                    cursor: pointer;
+                    color: #555;
+                    transition: all 0.2s ease;
+                }
+                .ratings-modal-star:hover,
+                .ratings-modal-star.hover {
+                    color: #ffd700;
+                    transform: scale(1.1);
+                }
+                .ratings-modal-star.filled {
+                    color: #ffd700;
+                }
+                .ratings-modal-rating-display {
+                    text-align: center;
+                    font-size: 1.5em;
+                    color: #ffd700;
+                    margin-bottom: 1em;
+                }
+                .ratings-modal-review-label {
+                    color: #bbb;
+                    margin-bottom: 0.5em;
+                    font-size: 0.95em;
+                }
+                .ratings-modal-review {
+                    width: 100%;
+                    min-height: 100px;
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    padding: 0.8em;
+                    color: #fff;
+                    font-size: 0.95em;
+                    resize: vertical;
+                    margin-bottom: 1em;
+                }
+                .ratings-modal-review:focus {
+                    outline: none;
+                    border-color: #ffd700;
+                }
+                .ratings-modal-buttons {
+                    display: flex;
+                    gap: 0.8em;
+                    justify-content: flex-end;
+                }
+                .ratings-modal-btn {
+                    padding: 0.6em 1.2em;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.95em;
+                    transition: all 0.2s ease;
+                }
+                .ratings-modal-btn-primary {
+                    background: #ffd700;
+                    color: #000;
+                }
+                .ratings-modal-btn-primary:hover {
+                    background: #ffed4a;
+                }
+                .ratings-modal-btn-primary:disabled {
+                    background: #666;
+                    color: #999;
+                    cursor: not-allowed;
+                }
+                .ratings-modal-btn-secondary {
+                    background: #444;
+                    color: #fff;
+                }
+                .ratings-modal-btn-secondary:hover {
+                    background: #555;
+                }
+
+                /* All Ratings Modal (list of all ratings) */
+                .ratings-list-modal {
+                    min-width: 400px;
+                    max-width: 600px;
+                }
+                .ratings-list-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 0.8em 0;
+                    border-bottom: 1px solid #333;
+                    gap: 1em;
+                }
+                .ratings-list-item:last-child {
+                    border-bottom: none;
+                }
+                .ratings-list-username {
+                    flex: 1;
+                    color: #fff;
+                    font-weight: 500;
+                }
+                .ratings-list-rating {
+                    color: #ffd700;
+                    font-weight: 600;
+                    font-size: 1.1em;
+                    min-width: 50px;
+                    text-align: center;
+                }
+                .ratings-list-review-icon {
+                    cursor: pointer;
+                    color: #4CAF50;
+                    font-size: 1.2em;
+                    padding: 0.3em;
+                    border-radius: 4px;
+                    transition: all 0.2s ease;
+                }
+                .ratings-list-review-icon:hover {
+                    background: rgba(76, 175, 80, 0.2);
+                }
+                .ratings-list-review-icon.no-review {
+                    color: #555;
+                    cursor: default;
+                }
+                .ratings-list-review-icon.no-review:hover {
+                    background: transparent;
+                }
+                .ratings-list-edit-btn {
+                    background: transparent;
+                    border: 1px solid #666;
+                    color: #bbb;
+                    padding: 0.3em 0.6em;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 0.85em;
+                }
+                .ratings-list-edit-btn:hover {
+                    border-color: #ffd700;
+                    color: #ffd700;
+                }
+                .ratings-list-empty {
+                    text-align: center;
+                    color: #999;
+                    padding: 2em;
+                    font-style: italic;
+                }
+                .ratings-list-you {
+                    color: #4CAF50;
+                    font-size: 0.8em;
+                    margin-left: 0.5em;
+                }
+
+                /* Review Mini-Modal */
+                .review-mini-modal {
+                    min-width: 300px;
+                    max-width: 450px;
+                }
+                .review-mini-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8em;
+                    margin-bottom: 1em;
+                }
+                .review-mini-username {
+                    font-weight: 600;
+                    color: #fff;
+                    flex: 1;
+                }
+                .review-mini-rating {
+                    color: #ffd700;
+                    font-weight: 600;
+                }
+                .review-mini-text {
+                    background: #2a2a2a;
+                    border-radius: 8px;
+                    padding: 1em;
+                    color: #ddd;
+                    margin-bottom: 1em;
+                    line-height: 1.5;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                }
+                .review-mini-actions {
+                    display: flex;
+                    gap: 1em;
+                    align-items: center;
+                }
+                .review-like-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4em;
+                    background: transparent;
+                    border: 1px solid #444;
+                    color: #bbb;
+                    padding: 0.5em 0.8em;
+                    border-radius: 20px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .review-like-btn:hover {
+                    border-color: #666;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+                .review-like-btn.active-like {
+                    border-color: #4CAF50;
+                    color: #4CAF50;
+                    background: rgba(76, 175, 80, 0.1);
+                }
+                .review-like-btn.active-dislike {
+                    border-color: #f44336;
+                    color: #f44336;
+                    background: rgba(244, 67, 54, 0.1);
+                }
+                .review-like-btn.disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
                 /* Card overlay ratings */
                 .cardImageContainer.has-rating::after,
                 .cardContent.has-rating::after,
@@ -11456,11 +11732,12 @@
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     const rating = parseInt(star.getAttribute('data-rating'));
-                    // Check if clicking the same rating - toggle off
+                    // Check if clicking the same rating - toggle off (delete)
                     if (self.currentUserRating === rating) {
                         self.deleteRating(itemId);
                     } else {
-                        self.submitRating(itemId, rating);
+                        // Open rating modal with review textarea
+                        self.openRatingModal(itemId, rating);
                     }
                 });
 
@@ -11482,6 +11759,18 @@
             starsContainer.addEventListener('mouseleave', () => {
                 popup.classList.remove('visible');
             });
+
+            // Add click handler for ratings count (delegated for dynamic content)
+            const statsElement = this.queryInVisiblePage('#ratingsPluginStats');
+            if (statsElement) {
+                statsElement.addEventListener('click', (e) => {
+                    const countLink = e.target.closest('.ratings-plugin-count-link');
+                    if (countLink) {
+                        const targetItemId = countLink.getAttribute('data-item-id');
+                        self.openAllRatingsModal(targetItemId);
+                    }
+                });
+            }
         },
 
         /**
@@ -11553,9 +11842,9 @@
 
                     let statsHtml = '';
                     if (stats.TotalRatings > 0) {
-                        statsHtml = `<span class="ratings-plugin-average">${stats.AverageRating.toFixed(1)}/10</span> - ${stats.TotalRatings} rating${stats.TotalRatings !== 1 ? 's' : ''}`;
+                        statsHtml = `<span class="ratings-plugin-average">${stats.AverageRating.toFixed(1)}/10</span> - <span class="ratings-plugin-count-link" data-item-id="${itemId}">${stats.TotalRatings} rating${stats.TotalRatings !== 1 ? 's' : ''}</span>`;
                         if (stats.UserRating) {
-                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10 <span class="ratings-plugin-remove-hint">(click to remove)</span></div>`;
+                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10 (click stars to edit)</div>`;
                         }
                     } else {
                         statsHtml = 'No ratings yet. Be the first to rate!';
@@ -11754,6 +12043,415 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+
+        /**
+         * Open rating modal for submitting/editing rating with review
+         */
+        openRatingModal: function (itemId, initialRating) {
+            const self = this;
+            let selectedRating = initialRating || 0;
+
+            // Get existing review if editing
+            let existingReview = '';
+            const isEditing = this.currentUserRating > 0;
+
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'ratingsModalOverlay';
+
+            // Generate stars HTML
+            let starsHtml = '';
+            for (let i = 1; i <= 10; i++) {
+                starsHtml += `<span class="ratings-modal-star${i <= selectedRating ? ' filled' : ''}" data-rating="${i}">★</span>`;
+            }
+
+            overlay.innerHTML = `
+                <div class="ratings-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">${isEditing ? 'Edit Your Rating' : 'Rate This'}</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="ratings-modal-stars">${starsHtml}</div>
+                    <div class="ratings-modal-rating-display">${selectedRating > 0 ? selectedRating + '/10' : 'Select a rating'}</div>
+                    <div class="ratings-modal-review-label">Write a review (optional):</div>
+                    <textarea class="ratings-modal-review" placeholder="Share your thoughts about this title..."></textarea>
+                    <div class="ratings-modal-buttons">
+                        <button class="ratings-modal-btn ratings-modal-btn-secondary" data-action="cancel">Cancel</button>
+                        <button class="ratings-modal-btn ratings-modal-btn-primary" data-action="submit" ${selectedRating === 0 ? 'disabled' : ''}>Submit Rating</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // If editing, fetch existing review
+            if (isEditing) {
+                const baseUrl = ApiClient.serverAddress();
+                const accessToken = ApiClient.accessToken();
+                const deviceId = ApiClient.deviceId();
+                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+                fetch(`${baseUrl}/Ratings/Items/${itemId}/DetailedRatings`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                .then(r => r.json())
+                .then(ratings => {
+                    const currentUserId = ApiClient.getCurrentUserId();
+                    const myRating = ratings.find(r => r.UserId === currentUserId);
+                    if (myRating && myRating.ReviewText) {
+                        const textarea = overlay.querySelector('.ratings-modal-review');
+                        if (textarea) textarea.value = myRating.ReviewText;
+                    }
+                })
+                .catch(() => {});
+            }
+
+            // Star hover and click handlers
+            const modalStars = overlay.querySelectorAll('.ratings-modal-star');
+            const ratingDisplay = overlay.querySelector('.ratings-modal-rating-display');
+            const submitBtn = overlay.querySelector('[data-action="submit"]');
+
+            modalStars.forEach(star => {
+                star.addEventListener('mouseenter', function() {
+                    const r = parseInt(this.getAttribute('data-rating'));
+                    modalStars.forEach((s, idx) => {
+                        s.classList.toggle('hover', idx < r);
+                    });
+                });
+
+                star.addEventListener('mouseleave', function() {
+                    modalStars.forEach(s => s.classList.remove('hover'));
+                });
+
+                star.addEventListener('click', function() {
+                    selectedRating = parseInt(this.getAttribute('data-rating'));
+                    modalStars.forEach((s, idx) => {
+                        s.classList.toggle('filled', idx < selectedRating);
+                    });
+                    ratingDisplay.textContent = selectedRating + '/10';
+                    submitBtn.disabled = false;
+                });
+            });
+
+            // Close button
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            // Cancel button
+            overlay.querySelector('[data-action="cancel"]').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            // Submit button
+            submitBtn.addEventListener('click', function() {
+                if (selectedRating === 0) return;
+                const review = overlay.querySelector('.ratings-modal-review').value.trim();
+                self.submitRatingWithReview(itemId, selectedRating, review);
+                overlay.remove();
+            });
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+
+            // Prevent keyboard events from bubbling (for video player)
+            overlay.querySelector('.ratings-modal-review').addEventListener('keydown', function(e) {
+                e.stopPropagation();
+            });
+            overlay.querySelector('.ratings-modal-review').addEventListener('keyup', function(e) {
+                e.stopPropagation();
+            });
+            overlay.querySelector('.ratings-modal-review').addEventListener('keypress', function(e) {
+                e.stopPropagation();
+            });
+        },
+
+        /**
+         * Submit rating with optional review
+         */
+        submitRatingWithReview: function (itemId, rating, review) {
+            const self = this;
+
+            if (!window.ApiClient) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            let url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
+            if (review) {
+                url += `&review=${encodeURIComponent(review)}`;
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                return response.json();
+            })
+            .then(() => {
+                self.currentUserRating = rating;
+                self.updateStarDisplay(rating);
+                self.loadRatings(itemId);
+
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Rated ' + rating + '/10' + (review ? ' with review' : ''));
+                    });
+                }
+            })
+            .catch(err => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error: ' + err.message);
+                    });
+                }
+            });
+        },
+
+        /**
+         * Open modal showing all ratings for an item
+         */
+        openAllRatingsModal: function (itemId) {
+            const self = this;
+            const currentUserId = ApiClient.getCurrentUserId();
+
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'allRatingsModalOverlay';
+
+            overlay.innerHTML = `
+                <div class="ratings-modal ratings-list-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">All Ratings</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="ratings-list-content">
+                        <div class="ratings-list-empty">Loading...</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Close button
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+
+            // Fetch ratings
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Items/${itemId}/DetailedRatings`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(ratings => {
+                const contentDiv = overlay.querySelector('.ratings-list-content');
+
+                if (!ratings || ratings.length === 0) {
+                    contentDiv.innerHTML = '<div class="ratings-list-empty">No ratings yet</div>';
+                    return;
+                }
+
+                let html = '';
+                ratings.forEach(rating => {
+                    const isMe = rating.UserId === currentUserId;
+                    const hasReview = rating.HasReview;
+                    const reviewIconClass = hasReview ? 'ratings-list-review-icon' : 'ratings-list-review-icon no-review';
+                    const reviewIcon = hasReview ? '💬' : '—';
+
+                    html += `
+                        <div class="ratings-list-item" data-user-id="${rating.UserId}">
+                            <span class="ratings-list-username">
+                                ${self.escapeHtml(rating.Username)}
+                                ${isMe ? '<span class="ratings-list-you">(you)</span>' : ''}
+                            </span>
+                            <span class="ratings-list-rating">${rating.Rating}/10</span>
+                            <span class="${reviewIconClass}" data-has-review="${hasReview}" data-user-id="${rating.UserId}" data-item-id="${itemId}" title="${hasReview ? 'View review' : 'No review'}">${reviewIcon}</span>
+                            ${isMe ? '<button class="ratings-list-edit-btn" data-item-id="' + itemId + '">Edit</button>' : ''}
+                        </div>
+                    `;
+                });
+
+                contentDiv.innerHTML = html;
+
+                // Add click handlers for review icons
+                contentDiv.querySelectorAll('.ratings-list-review-icon[data-has-review="true"]').forEach(icon => {
+                    icon.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-user-id');
+                        const targetItemId = this.getAttribute('data-item-id');
+                        const ratingData = ratings.find(r => r.UserId === userId);
+                        if (ratingData) {
+                            self.openReviewMiniModal(ratingData, targetItemId, currentUserId);
+                        }
+                    });
+                });
+
+                // Add click handler for edit button
+                contentDiv.querySelectorAll('.ratings-list-edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        overlay.remove();
+                        const targetItemId = this.getAttribute('data-item-id');
+                        self.openRatingModal(targetItemId, self.currentUserRating);
+                    });
+                });
+            })
+            .catch(err => {
+                const contentDiv = overlay.querySelector('.ratings-list-content');
+                contentDiv.innerHTML = '<div class="ratings-list-empty">Error loading ratings</div>';
+            });
+        },
+
+        /**
+         * Open mini-modal for viewing a review with like/dislike
+         */
+        openReviewMiniModal: function (ratingData, itemId, currentUserId) {
+            const self = this;
+            const isOwnReview = ratingData.UserId === currentUserId;
+
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'reviewMiniModalOverlay';
+
+            const likeActive = ratingData.UserLiked === true ? ' active-like' : '';
+            const dislikeActive = ratingData.UserLiked === false ? ' active-dislike' : '';
+            const disabledClass = isOwnReview ? ' disabled' : '';
+
+            overlay.innerHTML = `
+                <div class="ratings-modal review-mini-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">Review</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="review-mini-header">
+                        <span class="review-mini-username">${self.escapeHtml(ratingData.Username)}</span>
+                        <span class="review-mini-rating">${ratingData.Rating}/10</span>
+                    </div>
+                    <div class="review-mini-text">${self.escapeHtml(ratingData.ReviewText || '')}</div>
+                    <div class="review-mini-actions">
+                        <button class="review-like-btn${likeActive}${disabledClass}" data-action="like" ${isOwnReview ? 'disabled title="Cannot like your own review"' : ''}>
+                            👍 <span class="like-count">${ratingData.LikeCount || 0}</span>
+                        </button>
+                        <button class="review-like-btn${dislikeActive}${disabledClass}" data-action="dislike" ${isOwnReview ? 'disabled title="Cannot dislike your own review"' : ''}>
+                            👎 <span class="dislike-count">${ratingData.DislikeCount || 0}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Close button
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+
+            // Like/Dislike handlers
+            if (!isOwnReview) {
+                const likeBtn = overlay.querySelector('[data-action="like"]');
+                const dislikeBtn = overlay.querySelector('[data-action="dislike"]');
+
+                likeBtn.addEventListener('click', function() {
+                    self.toggleReviewLike(ratingData.UserId, itemId, true, overlay);
+                });
+
+                dislikeBtn.addEventListener('click', function() {
+                    self.toggleReviewLike(ratingData.UserId, itemId, false, overlay);
+                });
+            }
+        },
+
+        /**
+         * Toggle like/dislike on a review
+         */
+        toggleReviewLike: function (reviewerUserId, itemId, isLike, modalOverlay) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Like?isLike=${isLike}`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(result => {
+                // Update the UI
+                const likeBtn = modalOverlay.querySelector('[data-action="like"]');
+                const dislikeBtn = modalOverlay.querySelector('[data-action="dislike"]');
+
+                likeBtn.querySelector('.like-count').textContent = result.LikeCount;
+                dislikeBtn.querySelector('.dislike-count').textContent = result.DislikeCount;
+
+                // Update active states
+                likeBtn.classList.remove('active-like');
+                dislikeBtn.classList.remove('active-dislike');
+
+                if (result.UserLiked === true) {
+                    likeBtn.classList.add('active-like');
+                } else if (result.UserLiked === false) {
+                    dislikeBtn.classList.add('active-dislike');
+                }
+            })
+            .catch(err => {
+                if (window.require) {
+                    require(['toast'], function(toast) {
+                        toast('Error: ' + err.message);
+                    });
+                }
+            });
         },
 
         sanitizeUrl: function (url) {
