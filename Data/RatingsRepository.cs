@@ -37,7 +37,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _userStyleOverridesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _keepRequestsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _reviewLikesWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
+        private Dictionary<Guid, ReviewLike> _reviewLikes;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
         private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
@@ -65,6 +67,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _logger = logger;
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings");
             _ratings = new Dictionary<Guid, UserRating>();
+            _reviewLikes = new Dictionary<Guid, ReviewLike>();
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
             _notifications = new List<NewMediaNotification>();
             _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
@@ -100,6 +103,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadUserStyleOverrides();
             LoadMediaQuotas();
             LoadKeepRequests();
+            LoadReviewLikes();
         }
 
         /// <summary>
@@ -196,8 +200,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
+        /// <param name="reviewText">Optional review text.</param>
         /// <returns>The created or updated rating.</returns>
-        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
+        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null, string? reviewText = null)
         {
             lock (_lock)
             {
@@ -246,6 +251,12 @@ namespace Jellyfin.Plugin.Ratings.Data
                         existing.AniDbId = aniDbId;
                     }
 
+                    // Update review text if provided
+                    if (reviewText != null)
+                    {
+                        existing.ReviewText = string.IsNullOrWhiteSpace(reviewText) ? null : reviewText;
+                    }
+
                     _ = SaveRatingsAsync();
                     return existing;
                 }
@@ -257,7 +268,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                     Rating = rating,
                     TmdbId = tmdbId,
                     ImdbId = imdbId,
-                    AniDbId = aniDbId
+                    AniDbId = aniDbId,
+                    ReviewText = string.IsNullOrWhiteSpace(reviewText) ? null : reviewText
                 };
 
                 _ratings[newRating.Id] = newRating;
@@ -1138,6 +1150,160 @@ namespace Jellyfin.Plugin.Ratings.Data
             finally
             {
                 _keepRequestsWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Loads review likes from disk.
+        /// </summary>
+        private void LoadReviewLikes()
+        {
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "review_likes.json");
+                if (File.Exists(filePath))
+                {
+                    var json = File.ReadAllText(filePath);
+                    var likes = JsonSerializer.Deserialize<List<ReviewLike>>(json);
+                    if (likes != null)
+                    {
+                        _reviewLikes = likes.ToDictionary(l => l.Id);
+                        _logger.LogInformation("Loaded {Count} review likes from disk", _reviewLikes.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading review likes from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves review likes to disk.
+        /// </summary>
+        private async Task SaveReviewLikesAsync()
+        {
+            await _reviewLikesWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "review_likes.json");
+                List<ReviewLike> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _reviewLikes.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} review likes to disk", snapshot.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving review likes to disk");
+            }
+            finally
+            {
+                _reviewLikesWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Sets or updates a like/dislike on a review.
+        /// </summary>
+        public async Task<ReviewLike> SetReviewLikeAsync(Guid reviewerUserId, Guid itemId, Guid userId, bool isLike)
+        {
+            lock (_lock)
+            {
+                if (reviewerUserId == userId)
+                {
+                    throw new InvalidOperationException("Cannot like your own review");
+                }
+
+                var existing = _reviewLikes.Values.FirstOrDefault(l =>
+                    l.ReviewerUserId == reviewerUserId &&
+                    l.ItemId == itemId &&
+                    l.UserId == userId);
+
+                if (existing != null)
+                {
+                    if (existing.IsLike == isLike)
+                    {
+                        _reviewLikes.Remove(existing.Id);
+                        _ = SaveReviewLikesAsync();
+                        return existing;
+                    }
+
+                    existing.IsLike = isLike;
+                    existing.CreatedAt = DateTime.UtcNow;
+                    _ = SaveReviewLikesAsync();
+                    return existing;
+                }
+
+                var newLike = new ReviewLike
+                {
+                    ReviewerUserId = reviewerUserId,
+                    ItemId = itemId,
+                    UserId = userId,
+                    IsLike = isLike
+                };
+
+                _reviewLikes[newLike.Id] = newLike;
+                _ = SaveReviewLikesAsync();
+                return newLike;
+            }
+        }
+
+        /// <summary>
+        /// Gets the like/dislike counts for a review.
+        /// </summary>
+        public (int LikeCount, int DislikeCount) GetReviewLikeCounts(Guid reviewerUserId, Guid itemId)
+        {
+            lock (_lock)
+            {
+                var likes = _reviewLikes.Values.Where(l =>
+                    l.ReviewerUserId == reviewerUserId &&
+                    l.ItemId == itemId);
+
+                return (likes.Count(l => l.IsLike), likes.Count(l => !l.IsLike));
+            }
+        }
+
+        /// <summary>
+        /// Gets the current user's like/dislike status for a review.
+        /// </summary>
+        public bool? GetUserReviewLike(Guid reviewerUserId, Guid itemId, Guid userId)
+        {
+            lock (_lock)
+            {
+                var like = _reviewLikes.Values.FirstOrDefault(l =>
+                    l.ReviewerUserId == reviewerUserId &&
+                    l.ItemId == itemId &&
+                    l.UserId == userId);
+
+                return like?.IsLike;
+            }
+        }
+
+        /// <summary>
+        /// Updates a rating's review text.
+        /// </summary>
+        public async Task<UserRating?> UpdateReviewTextAsync(Guid userId, Guid itemId, string? reviewText)
+        {
+            lock (_lock)
+            {
+                var rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
+                if (rating == null)
+                {
+                    return null;
+                }
+
+                rating.ReviewText = string.IsNullOrWhiteSpace(reviewText) ? null : reviewText;
+                rating.UpdatedAt = DateTime.UtcNow;
+                _ = SaveRatingsAsync();
+                return rating;
             }
         }
 

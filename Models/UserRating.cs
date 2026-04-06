@@ -43,6 +43,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         public int Rating { get; set; }
 
         /// <summary>
+        /// Gets or sets the optional review text.
+        /// </summary>
+        public string? ReviewText { get; set; }
+
+        /// <summary>
         /// Gets or sets the timestamp when the rating was created.
         /// </summary>
         public DateTime CreatedAt { get; set; }

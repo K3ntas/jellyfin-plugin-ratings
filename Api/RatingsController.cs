@@ -134,11 +134,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="itemId">Item ID.</param>
         /// <param name="rating">Rating value (1-10).</param>
+        /// <param name="review">Optional review text.</param>
         /// <returns>The created or updated rating.</returns>
         [HttpPost("Items/{itemId}/Rating")]
         public async Task<ActionResult<UserRating>> SetRating(
             [FromRoute] [Required] Guid itemId,
-            [FromQuery] [Required] [Range(1, 10)] int rating)
+            [FromQuery] [Required] [Range(1, 10)] int rating,
+            [FromQuery] string? review = null)
         {
             try
             {
@@ -212,7 +214,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                 }
 
-                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId).ConfigureAwait(false);
+                // Sanitize review text
+                var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
+
+                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview).ConfigureAwait(false);
                 _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
 
                 return Ok(result);
@@ -522,7 +527,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>List of detailed ratings with usernames.</returns>
         [HttpGet("Items/{itemId}/DetailedRatings")]
-        public ActionResult<List<UserRatingDetail>> GetDetailedRatings([FromRoute] [Required] Guid itemId)
+        public async Task<ActionResult<List<UserRatingDetail>>> GetDetailedRatings([FromRoute] [Required] Guid itemId)
         {
             try
             {
@@ -533,16 +538,29 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound($"Item {itemId} not found");
                 }
 
+                // Get current user for like status
+                var currentUserId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+
                 var ratings = _repository.GetItemRatings(itemId);
                 var detailedRatings = ratings.Select(r =>
                 {
                     var user = _userManager.GetUserById(r.UserId);
+                    var likeCounts = _repository.GetReviewLikeCounts(r.UserId, itemId);
+                    var userLike = currentUserId != Guid.Empty
+                        ? _repository.GetUserReviewLike(r.UserId, itemId, currentUserId)
+                        : null;
+
                     return new UserRatingDetail
                     {
                         UserId = r.UserId,
                         Username = user?.Username ?? "Unknown User",
                         Rating = r.Rating,
-                        CreatedAt = r.CreatedAt
+                        CreatedAt = r.CreatedAt,
+                        ReviewText = r.ReviewText,
+                        HasReview = !string.IsNullOrWhiteSpace(r.ReviewText),
+                        LikeCount = likeCounts.LikeCount,
+                        DislikeCount = likeCounts.DislikeCount,
+                        UserLiked = userLike
                     };
                 }).OrderByDescending(r => r.Rating).ThenBy(r => r.Username).ToList();
 
@@ -551,6 +569,90 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting detailed ratings for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Likes or dislikes a review.
+        /// </summary>
+        [HttpPost("Reviews/{reviewerUserId}/{itemId}/Like")]
+        public async Task<ActionResult> LikeReview(
+            [FromRoute] [Required] Guid reviewerUserId,
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] [Required] bool isLike)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                if (userId == reviewerUserId)
+                {
+                    return BadRequest("Cannot like your own review");
+                }
+
+                var rating = _repository.GetUserRating(reviewerUserId, itemId);
+                if (rating == null || string.IsNullOrWhiteSpace(rating.ReviewText))
+                {
+                    return NotFound("Review not found");
+                }
+
+                await _repository.SetReviewLikeAsync(reviewerUserId, itemId, userId, isLike).ConfigureAwait(false);
+
+                var counts = _repository.GetReviewLikeCounts(reviewerUserId, itemId);
+                var userLike = _repository.GetUserReviewLike(reviewerUserId, itemId, userId);
+
+                return Ok(new
+                {
+                    LikeCount = counts.LikeCount,
+                    DislikeCount = counts.DislikeCount,
+                    UserLiked = userLike
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error liking review for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Updates only the review text for an existing rating.
+        /// </summary>
+        [HttpPut("Items/{itemId}/Review")]
+        public async Task<ActionResult<UserRating>> UpdateReview(
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] string? review = null)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
+
+                var result = await _repository.UpdateReviewTextAsync(userId, itemId, sanitizedReview).ConfigureAwait(false);
+                if (result == null)
+                {
+                    return NotFound("Rating not found. Please rate the item first.");
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating review for item {ItemId}", itemId);
                 return StatusCode(500, "Internal server error");
             }
         }
