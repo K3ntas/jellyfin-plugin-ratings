@@ -16099,29 +16099,26 @@
                 });
 
                 if (!response.ok) throw new Error('Failed to load disk usage');
-                const disks = await response.json();
+                const data = await response.json();
 
                 let html = '<div class="disk-usage-container">';
-                disks.forEach(disk => {
-                    const usedPercent = disk.TotalSize > 0 ? ((disk.UsedSize / disk.TotalSize) * 100).toFixed(1) : 0;
-                    const totalGB = (disk.TotalSize / (1024 * 1024 * 1024)).toFixed(1);
-                    const usedGB = (disk.UsedSize / (1024 * 1024 * 1024)).toFixed(1);
-                    const freeGB = (disk.FreeSpace / (1024 * 1024 * 1024)).toFixed(1);
+                data.Disks.forEach(disk => {
+                    const usedPercent = disk.UsedPercent;
                     const barColor = usedPercent > 90 ? '#e74c3c' : usedPercent > 70 ? '#f39c12' : '#52b54b';
 
                     html += `
                         <div class="disk-card">
                             <div class="disk-header">
-                                <span class="disk-name">${self.escapeHtml(disk.DriveName)}</span>
-                                <span class="disk-label">${self.escapeHtml(disk.VolumeLabel || '')}</span>
+                                <span class="disk-name">${self.escapeHtml(disk.DriveLetter)}</span>
+                                <span class="disk-label">${self.escapeHtml(disk.DriveName || '')}</span>
                             </div>
                             <div class="disk-bar-container">
                                 <div class="disk-bar" style="width: ${usedPercent}%; background: ${barColor};"></div>
                             </div>
                             <div class="disk-stats">
-                                <div><span class="disk-stat-label">${self.t('diskUsed')}:</span> ${usedGB} GB (${usedPercent}%)</div>
-                                <div><span class="disk-stat-label">${self.t('diskFree')}:</span> ${freeGB} GB</div>
-                                <div><span class="disk-stat-label">${self.t('diskTotal')}:</span> ${totalGB} GB</div>
+                                <div><span class="disk-stat-label">${self.t('diskUsed')}:</span> ${disk.UsedSizeGB} GB (${usedPercent}%)</div>
+                                <div><span class="disk-stat-label">${self.t('diskFree')}:</span> ${disk.FreeSizeGB} GB</div>
+                                <div><span class="disk-stat-label">${self.t('diskTotal')}:</span> ${disk.TotalSizeGB} GB</div>
                             </div>
                         </div>
                     `;
@@ -16156,38 +16153,38 @@
                 });
 
                 if (!response.ok) throw new Error('Failed to load duplicates');
-                const duplicates = await response.json();
+                const data = await response.json();
+                const duplicates = data.Duplicates || [];
 
                 if (!duplicates || duplicates.length === 0) {
                     body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
                     return;
                 }
 
-                let html = `<div class="duplicates-header">${duplicates.length} ${self.t('duplicatesFound')}</div>`;
+                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} groups, ${data.TotalDuplicateItems} items - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
                 html += '<div class="duplicates-container">';
 
                 duplicates.forEach(group => {
                     html += `
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
-                                <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)}</span>
-                                <span class="duplicate-count">${group.Items.length} copies</span>
+                                <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)} - ${self.escapeHtml(group.Title)}</span>
+                                <span class="duplicate-count">${group.ItemCount} copies (${group.TotalSizeGB} GB)</span>
                             </div>
                             <div class="duplicate-items">
                     `;
 
                     group.Items.forEach((item, index) => {
-                        const sizeGB = (item.Size / (1024 * 1024 * 1024)).toFixed(2);
                         html += `
-                            <div class="duplicate-item" data-item-id="${item.Id}">
+                            <div class="duplicate-item" data-item-id="${item.ItemId}">
                                 <div class="duplicate-info">
-                                    <div class="duplicate-name">${self.escapeHtml(item.Name)}</div>
-                                    <div class="duplicate-path">${self.escapeHtml(item.Path)}</div>
-                                    <div class="duplicate-size">${sizeGB} GB</div>
+                                    <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
+                                    <div class="duplicate-path">${self.escapeHtml(item.Path || 'Unknown path')}</div>
+                                    <div class="duplicate-size">${item.SizeGB} GB</div>
                                 </div>
                                 ${index > 0 ? `
                                     <div class="duplicate-actions">
-                                        <button class="delete-duplicate-btn" data-item-id="${item.Id}" title="${self.t('duplicateDelete')}">🗑️</button>
+                                        <button class="delete-duplicate-btn" data-item-id="${item.ItemId}" title="${self.t('duplicateDelete')}">🗑️</button>
                                     </div>
                                 ` : '<div class="duplicate-actions"><span style="color:#52b54b">✓ Keep</span></div>'}
                             </div>
