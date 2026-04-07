@@ -98,6 +98,13 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        // Pre-compiled regex patterns with timeout protection against ReDoS
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+        private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex IncompleteTagRegex = new(@"<[^>]*$", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex JavaScriptProtocolRegex = new(@"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+        private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+
         /// <summary>
         /// Sanitizes user input to prevent XSS attacks.
         /// Strips HTML tags and encodes special characters.
@@ -112,35 +119,82 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return string.Empty;
             }
 
-            // Trim first
+            // Limit length FIRST to prevent ReDoS on large inputs
             var sanitized = input.Trim();
-
-            // Strip all HTML tags (handles malformed tags too)
-            sanitized = Regex.Replace(sanitized, @"<[^>]*?>", string.Empty, RegexOptions.None);
-            // Also strip incomplete tags at end
-            sanitized = Regex.Replace(sanitized, @"<[^>]*$", string.Empty, RegexOptions.None);
-
-            // Recursively remove javascript: protocol until stable
-            string previous;
-            do
-            {
-                previous = sanitized;
-                sanitized = Regex.Replace(sanitized, @"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", string.Empty, RegexOptions.IgnoreCase);
-            } while (sanitized != previous);
-
-            // Remove event handler attributes
-            sanitized = Regex.Replace(sanitized, @"on\w+\s*=", string.Empty, RegexOptions.IgnoreCase);
-
-            // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
-            // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
-
-            // Limit length
             if (sanitized.Length > maxLength)
             {
                 sanitized = sanitized.Substring(0, maxLength);
             }
 
+            try
+            {
+                // Strip all HTML tags (handles malformed tags too)
+                sanitized = HtmlTagRegex.Replace(sanitized, string.Empty);
+                // Also strip incomplete tags at end
+                sanitized = IncompleteTagRegex.Replace(sanitized, string.Empty);
+
+                // Remove javascript: protocol (limit iterations to prevent infinite loop)
+                for (int i = 0; i < 5 && sanitized.Contains("javascript", StringComparison.OrdinalIgnoreCase); i++)
+                {
+                    var previous = sanitized;
+                    sanitized = JavaScriptProtocolRegex.Replace(sanitized, string.Empty);
+                    if (sanitized == previous) break;
+                }
+
+                // Remove event handler attributes
+                sanitized = EventHandlerRegex.Replace(sanitized, string.Empty);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                // If regex times out, return empty string for safety
+                return string.Empty;
+            }
+
+            // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
+            // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
+
             return sanitized;
+        }
+
+        /// <summary>
+        /// Validates and sanitizes JSON custom fields.
+        /// Ensures valid JSON structure with depth limit to prevent abuse.
+        /// </summary>
+        /// <param name="json">The JSON string to validate.</param>
+        /// <param name="maxLength">Maximum allowed length.</param>
+        /// <param name="maxDepth">Maximum nesting depth (default 3).</param>
+        /// <returns>Sanitized JSON or empty string if invalid.</returns>
+        private static string SanitizeJsonFields(string? json, int maxLength = 5000, int maxDepth = 3)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return string.Empty;
+            }
+
+            // Length check first
+            if (json.Length > maxLength)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                // Parse with depth limit using JsonDocument options
+                var options = new System.Text.Json.JsonDocumentOptions
+                {
+                    MaxDepth = maxDepth
+                };
+
+                using var doc = System.Text.Json.JsonDocument.Parse(json, options);
+
+                // Re-serialize to ensure clean JSON (removes any malformed content)
+                return System.Text.Json.JsonSerializer.Serialize(doc.RootElement);
+            }
+            catch
+            {
+                // Invalid JSON - return empty
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -232,7 +286,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
 
                 var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview).ConfigureAwait(false);
-                _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
+                _logger.LogDebug("User rated item {ItemId} with {Rating}", itemId, rating);
 
                 // Broadcast profile stats update via WebSocket
                 _ = Task.Run(async () =>
@@ -439,8 +493,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Use provided userId or fall back to authenticated user
                 var targetUserId = userId ?? authUserId;
 
+                // IDOR protection: Only allow viewing own ratings or if admin
+                if (targetUserId != authUserId && !IsJellyfinAdmin(authUserId))
+                {
+                    return Forbid("Cannot view another user's ratings");
+                }
+
                 var ratings = _repository.GetUserRatings(targetUserId);
-                _logger.LogInformation("Retrieved {Count} ratings for user {UserId}", ratings.Count, targetUserId);
+                _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
 
                 return Ok(ratings);
             }
@@ -546,7 +606,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound("No rating found to delete");
                 }
 
-                _logger.LogInformation("User {UserId} deleted rating for item {ItemId}", userId, itemId);
+                _logger.LogDebug("User deleted rating for item {ItemId}", itemId);
                 return NoContent();
             }
             catch (Exception ex)
@@ -1058,7 +1118,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     var allResources = assembly.GetManifestResourceNames();
                     _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
-                    return Content($"// ERROR: Resource {resourceName} not found", "application/javascript");
+                    return Content("// ERROR: Resource not available", "application/javascript");
                 }
 
                 using var reader = new System.IO.StreamReader(stream);
@@ -1185,7 +1245,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Title = SanitizeInput(request.Title, 500),
                     Type = SanitizeInput(request.Type, 100),
                     Notes = SanitizeInput(request.Notes, 2000),
-                    CustomFields = SanitizeInput(request.CustomFields, 5000),
+                    CustomFields = SanitizeJsonFields(request.CustomFields, 5000),
                     ImdbCode = SanitizeInput(request.ImdbCode, 50),
                     ImdbLink = request.ImdbLink, // Already validated as URL above
                     Status = "pending",
@@ -1563,7 +1623,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     SanitizeInput(request.Title, 500),
                     SanitizeInput(request.Type, 100),
                     SanitizeInput(request.Notes, 2000),
-                    SanitizeInput(request.CustomFields, 5000),
+                    SanitizeJsonFields(request.CustomFields, 5000),
                     SanitizeInput(request.ImdbCode, 50),
                     request.ImdbLink).ConfigureAwait(false);
 

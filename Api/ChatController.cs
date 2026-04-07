@@ -361,12 +361,36 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        // Maximum entries in rate limit dictionary to prevent memory exhaustion
+        private const int MaxRateLimitEntries = 10000;
+
         /// <summary>
         /// Checks rate limit for a user. Cleans up stale entries periodically.
         /// </summary>
         private static bool IsRateLimited(Guid userId, int maxPerMinute)
         {
             var now = DateTime.UtcNow;
+
+            // Emergency cleanup if dictionary grows too large (memory leak prevention)
+            if (_rateLimits.Count > MaxRateLimitEntries)
+            {
+                lock (_cleanupLock)
+                {
+                    if (_rateLimits.Count > MaxRateLimitEntries)
+                    {
+                        // Remove oldest half of entries
+                        var toRemove = _rateLimits
+                            .OrderBy(x => x.Value.ResetTime)
+                            .Take(_rateLimits.Count / 2)
+                            .Select(x => x.Key)
+                            .ToList();
+                        foreach (var key in toRemove)
+                        {
+                            _rateLimits.TryRemove(key, out _);
+                        }
+                    }
+                }
+            }
 
             // Periodic cleanup of stale entries (every 5 minutes) - thread-safe
             if ((now - _lastRateLimitCleanup).TotalMinutes >= 5)
