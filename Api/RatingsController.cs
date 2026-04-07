@@ -3216,26 +3216,44 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Admin access required");
                 }
 
-                var drives = DriveInfo.GetDrives()
+                var allDrives = DriveInfo.GetDrives()
                     .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
-                    .Select(d => new
+                    .ToList();
+
+                // On Linux, multiple mount points can be on the same physical disk
+                // Group by TotalSize to identify unique physical disks
+                var uniqueDisks = allDrives
+                    .GroupBy(d => d.TotalSize)
+                    .Select(g =>
                     {
-                        DriveLetter = d.Name.TrimEnd('\\'),
-                        DriveName = string.IsNullOrEmpty(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
-                        TotalSizeGB = Math.Round(d.TotalSize / 1073741824.0, 2),
-                        UsedSizeGB = Math.Round((d.TotalSize - d.AvailableFreeSpace) / 1073741824.0, 2),
-                        FreeSizeGB = Math.Round(d.AvailableFreeSpace / 1073741824.0, 2),
-                        UsedPercent = Math.Round((d.TotalSize - d.AvailableFreeSpace) * 100.0 / d.TotalSize, 1),
-                        DriveType = d.DriveType.ToString(),
-                        DriveFormat = d.DriveFormat
-                    }).ToList();
+                        // Pick the "best" mount point for display (prefer shorter paths, root-level)
+                        var representative = g.OrderBy(d => d.Name.Length).First();
+                        var mountPoints = g.Select(d => d.Name.TrimEnd('\\', '/')).ToList();
+
+                        return new
+                        {
+                            DriveLetter = representative.Name.TrimEnd('\\', '/'),
+                            DriveName = string.IsNullOrEmpty(representative.VolumeLabel)
+                                ? (mountPoints.Count > 1 ? $"Disk ({mountPoints.Count} mounts)" : "Local Disk")
+                                : representative.VolumeLabel,
+                            TotalSizeGB = Math.Round(representative.TotalSize / 1073741824.0, 2),
+                            UsedSizeGB = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) / 1073741824.0, 2),
+                            FreeSizeGB = Math.Round(representative.AvailableFreeSpace / 1073741824.0, 2),
+                            UsedPercent = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) * 100.0 / representative.TotalSize, 1),
+                            DriveType = representative.DriveType.ToString(),
+                            DriveFormat = representative.DriveFormat,
+                            MountPoints = mountPoints
+                        };
+                    })
+                    .OrderByDescending(d => d.TotalSizeGB)
+                    .ToList();
 
                 return Ok(new
                 {
-                    Disks = drives,
-                    TotalStorageGB = Math.Round(drives.Sum(d => d.TotalSizeGB), 2),
-                    TotalUsedGB = Math.Round(drives.Sum(d => d.UsedSizeGB), 2),
-                    TotalFreeGB = Math.Round(drives.Sum(d => d.FreeSizeGB), 2)
+                    Disks = uniqueDisks,
+                    TotalStorageGB = Math.Round(uniqueDisks.Sum(d => d.TotalSizeGB), 2),
+                    TotalUsedGB = Math.Round(uniqueDisks.Sum(d => d.UsedSizeGB), 2),
+                    TotalFreeGB = Math.Round(uniqueDisks.Sum(d => d.FreeSizeGB), 2)
                 });
             }
             catch (Exception ex)

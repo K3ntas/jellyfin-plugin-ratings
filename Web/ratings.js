@@ -2608,25 +2608,26 @@
         },
 
         /**
-         * Show server restart countdown overlay
+         * Show server restart countdown notification (bottom-left toast)
          */
         showRestartCountdownOverlay: function (seconds, reason) {
             var self = this;
 
-            // Create overlay if it doesn't exist
-            var overlay = document.getElementById('serverRestartOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'serverRestartOverlay';
-                overlay.innerHTML = `
-                    <div class="restart-overlay-content">
-                        <div class="restart-overlay-icon">🔄</div>
-                        <div class="restart-overlay-title">Server Restarting</div>
-                        <div class="restart-overlay-countdown" id="restartCountdownValue">--</div>
-                        <div class="restart-overlay-reason" id="restartReasonDisplay"></div>
+            // Create toast if it doesn't exist
+            var toast = document.getElementById('serverRestartToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'serverRestartToast';
+                toast.className = 'server-restart-toast';
+                toast.innerHTML = `
+                    <div class="restart-toast-icon">🔄</div>
+                    <div class="restart-toast-content">
+                        <div class="restart-toast-title">Server Restarting</div>
+                        <div class="restart-toast-countdown" id="restartCountdownValue">--</div>
+                        <div class="restart-toast-reason" id="restartReasonDisplay"></div>
                     </div>
                 `;
-                document.body.appendChild(overlay);
+                document.body.appendChild(toast);
             }
 
             // Update countdown and reason
@@ -2639,21 +2640,24 @@
                 countdownEl.textContent = minutes + ':' + secs.toString().padStart(2, '0');
             }
 
-            if (reasonEl) {
-                reasonEl.textContent = reason || '';
+            if (reasonEl && reason) {
+                reasonEl.textContent = reason;
+                reasonEl.style.display = 'block';
+            } else if (reasonEl) {
+                reasonEl.style.display = 'none';
             }
 
-            // Show overlay
-            overlay.classList.add('show');
+            // Show toast
+            toast.classList.add('show');
         },
 
         /**
-         * Hide server restart countdown overlay
+         * Hide server restart countdown notification
          */
         hideRestartCountdownOverlay: function () {
-            var overlay = document.getElementById('serverRestartOverlay');
-            if (overlay) {
-                overlay.classList.remove('show');
+            var toast = document.getElementById('serverRestartToast');
+            if (toast) {
+                toast.classList.remove('show');
             }
         },
 
@@ -7918,6 +7922,23 @@
                 }
 
                 /* Disk Usage Styles */
+                .disk-usage-summary {
+                    display: flex;
+                    justify-content: center;
+                    gap: 30px;
+                    padding: 15px 20px;
+                    background: #1a1a1a;
+                    border-bottom: 1px solid #333;
+                    color: #ccc;
+                    font-size: 14px;
+                }
+
+                .disk-usage-summary span {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+
                 .disk-usage-container {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -7975,6 +7996,15 @@
                 .disk-stat-label {
                     color: #888;
                     margin-right: 5px;
+                }
+
+                .disk-mounts {
+                    margin-top: 12px;
+                    padding-top: 12px;
+                    border-top: 1px solid #333;
+                    font-size: 12px;
+                    color: #666;
+                    word-break: break-all;
                 }
 
                 /* Duplicates Styles */
@@ -8187,52 +8217,64 @@
                     background: #52b54b;
                 }
 
-                /* Server Restart Countdown Overlay */
-                #serverRestartOverlay {
+                /* Server Restart Toast Notification (bottom-left) */
+                .server-restart-toast {
                     display: none;
                     position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.9);
+                    bottom: 20px;
+                    left: 20px;
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                    border: 1px solid #e74c3c;
+                    border-radius: 12px;
+                    padding: 15px 20px;
                     z-index: 99999999;
-                    align-items: center;
-                    justify-content: center;
-                    flex-direction: column;
+                    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+                    animation: slideInLeft 0.3s ease;
                 }
 
-                #serverRestartOverlay.show {
+                @keyframes slideInLeft {
+                    from { transform: translateX(-100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+
+                .server-restart-toast.show {
                     display: flex;
+                    align-items: center;
+                    gap: 15px;
                 }
 
-                .restart-overlay-content {
-                    text-align: center;
+                .restart-toast-icon {
+                    font-size: 32px;
+                    animation: spin 2s linear infinite;
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                .restart-toast-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .restart-toast-title {
+                    font-size: 14px;
+                    font-weight: 600;
                     color: #fff;
                 }
 
-                .restart-overlay-icon {
-                    font-size: 64px;
-                    margin-bottom: 20px;
-                }
-
-                .restart-overlay-title {
+                .restart-toast-countdown {
                     font-size: 24px;
-                    font-weight: 600;
-                    margin-bottom: 10px;
-                }
-
-                .restart-overlay-countdown {
-                    font-size: 72px;
                     font-weight: bold;
                     color: #e74c3c;
-                    margin: 20px 0;
                 }
 
-                .restart-overlay-reason {
-                    font-size: 16px;
+                .restart-toast-reason {
+                    font-size: 12px;
                     color: #888;
-                    margin-bottom: 30px;
+                    display: none;
                 }
 
                 /* Deletion Dialog */
@@ -16101,10 +16143,18 @@
                 if (!response.ok) throw new Error('Failed to load disk usage');
                 const data = await response.json();
 
-                let html = '<div class="disk-usage-container">';
+                let html = `<div class="disk-usage-summary">
+                    <span>${self.t('diskTotal')}: ${data.TotalStorageGB} GB</span>
+                    <span>${self.t('diskUsed')}: ${data.TotalUsedGB} GB</span>
+                    <span>${self.t('diskFree')}: ${data.TotalFreeGB} GB</span>
+                </div>`;
+                html += '<div class="disk-usage-container">';
                 data.Disks.forEach(disk => {
                     const usedPercent = disk.UsedPercent;
                     const barColor = usedPercent > 90 ? '#e74c3c' : usedPercent > 70 ? '#f39c12' : '#52b54b';
+                    const mountsInfo = disk.MountPoints && disk.MountPoints.length > 1
+                        ? `<div class="disk-mounts">Mounts: ${disk.MountPoints.map(m => self.escapeHtml(m)).join(', ')}</div>`
+                        : '';
 
                     html += `
                         <div class="disk-card">
@@ -16120,6 +16170,7 @@
                                 <div><span class="disk-stat-label">${self.t('diskFree')}:</span> ${disk.FreeSizeGB} GB</div>
                                 <div><span class="disk-stat-label">${self.t('diskTotal')}:</span> ${disk.TotalSizeGB} GB</div>
                             </div>
+                            ${mountsInfo}
                         </div>
                     `;
                 });
