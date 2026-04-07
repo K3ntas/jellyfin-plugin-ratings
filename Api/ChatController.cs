@@ -59,6 +59,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static DateTime _lastRateLimitCleanup = DateTime.UtcNow;
         private static readonly object _cleanupLock = new object();
 
+        // Pre-compiled regex patterns with timeout protection against ReDoS
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+        private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex IncompleteTagRegex = new(@"<[^>]*$", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex JavaScriptProtocolRegex = new(@"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+        private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+
         // Global GIF rate limit to prevent upstream API abuse
         private static int _globalGifRequestCount;
         private static DateTime _globalGifResetTime = DateTime.UtcNow;
@@ -310,21 +317,21 @@ namespace Jellyfin.Plugin.Ratings.Api
             input = input.Trim();
             if (input.Length > maxLength) input = input.Substring(0, maxLength);
 
-            // Strip all HTML tags (handles malformed tags too)
-            input = Regex.Replace(input, @"<[^>]*?>", "", RegexOptions.None);
+            // Strip all HTML tags using compiled regex with timeout (ReDoS protection)
+            input = HtmlTagRegex.Replace(input, "");
             // Also strip incomplete tags at end
-            input = Regex.Replace(input, @"<[^>]*$", "", RegexOptions.None);
+            input = IncompleteTagRegex.Replace(input, "");
 
             // Recursively remove javascript: protocol until stable
             string previous;
             do
             {
                 previous = input;
-                input = Regex.Replace(input, @"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", "", RegexOptions.IgnoreCase);
+                input = JavaScriptProtocolRegex.Replace(input, "");
             } while (input != previous);
 
             // Remove event handler attributes
-            input = Regex.Replace(input, @"on\w+\s*=", "", RegexOptions.IgnoreCase);
+            input = EventHandlerRegex.Replace(input, "");
 
             // Note: NOT HTML encoding here because client renders with textContent (safe)
             // Adding encoding would cause "&" to display as "&amp;"
