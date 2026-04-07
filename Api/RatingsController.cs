@@ -13,6 +13,7 @@ using MediaBrowser.Common.Configuration;
 using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Controller.Persistence;
@@ -39,6 +40,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IApplicationPaths _appPaths;
         private readonly ILogger<RatingsController> _logger;
         private readonly SocialWebSocketListener _socialWebSocketListener;
+        private readonly ISystemManager _systemManager;
+
+        // Server restart state
+        private static CancellationTokenSource? _restartCts;
+        private static DateTime? _restartScheduledAt;
+        private static string? _restartReason;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsController"/> class.
@@ -51,6 +58,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="appPaths">Application paths.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="socialWebSocketListener">Social WebSocket listener.</param>
+        /// <param name="systemManager">System manager for server control.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
@@ -59,7 +67,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             IUserDataManager userDataManager,
             IApplicationPaths appPaths,
             ILogger<RatingsController> logger,
-            SocialWebSocketListener socialWebSocketListener)
+            SocialWebSocketListener socialWebSocketListener,
+            ISystemManager systemManager)
         {
             _repository = repository;
             _userManager = userManager;
@@ -69,6 +78,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _appPaths = appPaths;
             _logger = logger;
             _socialWebSocketListener = socialWebSocketListener;
+            _systemManager = systemManager;
         }
 
         /// <summary>
@@ -3189,6 +3199,409 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             return Guid.Empty;
         }
+
+        #region Admin - Disk Usage
+
+        /// <summary>
+        /// Gets disk usage information for all physical drives.
+        /// </summary>
+        [HttpGet("Admin/DiskUsage")]
+        public async Task<ActionResult> GetDiskUsage()
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                var drives = DriveInfo.GetDrives()
+                    .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
+                    .Select(d => new
+                    {
+                        DriveLetter = d.Name.TrimEnd('\\'),
+                        DriveName = string.IsNullOrEmpty(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
+                        TotalSizeGB = Math.Round(d.TotalSize / 1073741824.0, 2),
+                        UsedSizeGB = Math.Round((d.TotalSize - d.AvailableFreeSpace) / 1073741824.0, 2),
+                        FreeSizeGB = Math.Round(d.AvailableFreeSpace / 1073741824.0, 2),
+                        UsedPercent = Math.Round((d.TotalSize - d.AvailableFreeSpace) * 100.0 / d.TotalSize, 1),
+                        DriveType = d.DriveType.ToString(),
+                        DriveFormat = d.DriveFormat
+                    }).ToList();
+
+                return Ok(new
+                {
+                    Disks = drives,
+                    TotalStorageGB = Math.Round(drives.Sum(d => d.TotalSizeGB), 2),
+                    TotalUsedGB = Math.Round(drives.Sum(d => d.UsedSizeGB), 2),
+                    TotalFreeGB = Math.Round(drives.Sum(d => d.FreeSizeGB), 2)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting disk usage");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        #endregion
+
+        #region Admin - Duplicate Finder
+
+        /// <summary>
+        /// Finds duplicate media items by IMDB ID.
+        /// </summary>
+        [HttpGet("Admin/Duplicates")]
+        public async Task<ActionResult> GetDuplicates()
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                var allItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                    Recursive = true
+                });
+
+                var duplicates = allItems
+                    .Where(i => i.ProviderIds?.ContainsKey("Imdb") == true && !string.IsNullOrEmpty(i.ProviderIds["Imdb"]))
+                    .GroupBy(i => i.ProviderIds["Imdb"])
+                    .Where(g => g.Count() > 1)
+                    .Select(g =>
+                    {
+                        var items = g.Select(i =>
+                        {
+                            double sizeGB = 0;
+                            string quality = "Unknown";
+                            try
+                            {
+                                if (!string.IsNullOrEmpty(i.Path) && System.IO.File.Exists(i.Path))
+                                {
+                                    var fileInfo = new FileInfo(i.Path);
+                                    sizeGB = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                                }
+
+                                // Try to determine quality from video stream
+                                var mediaStreams = i.GetMediaStreams();
+                                var videoStream = mediaStreams?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Video);
+                                if (videoStream != null && videoStream.Height.HasValue)
+                                {
+                                    var height = videoStream.Height.Value;
+                                    quality = height >= 2160 ? "4K" : height >= 1080 ? "1080p" : height >= 720 ? "720p" : height >= 480 ? "480p" : "SD";
+                                }
+                            }
+                            catch { }
+
+                            return new
+                            {
+                                ItemId = i.Id,
+                                Name = i.Name,
+                                Path = i.Path,
+                                SizeGB = sizeGB,
+                                DateAdded = i.DateCreated,
+                                Quality = quality,
+                                Container = System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
+                            };
+                        }).OrderByDescending(x => x.SizeGB).ToList();
+
+                        return new
+                        {
+                            ImdbId = g.Key,
+                            Title = g.First().Name,
+                            Year = g.First().ProductionYear,
+                            Items = items,
+                            TotalSizeGB = Math.Round(items.Sum(x => x.SizeGB), 2),
+                            ItemCount = items.Count
+                        };
+                    })
+                    .OrderByDescending(d => d.TotalSizeGB)
+                    .ToList();
+
+                var potentialSavings = duplicates.Sum(d => d.TotalSizeGB - d.Items.Max(i => i.SizeGB));
+
+                return Ok(new
+                {
+                    Duplicates = duplicates,
+                    TotalDuplicateGroups = duplicates.Count,
+                    TotalDuplicateItems = duplicates.Sum(d => d.ItemCount),
+                    PotentialSavingsGB = Math.Round(potentialSavings, 2)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding duplicates");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a duplicate item.
+        /// </summary>
+        [HttpDelete("Admin/Duplicates/{itemId}")]
+        public async Task<ActionResult> DeleteDuplicate(
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] bool deleteFile = false)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                var item = _libraryManager.GetItemById(itemId);
+                if (item == null)
+                {
+                    return NotFound("Item not found");
+                }
+
+                var filePath = item.Path;
+                double freedSpace = 0;
+
+                if (deleteFile && !string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+                {
+                    var fileInfo = new FileInfo(filePath);
+                    freedSpace = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                }
+
+                // Delete from library
+                _libraryManager.DeleteItem(item, new MediaBrowser.Controller.Library.DeleteOptions
+                {
+                    DeleteFileLocation = deleteFile
+                });
+
+                _logger.LogInformation("Admin deleted duplicate item {ItemId}, deleteFile={DeleteFile}", itemId, deleteFile);
+
+                return Ok(new
+                {
+                    Success = true,
+                    ItemId = itemId,
+                    DeletedFile = deleteFile,
+                    FreedSpaceGB = freedSpace
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting duplicate {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        #endregion
+
+        #region Admin - Server Restart
+
+        /// <summary>
+        /// Schedules a server restart with countdown notification.
+        /// </summary>
+        [HttpPost("Admin/ScheduleRestart")]
+        public async Task<ActionResult> ScheduleRestart([FromBody] RestartRequest request)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                if (_restartCts != null)
+                {
+                    return BadRequest("Restart already scheduled. Cancel it first.");
+                }
+
+                var delayMinutes = request?.DelayMinutes ?? 2;
+                if (delayMinutes < 1 || delayMinutes > 60)
+                {
+                    return BadRequest("Delay must be between 1 and 60 minutes");
+                }
+
+                var delaySeconds = delayMinutes * 60;
+                _restartScheduledAt = DateTime.UtcNow.AddSeconds(delaySeconds);
+                _restartReason = request?.Reason ?? "Server maintenance";
+                _restartCts = new CancellationTokenSource();
+
+                _logger.LogInformation("Server restart scheduled in {Minutes} minutes by admin", delayMinutes);
+
+                // Start countdown broadcast task
+                _ = BroadcastRestartCountdownAsync(delaySeconds, _restartCts.Token);
+
+                return Ok(new
+                {
+                    Success = true,
+                    RestartAt = _restartScheduledAt,
+                    DelaySeconds = delaySeconds,
+                    Message = $"Server restart scheduled in {delayMinutes} minute{(delayMinutes != 1 ? "s" : "")}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error scheduling restart");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Cancels a scheduled server restart.
+        /// </summary>
+        [HttpDelete("Admin/ScheduleRestart")]
+        public async Task<ActionResult> CancelRestart()
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                if (_restartCts == null)
+                {
+                    return BadRequest("No restart scheduled");
+                }
+
+                _restartCts.Cancel();
+                _restartCts = null;
+                _restartScheduledAt = null;
+                _restartReason = null;
+
+                _logger.LogInformation("Scheduled server restart cancelled by admin");
+
+                // Notify all clients
+                await _socialWebSocketListener.BroadcastToAllAsync(new
+                {
+                    MessageType = "ServerRestartCancelled",
+                    Data = new { Message = "Server restart has been cancelled" }
+                }).ConfigureAwait(false);
+
+                return Ok(new { Success = true, Message = "Scheduled restart cancelled" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling restart");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets the current restart status.
+        /// </summary>
+        [HttpGet("Admin/RestartStatus")]
+        public async Task<ActionResult> GetRestartStatus()
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsJellyfinAdmin(userId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                if (_restartScheduledAt == null)
+                {
+                    return Ok(new { IsScheduled = false });
+                }
+
+                var remaining = (_restartScheduledAt.Value - DateTime.UtcNow).TotalSeconds;
+                return Ok(new
+                {
+                    IsScheduled = true,
+                    RestartAt = _restartScheduledAt,
+                    SecondsRemaining = Math.Max(0, (int)remaining),
+                    Reason = _restartReason
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting restart status");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private async Task BroadcastRestartCountdownAsync(int totalSeconds, CancellationToken ct)
+        {
+            try
+            {
+                for (int remaining = totalSeconds; remaining >= 0; remaining--)
+                {
+                    if (ct.IsCancellationRequested) break;
+
+                    var phase = remaining > 30 ? "warning" : remaining > 10 ? "critical" : "imminent";
+                    var formatted = $"{remaining / 60}:{(remaining % 60):D2}";
+
+                    // Broadcast to ALL connected clients
+                    await _socialWebSocketListener.BroadcastToAllAsync(new
+                    {
+                        MessageType = "ServerRestartCountdown",
+                        Data = new
+                        {
+                            SecondsRemaining = remaining,
+                            FormattedTime = formatted,
+                            Reason = _restartReason,
+                            Phase = phase
+                        }
+                    }).ConfigureAwait(false);
+
+                    if (remaining > 0)
+                    {
+                        try
+                        {
+                            await Task.Delay(1000, ct).ConfigureAwait(false);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (!ct.IsCancellationRequested)
+                {
+                    _logger.LogInformation("Restarting server now");
+                    _restartCts = null;
+                    _restartScheduledAt = null;
+                    _restartReason = null;
+
+                    // Actually restart Jellyfin
+                    _systemManager.Restart();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in restart countdown");
+            }
+            finally
+            {
+                _restartCts = null;
+                _restartScheduledAt = null;
+                _restartReason = null;
+            }
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Request model for scheduling server restart.
+    /// </summary>
+    public class RestartRequest
+    {
+        /// <summary>
+        /// Delay in minutes before restart.
+        /// </summary>
+        public int DelayMinutes { get; set; } = 2;
+
+        /// <summary>
+        /// Optional reason for restart.
+        /// </summary>
+        public string? Reason { get; set; }
     }
 
     /// <summary>

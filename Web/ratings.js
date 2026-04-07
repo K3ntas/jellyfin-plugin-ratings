@@ -102,6 +102,14 @@
                 mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
                 mediaTypeScheduled: 'Scheduled', mediaSettings: 'Settings', mediaIncludeTypes: 'Include media types:', mediaTypesHint: 'Select which media types to show',
+                mediaDiskUsage: 'Disk Usage', mediaDuplicates: 'Duplicates', mediaRestart: 'Restart',
+                diskDrive: 'Drive', diskTotal: 'Total', diskUsed: 'Used', diskFree: 'Free', diskLoading: 'Loading disk information...',
+                duplicatesLoading: 'Scanning for duplicates...', duplicatesNone: 'No duplicates found', duplicatesFound: 'duplicates found',
+                duplicateDelete: 'Delete', duplicateDeleteFiles: 'Delete files too', duplicateConfirm: 'Delete this duplicate?',
+                restartSchedule: 'Schedule Restart', restartCancel: 'Cancel Restart', restartNow: 'Restart Now',
+                restartIn: 'Restart in', restartReason: 'Reason (optional)', restartScheduled: 'Restart scheduled',
+                restartCancelled: 'Restart cancelled', restartConfirm: 'Schedule server restart?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Request to delete request', requestDeleteMedia: 'Request to delete media', deletionRequests: 'Deletion Requests', noDeletionRequests: 'No deletion requests yet',
                 deleteNow: 'Delete ~1h', schedule1Day: '1 Day', schedule1Week: '1 Week', schedule1Month: '1 Month', rejectDeletion: 'Reject', approveDeleteRequest: 'Approve',
                 alreadyRequested: 'Deletion Requested', deletionApproved: 'APPROVED', deletionRejected: 'REJECTED', deletionPending: 'PENDING',
@@ -167,6 +175,14 @@
                 mediaActions: 'Acciones', mediaChange: 'Cambiar', mediaChangeTime: 'Cambiar tiempo', mediaSoon: 'Pronto', mediaDays: 'días', mediaPlays: 'reproducciones',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Siguiente', mediaGo: 'Ir',
                 mediaTypeScheduled: 'Programados', mediaSettings: 'Ajustes', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecciona los tipos a mostrar',
+                mediaDiskUsage: 'Uso de Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskDrive: 'Disco', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Libre', diskLoading: 'Cargando información del disco...',
+                duplicatesLoading: 'Buscando duplicados...', duplicatesNone: 'No se encontraron duplicados', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Eliminar', duplicateDeleteFiles: 'Eliminar archivos también', duplicateConfirm: '¿Eliminar este duplicado?',
+                restartSchedule: 'Programar Reinicio', restartCancel: 'Cancelar Reinicio', restartNow: 'Reiniciar Ahora',
+                restartIn: 'Reiniciar en', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinicio programado',
+                restartCancelled: 'Reinicio cancelado', restartConfirm: '¿Programar reinicio del servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Solicitar eliminar', requestDeleteMedia: 'Solicitar eliminar contenido', deletionRequests: 'Solicitudes de Eliminación', noDeletionRequests: 'Sin solicitudes de eliminación',
                 deleteNow: 'Eliminar ~1h', schedule1Day: '1 Día', schedule1Week: '1 Semana', schedule1Month: '1 Mes', rejectDeletion: 'Rechazar', approveDeleteRequest: 'Aprobar',
                 alreadyRequested: 'Eliminación Solicitada', deletionApproved: 'APROBADO', deletionRejected: 'RECHAZADO', deletionPending: 'PENDIENTE',
@@ -218,6 +234,14 @@
                 mediaActions: '操作', mediaChange: '更改', mediaChangeTime: '更改时间', mediaSoon: '即将', mediaDays: '天', mediaPlays: '次播放',
                 mediaMinutes: '分钟', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '页', mediaOf: '/', mediaPrev: '上一页', mediaNext: '下一页', mediaGo: '前往',
                 mediaTypeScheduled: '已计划', mediaSettings: '设置', mediaIncludeTypes: '包含类型:', mediaTypesHint: '选择要显示的媒体类型',
+                mediaDiskUsage: '磁盘使用', mediaDuplicates: '重复项', mediaRestart: '重启',
+                diskDrive: '驱动器', diskTotal: '总计', diskUsed: '已用', diskFree: '可用', diskLoading: '正在加载磁盘信息...',
+                duplicatesLoading: '正在扫描重复项...', duplicatesNone: '未找到重复项', duplicatesFound: '个重复项',
+                duplicateDelete: '删除', duplicateDeleteFiles: '同时删除文件', duplicateConfirm: '确定删除此重复项？',
+                restartSchedule: '计划重启', restartCancel: '取消重启', restartNow: '立即重启',
+                restartIn: '重启倒计时', restartReason: '原因（可选）', restartScheduled: '已计划重启',
+                restartCancelled: '重启已取消', restartConfirm: '确定计划服务器重启？',
+                restart1Min: '1分钟', restart2Min: '2分钟', restart5Min: '5分钟', restart10Min: '10分钟',
                 requestDeleteRequest: '请求删除', requestDeleteMedia: '请求删除媒体', deletionRequests: '删除请求', noDeletionRequests: '暂无删除请求',
                 deleteNow: '立即删除', schedule1Day: '1天', schedule1Week: '1周', schedule1Month: '1个月', rejectDeletion: '拒绝', approveDeleteRequest: '批准',
                 alreadyRequested: '已请求删除', deletionApproved: '已批准', deletionRejected: '已拒绝', deletionPending: '待处理',
@@ -269,6 +293,14 @@
                 mediaActions: 'Ações', mediaChange: 'Alterar', mediaChangeTime: 'Alterar tempo', mediaSoon: 'Em breve', mediaDays: 'dias', mediaPlays: 'reproduções',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Próximo', mediaGo: 'Ir',
                 mediaTypeScheduled: 'Agendados', mediaSettings: 'Configurações', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecione os tipos a mostrar',
+                mediaDiskUsage: 'Uso do Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskDrive: 'Disco', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Livre', diskLoading: 'Carregando informações do disco...',
+                duplicatesLoading: 'Procurando duplicados...', duplicatesNone: 'Nenhum duplicado encontrado', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Excluir', duplicateDeleteFiles: 'Excluir arquivos também', duplicateConfirm: 'Excluir este duplicado?',
+                restartSchedule: 'Agendar Reinício', restartCancel: 'Cancelar Reinício', restartNow: 'Reiniciar Agora',
+                restartIn: 'Reiniciar em', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinício agendado',
+                restartCancelled: 'Reinício cancelado', restartConfirm: 'Agendar reinício do servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Solicitar exclusão', requestDeleteMedia: 'Solicitar excluir mídia', deletionRequests: 'Solicitações de Exclusão', noDeletionRequests: 'Sem solicitações de exclusão',
                 deleteNow: 'Excluir ~1h', schedule1Day: '1 Dia', schedule1Week: '1 Semana', schedule1Month: '1 Mês', rejectDeletion: 'Rejeitar', approveDeleteRequest: 'Aprovar',
                 alreadyRequested: 'Exclusão Solicitada', deletionApproved: 'APROVADO', deletionRejected: 'REJEITADO', deletionPending: 'PENDENTE',
@@ -320,6 +352,14 @@
                 mediaActions: 'Действия', mediaChange: 'Изменить', mediaChangeTime: 'Изменить время', mediaSoon: 'Скоро', mediaDays: 'дней', mediaPlays: 'просмотров',
                 mediaMinutes: 'мин', mediaGB: 'ГБ', mediaMB: 'МБ', mediaPage: 'Страница', mediaOf: 'из', mediaPrev: 'Назад', mediaNext: 'Вперёд', mediaGo: 'Перейти',
                 mediaTypeScheduled: 'Запланировано', mediaSettings: 'Настройки', mediaIncludeTypes: 'Включить типы:', mediaTypesHint: 'Выберите типы для отображения',
+                mediaDiskUsage: 'Использование диска', mediaDuplicates: 'Дубликаты', mediaRestart: 'Перезапуск',
+                diskDrive: 'Диск', diskTotal: 'Всего', diskUsed: 'Занято', diskFree: 'Свободно', diskLoading: 'Загрузка информации о диске...',
+                duplicatesLoading: 'Поиск дубликатов...', duplicatesNone: 'Дубликаты не найдены', duplicatesFound: 'дубликатов найдено',
+                duplicateDelete: 'Удалить', duplicateDeleteFiles: 'Удалить файлы тоже', duplicateConfirm: 'Удалить этот дубликат?',
+                restartSchedule: 'Запланировать перезапуск', restartCancel: 'Отменить перезапуск', restartNow: 'Перезапустить сейчас',
+                restartIn: 'Перезапуск через', restartReason: 'Причина (необязательно)', restartScheduled: 'Перезапуск запланирован',
+                restartCancelled: 'Перезапуск отменён', restartConfirm: 'Запланировать перезапуск сервера?',
+                restart1Min: '1 мин', restart2Min: '2 мин', restart5Min: '5 мин', restart10Min: '10 мин',
                 requestDeleteRequest: 'Запросить удаление', requestDeleteMedia: 'Запросить удаление медиа', deletionRequests: 'Запросы на Удаление', noDeletionRequests: 'Нет запросов на удаление',
                 deleteNow: 'Удалить ~1ч', schedule1Day: '1 День', schedule1Week: '1 Неделя', schedule1Month: '1 Месяц', rejectDeletion: 'Отклонить', approveDeleteRequest: 'Одобрить',
                 alreadyRequested: 'Удаление Запрошено', deletionApproved: 'ОДОБРЕНО', deletionRejected: 'ОТКЛОНЕНО', deletionPending: 'ОЖИДАНИЕ',
@@ -371,6 +411,14 @@
                 mediaActions: 'アクション', mediaChange: '変更', mediaChangeTime: '時間変更', mediaSoon: 'もうすぐ', mediaDays: '日', mediaPlays: '回再生',
                 mediaMinutes: '分', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'ページ', mediaOf: '/', mediaPrev: '前へ', mediaNext: '次へ', mediaGo: '移動',
                 mediaTypeScheduled: '予約済み', mediaSettings: '設定', mediaIncludeTypes: '含めるタイプ:', mediaTypesHint: '表示するタイプを選択',
+                mediaDiskUsage: 'ディスク使用量', mediaDuplicates: '重複', mediaRestart: '再起動',
+                diskDrive: 'ドライブ', diskTotal: '合計', diskUsed: '使用中', diskFree: '空き', diskLoading: 'ディスク情報を読み込み中...',
+                duplicatesLoading: '重複をスキャン中...', duplicatesNone: '重複が見つかりません', duplicatesFound: '件の重複',
+                duplicateDelete: '削除', duplicateDeleteFiles: 'ファイルも削除', duplicateConfirm: 'この重複を削除しますか？',
+                restartSchedule: '再起動をスケジュール', restartCancel: '再起動をキャンセル', restartNow: '今すぐ再起動',
+                restartIn: '再起動まで', restartReason: '理由（任意）', restartScheduled: '再起動がスケジュールされました',
+                restartCancelled: '再起動がキャンセルされました', restartConfirm: 'サーバーの再起動をスケジュールしますか？',
+                restart1Min: '1分', restart2Min: '2分', restart5Min: '5分', restart10Min: '10分',
                 requestDeleteRequest: '削除リクエスト', requestDeleteMedia: 'メディア削除リクエスト', deletionRequests: '削除リクエスト', noDeletionRequests: '削除リクエストなし',
                 deleteNow: '即削除', schedule1Day: '1日', schedule1Week: '1週間', schedule1Month: '1ヶ月', rejectDeletion: '却下', approveDeleteRequest: '承認',
                 alreadyRequested: '削除リクエスト済み', deletionApproved: '承認済み', deletionRejected: '却下済み', deletionPending: '保留中',
@@ -422,6 +470,14 @@
                 mediaActions: 'Aktionen', mediaChange: 'Ändern', mediaChangeTime: 'Zeit ändern', mediaSoon: 'Bald', mediaDays: 'Tage', mediaPlays: 'Wiedergaben',
                 mediaMinutes: 'Min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Seite', mediaOf: 'von', mediaPrev: 'Zurück', mediaNext: 'Weiter', mediaGo: 'Los',
                 mediaTypeScheduled: 'Geplant', mediaSettings: 'Einstellungen', mediaIncludeTypes: 'Medientypen:', mediaTypesHint: 'Anzuzeigende Typen auswählen',
+                mediaDiskUsage: 'Festplattennutzung', mediaDuplicates: 'Duplikate', mediaRestart: 'Neustart',
+                diskDrive: 'Laufwerk', diskTotal: 'Gesamt', diskUsed: 'Belegt', diskFree: 'Frei', diskLoading: 'Lade Festplatteninformationen...',
+                duplicatesLoading: 'Suche nach Duplikaten...', duplicatesNone: 'Keine Duplikate gefunden', duplicatesFound: 'Duplikate gefunden',
+                duplicateDelete: 'Löschen', duplicateDeleteFiles: 'Dateien auch löschen', duplicateConfirm: 'Dieses Duplikat löschen?',
+                restartSchedule: 'Neustart planen', restartCancel: 'Neustart abbrechen', restartNow: 'Jetzt neu starten',
+                restartIn: 'Neustart in', restartReason: 'Grund (optional)', restartScheduled: 'Neustart geplant',
+                restartCancelled: 'Neustart abgebrochen', restartConfirm: 'Server-Neustart planen?',
+                restart1Min: '1 Min', restart2Min: '2 Min', restart5Min: '5 Min', restart10Min: '10 Min',
                 requestDeleteRequest: 'Löschung anfordern', requestDeleteMedia: 'Medienlöschung anfordern', deletionRequests: 'Löschanfragen', noDeletionRequests: 'Keine Löschanfragen',
                 deleteNow: 'Jetzt löschen', schedule1Day: '1 Tag', schedule1Week: '1 Woche', schedule1Month: '1 Monat', rejectDeletion: 'Ablehnen', approveDeleteRequest: 'Genehmigen',
                 alreadyRequested: 'Löschung Angefordert', deletionApproved: 'GENEHMIGT', deletionRejected: 'ABGELEHNT', deletionPending: 'AUSSTEHEND',
@@ -473,6 +529,14 @@
                 mediaActions: 'Actions', mediaChange: 'Modifier', mediaChangeTime: 'Modifier temps', mediaSoon: 'Bientôt', mediaDays: 'jours', mediaPlays: 'lectures',
                 mediaMinutes: 'min', mediaGB: 'Go', mediaMB: 'Mo', mediaPage: 'Page', mediaOf: 'sur', mediaPrev: 'Précédent', mediaNext: 'Suivant', mediaGo: 'Aller',
                 mediaTypeScheduled: 'Planifiés', mediaSettings: 'Paramètres', mediaIncludeTypes: 'Inclure types:', mediaTypesHint: 'Sélectionner les types à afficher',
+                mediaDiskUsage: 'Utilisation disque', mediaDuplicates: 'Doublons', mediaRestart: 'Redémarrer',
+                diskDrive: 'Disque', diskTotal: 'Total', diskUsed: 'Utilisé', diskFree: 'Libre', diskLoading: 'Chargement des informations du disque...',
+                duplicatesLoading: 'Recherche de doublons...', duplicatesNone: 'Aucun doublon trouvé', duplicatesFound: 'doublons trouvés',
+                duplicateDelete: 'Supprimer', duplicateDeleteFiles: 'Supprimer les fichiers aussi', duplicateConfirm: 'Supprimer ce doublon ?',
+                restartSchedule: 'Planifier redémarrage', restartCancel: 'Annuler redémarrage', restartNow: 'Redémarrer maintenant',
+                restartIn: 'Redémarrage dans', restartReason: 'Raison (facultatif)', restartScheduled: 'Redémarrage planifié',
+                restartCancelled: 'Redémarrage annulé', restartConfirm: 'Planifier le redémarrage du serveur ?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Demander suppression', requestDeleteMedia: 'Demander suppression média', deletionRequests: 'Demandes de Suppression', noDeletionRequests: 'Pas de demandes de suppression',
                 deleteNow: 'Supprimer ~1h', schedule1Day: '1 Jour', schedule1Week: '1 Semaine', schedule1Month: '1 Mois', rejectDeletion: 'Refuser', approveDeleteRequest: 'Approuver',
                 alreadyRequested: 'Suppression Demandée', deletionApproved: 'APPROUVÉ', deletionRejected: 'REFUSÉ', deletionPending: 'EN ATTENTE',
@@ -524,6 +588,14 @@
                 mediaActions: '작업', mediaChange: '변경', mediaChangeTime: '시간 변경', mediaSoon: '곧', mediaDays: '일', mediaPlays: '재생',
                 mediaMinutes: '분', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '페이지', mediaOf: '/', mediaPrev: '이전', mediaNext: '다음', mediaGo: '이동',
                 mediaTypeScheduled: '예약됨', mediaSettings: '설정', mediaIncludeTypes: '포함 유형:', mediaTypesHint: '표시할 유형 선택',
+                mediaDiskUsage: '디스크 사용량', mediaDuplicates: '중복', mediaRestart: '재시작',
+                diskDrive: '드라이브', diskTotal: '전체', diskUsed: '사용됨', diskFree: '여유', diskLoading: '디스크 정보 로딩 중...',
+                duplicatesLoading: '중복 검색 중...', duplicatesNone: '중복 없음', duplicatesFound: '개의 중복 발견',
+                duplicateDelete: '삭제', duplicateDeleteFiles: '파일도 삭제', duplicateConfirm: '이 중복을 삭제하시겠습니까?',
+                restartSchedule: '재시작 예약', restartCancel: '재시작 취소', restartNow: '지금 재시작',
+                restartIn: '재시작까지', restartReason: '사유 (선택)', restartScheduled: '재시작 예약됨',
+                restartCancelled: '재시작 취소됨', restartConfirm: '서버 재시작을 예약하시겠습니까?',
+                restart1Min: '1분', restart2Min: '2분', restart5Min: '5분', restart10Min: '10분',
                 requestDeleteRequest: '삭제 요청', requestDeleteMedia: '미디어 삭제 요청', deletionRequests: '삭제 요청', noDeletionRequests: '삭제 요청 없음',
                 deleteNow: '즉시 삭제', schedule1Day: '1일', schedule1Week: '1주', schedule1Month: '1개월', rejectDeletion: '거부', approveDeleteRequest: '승인',
                 alreadyRequested: '삭제 요청됨', deletionApproved: '승인됨', deletionRejected: '거부됨', deletionPending: '대기 중',
@@ -575,6 +647,14 @@
                 mediaActions: 'Azioni', mediaChange: 'Modifica', mediaChangeTime: 'Modifica tempo', mediaSoon: 'Presto', mediaDays: 'giorni', mediaPlays: 'riproduzioni',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'di', mediaPrev: 'Prec', mediaNext: 'Succ', mediaGo: 'Vai',
                 mediaTypeScheduled: 'Pianificati', mediaSettings: 'Impostazioni', mediaIncludeTypes: 'Includi tipi:', mediaTypesHint: 'Seleziona i tipi da mostrare',
+                mediaDiskUsage: 'Uso disco', mediaDuplicates: 'Duplicati', mediaRestart: 'Riavvia',
+                diskDrive: 'Disco', diskTotal: 'Totale', diskUsed: 'Usato', diskFree: 'Libero', diskLoading: 'Caricamento informazioni disco...',
+                duplicatesLoading: 'Ricerca duplicati...', duplicatesNone: 'Nessun duplicato trovato', duplicatesFound: 'duplicati trovati',
+                duplicateDelete: 'Elimina', duplicateDeleteFiles: 'Elimina anche file', duplicateConfirm: 'Eliminare questo duplicato?',
+                restartSchedule: 'Pianifica riavvio', restartCancel: 'Annulla riavvio', restartNow: 'Riavvia ora',
+                restartIn: 'Riavvio tra', restartReason: 'Motivo (opzionale)', restartScheduled: 'Riavvio pianificato',
+                restartCancelled: 'Riavvio annullato', restartConfirm: 'Pianificare il riavvio del server?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Richiedi eliminazione', requestDeleteMedia: 'Richiedi eliminazione media', deletionRequests: 'Richieste di Eliminazione', noDeletionRequests: 'Nessuna richiesta di eliminazione',
                 deleteNow: 'Elimina ~1h', schedule1Day: '1 Giorno', schedule1Week: '1 Settimana', schedule1Month: '1 Mese', rejectDeletion: 'Rifiuta', approveDeleteRequest: 'Approva',
                 alreadyRequested: 'Eliminazione Richiesta', deletionApproved: 'APPROVATO', deletionRejected: 'RIFIUTATO', deletionPending: 'IN ATTESA',
@@ -626,6 +706,14 @@
                 mediaActions: 'İşlemler', mediaChange: 'Değiştir', mediaChangeTime: 'Zamanı değiştir', mediaSoon: 'Yakında', mediaDays: 'gün', mediaPlays: 'oynatma',
                 mediaMinutes: 'dk', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Sayfa', mediaOf: '/', mediaPrev: 'Önceki', mediaNext: 'Sonraki', mediaGo: 'Git',
                 mediaTypeScheduled: 'Planlanmış', mediaSettings: 'Ayarlar', mediaIncludeTypes: 'Türleri dahil et:', mediaTypesHint: 'Gösterilecek türleri seçin',
+                mediaDiskUsage: 'Disk Kullanımı', mediaDuplicates: 'Kopyalar', mediaRestart: 'Yeniden Başlat',
+                diskDrive: 'Sürücü', diskTotal: 'Toplam', diskUsed: 'Kullanılan', diskFree: 'Boş', diskLoading: 'Disk bilgileri yükleniyor...',
+                duplicatesLoading: 'Kopyalar aranıyor...', duplicatesNone: 'Kopya bulunamadı', duplicatesFound: 'kopya bulundu',
+                duplicateDelete: 'Sil', duplicateDeleteFiles: 'Dosyaları da sil', duplicateConfirm: 'Bu kopyayı silmek istiyor musunuz?',
+                restartSchedule: 'Yeniden Başlatmayı Planla', restartCancel: 'Yeniden Başlatmayı İptal Et', restartNow: 'Şimdi Yeniden Başlat',
+                restartIn: 'Yeniden başlatma:', restartReason: 'Neden (isteğe bağlı)', restartScheduled: 'Yeniden başlatma planlandı',
+                restartCancelled: 'Yeniden başlatma iptal edildi', restartConfirm: 'Sunucu yeniden başlatması planlanacak mı?',
+                restart1Min: '1 dk', restart2Min: '2 dk', restart5Min: '5 dk', restart10Min: '10 dk',
                 requestDeleteRequest: 'Silme iste', requestDeleteMedia: 'Medya silme iste', deletionRequests: 'Silme İstekleri', noDeletionRequests: 'Silme isteği yok',
                 deleteNow: 'Şimdi sil', schedule1Day: '1 Gün', schedule1Week: '1 Hafta', schedule1Month: '1 Ay', rejectDeletion: 'Reddet', approveDeleteRequest: 'Onayla',
                 alreadyRequested: 'Silme İstendi', deletionApproved: 'ONAYLANDI', deletionRejected: 'REDDEDİLDİ', deletionPending: 'BEKLİYOR',
@@ -677,6 +765,14 @@
                 mediaActions: 'Akcje', mediaChange: 'Zmień', mediaChangeTime: 'Zmień czas', mediaSoon: 'Wkrótce', mediaDays: 'dni', mediaPlays: 'odtworzeń',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Strona', mediaOf: 'z', mediaPrev: 'Poprz', mediaNext: 'Nast', mediaGo: 'Idź',
                 mediaTypeScheduled: 'Zaplanowane', mediaSettings: 'Ustawienia', mediaIncludeTypes: 'Uwzględnij typy:', mediaTypesHint: 'Wybierz typy do wyświetlenia',
+                mediaDiskUsage: 'Użycie dysku', mediaDuplicates: 'Duplikaty', mediaRestart: 'Restart',
+                diskDrive: 'Dysk', diskTotal: 'Razem', diskUsed: 'Zajęte', diskFree: 'Wolne', diskLoading: 'Ładowanie informacji o dysku...',
+                duplicatesLoading: 'Szukanie duplikatów...', duplicatesNone: 'Nie znaleziono duplikatów', duplicatesFound: 'duplikatów znaleziono',
+                duplicateDelete: 'Usuń', duplicateDeleteFiles: 'Usuń też pliki', duplicateConfirm: 'Usunąć ten duplikat?',
+                restartSchedule: 'Zaplanuj restart', restartCancel: 'Anuluj restart', restartNow: 'Restartuj teraz',
+                restartIn: 'Restart za', restartReason: 'Powód (opcjonalnie)', restartScheduled: 'Restart zaplanowany',
+                restartCancelled: 'Restart anulowany', restartConfirm: 'Zaplanować restart serwera?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Poproś o usunięcie', requestDeleteMedia: 'Poproś o usunięcie mediów', deletionRequests: 'Prośby o Usunięcie', noDeletionRequests: 'Brak próśb o usunięcie',
                 deleteNow: 'Usuń ~1h', schedule1Day: '1 Dzień', schedule1Week: '1 Tydzień', schedule1Month: '1 Miesiąc', rejectDeletion: 'Odrzuć', approveDeleteRequest: 'Zatwierdź',
                 alreadyRequested: 'Usunięcie Zgłoszone', deletionApproved: 'ZATWIERDZONE', deletionRejected: 'ODRZUCONE', deletionPending: 'OCZEKUJE',
@@ -728,6 +824,14 @@
                 mediaActions: 'Acties', mediaChange: 'Wijzigen', mediaChangeTime: 'Tijd wijzigen', mediaSoon: 'Binnenkort', mediaDays: 'dagen', mediaPlays: 'keer afgespeeld',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'van', mediaPrev: 'Vorige', mediaNext: 'Volgende', mediaGo: 'Ga',
                 mediaTypeScheduled: 'Gepland', mediaSettings: 'Instellingen', mediaIncludeTypes: 'Inclusief types:', mediaTypesHint: 'Selecteer te tonen types',
+                mediaDiskUsage: 'Schijfgebruik', mediaDuplicates: 'Duplicaten', mediaRestart: 'Herstarten',
+                diskDrive: 'Schijf', diskTotal: 'Totaal', diskUsed: 'Gebruikt', diskFree: 'Vrij', diskLoading: 'Schijfinformatie laden...',
+                duplicatesLoading: 'Zoeken naar duplicaten...', duplicatesNone: 'Geen duplicaten gevonden', duplicatesFound: 'duplicaten gevonden',
+                duplicateDelete: 'Verwijderen', duplicateDeleteFiles: 'Bestanden ook verwijderen', duplicateConfirm: 'Dit duplicaat verwijderen?',
+                restartSchedule: 'Herstart plannen', restartCancel: 'Herstart annuleren', restartNow: 'Nu herstarten',
+                restartIn: 'Herstart over', restartReason: 'Reden (optioneel)', restartScheduled: 'Herstart gepland',
+                restartCancelled: 'Herstart geannuleerd', restartConfirm: 'Server herstart plannen?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Verwijdering aanvragen', requestDeleteMedia: 'Media verwijdering aanvragen', deletionRequests: 'Verwijderverzoeken', noDeletionRequests: 'Geen verwijderverzoeken',
                 deleteNow: 'Nu verwijderen', schedule1Day: '1 Dag', schedule1Week: '1 Week', schedule1Month: '1 Maand', rejectDeletion: 'Afwijzen', approveDeleteRequest: 'Goedkeuren',
                 alreadyRequested: 'Verwijdering Aangevraagd', deletionApproved: 'GOEDGEKEURD', deletionRejected: 'AFGEWEZEN', deletionPending: 'WACHTEND',
@@ -779,6 +883,14 @@
                 mediaActions: 'إجراءات', mediaChange: 'تغيير', mediaChangeTime: 'تغيير الوقت', mediaSoon: 'قريباً', mediaDays: 'أيام', mediaPlays: 'مشاهدات',
                 mediaMinutes: 'دقيقة', mediaGB: 'جيجا', mediaMB: 'ميجا', mediaPage: 'صفحة', mediaOf: 'من', mediaPrev: 'السابق', mediaNext: 'التالي', mediaGo: 'انتقل',
                 mediaTypeScheduled: 'مجدول', mediaSettings: 'الإعدادات', mediaIncludeTypes: 'تضمين الأنواع:', mediaTypesHint: 'اختر الأنواع للعرض',
+                mediaDiskUsage: 'استخدام القرص', mediaDuplicates: 'المكررات', mediaRestart: 'إعادة التشغيل',
+                diskDrive: 'القرص', diskTotal: 'الإجمالي', diskUsed: 'المستخدم', diskFree: 'المتاح', diskLoading: 'جاري تحميل معلومات القرص...',
+                duplicatesLoading: 'جاري البحث عن المكررات...', duplicatesNone: 'لم يتم العثور على مكررات', duplicatesFound: 'مكررات',
+                duplicateDelete: 'حذف', duplicateDeleteFiles: 'حذف الملفات أيضاً', duplicateConfirm: 'حذف هذا المكرر؟',
+                restartSchedule: 'جدولة إعادة التشغيل', restartCancel: 'إلغاء إعادة التشغيل', restartNow: 'إعادة التشغيل الآن',
+                restartIn: 'إعادة التشغيل خلال', restartReason: 'السبب (اختياري)', restartScheduled: 'تم جدولة إعادة التشغيل',
+                restartCancelled: 'تم إلغاء إعادة التشغيل', restartConfirm: 'جدولة إعادة تشغيل الخادم؟',
+                restart1Min: '1 دقيقة', restart2Min: '2 دقيقة', restart5Min: '5 دقائق', restart10Min: '10 دقائق',
                 requestDeleteRequest: 'طلب حذف', requestDeleteMedia: 'طلب حذف الوسائط', deletionRequests: 'طلبات الحذف', noDeletionRequests: 'لا توجد طلبات حذف',
                 deleteNow: 'حذف الآن', schedule1Day: '1 يوم', schedule1Week: '1 أسبوع', schedule1Month: '1 شهر', rejectDeletion: 'رفض', approveDeleteRequest: 'موافقة',
                 alreadyRequested: 'تم طلب الحذف', deletionApproved: 'موافق عليه', deletionRejected: 'مرفوض', deletionPending: 'قيد الانتظار',
@@ -830,6 +942,14 @@
                 mediaActions: 'कार्रवाई', mediaChange: 'बदलें', mediaChangeTime: 'समय बदलें', mediaSoon: 'जल्द', mediaDays: 'दिन', mediaPlays: 'बार चला',
                 mediaMinutes: 'मिनट', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'पृष्ठ', mediaOf: 'का', mediaPrev: 'पिछला', mediaNext: 'अगला', mediaGo: 'जाएं',
                 mediaTypeScheduled: 'शेड्यूल्ड', mediaSettings: 'सेटिंग्स', mediaIncludeTypes: 'प्रकार शामिल करें:', mediaTypesHint: 'दिखाने के लिए प्रकार चुनें',
+                mediaDiskUsage: 'डिस्क उपयोग', mediaDuplicates: 'डुप्लिकेट', mediaRestart: 'पुनः आरंभ',
+                diskDrive: 'ड्राइव', diskTotal: 'कुल', diskUsed: 'उपयोग', diskFree: 'खाली', diskLoading: 'डिस्क जानकारी लोड हो रही है...',
+                duplicatesLoading: 'डुप्लिकेट खोज रहा है...', duplicatesNone: 'कोई डुप्लिकेट नहीं मिला', duplicatesFound: 'डुप्लिकेट मिले',
+                duplicateDelete: 'हटाएं', duplicateDeleteFiles: 'फाइलें भी हटाएं', duplicateConfirm: 'यह डुप्लिकेट हटाएं?',
+                restartSchedule: 'पुनः आरंभ शेड्यूल करें', restartCancel: 'पुनः आरंभ रद्द करें', restartNow: 'अभी पुनः आरंभ करें',
+                restartIn: 'पुनः आरंभ', restartReason: 'कारण (वैकल्पिक)', restartScheduled: 'पुनः आरंभ शेड्यूल किया गया',
+                restartCancelled: 'पुनः आरंभ रद्द', restartConfirm: 'सर्वर पुनः आरंभ शेड्यूल करें?',
+                restart1Min: '1 मिनट', restart2Min: '2 मिनट', restart5Min: '5 मिनट', restart10Min: '10 मिनट',
                 requestDeleteRequest: 'हटाने का अनुरोध', requestDeleteMedia: 'मीडिया हटाने का अनुरोध', deletionRequests: 'हटाने के अनुरोध', noDeletionRequests: 'कोई हटाने के अनुरोध नहीं',
                 deleteNow: 'अभी हटाएं', schedule1Day: '1 दिन', schedule1Week: '1 सप्ताह', schedule1Month: '1 महीना', rejectDeletion: 'अस्वीकार', approveDeleteRequest: 'स्वीकार',
                 alreadyRequested: 'हटाने का अनुरोध किया', deletionApproved: 'स्वीकृत', deletionRejected: 'अस्वीकृत', deletionPending: 'लंबित',
@@ -881,6 +1001,14 @@
                 mediaActions: 'Veiksmai', mediaChange: 'Keisti', mediaChangeTime: 'Keisti laiką', mediaSoon: 'Greitai', mediaDays: 'dienų', mediaPlays: 'peržiūrų',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Puslapis', mediaOf: 'iš', mediaPrev: 'Ankstesnis', mediaNext: 'Kitas', mediaGo: 'Eiti',
                 mediaTypeScheduled: 'Suplanuoti', mediaSettings: 'Nustatymai', mediaIncludeTypes: 'Rodyti tipus:', mediaTypesHint: 'Pasirinkite rodytinus tipus',
+                mediaDiskUsage: 'Disko naudojimas', mediaDuplicates: 'Dublikatai', mediaRestart: 'Paleisti iš naujo',
+                diskDrive: 'Diskas', diskTotal: 'Iš viso', diskUsed: 'Naudojama', diskFree: 'Laisva', diskLoading: 'Kraunama disko informacija...',
+                duplicatesLoading: 'Ieškoma dublikatų...', duplicatesNone: 'Dublikatų nerasta', duplicatesFound: 'dublikatų rasta',
+                duplicateDelete: 'Ištrinti', duplicateDeleteFiles: 'Ištrinti ir failus', duplicateConfirm: 'Ištrinti šį dublikatą?',
+                restartSchedule: 'Planuoti paleidimą', restartCancel: 'Atšaukti paleidimą', restartNow: 'Paleisti dabar',
+                restartIn: 'Paleidimas po', restartReason: 'Priežastis (neprivaloma)', restartScheduled: 'Paleidimas suplanuotas',
+                restartCancelled: 'Paleidimas atšauktas', restartConfirm: 'Planuoti serverio paleidimą iš naujo?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Prašyti ištrinti', requestDeleteMedia: 'Prašyti ištrinti mediją', deletionRequests: 'Ištrynimo Užklausos', noDeletionRequests: 'Ištrynimo užklausų nėra',
                 deleteNow: 'Ištrinti ~1val', schedule1Day: '1 Diena', schedule1Week: '1 Savaitė', schedule1Month: '1 Mėnuo', rejectDeletion: 'Atmesti', approveDeleteRequest: 'Patvirtinti',
                 alreadyRequested: 'Ištrynimas Užsakytas', deletionApproved: 'PATVIRTINTA', deletionRejected: 'ATMESTA', deletionPending: 'LAUKIAMA',
@@ -2462,6 +2590,70 @@
                         }
                     }
                     break;
+
+                case 'ServerRestartCountdown':
+                    // Server restart countdown notification
+                    console.log('[Server] Restart countdown:', data.SocialData);
+                    if (data.SocialData) {
+                        self.showRestartCountdownOverlay(data.SocialData.SecondsRemaining, data.SocialData.Reason);
+                    }
+                    break;
+
+                case 'ServerRestartCancelled':
+                    // Server restart cancelled notification
+                    console.log('[Server] Restart cancelled');
+                    self.hideRestartCountdownOverlay();
+                    break;
+            }
+        },
+
+        /**
+         * Show server restart countdown overlay
+         */
+        showRestartCountdownOverlay: function (seconds, reason) {
+            var self = this;
+
+            // Create overlay if it doesn't exist
+            var overlay = document.getElementById('serverRestartOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'serverRestartOverlay';
+                overlay.innerHTML = `
+                    <div class="restart-overlay-content">
+                        <div class="restart-overlay-icon">🔄</div>
+                        <div class="restart-overlay-title">Server Restarting</div>
+                        <div class="restart-overlay-countdown" id="restartCountdownValue">--</div>
+                        <div class="restart-overlay-reason" id="restartReasonDisplay"></div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+
+            // Update countdown and reason
+            var countdownEl = document.getElementById('restartCountdownValue');
+            var reasonEl = document.getElementById('restartReasonDisplay');
+
+            if (countdownEl) {
+                var minutes = Math.floor(seconds / 60);
+                var secs = seconds % 60;
+                countdownEl.textContent = minutes + ':' + secs.toString().padStart(2, '0');
+            }
+
+            if (reasonEl) {
+                reasonEl.textContent = reason || '';
+            }
+
+            // Show overlay
+            overlay.classList.add('show');
+        },
+
+        /**
+         * Hide server restart countdown overlay
+         */
+        hideRestartCountdownOverlay: function () {
+            var overlay = document.getElementById('serverRestartOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
             }
         },
 
@@ -7723,6 +7915,324 @@
                 .media-type-checkbox.checked {
                     background: rgba(0, 164, 220, 0.2);
                     border: 1px solid #00a4dc;
+                }
+
+                /* Disk Usage Styles */
+                .disk-usage-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 20px;
+                    padding: 20px;
+                }
+
+                .disk-card {
+                    background: #252525;
+                    border-radius: 10px;
+                    padding: 20px;
+                    border: 1px solid #333;
+                }
+
+                .disk-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+
+                .disk-name {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+
+                .disk-label {
+                    font-size: 14px;
+                    color: #888;
+                }
+
+                .disk-bar-container {
+                    height: 20px;
+                    background: #333;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    margin-bottom: 15px;
+                }
+
+                .disk-bar {
+                    height: 100%;
+                    border-radius: 10px;
+                    transition: width 0.3s ease;
+                }
+
+                .disk-stats {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    font-size: 14px;
+                    color: #ccc;
+                }
+
+                .disk-stat-label {
+                    color: #888;
+                    margin-right: 5px;
+                }
+
+                /* Duplicates Styles */
+                .duplicates-header {
+                    padding: 15px 20px;
+                    background: #252525;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 500;
+                    border-bottom: 1px solid #333;
+                }
+
+                .duplicates-container {
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .duplicate-group {
+                    background: #252525;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    border: 1px solid #333;
+                }
+
+                .duplicate-group-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 15px;
+                    background: #1a1a1a;
+                    border-bottom: 1px solid #333;
+                }
+
+                .imdb-id {
+                    font-size: 14px;
+                    color: #f5c518;
+                    font-weight: 500;
+                }
+
+                .duplicate-count {
+                    font-size: 12px;
+                    color: #888;
+                    background: #333;
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                }
+
+                .duplicate-items {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .duplicate-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #333;
+                }
+
+                .duplicate-item:last-child {
+                    border-bottom: none;
+                }
+
+                .duplicate-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .duplicate-name {
+                    font-size: 14px;
+                    color: #fff;
+                    font-weight: 500;
+                    margin-bottom: 4px;
+                }
+
+                .duplicate-path {
+                    font-size: 12px;
+                    color: #888;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 4px;
+                }
+
+                .duplicate-size {
+                    font-size: 12px;
+                    color: #52b54b;
+                }
+
+                .duplicate-actions {
+                    margin-left: 15px;
+                }
+
+                .delete-duplicate-btn {
+                    background: transparent;
+                    border: none;
+                    font-size: 18px;
+                    cursor: pointer;
+                    opacity: 0.7;
+                    transition: opacity 0.2s;
+                }
+
+                .delete-duplicate-btn:hover {
+                    opacity: 1;
+                }
+
+                /* Restart Panel Styles */
+                .restart-panel {
+                    padding: 40px 20px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .restart-schedule-form {
+                    background: #252525;
+                    border-radius: 12px;
+                    padding: 30px;
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                }
+
+                .restart-schedule-form h3 {
+                    color: #fff;
+                    margin: 0 0 25px 0;
+                    font-size: 18px;
+                }
+
+                .restart-options {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+
+                .restart-time-btn {
+                    padding: 15px 20px;
+                    background: #333;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .restart-time-btn:hover {
+                    background: #e74c3c;
+                }
+
+                .restart-reason-input input {
+                    width: 100%;
+                    padding: 12px 15px;
+                    background: #333;
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+
+                .restart-status-active {
+                    background: #252525;
+                    border-radius: 12px;
+                    padding: 40px;
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                    border: 2px solid #e74c3c;
+                }
+
+                .restart-countdown {
+                    margin-bottom: 20px;
+                }
+
+                .countdown-label {
+                    display: block;
+                    color: #888;
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                }
+
+                .countdown-time {
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                }
+
+                .restart-reason {
+                    color: #ccc;
+                    margin-bottom: 25px;
+                    font-style: italic;
+                }
+
+                .cancel-restart-btn {
+                    padding: 12px 30px;
+                    background: #333;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .cancel-restart-btn:hover {
+                    background: #52b54b;
+                }
+
+                /* Server Restart Countdown Overlay */
+                #serverRestartOverlay {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 99999999;
+                    align-items: center;
+                    justify-content: center;
+                    flex-direction: column;
+                }
+
+                #serverRestartOverlay.show {
+                    display: flex;
+                }
+
+                .restart-overlay-content {
+                    text-align: center;
+                    color: #fff;
+                }
+
+                .restart-overlay-icon {
+                    font-size: 64px;
+                    margin-bottom: 20px;
+                }
+
+                .restart-overlay-title {
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                }
+
+                .restart-overlay-countdown {
+                    font-size: 72px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                    margin: 20px 0;
+                }
+
+                .restart-overlay-reason {
+                    font-size: 16px;
+                    color: #888;
+                    margin-bottom: 30px;
                 }
 
                 /* Deletion Dialog */
@@ -15289,8 +15799,11 @@
                 html += `<button class="media-tab" data-type="${self.escapeHtml(type)}">${self.escapeHtml(label)}</button>`;
             });
 
-            // Always add Scheduled and Settings tabs at the end
+            // Always add Scheduled, Disk Usage, Duplicates, Restart, and Settings tabs at the end
             html += `<button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>`;
+            html += `<button class="media-tab" data-type="diskusage">${self.t('mediaDiskUsage')}</button>`;
+            html += `<button class="media-tab" data-type="duplicates">${self.t('mediaDuplicates')}</button>`;
+            html += `<button class="media-tab" data-type="restart">${self.t('mediaRestart')}</button>`;
             html += `<button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>`;
 
             tabsContainer.innerHTML = html;
@@ -15317,6 +15830,24 @@
                         body.style.display = 'none';
                         pagination.style.display = 'none';
                         self.loadMediaTypeSettings();
+                    } else if (tabType === 'diskusage') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadDiskUsage();
+                    } else if (tabType === 'duplicates') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadDuplicates();
+                    } else if (tabType === 'restart') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadRestartPanel();
                     } else {
                         controls.style.display = 'flex';
                         settings.style.display = 'none';
@@ -15539,6 +16070,271 @@
             if (settingsTab) {
                 document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
                 settingsTab.classList.add('active');
+            }
+        },
+
+        // ===============================================
+        // Disk Usage, Duplicates, Server Restart Functions
+        // ===============================================
+
+        /**
+         * Load disk usage information
+         */
+        loadDiskUsage: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('diskLoading')}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const token = ApiClient.accessToken();
+                const response = await fetch(`${baseUrl}/Ratings/Admin/DiskUsage`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load disk usage');
+                const disks = await response.json();
+
+                let html = '<div class="disk-usage-container">';
+                disks.forEach(disk => {
+                    const usedPercent = disk.TotalSize > 0 ? ((disk.UsedSize / disk.TotalSize) * 100).toFixed(1) : 0;
+                    const totalGB = (disk.TotalSize / (1024 * 1024 * 1024)).toFixed(1);
+                    const usedGB = (disk.UsedSize / (1024 * 1024 * 1024)).toFixed(1);
+                    const freeGB = (disk.FreeSpace / (1024 * 1024 * 1024)).toFixed(1);
+                    const barColor = usedPercent > 90 ? '#e74c3c' : usedPercent > 70 ? '#f39c12' : '#52b54b';
+
+                    html += `
+                        <div class="disk-card">
+                            <div class="disk-header">
+                                <span class="disk-name">${self.escapeHtml(disk.DriveName)}</span>
+                                <span class="disk-label">${self.escapeHtml(disk.VolumeLabel || '')}</span>
+                            </div>
+                            <div class="disk-bar-container">
+                                <div class="disk-bar" style="width: ${usedPercent}%; background: ${barColor};"></div>
+                            </div>
+                            <div class="disk-stats">
+                                <div><span class="disk-stat-label">${self.t('diskUsed')}:</span> ${usedGB} GB (${usedPercent}%)</div>
+                                <div><span class="disk-stat-label">${self.t('diskFree')}:</span> ${freeGB} GB</div>
+                                <div><span class="disk-stat-label">${self.t('diskTotal')}:</span> ${totalGB} GB</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading disk usage:', error);
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading disk usage</div>`;
+            }
+        },
+
+        /**
+         * Load duplicates list
+         */
+        loadDuplicates: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesLoading')}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const token = ApiClient.accessToken();
+                const response = await fetch(`${baseUrl}/Ratings/Admin/Duplicates`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load duplicates');
+                const duplicates = await response.json();
+
+                if (!duplicates || duplicates.length === 0) {
+                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
+                    return;
+                }
+
+                let html = `<div class="duplicates-header">${duplicates.length} ${self.t('duplicatesFound')}</div>`;
+                html += '<div class="duplicates-container">';
+
+                duplicates.forEach(group => {
+                    html += `
+                        <div class="duplicate-group">
+                            <div class="duplicate-group-header">
+                                <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)}</span>
+                                <span class="duplicate-count">${group.Items.length} copies</span>
+                            </div>
+                            <div class="duplicate-items">
+                    `;
+
+                    group.Items.forEach((item, index) => {
+                        const sizeGB = (item.Size / (1024 * 1024 * 1024)).toFixed(2);
+                        html += `
+                            <div class="duplicate-item" data-item-id="${item.Id}">
+                                <div class="duplicate-info">
+                                    <div class="duplicate-name">${self.escapeHtml(item.Name)}</div>
+                                    <div class="duplicate-path">${self.escapeHtml(item.Path)}</div>
+                                    <div class="duplicate-size">${sizeGB} GB</div>
+                                </div>
+                                ${index > 0 ? `
+                                    <div class="duplicate-actions">
+                                        <button class="delete-duplicate-btn" data-item-id="${item.Id}" title="${self.t('duplicateDelete')}">🗑️</button>
+                                    </div>
+                                ` : '<div class="duplicate-actions"><span style="color:#52b54b">✓ Keep</span></div>'}
+                            </div>
+                        `;
+                    });
+
+                    html += '</div></div>';
+                });
+
+                html += '</div>';
+                body.innerHTML = html;
+
+                // Bind delete handlers
+                body.querySelectorAll('.delete-duplicate-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const itemId = btn.getAttribute('data-item-id');
+                        if (!confirm(self.t('duplicateConfirm'))) return;
+
+                        const deleteFiles = confirm(self.t('duplicateDeleteFiles'));
+
+                        try {
+                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFiles=${deleteFiles}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                },
+                                credentials: 'include'
+                            });
+
+                            if (deleteResponse.ok) {
+                                btn.closest('.duplicate-item').remove();
+                            }
+                        } catch (error) {
+                            console.error('Error deleting duplicate:', error);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading duplicates:', error);
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading duplicates</div>`;
+            }
+        },
+
+        /**
+         * Load server restart panel
+         */
+        loadRestartPanel: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            // Check current restart status
+            let restartStatus = null;
+            try {
+                const statusResponse = await fetch(`${baseUrl}/Ratings/Admin/RestartStatus`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+                if (statusResponse.ok) {
+                    restartStatus = await statusResponse.json();
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            let html = '<div class="restart-panel">';
+
+            if (restartStatus && restartStatus.IsScheduled) {
+                const secondsLeft = restartStatus.SecondsRemaining;
+                const minutes = Math.floor(secondsLeft / 60);
+                const seconds = secondsLeft % 60;
+                html += `
+                    <div class="restart-status-active">
+                        <div class="restart-countdown">
+                            <span class="countdown-label">${self.t('restartIn')}</span>
+                            <span class="countdown-time">${minutes}:${seconds.toString().padStart(2, '0')}</span>
+                        </div>
+                        ${restartStatus.Reason ? `<div class="restart-reason">${self.escapeHtml(restartStatus.Reason)}</div>` : ''}
+                        <button class="cancel-restart-btn">${self.t('restartCancel')}</button>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="restart-schedule-form">
+                        <h3>${self.t('restartSchedule')}</h3>
+                        <div class="restart-options">
+                            <button class="restart-time-btn" data-minutes="1">${self.t('restart1Min')}</button>
+                            <button class="restart-time-btn" data-minutes="2">${self.t('restart2Min')}</button>
+                            <button class="restart-time-btn" data-minutes="5">${self.t('restart5Min')}</button>
+                            <button class="restart-time-btn" data-minutes="10">${self.t('restart10Min')}</button>
+                        </div>
+                        <div class="restart-reason-input">
+                            <input type="text" id="restartReasonInput" placeholder="${self.t('restartReason')}" maxlength="200">
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            body.innerHTML = html;
+
+            // Bind handlers
+            if (restartStatus && restartStatus.IsScheduled) {
+                body.querySelector('.cancel-restart-btn')?.addEventListener('click', async () => {
+                    try {
+                        await fetch(`${baseUrl}/Ratings/Admin/ScheduleRestart`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                            },
+                            credentials: 'include'
+                        });
+                        self.loadRestartPanel();
+                    } catch (error) {
+                        console.error('Error cancelling restart:', error);
+                    }
+                });
+            } else {
+                body.querySelectorAll('.restart-time-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const minutes = parseInt(btn.getAttribute('data-minutes'), 10);
+                        const reason = document.getElementById('restartReasonInput')?.value || '';
+
+                        if (!confirm(self.t('restartConfirm'))) return;
+
+                        try {
+                            await fetch(`${baseUrl}/Ratings/Admin/ScheduleRestart`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                },
+                                body: JSON.stringify({ DelayMinutes: minutes, Reason: reason }),
+                                credentials: 'include'
+                            });
+                            self.loadRestartPanel();
+                        } catch (error) {
+                            console.error('Error scheduling restart:', error);
+                        }
+                    });
+                });
             }
         },
 

@@ -551,6 +551,32 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Broadcasts a message to ALL connected clients (for server-wide notifications like restart).
+        /// </summary>
+        public async Task BroadcastToAllAsync(object message)
+        {
+            // Extract MessageType and Data from the message object
+            var messageType = message.GetType().GetProperty("MessageType")?.GetValue(message)?.ToString() ?? "ServerNotification";
+            var data = message.GetType().GetProperty("Data")?.GetValue(message) ?? message;
+
+            foreach (var kvp in _userConnections)
+            {
+                var activeConnections = kvp.Value.Where(c => c.State == WebSocketState.Open).ToList();
+                foreach (var conn in activeConnections)
+                {
+                    try
+                    {
+                        await SendMessageAsync(conn, messageType, data).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "[SocialWS] Failed to broadcast to all");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Disposes the timer.
         /// </summary>
         public void Dispose()
