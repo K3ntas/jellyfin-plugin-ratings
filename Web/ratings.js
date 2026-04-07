@@ -1936,7 +1936,7 @@
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
                     '<div class="social-friend-status" style="color:#888;">Blocked</div>' +
                     '</div></div>' +
-                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + user.userId + '\')">Unblock</button>' +
+                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + self.escapeJs(user.userId) + '\')">Unblock</button>' +
                     '</div>';
             });
             html += '</div>';
@@ -1961,9 +1961,10 @@
                 var statusColor = user.status === 'Online' ? '#4CAF50' :
                                   user.status === 'Away' ? '#FFC107' : '#888';
                 var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:4px;">★</span>' : '';
-                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
+                var safeUserId = self.escapeJs(user.userId);
+                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + safeUserId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
 
-                html += '<div class="social-friend-item social-online-item" data-userid="' + user.userId + '" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
+                html += '<div class="social-friend-item social-online-item" data-userid="' + self.escapeHtml(user.userId) + '" onclick="RatingsPlugin.navigateToProfile(\'' + safeUserId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
                     '<div style="position:relative;flex-shrink:0;">' +
                     '<div style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;">' +
                     self.escapeHtml(user.username.charAt(0).toUpperCase()) + '</div>' +
@@ -2170,10 +2171,12 @@
             var menu = document.createElement('div');
             menu.id = 'social-friend-menu';
             menu.className = 'social-friend-menu';
+            var safeUserId = this.escapeJs(userId);
+            var safeUsername = this.escapeJs(username);
             menu.innerHTML = `
-                <button onclick="RatingsPlugin.navigateToProfile('${userId}')">View Profile</button>
-                <button onclick="RatingsPlugin.unfriendUser('${userId}', '${username.replace(/'/g, "\\'")}')">Unfriend</button>
-                <button onclick="RatingsPlugin.blockUser('${userId}')" style="color:#e74c3c;">Block</button>
+                <button onclick="RatingsPlugin.navigateToProfile('${safeUserId}')">View Profile</button>
+                <button onclick="RatingsPlugin.unfriendUser('${safeUserId}', '${safeUsername}')">Unfriend</button>
+                <button onclick="RatingsPlugin.blockUser('${safeUserId}')" style="color:#e74c3c;">Block</button>
             `;
 
             // Position near the button
@@ -2254,27 +2257,28 @@
 
                 // Build watching info if available
                 var watchingHtml = '';
+                var safeFriendId = self.escapeJs(friend.userId);
                 if (friend.watching && status !== 'Offline') {
                     var watchTitle = friend.watching.seriesName
                         ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                         : friend.watching.title;
-                    var itemId = friend.watching.itemId;
-                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    var safeItemId = self.escapeJs(friend.watching.itemId);
+                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + safeItemId + '\')" title="Click to view">' +
                         '<span class="watching-icon">&#9654;</span> ' +
                         self.escapeHtml(watchTitle) +
-                        ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                        ' <span class="watching-progress">(' + self.escapeHtml(friend.watching.position) + '/' + self.escapeHtml(friend.watching.duration) + ')</span>' +
                         '</div>';
                 }
 
-                html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
-                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                html += '<div class="social-friend-item" data-userid="' + self.escapeHtml(friend.userId) + '">' +
+                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + safeFriendId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
                     '<div class="social-friend-info">' +
-                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
+                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + safeFriendId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
                     '<div class="social-friend-status">' + statusText + '</div>' +
                     watchingHtml +
                     '</div>' +
                     '<div class="social-friend-actions">' +
-                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + friend.userId + '\', \'' + self.escapeHtml(friend.username).replace(/'/g, "\\'") + '\')" title="More actions">&#8942;</button>' +
+                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + self.escapeJs(friend.userId) + '\', \'' + self.escapeJs(friend.username) + '\')" title="More actions">&#8942;</button>' +
                     '</div></div>';
             });
             content.innerHTML = html;
@@ -2312,8 +2316,8 @@
                         '<div class="social-friend-status">Wants to be friends</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + id + '\')">Accept</button>' +
-                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + id + '\')">Reject</button>' +
+                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + self.escapeJs(id) + '\')">Accept</button>' +
+                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + self.escapeJs(id) + '\')">Reject</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -2325,8 +2329,9 @@
                 outgoing.forEach(function (req) {
                     var username = req.ToUsername || req.toUsername || '?';
                     var id = req.Id || req.id;
+                    var safeId = self.escapeJs(id);
                     var initial = username[0].toUpperCase();
-                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                    html += '<div class="social-request-item" data-requestid="' + self.escapeHtml(id) + '">' +
                         '<div class="social-request-info">' +
                         '<div class="social-friend-avatar">' + initial + '</div>' +
                         '<div class="social-friend-info">' +
@@ -2334,7 +2339,7 @@
                         '<div class="social-friend-status">Request pending</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + id + '\')">Cancel</button>' +
+                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + safeId + '\')">Cancel</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -3024,7 +3029,7 @@
                 var watchTitle = friend.watching.seriesName
                     ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                     : friend.watching.title;
-                var itemId = friend.watching.itemId;
+                var itemId = self.escapeJs(friend.watching.itemId);
                 var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
                     '<span class="watching-icon">&#9654;</span> ' +
                     self.escapeHtml(watchTitle) +
@@ -3092,7 +3097,7 @@
                 var watchTitle = data.watching.seriesName
                     ? data.watching.seriesName + ' ' + data.watching.episodeInfo
                     : data.watching.title;
-                var itemId = data.watching.itemId;
+                var itemId = self.escapeJs(data.watching.itemId);
                 var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
                     '<span class="watching-icon">&#9654;</span> ' +
                     self.escapeHtml(watchTitle) +
@@ -3282,6 +3287,7 @@
             var html = '';
             users.forEach(function (user) {
                 var initial = (user.username || '?')[0].toUpperCase();
+                var safeUserId = self.escapeJs(user.userId);
                 var buttonHtml;
 
                 if (user.isFriend) {
@@ -3289,14 +3295,14 @@
                 } else if (user.hasPendingRequest) {
                     buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
                 } else if (user.hasIncomingRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + safeUserId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
                 } else if (user.canSendRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + safeUserId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
                 } else {
                     buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
                 }
 
-                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="justify-content:space-between;cursor:pointer;">' +
+                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + safeUserId + '\')" style="justify-content:space-between;cursor:pointer;">' +
                     '<div style="display:flex;align-items:center;">' +
                     '<div class="social-friend-avatar">' + initial + '</div>' +
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
@@ -3387,9 +3393,54 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            if (text == null) return '';
             var div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = String(text);
             return div.innerHTML;
+        },
+
+        /**
+         * Escape a string for safe use in JavaScript string contexts (onclick handlers, etc.)
+         * Escapes backslashes first, then quotes
+         */
+        escapeJs: function (text) {
+            if (text == null) return '';
+            return String(text)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r')
+                .replace(/</g, '\\x3c')
+                .replace(/>/g, '\\x3e');
+        },
+
+        /**
+         * Sanitize HTML string by removing dangerous elements and attributes
+         * Use this before innerHTML when HTML structure is needed
+         */
+        sanitizeHtml: function (html) {
+            if (html == null) return '';
+            var str = String(html);
+            // Remove script tags and contents
+            str = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+            // Remove event handlers
+            str = str.replace(/\s*on\w+\s*=\s*(['"])[^'"]*\1/gi, '');
+            str = str.replace(/\s*on\w+\s*=\s*[^\s>]+/gi, '');
+            // Remove javascript: URLs
+            str = str.replace(/javascript\s*:/gi, '');
+            // Remove data: URLs in sensitive attributes
+            str = str.replace(/(href|src|action)\s*=\s*(['"])?\s*data:/gi, '$1=$2#');
+            return str;
+        },
+
+        /**
+         * Safely set innerHTML with sanitization
+         */
+        safeSetHtml: function (element, html) {
+            if (element && html != null) {
+                element.innerHTML = this.sanitizeHtml(html);
+            }
         },
 
         /**
@@ -11807,20 +11858,20 @@
             if (status.isSelf) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
             } else if (status.hasBlocked) {
-                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + profile.userId + '\')">Unblock</button>';
+                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(profile.userId) + '\')">Unblock</button>';
             } else if (status.isBlockedBy) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
             } else if (status.isFriend) {
-                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + profile.userId + '\', \'' + self.escapeHtml(username).replace(/'/g, "\\'") + '\')">Remove Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(profile.userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
             } else if (status.hasPendingOutgoing) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
             } else if (status.hasPendingIncoming) {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + status.incomingRequestId + '\')">Accept Request</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + status.incomingRequestId + '\')">Reject</button>';
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept Request</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
             } else {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + profile.userId + '\')">Add Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(profile.userId) + '\')">Add Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
             }
 
             var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
