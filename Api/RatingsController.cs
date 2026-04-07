@@ -3334,8 +3334,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             try
             {
-                // Parse /proc/mounts to get device -> mount point mappings
-                var deviceMounts = new Dictionary<string, List<string>>();
+                // Build mount point -> device mapping from /proc/mounts
+                var mountToDevice = new Dictionary<string, string>();
                 if (System.IO.File.Exists("/proc/mounts"))
                 {
                     var mountLines = System.IO.File.ReadAllLines("/proc/mounts");
@@ -3345,63 +3345,58 @@ namespace Jellyfin.Plugin.Ratings.Api
                         if (parts.Length < 2) continue;
 
                         var device = parts[0];
-                        var mountPoint = parts[1];
+                        var mountPoint = parts[1].TrimEnd('/');
+                        if (string.IsNullOrEmpty(mountPoint)) mountPoint = "/";
 
-                        // Skip non-physical devices
+                        // Only track /dev/ devices
                         if (!device.StartsWith("/dev/")) continue;
-                        // Skip system mounts
-                        if (mountPoint.StartsWith("/proc")) continue;
-                        if (mountPoint.StartsWith("/sys")) continue;
-                        if (mountPoint.StartsWith("/run")) continue;
-                        if (mountPoint.StartsWith("/dev/") && mountPoint != "/dev") continue;
-                        if (mountPoint.StartsWith("/etc/")) continue;
 
-                        // Normalize device name (handle /dev/mapper/*, /dev/sd*, /dev/nvme*, etc.)
-                        if (!deviceMounts.ContainsKey(device))
-                        {
-                            deviceMounts[device] = new List<string>();
-                        }
-                        deviceMounts[device].Add(mountPoint);
+                        mountToDevice[mountPoint] = device;
                     }
                 }
 
-                // Get DriveInfo for each unique device
+                // Get all drives and group by device
                 var allDrives = DriveInfo.GetDrives()
                     .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
-                    .ToDictionary(d => d.Name.TrimEnd('/'), d => d);
+                    .ToList();
+
+                // Filter meaningful drives and find their device
+                var driveDevicePairs = new List<(DriveInfo Drive, string Device, string MountPoint)>();
+                foreach (var drive in allDrives)
+                {
+                    var mountPoint = drive.Name.TrimEnd('/');
+                    if (string.IsNullOrEmpty(mountPoint)) mountPoint = "/";
+
+                    // Skip system paths
+                    if (mountPoint.StartsWith("/proc")) continue;
+                    if (mountPoint.StartsWith("/sys")) continue;
+                    if (mountPoint.StartsWith("/run")) continue;
+                    if (mountPoint.StartsWith("/dev/")) continue;
+                    if (mountPoint.StartsWith("/etc/")) continue;
+
+                    // Find device for this mount
+                    var device = mountToDevice.GetValueOrDefault(mountPoint, "unknown");
+                    driveDevicePairs.Add((drive, device, mountPoint));
+                }
+
+                // Group by device
+                var grouped = driveDevicePairs.GroupBy(p => p.Device).ToList();
 
                 int diskNumber = 1;
                 int mediaNumber = 1;
 
-                foreach (var kvp in deviceMounts)
+                foreach (var group in grouped)
                 {
-                    var device = kvp.Key;
-                    var mountPoints = kvp.Value
-                        .Select(m => m.TrimEnd('/'))
+                    var device = group.Key;
+                    var representative = group.First().Drive;
+                    var mountPoints = group
+                        .Select(p => p.MountPoint)
                         .Where(m => !string.IsNullOrEmpty(m))
                         .Distinct()
                         .OrderBy(m => m.Length)
                         .ToList();
 
                     if (mountPoints.Count == 0) continue;
-
-                    // Find DriveInfo for any of the mount points
-                    DriveInfo? driveInfo = null;
-                    foreach (var mp in mountPoints)
-                    {
-                        var key = mp.EndsWith("/") ? mp : mp + "/";
-                        var keyNoSlash = mp.TrimEnd('/');
-                        if (allDrives.TryGetValue(key, out driveInfo) || allDrives.TryGetValue(keyNoSlash, out driveInfo))
-                        {
-                            break;
-                        }
-                        // Also try exact match
-                        driveInfo = allDrives.Values.FirstOrDefault(d =>
-                            d.Name.TrimEnd('/') == keyNoSlash || d.Name == key);
-                        if (driveInfo != null) break;
-                    }
-
-                    if (driveInfo == null || !driveInfo.IsReady) continue;
 
                     // Determine a nice name based on mount points
                     string driveName;
@@ -3410,9 +3405,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         driveName = "System";
                     }
-                    else if (primaryMount.Contains("media"))
+                    else if (primaryMount.Contains("media") || primaryMount.Contains("cache") || primaryMount.Contains("config"))
                     {
-                        driveName = $"Media Storage {mediaNumber++}";
+                        driveName = $"Disk {diskNumber++}";
                     }
                     else
                     {
@@ -3423,43 +3418,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         DriveLetter = primaryMount,
                         DriveName = driveName,
-                        TotalSizeGB = Math.Round(driveInfo.TotalSize / 1073741824.0, 2),
-                        UsedSizeGB = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) / 1073741824.0, 2),
-                        FreeSizeGB = Math.Round(driveInfo.AvailableFreeSpace / 1073741824.0, 2),
-                        UsedPercent = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) * 100.0 / driveInfo.TotalSize, 1),
-                        DriveType = driveInfo.DriveType.ToString(),
-                        DriveFormat = driveInfo.DriveFormat ?? "Unknown",
+                        TotalSizeGB = Math.Round(representative.TotalSize / 1073741824.0, 2),
+                        UsedSizeGB = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) / 1073741824.0, 2),
+                        FreeSizeGB = Math.Round(representative.AvailableFreeSpace / 1073741824.0, 2),
+                        UsedPercent = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) * 100.0 / representative.TotalSize, 1),
+                        DriveType = representative.DriveType.ToString(),
+                        DriveFormat = representative.DriveFormat ?? "Unknown",
                         MountPoints = mountPoints,
                         Device = device
                     });
-                }
-
-                // Fallback: if no results from /proc/mounts parsing, use DriveInfo directly
-                if (result.Count == 0)
-                {
-                    foreach (var drive in allDrives.Values)
-                    {
-                        var name = drive.Name.TrimEnd('/');
-                        if (name.StartsWith("/etc/") || name.StartsWith("/proc") ||
-                            name.StartsWith("/sys") || name.StartsWith("/run")) continue;
-
-                        string driveName = name == "/" ? "System" :
-                            name.Contains("media") ? $"Media Storage {mediaNumber++}" : $"Disk {diskNumber++}";
-
-                        result.Add(new
-                        {
-                            DriveLetter = name,
-                            DriveName = driveName,
-                            TotalSizeGB = Math.Round(drive.TotalSize / 1073741824.0, 2),
-                            UsedSizeGB = Math.Round((drive.TotalSize - drive.AvailableFreeSpace) / 1073741824.0, 2),
-                            FreeSizeGB = Math.Round(drive.AvailableFreeSpace / 1073741824.0, 2),
-                            UsedPercent = Math.Round((drive.TotalSize - drive.AvailableFreeSpace) * 100.0 / drive.TotalSize, 1),
-                            DriveType = drive.DriveType.ToString(),
-                            DriveFormat = drive.DriveFormat ?? "Unknown",
-                            MountPoints = new List<string> { name },
-                            Device = "unknown"
-                        });
-                    }
                 }
             }
             catch (Exception ex)
