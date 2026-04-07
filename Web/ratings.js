@@ -132,7 +132,16 @@
                 privacyShowCurrentlyWatching: 'Currently Watching', privacyAllowFriendRequests: 'Friend Requests',
                 privacyAllowMessages: 'Direct Messages',
                 privacyEveryone: 'Everyone', privacyFriends: 'Friends', privacyNobody: 'Nobody',
-                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied'
+                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied',
+                // Media Management v2
+                mediaDiskUsage: 'Disk Usage', mediaDuplicates: 'Duplicates', mediaRestart: 'Restart',
+                diskLoading: 'Loading disk information...', diskTotal: 'Total', diskUsed: 'Used', diskFree: 'Free',
+                duplicatesLoading: 'Scanning for duplicates...', duplicatesNone: 'No duplicates found', duplicatesFound: 'duplicates found',
+                duplicateDelete: 'Delete this copy', duplicateConfirm: 'Delete this duplicate?', duplicateDeleteFiles: 'Also delete the file from disk?',
+                restartSchedule: 'Schedule Restart', restartCancel: 'Cancel Restart', restartNow: 'Restart Now',
+                restartIn: 'Restart in', restartReason: 'Reason (optional)', restartScheduled: 'Restart scheduled',
+                restartCancelled: 'Restart cancelled', restartConfirm: 'Schedule server restart?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -2458,6 +2467,74 @@
                         }
                     }
                     break;
+
+                case 'ServerRestartCountdown':
+                    // Server restart countdown notification
+                    console.log('[Server] Restart countdown:', data.SocialData);
+                    if (data.SocialData) {
+                        self.showRestartCountdownOverlay(data.SocialData.SecondsRemaining, data.SocialData.Reason);
+                    }
+                    break;
+
+                case 'ServerRestartCancelled':
+                    // Server restart cancelled notification
+                    console.log('[Server] Restart cancelled');
+                    self.hideRestartCountdownOverlay();
+                    break;
+            }
+        },
+
+        /**
+         * Show server restart countdown notification (bottom-left toast)
+         */
+        showRestartCountdownOverlay: function (seconds, reason) {
+            var self = this;
+
+            // Create toast if it doesn't exist
+            var toast = document.getElementById('serverRestartToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'serverRestartToast';
+                toast.className = 'server-restart-toast';
+                toast.innerHTML = `
+                    <div class="restart-toast-icon">🔄</div>
+                    <div class="restart-toast-content">
+                        <div class="restart-toast-title">Server Restarting</div>
+                        <div class="restart-toast-countdown" id="restartCountdownValue">--</div>
+                        <div class="restart-toast-reason" id="restartReasonDisplay"></div>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+            }
+
+            // Update countdown and reason
+            var countdownEl = document.getElementById('restartCountdownValue');
+            var reasonEl = document.getElementById('restartReasonDisplay');
+
+            if (countdownEl) {
+                var minutes = Math.floor(seconds / 60);
+                var secs = seconds % 60;
+                countdownEl.textContent = minutes + ':' + secs.toString().padStart(2, '0');
+            }
+
+            if (reasonEl && reason) {
+                reasonEl.textContent = reason;
+                reasonEl.style.display = 'block';
+            } else if (reasonEl) {
+                reasonEl.style.display = 'none';
+            }
+
+            // Show toast
+            toast.classList.add('show');
+        },
+
+        /**
+         * Hide server restart countdown notification
+         */
+        hideRestartCountdownOverlay: function () {
+            var toast = document.getElementById('serverRestartToast');
+            if (toast) {
+                toast.classList.remove('show');
             }
         },
 
@@ -7654,6 +7731,304 @@
                 .pagination-items {
                     color: #666;
                     font-size: 12px;
+                }
+
+                /* Disk Usage Tab */
+                .disk-usage-summary {
+                    display: flex;
+                    justify-content: center;
+                    gap: 30px;
+                    padding: 15px;
+                    background: #252525;
+                    border-bottom: 1px solid #333;
+                    color: #fff;
+                }
+
+                .disk-usage-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 20px;
+                    padding: 20px;
+                }
+
+                .disk-card {
+                    background: #252525;
+                    border-radius: 8px;
+                    padding: 20px;
+                }
+
+                .disk-header {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 15px;
+                }
+
+                .disk-name {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 16px;
+                }
+
+                .disk-label {
+                    color: #888;
+                    font-size: 14px;
+                }
+
+                .disk-bar-container {
+                    background: #333;
+                    border-radius: 6px;
+                    height: 20px;
+                    overflow: hidden;
+                    margin-bottom: 15px;
+                }
+
+                .disk-bar {
+                    height: 100%;
+                    border-radius: 6px;
+                    transition: width 0.3s ease;
+                }
+
+                .disk-stats {
+                    display: grid;
+                    gap: 8px;
+                    color: #ddd;
+                    font-size: 13px;
+                }
+
+                .disk-stat-label {
+                    color: #888;
+                }
+
+                .disk-mounts {
+                    margin-top: 10px;
+                    font-size: 11px;
+                    color: #666;
+                }
+
+                /* Duplicates Tab */
+                .duplicates-header {
+                    padding: 15px 20px;
+                    background: #252525;
+                    border-bottom: 1px solid #333;
+                    color: #fff;
+                    font-weight: 500;
+                }
+
+                .duplicates-container {
+                    padding: 20px;
+                }
+
+                .duplicate-group {
+                    background: #252525;
+                    border-radius: 8px;
+                    margin-bottom: 15px;
+                    overflow: hidden;
+                }
+
+                .duplicate-group-header {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 15px;
+                    background: #333;
+                    color: #fff;
+                }
+
+                .imdb-id {
+                    font-weight: 500;
+                }
+
+                .duplicate-count {
+                    color: #888;
+                }
+
+                .duplicate-items {
+                    padding: 10px;
+                }
+
+                .duplicate-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px;
+                    border-bottom: 1px solid #333;
+                }
+
+                .duplicate-item:last-child {
+                    border-bottom: none;
+                }
+
+                .duplicate-info {
+                    flex: 1;
+                }
+
+                .duplicate-name {
+                    color: #fff;
+                    font-weight: 500;
+                }
+
+                .duplicate-path {
+                    color: #666;
+                    font-size: 11px;
+                    margin-top: 4px;
+                    word-break: break-all;
+                }
+
+                .duplicate-size {
+                    color: #52b54b;
+                    margin-top: 4px;
+                }
+
+                .duplicate-actions {
+                    margin-left: 15px;
+                }
+
+                .delete-duplicate-btn {
+                    background: #e74c3c;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }
+
+                .delete-duplicate-btn:hover {
+                    background: #c0392b;
+                }
+
+                /* Restart Panel Tab */
+                .restart-panel {
+                    padding: 40px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .restart-schedule-form {
+                    text-align: center;
+                }
+
+                .restart-schedule-form h3 {
+                    color: #fff;
+                    margin-bottom: 20px;
+                }
+
+                .restart-options {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: center;
+                    margin-bottom: 20px;
+                }
+
+                .restart-time-btn {
+                    background: #52b54b;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 12px 24px;
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+
+                .restart-time-btn:hover {
+                    background: #3d8b3d;
+                }
+
+                .restart-reason-input input {
+                    padding: 10px 15px;
+                    border: 1px solid #444;
+                    border-radius: 6px;
+                    background: #333;
+                    color: #fff;
+                    width: 300px;
+                    font-size: 14px;
+                }
+
+                .restart-status-active {
+                    text-align: center;
+                }
+
+                .restart-countdown {
+                    margin-bottom: 15px;
+                }
+
+                .countdown-label {
+                    display: block;
+                    color: #888;
+                    margin-bottom: 5px;
+                }
+
+                .countdown-time {
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                }
+
+                .restart-reason {
+                    color: #aaa;
+                    margin-bottom: 20px;
+                }
+
+                .cancel-restart-btn {
+                    background: #e74c3c;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 12px 30px;
+                    color: #fff;
+                    font-size: 16px;
+                    cursor: pointer;
+                }
+
+                .cancel-restart-btn:hover {
+                    background: #c0392b;
+                }
+
+                /* Server Restart Toast */
+                .server-restart-toast {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: #1a1a1a;
+                    border: 1px solid #e74c3c;
+                    border-radius: 12px;
+                    padding: 15px 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    z-index: 999999;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                    transform: translateX(-120%);
+                    transition: transform 0.3s ease;
+                }
+
+                .server-restart-toast.show {
+                    transform: translateX(0);
+                }
+
+                .restart-toast-icon {
+                    font-size: 24px;
+                    animation: spin 2s linear infinite;
+                }
+
+                @keyframes spin {
+                    100% { transform: rotate(360deg); }
+                }
+
+                .restart-toast-title {
+                    color: #fff;
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+
+                .restart-toast-countdown {
+                    color: #e74c3c;
+                    font-size: 24px;
+                    font-weight: bold;
+                }
+
+                .restart-toast-reason {
+                    color: #888;
+                    font-size: 12px;
+                    display: none;
                 }
 
                 /* Settings Tab */
@@ -14595,6 +14970,28 @@
                 document.body.style.overflow = 'hidden';
                 // Set current tab to 'all' (default when opening)
                 this.mediaListState.currentTab = 'all';
+
+                // Reset visual tab selection
+                const tabs = modal.querySelectorAll('#mediaManagementTabs .media-tab');
+                tabs.forEach((tab, index) => {
+                    if (index === 0) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+
+                // Reset panel visibility
+                const controls = document.getElementById('mediaManagementControls');
+                const settings = document.getElementById('mediaManagementSettings');
+                const body = document.getElementById('mediaManagementBody');
+                const pagination = document.getElementById('mediaManagementPagination');
+
+                if (controls) controls.style.display = 'flex';
+                if (settings) settings.style.display = 'none';
+                if (body) body.style.display = 'block';
+                if (pagination) pagination.style.display = 'flex';
+
                 this.loadMediaList();
             }
         },
@@ -15285,8 +15682,11 @@
                 html += `<button class="media-tab" data-type="${self.escapeHtml(type)}">${self.escapeHtml(label)}</button>`;
             });
 
-            // Always add Scheduled and Settings tabs at the end
+            // Always add Scheduled, Disk Usage, Duplicates, Restart, and Settings tabs at the end
             html += `<button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>`;
+            html += `<button class="media-tab" data-type="diskusage">${self.t('mediaDiskUsage')}</button>`;
+            html += `<button class="media-tab" data-type="duplicates">${self.t('mediaDuplicates')}</button>`;
+            html += `<button class="media-tab" data-type="restart">${self.t('mediaRestart')}</button>`;
             html += `<button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>`;
 
             tabsContainer.innerHTML = html;
@@ -15321,6 +15721,18 @@
 
                         if (tabType === 'scheduled') {
                             self.loadScheduledMediaList();
+                        } else if (tabType === 'diskusage') {
+                            pagination.style.display = 'none';
+                            controls.style.display = 'none';
+                            self.loadDiskUsage();
+                        } else if (tabType === 'duplicates') {
+                            pagination.style.display = 'none';
+                            controls.style.display = 'none';
+                            self.loadDuplicates();
+                        } else if (tabType === 'restart') {
+                            pagination.style.display = 'none';
+                            controls.style.display = 'none';
+                            self.loadRestartPanel();
                         } else {
                             self.loadMediaList();
                         }
@@ -15535,6 +15947,277 @@
             if (settingsTab) {
                 document.querySelectorAll('#mediaManagementTabs .media-tab').forEach(t => t.classList.remove('active'));
                 settingsTab.classList.add('active');
+            }
+        },
+
+        // ===============================================
+        // Media Management v2 - Disk Usage, Duplicates, Restart
+        // ===============================================
+
+        /**
+         * Load disk usage information
+         */
+        loadDiskUsage: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('diskLoading')}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const token = ApiClient.accessToken();
+                const response = await fetch(`${baseUrl}/Ratings/Admin/DiskUsage`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load disk usage');
+                const data = await response.json();
+
+                let html = `<div class="disk-usage-summary">
+                    <span>${self.t('diskTotal')}: ${data.TotalStorageGB} GB</span>
+                    <span>${self.t('diskUsed')}: ${data.TotalUsedGB} GB</span>
+                    <span>${self.t('diskFree')}: ${data.TotalFreeGB} GB</span>
+                </div>`;
+                html += '<div class="disk-usage-container">';
+                data.Disks.forEach(disk => {
+                    const usedPercent = disk.UsedPercent;
+                    const barColor = usedPercent > 90 ? '#e74c3c' : usedPercent > 70 ? '#f39c12' : '#52b54b';
+                    const mountsInfo = disk.MountPoints && disk.MountPoints.length > 1
+                        ? `<div class="disk-mounts">Mounts: ${disk.MountPoints.map(m => self.escapeHtml(m)).join(', ')}</div>`
+                        : '';
+
+                    html += `
+                        <div class="disk-card">
+                            <div class="disk-header">
+                                <span class="disk-name">${self.escapeHtml(disk.DriveLetter)}</span>
+                                <span class="disk-label">${self.escapeHtml(disk.DriveName || '')}</span>
+                            </div>
+                            <div class="disk-bar-container">
+                                <div class="disk-bar" style="width: ${usedPercent}%; background: ${barColor};"></div>
+                            </div>
+                            <div class="disk-stats">
+                                <div><span class="disk-stat-label">${self.t('diskUsed')}:</span> ${disk.UsedSizeGB} GB (${usedPercent}%)</div>
+                                <div><span class="disk-stat-label">${self.t('diskFree')}:</span> ${disk.FreeSizeGB} GB</div>
+                                <div><span class="disk-stat-label">${self.t('diskTotal')}:</span> ${disk.TotalSizeGB} GB</div>
+                            </div>
+                            ${mountsInfo}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading disk usage:', error);
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading disk usage</div>`;
+            }
+        },
+
+        /**
+         * Load duplicates list
+         */
+        loadDuplicates: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesLoading')}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const token = ApiClient.accessToken();
+                const response = await fetch(`${baseUrl}/Ratings/Admin/Duplicates`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error('Failed to load duplicates');
+                const data = await response.json();
+                const duplicates = data.Duplicates || [];
+
+                if (!duplicates || duplicates.length === 0) {
+                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
+                    return;
+                }
+
+                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} groups, ${data.TotalDuplicateItems} items - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
+                html += '<div class="duplicates-container">';
+
+                duplicates.forEach(group => {
+                    html += `
+                        <div class="duplicate-group">
+                            <div class="duplicate-group-header">
+                                <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)} - ${self.escapeHtml(group.Title)}</span>
+                                <span class="duplicate-count">${group.ItemCount} copies (${group.TotalSizeGB} GB)</span>
+                            </div>
+                            <div class="duplicate-items">
+                    `;
+
+                    group.Items.forEach((item, index) => {
+                        html += `
+                            <div class="duplicate-item" data-item-id="${item.ItemId}">
+                                <div class="duplicate-info">
+                                    <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
+                                    <div class="duplicate-path">${self.escapeHtml(item.Path || 'Unknown path')}</div>
+                                    <div class="duplicate-size">${item.SizeGB} GB</div>
+                                </div>
+                                ${index > 0 ? `
+                                    <div class="duplicate-actions">
+                                        <button class="delete-duplicate-btn" data-item-id="${item.ItemId}" title="${self.t('duplicateDelete')}">🗑️</button>
+                                    </div>
+                                ` : '<div class="duplicate-actions"><span style="color:#52b54b">✓ Keep</span></div>'}
+                            </div>
+                        `;
+                    });
+
+                    html += '</div></div>';
+                });
+
+                html += '</div>';
+                body.innerHTML = html;
+
+                // Bind delete handlers
+                body.querySelectorAll('.delete-duplicate-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const itemId = btn.getAttribute('data-item-id');
+                        if (!confirm(self.t('duplicateConfirm'))) return;
+
+                        const deleteFiles = confirm(self.t('duplicateDeleteFiles'));
+
+                        try {
+                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFiles=${deleteFiles}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                },
+                                credentials: 'include'
+                            });
+
+                            if (deleteResponse.ok) {
+                                btn.closest('.duplicate-item').remove();
+                            }
+                        } catch (error) {
+                            console.error('Error deleting duplicate:', error);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading duplicates:', error);
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading duplicates</div>`;
+            }
+        },
+
+        /**
+         * Load server restart panel
+         */
+        loadRestartPanel: async function () {
+            const self = this;
+            const body = document.getElementById('mediaManagementBody');
+            if (!body) return;
+
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            // Check current restart status
+            let restartStatus = null;
+            try {
+                const statusResponse = await fetch(`${baseUrl}/Ratings/Admin/RestartStatus`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    },
+                    credentials: 'include'
+                });
+                if (statusResponse.ok) {
+                    restartStatus = await statusResponse.json();
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            let html = '<div class="restart-panel">';
+
+            if (restartStatus && restartStatus.IsScheduled) {
+                const secondsLeft = restartStatus.SecondsRemaining;
+                const minutes = Math.floor(secondsLeft / 60);
+                const seconds = secondsLeft % 60;
+                html += `
+                    <div class="restart-status-active">
+                        <div class="restart-countdown">
+                            <span class="countdown-label">${self.t('restartIn')}</span>
+                            <span class="countdown-time">${minutes}:${seconds.toString().padStart(2, '0')}</span>
+                        </div>
+                        ${restartStatus.Reason ? `<div class="restart-reason">${self.escapeHtml(restartStatus.Reason)}</div>` : ''}
+                        <button class="cancel-restart-btn">${self.t('restartCancel')}</button>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="restart-schedule-form">
+                        <h3>${self.t('restartSchedule')}</h3>
+                        <div class="restart-options">
+                            <button class="restart-time-btn" data-minutes="1">${self.t('restart1Min')}</button>
+                            <button class="restart-time-btn" data-minutes="2">${self.t('restart2Min')}</button>
+                            <button class="restart-time-btn" data-minutes="5">${self.t('restart5Min')}</button>
+                            <button class="restart-time-btn" data-minutes="10">${self.t('restart10Min')}</button>
+                        </div>
+                        <div class="restart-reason-input">
+                            <input type="text" id="restartReasonInput" placeholder="${self.t('restartReason')}" maxlength="200">
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            body.innerHTML = html;
+
+            // Bind handlers
+            if (restartStatus && restartStatus.IsScheduled) {
+                body.querySelector('.cancel-restart-btn')?.addEventListener('click', async () => {
+                    try {
+                        await fetch(`${baseUrl}/Ratings/Admin/ScheduleRestart`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                            },
+                            credentials: 'include'
+                        });
+                        self.loadRestartPanel();
+                    } catch (error) {
+                        console.error('Error cancelling restart:', error);
+                    }
+                });
+            } else {
+                body.querySelectorAll('.restart-time-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const minutes = parseInt(btn.getAttribute('data-minutes'), 10);
+                        const reason = document.getElementById('restartReasonInput')?.value || '';
+
+                        if (!confirm(self.t('restartConfirm'))) return;
+
+                        try {
+                            await fetch(`${baseUrl}/Ratings/Admin/ScheduleRestart`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                },
+                                body: JSON.stringify({ DelayMinutes: minutes, Reason: reason }),
+                                credentials: 'include'
+                            });
+                            self.loadRestartPanel();
+                        } catch (error) {
+                            console.error('Error scheduling restart:', error);
+                        }
+                    });
+                });
             }
         },
 

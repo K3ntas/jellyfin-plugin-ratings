@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.329.0",
+        "changelog": "Media Management v2: Disk Usage, Duplicates Finder, Server Restart with countdown",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.329.0/jellyfin-plugin-ratings_1.0.329.0.zip",
+        "checksum": "a2c9d80b4a85364fd972a7eeaec53f0e",
+        "timestamp": "2026-04-07T23:00:00Z"
+      },
+      {
         "version": "1.0.328.0",
         "changelog": "Add user reviews with like/dislike system",
         "targetAbi": "10.11.0.0",

@@ -1,5 +1,7 @@
+using Jellyfin.Plugin.Ratings.Api;
 using Jellyfin.Plugin.Ratings.Data;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +33,10 @@ namespace Jellyfin.Plugin.Ratings
 
             // Register deletion service for scheduled media deletions
             serviceCollection.AddHostedService<DeletionService>();
+
+            // Register WebSocket listener for server notifications
+            serviceCollection.AddSingleton<SocialWebSocketListener>();
+            serviceCollection.AddSingleton<IWebSocketListener>(sp => sp.GetRequiredService<SocialWebSocketListener>());
         }
     }
 }
