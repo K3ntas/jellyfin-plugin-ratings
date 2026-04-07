@@ -47,6 +47,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static DateTime? _restartScheduledAt;
         private static string? _restartReason;
 
+        // Pre-compiled regex patterns with timeout protection against ReDoS
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+        private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex IncompleteTagRegex = new(@"<[^>]*$", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex JavaScriptProtocolRegex = new(@"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+        private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsController"/> class.
         /// </summary>
@@ -115,21 +122,21 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Trim first
             var sanitized = input.Trim();
 
-            // Strip all HTML tags (handles malformed tags too)
-            sanitized = Regex.Replace(sanitized, @"<[^>]*?>", string.Empty, RegexOptions.None);
+            // Strip all HTML tags using compiled regex with timeout (ReDoS protection)
+            sanitized = HtmlTagRegex.Replace(sanitized, string.Empty);
             // Also strip incomplete tags at end
-            sanitized = Regex.Replace(sanitized, @"<[^>]*$", string.Empty, RegexOptions.None);
+            sanitized = IncompleteTagRegex.Replace(sanitized, string.Empty);
 
             // Recursively remove javascript: protocol until stable
             string previous;
             do
             {
                 previous = sanitized;
-                sanitized = Regex.Replace(sanitized, @"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", string.Empty, RegexOptions.IgnoreCase);
+                sanitized = JavaScriptProtocolRegex.Replace(sanitized, string.Empty);
             } while (sanitized != previous);
 
             // Remove event handler attributes
-            sanitized = Regex.Replace(sanitized, @"on\w+\s*=", string.Empty, RegexOptions.IgnoreCase);
+            sanitized = EventHandlerRegex.Replace(sanitized, string.Empty);
 
             // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
             // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
@@ -418,8 +425,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Use provided userId or fall back to authenticated user
                 var targetUserId = userId ?? authUserId;
 
+                // IDOR protection: Only allow viewing own ratings or if admin
+                if (targetUserId != authUserId && !IsJellyfinAdmin(authUserId))
+                {
+                    return Forbid("Cannot view another user's ratings");
+                }
+
                 var ratings = _repository.GetUserRatings(targetUserId);
-                _logger.LogInformation("Retrieved {Count} ratings for user {UserId}", ratings.Count, targetUserId);
+                _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
 
                 return Ok(ratings);
             }
