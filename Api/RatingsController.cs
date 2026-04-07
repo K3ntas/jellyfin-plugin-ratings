@@ -3265,118 +3265,87 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Gets physical disk info on Linux by reading /proc/mounts.
+        /// Gets unique filesystems on Linux, handling Docker/LVM environments.
+        /// Groups mount points by actual filesystem (using TotalSize + FreeSpace as identifier).
         /// </summary>
         private List<object> GetLinuxPhysicalDisks()
         {
             var result = new List<object>();
-            var deviceMounts = new Dictionary<string, List<string>>();
-            var deviceDriveInfo = new Dictionary<string, DriveInfo>();
 
             try
             {
-                var mountLines = System.IO.File.ReadAllLines("/proc/mounts");
-                foreach (var line in mountLines)
+                // Get all ready fixed drives
+                var allDrives = DriveInfo.GetDrives()
+                    .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
+                    .ToList();
+
+                // Filter out Docker bind mounts and system directories
+                var meaningfulDrives = allDrives.Where(d =>
                 {
-                    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length < 2) continue;
+                    var name = d.Name.TrimEnd('/');
+                    // Skip Docker/system bind mounts
+                    if (name.StartsWith("/etc/")) return false;
+                    if (name.StartsWith("/proc")) return false;
+                    if (name.StartsWith("/sys")) return false;
+                    if (name.StartsWith("/dev") && !name.StartsWith("/dev/")) return false;
+                    if (name.StartsWith("/run")) return false;
+                    // Include meaningful paths
+                    return true;
+                }).ToList();
 
-                    var device = parts[0];
-                    var mountPoint = parts[1];
+                // Group by filesystem identity (TotalSize + AvailableFreeSpace)
+                // Same physical disk/partition will have same total and free space
+                var grouped = meaningfulDrives
+                    .GroupBy(d => (d.TotalSize, d.AvailableFreeSpace))
+                    .ToList();
 
-                    // Only include real block devices (skip virtual filesystems)
-                    if (!device.StartsWith("/dev/")) continue;
-                    if (device.StartsWith("/dev/loop")) continue; // Skip loop devices
-
-                    // Get the physical device name (e.g., sda from sda1, nvme0n1 from nvme0n1p1)
-                    var physicalDevice = GetPhysicalDeviceName(device);
-
-                    if (!deviceMounts.ContainsKey(physicalDevice))
-                    {
-                        deviceMounts[physicalDevice] = new List<string>();
-                    }
-                    deviceMounts[physicalDevice].Add(mountPoint);
-
-                    // Get DriveInfo for this mount point if we don't have one for this physical device yet
-                    if (!deviceDriveInfo.ContainsKey(physicalDevice))
-                    {
-                        try
-                        {
-                            var driveInfo = new DriveInfo(mountPoint);
-                            if (driveInfo.IsReady)
-                            {
-                                deviceDriveInfo[physicalDevice] = driveInfo;
-                            }
-                        }
-                        catch { }
-                    }
-                }
-
-                // Build result for each physical device
-                foreach (var kvp in deviceDriveInfo)
+                int diskNumber = 1;
+                foreach (var group in grouped)
                 {
-                    var physicalDevice = kvp.Key;
-                    var driveInfo = kvp.Value;
-                    var mounts = deviceMounts.ContainsKey(physicalDevice) ? deviceMounts[physicalDevice] : new List<string>();
+                    var representative = group.First();
+                    var mountPoints = group
+                        .Select(d => d.Name.TrimEnd('/'))
+                        .Where(m => !string.IsNullOrEmpty(m))
+                        .Distinct()
+                        .OrderBy(m => m.Length)
+                        .ToList();
+
+                    // Determine a nice name based on mount points
+                    string driveName;
+                    var primaryMount = mountPoints.FirstOrDefault() ?? "/";
+                    if (primaryMount == "/")
+                    {
+                        driveName = "System";
+                    }
+                    else if (primaryMount.Contains("media"))
+                    {
+                        driveName = $"Media Storage {diskNumber++}";
+                    }
+                    else
+                    {
+                        driveName = $"Disk {diskNumber++}";
+                    }
 
                     result.Add(new
                     {
-                        DriveLetter = physicalDevice,
-                        DriveName = $"Disk {physicalDevice.Replace("/dev/", "")}",
-                        TotalSizeGB = Math.Round(driveInfo.TotalSize / 1073741824.0, 2),
-                        UsedSizeGB = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) / 1073741824.0, 2),
-                        FreeSizeGB = Math.Round(driveInfo.AvailableFreeSpace / 1073741824.0, 2),
-                        UsedPercent = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) * 100.0 / driveInfo.TotalSize, 1),
-                        DriveType = driveInfo.DriveType.ToString(),
-                        DriveFormat = driveInfo.DriveFormat,
-                        MountPoints = mounts.Distinct().ToList()
+                        DriveLetter = primaryMount,
+                        DriveName = driveName,
+                        TotalSizeGB = Math.Round(representative.TotalSize / 1073741824.0, 2),
+                        UsedSizeGB = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) / 1073741824.0, 2),
+                        FreeSizeGB = Math.Round(representative.AvailableFreeSpace / 1073741824.0, 2),
+                        UsedPercent = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) * 100.0 / representative.TotalSize, 1),
+                        DriveType = representative.DriveType.ToString(),
+                        DriveFormat = representative.DriveFormat ?? "Unknown",
+                        MountPoints = mountPoints
                     });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error reading Linux mount info, falling back to DriveInfo");
-                // Fallback to basic DriveInfo
-                var allDrives = DriveInfo.GetDrives()
-                    .Where(d => d.IsReady && d.DriveType == DriveType.Fixed);
-                foreach (var d in allDrives)
-                {
-                    result.Add(new
-                    {
-                        DriveLetter = d.Name.TrimEnd('/'),
-                        DriveName = string.IsNullOrEmpty(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
-                        TotalSizeGB = Math.Round(d.TotalSize / 1073741824.0, 2),
-                        UsedSizeGB = Math.Round((d.TotalSize - d.AvailableFreeSpace) / 1073741824.0, 2),
-                        FreeSizeGB = Math.Round(d.AvailableFreeSpace / 1073741824.0, 2),
-                        UsedPercent = Math.Round((d.TotalSize - d.AvailableFreeSpace) * 100.0 / d.TotalSize, 1),
-                        DriveType = d.DriveType.ToString(),
-                        DriveFormat = d.DriveFormat,
-                        MountPoints = new List<string> { d.Name.TrimEnd('/') }
-                    });
-                }
+                _logger.LogDebug(ex, "Error getting Linux disk info");
             }
 
             return result.OrderByDescending(d => (double)d.GetType().GetProperty("TotalSizeGB")!.GetValue(d)!).ToList();
-        }
-
-        /// <summary>
-        /// Extracts the physical device name from a partition device name.
-        /// e.g., /dev/sda1 -> /dev/sda, /dev/nvme0n1p1 -> /dev/nvme0n1
-        /// </summary>
-        private static string GetPhysicalDeviceName(string device)
-        {
-            // Handle NVMe devices: /dev/nvme0n1p1 -> /dev/nvme0n1
-            if (device.Contains("nvme"))
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(device, @"(/dev/nvme\d+n\d+)");
-                if (match.Success) return match.Groups[1].Value;
-            }
-
-            // Handle standard devices: /dev/sda1 -> /dev/sda, /dev/vda1 -> /dev/vda
-            var stdMatch = System.Text.RegularExpressions.Regex.Match(device, @"(/dev/[a-z]+)");
-            if (stdMatch.Success) return stdMatch.Groups[1].Value;
-
-            return device;
         }
 
         #endregion
