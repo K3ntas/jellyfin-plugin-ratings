@@ -3216,44 +3216,45 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Admin access required");
                 }
 
-                var allDrives = DriveInfo.GetDrives()
-                    .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
-                    .ToList();
+                var disks = new List<object>();
 
-                // On Linux, multiple mount points can be on the same physical disk
-                // Group by TotalSize to identify unique physical disks
-                var uniqueDisks = allDrives
-                    .GroupBy(d => d.TotalSize)
-                    .Select(g =>
-                    {
-                        // Pick the "best" mount point for display (prefer shorter paths, root-level)
-                        var representative = g.OrderBy(d => d.Name.Length).First();
-                        var mountPoints = g.Select(d => d.Name.TrimEnd('\\', '/')).ToList();
-
-                        return new
+                // On Linux, read /proc/mounts to get physical device info
+                if (System.IO.File.Exists("/proc/mounts"))
+                {
+                    var mountInfo = GetLinuxPhysicalDisks();
+                    disks.AddRange(mountInfo);
+                }
+                else
+                {
+                    // Windows: use DriveInfo directly (each drive letter = separate disk)
+                    var allDrives = DriveInfo.GetDrives()
+                        .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
+                        .Select(d => new
                         {
-                            DriveLetter = representative.Name.TrimEnd('\\', '/'),
-                            DriveName = string.IsNullOrEmpty(representative.VolumeLabel)
-                                ? (mountPoints.Count > 1 ? $"Disk ({mountPoints.Count} mounts)" : "Local Disk")
-                                : representative.VolumeLabel,
-                            TotalSizeGB = Math.Round(representative.TotalSize / 1073741824.0, 2),
-                            UsedSizeGB = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) / 1073741824.0, 2),
-                            FreeSizeGB = Math.Round(representative.AvailableFreeSpace / 1073741824.0, 2),
-                            UsedPercent = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) * 100.0 / representative.TotalSize, 1),
-                            DriveType = representative.DriveType.ToString(),
-                            DriveFormat = representative.DriveFormat,
-                            MountPoints = mountPoints
-                        };
-                    })
-                    .OrderByDescending(d => d.TotalSizeGB)
-                    .ToList();
+                            DriveLetter = d.Name.TrimEnd('\\'),
+                            DriveName = string.IsNullOrEmpty(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
+                            TotalSizeGB = Math.Round(d.TotalSize / 1073741824.0, 2),
+                            UsedSizeGB = Math.Round((d.TotalSize - d.AvailableFreeSpace) / 1073741824.0, 2),
+                            FreeSizeGB = Math.Round(d.AvailableFreeSpace / 1073741824.0, 2),
+                            UsedPercent = Math.Round((d.TotalSize - d.AvailableFreeSpace) * 100.0 / d.TotalSize, 1),
+                            DriveType = d.DriveType.ToString(),
+                            DriveFormat = d.DriveFormat,
+                            MountPoints = new List<string> { d.Name.TrimEnd('\\') }
+                        })
+                        .ToList();
+                    disks.AddRange(allDrives.Cast<object>());
+                }
+
+                var totalStorage = disks.Sum(d => (double)d.GetType().GetProperty("TotalSizeGB")!.GetValue(d)!);
+                var totalUsed = disks.Sum(d => (double)d.GetType().GetProperty("UsedSizeGB")!.GetValue(d)!);
+                var totalFree = disks.Sum(d => (double)d.GetType().GetProperty("FreeSizeGB")!.GetValue(d)!);
 
                 return Ok(new
                 {
-                    Disks = uniqueDisks,
-                    TotalStorageGB = Math.Round(uniqueDisks.Sum(d => d.TotalSizeGB), 2),
-                    TotalUsedGB = Math.Round(uniqueDisks.Sum(d => d.UsedSizeGB), 2),
-                    TotalFreeGB = Math.Round(uniqueDisks.Sum(d => d.FreeSizeGB), 2)
+                    Disks = disks,
+                    TotalStorageGB = Math.Round(totalStorage, 2),
+                    TotalUsedGB = Math.Round(totalUsed, 2),
+                    TotalFreeGB = Math.Round(totalFree, 2)
                 });
             }
             catch (Exception ex)
@@ -3261,6 +3262,121 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error getting disk usage");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        /// <summary>
+        /// Gets physical disk info on Linux by reading /proc/mounts.
+        /// </summary>
+        private List<object> GetLinuxPhysicalDisks()
+        {
+            var result = new List<object>();
+            var deviceMounts = new Dictionary<string, List<string>>();
+            var deviceDriveInfo = new Dictionary<string, DriveInfo>();
+
+            try
+            {
+                var mountLines = System.IO.File.ReadAllLines("/proc/mounts");
+                foreach (var line in mountLines)
+                {
+                    var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) continue;
+
+                    var device = parts[0];
+                    var mountPoint = parts[1];
+
+                    // Only include real block devices (skip virtual filesystems)
+                    if (!device.StartsWith("/dev/")) continue;
+                    if (device.StartsWith("/dev/loop")) continue; // Skip loop devices
+
+                    // Get the physical device name (e.g., sda from sda1, nvme0n1 from nvme0n1p1)
+                    var physicalDevice = GetPhysicalDeviceName(device);
+
+                    if (!deviceMounts.ContainsKey(physicalDevice))
+                    {
+                        deviceMounts[physicalDevice] = new List<string>();
+                    }
+                    deviceMounts[physicalDevice].Add(mountPoint);
+
+                    // Get DriveInfo for this mount point if we don't have one for this physical device yet
+                    if (!deviceDriveInfo.ContainsKey(physicalDevice))
+                    {
+                        try
+                        {
+                            var driveInfo = new DriveInfo(mountPoint);
+                            if (driveInfo.IsReady)
+                            {
+                                deviceDriveInfo[physicalDevice] = driveInfo;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                // Build result for each physical device
+                foreach (var kvp in deviceDriveInfo)
+                {
+                    var physicalDevice = kvp.Key;
+                    var driveInfo = kvp.Value;
+                    var mounts = deviceMounts.ContainsKey(physicalDevice) ? deviceMounts[physicalDevice] : new List<string>();
+
+                    result.Add(new
+                    {
+                        DriveLetter = physicalDevice,
+                        DriveName = $"Disk {physicalDevice.Replace("/dev/", "")}",
+                        TotalSizeGB = Math.Round(driveInfo.TotalSize / 1073741824.0, 2),
+                        UsedSizeGB = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) / 1073741824.0, 2),
+                        FreeSizeGB = Math.Round(driveInfo.AvailableFreeSpace / 1073741824.0, 2),
+                        UsedPercent = Math.Round((driveInfo.TotalSize - driveInfo.AvailableFreeSpace) * 100.0 / driveInfo.TotalSize, 1),
+                        DriveType = driveInfo.DriveType.ToString(),
+                        DriveFormat = driveInfo.DriveFormat,
+                        MountPoints = mounts.Distinct().ToList()
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error reading Linux mount info, falling back to DriveInfo");
+                // Fallback to basic DriveInfo
+                var allDrives = DriveInfo.GetDrives()
+                    .Where(d => d.IsReady && d.DriveType == DriveType.Fixed);
+                foreach (var d in allDrives)
+                {
+                    result.Add(new
+                    {
+                        DriveLetter = d.Name.TrimEnd('/'),
+                        DriveName = string.IsNullOrEmpty(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
+                        TotalSizeGB = Math.Round(d.TotalSize / 1073741824.0, 2),
+                        UsedSizeGB = Math.Round((d.TotalSize - d.AvailableFreeSpace) / 1073741824.0, 2),
+                        FreeSizeGB = Math.Round(d.AvailableFreeSpace / 1073741824.0, 2),
+                        UsedPercent = Math.Round((d.TotalSize - d.AvailableFreeSpace) * 100.0 / d.TotalSize, 1),
+                        DriveType = d.DriveType.ToString(),
+                        DriveFormat = d.DriveFormat,
+                        MountPoints = new List<string> { d.Name.TrimEnd('/') }
+                    });
+                }
+            }
+
+            return result.OrderByDescending(d => (double)d.GetType().GetProperty("TotalSizeGB")!.GetValue(d)!).ToList();
+        }
+
+        /// <summary>
+        /// Extracts the physical device name from a partition device name.
+        /// e.g., /dev/sda1 -> /dev/sda, /dev/nvme0n1p1 -> /dev/nvme0n1
+        /// </summary>
+        private static string GetPhysicalDeviceName(string device)
+        {
+            // Handle NVMe devices: /dev/nvme0n1p1 -> /dev/nvme0n1
+            if (device.Contains("nvme"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(device, @"(/dev/nvme\d+n\d+)");
+                if (match.Success) return match.Groups[1].Value;
+            }
+
+            // Handle standard devices: /dev/sda1 -> /dev/sda, /dev/vda1 -> /dev/vda
+            var stdMatch = System.Text.RegularExpressions.Regex.Match(device, @"(/dev/[a-z]+)");
+            if (stdMatch.Success) return stdMatch.Groups[1].Value;
+
+            return device;
         }
 
         #endregion

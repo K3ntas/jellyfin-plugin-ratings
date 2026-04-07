@@ -15149,8 +15149,31 @@
             if (modal) {
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
-                // Set current tab to 'all' (default when opening)
+
+                // Reset to 'All Types' tab when opening
                 this.mediaListState.currentTab = 'all';
+
+                // Reset visual tab selection to first tab (All Types)
+                const tabs = modal.querySelectorAll('#mediaManagementTabs .media-tab');
+                tabs.forEach((tab, index) => {
+                    if (index === 0) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+
+                // Show correct panels for media list view
+                const controls = document.getElementById('mediaManagementControls');
+                const settings = document.getElementById('mediaManagementSettings');
+                const body = document.getElementById('mediaManagementBody');
+                const pagination = document.getElementById('mediaManagementPagination');
+
+                if (controls) controls.style.display = 'flex';
+                if (settings) settings.style.display = 'none';
+                if (body) body.style.display = 'block';
+                if (pagination) pagination.style.display = 'flex';
+
                 this.loadMediaList();
             }
         },
