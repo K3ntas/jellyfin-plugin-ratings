@@ -21146,37 +21146,73 @@
                 return;
             }
 
-            // Sort items by cached ratings
-            const sortedItems = [...items].sort((a, b) => {
-                const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
-                const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+            // Find items without cached ratings
+            const uncachedIds = items
+                .filter(item => !self.ratingsCache[item.Id])
+                .map(item => item.Id);
 
-                // Items without ratings go to the end
-                if (ratingA === -1 && ratingB === -1) return 0;
-                if (ratingA === -1) return 1;
-                if (ratingB === -1) return -1;
+            // Helper function to perform the actual sort
+            const performSort = () => {
+                const sortedItems = [...items].sort((a, b) => {
+                    const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                    const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
 
-                // Sort by direction
-                if (direction === 'desc') {
-                    return ratingB - ratingA; // Highest first
-                } else {
-                    return ratingA - ratingB; // Lowest first
+                    // Items without ratings go to the end
+                    if (ratingA === -1 && ratingB === -1) return 0;
+                    if (ratingA === -1) return 1;
+                    if (ratingB === -1) return -1;
+
+                    // Sort by direction
+                    if (direction === 'desc') {
+                        return ratingB - ratingA; // Highest first
+                    } else {
+                        return ratingA - ratingB; // Lowest first
+                    }
+                });
+
+                // Update items data to reflect new order
+                const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
+                genreRow.setAttribute('data-items', newItemsData);
+
+                // Re-render cards with lazy loading
+                self.renderGenreCards(genreRow, sortedItems, baseUrl);
+
+                // Update sort state and button styles
+                genreRow.setAttribute('data-sort-state', direction);
+                const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+                buttons.forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
+                });
+            };
+
+            // If there are uncached ratings, fetch them first
+            if (uncachedIds.length > 0) {
+                // Show loading indicator on button
+                const activeBtn = genreRow.querySelector(`.netflix-sort-btn[data-sort="${direction}"]`);
+                if (activeBtn) {
+                    activeBtn.innerHTML = '⏳';
+                    activeBtn.disabled = true;
                 }
-            });
 
-            // Update items data to reflect new order
-            const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
-            genreRow.setAttribute('data-items', newItemsData);
-
-            // Re-render cards with lazy loading
-            self.renderGenreCards(genreRow, sortedItems, baseUrl);
-
-            // Update sort state and button styles
-            genreRow.setAttribute('data-sort-state', direction);
-            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
-            buttons.forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
-            });
+                self.fetchRatingsForItems(uncachedIds).then(() => {
+                    // Restore button
+                    if (activeBtn) {
+                        activeBtn.innerHTML = direction === 'desc' ? '▲' : '▼';
+                        activeBtn.disabled = false;
+                    }
+                    performSort();
+                }).catch(() => {
+                    // Restore button even on error
+                    if (activeBtn) {
+                        activeBtn.innerHTML = direction === 'desc' ? '▲' : '▼';
+                        activeBtn.disabled = false;
+                    }
+                    performSort(); // Still sort with available data
+                });
+            } else {
+                // All ratings cached, sort immediately
+                performSort();
+            }
         },
 
         /**
@@ -21567,21 +21603,82 @@
         },
 
         /**
-         * Sort library cards by custom ratings
+         * Sort library cards by custom ratings - fetches ALL items from library
          */
         sortLibraryCards: function (direction) {
             const self = this;
 
-            // Media types we want to sort
+            // Get parent ID from URL to fetch all items
+            const parentId = self.getParentIdFromUrl();
+
+            // Find the items container
+            const itemsContainer = self.findLibraryItemsContainer();
+            if (!itemsContainer) {
+                return;
+            }
+
+            // Store original HTML if not already stored (for restore)
+            if (!itemsContainer.dataset.originalHtml) {
+                itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
+            }
+
+            // Show loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'rating-sort-loading';
+            loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: #fff;';
+            loadingDiv.innerHTML = '⏳ Loading all items for sorting...';
+            itemsContainer.insertBefore(loadingDiv, itemsContainer.firstChild);
+
+            // Fetch ALL items from library
+            self.fetchAllLibraryItems(parentId).then(items => {
+                if (items.length === 0) {
+                    loadingDiv.remove();
+                    return;
+                }
+
+                // Update loading message
+                loadingDiv.innerHTML = `⏳ Fetching ratings for ${items.length} items...`;
+
+                // Get all item IDs that need ratings
+                const uncachedIds = items
+                    .filter(item => self.ratingsCache[item.Id] === undefined)
+                    .map(item => item.Id);
+
+                // Fetch ratings then sort
+                const ratingsPromise = uncachedIds.length > 0
+                    ? self.fetchRatingsForItems(uncachedIds)
+                    : Promise.resolve();
+
+                ratingsPromise.then(() => {
+                    loadingDiv.remove();
+
+                    // Sort items by rating
+                    const sortedItems = [...items].sort((a, b) => {
+                        const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                        const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+
+                        if (ratingA === -1 && ratingB === -1) return 0;
+                        if (ratingA === -1) return 1;
+                        if (ratingB === -1) return -1;
+
+                        return direction === 'desc' ? ratingB - ratingA : ratingA - ratingB;
+                    });
+
+                    // Rebuild cards with sorted items
+                    self.rebuildLibraryCards(itemsContainer, sortedItems);
+                }).catch(() => {
+                    loadingDiv.remove();
+                });
+            }).catch(() => {
+                loadingDiv.remove();
+            });
+        },
+
+        /**
+         * Find the library items container
+         */
+        findLibraryItemsContainer: function () {
             const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
-
-            // Find the items container that has actual media cards (not library folders)
-            // There can be multiple .itemsContainer on the page - find the one with MOST media cards
-            let itemsContainer = null;
-            let cards = [];
-            let maxMediaCards = 0;
-
-            // Try multiple container selectors
             const containerSelectors = [
                 '.itemsContainer.vertical-wrap',
                 '.itemsContainer.padded-left.padded-right',
@@ -21589,68 +21686,120 @@
                 '.itemsContainer'
             ];
 
-            let allContainers = [];
+            let itemsContainer = null;
+            let maxMediaCards = 0;
+
             for (const selector of containerSelectors) {
-                allContainers = document.querySelectorAll(selector);
-                if (allContainers.length > 0) break;
-            }
-
-            for (const container of allContainers) {
-                // Get cards from this container - try multiple selectors
-                let containerCards = Array.from(container.querySelectorAll('.card[data-id]'));
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.querySelectorAll('[data-id].card'));
-                }
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.querySelectorAll('.card'));
-                }
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.children).filter(el => el.classList.contains('card') || el.hasAttribute('data-id'));
-                }
-
-                // Filter to only media types
-                const mediaCards = containerCards.filter(card => {
-                    const dataType = card.getAttribute('data-type');
-                    return mediaTypes.includes(dataType);
-                });
-
-                // Use the container with the MOST media cards
-                if (mediaCards.length > maxMediaCards) {
-                    maxMediaCards = mediaCards.length;
-                    itemsContainer = container;
-                    cards = mediaCards;
+                const containers = document.querySelectorAll(selector);
+                for (const container of containers) {
+                    let cards = Array.from(container.querySelectorAll('.card[data-id]'));
+                    if (cards.length === 0) {
+                        cards = Array.from(container.querySelectorAll('.card'));
+                    }
+                    const mediaCards = cards.filter(card => mediaTypes.includes(card.getAttribute('data-type')));
+                    if (mediaCards.length > maxMediaCards) {
+                        maxMediaCards = mediaCards.length;
+                        itemsContainer = container;
+                    }
                 }
             }
+            return itemsContainer;
+        },
 
-            if (!itemsContainer || cards.length === 0) {
-                return;
+        /**
+         * Fetch ALL items from a library (handles pagination)
+         */
+        fetchAllLibraryItems: function (parentId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const userId = ApiClient.getCurrentUserId();
+
+            let deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Build URL - if no parentId, get all items
+            let url = `${baseUrl}/Users/${userId}/Items?`;
+            url += 'IncludeItemTypes=Movie,Series&Recursive=true&SortBy=SortName&SortOrder=Ascending&Limit=10000';
+            url += '&Fields=PrimaryImageAspectRatio,BasicSyncInfo';
+            if (parentId) {
+                url += `&ParentId=${parentId}`;
             }
 
-            // Store original order if not already stored
-            if (!itemsContainer.dataset.originalOrder) {
-                const originalIds = cards.map(card => card.getAttribute('data-id') || '').join(',');
-                itemsContainer.dataset.originalOrder = originalIds;
-            }
-
-            // Collect item IDs that need ratings fetched
-            const itemIds = [];
-            cards.forEach(card => {
-                // Try data-id first, then fallback
-                const itemId = card.getAttribute('data-id') || self.getItemIdFromCard(card);
-                if (itemId && self.ratingsCache[itemId] === undefined) {
-                    itemIds.push(itemId);
+            return fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
                 }
+            })
+            .then(response => response.json())
+            .then(data => data.Items || []);
+        },
+
+        /**
+         * Generate a device ID for API calls
+         */
+        generateDeviceId: function () {
+            const deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('_deviceId2', deviceId);
+            return deviceId;
+        },
+
+        /**
+         * Rebuild library cards with sorted items
+         */
+        rebuildLibraryCards: function (container, items) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+
+            // Build cards HTML matching Jellyfin's card structure
+            let html = '';
+            items.forEach(item => {
+                const imageUrl = item.ImageTags && item.ImageTags.Primary
+                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=300&fillWidth=200&quality=96`
+                    : '';
+
+                const rating = self.ratingsCache[item.Id];
+                const ratingBadge = rating && rating.AverageRating > 0
+                    ? `<div class="ratings-plugin-badge" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);color:#ffd700;padding:2px 6px;border-radius:4px;font-size:12px;z-index:10;">★ ${rating.AverageRating.toFixed(1)}</div>`
+                    : '';
+
+                html += `
+                    <a href="#!/details?id=${item.Id}"
+                       class="card overflowPortraitCard card-hoverable card-withuserdata"
+                       data-id="${item.Id}"
+                       data-type="${item.Type}"
+                       style="position:relative;">
+                        ${ratingBadge}
+                        <div class="cardBox visualCardBox">
+                            <div class="cardScalable visualCardBox-cardScalable">
+                                <div class="cardPadder cardPadder-overflowPortrait"></div>
+                                <div class="cardContent">
+                                    ${imageUrl
+                                        ? `<div class="cardImageContainer coveredImage" style="background-image:url('${imageUrl}');"></div>`
+                                        : `<div class="cardImageContainer coveredImage defaultCardBackground defaultCardBackground1"><span class="cardImageIcon material-icons movie"></span></div>`
+                                    }
+                                </div>
+                            </div>
+                            <div class="cardFooter visualCardBox-cardFooter">
+                                <div class="cardText cardTextCentered">${self.escapeHtml(item.Name)}</div>
+                                ${item.ProductionYear ? `<div class="cardText cardText-secondary cardTextCentered">${item.ProductionYear}</div>` : ''}
+                            </div>
+                        </div>
+                    </a>
+                `;
             });
 
-            // If we need to fetch ratings, do it first then sort
-            if (itemIds.length > 0) {
-                self.fetchRatingsForItems(itemIds).then(() => {
-                    self.performLibrarySort(itemsContainer, cards, direction);
-                });
-            } else {
-                // All ratings cached, sort immediately
-                self.performLibrarySort(itemsContainer, cards, direction);
-            }
+            container.innerHTML = html;
+
+            // Re-apply any plugin badges
+            self.processCards();
         },
 
         /**
@@ -21762,29 +21911,39 @@
          * Restore original order of library cards
          */
         restoreLibraryCardsOrder: function () {
-            const itemsContainer = document.querySelector('.itemsContainer');
-            if (!itemsContainer || !itemsContainer.dataset.originalOrder) return;
+            const self = this;
+            const itemsContainer = self.findLibraryItemsContainer();
+            if (!itemsContainer) return;
 
-            const originalIds = itemsContainer.dataset.originalOrder.split(',');
-            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
+            // Restore from original HTML if available
+            if (itemsContainer.dataset.originalHtml) {
+                itemsContainer.innerHTML = itemsContainer.dataset.originalHtml;
+                delete itemsContainer.dataset.originalHtml;
+                // Re-apply plugin badges
+                self.processCards();
+                return;
+            }
 
-            // Create a map of id to card
-            const cardMap = new Map();
-            cards.forEach(card => {
-                const id = card.getAttribute('data-id') || '';
-                cardMap.set(id, card);
-            });
+            // Fallback: restore from original order IDs
+            if (itemsContainer.dataset.originalOrder) {
+                const originalIds = itemsContainer.dataset.originalOrder.split(',');
+                const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
 
-            // Re-append in original order
-            originalIds.forEach(id => {
-                const card = cardMap.get(id);
-                if (card) {
-                    itemsContainer.appendChild(card);
-                }
-            });
+                const cardMap = new Map();
+                cards.forEach(card => {
+                    const id = card.getAttribute('data-id') || '';
+                    cardMap.set(id, card);
+                });
 
-            // Clear stored order
-            delete itemsContainer.dataset.originalOrder;
+                originalIds.forEach(id => {
+                    const card = cardMap.get(id);
+                    if (card) {
+                        itemsContainer.appendChild(card);
+                    }
+                });
+
+                delete itemsContainer.dataset.originalOrder;
+            }
         },
 
         /**

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.231.0",
+        "changelog": "Fix rating sort to work across all pages - fetches all library items before sorting",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.231.0/Jellyfin.Plugin.Ratings_2.0.231.0.zip",
+        "checksum": "171898a9c2eb8b55ff0e986930571162",
+        "timestamp": "2026-04-11T12:00:00Z"
+      },
+      {
         "version": "2.0.230.0",
         "changelog": "Fix disk detection for Docker/Synology - properly map DriveInfo to /proc/mounts devices",
         "targetAbi": "10.11.0.0",
