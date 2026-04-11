@@ -160,7 +160,8 @@
                 modUserWillBeMuted: 'User will be muted for', modMinutes: 'minutes', modHours: 'hours', modDays: 'days', modWeeks: 'weeks',
                 modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
                 modDeletes: 'deletes', modActions: 'actions',
-                changeLanguage: 'Change Language'
+                changeLanguage: 'Change Language',
+                testNotificationTooltip: 'Send test notification'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -257,7 +258,8 @@
                 modUserWillBeMuted: 'El usuario será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'días', modWeeks: 'semanas',
                 modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
                 modDeletes: 'eliminaciones', modActions: 'acciones',
-                changeLanguage: 'Cambiar Idioma'
+                changeLanguage: 'Cambiar Idioma',
+                testNotificationTooltip: 'Enviar notificación de prueba'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -354,7 +356,8 @@
                 modUserWillBeMuted: '用户将被禁言', modMinutes: '分钟', modHours: '小时', modDays: '天', modWeeks: '周',
                 modAllModerators: '所有管理员', modNoActions: '没有操作记录',
                 modDeletes: '删除', modActions: '操作',
-                changeLanguage: '更改语言'
+                changeLanguage: '更改语言',
+                testNotificationTooltip: '发送测试通知'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -451,7 +454,8 @@
                 modUserWillBeMuted: 'O usuário será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'dias', modWeeks: 'semanas',
                 modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
                 modDeletes: 'exclusões', modActions: 'ações',
-                changeLanguage: 'Alterar Idioma'
+                changeLanguage: 'Alterar Idioma',
+                testNotificationTooltip: 'Enviar notificação de teste'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -548,7 +552,8 @@
                 modUserWillBeMuted: 'Пользователь будет заглушен на', modMinutes: 'минут', modHours: 'часов', modDays: 'дней', modWeeks: 'недель',
                 modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
                 modDeletes: 'удалений', modActions: 'действий',
-                changeLanguage: 'Изменить Язык'
+                changeLanguage: 'Изменить Язык',
+                testNotificationTooltip: 'Отправить тестовое уведомление'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -645,7 +650,8 @@
                 modUserWillBeMuted: 'ユーザーは以下の期間ミュートされます', modMinutes: '分', modHours: '時間', modDays: '日', modWeeks: '週',
                 modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
                 modDeletes: '削除', modActions: 'アクション',
-                changeLanguage: '言語を変更'
+                changeLanguage: '言語を変更',
+                testNotificationTooltip: 'テスト通知を送信'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -740,7 +746,8 @@
                 modUserWillBeMuted: 'Benutzer wird stummgeschaltet für', modMinutes: 'Minuten', modHours: 'Stunden', modDays: 'Tage', modWeeks: 'Wochen',
                 modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
                 modDeletes: 'Löschungen', modActions: 'Aktionen',
-                changeLanguage: 'Sprache ändern'
+                changeLanguage: 'Sprache ändern',
+                testNotificationTooltip: 'Testbenachrichtigung senden'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -837,7 +844,8 @@
                 modUserWillBeMuted: 'L\'utilisateur sera mis en sourdine pour', modMinutes: 'minutes', modHours: 'heures', modDays: 'jours', modWeeks: 'semaines',
                 modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
                 modDeletes: 'suppressions', modActions: 'actions',
-                changeLanguage: 'Changer la Langue'
+                changeLanguage: 'Changer la Langue',
+                testNotificationTooltip: 'Envoyer une notification test'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -934,7 +942,8 @@
                 modUserWillBeMuted: '사용자가 음소거됩니다', modMinutes: '분', modHours: '시간', modDays: '일', modWeeks: '주',
                 modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
                 modDeletes: '삭제', modActions: '활동',
-                changeLanguage: '언어 변경'
+                changeLanguage: '언어 변경',
+                testNotificationTooltip: '테스트 알림 보내기'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -1031,7 +1040,8 @@
                 modUserWillBeMuted: 'L\'utente sarà silenziato per', modMinutes: 'minuti', modHours: 'ore', modDays: 'giorni', modWeeks: 'settimane',
                 modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
                 modDeletes: 'eliminazioni', modActions: 'azioni',
-                changeLanguage: 'Cambia Lingua'
+                changeLanguage: 'Cambia Lingua',
+                testNotificationTooltip: 'Invia notifica di prova'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -1128,7 +1138,8 @@
                 modUserWillBeMuted: 'Kullanıcı susturulacak', modMinutes: 'dakika', modHours: 'saat', modDays: 'gün', modWeeks: 'hafta',
                 modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
                 modDeletes: 'silme', modActions: 'eylem',
-                changeLanguage: 'Dili Değiştir'
+                changeLanguage: 'Dili Değiştir',
+                testNotificationTooltip: 'Test bildirimi gönder'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -1225,7 +1236,8 @@
                 modUserWillBeMuted: 'Użytkownik zostanie wyciszony na', modMinutes: 'minut', modHours: 'godzin', modDays: 'dni', modWeeks: 'tygodni',
                 modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
                 modDeletes: 'usunięć', modActions: 'akcji',
-                changeLanguage: 'Zmień Język'
+                changeLanguage: 'Zmień Język',
+                testNotificationTooltip: 'Wyślij powiadomienie testowe'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -1322,7 +1334,8 @@
                 modUserWillBeMuted: 'Gebruiker wordt gedempt voor', modMinutes: 'minuten', modHours: 'uur', modDays: 'dagen', modWeeks: 'weken',
                 modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
                 modDeletes: 'verwijderingen', modActions: 'acties',
-                changeLanguage: 'Taal Wijzigen'
+                changeLanguage: 'Taal Wijzigen',
+                testNotificationTooltip: 'Testmelding versturen'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -1419,7 +1432,8 @@
                 modUserWillBeMuted: 'سيتم كتم المستخدم لمدة', modMinutes: 'دقائق', modHours: 'ساعات', modDays: 'أيام', modWeeks: 'أسابيع',
                 modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
                 modDeletes: 'حذف', modActions: 'إجراءات',
-                changeLanguage: 'تغيير اللغة'
+                changeLanguage: 'تغيير اللغة',
+                testNotificationTooltip: 'إرسال إشعار تجريبي'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -1516,7 +1530,8 @@
                 modUserWillBeMuted: 'उपयोगकर्ता को म्यूट किया जाएगा', modMinutes: 'मिनट', modHours: 'घंटे', modDays: 'दिन', modWeeks: 'सप्ताह',
                 modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
                 modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ',
-                changeLanguage: 'भाषा बदलें'
+                changeLanguage: 'भाषा बदलें',
+                testNotificationTooltip: 'परीक्षण सूचना भेजें'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -1613,7 +1628,8 @@
                 modUserWillBeMuted: 'Vartotojas bus nutildytas', modMinutes: 'minučių', modHours: 'valandų', modDays: 'dienų', modWeeks: 'savaičių',
                 modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
                 modDeletes: 'ištrinimų', modActions: 'veiksmų',
-                changeLanguage: 'Keisti Kalbą'
+                changeLanguage: 'Keisti Kalbą',
+                testNotificationTooltip: 'Siųsti bandomąjį pranešimą'
             }
         },
 
@@ -2104,7 +2120,7 @@
                 btn.id = 'social-friends-btn';
                 btn.className = 'social-friends-btn';
                 btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span class="badge hidden">0</span>';
-                btn.title = 'Friends';
+                btn.title = self.t('privacyFriends');
 
                 // Load saved position with bounds checking
                 var savedPos = localStorage.getItem('socialFriendsBtnPos');
@@ -8124,19 +8140,19 @@
                     width: 22px !important;
                     height: 22px !important;
                     fill: currentColor !important;
+                    opacity: 0.3 !important;
                 }
 
                 #languageBtn .lang-code {
                     position: absolute !important;
-                    bottom: 2px !important;
-                    right: 2px !important;
-                    font-size: 8px !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    font-size: 10px !important;
                     font-weight: 700 !important;
-                    background: rgba(0, 164, 220, 0.9) !important;
-                    color: #fff !important;
-                    padding: 1px 3px !important;
-                    border-radius: 3px !important;
+                    color: rgba(255, 255, 255, 0.9) !important;
                     text-transform: uppercase !important;
+                    pointer-events: none !important;
                 }
 
                 #languageDropdown {
@@ -14517,7 +14533,7 @@
                         // Create search input
                         const searchInput = document.createElement('input');
                         searchInput.type = 'text';
-                        searchInput.placeholder = 'Search...';
+                        searchInput.placeholder = self.t('mediaSearch');
                         searchInput.id = 'headerSearchInput';
                         searchInput.autocomplete = 'off';
                         searchInput.setAttribute('autocomplete', 'off');
@@ -14988,7 +15004,7 @@
                         // Create tooltip
                         const tooltip = document.createElement('div');
                         tooltip.id = 'notificationTooltip';
-                        tooltip.textContent = 'Enable/disable new media notifications';
+                        tooltip.textContent = self.t('notificationToggleTitle');
 
                         // Get saved preference (default to config setting or true)
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
@@ -15042,7 +15058,7 @@
 
                         // Show tooltip on hover, auto-hide after 2s
                         toggleContainer.addEventListener('mouseenter', () => {
-                            showTooltipFor('Enable/disable new media notifications', 2000);
+                            showTooltipFor(self.t('notificationToggleTitle'), 2000);
                         });
 
                         toggleContainer.addEventListener('mouseleave', () => {
@@ -21443,7 +21459,7 @@
                 const btn = document.createElement('button');
                 btn.id = 'testNotificationBtn';
                 btn.innerHTML = '🔔 Test';
-                btn.title = 'Send a test notification to all users';
+                btn.title = self.t('testNotificationTooltip');
 
                 btn.addEventListener('click', () => {
                     self.sendTestNotification();
