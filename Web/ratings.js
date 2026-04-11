@@ -16081,9 +16081,15 @@
                 const seenTitles = new Set();
 
                 cards.forEach(card => {
-                    // Get the card title text - this is the most reliable way to detect duplicates
-                    const titleElement = card.querySelector('.cardText');
-                    const title = titleElement ? titleElement.textContent.trim() : null;
+                    // Get title from aria-label on cardImageContainer (most reliable)
+                    // or fallback to .cardText
+                    const imageContainer = card.querySelector('.cardImageContainer');
+                    let title = imageContainer ? imageContainer.getAttribute('aria-label') : null;
+
+                    if (!title) {
+                        const titleElement = card.querySelector('.cardText');
+                        title = titleElement ? titleElement.textContent.trim() : null;
+                    }
 
                     if (!title) return;
 
