@@ -16117,6 +16117,11 @@
             };
 
             const hideDuplicatesInRow = async (row) => {
+                // Skip "Continue Watching" row - users need to see their progress on each item
+                if (row.getAttribute('data-monitor') === 'videoplayback,markplayed') {
+                    return;
+                }
+
                 // Find all cards in this row
                 const cards = row.querySelectorAll('.card');
                 if (cards.length === 0) return;
