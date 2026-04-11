@@ -22192,6 +22192,7 @@
                             </span>
                         </div>
                         <div class="chat-header-right">
+                            <button class="chat-header-btn" id="chatClearAllBtn" title="Clear All Messages" style="display:none;">🗑️</button>
                             <button class="chat-header-btn" id="chatSettingsBtn" title="Moderator Panel" style="display:none;">⚙️</button>
                             <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
                         </div>
@@ -23612,13 +23613,24 @@
          */
         showModeratorTab: function () {
             const settingsBtn = document.getElementById('chatSettingsBtn');
-            if (!settingsBtn) return;
+            const clearAllBtn = document.getElementById('chatClearAllBtn');
 
             // Show settings button if user is admin or moderator
-            if (this.chatIsAdmin || this.chatIsModerator) {
-                settingsBtn.style.display = '';
-            } else {
-                settingsBtn.style.display = 'none';
+            if (settingsBtn) {
+                if (this.chatIsAdmin || this.chatIsModerator) {
+                    settingsBtn.style.display = '';
+                } else {
+                    settingsBtn.style.display = 'none';
+                }
+            }
+
+            // Show clear all button only for admins
+            if (clearAllBtn) {
+                if (this.chatIsAdmin) {
+                    clearAllBtn.style.display = '';
+                } else {
+                    clearAllBtn.style.display = 'none';
+                }
             }
         },
 
