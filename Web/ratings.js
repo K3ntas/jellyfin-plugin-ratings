@@ -21765,18 +21765,11 @@
                     ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=300&fillWidth=200&quality=96`
                     : '';
 
-                const rating = self.ratingsCache[item.Id];
-                const ratingBadge = rating && rating.AverageRating > 0
-                    ? `<div class="ratings-plugin-badge" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);color:#ffd700;padding:2px 6px;border-radius:4px;font-size:12px;z-index:10;">★ ${rating.AverageRating.toFixed(1)}</div>`
-                    : '';
-
                 html += `
                     <a href="#!/details?id=${item.Id}"
                        class="card overflowPortraitCard card-hoverable card-withuserdata"
                        data-id="${item.Id}"
-                       data-type="${item.Type}"
-                       style="position:relative;">
-                        ${ratingBadge}
+                       data-type="${item.Type}">
                         <div class="cardBox visualCardBox">
                             <div class="cardScalable visualCardBox-cardScalable">
                                 <div class="cardPadder cardPadder-overflowPortrait"></div>
