@@ -149,10 +149,20 @@
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="chkShowLanguageSwitch" type="checkbox" is="emby-checkbox" />
-                                    <span>Show Language Switch (EN/LT)</span>
+                                    <span>Show Language Switch</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription">
-                                    Show the EN/LT language toggle in the request modal.
+                                    Show language toggle in the <span style="color: #e57373;">request modal</span>.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowHeaderLanguageButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Header Language Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show language button in the <span style="color: #e57373;">header</span>.
                                 </div>
                             </div>
 
@@ -1067,6 +1077,7 @@
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
+                    document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
@@ -1169,6 +1180,7 @@
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
+                    config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;

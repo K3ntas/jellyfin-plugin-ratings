@@ -802,6 +802,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // UI toggles
                     DefaultLanguage = config?.DefaultLanguage ?? "en",
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
+                    ShowHeaderLanguageButton = config?.ShowHeaderLanguageButton ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
                     NotificationsEnabledByDefault = config?.NotificationsEnabledByDefault ?? true,

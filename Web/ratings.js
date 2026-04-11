@@ -14891,8 +14891,30 @@
                     return;
                 }
 
-                // Language names mapping
-                const langNames = {
+                // Check config if header language button is enabled
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.ShowHeaderLanguageButton === false) {
+                                return; // Don't create language button
+                            }
+                            proceedWithCreation();
+                        })
+                        .catch(() => {
+                            // Default to showing if config fails
+                            proceedWithCreation();
+                        });
+                };
+
+                const proceedWithCreation = () => {
+                    // Language names mapping
+                    const langNames = {
                     en: 'English', es: 'Español', zh: '中文', pt: 'Português', ru: 'Русский',
                     ja: '日本語', de: 'Deutsch', fr: 'Français', ko: '한국어', it: 'Italiano',
                     tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands', ar: 'العربية', hi: 'हिन्दी', lt: 'Lietuvių'
@@ -15040,6 +15062,9 @@
                 };
 
                 setTimeout(waitForButtonGroup, 500);
+                }; // end proceedWithCreation
+
+                checkConfigAndCreate();
 
             } catch (err) {
                 console.error('[Ratings] Error initializing language button:', err);

@@ -23,6 +23,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             EnableNewMediaNotifications = true;
             EnableEpisodeGrouping = true;
             ShowLanguageSwitch = true;
+            ShowHeaderLanguageButton = true;
             ShowSearchButton = true;
             ShowNotificationToggle = true;
             NotificationsEnabledByDefault = true;
@@ -142,9 +143,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public bool EnableEpisodeGrouping { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the language switch (EN/LT) is shown.
+        /// Gets or sets a value indicating whether the language switch is shown in the request modal.
         /// </summary>
         public bool ShowLanguageSwitch { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the language button is shown in the header.
+        /// </summary>
+        public bool ShowHeaderLanguageButton { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the search button is shown in the header.
