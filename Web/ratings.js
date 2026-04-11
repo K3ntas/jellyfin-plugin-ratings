@@ -1870,11 +1870,11 @@
             // Initialize unified button group container first
             this.initButtonGroup();
 
-            // Initialize buttons in order: search first, then others
+            // Initialize buttons in order: search first, language right after, then others
             this.initSearchField();
+            this.initLanguageButton();
             this.initNotificationToggle();
             this.initRequestButtonWithRetry();
-            this.initLanguageButton();
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
@@ -5256,8 +5256,8 @@
                     transform: translate(-50%, -50%) rotate(-45deg) !important;
                 }
 
-                /* Tooltip for notification toggle - using fixed positioning to avoid clipping */
-                #notificationTooltip {
+                /* Shared tooltip for header buttons */
+                #headerTooltip {
                     position: fixed !important;
                     background: rgba(20, 20, 20, 0.98) !important;
                     color: #fff !important;
@@ -5274,7 +5274,7 @@
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                 }
 
-                #notificationTooltip.show {
+                #headerTooltip.show {
                     opacity: 1 !important;
                     visibility: visible !important;
                 }
@@ -14255,7 +14255,6 @@
                 btn.id = 'requestMediaBtn';
                 btn.className = 'ratingsGroupBtn';
                 btn.setAttribute('type', 'button');
-                btn.setAttribute('title', self.t('requestMedia'));
                 btn.style.position = 'relative';
                 // Plus/request icon - movie reel with plus
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
@@ -14282,6 +14281,9 @@
                 // Insert into button group
                 buttonGroup.appendChild(btn);
                 document.body.appendChild(modal);
+
+                // Add tooltip
+                self.addTooltipToButton(btn, 'requestMedia');
 
                 // Button click - wrapped in try-catch
                 btn.addEventListener('click', (e) => {
@@ -14788,6 +14790,52 @@
         },
 
         /**
+         * Shared tooltip system for header buttons
+         */
+        _headerTooltip: null,
+        _headerTooltipTimer: null,
+
+        initHeaderTooltip: function () {
+            if (this._headerTooltip) return;
+            const tooltip = document.createElement('div');
+            tooltip.id = 'headerTooltip';
+            document.body.appendChild(tooltip);
+            this._headerTooltip = tooltip;
+        },
+
+        showHeaderTooltip: function (element, text) {
+            const self = this;
+            if (!this._headerTooltip) this.initHeaderTooltip();
+            if (this._headerTooltipTimer) clearTimeout(this._headerTooltipTimer);
+
+            const tooltip = this._headerTooltip;
+            tooltip.textContent = text;
+
+            const rect = element.getBoundingClientRect();
+            tooltip.style.top = (rect.bottom + 8) + 'px';
+            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.classList.add('show');
+        },
+
+        hideHeaderTooltip: function () {
+            if (this._headerTooltipTimer) clearTimeout(this._headerTooltipTimer);
+            if (this._headerTooltip) {
+                this._headerTooltip.classList.remove('show');
+            }
+        },
+
+        addTooltipToButton: function (button, textKey) {
+            const self = this;
+            button.addEventListener('mouseenter', function () {
+                self.showHeaderTooltip(button, self.t(textKey));
+            });
+            button.addEventListener('mouseleave', function () {
+                self.hideHeaderTooltip();
+            });
+        },
+
+        /**
          * Initialize unified button group container
          */
         initButtonGroup: function () {
@@ -14852,7 +14900,6 @@
                         btn.id = 'languageBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('changeLanguage'));
                         btn.style.position = 'relative';
 
                         // Globe icon with current language code badge
@@ -14920,8 +14967,7 @@
                                 }
 
                                 // Update button title
-                                btn.setAttribute('title', self.t('changeLanguage'));
-                            }
+                                    }
 
                             // Close dropdown
                             dropdown.classList.remove('visible');
@@ -14943,6 +14989,9 @@
 
                         // Insert button into button group
                         buttonGroup.appendChild(btn);
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'changeLanguage');
 
                         // Trigger responsive scaling
                         setTimeout(() => {
@@ -15032,11 +15081,6 @@
                             <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
                         </svg>`;
 
-                        // Create tooltip
-                        const tooltip = document.createElement('div');
-                        tooltip.id = 'notificationTooltip';
-                        tooltip.textContent = self.t('notificationToggleTitle');
-
                         // Get saved preference (default to config setting or true)
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
                         const defaultEnabled = config && config.NotificationsEnabledByDefault !== undefined ? config.NotificationsEnabledByDefault : true;
@@ -15059,47 +15103,24 @@
                         updateToggleState(isEnabled);
                         self.userNotificationsEnabled = isEnabled;
 
-                        // Auto-hide tooltip after delay
-                        let tooltipTimer = null;
-                        const showTooltipFor = (text, duration) => {
-                            if (tooltipTimer) clearTimeout(tooltipTimer);
-                            tooltip.textContent = text;
-                            const rect = toggleContainer.getBoundingClientRect();
-                            tooltip.style.top = (rect.bottom + 8) + 'px';
-                            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-                            tooltip.style.transform = 'translateX(-50%)';
-                            tooltip.classList.add('show');
-                            tooltipTimer = setTimeout(() => {
-                                tooltip.classList.remove('show');
-                                tooltipTimer = null;
-                            }, duration);
-                        };
-
-                        // Handle click
+                        // Handle click - show feedback tooltip briefly
                         toggleContainer.addEventListener('click', () => {
                             const currentState = self.userNotificationsEnabled;
                             const newState = !currentState;
                             updateToggleState(newState);
-                            showTooltipFor(newState ? self.t('notificationsOn') : self.t('notificationsOff'), 2000);
+                            // Show feedback using shared tooltip
+                            self.showHeaderTooltip(toggleContainer, newState ? self.t('notificationsOn') : self.t('notificationsOff'));
+                            setTimeout(() => self.hideHeaderTooltip(), 2000);
                         });
 
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
-                        document.body.appendChild(tooltip); // Tooltip in body to avoid clipping
-
-                        // Show tooltip on hover, auto-hide after 2s
-                        toggleContainer.addEventListener('mouseenter', () => {
-                            showTooltipFor(self.t('notificationToggleTitle'), 2000);
-                        });
-
-                        toggleContainer.addEventListener('mouseleave', () => {
-                            if (tooltipTimer) clearTimeout(tooltipTimer);
-                            tooltip.classList.remove('show');
-                            tooltipTimer = null;
-                        });
 
                         // Insert into button group
                         buttonGroup.appendChild(toggleContainer);
+
+                        // Add hover tooltip
+                        self.addTooltipToButton(toggleContainer, 'notificationToggleTitle');
 
                         // Hide during video playback and on login page
                         setInterval(() => {
@@ -15182,7 +15203,6 @@
                         btn.id = 'latestMediaBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('latestMedia'));
                         btn.style.position = 'relative';
                         // Clock/new icon - represents "latest/recent"
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -15252,6 +15272,9 @@
                                 headerRight.insertBefore(btn, headerRight.firstChild);
                             }
                         }
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'latestMedia');
 
                         // Trigger responsive scaling after element is added (fixes mobile positioning)
                         setTimeout(() => {
@@ -15964,7 +15987,6 @@
                         btn.id = 'mediaManagementBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('mediaManagement'));
                         // Folder icon for media management
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
@@ -15990,6 +16012,9 @@
                                 document.body.appendChild(btn);
                             }
                         }
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'mediaManagement');
 
                         // Observe for search button appearing later (SPA navigation)
                         const observer = new MutationObserver(() => {
@@ -23133,7 +23158,6 @@
                     chatBtn.id = 'chatBtn';
                     chatBtn.className = 'ratingsGroupBtn';
                     chatBtn.setAttribute('type', 'button');
-                    chatBtn.setAttribute('title', self.t('liveChat'));
                     chatBtn.style.position = 'relative';
                     // SVG chat bubble icon + badge inside (like Latest Media)
                     chatBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
@@ -23145,6 +23169,9 @@
 
                     // Insert into button group
                     buttonGroup.appendChild(chatBtn);
+
+                    // Add tooltip
+                    self.addTooltipToButton(chatBtn, 'liveChat');
 
                     return;
                 }

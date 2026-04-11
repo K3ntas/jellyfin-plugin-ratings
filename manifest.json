@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.242.0",
+        "changelog": "Remove all browser tooltips from header buttons, language button now right after search",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.242.0/Jellyfin.Plugin.Ratings_2.0.242.0.zip",
+        "checksum": "a9db6a183ff79594f5607a2f447d1d79",
+        "timestamp": "2026-04-11T17:15:00Z"
+      },
+      {
         "version": "2.0.241.0",
         "changelog": "Remove duplicate tooltips, move language button to right, add notification state translations",
         "targetAbi": "10.11.0.0",
