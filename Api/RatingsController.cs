@@ -3445,7 +3445,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         #region Admin - Duplicate Finder
 
         /// <summary>
-        /// Finds duplicate media items by IMDB ID.
+        /// Finds duplicate media items by IMDB ID (Movies only, Series excluded).
         /// </summary>
         [HttpGet("Admin/Duplicates")]
         public async Task<ActionResult> GetDuplicates()
@@ -3458,9 +3458,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Admin access required");
                 }
 
+                // Only query Movies - Series episodes share the same IMDB ID and aren't true duplicates
                 var allItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
                 {
-                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
                     Recursive = true
                 });
 

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.237.0",
+        "changelog": "Fix duplicates detection (movies only), add missing translations for all 16 languages",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.237.0/Jellyfin.Plugin.Ratings_2.0.237.0.zip",
+        "checksum": "3ad9fea0c410f9a43b640b7ef9ad818c",
+        "timestamp": "2026-04-11T14:30:00Z"
+      },
+      {
         "version": "2.0.236.0",
         "changelog": "Add EnableFriendsButton setting (off by default)",
         "targetAbi": "10.11.0.0",
