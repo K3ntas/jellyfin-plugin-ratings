@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.252.0",
+        "changelog": "Fix home duplicate detection, clean up debug logs",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.252.0/Jellyfin.Plugin.Ratings_2.0.252.0.zip",
+        "checksum": "9b22fe899f8731dccae6f247239be3b5",
+        "timestamp": "2026-04-11T23:30:00Z"
+      },
+      {
         "version": "2.0.251.0",
         "changelog": "Hide duplicate cards on home page (Recently Added, Continue Watching, etc.)",
         "targetAbi": "10.11.0.0",
