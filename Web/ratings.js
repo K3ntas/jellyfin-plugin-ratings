@@ -22070,9 +22070,11 @@
                 }
 
                 const baseUrl = ApiClient.serverAddress();
+                console.log('[Chat] Fetching config from:', baseUrl + '/Ratings/Config');
                 fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
                     .then(function (r) { return r.json(); })
                     .then(function (config) {
+                        console.log('[Chat] Config received, EnableChat:', config.EnableChat);
                         self.chatEnabled = config.EnableChat === true;
                         self.chatConfig = {
                             hasGifSupport: config.HasGifSupport === true,
@@ -22085,10 +22087,14 @@
                         self.chatNotifyPublic = config.ChatNotifyPublic !== false;
                         self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
                         if (self.chatEnabled) {
+                            console.log('[Chat] Chat is enabled, calling initChat');
                             self.initChat();
+                        } else {
+                            console.log('[Chat] Chat is disabled in config');
                         }
                     })
-                    .catch(function () {
+                    .catch(function (err) {
+                        console.log('[Chat] Config fetch error:', err);
                         self.chatEnabled = false;
                     });
             };
@@ -22101,6 +22107,7 @@
          */
         initChat: function () {
             const self = this;
+            console.log('[Chat] initChat called');
 
             // Find and replace cast button
             this.injectChatButton();
@@ -22109,6 +22116,7 @@
             this.createChatWindow();
 
             // Start heartbeat for presence
+            console.log('[Chat] About to call startChatHeartbeat');
             this.startChatHeartbeat();
 
             // Check ban status
@@ -22987,9 +22995,15 @@
          */
         startChatHeartbeat: function () {
             const self = this;
+            console.log('[Chat] startChatHeartbeat called');
             const heartbeat = function () {
-                if (!window.ApiClient) return;
+                console.log('[Chat] heartbeat function called, ApiClient:', !!window.ApiClient);
+                if (!window.ApiClient) {
+                    console.log('[Chat] No ApiClient, skipping heartbeat');
+                    return;
+                }
                 const baseUrl = ApiClient.serverAddress();
+                console.log('[Chat] Sending heartbeat to:', baseUrl + '/Ratings/Chat/Heartbeat');
                 // Server determines admin status - no need to send from client
                 fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
                     method: 'POST',
@@ -22999,8 +23013,10 @@
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
+                    console.log('[Chat] Heartbeat response:', data);
                     self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
                     self.chatIsModerator = data.isModerator || data.IsModerator || false;
+                    console.log('[Chat] isAdmin:', self.chatIsAdmin, 'isModerator:', self.chatIsModerator);
                     // Show moderator tab if user is admin or moderator
                     self.showModeratorTab();
                     // Add class to chat window for CSS styling of action buttons
@@ -23010,7 +23026,9 @@
                         chatWindow.classList.toggle('chat-is-mod', self.chatIsModerator);
                     }
                 })
-                .catch(function () {});
+                .catch(function (err) {
+                    console.log('[Chat] Heartbeat error:', err);
+                });
             };
             heartbeat();
             setInterval(heartbeat, 30000);
