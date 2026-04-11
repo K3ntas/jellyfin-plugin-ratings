@@ -16073,31 +16073,74 @@
         setupHomeDuplicateObserver: function () {
             const self = this;
 
-            const hideDuplicatesInRow = (row) => {
+            // Cache for item info to avoid repeated API calls
+            const itemCache = {};
+
+            // Extract item ID from card href
+            const getItemId = (card) => {
+                const link = card.querySelector('a[href*="id="]') || card.querySelector('.cardImageContainer[href*="id="]');
+                if (!link) return null;
+                const href = link.getAttribute('href');
+                const match = href && href.match(/id=([a-f0-9]+)/i);
+                return match ? match[1] : null;
+            };
+
+            // Fetch item info from API (with caching)
+            const getItemInfo = async (itemId) => {
+                if (!itemId || !window.ApiClient) return null;
+                if (itemCache[itemId]) return itemCache[itemId];
+
+                try {
+                    const baseUrl = ApiClient.serverAddress();
+                    const response = await fetch(`${baseUrl}/Items/${itemId}`, {
+                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        itemCache[itemId] = data;
+                        return data;
+                    }
+                } catch (e) {
+                    // Silently fail
+                }
+                return null;
+            };
+
+            // Get the resolved name for duplicate detection
+            // For episodes, use SeriesName; for series/movies, use Name
+            const getResolvedName = (itemInfo) => {
+                if (!itemInfo) return null;
+                // If it's an episode, use SeriesName
+                if (itemInfo.SeriesName) return itemInfo.SeriesName;
+                // Otherwise use Name
+                return itemInfo.Name || null;
+            };
+
+            const hideDuplicatesInRow = async (row) => {
                 // Find all cards in this row
                 const cards = row.querySelectorAll('.card');
                 if (cards.length === 0) return;
 
-                const seenTitles = new Set();
+                // Collect item IDs and fetch info in parallel
+                const cardData = await Promise.all(
+                    Array.from(cards).map(async (card) => {
+                        const itemId = getItemId(card);
+                        const itemInfo = await getItemInfo(itemId);
+                        const resolvedName = getResolvedName(itemInfo);
+                        return { card, itemId, resolvedName };
+                    })
+                );
 
-                cards.forEach(card => {
-                    // Get title from aria-label on cardImageContainer (most reliable)
-                    // or fallback to .cardText
-                    const imageContainer = card.querySelector('.cardImageContainer');
-                    let title = imageContainer ? imageContainer.getAttribute('aria-label') : null;
+                const seenNames = new Set();
 
-                    if (!title) {
-                        const titleElement = card.querySelector('.cardText');
-                        title = titleElement ? titleElement.textContent.trim() : null;
-                    }
+                cardData.forEach(({ card, resolvedName }) => {
+                    if (!resolvedName) return;
 
-                    if (!title) return;
-
-                    if (seenTitles.has(title)) {
+                    if (seenNames.has(resolvedName)) {
                         // This is a duplicate, hide it
                         card.style.display = 'none';
                     } else {
-                        seenTitles.add(title);
+                        seenNames.add(resolvedName);
                         // Make sure it's visible (in case it was hidden before)
                         if (card.style.display === 'none') {
                             card.style.display = '';
@@ -16106,7 +16149,7 @@
                 });
             };
 
-            const processHomePage = () => {
+            const processHomePage = async () => {
                 // Check if we're on home page
                 const hash = window.location.hash;
                 if (hash && hash !== '#/' && hash !== '#!/' && !hash.includes('home')) {
@@ -16115,15 +16158,16 @@
 
                 // Find all scrollSlider rows (home page carousels)
                 const rows = document.querySelectorAll('.itemsContainer.scrollSlider, .section .itemsContainer');
-                rows.forEach(row => {
-                    hideDuplicatesInRow(row);
-                });
+                for (const row of rows) {
+                    await hideDuplicatesInRow(row);
+                }
             };
 
             // Process on page load
             setTimeout(processHomePage, 1000);
 
             // Watch for new cards being added
+            let processTimeout = null;
             const observer = new MutationObserver((mutations) => {
                 let shouldProcess = false;
                 for (const mutation of mutations) {
@@ -16138,7 +16182,9 @@
                     if (shouldProcess) break;
                 }
                 if (shouldProcess) {
-                    setTimeout(processHomePage, 100);
+                    // Debounce to avoid multiple rapid calls
+                    if (processTimeout) clearTimeout(processTimeout);
+                    processTimeout = setTimeout(processHomePage, 300);
                 }
             });
 

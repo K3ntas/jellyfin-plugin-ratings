@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.254.0",
+        "changelog": "Fix home duplicates: use API to resolve series name for episodes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.254.0/Jellyfin.Plugin.Ratings_2.0.254.0.zip",
+        "checksum": "f2ac3ff59f7a7f44f07e29fb8548f143",
+        "timestamp": "2026-04-12T01:00:00Z"
+      },
+      {
         "version": "2.0.253.0",
         "changelog": "Fix home duplicate detection using aria-label",
         "targetAbi": "10.11.0.0",
