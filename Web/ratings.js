@@ -140,7 +140,26 @@
                 privacyShowCurrentlyWatching: 'Currently Watching', privacyAllowFriendRequests: 'Friend Requests',
                 privacyAllowMessages: 'Direct Messages',
                 privacyEveryone: 'Everyone', privacyFriends: 'Friends', privacyNobody: 'Nobody',
-                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied'
+                privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied',
+                // Additional UI translations
+                duplicatesGroups: 'groups', duplicatesItems: 'items', duplicateCopies: 'copies', duplicateKeep: 'Keep',
+                notificationToggleTitle: 'Enable/disable new media notifications',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderator Panel', modUsers: 'Users', modBans: 'Bans', modLog: 'Log',
+                modSearchUser: 'Search User', modSearchPlaceholder: 'Search for a user to manage...',
+                modManageUser: 'Manage User', modModeratorStatus: 'Moderator Status',
+                modNotModerator: 'Not a Moderator', modLevel1: 'Level 1', modLevel2: 'Level 2', modLevel3: 'Level 3',
+                modApply: 'Apply', modChatStyle: 'Chat Style', modNicknameColor: 'Nickname Color', modMessageColor: 'Message Color',
+                modClear: 'Clear', modTextStyle: 'Text Style', modNormal: 'Normal', modBold: 'Bold', modItalic: 'Italic', modBoth: 'Both',
+                modResetStyle: 'Reset Style', modApplyStyle: 'Apply Style', modPenalties: 'Penalties',
+                modSnooze: 'Snooze', modChatBan: 'Chat Ban', modMediaBan: 'Media Ban', modDuration: 'Duration', modPerm: 'Perm',
+                modReasonOptional: 'Reason (optional)', modEnterReason: 'Enter reason...', modCancel: 'Cancel', modApplyPenalty: 'Apply Penalty',
+                modCurrentModerators: 'Current Moderators', modNoModerators: 'No moderators',
+                modSearchBans: 'Search Bans', modSearchBannedUsers: 'Search banned users...', modActiveBans: 'Active Bans', modNoActiveBans: 'No active bans',
+                modModeratorActions: 'Moderator Actions', modSampleMessage: 'Sample message text',
+                modUserWillBeMuted: 'User will be muted for', modMinutes: 'minutes', modHours: 'hours', modDays: 'days', modWeeks: 'weeks',
+                modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
+                modDeletes: 'deletes', modActions: 'actions'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -217,7 +236,26 @@
                 restartSchedule: 'Programar Reinicio', restartCancel: 'Cancelar Reinicio', restartNow: 'Reiniciar Ahora',
                 restartIn: 'Reiniciar en', restartReason: 'Razón (opcional)', restartScheduled: 'Reinicio programado',
                 restartCancelled: 'Reinicio cancelado', restartConfirm: '¿Programar reinicio del servidor?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupos', duplicatesItems: 'elementos', duplicateCopies: 'copias', duplicateKeep: 'Conservar',
+                notificationToggleTitle: 'Activar/desactivar notificaciones de nuevo contenido',
+                // Moderator Panel translations
+                modPanelTitle: 'Panel de Moderador', modUsers: 'Usuarios', modBans: 'Baneos', modLog: 'Registro',
+                modSearchUser: 'Buscar Usuario', modSearchPlaceholder: 'Buscar usuario para gestionar...',
+                modManageUser: 'Gestionar Usuario', modModeratorStatus: 'Estado de Moderador',
+                modNotModerator: 'No es Moderador', modLevel1: 'Nivel 1', modLevel2: 'Nivel 2', modLevel3: 'Nivel 3',
+                modApply: 'Aplicar', modChatStyle: 'Estilo de Chat', modNicknameColor: 'Color del Apodo', modMessageColor: 'Color del Mensaje',
+                modClear: 'Limpiar', modTextStyle: 'Estilo de Texto', modNormal: 'Normal', modBold: 'Negrita', modItalic: 'Cursiva', modBoth: 'Ambos',
+                modResetStyle: 'Restablecer Estilo', modApplyStyle: 'Aplicar Estilo', modPenalties: 'Sanciones',
+                modSnooze: 'Silenciar', modChatBan: 'Ban de Chat', modMediaBan: 'Ban de Media', modDuration: 'Duración', modPerm: 'Perm',
+                modReasonOptional: 'Razón (opcional)', modEnterReason: 'Ingresa la razón...', modCancel: 'Cancelar', modApplyPenalty: 'Aplicar Sanción',
+                modCurrentModerators: 'Moderadores Actuales', modNoModerators: 'Sin moderadores',
+                modSearchBans: 'Buscar Baneos', modSearchBannedUsers: 'Buscar usuarios baneados...', modActiveBans: 'Baneos Activos', modNoActiveBans: 'Sin baneos activos',
+                modModeratorActions: 'Acciones de Moderador', modSampleMessage: 'Texto de mensaje de ejemplo',
+                modUserWillBeMuted: 'El usuario será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'días', modWeeks: 'semanas',
+                modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
+                modDeletes: 'eliminaciones', modActions: 'acciones'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -294,7 +332,26 @@
                 restartSchedule: '计划重启', restartCancel: '取消重启', restartNow: '立即重启',
                 restartIn: '重启于', restartReason: '原因（可选）', restartScheduled: '已计划重启',
                 restartCancelled: '重启已取消', restartConfirm: '计划服务器重启？',
-                restart1Min: '1分钟', restart2Min: '2分钟', restart5Min: '5分钟', restart10Min: '10分钟'
+                restart1Min: '1分钟', restart2Min: '2分钟', restart5Min: '5分钟', restart10Min: '10分钟',
+                // Additional UI translations
+                duplicatesGroups: '组', duplicatesItems: '项', duplicateCopies: '副本', duplicateKeep: '保留',
+                notificationToggleTitle: '启用/禁用新媒体通知',
+                // Moderator Panel translations
+                modPanelTitle: '管理员面板', modUsers: '用户', modBans: '封禁', modLog: '日志',
+                modSearchUser: '搜索用户', modSearchPlaceholder: '搜索要管理的用户...',
+                modManageUser: '管理用户', modModeratorStatus: '管理员状态',
+                modNotModerator: '非管理员', modLevel1: '等级 1', modLevel2: '等级 2', modLevel3: '等级 3',
+                modApply: '应用', modChatStyle: '聊天样式', modNicknameColor: '昵称颜色', modMessageColor: '消息颜色',
+                modClear: '清除', modTextStyle: '文字样式', modNormal: '正常', modBold: '粗体', modItalic: '斜体', modBoth: '两者',
+                modResetStyle: '重置样式', modApplyStyle: '应用样式', modPenalties: '处罚',
+                modSnooze: '禁言', modChatBan: '聊天封禁', modMediaBan: '媒体封禁', modDuration: '时长', modPerm: '永久',
+                modReasonOptional: '原因（可选）', modEnterReason: '输入原因...', modCancel: '取消', modApplyPenalty: '应用处罚',
+                modCurrentModerators: '当前管理员', modNoModerators: '没有管理员',
+                modSearchBans: '搜索封禁', modSearchBannedUsers: '搜索被封禁用户...', modActiveBans: '活跃封禁', modNoActiveBans: '没有活跃封禁',
+                modModeratorActions: '管理员操作', modSampleMessage: '示例消息文本',
+                modUserWillBeMuted: '用户将被禁言', modMinutes: '分钟', modHours: '小时', modDays: '天', modWeeks: '周',
+                modAllModerators: '所有管理员', modNoActions: '没有操作记录',
+                modDeletes: '删除', modActions: '操作'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -371,7 +428,26 @@
                 restartSchedule: 'Agendar Reinício', restartCancel: 'Cancelar Reinício', restartNow: 'Reiniciar Agora',
                 restartIn: 'Reiniciar em', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinício agendado',
                 restartCancelled: 'Reinício cancelado', restartConfirm: 'Agendar reinício do servidor?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupos', duplicatesItems: 'itens', duplicateCopies: 'cópias', duplicateKeep: 'Manter',
+                notificationToggleTitle: 'Ativar/desativar notificações de nova mídia',
+                // Moderator Panel translations
+                modPanelTitle: 'Painel do Moderador', modUsers: 'Usuários', modBans: 'Banimentos', modLog: 'Registro',
+                modSearchUser: 'Buscar Usuário', modSearchPlaceholder: 'Buscar usuário para gerenciar...',
+                modManageUser: 'Gerenciar Usuário', modModeratorStatus: 'Status de Moderador',
+                modNotModerator: 'Não é Moderador', modLevel1: 'Nível 1', modLevel2: 'Nível 2', modLevel3: 'Nível 3',
+                modApply: 'Aplicar', modChatStyle: 'Estilo do Chat', modNicknameColor: 'Cor do Apelido', modMessageColor: 'Cor da Mensagem',
+                modClear: 'Limpar', modTextStyle: 'Estilo do Texto', modNormal: 'Normal', modBold: 'Negrito', modItalic: 'Itálico', modBoth: 'Ambos',
+                modResetStyle: 'Redefinir Estilo', modApplyStyle: 'Aplicar Estilo', modPenalties: 'Penalidades',
+                modSnooze: 'Silenciar', modChatBan: 'Ban do Chat', modMediaBan: 'Ban de Mídia', modDuration: 'Duração', modPerm: 'Perm',
+                modReasonOptional: 'Motivo (opcional)', modEnterReason: 'Digite o motivo...', modCancel: 'Cancelar', modApplyPenalty: 'Aplicar Penalidade',
+                modCurrentModerators: 'Moderadores Atuais', modNoModerators: 'Sem moderadores',
+                modSearchBans: 'Buscar Banimentos', modSearchBannedUsers: 'Buscar usuários banidos...', modActiveBans: 'Banimentos Ativos', modNoActiveBans: 'Sem banimentos ativos',
+                modModeratorActions: 'Ações do Moderador', modSampleMessage: 'Texto de mensagem de exemplo',
+                modUserWillBeMuted: 'O usuário será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'dias', modWeeks: 'semanas',
+                modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
+                modDeletes: 'exclusões', modActions: 'ações'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -448,7 +524,26 @@
                 restartSchedule: 'Запланировать перезапуск', restartCancel: 'Отменить перезапуск', restartNow: 'Перезапустить сейчас',
                 restartIn: 'Перезапуск через', restartReason: 'Причина (необязательно)', restartScheduled: 'Перезапуск запланирован',
                 restartCancelled: 'Перезапуск отменён', restartConfirm: 'Запланировать перезапуск сервера?',
-                restart1Min: '1 мин', restart2Min: '2 мин', restart5Min: '5 мин', restart10Min: '10 мин'
+                restart1Min: '1 мин', restart2Min: '2 мин', restart5Min: '5 мин', restart10Min: '10 мин',
+                // Additional UI translations
+                duplicatesGroups: 'групп', duplicatesItems: 'элементов', duplicateCopies: 'копий', duplicateKeep: 'Оставить',
+                notificationToggleTitle: 'Включить/выключить уведомления о новых медиа',
+                // Moderator Panel translations
+                modPanelTitle: 'Панель Модератора', modUsers: 'Пользователи', modBans: 'Баны', modLog: 'Журнал',
+                modSearchUser: 'Поиск Пользователя', modSearchPlaceholder: 'Найти пользователя для управления...',
+                modManageUser: 'Управление Пользователем', modModeratorStatus: 'Статус Модератора',
+                modNotModerator: 'Не модератор', modLevel1: 'Уровень 1', modLevel2: 'Уровень 2', modLevel3: 'Уровень 3',
+                modApply: 'Применить', modChatStyle: 'Стиль Чата', modNicknameColor: 'Цвет Ника', modMessageColor: 'Цвет Сообщения',
+                modClear: 'Очистить', modTextStyle: 'Стиль Текста', modNormal: 'Обычный', modBold: 'Жирный', modItalic: 'Курсив', modBoth: 'Оба',
+                modResetStyle: 'Сбросить Стиль', modApplyStyle: 'Применить Стиль', modPenalties: 'Наказания',
+                modSnooze: 'Заглушить', modChatBan: 'Бан Чата', modMediaBan: 'Бан Медиа', modDuration: 'Длительность', modPerm: 'Навсегда',
+                modReasonOptional: 'Причина (необязательно)', modEnterReason: 'Введите причину...', modCancel: 'Отмена', modApplyPenalty: 'Применить Наказание',
+                modCurrentModerators: 'Текущие Модераторы', modNoModerators: 'Нет модераторов',
+                modSearchBans: 'Поиск Банов', modSearchBannedUsers: 'Поиск забаненных пользователей...', modActiveBans: 'Активные Баны', modNoActiveBans: 'Нет активных банов',
+                modModeratorActions: 'Действия Модератора', modSampleMessage: 'Пример текста сообщения',
+                modUserWillBeMuted: 'Пользователь будет заглушен на', modMinutes: 'минут', modHours: 'часов', modDays: 'дней', modWeeks: 'недель',
+                modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
+                modDeletes: 'удалений', modActions: 'действий'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -525,7 +620,26 @@
                 restartSchedule: '再起動をスケジュール', restartCancel: '再起動をキャンセル', restartNow: '今すぐ再起動',
                 restartIn: '再起動まで', restartReason: '理由（任意）', restartScheduled: '再起動がスケジュールされました',
                 restartCancelled: '再起動がキャンセルされました', restartConfirm: 'サーバーの再起動をスケジュールしますか？',
-                restart1Min: '1分', restart2Min: '2分', restart5Min: '5分', restart10Min: '10分'
+                restart1Min: '1分', restart2Min: '2分', restart5Min: '5分', restart10Min: '10分',
+                // Additional UI translations
+                duplicatesGroups: 'グループ', duplicatesItems: 'アイテム', duplicateCopies: 'コピー', duplicateKeep: '保持',
+                notificationToggleTitle: '新しいメディアの通知を有効/無効にする',
+                // Moderator Panel translations
+                modPanelTitle: 'モデレーターパネル', modUsers: 'ユーザー', modBans: 'BAN', modLog: 'ログ',
+                modSearchUser: 'ユーザー検索', modSearchPlaceholder: '管理するユーザーを検索...',
+                modManageUser: 'ユーザー管理', modModeratorStatus: 'モデレーターステータス',
+                modNotModerator: 'モデレーターではない', modLevel1: 'レベル 1', modLevel2: 'レベル 2', modLevel3: 'レベル 3',
+                modApply: '適用', modChatStyle: 'チャットスタイル', modNicknameColor: 'ニックネームの色', modMessageColor: 'メッセージの色',
+                modClear: 'クリア', modTextStyle: 'テキストスタイル', modNormal: '通常', modBold: '太字', modItalic: '斜体', modBoth: '両方',
+                modResetStyle: 'スタイルリセット', modApplyStyle: 'スタイル適用', modPenalties: 'ペナルティ',
+                modSnooze: 'ミュート', modChatBan: 'チャットBAN', modMediaBan: 'メディアBAN', modDuration: '期間', modPerm: '永久',
+                modReasonOptional: '理由（任意）', modEnterReason: '理由を入力...', modCancel: 'キャンセル', modApplyPenalty: 'ペナルティ適用',
+                modCurrentModerators: '現在のモデレーター', modNoModerators: 'モデレーターなし',
+                modSearchBans: 'BAN検索', modSearchBannedUsers: 'BANされたユーザーを検索...', modActiveBans: 'アクティブなBAN', modNoActiveBans: 'アクティブなBANなし',
+                modModeratorActions: 'モデレーター操作', modSampleMessage: 'サンプルメッセージテキスト',
+                modUserWillBeMuted: 'ユーザーは以下の期間ミュートされます', modMinutes: '分', modHours: '時間', modDays: '日', modWeeks: '週',
+                modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
+                modDeletes: '削除', modActions: 'アクション'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -602,7 +716,24 @@
                 restartSchedule: 'Neustart planen', restartCancel: 'Neustart abbrechen', restartNow: 'Jetzt neustarten',
                 restartIn: 'Neustart in', restartReason: 'Grund (optional)', restartScheduled: 'Neustart geplant',
                 restartCancelled: 'Neustart abgebrochen', restartConfirm: 'Server-Neustart planen?',
-                restart1Min: '1 Min', restart2Min: '2 Min', restart5Min: '5 Min', restart10Min: '10 Min'
+                restart1Min: '1 Min', restart2Min: '2 Min', restart5Min: '5 Min', restart10Min: '10 Min',
+                duplicatesGroups: 'Gruppen', duplicatesItems: 'Elemente', duplicateCopies: 'Kopien', duplicateKeep: 'Behalten',
+                notificationToggleTitle: 'Neue Medien-Benachrichtigungen aktivieren/deaktivieren',
+                modPanelTitle: 'Moderator-Panel', modUsers: 'Benutzer', modBans: 'Sperren', modLog: 'Protokoll',
+                modSearchUser: 'Benutzer Suchen', modSearchPlaceholder: 'Benutzer zum Verwalten suchen...',
+                modManageUser: 'Benutzer Verwalten', modModeratorStatus: 'Moderator-Status',
+                modNotModerator: 'Kein Moderator', modLevel1: 'Stufe 1', modLevel2: 'Stufe 2', modLevel3: 'Stufe 3',
+                modApply: 'Anwenden', modChatStyle: 'Chat-Stil', modNicknameColor: 'Nickname-Farbe', modMessageColor: 'Nachrichtenfarbe',
+                modClear: 'Löschen', modTextStyle: 'Textstil', modNormal: 'Normal', modBold: 'Fett', modItalic: 'Kursiv', modBoth: 'Beides',
+                modResetStyle: 'Stil Zurücksetzen', modApplyStyle: 'Stil Anwenden', modPenalties: 'Strafen',
+                modSnooze: 'Stummschalten', modChatBan: 'Chat-Sperre', modMediaBan: 'Medien-Sperre', modDuration: 'Dauer', modPerm: 'Permanent',
+                modReasonOptional: 'Grund (optional)', modEnterReason: 'Grund eingeben...', modCancel: 'Abbrechen', modApplyPenalty: 'Strafe Anwenden',
+                modCurrentModerators: 'Aktuelle Moderatoren', modNoModerators: 'Keine Moderatoren',
+                modSearchBans: 'Sperren Suchen', modSearchBannedUsers: 'Gesperrte Benutzer suchen...', modActiveBans: 'Aktive Sperren', modNoActiveBans: 'Keine aktiven Sperren',
+                modModeratorActions: 'Moderator-Aktionen', modSampleMessage: 'Beispielnachricht',
+                modUserWillBeMuted: 'Benutzer wird stummgeschaltet für', modMinutes: 'Minuten', modHours: 'Stunden', modDays: 'Tage', modWeeks: 'Wochen',
+                modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
+                modDeletes: 'Löschungen', modActions: 'Aktionen'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -679,7 +810,26 @@
                 restartSchedule: 'Planifier le redémarrage', restartCancel: 'Annuler le redémarrage', restartNow: 'Redémarrer maintenant',
                 restartIn: 'Redémarrage dans', restartReason: 'Raison (optionnel)', restartScheduled: 'Redémarrage planifié',
                 restartCancelled: 'Redémarrage annulé', restartConfirm: 'Planifier le redémarrage du serveur ?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'groupes', duplicatesItems: 'éléments', duplicateCopies: 'copies', duplicateKeep: 'Garder',
+                notificationToggleTitle: 'Activer/désactiver les notifications de nouveaux médias',
+                // Moderator Panel translations
+                modPanelTitle: 'Panneau Modérateur', modUsers: 'Utilisateurs', modBans: 'Bannissements', modLog: 'Journal',
+                modSearchUser: 'Rechercher Utilisateur', modSearchPlaceholder: 'Rechercher un utilisateur à gérer...',
+                modManageUser: 'Gérer Utilisateur', modModeratorStatus: 'Statut Modérateur',
+                modNotModerator: 'Pas Modérateur', modLevel1: 'Niveau 1', modLevel2: 'Niveau 2', modLevel3: 'Niveau 3',
+                modApply: 'Appliquer', modChatStyle: 'Style du Chat', modNicknameColor: 'Couleur du Pseudo', modMessageColor: 'Couleur du Message',
+                modClear: 'Effacer', modTextStyle: 'Style du Texte', modNormal: 'Normal', modBold: 'Gras', modItalic: 'Italique', modBoth: 'Les deux',
+                modResetStyle: 'Réinitialiser le Style', modApplyStyle: 'Appliquer le Style', modPenalties: 'Pénalités',
+                modSnooze: 'Mettre en Sourdine', modChatBan: 'Ban du Chat', modMediaBan: 'Ban Média', modDuration: 'Durée', modPerm: 'Perm',
+                modReasonOptional: 'Raison (facultatif)', modEnterReason: 'Entrez la raison...', modCancel: 'Annuler', modApplyPenalty: 'Appliquer la Pénalité',
+                modCurrentModerators: 'Modérateurs Actuels', modNoModerators: 'Aucun modérateur',
+                modSearchBans: 'Rechercher les Bans', modSearchBannedUsers: 'Rechercher utilisateurs bannis...', modActiveBans: 'Bans Actifs', modNoActiveBans: 'Aucun ban actif',
+                modModeratorActions: 'Actions Modérateur', modSampleMessage: 'Texte de message exemple',
+                modUserWillBeMuted: 'L\'utilisateur sera mis en sourdine pour', modMinutes: 'minutes', modHours: 'heures', modDays: 'jours', modWeeks: 'semaines',
+                modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
+                modDeletes: 'suppressions', modActions: 'actions'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -756,7 +906,26 @@
                 restartSchedule: '재시작 예약', restartCancel: '재시작 취소', restartNow: '지금 재시작',
                 restartIn: '재시작까지', restartReason: '이유 (선택)', restartScheduled: '재시작이 예약됨',
                 restartCancelled: '재시작이 취소됨', restartConfirm: '서버 재시작을 예약하시겠습니까?',
-                restart1Min: '1분', restart2Min: '2분', restart5Min: '5분', restart10Min: '10분'
+                restart1Min: '1분', restart2Min: '2분', restart5Min: '5분', restart10Min: '10분',
+                // Additional UI translations
+                duplicatesGroups: '그룹', duplicatesItems: '항목', duplicateCopies: '복사본', duplicateKeep: '유지',
+                notificationToggleTitle: '새 미디어 알림 활성화/비활성화',
+                // Moderator Panel translations
+                modPanelTitle: '관리자 패널', modUsers: '사용자', modBans: '차단', modLog: '로그',
+                modSearchUser: '사용자 검색', modSearchPlaceholder: '관리할 사용자 검색...',
+                modManageUser: '사용자 관리', modModeratorStatus: '관리자 상태',
+                modNotModerator: '관리자 아님', modLevel1: '레벨 1', modLevel2: '레벨 2', modLevel3: '레벨 3',
+                modApply: '적용', modChatStyle: '채팅 스타일', modNicknameColor: '닉네임 색상', modMessageColor: '메시지 색상',
+                modClear: '지우기', modTextStyle: '텍스트 스타일', modNormal: '보통', modBold: '굵게', modItalic: '기울임', modBoth: '둘 다',
+                modResetStyle: '스타일 초기화', modApplyStyle: '스타일 적용', modPenalties: '제재',
+                modSnooze: '음소거', modChatBan: '채팅 차단', modMediaBan: '미디어 차단', modDuration: '기간', modPerm: '영구',
+                modReasonOptional: '사유 (선택)', modEnterReason: '사유 입력...', modCancel: '취소', modApplyPenalty: '제재 적용',
+                modCurrentModerators: '현재 관리자', modNoModerators: '관리자 없음',
+                modSearchBans: '차단 검색', modSearchBannedUsers: '차단된 사용자 검색...', modActiveBans: '활성 차단', modNoActiveBans: '활성 차단 없음',
+                modModeratorActions: '관리자 활동', modSampleMessage: '샘플 메시지 텍스트',
+                modUserWillBeMuted: '사용자가 음소거됩니다', modMinutes: '분', modHours: '시간', modDays: '일', modWeeks: '주',
+                modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
+                modDeletes: '삭제', modActions: '활동'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -833,7 +1002,26 @@
                 restartSchedule: 'Pianifica Riavvio', restartCancel: 'Annulla Riavvio', restartNow: 'Riavvia Ora',
                 restartIn: 'Riavvio tra', restartReason: 'Motivo (opzionale)', restartScheduled: 'Riavvio pianificato',
                 restartCancelled: 'Riavvio annullato', restartConfirm: 'Pianificare il riavvio del server?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'gruppi', duplicatesItems: 'elementi', duplicateCopies: 'copie', duplicateKeep: 'Mantieni',
+                notificationToggleTitle: 'Attiva/disattiva notifiche nuovi media',
+                // Moderator Panel translations
+                modPanelTitle: 'Pannello Moderatore', modUsers: 'Utenti', modBans: 'Ban', modLog: 'Registro',
+                modSearchUser: 'Cerca Utente', modSearchPlaceholder: 'Cerca utente da gestire...',
+                modManageUser: 'Gestisci Utente', modModeratorStatus: 'Stato Moderatore',
+                modNotModerator: 'Non Moderatore', modLevel1: 'Livello 1', modLevel2: 'Livello 2', modLevel3: 'Livello 3',
+                modApply: 'Applica', modChatStyle: 'Stile Chat', modNicknameColor: 'Colore Nickname', modMessageColor: 'Colore Messaggio',
+                modClear: 'Cancella', modTextStyle: 'Stile Testo', modNormal: 'Normale', modBold: 'Grassetto', modItalic: 'Corsivo', modBoth: 'Entrambi',
+                modResetStyle: 'Resetta Stile', modApplyStyle: 'Applica Stile', modPenalties: 'Penalità',
+                modSnooze: 'Silenzia', modChatBan: 'Ban Chat', modMediaBan: 'Ban Media', modDuration: 'Durata', modPerm: 'Perm',
+                modReasonOptional: 'Motivo (opzionale)', modEnterReason: 'Inserisci motivo...', modCancel: 'Annulla', modApplyPenalty: 'Applica Penalità',
+                modCurrentModerators: 'Moderatori Attuali', modNoModerators: 'Nessun moderatore',
+                modSearchBans: 'Cerca Ban', modSearchBannedUsers: 'Cerca utenti bannati...', modActiveBans: 'Ban Attivi', modNoActiveBans: 'Nessun ban attivo',
+                modModeratorActions: 'Azioni Moderatore', modSampleMessage: 'Testo messaggio di esempio',
+                modUserWillBeMuted: 'L\'utente sarà silenziato per', modMinutes: 'minuti', modHours: 'ore', modDays: 'giorni', modWeeks: 'settimane',
+                modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
+                modDeletes: 'eliminazioni', modActions: 'azioni'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -910,7 +1098,26 @@
                 restartSchedule: 'Yeniden Başlatma Planla', restartCancel: 'Yeniden Başlatmayı İptal Et', restartNow: 'Şimdi Yeniden Başlat',
                 restartIn: 'Yeniden başlatma', restartReason: 'Neden (isteğe bağlı)', restartScheduled: 'Yeniden başlatma planlandı',
                 restartCancelled: 'Yeniden başlatma iptal edildi', restartConfirm: 'Sunucu yeniden başlatması planlansın mı?',
-                restart1Min: '1 dk', restart2Min: '2 dk', restart5Min: '5 dk', restart10Min: '10 dk'
+                restart1Min: '1 dk', restart2Min: '2 dk', restart5Min: '5 dk', restart10Min: '10 dk',
+                // Additional UI translations
+                duplicatesGroups: 'grup', duplicatesItems: 'öğe', duplicateCopies: 'kopya', duplicateKeep: 'Tut',
+                notificationToggleTitle: 'Yeni medya bildirimlerini aç/kapat',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderatör Paneli', modUsers: 'Kullanıcılar', modBans: 'Yasaklar', modLog: 'Günlük',
+                modSearchUser: 'Kullanıcı Ara', modSearchPlaceholder: 'Yönetilecek kullanıcı ara...',
+                modManageUser: 'Kullanıcı Yönet', modModeratorStatus: 'Moderatör Durumu',
+                modNotModerator: 'Moderatör Değil', modLevel1: 'Seviye 1', modLevel2: 'Seviye 2', modLevel3: 'Seviye 3',
+                modApply: 'Uygula', modChatStyle: 'Sohbet Stili', modNicknameColor: 'Takma Ad Rengi', modMessageColor: 'Mesaj Rengi',
+                modClear: 'Temizle', modTextStyle: 'Metin Stili', modNormal: 'Normal', modBold: 'Kalın', modItalic: 'İtalik', modBoth: 'Her İkisi',
+                modResetStyle: 'Stili Sıfırla', modApplyStyle: 'Stili Uygula', modPenalties: 'Cezalar',
+                modSnooze: 'Sustur', modChatBan: 'Sohbet Yasağı', modMediaBan: 'Medya Yasağı', modDuration: 'Süre', modPerm: 'Kalıcı',
+                modReasonOptional: 'Neden (isteğe bağlı)', modEnterReason: 'Neden girin...', modCancel: 'İptal', modApplyPenalty: 'Ceza Uygula',
+                modCurrentModerators: 'Mevcut Moderatörler', modNoModerators: 'Moderatör yok',
+                modSearchBans: 'Yasakları Ara', modSearchBannedUsers: 'Yasaklı kullanıcıları ara...', modActiveBans: 'Aktif Yasaklar', modNoActiveBans: 'Aktif yasak yok',
+                modModeratorActions: 'Moderatör Eylemleri', modSampleMessage: 'Örnek mesaj metni',
+                modUserWillBeMuted: 'Kullanıcı susturulacak', modMinutes: 'dakika', modHours: 'saat', modDays: 'gün', modWeeks: 'hafta',
+                modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
+                modDeletes: 'silme', modActions: 'eylem'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -987,7 +1194,26 @@
                 restartSchedule: 'Zaplanuj Restart', restartCancel: 'Anuluj Restart', restartNow: 'Restartuj Teraz',
                 restartIn: 'Restart za', restartReason: 'Powód (opcjonalnie)', restartScheduled: 'Restart zaplanowany',
                 restartCancelled: 'Restart anulowany', restartConfirm: 'Zaplanować restart serwera?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grup', duplicatesItems: 'elementów', duplicateCopies: 'kopii', duplicateKeep: 'Zachowaj',
+                notificationToggleTitle: 'Włącz/wyłącz powiadomienia o nowych mediach',
+                // Moderator Panel translations
+                modPanelTitle: 'Panel Moderatora', modUsers: 'Użytkownicy', modBans: 'Bany', modLog: 'Dziennik',
+                modSearchUser: 'Szukaj Użytkownika', modSearchPlaceholder: 'Szukaj użytkownika do zarządzania...',
+                modManageUser: 'Zarządzaj Użytkownikiem', modModeratorStatus: 'Status Moderatora',
+                modNotModerator: 'Nie jest Moderatorem', modLevel1: 'Poziom 1', modLevel2: 'Poziom 2', modLevel3: 'Poziom 3',
+                modApply: 'Zastosuj', modChatStyle: 'Styl Czatu', modNicknameColor: 'Kolor Nicku', modMessageColor: 'Kolor Wiadomości',
+                modClear: 'Wyczyść', modTextStyle: 'Styl Tekstu', modNormal: 'Normalny', modBold: 'Pogrubiony', modItalic: 'Kursywa', modBoth: 'Oba',
+                modResetStyle: 'Resetuj Styl', modApplyStyle: 'Zastosuj Styl', modPenalties: 'Kary',
+                modSnooze: 'Wycisz', modChatBan: 'Ban na Czacie', modMediaBan: 'Ban Mediów', modDuration: 'Czas Trwania', modPerm: 'Stały',
+                modReasonOptional: 'Powód (opcjonalnie)', modEnterReason: 'Wprowadź powód...', modCancel: 'Anuluj', modApplyPenalty: 'Zastosuj Karę',
+                modCurrentModerators: 'Obecni Moderatorzy', modNoModerators: 'Brak moderatorów',
+                modSearchBans: 'Szukaj Banów', modSearchBannedUsers: 'Szukaj zbanowanych użytkowników...', modActiveBans: 'Aktywne Bany', modNoActiveBans: 'Brak aktywnych banów',
+                modModeratorActions: 'Akcje Moderatora', modSampleMessage: 'Przykładowy tekst wiadomości',
+                modUserWillBeMuted: 'Użytkownik zostanie wyciszony na', modMinutes: 'minut', modHours: 'godzin', modDays: 'dni', modWeeks: 'tygodni',
+                modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
+                modDeletes: 'usunięć', modActions: 'akcji'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -1064,7 +1290,26 @@
                 restartSchedule: 'Herstart Plannen', restartCancel: 'Herstart Annuleren', restartNow: 'Nu Herstarten',
                 restartIn: 'Herstart over', restartReason: 'Reden (optioneel)', restartScheduled: 'Herstart gepland',
                 restartCancelled: 'Herstart geannuleerd', restartConfirm: 'Server herstart plannen?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'groepen', duplicatesItems: 'items', duplicateCopies: 'kopieën', duplicateKeep: 'Behouden',
+                notificationToggleTitle: 'Nieuwe media meldingen in-/uitschakelen',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderator Paneel', modUsers: 'Gebruikers', modBans: 'Verboden', modLog: 'Logboek',
+                modSearchUser: 'Gebruiker Zoeken', modSearchPlaceholder: 'Zoek gebruiker om te beheren...',
+                modManageUser: 'Beheer Gebruiker', modModeratorStatus: 'Moderator Status',
+                modNotModerator: 'Geen Moderator', modLevel1: 'Niveau 1', modLevel2: 'Niveau 2', modLevel3: 'Niveau 3',
+                modApply: 'Toepassen', modChatStyle: 'Chat Stijl', modNicknameColor: 'Bijnaam Kleur', modMessageColor: 'Bericht Kleur',
+                modClear: 'Wissen', modTextStyle: 'Tekst Stijl', modNormal: 'Normaal', modBold: 'Vet', modItalic: 'Cursief', modBoth: 'Beide',
+                modResetStyle: 'Stijl Resetten', modApplyStyle: 'Stijl Toepassen', modPenalties: 'Straffen',
+                modSnooze: 'Dempen', modChatBan: 'Chat Verbod', modMediaBan: 'Media Verbod', modDuration: 'Duur', modPerm: 'Permanent',
+                modReasonOptional: 'Reden (optioneel)', modEnterReason: 'Voer reden in...', modCancel: 'Annuleren', modApplyPenalty: 'Straf Toepassen',
+                modCurrentModerators: 'Huidige Moderators', modNoModerators: 'Geen moderators',
+                modSearchBans: 'Verboden Zoeken', modSearchBannedUsers: 'Zoek verbannen gebruikers...', modActiveBans: 'Actieve Verboden', modNoActiveBans: 'Geen actieve verboden',
+                modModeratorActions: 'Moderator Acties', modSampleMessage: 'Voorbeeld berichttekst',
+                modUserWillBeMuted: 'Gebruiker wordt gedempt voor', modMinutes: 'minuten', modHours: 'uur', modDays: 'dagen', modWeeks: 'weken',
+                modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
+                modDeletes: 'verwijderingen', modActions: 'acties'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -1141,7 +1386,26 @@
                 restartSchedule: 'جدولة إعادة التشغيل', restartCancel: 'إلغاء إعادة التشغيل', restartNow: 'إعادة التشغيل الآن',
                 restartIn: 'إعادة التشغيل في', restartReason: 'السبب (اختياري)', restartScheduled: 'تمت جدولة إعادة التشغيل',
                 restartCancelled: 'تم إلغاء إعادة التشغيل', restartConfirm: 'جدولة إعادة تشغيل الخادم؟',
-                restart1Min: '1 دقيقة', restart2Min: '2 دقيقة', restart5Min: '5 دقائق', restart10Min: '10 دقائق'
+                restart1Min: '1 دقيقة', restart2Min: '2 دقيقة', restart5Min: '5 دقائق', restart10Min: '10 دقائق',
+                // Additional UI translations
+                duplicatesGroups: 'مجموعات', duplicatesItems: 'عناصر', duplicateCopies: 'نسخ', duplicateKeep: 'احتفظ',
+                notificationToggleTitle: 'تفعيل/إلغاء تفعيل إشعارات الوسائط الجديدة',
+                // Moderator Panel translations
+                modPanelTitle: 'لوحة المشرف', modUsers: 'المستخدمون', modBans: 'الحظر', modLog: 'السجل',
+                modSearchUser: 'بحث عن مستخدم', modSearchPlaceholder: 'ابحث عن مستخدم للإدارة...',
+                modManageUser: 'إدارة المستخدم', modModeratorStatus: 'حالة المشرف',
+                modNotModerator: 'ليس مشرفاً', modLevel1: 'المستوى 1', modLevel2: 'المستوى 2', modLevel3: 'المستوى 3',
+                modApply: 'تطبيق', modChatStyle: 'نمط الدردشة', modNicknameColor: 'لون الاسم', modMessageColor: 'لون الرسالة',
+                modClear: 'مسح', modTextStyle: 'نمط النص', modNormal: 'عادي', modBold: 'غامق', modItalic: 'مائل', modBoth: 'كلاهما',
+                modResetStyle: 'إعادة تعيين النمط', modApplyStyle: 'تطبيق النمط', modPenalties: 'العقوبات',
+                modSnooze: 'كتم', modChatBan: 'حظر الدردشة', modMediaBan: 'حظر الوسائط', modDuration: 'المدة', modPerm: 'دائم',
+                modReasonOptional: 'السبب (اختياري)', modEnterReason: 'أدخل السبب...', modCancel: 'إلغاء', modApplyPenalty: 'تطبيق العقوبة',
+                modCurrentModerators: 'المشرفون الحاليون', modNoModerators: 'لا يوجد مشرفون',
+                modSearchBans: 'بحث في الحظر', modSearchBannedUsers: 'ابحث عن المحظورين...', modActiveBans: 'الحظر النشط', modNoActiveBans: 'لا يوجد حظر نشط',
+                modModeratorActions: 'إجراءات المشرف', modSampleMessage: 'نص الرسالة النموذجية',
+                modUserWillBeMuted: 'سيتم كتم المستخدم لمدة', modMinutes: 'دقائق', modHours: 'ساعات', modDays: 'أيام', modWeeks: 'أسابيع',
+                modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
+                modDeletes: 'حذف', modActions: 'إجراءات'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -1218,7 +1482,26 @@
                 restartSchedule: 'पुनः आरंभ शेड्यूल करें', restartCancel: 'पुनः आरंभ रद्द करें', restartNow: 'अभी पुनः आरंभ करें',
                 restartIn: 'पुनः आरंभ में', restartReason: 'कारण (वैकल्पिक)', restartScheduled: 'पुनः आरंभ शेड्यूल किया गया',
                 restartCancelled: 'पुनः आरंभ रद्द किया गया', restartConfirm: 'सर्वर पुनः आरंभ शेड्यूल करें?',
-                restart1Min: '1 मिनट', restart2Min: '2 मिनट', restart5Min: '5 मिनट', restart10Min: '10 मिनट'
+                restart1Min: '1 मिनट', restart2Min: '2 मिनट', restart5Min: '5 मिनट', restart10Min: '10 मिनट',
+                // Additional UI translations
+                duplicatesGroups: 'समूह', duplicatesItems: 'आइटम', duplicateCopies: 'प्रतियां', duplicateKeep: 'रखें',
+                notificationToggleTitle: 'नई मीडिया सूचनाएं सक्षम/अक्षम करें',
+                // Moderator Panel translations
+                modPanelTitle: 'मॉडरेटर पैनल', modUsers: 'उपयोगकर्ता', modBans: 'प्रतिबंध', modLog: 'लॉग',
+                modSearchUser: 'उपयोगकर्ता खोजें', modSearchPlaceholder: 'प्रबंधित करने के लिए उपयोगकर्ता खोजें...',
+                modManageUser: 'उपयोगकर्ता प्रबंधन', modModeratorStatus: 'मॉडरेटर स्थिति',
+                modNotModerator: 'मॉडरेटर नहीं', modLevel1: 'स्तर 1', modLevel2: 'स्तर 2', modLevel3: 'स्तर 3',
+                modApply: 'लागू करें', modChatStyle: 'चैट शैली', modNicknameColor: 'उपनाम रंग', modMessageColor: 'संदेश रंग',
+                modClear: 'साफ़ करें', modTextStyle: 'टेक्स्ट शैली', modNormal: 'सामान्य', modBold: 'बोल्ड', modItalic: 'इटैलिक', modBoth: 'दोनों',
+                modResetStyle: 'शैली रीसेट करें', modApplyStyle: 'शैली लागू करें', modPenalties: 'दंड',
+                modSnooze: 'म्यूट', modChatBan: 'चैट प्रतिबंध', modMediaBan: 'मीडिया प्रतिबंध', modDuration: 'अवधि', modPerm: 'स्थायी',
+                modReasonOptional: 'कारण (वैकल्पि���)', modEnterReason: 'कारण दर्ज करें...', modCancel: 'रद्द करें', modApplyPenalty: 'दंड लागू करें',
+                modCurrentModerators: 'वर्तमान मॉडरेटर', modNoModerators: 'कोई मॉडरेटर नहीं',
+                modSearchBans: 'प्रतिबंध खोजें', modSearchBannedUsers: 'प्रतिबंधित उपयोगकर्ता खोजें...', modActiveBans: 'सक्रिय प्रतिबंध', modNoActiveBans: 'कोई सक्रिय प्रतिबंध नहीं',
+                modModeratorActions: 'मॉडरेटर गतिविधियाँ', modSampleMessage: 'नमूना संदेश टेक्स्ट',
+                modUserWillBeMuted: 'उपयोगकर्ता को म्यूट किया जाएगा', modMinutes: 'मिनट', modHours: 'घंटे', modDays: 'दिन', modWeeks: 'सप्ताह',
+                modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
+                modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -1295,7 +1578,26 @@
                 restartSchedule: 'Planuoti Paleidimą', restartCancel: 'Atšaukti Paleidimą', restartNow: 'Paleisti Dabar',
                 restartIn: 'Paleidimas po', restartReason: 'Priežastis (neprivaloma)', restartScheduled: 'Paleidimas suplanuotas',
                 restartCancelled: 'Paleidimas atšauktas', restartConfirm: 'Planuoti serverio paleidimą iš naujo?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupių', duplicatesItems: 'elementų', duplicateCopies: 'kopijų', duplicateKeep: 'Palikti',
+                notificationToggleTitle: 'Įjungti/išjungti naujų medijų pranešimus',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderatoriaus Skydelis', modUsers: 'Vartotojai', modBans: 'Draudimai', modLog: 'Žurnalas',
+                modSearchUser: 'Ieškoti Vartotojo', modSearchPlaceholder: 'Ieškoti vartotojo valdymui...',
+                modManageUser: 'Valdyti Vartotoją', modModeratorStatus: 'Moderatoriaus Statusas',
+                modNotModerator: 'Ne Moderatorius', modLevel1: 'Lygis 1', modLevel2: 'Lygis 2', modLevel3: 'Lygis 3',
+                modApply: 'Taikyti', modChatStyle: 'Pokalbio Stilius', modNicknameColor: 'Slapyvardžio Spalva', modMessageColor: 'Žinutės Spalva',
+                modClear: 'Išvalyti', modTextStyle: 'Teksto Stilius', modNormal: 'Normalus', modBold: 'Pusjuodis', modItalic: 'Kursyvas', modBoth: 'Abu',
+                modResetStyle: 'Atstatyti Stilių', modApplyStyle: 'Taikyti Stilių', modPenalties: 'Baudos',
+                modSnooze: 'Nutildyti', modChatBan: 'Pokalbio Draudimas', modMediaBan: 'Medijos Draudimas', modDuration: 'Trukmė', modPerm: 'Nuolat',
+                modReasonOptional: 'Priežastis (neprivaloma)', modEnterReason: 'Įveskite priežastį...', modCancel: 'Atšaukti', modApplyPenalty: 'Taikyti Baudą',
+                modCurrentModerators: 'Dabartiniai Moderatoriai', modNoModerators: 'Nėra moderatorių',
+                modSearchBans: 'Ieškoti Draudimų', modSearchBannedUsers: 'Ieškoti uždraustų vartotojų...', modActiveBans: 'Aktyvūs Draudimai', modNoActiveBans: 'Nėra aktyvių draudimų',
+                modModeratorActions: 'Moderatoriaus Veiksmai', modSampleMessage: 'Pavyzdinė žinutė',
+                modUserWillBeMuted: 'Vartotojas bus nutildytas', modMinutes: 'minučių', modHours: 'valandų', modDays: 'dienų', modWeeks: 'savaičių',
+                modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
+                modDeletes: 'ištrinimų', modActions: 'veiksmų'
             }
         },
 
@@ -1497,6 +1799,7 @@
             }
 
             this.injectStyles();
+            this.applyElegantFinFix();
             this.observeDetailPages();
             this.observeHomePageCards();
 
@@ -11953,6 +12256,47 @@
         },
 
         /**
+         * Apply CSS fixes for ElegantFin theme compatibility on mobile.
+         * Only injects styles when ElegantFin is detected (skinBody class present).
+         */
+        applyElegantFinFix: function () {
+            // Check if ElegantFin theme is active by looking for skinBody class
+            const checkAndApplyFix = function () {
+                if (!document.body.classList.contains('skinBody')) {
+                    return; // ElegantFin not detected, skip
+                }
+
+                // Only inject if not already present
+                if (document.getElementById('elegantFinCompatStyles')) {
+                    return;
+                }
+
+                const style = document.createElement('style');
+                style.id = 'elegantFinCompatStyles';
+                style.textContent = `
+                    /* ElegantFin theme compatibility - mobile only */
+                    @media screen and (max-width: 600px) {
+                        .skinBody {
+                            padding-top: 0 !important;
+                        }
+                        .tabs-viewmenubar.emby-tabs {
+                            padding-top: 0 !important;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                console.log('[Ratings] ElegantFin theme detected - applied mobile compatibility fix');
+            };
+
+            // Check immediately
+            checkAndApplyFix();
+
+            // Also check after a short delay (theme may load after our script)
+            setTimeout(checkAndApplyFix, 1000);
+            setTimeout(checkAndApplyFix, 3000);
+        },
+
+        /**
          * Observe detail pages for item changes
          */
         observeDetailPages: function () {
@@ -14333,7 +14677,7 @@
                         toggleContainer.id = 'notificationToggle';
                         toggleContainer.className = 'ratingsGroupBtn';
                         toggleContainer.setAttribute('type', 'button');
-                        toggleContainer.setAttribute('title', 'Enable/disable new media notifications');
+                        toggleContainer.setAttribute('title', self.t('notificationToggleTitle'));
                         toggleContainer.style.position = 'relative';
 
                         // Create bell icon SVG
@@ -16583,7 +16927,7 @@
                     return;
                 }
 
-                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} groups, ${data.TotalDuplicateItems} items - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
+                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
                 html += '<div class="duplicates-container">';
 
                 duplicates.forEach(group => {
@@ -16591,7 +16935,7 @@
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
                                 <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)} - ${self.escapeHtml(group.Title)}</span>
-                                <span class="duplicate-count">${group.ItemCount} copies (${group.TotalSizeGB} GB)</span>
+                                <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
                             </div>
                             <div class="duplicate-items">
                     `;
@@ -16601,14 +16945,14 @@
                             <div class="duplicate-item" data-item-id="${item.ItemId}">
                                 <div class="duplicate-info">
                                     <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
-                                    <div class="duplicate-path">${self.escapeHtml(item.Path || 'Unknown path')}</div>
+                                    <div class="duplicate-path">${self.escapeHtml(item.Path || self.t('unknown'))}</div>
                                     <div class="duplicate-size">${item.SizeGB} GB</div>
                                 </div>
                                 ${index > 0 ? `
                                     <div class="duplicate-actions">
                                         <button class="delete-duplicate-btn" data-item-id="${item.ItemId}" title="${self.t('duplicateDelete')}">🗑️</button>
                                     </div>
-                                ` : '<div class="duplicate-actions"><span style="color:#52b54b">✓ Keep</span></div>'}
+                                ` : `<div class="duplicate-actions"><span style="color:#52b54b">✓ ${self.t('duplicateKeep')}</span></div>`}
                             </div>
                         `;
                     });
@@ -22489,9 +22833,9 @@
                             </span>
                         </div>
                         <div class="chat-header-right">
-                            <button class="chat-header-btn" id="chatClearAllBtn" title="Clear All Messages" style="display:none;">🗑️</button>
-                            <button class="chat-header-btn" id="chatSettingsBtn" title="Moderator Panel" style="display:none;">⚙️</button>
-                            <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
+                            <button class="chat-header-btn" id="chatClearAllBtn" title="${this.t('chatClearAll')}" style="display:none;">🗑️</button>
+                            <button class="chat-header-btn" id="chatSettingsBtn" title="${this.t('modPanelTitle')}" style="display:none;">⚙️</button>
+                            <button class="chat-header-btn" id="chatCloseBtn" title="${this.t('modCancel')}">✕</button>
                         </div>
                     </div>
                     <div class="chat-tabs" id="chatTabs">
@@ -22562,37 +22906,37 @@
             const modWindowHtml = `
                 <div id="modWindow" class="mod-window">
                     <div class="mod-window-header">
-                        <span class="mod-window-title">Moderator Panel</span>
+                        <span class="mod-window-title">${this.t('modPanelTitle')}</span>
                         <button class="mod-window-close" id="modWindowClose">✕</button>
                     </div>
                     <div class="mod-window-body">
                         <div class="chat-mod-sidebar">
-                            <button class="chat-mod-sidebar-btn active" data-mod-section="users" title="Users">
+                            <button class="chat-mod-sidebar-btn active" data-mod-section="users" title="${this.t('modUsers')}">
                                 <span class="chat-mod-sidebar-icon">👥</span>
-                                <span class="chat-mod-sidebar-label">Users</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modUsers')}</span>
                             </button>
-                            <button class="chat-mod-sidebar-btn" data-mod-section="bans" title="Bans">
+                            <button class="chat-mod-sidebar-btn" data-mod-section="bans" title="${this.t('modBans')}">
                                 <span class="chat-mod-sidebar-icon">🚫</span>
-                                <span class="chat-mod-sidebar-label">Bans</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modBans')}</span>
                             </button>
-                            <button class="chat-mod-sidebar-btn" data-mod-section="actions" title="Actions">
+                            <button class="chat-mod-sidebar-btn" data-mod-section="actions" title="${this.t('modLog')}">
                                 <span class="chat-mod-sidebar-icon">📋</span>
-                                <span class="chat-mod-sidebar-label">Log</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modLog')}</span>
                             </button>
                         </div>
                         <div class="chat-mod-content">
                             <!-- Users Section - User Management -->
                             <div class="chat-mod-section visible" id="chatModSectionUsers">
-                                <div class="chat-mod-section-title">Search User</div>
+                                <div class="chat-mod-section-title">${this.t('modSearchUser')}</div>
                                 <div class="chat-mod-user-search">
                                     <div class="chat-mod-user-search-wrapper">
-                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="Search for a user to manage...">
+                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="${this.t('modSearchPlaceholder')}">
                                         <div class="chat-mod-user-search-dropdown" id="chatModUserSearchDropdown"></div>
                                     </div>
                                 </div>
                                 <div class="chat-mod-action-panel" id="chatModActionPanel">
                                     <div class="chat-mod-action-header">
-                                        <span class="chat-mod-action-title">Manage User</span>
+                                        <span class="chat-mod-action-title">${this.t('modManageUser')}</span>
                                         <button class="chat-mod-action-close" id="chatModActionClose">×</button>
                                     </div>
                                     <div class="chat-mod-action-target" id="chatModActionTarget">
@@ -22601,122 +22945,122 @@
                                         <span class="chat-mod-user-status" id="chatModUserStatus"></span>
                                     </div>
                                     <!-- Moderator Controls -->
-                                    <div class="chat-mod-action-label">Moderator Status</div>
+                                    <div class="chat-mod-action-label">${this.t('modModeratorStatus')}</div>
                                     <div class="chat-mod-moderator-controls" id="chatModModeratorControls">
                                         <div class="chat-mod-mod-row" id="chatModModRow">
                                             <select class="chat-mod-level-select" id="chatModUserLevel">
-                                                <option value="0">Not a Moderator</option>
-                                                <option value="1">Level 1</option>
-                                                <option value="2">Level 2</option>
-                                                <option value="3">Level 3</option>
+                                                <option value="0">${this.t('modNotModerator')}</option>
+                                                <option value="1">${this.t('modLevel1')}</option>
+                                                <option value="2">${this.t('modLevel2')}</option>
+                                                <option value="3">${this.t('modLevel3')}</option>
                                             </select>
-                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">Apply</button>
+                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">${this.t('modApply')}</button>
                                         </div>
                                     </div>
                                     <!-- Style Controls -->
-                                    <div class="chat-mod-action-label">Chat Style</div>
+                                    <div class="chat-mod-action-label">${this.t('modChatStyle')}</div>
                                     <div class="chat-mod-color-row">
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Nickname Color</span>
+                                            <span class="chat-mod-color-label">${this.t('modNicknameColor')}</span>
                                             <div class="chat-mod-color-input-wrapper">
                                                 <input type="color" class="chat-mod-color-picker" id="chatModNicknameColor" value="#ffffff">
                                                 <input type="text" class="chat-mod-color-hex" id="chatModNicknameHex" placeholder="#ffffff" maxlength="7">
-                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="Clear">×</button>
+                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="${this.t('modClear')}">×</button>
                                             </div>
                                         </div>
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Message Color</span>
+                                            <span class="chat-mod-color-label">${this.t('modMessageColor')}</span>
                                             <div class="chat-mod-color-input-wrapper">
                                                 <input type="color" class="chat-mod-color-picker" id="chatModMessageColor" value="#cccccc">
                                                 <input type="text" class="chat-mod-color-hex" id="chatModMessageHex" placeholder="#cccccc" maxlength="7">
-                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="Clear">×</button>
+                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="${this.t('modClear')}">×</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="chat-mod-color-row">
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Text Style</span>
+                                            <span class="chat-mod-color-label">${this.t('modTextStyle')}</span>
                                             <div style="display:flex;gap:8px;">
-                                                <button class="chat-mod-style-btn" data-style="">Normal</button>
-                                                <button class="chat-mod-style-btn" data-style="bold">Bold</button>
-                                                <button class="chat-mod-style-btn" data-style="italic">Italic</button>
-                                                <button class="chat-mod-style-btn" data-style="bold-italic">Both</button>
+                                                <button class="chat-mod-style-btn" data-style="">${this.t('modNormal')}</button>
+                                                <button class="chat-mod-style-btn" data-style="bold">${this.t('modBold')}</button>
+                                                <button class="chat-mod-style-btn" data-style="italic">${this.t('modItalic')}</button>
+                                                <button class="chat-mod-style-btn" data-style="bold-italic">${this.t('modBoth')}</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="chat-mod-color-preview" id="chatModColorPreview">
-                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">Sample message text</span>
+                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">${this.t('modSampleMessage')}</span>
                                     </div>
                                     <div class="chat-mod-action-buttons" style="margin-bottom:16px;">
-                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">Reset Style</button>
-                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">Apply Style</button>
+                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">${this.t('modResetStyle')}</button>
+                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">${this.t('modApplyStyle')}</button>
                                     </div>
                                     <!-- Penalty Controls -->
-                                    <div class="chat-mod-action-label">Penalties</div>
+                                    <div class="chat-mod-action-label">${this.t('modPenalties')}</div>
                                     <div class="chat-mod-type-grid" id="chatModTypeGrid">
                                         <button type="button" class="chat-mod-type-btn selected" data-action-type="snooze">
                                             <div class="chat-mod-type-icon">😴</div>
-                                            <div class="chat-mod-type-label">Snooze</div>
+                                            <div class="chat-mod-type-label">${this.t('modSnooze')}</div>
                                         </button>
                                         <button type="button" class="chat-mod-type-btn" data-action-type="chat">
                                             <div class="chat-mod-type-icon">💬</div>
-                                            <div class="chat-mod-type-label">Chat Ban</div>
+                                            <div class="chat-mod-type-label">${this.t('modChatBan')}</div>
                                         </button>
                                         <button type="button" class="chat-mod-type-btn" data-action-type="media">
                                             <div class="chat-mod-type-icon">🎬</div>
-                                            <div class="chat-mod-type-label">Media Ban</div>
+                                            <div class="chat-mod-type-label">${this.t('modMediaBan')}</div>
                                         </button>
                                     </div>
-                                    <div class="chat-mod-action-label">Duration</div>
+                                    <div class="chat-mod-action-label">${this.t('modDuration')}</div>
                                     <div class="chat-mod-duration-presets" id="chatModDurationPresets">
                                         <button type="button" class="chat-mod-duration-btn selected" data-duration="10">10m</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="60">1h</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="1440">1d</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="10080">1w</button>
-                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">Perm</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">${this.t('modPerm')}</button>
                                     </div>
-                                    <div class="chat-mod-action-label">Reason (optional)</div>
-                                    <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="Enter reason...">
-                                    <div class="chat-mod-preview" id="chatModPreview">User will be muted for 10 minutes</div>
+                                    <div class="chat-mod-action-label">${this.t('modReasonOptional')}</div>
+                                    <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="${this.t('modEnterReason')}">
+                                    <div class="chat-mod-preview" id="chatModPreview">${this.t('modUserWillBeMuted')} 10 ${this.t('modMinutes')}</div>
                                     <div class="chat-mod-action-buttons">
-                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
-                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
+                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">${this.t('modCancel')}</button>
+                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">${this.t('modApplyPenalty')}</button>
                                     </div>
                                 </div>
-                                <div class="chat-mod-section-title" style="margin-top:20px;">Current Moderators</div>
+                                <div class="chat-mod-section-title" style="margin-top:20px;">${this.t('modCurrentModerators')}</div>
                                 <div class="chat-mod-list" id="chatModList">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">👥</div>
-                                        <div>No moderators</div>
+                                        <div>${this.t('modNoModerators')}</div>
                                     </div>
                                 </div>
                             </div>
                             <!-- Bans Section -->
                             <div class="chat-mod-section" id="chatModSectionBans">
-                                <div class="chat-mod-section-title">Search Bans</div>
+                                <div class="chat-mod-section-title">${this.t('modSearchBans')}</div>
                                 <div class="chat-mod-ban-search">
-                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="Search banned users...">
+                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="${this.t('modSearchBannedUsers')}">
                                 </div>
-                                <div class="chat-mod-section-title" style="margin-top:12px;">Active Bans</div>
+                                <div class="chat-mod-section-title" style="margin-top:12px;">${this.t('modActiveBans')}</div>
                                 <div class="chat-mod-list" id="chatModBanList">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">🚫</div>
-                                        <div>No active bans</div>
+                                        <div>${this.t('modNoActiveBans')}</div>
                                     </div>
                                 </div>
                             </div>
                             <!-- Actions Section -->
                             <div class="chat-mod-section" id="chatModSectionActions">
-                                <div class="chat-mod-section-title">Moderator Actions</div>
+                                <div class="chat-mod-section-title">${this.t('modModeratorActions')}</div>
                                 <div style="margin-bottom:12px;">
                                     <select class="chat-mod-level-select" id="chatModActionsFilter" style="width:100%;">
-                                        <option value="">All Moderators</option>
+                                        <option value="">${this.t('modAllModerators')}</option>
                                     </select>
                                 </div>
                                 <div class="chat-mod-action-log" id="chatModActionLog">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">📋</div>
-                                        <div>No actions recorded</div>
+                                        <div>${this.t('modNoActions')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -24115,7 +24459,7 @@
                 const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
 
                 if (!mods || mods.length === 0) {
-                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>' + self.t('modNoModerators') + '</div></div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
                         // API returns PascalCase, handle both for safety
@@ -24133,10 +24477,10 @@
                             + '<span class="chat-mod-item-level" style="background:' + self.getModLevelColor(modLevel) + ';">L' + modLevel + '</span>'
                             + '<div>'
                             + '<div class="chat-mod-item-name">' + self.escapeHtml(modUserName) + '</div>'
-                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' deletes · ' + actionCount + ' actions</div>'
+                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' ' + self.t('modDeletes') + ' · ' + actionCount + ' ' + self.t('modActions') + '</div>'
                             + '</div>'
                             + '</div>'
-                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">Remove</button>' : '')
+                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">' + self.t('chatRemoveMod') + '</button>' : '')
                             + '</div>';
                     }).join('');
 
@@ -24150,7 +24494,7 @@
                 // Update actions filter
                 const filter = document.getElementById('chatModActionsFilter');
                 if (filter) {
-                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                    filter.innerHTML = '<option value="">' + self.t('modAllModerators') + '</option>' + mods.map(function (mod) {
                         const modUserId = mod.UserId || mod.userId;
                         const modUserName = mod.UserName || mod.userName || 'Unknown';
                         return '<option value="' + self.escapeHtml(modUserId) + '">' + self.escapeHtml(modUserName) + '</option>';
@@ -24159,7 +24503,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModList');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>' + self.t('modNoModerators') + '</div></div>';
             });
         },
 
@@ -24186,7 +24530,7 @@
                 console.error('[Ratings] Failed to load bans:', err);
                 self._cachedBans = [];
                 const list = document.getElementById('chatModBanList');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>' + self.t('modNoActiveBans') + '</div></div>';
             });
         },
 
@@ -24203,7 +24547,7 @@
 
             if (!bans || bans.length === 0) {
                 console.log('[Ratings] No bans to display');
-                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>' + self.t('modNoActiveBans') + '</div></div>';
             } else {
                 list.innerHTML = bans.map(function (ban) {
                     // API returns PascalCase, handle both
@@ -24290,7 +24634,7 @@
                 if (!list) return;
 
                 if (!actions || actions.length === 0) {
-                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>' + self.t('modNoActions') + '</div></div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
                         // Handle both PascalCase and camelCase from API
@@ -24309,7 +24653,7 @@
                                 if (d.durationMinutes) {
                                     parts.push(self.formatDuration(d.durationMinutes));
                                 } else if (d.permanent) {
-                                    parts.push('permanent');
+                                    parts.push(self.t('modPerm'));
                                 }
                                 if (d.reason) {
                                     parts.push('"' + d.reason + '"');
@@ -24339,7 +24683,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModActionLog');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>' + self.t('modNoActions') + '</div></div>';
             });
         },
 
@@ -25385,11 +25729,11 @@
                 if (addSection) addSection.style.display = canManageMods ? '' : 'none';
 
                 if (!mods || mods.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoModerators') + '</div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
                         const levelBadge = '<span class="chat-mod-level" style="background:' + self.getModLevelColor(mod.level) + ';">L' + mod.level + '</span>';
-                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' deletes | ' + mod.actionCount + ' actions</span>';
+                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' ' + self.t('modDeletes') + ' | ' + mod.actionCount + ' ' + self.t('modActions') + '</span>';
                         const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && mod.level < 3);
 
                         return '<div class="chat-admin-item">'
@@ -25409,7 +25753,7 @@
                 // Update actions filter
                 const filter = document.getElementById('chatActionsFilter');
                 if (filter) {
-                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                    filter.innerHTML = '<option value="">' + self.t('modAllModerators') + '</option>' + mods.map(function (mod) {
                         return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
                     }).join('');
                     filter.onchange = function () {
@@ -25419,7 +25763,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModeratorList');
-                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoModerators') + '</div>';
             });
         },
 
@@ -25456,7 +25800,7 @@
                 const list = document.getElementById('chatActionsList');
                 if (!list) return;
                 if (!actions || actions.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoActions') + '</div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
                         // Handle both PascalCase and camelCase from API
@@ -25475,7 +25819,7 @@
                                 if (d.durationMinutes) {
                                     parts.push(self.formatDuration(d.durationMinutes));
                                 } else if (d.permanent) {
-                                    parts.push('permanent');
+                                    parts.push(self.t('modPerm'));
                                 }
                                 if (d.reason) {
                                     parts.push('"' + d.reason + '"');
@@ -25505,7 +25849,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatActionsList');
-                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoActions') + '</div>';
             });
         },
 
