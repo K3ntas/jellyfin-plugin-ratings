@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.256.0",
+        "changelog": "Hide friends button during video playback (fullscreen)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.256.0/Jellyfin.Plugin.Ratings_2.0.256.0.zip",
+        "checksum": "57c126a0f8196f8fdb9f9f3bde4f64f7",
+        "timestamp": "2026-04-12T02:00:00Z"
+      },
+      {
         "version": "2.0.255.0",
         "changelog": "Skip Continue Watching from duplicate hiding, default OFF",
         "targetAbi": "10.11.0.0",
