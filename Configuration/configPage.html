@@ -508,13 +508,23 @@
                         </div>
                     </div>
 
-                    <!-- ============ GROUP 7: Live Chat ============ -->
-                    <div class="settings-group" id="groupLiveChat">
-                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupLiveChat')">
+                    <!-- ============ GROUP 7: Social Features ============ -->
+                    <div class="settings-group" id="groupSocialFeatures">
+                        <div class="settings-group-header" onclick="toggleSettingsGroup('groupSocialFeatures')">
                             <span class="settings-group-arrow">&#9660;</span>
-                            <span>Live Chat</span>
+                            <span>Social Features</span>
                         </div>
                         <div class="settings-group-content">
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableFriendsButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Friends Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the floating friends button that allows users to see online friends, add friends, and view activity.
+                                </div>
+                            </div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
@@ -1115,6 +1125,9 @@
                     }
                     renderBadgeProfiles();
 
+                    // Social features
+                    document.querySelector('#chkEnableFriendsButton').checked = config.EnableFriendsButton;
+
                     // Chat settings
                     document.querySelector('#chkEnableChat').checked = config.EnableChat;
                     document.querySelector('#txtChatMessageRetentionDays').value = config.ChatMessageRetentionDays || 7;
@@ -1207,6 +1220,9 @@
 
                     // Badge display profiles
                     config.BadgeDisplayProfiles = JSON.stringify(collectBadgeProfiles());
+
+                    // Social features
+                    config.EnableFriendsButton = document.querySelector('#chkEnableFriendsButton').checked;
 
                     // Chat settings
                     config.EnableChat = document.querySelector('#chkEnableChat').checked;

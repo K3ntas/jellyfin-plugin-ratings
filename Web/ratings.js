@@ -1437,6 +1437,7 @@
         initFriendsButton: function () {
             const self = this;
             var attempts = 0;
+            var configChecked = false;
 
             var tryInit = function () {
                 attempts++;
@@ -1444,6 +1445,32 @@
                     if (attempts < 15) {
                         setTimeout(tryInit, 1000);
                     }
+                    return;
+                }
+
+                // Check config once to see if friends button is enabled
+                if (!configChecked) {
+                    configChecked = true;
+                    var baseUrl = ApiClient.serverAddress();
+                    fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (config) {
+                            if (config.EnableFriendsButton === true) {
+                                self.friendsButtonEnabled = true;
+                                tryInit(); // Continue with init
+                            } else {
+                                self.friendsButtonEnabled = false;
+                                console.log('[Social] Friends button disabled in config');
+                            }
+                        })
+                        .catch(function () {
+                            self.friendsButtonEnabled = false;
+                        });
+                    return;
+                }
+
+                // Don't continue if not enabled
+                if (!self.friendsButtonEnabled) {
                     return;
                 }
 
