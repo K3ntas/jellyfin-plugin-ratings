@@ -159,7 +159,8 @@
                 modModeratorActions: 'Moderator Actions', modSampleMessage: 'Sample message text',
                 modUserWillBeMuted: 'User will be muted for', modMinutes: 'minutes', modHours: 'hours', modDays: 'days', modWeeks: 'weeks',
                 modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
-                modDeletes: 'deletes', modActions: 'actions'
+                modDeletes: 'deletes', modActions: 'actions',
+                changeLanguage: 'Change Language'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -255,7 +256,8 @@
                 modModeratorActions: 'Acciones de Moderador', modSampleMessage: 'Texto de mensaje de ejemplo',
                 modUserWillBeMuted: 'El usuario será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'días', modWeeks: 'semanas',
                 modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
-                modDeletes: 'eliminaciones', modActions: 'acciones'
+                modDeletes: 'eliminaciones', modActions: 'acciones',
+                changeLanguage: 'Cambiar Idioma'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -351,7 +353,8 @@
                 modModeratorActions: '管理员操作', modSampleMessage: '示例消息文本',
                 modUserWillBeMuted: '用户将被禁言', modMinutes: '分钟', modHours: '小时', modDays: '天', modWeeks: '周',
                 modAllModerators: '所有管理员', modNoActions: '没有操作记录',
-                modDeletes: '删除', modActions: '操作'
+                modDeletes: '删除', modActions: '操作',
+                changeLanguage: '更改语言'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -447,7 +450,8 @@
                 modModeratorActions: 'Ações do Moderador', modSampleMessage: 'Texto de mensagem de exemplo',
                 modUserWillBeMuted: 'O usuário será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'dias', modWeeks: 'semanas',
                 modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
-                modDeletes: 'exclusões', modActions: 'ações'
+                modDeletes: 'exclusões', modActions: 'ações',
+                changeLanguage: 'Alterar Idioma'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -543,7 +547,8 @@
                 modModeratorActions: 'Действия Модератора', modSampleMessage: 'Пример текста сообщения',
                 modUserWillBeMuted: 'Пользователь будет заглушен на', modMinutes: 'минут', modHours: 'часов', modDays: 'дней', modWeeks: 'недель',
                 modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
-                modDeletes: 'удалений', modActions: 'действий'
+                modDeletes: 'удалений', modActions: 'действий',
+                changeLanguage: 'Изменить Язык'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -639,7 +644,8 @@
                 modModeratorActions: 'モデレーター操作', modSampleMessage: 'サンプルメッセージテキスト',
                 modUserWillBeMuted: 'ユーザーは以下の期間ミュートされます', modMinutes: '分', modHours: '時間', modDays: '日', modWeeks: '週',
                 modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
-                modDeletes: '削除', modActions: 'アクション'
+                modDeletes: '削除', modActions: 'アクション',
+                changeLanguage: '言語を変更'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -733,7 +739,8 @@
                 modModeratorActions: 'Moderator-Aktionen', modSampleMessage: 'Beispielnachricht',
                 modUserWillBeMuted: 'Benutzer wird stummgeschaltet für', modMinutes: 'Minuten', modHours: 'Stunden', modDays: 'Tage', modWeeks: 'Wochen',
                 modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
-                modDeletes: 'Löschungen', modActions: 'Aktionen'
+                modDeletes: 'Löschungen', modActions: 'Aktionen',
+                changeLanguage: 'Sprache ändern'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -829,7 +836,8 @@
                 modModeratorActions: 'Actions Modérateur', modSampleMessage: 'Texte de message exemple',
                 modUserWillBeMuted: 'L\'utilisateur sera mis en sourdine pour', modMinutes: 'minutes', modHours: 'heures', modDays: 'jours', modWeeks: 'semaines',
                 modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
-                modDeletes: 'suppressions', modActions: 'actions'
+                modDeletes: 'suppressions', modActions: 'actions',
+                changeLanguage: 'Changer la Langue'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -925,7 +933,8 @@
                 modModeratorActions: '관리자 활동', modSampleMessage: '샘플 메시지 텍스트',
                 modUserWillBeMuted: '사용자가 음소거됩니다', modMinutes: '분', modHours: '시간', modDays: '일', modWeeks: '주',
                 modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
-                modDeletes: '삭제', modActions: '활동'
+                modDeletes: '삭제', modActions: '활동',
+                changeLanguage: '언어 변경'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -1021,7 +1030,8 @@
                 modModeratorActions: 'Azioni Moderatore', modSampleMessage: 'Testo messaggio di esempio',
                 modUserWillBeMuted: 'L\'utente sarà silenziato per', modMinutes: 'minuti', modHours: 'ore', modDays: 'giorni', modWeeks: 'settimane',
                 modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
-                modDeletes: 'eliminazioni', modActions: 'azioni'
+                modDeletes: 'eliminazioni', modActions: 'azioni',
+                changeLanguage: 'Cambia Lingua'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -1117,7 +1127,8 @@
                 modModeratorActions: 'Moderatör Eylemleri', modSampleMessage: 'Örnek mesaj metni',
                 modUserWillBeMuted: 'Kullanıcı susturulacak', modMinutes: 'dakika', modHours: 'saat', modDays: 'gün', modWeeks: 'hafta',
                 modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
-                modDeletes: 'silme', modActions: 'eylem'
+                modDeletes: 'silme', modActions: 'eylem',
+                changeLanguage: 'Dili Değiştir'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -1213,7 +1224,8 @@
                 modModeratorActions: 'Akcje Moderatora', modSampleMessage: 'Przykładowy tekst wiadomości',
                 modUserWillBeMuted: 'Użytkownik zostanie wyciszony na', modMinutes: 'minut', modHours: 'godzin', modDays: 'dni', modWeeks: 'tygodni',
                 modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
-                modDeletes: 'usunięć', modActions: 'akcji'
+                modDeletes: 'usunięć', modActions: 'akcji',
+                changeLanguage: 'Zmień Język'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -1309,7 +1321,8 @@
                 modModeratorActions: 'Moderator Acties', modSampleMessage: 'Voorbeeld berichttekst',
                 modUserWillBeMuted: 'Gebruiker wordt gedempt voor', modMinutes: 'minuten', modHours: 'uur', modDays: 'dagen', modWeeks: 'weken',
                 modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
-                modDeletes: 'verwijderingen', modActions: 'acties'
+                modDeletes: 'verwijderingen', modActions: 'acties',
+                changeLanguage: 'Taal Wijzigen'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -1405,7 +1418,8 @@
                 modModeratorActions: 'إجراءات المشرف', modSampleMessage: 'نص الرسالة النموذجية',
                 modUserWillBeMuted: 'سيتم كتم المستخدم لمدة', modMinutes: 'دقائق', modHours: 'ساعات', modDays: 'أيام', modWeeks: 'أسابيع',
                 modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
-                modDeletes: 'حذف', modActions: 'إجراءات'
+                modDeletes: 'حذف', modActions: 'إجراءات',
+                changeLanguage: 'تغيير اللغة'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -1501,7 +1515,8 @@
                 modModeratorActions: 'मॉडरेटर गतिविधियाँ', modSampleMessage: 'नमूना संदेश टेक्स्ट',
                 modUserWillBeMuted: 'उपयोगकर्ता को म्यूट किया जाएगा', modMinutes: 'मिनट', modHours: 'घंटे', modDays: 'दिन', modWeeks: 'सप्ताह',
                 modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
-                modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ'
+                modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ',
+                changeLanguage: 'भाषा बदलें'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -1597,7 +1612,8 @@
                 modModeratorActions: 'Moderatoriaus Veiksmai', modSampleMessage: 'Pavyzdinė žinutė',
                 modUserWillBeMuted: 'Vartotojas bus nutildytas', modMinutes: 'minučių', modHours: 'valandų', modDays: 'dienų', modWeeks: 'savaičių',
                 modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
-                modDeletes: 'ištrinimų', modActions: 'veiksmų'
+                modDeletes: 'ištrinimų', modActions: 'veiksmų',
+                changeLanguage: 'Keisti Kalbą'
             }
         },
 
@@ -1808,6 +1824,7 @@
 
             // Initialize buttons in order: search first, then others
             this.initSearchField();
+            this.initLanguageButton();
             this.initNotificationToggle();
             this.initRequestButtonWithRetry();
 
@@ -8082,6 +8099,130 @@
                     #latestMediaDropdown .latest-item-title {
                         font-size: 11px !important;
                     }
+                }
+
+                /* Language Button and Dropdown */
+                #languageBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    position: relative !important;
+                }
+
+                #languageBtn:hover {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                }
+
+                #languageBtn svg {
+                    width: 22px !important;
+                    height: 22px !important;
+                    fill: currentColor !important;
+                }
+
+                #languageBtn .lang-code {
+                    position: absolute !important;
+                    bottom: 2px !important;
+                    right: 2px !important;
+                    font-size: 8px !important;
+                    font-weight: 700 !important;
+                    background: rgba(0, 164, 220, 0.9) !important;
+                    color: #fff !important;
+                    padding: 1px 3px !important;
+                    border-radius: 3px !important;
+                    text-transform: uppercase !important;
+                }
+
+                #languageDropdown {
+                    position: fixed !important;
+                    min-width: 180px !important;
+                    max-height: 400px !important;
+                    overflow-y: auto !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+                    z-index: 2147483647 !important;
+                    display: none;
+                    padding: 6px 0 !important;
+                }
+
+                #languageDropdown.visible {
+                    display: block !important;
+                }
+
+                #languageDropdown .lang-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 10px 16px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s ease !important;
+                    color: #ccc !important;
+                    font-size: 13px !important;
+                    gap: 10px !important;
+                }
+
+                #languageDropdown .lang-item:hover {
+                    background: rgba(255, 255, 255, 0.08) !important;
+                    color: #fff !important;
+                }
+
+                #languageDropdown .lang-item.active {
+                    background: rgba(0, 164, 220, 0.2) !important;
+                    color: #00a4dc !important;
+                }
+
+                #languageDropdown .lang-item .lang-code-badge {
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    padding: 2px 6px !important;
+                    border-radius: 4px !important;
+                    text-transform: uppercase !important;
+                    min-width: 24px !important;
+                    text-align: center !important;
+                }
+
+                #languageDropdown .lang-item.active .lang-code-badge {
+                    background: rgba(0, 164, 220, 0.3) !important;
+                }
+
+                #languageDropdown .lang-item .lang-name {
+                    flex: 1 !important;
+                }
+
+                #languageDropdown .lang-item .lang-check {
+                    color: #00a4dc !important;
+                    font-size: 14px !important;
+                    opacity: 0;
+                }
+
+                #languageDropdown .lang-item.active .lang-check {
+                    opacity: 1;
+                }
+
+                /* Scrollbar styling for language dropdown */
+                #languageDropdown::-webkit-scrollbar {
+                    width: 6px !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-track {
+                    background: transparent !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 3px !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3) !important;
                 }
 
                 /* Media Management Button Styles */
@@ -14624,6 +14765,163 @@
             };
 
             setTimeout(tryCreate, 500);
+        },
+
+        /**
+         * Initialize language selector button in header
+         */
+        initLanguageButton: function () {
+            const self = this;
+            try {
+                // Check if already exists
+                if (document.getElementById('languageBtn')) {
+                    return;
+                }
+
+                // Language names mapping
+                const langNames = {
+                    en: 'English', es: 'Español', zh: '中文', pt: 'Português', ru: 'Русский',
+                    ja: '日本語', de: 'Deutsch', fr: 'Français', ko: '한국어', it: 'Italiano',
+                    tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands', ar: 'العربية', hi: 'हिन्दी', lt: 'Lietuvių'
+                };
+
+                const createLanguageButton = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('languageBtn')) {
+                            return;
+                        }
+
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (!buttonGroup) {
+                            // Retry later
+                            setTimeout(createLanguageButton, 500);
+                            return;
+                        }
+
+                        // Create the language button
+                        const btn = document.createElement('button');
+                        btn.id = 'languageBtn';
+                        btn.className = 'ratingsGroupBtn';
+                        btn.setAttribute('type', 'button');
+                        btn.setAttribute('title', self.t('changeLanguage'));
+                        btn.style.position = 'relative';
+
+                        // Globe icon with current language code badge
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg><span class="lang-code">${self.currentLanguage.toUpperCase()}</span>`;
+
+                        // Create dropdown container
+                        const dropdown = document.createElement('div');
+                        dropdown.id = 'languageDropdown';
+
+                        // Build dropdown items
+                        let dropdownHtml = '';
+                        self.validLanguages.forEach(code => {
+                            const isActive = code === self.currentLanguage ? ' active' : '';
+                            dropdownHtml += `<div class="lang-item${isActive}" data-lang="${code}">
+                                <span class="lang-code-badge">${code}</span>
+                                <span class="lang-name">${langNames[code]}</span>
+                                <span class="lang-check">✓</span>
+                            </div>`;
+                        });
+                        dropdown.innerHTML = dropdownHtml;
+                        document.body.appendChild(dropdown);
+
+                        // Position dropdown below button
+                        const positionDropdown = () => {
+                            const rect = btn.getBoundingClientRect();
+                            dropdown.style.top = (rect.bottom + 4) + 'px';
+                            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                            dropdown.style.left = 'auto';
+                        };
+
+                        // Toggle dropdown on click
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (dropdown.classList.contains('visible')) {
+                                dropdown.classList.remove('visible');
+                            } else {
+                                positionDropdown();
+                                dropdown.classList.add('visible');
+                            }
+                        });
+
+                        // Handle language selection
+                        dropdown.addEventListener('click', (e) => {
+                            const langItem = e.target.closest('.lang-item');
+                            if (!langItem) return;
+
+                            const newLang = langItem.dataset.lang;
+                            if (newLang && newLang !== self.currentLanguage) {
+                                // Update active state
+                                dropdown.querySelectorAll('.lang-item').forEach(item => {
+                                    item.classList.toggle('active', item.dataset.lang === newLang);
+                                });
+
+                                // Set language
+                                self.setLanguage(newLang);
+
+                                // Update button badge
+                                const badge = btn.querySelector('.lang-code');
+                                if (badge) {
+                                    badge.textContent = newLang.toUpperCase();
+                                }
+
+                                // Update button title
+                                btn.setAttribute('title', self.t('changeLanguage'));
+                            }
+
+                            // Close dropdown
+                            dropdown.classList.remove('visible');
+                        });
+
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', (e) => {
+                            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Close dropdown on escape
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Insert button into button group
+                        buttonGroup.appendChild(btn);
+
+                        // Trigger responsive scaling
+                        setTimeout(() => {
+                            if (typeof self.triggerResponsiveUpdate === 'function') {
+                                self.triggerResponsiveUpdate();
+                            }
+                        }, 100);
+
+                    } catch (err) {
+                        console.error('[Ratings] Error creating language button:', err);
+                    }
+                };
+
+                // Wait for button group to exist
+                const waitForButtonGroup = () => {
+                    if (document.getElementById('ratingsButtonGroup')) {
+                        createLanguageButton();
+                    } else {
+                        setTimeout(waitForButtonGroup, 500);
+                    }
+                };
+
+                setTimeout(waitForButtonGroup, 300);
+
+            } catch (err) {
+                console.error('[Ratings] Error initializing language button:', err);
+            }
         },
 
         /**
