@@ -127,7 +127,7 @@
                 chatBan: 'Ban', chatUnban: 'Unban', chatMute: 'Mute', chatBanFromMedia: 'Ban from Media', chatMinutes: 'minutes',
                 chatBanned: 'You are banned from chat', chatMuted: 'You are temporarily muted', chatRateLimited: 'Slow down! Too many messages.',
                 chatConnecting: 'Connecting...', chatReconnecting: 'Reconnecting...', chatDisconnected: 'Disconnected',
-                chatClearAll: 'Clear All', chatClearConfirm: 'Delete all chat messages? This cannot be undone.', chatCleared: 'Chat cleared',
+                chatClearAll: 'Clear All', chatClearConfirm: 'Delete all chat messages? This cannot be undone.', chatCleared: 'Chat cleared', chatClearDMConfirm: 'Delete your messages in this conversation?',
                 // DM translations
                 chatPublic: 'Public', chatDM: 'Direct Messages', chatStartDM: 'Start a private conversation',
                 chatSearchUsers: 'Search users...', chatNoUsers: 'No users found', chatNewMessage: 'New message from',
@@ -222,7 +222,7 @@
                 chatBan: 'Banear', chatUnban: 'Desbanear', chatMute: 'Silenciar', chatBanFromMedia: 'Banear de Media', chatMinutes: 'minutos',
                 chatBanned: 'Estás baneado del chat', chatMuted: 'Estás temporalmente silenciado', chatRateLimited: '¡Más despacio! Demasiados mensajes.',
                 chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
-                chatClearAll: 'Limpiar Todo', chatClearConfirm: '¿Eliminar todos los mensajes? Esto no se puede deshacer.', chatCleared: 'Chat limpiado',
+                chatClearAll: 'Limpiar Todo', chatClearConfirm: '¿Eliminar todos los mensajes? Esto no se puede deshacer.', chatCleared: 'Chat limpiado', chatClearDMConfirm: '¿Eliminar tus mensajes en esta conversación?',
                 chatPublic: 'Público', chatDM: 'Mensajes Directos', chatStartDM: 'Iniciar conversación privada',
                 chatSearchUsers: 'Buscar usuarios...', chatNoUsers: 'No se encontraron usuarios', chatNewMessage: 'Nuevo mensaje de',
                 chatNoDMs: 'Sin mensajes privados aún', chatTypeSlash: 'Escribe / para iniciar MD',
@@ -322,7 +322,7 @@
                 chatBan: '封禁', chatUnban: '解封', chatMute: '禁言', chatBanFromMedia: '禁止访问媒体', chatMinutes: '分钟',
                 chatBanned: '您已被禁止聊天', chatMuted: '您已被临时禁言', chatRateLimited: '请慢一点！消息太多了。',
                 chatConnecting: '连接中...', chatReconnecting: '重新连接中...', chatDisconnected: '已断开连接',
-                chatClearAll: '清除全部', chatClearConfirm: '删除所有聊天消息？此操作无法撤销。', chatCleared: '聊天已清除',
+                chatClearAll: '清除全部', chatClearConfirm: '删除所有聊天消息？此操作无法撤销。', chatCleared: '聊天已清除', chatClearDMConfirm: '删除此对话中您的消息？',
                 chatPublic: '公共', chatDM: '私信', chatStartDM: '开始私聊',
                 chatSearchUsers: '搜索用户...', chatNoUsers: '未找到用户', chatNewMessage: '新消息来自',
                 chatNoDMs: '暂无私信', chatTypeSlash: '输入 / 开始私信',
@@ -422,7 +422,7 @@
                 chatBan: 'Banir', chatUnban: 'Desbanir', chatMute: 'Silenciar', chatBanFromMedia: 'Banir de Mídia', chatMinutes: 'minutos',
                 chatBanned: 'Você está banido do chat', chatMuted: 'Você está temporariamente silenciado', chatRateLimited: 'Devagar! Muitas mensagens.',
                 chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
-                chatClearAll: 'Limpar Tudo', chatClearConfirm: 'Excluir todas as mensagens? Isso não pode ser desfeito.', chatCleared: 'Chat limpo',
+                chatClearAll: 'Limpar Tudo', chatClearConfirm: 'Excluir todas as mensagens? Isso não pode ser desfeito.', chatCleared: 'Chat limpo', chatClearDMConfirm: 'Excluir suas mensagens nesta conversa?',
                 chatPublic: 'Público', chatDM: 'Mensagens Diretas', chatStartDM: 'Iniciar conversa privada',
                 chatSearchUsers: 'Buscar usuários...', chatNoUsers: 'Nenhum usuário encontrado', chatNewMessage: 'Nova mensagem de',
                 chatNoDMs: 'Sem mensagens privadas ainda', chatTypeSlash: 'Digite / para iniciar MD',
@@ -522,7 +522,7 @@
                 chatBan: 'Заблокировать', chatUnban: 'Разблокировать', chatMute: 'Заглушить', chatBanFromMedia: 'Заблокировать медиа', chatMinutes: 'минут',
                 chatBanned: 'Вы заблокированы в чате', chatMuted: 'Вы временно заглушены', chatRateLimited: 'Помедленнее! Слишком много сообщений.',
                 chatConnecting: 'Подключение...', chatReconnecting: 'Переподключение...', chatDisconnected: 'Отключено',
-                chatClearAll: 'Очистить всё', chatClearConfirm: 'Удалить все сообщения? Это действие нельзя отменить.', chatCleared: 'Чат очищен',
+                chatClearAll: 'Очистить всё', chatClearConfirm: 'Удалить все сообщения? Это действие нельзя отменить.', chatCleared: 'Чат очищен', chatClearDMConfirm: 'Удалить ваши сообщения в этом разговоре?',
                 chatPublic: 'Публичный', chatDM: 'Личные сообщения', chatStartDM: 'Начать приватный разговор',
                 chatSearchUsers: 'Поиск пользователей...', chatNoUsers: 'Пользователи не найдены', chatNewMessage: 'Новое сообщение от',
                 chatNoDMs: 'Пока нет личных сообщений', chatTypeSlash: 'Введите / для ЛС',
@@ -622,7 +622,7 @@
                 chatBan: 'BAN', chatUnban: 'BAN解除', chatMute: 'ミュート', chatBanFromMedia: 'メディアBAN', chatMinutes: '分',
                 chatBanned: 'チャットからBANされています', chatMuted: '一時的にミュートされています', chatRateLimited: '少し待ってください！メッセージが多すぎます。',
                 chatConnecting: '接続中...', chatReconnecting: '再接続中...', chatDisconnected: '切断されました',
-                chatClearAll: '全削除', chatClearConfirm: 'すべてのメッセージを削除しますか？この操作は取り消せません。', chatCleared: 'チャットを削除しました',
+                chatClearAll: '全削除', chatClearConfirm: 'すべてのメッセージを削除しますか？この操作は取り消せません。', chatCleared: 'チャットを削除しました', chatClearDMConfirm: 'この会話のあなたのメッセージを削除しますか？',
                 chatPublic: '公開', chatDM: 'ダイレクトメッセージ', chatStartDM: 'プライベート会話を開始',
                 chatSearchUsers: 'ユーザーを検索...', chatNoUsers: 'ユーザーが見つかりません', chatNewMessage: '新着メッセージ',
                 chatNoDMs: 'プライベートメッセージはまだありません', chatTypeSlash: '/ を入力してDMを開始',
@@ -722,7 +722,7 @@
                 chatBan: 'Sperren', chatUnban: 'Entsperren', chatMute: 'Stummschalten', chatBanFromMedia: 'Von Medien sperren', chatMinutes: 'Minuten',
                 chatBanned: 'Du bist vom Chat gesperrt', chatMuted: 'Du bist vorübergehend stummgeschaltet', chatRateLimited: 'Langsamer! Zu viele Nachrichten.',
                 chatConnecting: 'Verbinden...', chatReconnecting: 'Neu verbinden...', chatDisconnected: 'Getrennt',
-                chatClearAll: 'Alle löschen', chatClearConfirm: 'Alle Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.', chatCleared: 'Chat gelöscht',
+                chatClearAll: 'Alle löschen', chatClearConfirm: 'Alle Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.', chatCleared: 'Chat gelöscht', chatClearDMConfirm: 'Ihre Nachrichten in diesem Gespräch löschen?',
                 chatPublic: 'Öffentlich', chatDM: 'Direktnachrichten', chatStartDM: 'Private Unterhaltung starten',
                 chatSearchUsers: 'Benutzer suchen...', chatNoUsers: 'Keine Benutzer gefunden', chatNewMessage: 'Neue Nachricht von',
                 chatNoDMs: 'Noch keine privaten Nachrichten', chatTypeSlash: 'Tippe / für DM',
@@ -820,7 +820,7 @@
                 chatBan: 'Bannir', chatUnban: 'Débannir', chatMute: 'Rendre muet', chatBanFromMedia: 'Bannir des Médias', chatMinutes: 'minutes',
                 chatBanned: 'Vous êtes banni du chat', chatMuted: 'Vous êtes temporairement muet', chatRateLimited: 'Doucement ! Trop de messages.',
                 chatConnecting: 'Connexion...', chatReconnecting: 'Reconnexion...', chatDisconnected: 'Déconnecté',
-                chatClearAll: 'Tout effacer', chatClearConfirm: 'Supprimer tous les messages ? Cette action est irréversible.', chatCleared: 'Chat effacé',
+                chatClearAll: 'Tout effacer', chatClearConfirm: 'Supprimer tous les messages ? Cette action est irréversible.', chatCleared: 'Chat effacé', chatClearDMConfirm: 'Supprimer vos messages dans cette conversation ?',
                 chatPublic: 'Public', chatDM: 'Messages Directs', chatStartDM: 'Démarrer une conversation privée',
                 chatSearchUsers: 'Rechercher des utilisateurs...', chatNoUsers: 'Aucun utilisateur trouvé', chatNewMessage: 'Nouveau message de',
                 chatNoDMs: 'Pas encore de messages privés', chatTypeSlash: 'Tapez / pour démarrer un MD',
@@ -920,7 +920,7 @@
                 chatBan: '차단', chatUnban: '차단 해제', chatMute: '음소거', chatBanFromMedia: '미디어 차단', chatMinutes: '분',
                 chatBanned: '채팅이 차단되었습니다', chatMuted: '일시적으로 음소거되었습니다', chatRateLimited: '잠시만요! 메시지가 너무 많습니다.',
                 chatConnecting: '연결 중...', chatReconnecting: '재연결 중...', chatDisconnected: '연결 끊김',
-                chatClearAll: '모두 삭제', chatClearConfirm: '모든 메시지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.', chatCleared: '채팅이 삭제됨',
+                chatClearAll: '모두 삭제', chatClearConfirm: '모든 메시지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.', chatCleared: '채팅이 삭제됨', chatClearDMConfirm: '이 대화에서 내 메시지를 삭제하시겠습니까?',
                 chatPublic: '공개', chatDM: '다이렉트 메시지', chatStartDM: '비공개 대화 시작',
                 chatSearchUsers: '사용자 검색...', chatNoUsers: '사용자를 찾을 수 없습니다', chatNewMessage: '새 메시지',
                 chatNoDMs: '비공개 메시지가 없습니다', chatTypeSlash: '/ 입력하여 DM 시작',
@@ -1020,7 +1020,7 @@
                 chatBan: 'Banna', chatUnban: 'Sbanna', chatMute: 'Silenzia', chatBanFromMedia: 'Banna dai Media', chatMinutes: 'minuti',
                 chatBanned: 'Sei bannato dalla chat', chatMuted: 'Sei temporaneamente silenziato', chatRateLimited: 'Piano! Troppi messaggi.',
                 chatConnecting: 'Connessione...', chatReconnecting: 'Riconnessione...', chatDisconnected: 'Disconnesso',
-                chatClearAll: 'Cancella tutto', chatClearConfirm: 'Eliminare tutti i messaggi? Non può essere annullato.', chatCleared: 'Chat cancellata',
+                chatClearAll: 'Cancella tutto', chatClearConfirm: 'Eliminare tutti i messaggi? Non può essere annullato.', chatCleared: 'Chat cancellata', chatClearDMConfirm: 'Eliminare i tuoi messaggi in questa conversazione?',
                 chatPublic: 'Pubblico', chatDM: 'Messaggi Diretti', chatStartDM: 'Inizia una conversazione privata',
                 chatSearchUsers: 'Cerca utenti...', chatNoUsers: 'Nessun utente trovato', chatNewMessage: 'Nuovo messaggio da',
                 chatNoDMs: 'Nessun messaggio privato ancora', chatTypeSlash: 'Digita / per iniziare MD',
@@ -1120,7 +1120,7 @@
                 chatBan: 'Yasakla', chatUnban: 'Yasağı Kaldır', chatMute: 'Sustur', chatBanFromMedia: 'Medyadan Yasakla', chatMinutes: 'dakika',
                 chatBanned: 'Sohbetten yasaklandınız', chatMuted: 'Geçici olarak susturuldunuz', chatRateLimited: 'Yavaş olun! Çok fazla mesaj.',
                 chatConnecting: 'Bağlanıyor...', chatReconnecting: 'Yeniden bağlanıyor...', chatDisconnected: 'Bağlantı kesildi',
-                chatClearAll: 'Tümünü Temizle', chatClearConfirm: 'Tüm mesajları sil? Bu geri alınamaz.', chatCleared: 'Sohbet temizlendi',
+                chatClearAll: 'Tümünü Temizle', chatClearConfirm: 'Tüm mesajları sil? Bu geri alınamaz.', chatCleared: 'Sohbet temizlendi', chatClearDMConfirm: 'Bu sohbetteki mesajlarınızı silinsin mi?',
                 chatPublic: 'Herkese Açık', chatDM: 'Direkt Mesajlar', chatStartDM: 'Özel sohbet başlat',
                 chatSearchUsers: 'Kullanıcı ara...', chatNoUsers: 'Kullanıcı bulunamadı', chatNewMessage: 'Yeni mesaj',
                 chatNoDMs: 'Henüz özel mesaj yok', chatTypeSlash: 'DM için / yazın',
@@ -1220,7 +1220,7 @@
                 chatBan: 'Zbanuj', chatUnban: 'Odbanuj', chatMute: 'Wycisz', chatBanFromMedia: 'Zbanuj z Mediów', chatMinutes: 'minut',
                 chatBanned: 'Jesteś zbanowany z czatu', chatMuted: 'Jesteś tymczasowo wyciszony', chatRateLimited: 'Zwolnij! Za dużo wiadomości.',
                 chatConnecting: 'Łączenie...', chatReconnecting: 'Ponowne łączenie...', chatDisconnected: 'Rozłączono',
-                chatClearAll: 'Wyczyść wszystko', chatClearConfirm: 'Usunąć wszystkie wiadomości? Tej operacji nie można cofnąć.', chatCleared: 'Czat wyczyszczony',
+                chatClearAll: 'Wyczyść wszystko', chatClearConfirm: 'Usunąć wszystkie wiadomości? Tej operacji nie można cofnąć.', chatCleared: 'Czat wyczyszczony', chatClearDMConfirm: 'Usunąć twoje wiadomości z tej rozmowy?',
                 chatPublic: 'Publiczny', chatDM: 'Wiadomości Prywatne', chatStartDM: 'Rozpocznij prywatną rozmowę',
                 chatSearchUsers: 'Szukaj użytkowników...', chatNoUsers: 'Nie znaleziono użytkowników', chatNewMessage: 'Nowa wiadomość od',
                 chatNoDMs: 'Brak prywatnych wiadomości', chatTypeSlash: 'Wpisz / aby rozpocząć WP',
@@ -1320,7 +1320,7 @@
                 chatBan: 'Blokkeren', chatUnban: 'Deblokkeren', chatMute: 'Dempen', chatBanFromMedia: 'Blokkeren van Media', chatMinutes: 'minuten',
                 chatBanned: 'Je bent geblokkeerd van de chat', chatMuted: 'Je bent tijdelijk gedempt', chatRateLimited: 'Rustig aan! Te veel berichten.',
                 chatConnecting: 'Verbinden...', chatReconnecting: 'Opnieuw verbinden...', chatDisconnected: 'Verbinding verbroken',
-                chatClearAll: 'Alles wissen', chatClearConfirm: 'Alle berichten verwijderen? Dit kan niet ongedaan worden gemaakt.', chatCleared: 'Chat gewist',
+                chatClearAll: 'Alles wissen', chatClearConfirm: 'Alle berichten verwijderen? Dit kan niet ongedaan worden gemaakt.', chatCleared: 'Chat gewist', chatClearDMConfirm: 'Je berichten in dit gesprek verwijderen?',
                 chatPublic: 'Openbaar', chatDM: 'Directe Berichten', chatStartDM: 'Start een privégesprek',
                 chatSearchUsers: 'Gebruikers zoeken...', chatNoUsers: 'Geen gebruikers gevonden', chatNewMessage: 'Nieuw bericht van',
                 chatNoDMs: 'Nog geen privéberichten', chatTypeSlash: 'Typ / om DM te starten',
@@ -1420,7 +1420,7 @@
                 chatBan: 'حظر', chatUnban: 'إلغاء الحظر', chatMute: 'كتم', chatBanFromMedia: 'حظر من الوسائط', chatMinutes: 'دقائق',
                 chatBanned: 'أنت محظور من الدردشة', chatMuted: 'أنت مكتوم مؤقتاً', chatRateLimited: 'ببطء! رسائل كثيرة جداً.',
                 chatConnecting: 'جاري الاتصال...', chatReconnecting: 'إعادة الاتصال...', chatDisconnected: 'غير متصل',
-                chatClearAll: 'مسح الكل', chatClearConfirm: 'حذف جميع الرسائل؟ لا يمكن التراجع عن هذا.', chatCleared: 'تم مسح الدردشة',
+                chatClearAll: 'مسح الكل', chatClearConfirm: 'حذف جميع الرسائل؟ لا يمكن التراجع عن هذا.', chatCleared: 'تم مسح الدردشة', chatClearDMConfirm: 'حذف رسائلك في هذه المحادثة؟',
                 chatPublic: 'عام', chatDM: 'رسائل مباشرة', chatStartDM: 'بدء محادثة خاصة',
                 chatSearchUsers: 'البحث عن مستخدمين...', chatNoUsers: 'لم يتم العثور على مستخدمين', chatNewMessage: 'رسالة جديدة من',
                 chatNoDMs: 'لا توجد رسائل خاصة حتى الآن', chatTypeSlash: 'اكتب / لبدء رسالة مباشرة',
@@ -1520,7 +1520,7 @@
                 chatBan: 'प्रतिबंध', chatUnban: 'प्रतिबंध हटाएं', chatMute: 'म्यूट', chatBanFromMedia: 'मीडिया से प्रतिबंध', chatMinutes: 'मिनट',
                 chatBanned: 'आप चैट से प्रतिबंधित हैं', chatMuted: 'आप अस्थायी रूप से म्यूट हैं', chatRateLimited: 'धीरे! बहुत सारे संदेश।',
                 chatConnecting: 'कनेक्ट हो रहा है...', chatReconnecting: 'पुनः कनेक्ट हो रहा है...', chatDisconnected: 'डिस्कनेक्ट',
-                chatClearAll: 'सब साफ करें', chatClearConfirm: 'सभी संदेश हटाएं? यह पूर्ववत नहीं किया जा सकता।', chatCleared: 'चैट साफ़ हो गई',
+                chatClearAll: 'सब साफ करें', chatClearConfirm: 'सभी संदेश हटाएं? यह पूर्ववत नहीं किया जा सकता।', chatCleared: 'चैट साफ़ हो गई', chatClearDMConfirm: 'इस बातचीत में अपने संदेश हटाएं?',
                 chatPublic: 'सार्वजनिक', chatDM: 'सीधे संदेश', chatStartDM: 'निजी बातचीत शुरू करें',
                 chatSearchUsers: 'उपयोगकर्ता खोजें...', chatNoUsers: 'कोई उपयोगकर्ता नहीं मिला', chatNewMessage: 'नया संदेश',
                 chatNoDMs: 'अभी तक कोई निजी संदेश नहीं', chatTypeSlash: 'DM शुरू करने के लिए / टाइप करें',
@@ -1620,7 +1620,7 @@
                 chatBan: 'Uždrausti', chatUnban: 'Atblokuoti', chatMute: 'Nutildyti', chatBanFromMedia: 'Uždrausti Mediją', chatMinutes: 'minučių',
                 chatBanned: 'Jums uždrausta rašyti', chatMuted: 'Jūs laikinai nutildytas', chatRateLimited: 'Lėčiau! Per daug žinučių.',
                 chatConnecting: 'Jungiamasi...', chatReconnecting: 'Jungiantis iš naujo...', chatDisconnected: 'Atsijungta',
-                chatClearAll: 'Išvalyti viską', chatClearConfirm: 'Ištrinti visas žinutes? Šio veiksmo negalima atšaukti.', chatCleared: 'Pokalbis išvalytas',
+                chatClearAll: 'Išvalyti viską', chatClearConfirm: 'Ištrinti visas žinutes? Šio veiksmo negalima atšaukti.', chatCleared: 'Pokalbis išvalytas', chatClearDMConfirm: 'Ištrinti jūsų žinutes šiame pokalbyje?',
                 chatPublic: 'Viešas', chatDM: 'Tiesioginės Žinutės', chatStartDM: 'Pradėti privatų pokalbį',
                 chatSearchUsers: 'Ieškoti vartotojų...', chatNoUsers: 'Vartotojų nerasta', chatNewMessage: 'Nauja žinutė nuo',
                 chatNoDMs: 'Kol kas nėra privačių žinučių', chatTypeSlash: 'Rašykite / norėdami pradėti TŽ',
@@ -23650,9 +23650,12 @@
                 };
             }
 
-            // Clear all button (admin only)
+            // Clear all button (admin for public, anyone for own DMs)
             document.getElementById('chatClearAllBtn').onclick = function () {
-                if (confirm(self.t('chatClearConfirm'))) {
+                const confirmMsg = self.chatActiveTab !== 'public' && self.dmActiveConversation
+                    ? (self.t('chatClearDMConfirm') || 'Delete your messages in this conversation?')
+                    : self.t('chatClearConfirm');
+                if (confirm(confirmMsg)) {
                     self.clearAllChatMessages();
                 }
             };
@@ -24651,7 +24654,6 @@
          */
         showModeratorTab: function () {
             const settingsBtn = document.getElementById('chatSettingsBtn');
-            const clearAllBtn = document.getElementById('chatClearAllBtn');
 
             // Show settings button if user is admin or moderator
             if (settingsBtn) {
@@ -24662,13 +24664,25 @@
                 }
             }
 
-            // Show clear all button only for admins
-            if (clearAllBtn) {
-                if (this.chatIsAdmin) {
-                    clearAllBtn.style.display = '';
-                } else {
-                    clearAllBtn.style.display = 'none';
-                }
+            // Update clear button visibility
+            this.updateClearButtonVisibility();
+        },
+
+        /**
+         * Update clear button visibility based on active tab
+         */
+        updateClearButtonVisibility: function () {
+            const clearAllBtn = document.getElementById('chatClearAllBtn');
+            if (!clearAllBtn) return;
+
+            // Show clear button if:
+            // 1. On public tab AND user is admin
+            // 2. On DM tab (any user can clear their own messages)
+            const isOnDM = this.chatActiveTab !== 'public' && this.dmActiveConversation;
+            if (isOnDM || this.chatIsAdmin) {
+                clearAllBtn.style.display = '';
+            } else {
+                clearAllBtn.style.display = 'none';
             }
         },
 
@@ -26660,22 +26674,51 @@
         },
 
         /**
-         * Clear all chat messages (admin only)
+         * Clear all chat messages - context aware (public chat or DM)
          */
         clearAllChatMessages: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Chat/Messages/Clear', {
-                method: 'DELETE',
-                credentials: 'include',
-                headers: self.getChatAuthHeaders()
-            })
-            .then(function () {
-                self.chatMessages = [];
-                self.renderChatMessages();
-                alert(self.t('chatCleared'));
-            })
-            .catch(function () {});
+
+            // If on a DM tab, clear that DM conversation
+            if (this.chatActiveTab !== 'public' && this.dmActiveConversation) {
+                const messages = this.dmMessages[this.dmActiveConversation.userId] || [];
+                const myMessages = messages.filter(m => m.isFromMe);
+
+                if (myMessages.length === 0) {
+                    alert(self.t('chatCleared'));
+                    return;
+                }
+
+                // Delete all own messages in this DM
+                Promise.all(myMessages.map(msg =>
+                    fetch(baseUrl + '/Ratings/Chat/DM/Messages/' + encodeURIComponent(msg.id), {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: self.getChatAuthHeaders()
+                    })
+                ))
+                .then(function () {
+                    // Remove deleted messages from local state
+                    self.dmMessages[self.dmActiveConversation.userId] = messages.filter(m => !m.isFromMe);
+                    self.renderDMMessages(self.dmActiveConversation.userId);
+                    alert(self.t('chatCleared'));
+                })
+                .catch(function () {});
+            } else {
+                // Clear public chat (existing behavior)
+                fetch(baseUrl + '/Ratings/Chat/Messages/Clear', {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: self.getChatAuthHeaders()
+                })
+                .then(function () {
+                    self.chatMessages = [];
+                    self.renderChatMessages();
+                    alert(self.t('chatCleared'));
+                })
+                .catch(function () {});
+            }
         },
 
         /**
@@ -27279,6 +27322,9 @@
             document.querySelectorAll('.chat-tab').forEach(tab => {
                 tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
             });
+
+            // Update clear button visibility based on tab
+            this.updateClearButtonVisibility();
 
             if (tabId === 'public') {
                 this.dmActiveConversation = null;
