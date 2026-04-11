@@ -4754,6 +4754,15 @@
                     margin-right: 8px !important;
                 }
 
+                /* Force button order using CSS order (async loading causes random DOM order) */
+                #headerSearchField { order: 1 !important; }
+                #languageBtn { order: 2 !important; }
+                #requestMediaBtn { order: 3 !important; }
+                #notificationToggle { order: 4 !important; }
+                #latestMediaBtn { order: 5 !important; }
+                #mediaManagementBtn { order: 6 !important; }
+                #chatBtn { order: 7 !important; }
+
                 /* Button style inside group */
                 .ratingsGroupBtn {
                     display: flex !important;
@@ -14278,8 +14287,16 @@
                     </div>
                 `;
 
-                // Insert into button group
-                buttonGroup.appendChild(btn);
+                // Insert AFTER language button or search field (to keep buttons together)
+                const langBtn = document.getElementById('languageBtn');
+                const searchField = document.getElementById('headerSearchField');
+                if (langBtn) {
+                    langBtn.insertAdjacentElement('afterend', btn);
+                } else if (searchField) {
+                    searchField.insertAdjacentElement('afterend', btn);
+                } else {
+                    buttonGroup.appendChild(btn);
+                }
                 document.body.appendChild(modal);
 
                 // Add tooltip
