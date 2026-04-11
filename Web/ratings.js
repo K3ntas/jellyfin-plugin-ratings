@@ -1314,6 +1314,7 @@
         initFriendsButton: function () {
             const self = this;
             var attempts = 0;
+            var configChecked = false;
 
             var tryInit = function () {
                 attempts++;
@@ -1321,6 +1322,32 @@
                     if (attempts < 15) {
                         setTimeout(tryInit, 1000);
                     }
+                    return;
+                }
+
+                // Check config once to see if friends button is enabled
+                if (!configChecked) {
+                    configChecked = true;
+                    var baseUrl = ApiClient.serverAddress();
+                    fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (config) {
+                            if (config.EnableFriendsButton === true) {
+                                self.friendsButtonEnabled = true;
+                                tryInit(); // Continue with init
+                            } else {
+                                self.friendsButtonEnabled = false;
+                                console.log('[Social] Friends button disabled in config');
+                            }
+                        })
+                        .catch(function () {
+                            self.friendsButtonEnabled = false;
+                        });
+                    return;
+                }
+
+                // Don't continue if not enabled
+                if (!self.friendsButtonEnabled) {
                     return;
                 }
 
@@ -21786,6 +21813,7 @@
                             </span>
                         </div>
                         <div class="chat-header-right">
+                            <button class="chat-header-btn" id="chatClearAllBtn" title="Clear All Messages" style="display:none;">🗑️</button>
                             <button class="chat-header-btn" id="chatSettingsBtn" title="Moderator Panel" style="display:none;">⚙️</button>
                             <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
                         </div>
@@ -23196,13 +23224,24 @@
          */
         showModeratorTab: function () {
             const settingsBtn = document.getElementById('chatSettingsBtn');
-            if (!settingsBtn) return;
+            const clearAllBtn = document.getElementById('chatClearAllBtn');
 
             // Show settings button if user is admin or moderator
-            if (this.chatIsAdmin || this.chatIsModerator) {
-                settingsBtn.style.display = '';
-            } else {
-                settingsBtn.style.display = 'none';
+            if (settingsBtn) {
+                if (this.chatIsAdmin || this.chatIsModerator) {
+                    settingsBtn.style.display = '';
+                } else {
+                    settingsBtn.style.display = 'none';
+                }
+            }
+
+            // Show clear all button only for admins
+            if (clearAllBtn) {
+                if (this.chatIsAdmin) {
+                    clearAllBtn.style.display = '';
+                } else {
+                    clearAllBtn.style.display = 'none';
+                }
             }
         },
 

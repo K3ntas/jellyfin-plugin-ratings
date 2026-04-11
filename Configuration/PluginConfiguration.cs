@@ -79,6 +79,9 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Language settings
             DefaultLanguage = "en";
 
+            // Social features
+            EnableFriendsButton = false;
+
             // Chat settings
             EnableChat = false;
             ChatMessageRetentionDays = 7;
@@ -327,6 +330,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public string DefaultLanguage { get; set; }
 
         // Chat settings
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the friends button is enabled.
+        /// </summary>
+        public bool EnableFriendsButton { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the live chat feature is enabled.

@@ -775,6 +775,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Badge display profiles
                     BadgeDisplayProfiles = config?.BadgeDisplayProfiles ?? string.Empty,
 
+                    // Social features
+                    EnableFriendsButton = config?.EnableFriendsButton ?? false,
+
                     // Chat settings
                     EnableChat = config?.EnableChat ?? false,
                     // HasGifSupport indicates API key is configured (key is never exposed to client)
