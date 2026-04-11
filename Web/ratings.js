@@ -27400,8 +27400,8 @@
                             <span class="chat-timestamp">${this.formatChatTime(msg.timestamp)}</span>
                         </div>
                         <div class="chat-bubble">${bubbleContent}</div>
+                        ${isOwn ? '<div class="chat-message-actions"><button class="chat-action-btn delete" data-delete-dm="' + this.escapeHtml(msg.id) + '">' + this.t('delete') + '</button></div>' : ''}
                     </div>
-                    ${isOwn ? '<button class="chat-delete-btn" data-delete-dm="' + this.escapeHtml(msg.id) + '" title="Delete">🗑️</button>' : ''}
                 `;
                 container.appendChild(div);
             });
