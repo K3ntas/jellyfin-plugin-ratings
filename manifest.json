@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.247.0",
+        "changelog": "Admins can delete entire DM conversations (for deleted accounts cleanup)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.247.0/Jellyfin.Plugin.Ratings_2.0.247.0.zip",
+        "checksum": "dc427f05e6bf0acb53bf2c9c032968f1",
+        "timestamp": "2026-04-11T20:30:00Z"
+      },
+      {
         "version": "2.0.246.0",
         "changelog": "Clear All button now works per-tab (public chat or DM conversation)",
         "targetAbi": "10.11.0.0",

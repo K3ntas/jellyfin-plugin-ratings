@@ -2643,6 +2643,37 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Deletes entire DM conversation between two users (admin only).
+        /// Used to clean up conversations with deleted accounts.
+        /// </summary>
+        public async Task<int> DeleteDMConversationAsync(Guid userId1, Guid userId2)
+        {
+            int deletedCount = 0;
+            lock (_lock)
+            {
+                // Find all messages between these two users (both directions)
+                var messagesToDelete = _privateMessages.Where(m =>
+                    !m.IsDeleted &&
+                    ((m.SenderId == userId1 && m.RecipientId == userId2) ||
+                     (m.SenderId == userId2 && m.RecipientId == userId1))
+                ).ToList();
+
+                foreach (var msg in messagesToDelete)
+                {
+                    msg.IsDeleted = true;
+                    msg.DeletedAt = DateTime.UtcNow;
+                    deletedCount++;
+                }
+
+                if (deletedCount > 0)
+                {
+                    _ = SavePrivateMessagesAsync();
+                }
+            }
+            return deletedCount;
+        }
+
+        /// <summary>
         /// Cleans up expired data to prevent unbounded growth.
         /// Should be called periodically (e.g., on plugin startup and daily).
         /// </summary>

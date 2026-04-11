@@ -1594,6 +1594,30 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Deletes entire DM conversation (admin only). Used to clean up conversations with deleted accounts.
+        /// </summary>
+        [HttpDelete("DM/{otherUserId}/Conversation")]
+        [AllowAnonymous]
+        public async Task<ActionResult> DeleteDMConversation([FromRoute] Guid otherUserId)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableChat != true) return BadRequest("Chat is disabled");
+
+            var userId = await RequireAuthAsync().ConfigureAwait(false);
+
+            // Only admins can delete entire conversations
+            if (!IsJellyfinAdmin(userId))
+            {
+                return Forbid("Only admins can delete entire conversations");
+            }
+
+            // Delete all messages in this conversation (both directions)
+            var deleted = await _repository.DeleteDMConversationAsync(userId, otherUserId).ConfigureAwait(false);
+
+            return Ok(new { success = true, deletedCount = deleted });
+        }
+
+        /// <summary>
         /// Gets public chat unread count.
         /// </summary>
         [HttpGet("Public/Unread")]
