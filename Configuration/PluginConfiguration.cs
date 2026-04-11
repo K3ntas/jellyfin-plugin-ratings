@@ -28,7 +28,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowNotificationToggle = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
-            HideHomeDuplicates = true;
+            HideHomeDuplicates = false;
 
             // Media management settings
             EnableMediaManagement = true;
