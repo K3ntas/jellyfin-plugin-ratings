@@ -21622,22 +21622,29 @@
                 itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
             }
 
-            // Show loading indicator
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'rating-sort-loading';
-            loadingDiv.style.cssText = 'text-align: center; padding: 20px; color: #fff;';
-            loadingDiv.innerHTML = '⏳ Loading all items for sorting...';
-            itemsContainer.insertBefore(loadingDiv, itemsContainer.firstChild);
+            // Show loading on the sort button instead of inserting a div
+            const sortBtn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
+            const originalBtnHtml = sortBtn ? sortBtn.innerHTML : null;
+            if (sortBtn) {
+                sortBtn.innerHTML = '⏳';
+                sortBtn.disabled = true;
+                sortBtn.style.opacity = '0.7';
+            }
+
+            const restoreBtn = () => {
+                if (sortBtn && originalBtnHtml) {
+                    sortBtn.innerHTML = originalBtnHtml;
+                    sortBtn.disabled = false;
+                    sortBtn.style.opacity = '';
+                }
+            };
 
             // Fetch ALL items from library
             self.fetchAllLibraryItems(parentId).then(items => {
                 if (items.length === 0) {
-                    loadingDiv.remove();
+                    restoreBtn();
                     return;
                 }
-
-                // Update loading message
-                loadingDiv.innerHTML = `⏳ Fetching ratings for ${items.length} items...`;
 
                 // Get all item IDs that need ratings
                 const uncachedIds = items
@@ -21650,7 +21657,7 @@
                     : Promise.resolve();
 
                 ratingsPromise.then(() => {
-                    loadingDiv.remove();
+                    restoreBtn();
 
                     // Sort items by rating
                     const sortedItems = [...items].sort((a, b) => {
@@ -21667,10 +21674,10 @@
                     // Rebuild cards with sorted items
                     self.rebuildLibraryCards(itemsContainer, sortedItems);
                 }).catch(() => {
-                    loadingDiv.remove();
+                    restoreBtn();
                 });
             }).catch(() => {
-                loadingDiv.remove();
+                restoreBtn();
             });
         },
 
