@@ -161,7 +161,9 @@
                 modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
                 modDeletes: 'deletes', modActions: 'actions',
                 changeLanguage: 'Change Language',
-                testNotificationTooltip: 'Send test notification'
+                testNotificationTooltip: 'Send test notification',
+                notificationsOn: 'Notifications enabled',
+                notificationsOff: 'Notifications disabled'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -259,7 +261,9 @@
                 modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
                 modDeletes: 'eliminaciones', modActions: 'acciones',
                 changeLanguage: 'Cambiar Idioma',
-                testNotificationTooltip: 'Enviar notificación de prueba'
+                testNotificationTooltip: 'Enviar notificación de prueba',
+                notificationsOn: 'Notificaciones activadas',
+                notificationsOff: 'Notificaciones desactivadas'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -357,7 +361,9 @@
                 modAllModerators: '所有管理员', modNoActions: '没有操作记录',
                 modDeletes: '删除', modActions: '操作',
                 changeLanguage: '更改语言',
-                testNotificationTooltip: '发送测试通知'
+                testNotificationTooltip: '发送测试通知',
+                notificationsOn: '通知已启用',
+                notificationsOff: '通知已禁用'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -455,7 +461,9 @@
                 modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
                 modDeletes: 'exclusões', modActions: 'ações',
                 changeLanguage: 'Alterar Idioma',
-                testNotificationTooltip: 'Enviar notificação de teste'
+                testNotificationTooltip: 'Enviar notificação de teste',
+                notificationsOn: 'Notificações ativadas',
+                notificationsOff: 'Notificações desativadas'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -553,7 +561,9 @@
                 modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
                 modDeletes: 'удалений', modActions: 'действий',
                 changeLanguage: 'Изменить Язык',
-                testNotificationTooltip: 'Отправить тестовое уведомление'
+                testNotificationTooltip: 'Отправить тестовое уведомление',
+                notificationsOn: 'Уведомления включены',
+                notificationsOff: 'Уведомления отключены'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -651,7 +661,9 @@
                 modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
                 modDeletes: '削除', modActions: 'アクション',
                 changeLanguage: '言語を変更',
-                testNotificationTooltip: 'テスト通知を送信'
+                testNotificationTooltip: 'テスト通知を送信',
+                notificationsOn: '通知が有効',
+                notificationsOff: '通知が無効'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -747,7 +759,9 @@
                 modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
                 modDeletes: 'Löschungen', modActions: 'Aktionen',
                 changeLanguage: 'Sprache ändern',
-                testNotificationTooltip: 'Testbenachrichtigung senden'
+                testNotificationTooltip: 'Testbenachrichtigung senden',
+                notificationsOn: 'Benachrichtigungen aktiviert',
+                notificationsOff: 'Benachrichtigungen deaktiviert'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -845,7 +859,9 @@
                 modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
                 modDeletes: 'suppressions', modActions: 'actions',
                 changeLanguage: 'Changer la Langue',
-                testNotificationTooltip: 'Envoyer une notification test'
+                testNotificationTooltip: 'Envoyer une notification test',
+                notificationsOn: 'Notifications activées',
+                notificationsOff: 'Notifications désactivées'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -943,7 +959,9 @@
                 modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
                 modDeletes: '삭제', modActions: '활동',
                 changeLanguage: '언어 변경',
-                testNotificationTooltip: '테스트 알림 보내기'
+                testNotificationTooltip: '테스트 알림 보내기',
+                notificationsOn: '알림 활성화됨',
+                notificationsOff: '알림 비활성화됨'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -1041,7 +1059,9 @@
                 modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
                 modDeletes: 'eliminazioni', modActions: 'azioni',
                 changeLanguage: 'Cambia Lingua',
-                testNotificationTooltip: 'Invia notifica di prova'
+                testNotificationTooltip: 'Invia notifica di prova',
+                notificationsOn: 'Notifiche attivate',
+                notificationsOff: 'Notifiche disattivate'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -1139,7 +1159,9 @@
                 modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
                 modDeletes: 'silme', modActions: 'eylem',
                 changeLanguage: 'Dili Değiştir',
-                testNotificationTooltip: 'Test bildirimi gönder'
+                testNotificationTooltip: 'Test bildirimi gönder',
+                notificationsOn: 'Bildirimler açık',
+                notificationsOff: 'Bildirimler kapalı'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -1237,7 +1259,9 @@
                 modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
                 modDeletes: 'usunięć', modActions: 'akcji',
                 changeLanguage: 'Zmień Język',
-                testNotificationTooltip: 'Wyślij powiadomienie testowe'
+                testNotificationTooltip: 'Wyślij powiadomienie testowe',
+                notificationsOn: 'Powiadomienia włączone',
+                notificationsOff: 'Powiadomienia wyłączone'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -1335,7 +1359,9 @@
                 modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
                 modDeletes: 'verwijderingen', modActions: 'acties',
                 changeLanguage: 'Taal Wijzigen',
-                testNotificationTooltip: 'Testmelding versturen'
+                testNotificationTooltip: 'Testmelding versturen',
+                notificationsOn: 'Meldingen ingeschakeld',
+                notificationsOff: 'Meldingen uitgeschakeld'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -1433,7 +1459,9 @@
                 modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
                 modDeletes: 'حذف', modActions: 'إجراءات',
                 changeLanguage: 'تغيير اللغة',
-                testNotificationTooltip: 'إرسال إشعار تجريبي'
+                testNotificationTooltip: 'إرسال إشعار تجريبي',
+                notificationsOn: 'الإشعارات مفعلة',
+                notificationsOff: 'الإشعارات معطلة'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -1531,7 +1559,9 @@
                 modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
                 modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ',
                 changeLanguage: 'भाषा बदलें',
-                testNotificationTooltip: 'परीक्षण सूचना भेजें'
+                testNotificationTooltip: 'परीक्षण सूचना भेजें',
+                notificationsOn: 'सूचनाएं सक्षम',
+                notificationsOff: 'सूचनाएं अक्षम'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -1629,7 +1659,9 @@
                 modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
                 modDeletes: 'ištrinimų', modActions: 'veiksmų',
                 changeLanguage: 'Keisti Kalbą',
-                testNotificationTooltip: 'Siųsti bandomąjį pranešimą'
+                testNotificationTooltip: 'Siųsti bandomąjį pranešimą',
+                notificationsOn: 'Pranešimai įjungti',
+                notificationsOff: 'Pranešimai išjungti'
             }
         },
 
@@ -1840,9 +1872,9 @@
 
             // Initialize buttons in order: search first, then others
             this.initSearchField();
-            this.initLanguageButton();
             this.initNotificationToggle();
             this.initRequestButtonWithRetry();
+            this.initLanguageButton();
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
@@ -14991,7 +15023,6 @@
                         toggleContainer.id = 'notificationToggle';
                         toggleContainer.className = 'ratingsGroupBtn';
                         toggleContainer.setAttribute('type', 'button');
-                        toggleContainer.setAttribute('title', self.t('notificationToggleTitle'));
                         toggleContainer.style.position = 'relative';
 
                         // Create bell icon SVG
@@ -15049,7 +15080,7 @@
                             const currentState = self.userNotificationsEnabled;
                             const newState = !currentState;
                             updateToggleState(newState);
-                            showTooltipFor(newState ? 'Notifications enabled' : 'Notifications disabled', 2000);
+                            showTooltipFor(newState ? self.t('notificationsOn') : self.t('notificationsOff'), 2000);
                         });
 
                         // Append elements
