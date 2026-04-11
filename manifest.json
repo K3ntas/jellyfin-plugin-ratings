@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.245.0",
+        "changelog": "Fix DM delete button visibility - now matches public chat style",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.245.0/Jellyfin.Plugin.Ratings_2.0.245.0.zip",
+        "checksum": "0385ae9b2863b31c320b2245288fac2f",
+        "timestamp": "2026-04-11T19:30:00Z"
+      },
+      {
         "version": "2.0.244.0",
         "changelog": "Fix button ordering - use CSS order to ensure consistent layout",
         "targetAbi": "10.11.0.0",
