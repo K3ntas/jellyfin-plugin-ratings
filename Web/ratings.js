@@ -160,7 +160,10 @@
                 modUserWillBeMuted: 'User will be muted for', modMinutes: 'minutes', modHours: 'hours', modDays: 'days', modWeeks: 'weeks',
                 modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
                 modDeletes: 'deletes', modActions: 'actions',
-                changeLanguage: 'Change Language'
+                changeLanguage: 'Change Language',
+                testNotificationTooltip: 'Send test notification',
+                notificationsOn: 'Notifications enabled',
+                notificationsOff: 'Notifications disabled'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -257,7 +260,10 @@
                 modUserWillBeMuted: 'El usuario será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'días', modWeeks: 'semanas',
                 modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
                 modDeletes: 'eliminaciones', modActions: 'acciones',
-                changeLanguage: 'Cambiar Idioma'
+                changeLanguage: 'Cambiar Idioma',
+                testNotificationTooltip: 'Enviar notificación de prueba',
+                notificationsOn: 'Notificaciones activadas',
+                notificationsOff: 'Notificaciones desactivadas'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -354,7 +360,10 @@
                 modUserWillBeMuted: '用户将被禁言', modMinutes: '分钟', modHours: '小时', modDays: '天', modWeeks: '周',
                 modAllModerators: '所有管理员', modNoActions: '没有操作记录',
                 modDeletes: '删除', modActions: '操作',
-                changeLanguage: '更改语言'
+                changeLanguage: '更改语言',
+                testNotificationTooltip: '发送测试通知',
+                notificationsOn: '通知已启用',
+                notificationsOff: '通知已禁用'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -451,7 +460,10 @@
                 modUserWillBeMuted: 'O usuário será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'dias', modWeeks: 'semanas',
                 modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
                 modDeletes: 'exclusões', modActions: 'ações',
-                changeLanguage: 'Alterar Idioma'
+                changeLanguage: 'Alterar Idioma',
+                testNotificationTooltip: 'Enviar notificação de teste',
+                notificationsOn: 'Notificações ativadas',
+                notificationsOff: 'Notificações desativadas'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -548,7 +560,10 @@
                 modUserWillBeMuted: 'Пользователь будет заглушен на', modMinutes: 'минут', modHours: 'часов', modDays: 'дней', modWeeks: 'недель',
                 modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
                 modDeletes: 'удалений', modActions: 'действий',
-                changeLanguage: 'Изменить Язык'
+                changeLanguage: 'Изменить Язык',
+                testNotificationTooltip: 'Отправить тестовое уведомление',
+                notificationsOn: 'Уведомления включены',
+                notificationsOff: 'Уведомления отключены'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -645,7 +660,10 @@
                 modUserWillBeMuted: 'ユーザーは以下の期間ミュートされます', modMinutes: '分', modHours: '時間', modDays: '日', modWeeks: '週',
                 modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
                 modDeletes: '削除', modActions: 'アクション',
-                changeLanguage: '言語を変更'
+                changeLanguage: '言語を変更',
+                testNotificationTooltip: 'テスト通知を送信',
+                notificationsOn: '通知が有効',
+                notificationsOff: '通知が無効'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -740,7 +758,10 @@
                 modUserWillBeMuted: 'Benutzer wird stummgeschaltet für', modMinutes: 'Minuten', modHours: 'Stunden', modDays: 'Tage', modWeeks: 'Wochen',
                 modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
                 modDeletes: 'Löschungen', modActions: 'Aktionen',
-                changeLanguage: 'Sprache ändern'
+                changeLanguage: 'Sprache ändern',
+                testNotificationTooltip: 'Testbenachrichtigung senden',
+                notificationsOn: 'Benachrichtigungen aktiviert',
+                notificationsOff: 'Benachrichtigungen deaktiviert'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -837,7 +858,10 @@
                 modUserWillBeMuted: 'L\'utilisateur sera mis en sourdine pour', modMinutes: 'minutes', modHours: 'heures', modDays: 'jours', modWeeks: 'semaines',
                 modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
                 modDeletes: 'suppressions', modActions: 'actions',
-                changeLanguage: 'Changer la Langue'
+                changeLanguage: 'Changer la Langue',
+                testNotificationTooltip: 'Envoyer une notification test',
+                notificationsOn: 'Notifications activées',
+                notificationsOff: 'Notifications désactivées'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -934,7 +958,10 @@
                 modUserWillBeMuted: '사용자가 음소거됩니다', modMinutes: '분', modHours: '시간', modDays: '일', modWeeks: '주',
                 modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
                 modDeletes: '삭제', modActions: '활동',
-                changeLanguage: '언어 변경'
+                changeLanguage: '언어 변경',
+                testNotificationTooltip: '테스트 알림 보내기',
+                notificationsOn: '알림 활성화됨',
+                notificationsOff: '알림 비활성화됨'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -1031,7 +1058,10 @@
                 modUserWillBeMuted: 'L\'utente sarà silenziato per', modMinutes: 'minuti', modHours: 'ore', modDays: 'giorni', modWeeks: 'settimane',
                 modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
                 modDeletes: 'eliminazioni', modActions: 'azioni',
-                changeLanguage: 'Cambia Lingua'
+                changeLanguage: 'Cambia Lingua',
+                testNotificationTooltip: 'Invia notifica di prova',
+                notificationsOn: 'Notifiche attivate',
+                notificationsOff: 'Notifiche disattivate'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -1128,7 +1158,10 @@
                 modUserWillBeMuted: 'Kullanıcı susturulacak', modMinutes: 'dakika', modHours: 'saat', modDays: 'gün', modWeeks: 'hafta',
                 modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
                 modDeletes: 'silme', modActions: 'eylem',
-                changeLanguage: 'Dili Değiştir'
+                changeLanguage: 'Dili Değiştir',
+                testNotificationTooltip: 'Test bildirimi gönder',
+                notificationsOn: 'Bildirimler açık',
+                notificationsOff: 'Bildirimler kapalı'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -1225,7 +1258,10 @@
                 modUserWillBeMuted: 'Użytkownik zostanie wyciszony na', modMinutes: 'minut', modHours: 'godzin', modDays: 'dni', modWeeks: 'tygodni',
                 modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
                 modDeletes: 'usunięć', modActions: 'akcji',
-                changeLanguage: 'Zmień Język'
+                changeLanguage: 'Zmień Język',
+                testNotificationTooltip: 'Wyślij powiadomienie testowe',
+                notificationsOn: 'Powiadomienia włączone',
+                notificationsOff: 'Powiadomienia wyłączone'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -1322,7 +1358,10 @@
                 modUserWillBeMuted: 'Gebruiker wordt gedempt voor', modMinutes: 'minuten', modHours: 'uur', modDays: 'dagen', modWeeks: 'weken',
                 modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
                 modDeletes: 'verwijderingen', modActions: 'acties',
-                changeLanguage: 'Taal Wijzigen'
+                changeLanguage: 'Taal Wijzigen',
+                testNotificationTooltip: 'Testmelding versturen',
+                notificationsOn: 'Meldingen ingeschakeld',
+                notificationsOff: 'Meldingen uitgeschakeld'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -1419,7 +1458,10 @@
                 modUserWillBeMuted: 'سيتم كتم المستخدم لمدة', modMinutes: 'دقائق', modHours: 'ساعات', modDays: 'أيام', modWeeks: 'أسابيع',
                 modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
                 modDeletes: 'حذف', modActions: 'إجراءات',
-                changeLanguage: 'تغيير اللغة'
+                changeLanguage: 'تغيير اللغة',
+                testNotificationTooltip: 'إرسال إشعار تجريبي',
+                notificationsOn: 'الإشعارات مفعلة',
+                notificationsOff: 'الإشعارات معطلة'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -1516,7 +1558,10 @@
                 modUserWillBeMuted: 'उपयोगकर्ता को म्यूट किया जाएगा', modMinutes: 'मिनट', modHours: 'घंटे', modDays: 'दिन', modWeeks: 'सप्ताह',
                 modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
                 modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ',
-                changeLanguage: 'भाषा बदलें'
+                changeLanguage: 'भाषा बदलें',
+                testNotificationTooltip: 'परीक्षण सूचना भेजें',
+                notificationsOn: 'सूचनाएं सक्षम',
+                notificationsOff: 'सूचनाएं अक्षम'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -1613,7 +1658,10 @@
                 modUserWillBeMuted: 'Vartotojas bus nutildytas', modMinutes: 'minučių', modHours: 'valandų', modDays: 'dienų', modWeeks: 'savaičių',
                 modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
                 modDeletes: 'ištrinimų', modActions: 'veiksmų',
-                changeLanguage: 'Keisti Kalbą'
+                changeLanguage: 'Keisti Kalbą',
+                testNotificationTooltip: 'Siųsti bandomąjį pranešimą',
+                notificationsOn: 'Pranešimai įjungti',
+                notificationsOff: 'Pranešimai išjungti'
             }
         },
 
@@ -1822,7 +1870,7 @@
             // Initialize unified button group container first
             this.initButtonGroup();
 
-            // Initialize buttons in order: search first, then others
+            // Initialize buttons in order: search first, language right after, then others
             this.initSearchField();
             this.initLanguageButton();
             this.initNotificationToggle();
@@ -2104,7 +2152,7 @@
                 btn.id = 'social-friends-btn';
                 btn.className = 'social-friends-btn';
                 btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span class="badge hidden">0</span>';
-                btn.title = 'Friends';
+                btn.title = self.t('privacyFriends');
 
                 // Load saved position with bounds checking
                 var savedPos = localStorage.getItem('socialFriendsBtnPos');
@@ -4706,6 +4754,15 @@
                     margin-right: 8px !important;
                 }
 
+                /* Force button order using CSS order (async loading causes random DOM order) */
+                #headerSearchField { order: 1 !important; }
+                #languageBtn { order: 2 !important; }
+                #requestMediaBtn { order: 3 !important; }
+                #notificationToggle { order: 4 !important; }
+                #latestMediaBtn { order: 5 !important; }
+                #mediaManagementBtn { order: 6 !important; }
+                #chatBtn { order: 7 !important; }
+
                 /* Button style inside group */
                 .ratingsGroupBtn {
                     display: flex !important;
@@ -5208,8 +5265,8 @@
                     transform: translate(-50%, -50%) rotate(-45deg) !important;
                 }
 
-                /* Tooltip for notification toggle - using fixed positioning to avoid clipping */
-                #notificationTooltip {
+                /* Shared tooltip for header buttons */
+                #headerTooltip {
                     position: fixed !important;
                     background: rgba(20, 20, 20, 0.98) !important;
                     color: #fff !important;
@@ -5226,7 +5283,7 @@
                     border: 1px solid rgba(255, 255, 255, 0.2) !important;
                 }
 
-                #notificationTooltip.show {
+                #headerTooltip.show {
                     opacity: 1 !important;
                     visibility: visible !important;
                 }
@@ -8124,19 +8181,19 @@
                     width: 22px !important;
                     height: 22px !important;
                     fill: currentColor !important;
+                    opacity: 0.3 !important;
                 }
 
                 #languageBtn .lang-code {
                     position: absolute !important;
-                    bottom: 2px !important;
-                    right: 2px !important;
-                    font-size: 8px !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    font-size: 10px !important;
                     font-weight: 700 !important;
-                    background: rgba(0, 164, 220, 0.9) !important;
-                    color: #fff !important;
-                    padding: 1px 3px !important;
-                    border-radius: 3px !important;
+                    color: rgba(255, 255, 255, 0.9) !important;
                     text-transform: uppercase !important;
+                    pointer-events: none !important;
                 }
 
                 #languageDropdown {
@@ -14207,7 +14264,6 @@
                 btn.id = 'requestMediaBtn';
                 btn.className = 'ratingsGroupBtn';
                 btn.setAttribute('type', 'button');
-                btn.setAttribute('title', self.t('requestMedia'));
                 btn.style.position = 'relative';
                 // Plus/request icon - movie reel with plus
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
@@ -14231,9 +14287,20 @@
                     </div>
                 `;
 
-                // Insert into button group
-                buttonGroup.appendChild(btn);
+                // Insert AFTER language button or search field (to keep buttons together)
+                const langBtn = document.getElementById('languageBtn');
+                const searchField = document.getElementById('headerSearchField');
+                if (langBtn) {
+                    langBtn.insertAdjacentElement('afterend', btn);
+                } else if (searchField) {
+                    searchField.insertAdjacentElement('afterend', btn);
+                } else {
+                    buttonGroup.appendChild(btn);
+                }
                 document.body.appendChild(modal);
+
+                // Add tooltip
+                self.addTooltipToButton(btn, 'requestMedia');
 
                 // Button click - wrapped in try-catch
                 btn.addEventListener('click', (e) => {
@@ -14517,7 +14584,7 @@
                         // Create search input
                         const searchInput = document.createElement('input');
                         searchInput.type = 'text';
-                        searchInput.placeholder = 'Search...';
+                        searchInput.placeholder = self.t('mediaSearch');
                         searchInput.id = 'headerSearchInput';
                         searchInput.autocomplete = 'off';
                         searchInput.setAttribute('autocomplete', 'off');
@@ -14740,6 +14807,52 @@
         },
 
         /**
+         * Shared tooltip system for header buttons
+         */
+        _headerTooltip: null,
+        _headerTooltipTimer: null,
+
+        initHeaderTooltip: function () {
+            if (this._headerTooltip) return;
+            const tooltip = document.createElement('div');
+            tooltip.id = 'headerTooltip';
+            document.body.appendChild(tooltip);
+            this._headerTooltip = tooltip;
+        },
+
+        showHeaderTooltip: function (element, text) {
+            const self = this;
+            if (!this._headerTooltip) this.initHeaderTooltip();
+            if (this._headerTooltipTimer) clearTimeout(this._headerTooltipTimer);
+
+            const tooltip = this._headerTooltip;
+            tooltip.textContent = text;
+
+            const rect = element.getBoundingClientRect();
+            tooltip.style.top = (rect.bottom + 8) + 'px';
+            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.classList.add('show');
+        },
+
+        hideHeaderTooltip: function () {
+            if (this._headerTooltipTimer) clearTimeout(this._headerTooltipTimer);
+            if (this._headerTooltip) {
+                this._headerTooltip.classList.remove('show');
+            }
+        },
+
+        addTooltipToButton: function (button, textKey) {
+            const self = this;
+            button.addEventListener('mouseenter', function () {
+                self.showHeaderTooltip(button, self.t(textKey));
+            });
+            button.addEventListener('mouseleave', function () {
+                self.hideHeaderTooltip();
+            });
+        },
+
+        /**
          * Initialize unified button group container
          */
         initButtonGroup: function () {
@@ -14804,7 +14917,6 @@
                         btn.id = 'languageBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('changeLanguage'));
                         btn.style.position = 'relative';
 
                         // Globe icon with current language code badge
@@ -14872,8 +14984,7 @@
                                 }
 
                                 // Update button title
-                                btn.setAttribute('title', self.t('changeLanguage'));
-                            }
+                                    }
 
                             // Close dropdown
                             dropdown.classList.remove('visible');
@@ -14893,8 +15004,17 @@
                             }
                         });
 
-                        // Insert button into button group
-                        buttonGroup.appendChild(btn);
+                        // Insert button AFTER search field (not at beginning)
+                        const searchField = document.getElementById('headerSearchField');
+                        if (searchField) {
+                            searchField.insertAdjacentElement('afterend', btn);
+                        } else {
+                            // If no search field, append to end
+                            buttonGroup.appendChild(btn);
+                        }
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'changeLanguage');
 
                         // Trigger responsive scaling
                         setTimeout(() => {
@@ -14908,16 +15028,18 @@
                     }
                 };
 
-                // Wait for button group to exist
+                // Wait for button group AND search field to exist
                 const waitForButtonGroup = () => {
-                    if (document.getElementById('ratingsButtonGroup')) {
+                    const buttonGroup = document.getElementById('ratingsButtonGroup');
+                    const searchField = document.getElementById('headerSearchField');
+                    if (buttonGroup && searchField) {
                         createLanguageButton();
                     } else {
                         setTimeout(waitForButtonGroup, 500);
                     }
                 };
 
-                setTimeout(waitForButtonGroup, 300);
+                setTimeout(waitForButtonGroup, 500);
 
             } catch (err) {
                 console.error('[Ratings] Error initializing language button:', err);
@@ -14975,7 +15097,6 @@
                         toggleContainer.id = 'notificationToggle';
                         toggleContainer.className = 'ratingsGroupBtn';
                         toggleContainer.setAttribute('type', 'button');
-                        toggleContainer.setAttribute('title', self.t('notificationToggleTitle'));
                         toggleContainer.style.position = 'relative';
 
                         // Create bell icon SVG
@@ -14984,11 +15105,6 @@
                         bellIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
                             <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
                         </svg>`;
-
-                        // Create tooltip
-                        const tooltip = document.createElement('div');
-                        tooltip.id = 'notificationTooltip';
-                        tooltip.textContent = 'Enable/disable new media notifications';
 
                         // Get saved preference (default to config setting or true)
                         const savedPref = localStorage.getItem('ratingsNotificationsEnabled');
@@ -15012,47 +15128,24 @@
                         updateToggleState(isEnabled);
                         self.userNotificationsEnabled = isEnabled;
 
-                        // Auto-hide tooltip after delay
-                        let tooltipTimer = null;
-                        const showTooltipFor = (text, duration) => {
-                            if (tooltipTimer) clearTimeout(tooltipTimer);
-                            tooltip.textContent = text;
-                            const rect = toggleContainer.getBoundingClientRect();
-                            tooltip.style.top = (rect.bottom + 8) + 'px';
-                            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-                            tooltip.style.transform = 'translateX(-50%)';
-                            tooltip.classList.add('show');
-                            tooltipTimer = setTimeout(() => {
-                                tooltip.classList.remove('show');
-                                tooltipTimer = null;
-                            }, duration);
-                        };
-
-                        // Handle click
+                        // Handle click - show feedback tooltip briefly
                         toggleContainer.addEventListener('click', () => {
                             const currentState = self.userNotificationsEnabled;
                             const newState = !currentState;
                             updateToggleState(newState);
-                            showTooltipFor(newState ? 'Notifications enabled' : 'Notifications disabled', 2000);
+                            // Show feedback using shared tooltip
+                            self.showHeaderTooltip(toggleContainer, newState ? self.t('notificationsOn') : self.t('notificationsOff'));
+                            setTimeout(() => self.hideHeaderTooltip(), 2000);
                         });
 
                         // Append elements
                         toggleContainer.appendChild(bellIcon);
-                        document.body.appendChild(tooltip); // Tooltip in body to avoid clipping
-
-                        // Show tooltip on hover, auto-hide after 2s
-                        toggleContainer.addEventListener('mouseenter', () => {
-                            showTooltipFor('Enable/disable new media notifications', 2000);
-                        });
-
-                        toggleContainer.addEventListener('mouseleave', () => {
-                            if (tooltipTimer) clearTimeout(tooltipTimer);
-                            tooltip.classList.remove('show');
-                            tooltipTimer = null;
-                        });
 
                         // Insert into button group
                         buttonGroup.appendChild(toggleContainer);
+
+                        // Add hover tooltip
+                        self.addTooltipToButton(toggleContainer, 'notificationToggleTitle');
 
                         // Hide during video playback and on login page
                         setInterval(() => {
@@ -15135,7 +15228,6 @@
                         btn.id = 'latestMediaBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('latestMedia'));
                         btn.style.position = 'relative';
                         // Clock/new icon - represents "latest/recent"
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -15205,6 +15297,9 @@
                                 headerRight.insertBefore(btn, headerRight.firstChild);
                             }
                         }
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'latestMedia');
 
                         // Trigger responsive scaling after element is added (fixes mobile positioning)
                         setTimeout(() => {
@@ -15917,7 +16012,6 @@
                         btn.id = 'mediaManagementBtn';
                         btn.className = 'ratingsGroupBtn';
                         btn.setAttribute('type', 'button');
-                        btn.setAttribute('title', self.t('mediaManagement'));
                         // Folder icon for media management
                         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
@@ -15943,6 +16037,9 @@
                                 document.body.appendChild(btn);
                             }
                         }
+
+                        // Add tooltip
+                        self.addTooltipToButton(btn, 'mediaManagement');
 
                         // Observe for search button appearing later (SPA navigation)
                         const observer = new MutationObserver(() => {
@@ -21443,7 +21540,7 @@
                 const btn = document.createElement('button');
                 btn.id = 'testNotificationBtn';
                 btn.innerHTML = '🔔 Test';
-                btn.title = 'Send a test notification to all users';
+                btn.title = self.t('testNotificationTooltip');
 
                 btn.addEventListener('click', () => {
                     self.sendTestNotification();
@@ -23086,7 +23183,6 @@
                     chatBtn.id = 'chatBtn';
                     chatBtn.className = 'ratingsGroupBtn';
                     chatBtn.setAttribute('type', 'button');
-                    chatBtn.setAttribute('title', self.t('liveChat'));
                     chatBtn.style.position = 'relative';
                     // SVG chat bubble icon + badge inside (like Latest Media)
                     chatBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
@@ -23098,6 +23194,9 @@
 
                     // Insert into button group
                     buttonGroup.appendChild(chatBtn);
+
+                    // Add tooltip
+                    self.addTooltipToButton(chatBtn, 'liveChat');
 
                     return;
                 }
