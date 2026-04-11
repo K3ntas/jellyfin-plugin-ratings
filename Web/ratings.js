@@ -1955,7 +1955,6 @@
                     var token = ApiClient.accessToken();
                     if (!token) return;
 
-                    console.log('[Social] Logout - going offline...');
                     fetch(baseUrl + '/Social/Offline', {
                         method: 'POST',
                         headers: {
@@ -1994,61 +1993,61 @@
                     debug: function() {
                         return fetch(baseUrl + '/Social/Debug', { method: 'GET', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Debug:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Get my profile
                     myProfile: function() {
                         return fetch(baseUrl + '/Social/MyProfile', { method: 'GET', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] My Profile:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Send friend request (pass user ID)
                     sendRequest: function(userId) {
                         return fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Send Request:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Get incoming requests
                     incoming: function() {
                         return fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Incoming Requests:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Get outgoing requests
                     outgoing: function() {
                         return fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Outgoing Requests:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Accept friend request (pass request ID)
                     accept: function(requestId) {
                         return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Accept:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Reject friend request (pass request ID)
                     reject: function(requestId) {
                         return fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Reject:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Cancel outgoing request (pass request ID)
                     cancel: function(requestId) {
                         return fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Cancel:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Get friends list
                     friends: function() {
                         return fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Friends:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Remove friend (pass user ID)
                     unfriend: function(userId) {
                         return fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
                             .then(function(r) { return r.json(); })
-                            .then(function(data) { console.log('[Social] Unfriend:', data); return data; });
+                            .then(function(data) { return data; });
                     },
                     // Show help
                     help: function() {
@@ -2117,7 +2116,6 @@
                                 tryInit(); // Continue with init
                             } else {
                                 self.friendsButtonEnabled = false;
-                                console.log('[Social] Friends button disabled in config');
                             }
                         })
                         .catch(function () {
@@ -2555,7 +2553,6 @@
                 ]).then(function (results) {
                     var incoming = results[0].requests || [];
                     var outgoing = results[1].requests || [];
-                    console.log('[Social] Incoming:', incoming.length, 'Outgoing:', outgoing.length);
                     self.renderRequestsList(incoming, outgoing);
                     self.updateRequestsBadge(incoming.length);
                 }).catch(function () {
@@ -3166,7 +3163,6 @@
                 self._socialWebSocket = new WebSocket(wsUrl);
 
                 self._socialWebSocket.onopen = function () {
-                    console.log('[Social] WebSocket connected to Jellyfin');
                     self._wsConnected = true;
                     self._wsReconnectAttempts = 0;
                 };
@@ -3184,7 +3180,6 @@
                 };
 
                 self._socialWebSocket.onclose = function (event) {
-                    console.log('[Social] WebSocket closed:', event.code);
                     self._socialWebSocket = null;
                     self._wsConnected = false;
                     // Reconnect after delay
@@ -3196,7 +3191,6 @@
                 };
 
                 self._socialWebSocket.onerror = function (error) {
-                    console.log('[Social] WebSocket error');
                     self._wsConnected = false;
                 };
             } catch (e) {
@@ -3227,7 +3221,6 @@
 
                 case 'SocialStatusUpdate':
                     // Single friend STATUS update (online/offline only)
-                    console.log('[Social] Status update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
@@ -3241,7 +3234,6 @@
 
                 case 'SocialWatchingUpdate':
                     // Single friend WATCHING update (movie title only, no status change)
-                    console.log('[Social] Watching update received:', data.SocialData);
                     if (data.SocialData) {
                         if (!self._friendsStatusCache) {
                             self._friendsStatusCache = {};
@@ -3258,7 +3250,6 @@
 
                 case 'SocialProfileStatsUpdate':
                     // Profile stats update - update stats if we're viewing this profile
-                    console.log('[Social] Profile stats update received:', data.SocialData);
                     if (data.SocialData && data.SocialData.profileUserId) {
                         var viewingProfileId = self._viewingProfileUserId;
                         if (viewingProfileId && viewingProfileId === data.SocialData.profileUserId) {
@@ -3270,10 +3261,8 @@
 
                 case 'SocialProfileStatusUpdate':
                     // Online status update for profile we're viewing
-                    console.log('[Social] Profile status update received:', data.SocialData);
                     if (data.SocialData && data.SocialData.userId) {
                         var viewingId = self._viewingProfileUserId;
-                        console.log('[Social] Viewing profile:', viewingId, 'Update for:', data.SocialData.userId);
                         if (viewingId && viewingId === data.SocialData.userId) {
                             self.updateProfileStatusFromWebSocket(data.SocialData);
                         }
@@ -3282,7 +3271,6 @@
 
                 case 'ServerRestartCountdown':
                     // Server restart countdown notification
-                    console.log('[Server] Restart countdown:', data.SocialData);
                     if (data.SocialData) {
                         self.showRestartCountdownOverlay(data.SocialData.SecondsRemaining, data.SocialData.Reason);
                     }
@@ -3290,7 +3278,6 @@
 
                 case 'ServerRestartCancelled':
                     // Server restart cancelled notification
-                    console.log('[Server] Restart cancelled');
                     self.hideRestartCountdownOverlay();
                     break;
             }
@@ -3759,7 +3746,6 @@
                 statusDiv.textContent = statusText;
             }
 
-            console.log('[Social] Updated status only for', data.userId, 'to', status);
             return true;
         },
 
@@ -3793,10 +3779,8 @@
                 } else if (infoDiv) {
                     infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
                 }
-                console.log('[Social] Updated watching for', data.userId, 'to', watchTitle);
             } else if (existingWatching) {
                 existingWatching.remove();
-                console.log('[Social] Cleared watching for', data.userId);
             }
 
             return true;
@@ -3836,8 +3820,6 @@
                 'Content-Type': 'application/json'
             };
 
-            console.log('[Social] Sending watching:', watching.title);
-
             fetch(baseUrl + '/Social/Watching', {
                 method: 'POST',
                 credentials: 'include',
@@ -3859,8 +3841,6 @@
                 'X-Emby-Token': ApiClient.accessToken(),
                 'Content-Type': 'application/json'
             };
-
-            console.log('[Social] Sending stop watching');
 
             fetch(baseUrl + '/Social/StopWatching', {
                 method: 'POST',
@@ -16094,32 +16074,24 @@
             const self = this;
 
             const hideDuplicatesInRow = (row) => {
-                // Find all card links in this row
-                const cards = row.querySelectorAll('.card[data-id], a.card');
+                // Find all cards in this row
+                const cards = row.querySelectorAll('.card');
                 if (cards.length === 0) return;
 
-                const seenIds = new Set();
+                const seenTitles = new Set();
 
                 cards.forEach(card => {
-                    // Get the unique identifier - SeriesId for episodes/seasons, or item Id for movies
-                    let uniqueId = card.getAttribute('data-seriesid') ||
-                                   card.getAttribute('data-id') ||
-                                   card.querySelector('[data-id]')?.getAttribute('data-id');
+                    // Get the card title text - this is the most reliable way to detect duplicates
+                    const titleElement = card.querySelector('.cardText');
+                    const title = titleElement ? titleElement.textContent.trim() : null;
 
-                    // Also check href for item ID
-                    if (!uniqueId) {
-                        const href = card.getAttribute('href') || '';
-                        const match = href.match(/id=([a-f0-9-]+)/i);
-                        if (match) uniqueId = match[1];
-                    }
+                    if (!title) return;
 
-                    if (!uniqueId) return;
-
-                    if (seenIds.has(uniqueId)) {
+                    if (seenTitles.has(title)) {
                         // This is a duplicate, hide it
                         card.style.display = 'none';
                     } else {
-                        seenIds.add(uniqueId);
+                        seenTitles.add(title);
                         // Make sure it's visible (in case it was hidden before)
                         if (card.style.display === 'none') {
                             card.style.display = '';
@@ -23425,11 +23397,9 @@
                 }
 
                 const baseUrl = ApiClient.serverAddress();
-                console.log('[Chat] Fetching config from:', baseUrl + '/Ratings/Config');
                 fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
                     .then(function (r) { return r.json(); })
                     .then(function (config) {
-                        console.log('[Chat] Config received, EnableChat:', config.EnableChat);
                         self.chatEnabled = config.EnableChat === true;
                         self.chatConfig = {
                             hasGifSupport: config.HasGifSupport === true,
@@ -23442,14 +23412,10 @@
                         self.chatNotifyPublic = config.ChatNotifyPublic !== false;
                         self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
                         if (self.chatEnabled) {
-                            console.log('[Chat] Chat is enabled, calling initChat');
                             self.initChat();
-                        } else {
-                            console.log('[Chat] Chat is disabled in config');
                         }
                     })
-                    .catch(function (err) {
-                        console.log('[Chat] Config fetch error:', err);
+                    .catch(function () {
                         self.chatEnabled = false;
                     });
             };
@@ -23462,7 +23428,6 @@
          */
         initChat: function () {
             const self = this;
-            console.log('[Chat] initChat called');
 
             // Find and replace cast button
             this.injectChatButton();
@@ -23471,7 +23436,6 @@
             this.createChatWindow();
 
             // Start heartbeat for presence
-            console.log('[Chat] About to call startChatHeartbeat');
             this.startChatHeartbeat();
 
             // Check ban status
@@ -24362,15 +24326,9 @@
          */
         startChatHeartbeat: function () {
             const self = this;
-            console.log('[Chat] startChatHeartbeat called');
             const heartbeat = function () {
-                console.log('[Chat] heartbeat function called, ApiClient:', !!window.ApiClient);
-                if (!window.ApiClient) {
-                    console.log('[Chat] No ApiClient, skipping heartbeat');
-                    return;
-                }
+                if (!window.ApiClient) return;
                 const baseUrl = ApiClient.serverAddress();
-                console.log('[Chat] Sending heartbeat to:', baseUrl + '/Ratings/Chat/Heartbeat');
                 // Server determines admin status - no need to send from client
                 fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
                     method: 'POST',
@@ -24380,10 +24338,8 @@
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    console.log('[Chat] Heartbeat response:', data);
                     self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
                     self.chatIsModerator = data.isModerator || data.IsModerator || false;
-                    console.log('[Chat] isAdmin:', self.chatIsAdmin, 'isModerator:', self.chatIsModerator);
                     // Show moderator tab if user is admin or moderator
                     self.showModeratorTab();
                     // Add class to chat window for CSS styling of action buttons
@@ -24393,9 +24349,7 @@
                         chatWindow.classList.toggle('chat-is-mod', self.chatIsModerator);
                     }
                 })
-                .catch(function (err) {
-                    console.log('[Chat] Heartbeat error:', err);
-                });
+                .catch(function () {});
             };
             heartbeat();
             setInterval(heartbeat, 30000);
@@ -25249,7 +25203,6 @@
         loadModPanelBans: function () {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
-            console.log('[Ratings] Loading ban list...');
             fetch(baseUrl + '/Ratings/Chat/Bans', {
                 method: 'GET',
                 credentials: 'include',
@@ -25257,7 +25210,6 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (bans) {
-                console.log('[Ratings] Bans loaded:', bans);
                 // Store bans for filtering
                 self._cachedBans = bans || [];
                 self.renderBanList(bans || []);
@@ -25276,13 +25228,9 @@
         renderBanList: function (bans) {
             const self = this;
             const list = document.getElementById('chatModBanList');
-            if (!list) {
-                console.log('[Ratings] chatModBanList element not found');
-                return;
-            }
+            if (!list) return;
 
             if (!bans || bans.length === 0) {
-                console.log('[Ratings] No bans to display');
                 list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>' + self.t('modNoActiveBans') + '</div></div>';
             } else {
                 list.innerHTML = bans.map(function (ban) {
@@ -25918,9 +25866,7 @@
                 headers: this.getChatAuthHeaders()
             })
             .then(function (r) {
-                console.log('[Ratings] Style API response:', r.status, r.ok);
                 if (r.ok) {
-                    console.log('[Ratings] Style applied successfully');
                     self.addModSystemMessage('Style updated for ' + userName, '🎨');
                     // Reload styles then refresh chat to show new styles
                     self.loadUserStylesAndRefresh();
@@ -25933,7 +25879,6 @@
                     }
                 } else {
                     r.text().then(function (txt) {
-                        console.log('[Ratings] Style API failed:', txt);
                         self.showModToast('Failed to apply style: ' + txt);
                     });
                 }
@@ -26377,8 +26322,6 @@
             const durationMinutes = this.modActionDuration;
             const reasonInput = document.getElementById('chatModReasonInput');
             const reason = reasonInput?.value || '';
-
-            console.log('[Ratings] Applying penalty:', { userId, userName, banType, durationMinutes, reason });
 
             // Clear reason field but keep panel open for potential additional penalties
             if (reasonInput) reasonInput.value = '';
@@ -26893,7 +26836,6 @@
                 self.showPenaltySuccessModal(userName, banType, durationMinutes);
                 self.addModSystemMessage(userName + ' received ' + actionName.toLowerCase() + ' (' + durationText + ')', '🚫');
                 // Refresh all mod panel data
-                console.log('[Ratings] Ban success, refreshing lists...');
                 self.loadBannedUsers();
                 self.loadModPanelBans();
                 self.loadModPanelActions();
@@ -27239,12 +27181,10 @@
          */
         showStyleSuccessModal: function (userName, nicknameColor, messageColor, textStyle) {
             const self = this;
-            console.log('[Ratings] showStyleSuccessModal called:', userName, nicknameColor, messageColor, textStyle);
 
             // Remove existing modal if any
             const existing = document.querySelector('.chat-penalty-modal-overlay');
             if (existing) {
-                console.log('[Ratings] Removing existing modal');
                 existing.remove();
             }
 
@@ -27298,14 +27238,11 @@
                     '</div>' +
                 '</div>';
 
-            console.log('[Ratings] Style modal HTML created');
             document.body.appendChild(overlay);
-            console.log('[Ratings] Style modal appended to body');
 
             // Show with animation
             requestAnimationFrame(function () {
                 overlay.classList.add('visible');
-                console.log('[Ratings] Style modal visible class added');
             });
 
             // Close handlers
