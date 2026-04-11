@@ -48,6 +48,7 @@ namespace Jellyfin.Plugin.Ratings.Api
     public class ChatController : ControllerBase
     {
         private readonly RatingsRepository _repository;
+        private readonly SocialRepository _socialRepository;
         private readonly IUserManager _userManager;
         private readonly ISessionManager _sessionManager;
         private readonly ILogger<ChatController> _logger;
@@ -87,11 +88,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         public ChatController(
             RatingsRepository repository,
+            SocialRepository socialRepository,
             IUserManager userManager,
             ISessionManager sessionManager,
             ILogger<ChatController> logger)
         {
             _repository = repository;
+            _socialRepository = socialRepository;
             _userManager = userManager;
             _sessionManager = sessionManager;
             _logger = logger;
@@ -1469,6 +1472,23 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Verify recipient exists
             var recipient = _userManager.GetUserById(otherUserId);
             if (recipient == null) return NotFound("User not found");
+
+            // Check recipient's AllowMessages privacy setting
+            var recipientProfile = _socialRepository.GetProfile(otherUserId);
+            if (recipientProfile != null)
+            {
+                var allowMessages = recipientProfile.Privacy?.AllowMessages ?? "Friends";
+                var areFriends = _socialRepository.AreFriends(userId, otherUserId);
+
+                if (allowMessages == "Nobody")
+                {
+                    return StatusCode(403, new { message = "This user does not accept messages" });
+                }
+                if (allowMessages == "Friends" && !areFriends)
+                {
+                    return StatusCode(403, new { message = "This user only accepts messages from friends" });
+                }
+            }
 
             // Check if sender is banned from chat
             var chatBan = _repository.GetActiveChatBan(userId, "chat");

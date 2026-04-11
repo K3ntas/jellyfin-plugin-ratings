@@ -47,13 +47,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static DateTime? _restartScheduledAt;
         private static string? _restartReason;
 
-        // Pre-compiled regex patterns with timeout protection against ReDoS
-        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
-        private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
-        private static readonly Regex IncompleteTagRegex = new(@"<[^>]*$", RegexOptions.Compiled, RegexTimeout);
-        private static readonly Regex JavaScriptProtocolRegex = new(@"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
-        private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsController"/> class.
         /// </summary>
@@ -105,6 +98,13 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        // Pre-compiled regex patterns with timeout protection against ReDoS
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+        private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex IncompleteTagRegex = new(@"<[^>]*$", RegexOptions.Compiled, RegexTimeout);
+        private static readonly Regex JavaScriptProtocolRegex = new(@"j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+        private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+
         /// <summary>
         /// Sanitizes user input to prevent XSS attacks.
         /// Strips HTML tags and encodes special characters.
@@ -119,35 +119,82 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return string.Empty;
             }
 
-            // Trim first
+            // Limit length FIRST to prevent ReDoS on large inputs
             var sanitized = input.Trim();
-
-            // Strip all HTML tags using compiled regex with timeout (ReDoS protection)
-            sanitized = HtmlTagRegex.Replace(sanitized, string.Empty);
-            // Also strip incomplete tags at end
-            sanitized = IncompleteTagRegex.Replace(sanitized, string.Empty);
-
-            // Recursively remove javascript: protocol until stable
-            string previous;
-            do
-            {
-                previous = sanitized;
-                sanitized = JavaScriptProtocolRegex.Replace(sanitized, string.Empty);
-            } while (sanitized != previous);
-
-            // Remove event handler attributes
-            sanitized = EventHandlerRegex.Replace(sanitized, string.Empty);
-
-            // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
-            // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
-
-            // Limit length
             if (sanitized.Length > maxLength)
             {
                 sanitized = sanitized.Substring(0, maxLength);
             }
 
+            try
+            {
+                // Strip all HTML tags (handles malformed tags too)
+                sanitized = HtmlTagRegex.Replace(sanitized, string.Empty);
+                // Also strip incomplete tags at end
+                sanitized = IncompleteTagRegex.Replace(sanitized, string.Empty);
+
+                // Remove javascript: protocol (limit iterations to prevent infinite loop)
+                for (int i = 0; i < 5 && sanitized.Contains("javascript", StringComparison.OrdinalIgnoreCase); i++)
+                {
+                    var previous = sanitized;
+                    sanitized = JavaScriptProtocolRegex.Replace(sanitized, string.Empty);
+                    if (sanitized == previous) break;
+                }
+
+                // Remove event handler attributes
+                sanitized = EventHandlerRegex.Replace(sanitized, string.Empty);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                // If regex times out, return empty string for safety
+                return string.Empty;
+            }
+
+            // Note: NOT HTML encoding here because client renders with escapeHtml() or textContent
+            // Adding encoding would cause double-encoding: "L'été" → "L&#39;&#233;t&#233;"
+
             return sanitized;
+        }
+
+        /// <summary>
+        /// Validates and sanitizes JSON custom fields.
+        /// Ensures valid JSON structure with depth limit to prevent abuse.
+        /// </summary>
+        /// <param name="json">The JSON string to validate.</param>
+        /// <param name="maxLength">Maximum allowed length.</param>
+        /// <param name="maxDepth">Maximum nesting depth (default 3).</param>
+        /// <returns>Sanitized JSON or empty string if invalid.</returns>
+        private static string SanitizeJsonFields(string? json, int maxLength = 5000, int maxDepth = 3)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return string.Empty;
+            }
+
+            // Length check first
+            if (json.Length > maxLength)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                // Parse with depth limit using JsonDocument options
+                var options = new System.Text.Json.JsonDocumentOptions
+                {
+                    MaxDepth = maxDepth
+                };
+
+                using var doc = System.Text.Json.JsonDocument.Parse(json, options);
+
+                // Re-serialize to ensure clean JSON (removes any malformed content)
+                return System.Text.Json.JsonSerializer.Serialize(doc.RootElement);
+            }
+            catch
+            {
+                // Invalid JSON - return empty
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -239,7 +286,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
 
                 var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview).ConfigureAwait(false);
-                _logger.LogInformation("User {UserId} rated item {ItemId} with {Rating}", userId, itemId, rating);
+                _logger.LogDebug("User rated item {ItemId} with {Rating}", itemId, rating);
+
+                // Broadcast profile stats update via WebSocket
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var userRatings = _repository.GetUserRatings(userId);
+                        var ratingsCount = userRatings.Count;
+                        var averageRating = ratingsCount > 0 ? Math.Round(userRatings.Average(r => r.Rating), 1) : 0;
+
+                        await _socialWebSocketListener.BroadcastProfileStatsUpdateAsync(userId, new
+                        {
+                            ratingsCount,
+                            averageRating
+                        }).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to broadcast stats update");
+                    }
+                });
 
                 return Ok(result);
             }
@@ -538,7 +606,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound("No rating found to delete");
                 }
 
-                _logger.LogInformation("User {UserId} deleted rating for item {ItemId}", userId, itemId);
+                _logger.LogDebug("User deleted rating for item {ItemId}", itemId);
                 return NoContent();
             }
             catch (Exception ex)
@@ -603,6 +671,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Likes or dislikes a review.
         /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="isLike">True for like, false for dislike.</param>
+        /// <returns>Success status.</returns>
         [HttpPost("Reviews/{reviewerUserId}/{itemId}/Like")]
         public async Task<ActionResult> LikeReview(
             [FromRoute] [Required] Guid reviewerUserId,
@@ -617,11 +689,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                // Can't like your own review
                 if (userId == reviewerUserId)
                 {
                     return BadRequest("Cannot like your own review");
                 }
 
+                // Verify review exists
                 var rating = _repository.GetUserRating(reviewerUserId, itemId);
                 if (rating == null || string.IsNullOrWhiteSpace(rating.ReviewText))
                 {
@@ -630,6 +704,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 await _repository.SetReviewLikeAsync(reviewerUserId, itemId, userId, isLike).ConfigureAwait(false);
 
+                // Return updated counts
                 var counts = _repository.GetReviewLikeCounts(reviewerUserId, itemId);
                 var userLike = _repository.GetUserReviewLike(reviewerUserId, itemId, userId);
 
@@ -654,6 +729,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <summary>
         /// Updates only the review text for an existing rating.
         /// </summary>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="review">Review text (empty to clear).</param>
+        /// <returns>The updated rating.</returns>
         [HttpPut("Items/{itemId}/Review")]
         public async Task<ActionResult<UserRating>> UpdateReview(
             [FromRoute] [Required] Guid itemId,
@@ -667,6 +745,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                // Sanitize review text
                 var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
 
                 var result = await _repository.UpdateReviewTextAsync(userId, itemId, sanitizedReview).ConfigureAwait(false);
@@ -1042,7 +1121,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     var allResources = assembly.GetManifestResourceNames();
                     _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
-                    return Content($"// ERROR: Resource {resourceName} not found", "application/javascript");
+                    return Content("// ERROR: Resource not available", "application/javascript");
                 }
 
                 using var reader = new System.IO.StreamReader(stream);
@@ -1169,7 +1248,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Title = SanitizeInput(request.Title, 500),
                     Type = SanitizeInput(request.Type, 100),
                     Notes = SanitizeInput(request.Notes, 2000),
-                    CustomFields = SanitizeInput(request.CustomFields, 5000),
+                    CustomFields = SanitizeJsonFields(request.CustomFields, 5000),
                     ImdbCode = SanitizeInput(request.ImdbCode, 50),
                     ImdbLink = request.ImdbLink, // Already validated as URL above
                     Status = "pending",
@@ -1547,7 +1626,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     SanitizeInput(request.Title, 500),
                     SanitizeInput(request.Type, 100),
                     SanitizeInput(request.Notes, 2000),
-                    SanitizeInput(request.CustomFields, 5000),
+                    SanitizeJsonFields(request.CustomFields, 5000),
                     SanitizeInput(request.ImdbCode, 50),
                     request.ImdbLink).ConfigureAwait(false);
 
@@ -3153,10 +3232,41 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         #endregion
 
+        /// <summary>
+        /// Helper to get authenticated user ID from headers.
+        /// </summary>
+        private async Task<Guid> GetAuthenticatedUserIdAsync()
+        {
+            var userId = User.GetUserId();
+            if (userId != Guid.Empty)
+            {
+                return userId;
+            }
+
+            var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                          ?? Request.Headers["Authorization"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                if (tokenMatch.Success)
+                {
+                    var token = tokenMatch.Groups[1].Value;
+                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                    if (session != null)
+                    {
+                        return session.UserId;
+                    }
+                }
+            }
+
+            return Guid.Empty;
+        }
+
         #region Admin - Disk Usage
 
         /// <summary>
-        /// Gets disk usage information.
+        /// Gets disk usage information for all physical drives.
         /// </summary>
         [HttpGet("Admin/DiskUsage")]
         public async Task<ActionResult> GetDiskUsage()
@@ -3219,7 +3329,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         /// <summary>
         /// Gets unique filesystems on Linux, handling Docker/LVM environments.
-        /// Groups mount points by actual filesystem (using TotalSize + FreeSpace as identifier).
+        /// Uses device names from /proc/mounts to correctly identify separate physical disks.
         /// </summary>
         private List<object> GetLinuxPhysicalDisks()
         {
@@ -3227,52 +3337,80 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             try
             {
-                // Get all ready fixed drives
+                // Build mount point -> device mapping from /proc/mounts
+                var mountToDevice = new Dictionary<string, string>();
+                if (System.IO.File.Exists("/proc/mounts"))
+                {
+                    var mountLines = System.IO.File.ReadAllLines("/proc/mounts");
+                    foreach (var line in mountLines)
+                    {
+                        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 2) continue;
+
+                        var device = parts[0];
+                        var mountPoint = parts[1].TrimEnd('/');
+                        if (string.IsNullOrEmpty(mountPoint)) mountPoint = "/";
+
+                        // Only track /dev/ devices
+                        if (!device.StartsWith("/dev/")) continue;
+
+                        mountToDevice[mountPoint] = device;
+                    }
+                }
+
+                // Get all drives and group by device
                 var allDrives = DriveInfo.GetDrives()
                     .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
                     .ToList();
 
-                // Filter out Docker bind mounts and system directories
-                var meaningfulDrives = allDrives.Where(d =>
+                // Filter meaningful drives and find their device
+                var driveDevicePairs = new List<(DriveInfo Drive, string Device, string MountPoint)>();
+                foreach (var drive in allDrives)
                 {
-                    var name = d.Name.TrimEnd('/');
-                    // Skip Docker/system bind mounts
-                    if (name.StartsWith("/etc/")) return false;
-                    if (name.StartsWith("/proc")) return false;
-                    if (name.StartsWith("/sys")) return false;
-                    if (name.StartsWith("/dev") && !name.StartsWith("/dev/")) return false;
-                    if (name.StartsWith("/run")) return false;
-                    // Include meaningful paths
-                    return true;
-                }).ToList();
+                    var mountPoint = drive.Name.TrimEnd('/');
+                    if (string.IsNullOrEmpty(mountPoint)) mountPoint = "/";
 
-                // Group by filesystem identity (TotalSize + AvailableFreeSpace)
-                // Same physical disk/partition will have same total and free space
-                var grouped = meaningfulDrives
-                    .GroupBy(d => (d.TotalSize, d.AvailableFreeSpace))
-                    .ToList();
+                    // Skip system paths
+                    if (mountPoint.StartsWith("/proc")) continue;
+                    if (mountPoint.StartsWith("/sys")) continue;
+                    if (mountPoint.StartsWith("/run")) continue;
+                    if (mountPoint.StartsWith("/dev/")) continue;
+                    if (mountPoint.StartsWith("/etc/")) continue;
+
+                    // Find device for this mount
+                    var device = mountToDevice.GetValueOrDefault(mountPoint, "unknown");
+                    driveDevicePairs.Add((drive, device, mountPoint));
+                }
+
+                // Group by device
+                var grouped = driveDevicePairs.GroupBy(p => p.Device).ToList();
 
                 int diskNumber = 1;
+                int mediaNumber = 1;
+
                 foreach (var group in grouped)
                 {
-                    var representative = group.First();
+                    var device = group.Key;
+                    var representative = group.First().Drive;
                     var mountPoints = group
-                        .Select(d => d.Name.TrimEnd('/'))
+                        .Select(p => p.MountPoint)
                         .Where(m => !string.IsNullOrEmpty(m))
                         .Distinct()
                         .OrderBy(m => m.Length)
                         .ToList();
 
+                    if (mountPoints.Count == 0) continue;
+
                     // Determine a nice name based on mount points
                     string driveName;
                     var primaryMount = mountPoints.FirstOrDefault() ?? "/";
-                    if (primaryMount == "/")
+                    if (primaryMount == "/" || primaryMount == "")
                     {
                         driveName = "System";
                     }
-                    else if (primaryMount.Contains("media"))
+                    else if (primaryMount.Contains("media") || primaryMount.Contains("cache") || primaryMount.Contains("config"))
                     {
-                        driveName = $"Media Storage {diskNumber++}";
+                        driveName = $"Disk {diskNumber++}";
                     }
                     else
                     {
@@ -3289,7 +3427,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                         UsedPercent = Math.Round((representative.TotalSize - representative.AvailableFreeSpace) * 100.0 / representative.TotalSize, 1),
                         DriveType = representative.DriveType.ToString(),
                         DriveFormat = representative.DriveFormat ?? "Unknown",
-                        MountPoints = mountPoints
+                        MountPoints = mountPoints,
+                        Device = device
                     });
                 }
             }
@@ -3306,7 +3445,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         #region Admin - Duplicate Finder
 
         /// <summary>
-        /// Finds duplicate media items by IMDB ID.
+        /// Finds duplicate media items by IMDB ID (Movies only, Series excluded).
         /// </summary>
         [HttpGet("Admin/Duplicates")]
         public async Task<ActionResult> GetDuplicates()
@@ -3319,9 +3458,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Admin access required");
                 }
 
+                // Only query Movies - Series episodes share the same IMDB ID and aren't true duplicates
                 var allItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
                 {
-                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
                     Recursive = true
                 });
 
@@ -3642,37 +3782,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         #endregion
-
-        /// <summary>
-        /// Helper to get authenticated user ID from headers.
-        /// </summary>
-        private async Task<Guid> GetAuthenticatedUserIdAsync()
-        {
-            var userId = User.GetUserId();
-            if (userId != Guid.Empty)
-            {
-                return userId;
-            }
-
-            var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                          ?? Request.Headers["Authorization"].FirstOrDefault();
-
-            if (!string.IsNullOrEmpty(authHeader))
-            {
-                var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                if (tokenMatch.Success)
-                {
-                    var token = tokenMatch.Groups[1].Value;
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session != null)
-                    {
-                        return session.UserId;
-                    }
-                }
-            }
-
-            return Guid.Empty;
-        }
     }
 
     /// <summary>

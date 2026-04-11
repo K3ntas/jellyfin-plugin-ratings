@@ -102,6 +102,14 @@
                 mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
                 mediaTypeScheduled: 'Scheduled', mediaSettings: 'Settings', mediaIncludeTypes: 'Include media types:', mediaTypesHint: 'Select which media types to show',
+                mediaDiskUsage: 'Disk Usage', mediaDuplicates: 'Duplicates', mediaRestart: 'Restart',
+                diskDrive: 'Drive', diskTotal: 'Total', diskUsed: 'Used', diskFree: 'Free', diskLoading: 'Loading disk information...',
+                duplicatesLoading: 'Scanning for duplicates...', duplicatesNone: 'No duplicates found', duplicatesFound: 'duplicates found',
+                duplicateDelete: 'Delete', duplicateDeleteFiles: 'Delete files too', duplicateConfirm: 'Delete this duplicate?',
+                restartSchedule: 'Schedule Restart', restartCancel: 'Cancel Restart', restartNow: 'Restart Now',
+                restartIn: 'Restart in', restartReason: 'Reason (optional)', restartScheduled: 'Restart scheduled',
+                restartCancelled: 'Restart cancelled', restartConfirm: 'Schedule server restart?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Request to delete request', requestDeleteMedia: 'Request to delete media', deletionRequests: 'Deletion Requests', noDeletionRequests: 'No deletion requests yet',
                 deleteNow: 'Delete ~1h', schedule1Day: '1 Day', schedule1Week: '1 Week', schedule1Month: '1 Month', rejectDeletion: 'Reject', approveDeleteRequest: 'Approve',
                 alreadyRequested: 'Deletion Requested', deletionApproved: 'APPROVED', deletionRejected: 'REJECTED', deletionPending: 'PENDING',
@@ -133,15 +141,26 @@
                 privacyAllowMessages: 'Direct Messages',
                 privacyEveryone: 'Everyone', privacyFriends: 'Friends', privacyNobody: 'Nobody',
                 privacySaved: 'Settings saved', privacyPresetApplied: 'Preset applied',
-                // Media Management v2
-                mediaDiskUsage: 'Disk Usage', mediaDuplicates: 'Duplicates', mediaRestart: 'Restart',
-                diskLoading: 'Loading disk information...', diskTotal: 'Total', diskUsed: 'Used', diskFree: 'Free',
-                duplicatesLoading: 'Scanning for duplicates...', duplicatesNone: 'No duplicates found', duplicatesFound: 'duplicates found',
-                duplicateDelete: 'Delete this copy', duplicateConfirm: 'Delete this duplicate?', duplicateDeleteFiles: 'Also delete the file from disk?',
-                restartSchedule: 'Schedule Restart', restartCancel: 'Cancel Restart', restartNow: 'Restart Now',
-                restartIn: 'Restart in', restartReason: 'Reason (optional)', restartScheduled: 'Restart scheduled',
-                restartCancelled: 'Restart cancelled', restartConfirm: 'Schedule server restart?',
-                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min'
+                // Additional UI translations
+                duplicatesGroups: 'groups', duplicatesItems: 'items', duplicateCopies: 'copies', duplicateKeep: 'Keep',
+                notificationToggleTitle: 'Enable/disable new media notifications',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderator Panel', modUsers: 'Users', modBans: 'Bans', modLog: 'Log',
+                modSearchUser: 'Search User', modSearchPlaceholder: 'Search for a user to manage...',
+                modManageUser: 'Manage User', modModeratorStatus: 'Moderator Status',
+                modNotModerator: 'Not a Moderator', modLevel1: 'Level 1', modLevel2: 'Level 2', modLevel3: 'Level 3',
+                modApply: 'Apply', modChatStyle: 'Chat Style', modNicknameColor: 'Nickname Color', modMessageColor: 'Message Color',
+                modClear: 'Clear', modTextStyle: 'Text Style', modNormal: 'Normal', modBold: 'Bold', modItalic: 'Italic', modBoth: 'Both',
+                modResetStyle: 'Reset Style', modApplyStyle: 'Apply Style', modPenalties: 'Penalties',
+                modSnooze: 'Snooze', modChatBan: 'Chat Ban', modMediaBan: 'Media Ban', modDuration: 'Duration', modPerm: 'Perm',
+                modReasonOptional: 'Reason (optional)', modEnterReason: 'Enter reason...', modCancel: 'Cancel', modApplyPenalty: 'Apply Penalty',
+                modCurrentModerators: 'Current Moderators', modNoModerators: 'No moderators',
+                modSearchBans: 'Search Bans', modSearchBannedUsers: 'Search banned users...', modActiveBans: 'Active Bans', modNoActiveBans: 'No active bans',
+                modModeratorActions: 'Moderator Actions', modSampleMessage: 'Sample message text',
+                modUserWillBeMuted: 'User will be muted for', modMinutes: 'minutes', modHours: 'hours', modDays: 'days', modWeeks: 'weeks',
+                modAllModerators: 'All Moderators', modNoActions: 'No actions recorded',
+                modDeletes: 'deletes', modActions: 'actions',
+                changeLanguage: 'Change Language'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -176,6 +195,14 @@
                 mediaActions: 'Acciones', mediaChange: 'Cambiar', mediaChangeTime: 'Cambiar tiempo', mediaSoon: 'Pronto', mediaDays: 'días', mediaPlays: 'reproducciones',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Siguiente', mediaGo: 'Ir',
                 mediaTypeScheduled: 'Programados', mediaSettings: 'Ajustes', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecciona los tipos a mostrar',
+                mediaDiskUsage: 'Uso de Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskDrive: 'Disco', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Libre', diskLoading: 'Cargando información del disco...',
+                duplicatesLoading: 'Buscando duplicados...', duplicatesNone: 'No se encontraron duplicados', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Eliminar', duplicateDeleteFiles: 'Eliminar archivos también', duplicateConfirm: '¿Eliminar este duplicado?',
+                restartSchedule: 'Programar Reinicio', restartCancel: 'Cancelar Reinicio', restartNow: 'Reiniciar Ahora',
+                restartIn: 'Reiniciar en', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinicio programado',
+                restartCancelled: 'Reinicio cancelado', restartConfirm: '¿Programar reinicio del servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Solicitar eliminar', requestDeleteMedia: 'Solicitar eliminar contenido', deletionRequests: 'Solicitudes de Eliminación', noDeletionRequests: 'Sin solicitudes de eliminación',
                 deleteNow: 'Eliminar ~1h', schedule1Day: '1 Día', schedule1Week: '1 Semana', schedule1Month: '1 Mes', rejectDeletion: 'Rechazar', approveDeleteRequest: 'Aprobar',
                 alreadyRequested: 'Eliminación Solicitada', deletionApproved: 'APROBADO', deletionRejected: 'RECHAZADO', deletionPending: 'PENDIENTE',
@@ -192,7 +219,45 @@
                 chatBan: 'Banear', chatUnban: 'Desbanear', chatMute: 'Silenciar', chatBanFromMedia: 'Banear de Media', chatMinutes: 'minutos',
                 chatBanned: 'Estás baneado del chat', chatMuted: 'Estás temporalmente silenciado', chatRateLimited: '¡Más despacio! Demasiados mensajes.',
                 chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
-                chatClearAll: 'Limpiar Todo', chatClearConfirm: '¿Eliminar todos los mensajes? Esto no se puede deshacer.', chatCleared: 'Chat limpiado'
+                chatClearAll: 'Limpiar Todo', chatClearConfirm: '¿Eliminar todos los mensajes? Esto no se puede deshacer.', chatCleared: 'Chat limpiado',
+                chatPublic: 'Público', chatDM: 'Mensajes Directos', chatStartDM: 'Iniciar conversación privada',
+                chatSearchUsers: 'Buscar usuarios...', chatNoUsers: 'No se encontraron usuarios', chatNewMessage: 'Nuevo mensaje de',
+                chatNoDMs: 'Sin mensajes privados aún', chatTypeSlash: 'Escribe / para iniciar MD',
+                privacySettings: 'Configuración de Privacidad', privacyPresets: 'Preajustes Rápidos',
+                privacyPublic: 'Público', privacyFriendsOnly: 'Solo Amigos', privacyPrivate: 'Privado',
+                privacyProfileVisibility: 'Visibilidad del Perfil', privacyShowOnlineStatus: 'Estado en Línea',
+                privacyShowWatchedHistory: 'Historial de Visualización', privacyShowFriendsList: 'Lista de Amigos',
+                privacyShowCurrentlyWatching: 'Viendo Actualmente', privacyAllowFriendRequests: 'Solicitudes de Amistad',
+                privacyAllowMessages: 'Mensajes Directos', privacyEveryone: 'Todos', privacyFriends: 'Amigos', privacyNobody: 'Nadie',
+                privacySaved: 'Configuración guardada', privacyPresetApplied: 'Preajuste aplicado',
+                mediaDiskUsage: 'Uso de Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskLoading: 'Cargando información del disco...', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Libre',
+                duplicatesLoading: 'Buscando duplicados...', duplicatesNone: 'No se encontraron duplicados', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Eliminar esta copia', duplicateConfirm: '¿Eliminar este duplicado?', duplicateDeleteFiles: '¿También eliminar el archivo del disco?',
+                restartSchedule: 'Programar Reinicio', restartCancel: 'Cancelar Reinicio', restartNow: 'Reiniciar Ahora',
+                restartIn: 'Reiniciar en', restartReason: 'Razón (opcional)', restartScheduled: 'Reinicio programado',
+                restartCancelled: 'Reinicio cancelado', restartConfirm: '¿Programar reinicio del servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupos', duplicatesItems: 'elementos', duplicateCopies: 'copias', duplicateKeep: 'Conservar',
+                notificationToggleTitle: 'Activar/desactivar notificaciones de nuevo contenido',
+                // Moderator Panel translations
+                modPanelTitle: 'Panel de Moderador', modUsers: 'Usuarios', modBans: 'Baneos', modLog: 'Registro',
+                modSearchUser: 'Buscar Usuario', modSearchPlaceholder: 'Buscar usuario para gestionar...',
+                modManageUser: 'Gestionar Usuario', modModeratorStatus: 'Estado de Moderador',
+                modNotModerator: 'No es Moderador', modLevel1: 'Nivel 1', modLevel2: 'Nivel 2', modLevel3: 'Nivel 3',
+                modApply: 'Aplicar', modChatStyle: 'Estilo de Chat', modNicknameColor: 'Color del Apodo', modMessageColor: 'Color del Mensaje',
+                modClear: 'Limpiar', modTextStyle: 'Estilo de Texto', modNormal: 'Normal', modBold: 'Negrita', modItalic: 'Cursiva', modBoth: 'Ambos',
+                modResetStyle: 'Restablecer Estilo', modApplyStyle: 'Aplicar Estilo', modPenalties: 'Sanciones',
+                modSnooze: 'Silenciar', modChatBan: 'Ban de Chat', modMediaBan: 'Ban de Media', modDuration: 'Duración', modPerm: 'Perm',
+                modReasonOptional: 'Razón (opcional)', modEnterReason: 'Ingresa la razón...', modCancel: 'Cancelar', modApplyPenalty: 'Aplicar Sanción',
+                modCurrentModerators: 'Moderadores Actuales', modNoModerators: 'Sin moderadores',
+                modSearchBans: 'Buscar Baneos', modSearchBannedUsers: 'Buscar usuarios baneados...', modActiveBans: 'Baneos Activos', modNoActiveBans: 'Sin baneos activos',
+                modModeratorActions: 'Acciones de Moderador', modSampleMessage: 'Texto de mensaje de ejemplo',
+                modUserWillBeMuted: 'El usuario será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'días', modWeeks: 'semanas',
+                modAllModerators: 'Todos los Moderadores', modNoActions: 'Sin acciones registradas',
+                modDeletes: 'eliminaciones', modActions: 'acciones',
+                changeLanguage: 'Cambiar Idioma'
             },
             zh: {
                 requestMedia: '请求媒体', manageRequests: '管理请求', requestDescription: '📬 请求您喜欢的媒体！',
@@ -227,6 +292,14 @@
                 mediaActions: '操作', mediaChange: '更改', mediaChangeTime: '更改时间', mediaSoon: '即将', mediaDays: '天', mediaPlays: '次播放',
                 mediaMinutes: '分钟', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '页', mediaOf: '/', mediaPrev: '上一页', mediaNext: '下一页', mediaGo: '前往',
                 mediaTypeScheduled: '已计划', mediaSettings: '设置', mediaIncludeTypes: '包含类型:', mediaTypesHint: '选择要显示的媒体类型',
+                mediaDiskUsage: '磁盘使用', mediaDuplicates: '重复项', mediaRestart: '重启',
+                diskDrive: '驱动器', diskTotal: '总计', diskUsed: '已用', diskFree: '可用', diskLoading: '正在加载磁盘信息...',
+                duplicatesLoading: '正在扫描重复项...', duplicatesNone: '未找到重复项', duplicatesFound: '个重复项',
+                duplicateDelete: '删除', duplicateDeleteFiles: '同时删除文件', duplicateConfirm: '确定删除此重复项？',
+                restartSchedule: '计划重启', restartCancel: '取消重启', restartNow: '立即重启',
+                restartIn: '重启倒计时', restartReason: '原因（可选）', restartScheduled: '已计划重启',
+                restartCancelled: '重启已取消', restartConfirm: '确定计划服务器重启？',
+                restart1Min: '1分钟', restart2Min: '2分钟', restart5Min: '5分钟', restart10Min: '10分钟',
                 requestDeleteRequest: '请求删除', requestDeleteMedia: '请求删除媒体', deletionRequests: '删除请求', noDeletionRequests: '暂无删除请求',
                 deleteNow: '立即删除', schedule1Day: '1天', schedule1Week: '1周', schedule1Month: '1个月', rejectDeletion: '拒绝', approveDeleteRequest: '批准',
                 alreadyRequested: '已请求删除', deletionApproved: '已批准', deletionRejected: '已拒绝', deletionPending: '待处理',
@@ -243,7 +316,45 @@
                 chatBan: '封禁', chatUnban: '解封', chatMute: '禁言', chatBanFromMedia: '禁止访问媒体', chatMinutes: '分钟',
                 chatBanned: '您已被禁止聊天', chatMuted: '您已被临时禁言', chatRateLimited: '请慢一点！消息太多了。',
                 chatConnecting: '连接中...', chatReconnecting: '重新连接中...', chatDisconnected: '已断开连接',
-                chatClearAll: '清除全部', chatClearConfirm: '删除所有聊天消息？此操作无法撤销。', chatCleared: '聊天已清除'
+                chatClearAll: '清除全部', chatClearConfirm: '删除所有聊天消息？此操作无法撤销。', chatCleared: '聊天已清除',
+                chatPublic: '公共', chatDM: '私信', chatStartDM: '开始私聊',
+                chatSearchUsers: '搜索用户...', chatNoUsers: '未找到用户', chatNewMessage: '新消息来自',
+                chatNoDMs: '暂无私信', chatTypeSlash: '输入 / 开始私信',
+                privacySettings: '隐私设置', privacyPresets: '快速预设',
+                privacyPublic: '公开', privacyFriendsOnly: '仅好友', privacyPrivate: '私密',
+                privacyProfileVisibility: '个人资料可见性', privacyShowOnlineStatus: '在线状态',
+                privacyShowWatchedHistory: '观看历史', privacyShowFriendsList: '好友列表',
+                privacyShowCurrentlyWatching: '正在观看', privacyAllowFriendRequests: '好友请求',
+                privacyAllowMessages: '私信', privacyEveryone: '所有人', privacyFriends: '好友', privacyNobody: '无人',
+                privacySaved: '设置已保存', privacyPresetApplied: '预设已应用',
+                mediaDiskUsage: '磁盘使用', mediaDuplicates: '重复项', mediaRestart: '重启',
+                diskLoading: '加载磁盘信息...', diskTotal: '总计', diskUsed: '已用', diskFree: '可用',
+                duplicatesLoading: '扫描重复项...', duplicatesNone: '未找到重复项', duplicatesFound: '找到重复项',
+                duplicateDelete: '删除此副本', duplicateConfirm: '删除此重复项？', duplicateDeleteFiles: '同时从磁盘删除文件？',
+                restartSchedule: '计划重启', restartCancel: '取消重启', restartNow: '立即重启',
+                restartIn: '重启于', restartReason: '原因（可选）', restartScheduled: '已计划重启',
+                restartCancelled: '重启已取消', restartConfirm: '计划服务器重启？',
+                restart1Min: '1分钟', restart2Min: '2分钟', restart5Min: '5分钟', restart10Min: '10分钟',
+                // Additional UI translations
+                duplicatesGroups: '组', duplicatesItems: '项', duplicateCopies: '副本', duplicateKeep: '保留',
+                notificationToggleTitle: '启用/禁用新媒体通知',
+                // Moderator Panel translations
+                modPanelTitle: '管理员面板', modUsers: '用户', modBans: '封禁', modLog: '日志',
+                modSearchUser: '搜索用户', modSearchPlaceholder: '搜索要管理的用户...',
+                modManageUser: '管理用户', modModeratorStatus: '管理员状态',
+                modNotModerator: '非管理员', modLevel1: '等级 1', modLevel2: '等级 2', modLevel3: '等级 3',
+                modApply: '应用', modChatStyle: '聊天样式', modNicknameColor: '昵称颜色', modMessageColor: '消息颜色',
+                modClear: '清除', modTextStyle: '文字样式', modNormal: '正常', modBold: '粗体', modItalic: '斜体', modBoth: '两者',
+                modResetStyle: '重置样式', modApplyStyle: '应用样式', modPenalties: '处罚',
+                modSnooze: '禁言', modChatBan: '聊天封禁', modMediaBan: '媒体封禁', modDuration: '时长', modPerm: '永久',
+                modReasonOptional: '原因（可选）', modEnterReason: '输入原因...', modCancel: '取消', modApplyPenalty: '应用处罚',
+                modCurrentModerators: '当前管理员', modNoModerators: '没有管理员',
+                modSearchBans: '搜索封禁', modSearchBannedUsers: '搜索被封禁用户...', modActiveBans: '活跃封禁', modNoActiveBans: '没有活跃封禁',
+                modModeratorActions: '管理员操作', modSampleMessage: '示例消息文本',
+                modUserWillBeMuted: '用户将被禁言', modMinutes: '分钟', modHours: '小时', modDays: '天', modWeeks: '周',
+                modAllModerators: '所有管理员', modNoActions: '没有操作记录',
+                modDeletes: '删除', modActions: '操作',
+                changeLanguage: '更改语言'
             },
             pt: {
                 requestMedia: 'Solicitar Mídia', manageRequests: 'Gerenciar Solicitações', requestDescription: '📬 Solicite sua Mídia Favorita!',
@@ -278,6 +389,14 @@
                 mediaActions: 'Ações', mediaChange: 'Alterar', mediaChangeTime: 'Alterar tempo', mediaSoon: 'Em breve', mediaDays: 'dias', mediaPlays: 'reproduções',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Página', mediaOf: 'de', mediaPrev: 'Anterior', mediaNext: 'Próximo', mediaGo: 'Ir',
                 mediaTypeScheduled: 'Agendados', mediaSettings: 'Configurações', mediaIncludeTypes: 'Incluir tipos:', mediaTypesHint: 'Selecione os tipos a mostrar',
+                mediaDiskUsage: 'Uso do Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskDrive: 'Disco', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Livre', diskLoading: 'Carregando informações do disco...',
+                duplicatesLoading: 'Procurando duplicados...', duplicatesNone: 'Nenhum duplicado encontrado', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Excluir', duplicateDeleteFiles: 'Excluir arquivos também', duplicateConfirm: 'Excluir este duplicado?',
+                restartSchedule: 'Agendar Reinício', restartCancel: 'Cancelar Reinício', restartNow: 'Reiniciar Agora',
+                restartIn: 'Reiniciar em', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinício agendado',
+                restartCancelled: 'Reinício cancelado', restartConfirm: 'Agendar reinício do servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Solicitar exclusão', requestDeleteMedia: 'Solicitar excluir mídia', deletionRequests: 'Solicitações de Exclusão', noDeletionRequests: 'Sem solicitações de exclusão',
                 deleteNow: 'Excluir ~1h', schedule1Day: '1 Dia', schedule1Week: '1 Semana', schedule1Month: '1 Mês', rejectDeletion: 'Rejeitar', approveDeleteRequest: 'Aprovar',
                 alreadyRequested: 'Exclusão Solicitada', deletionApproved: 'APROVADO', deletionRejected: 'REJEITADO', deletionPending: 'PENDENTE',
@@ -294,7 +413,45 @@
                 chatBan: 'Banir', chatUnban: 'Desbanir', chatMute: 'Silenciar', chatBanFromMedia: 'Banir de Mídia', chatMinutes: 'minutos',
                 chatBanned: 'Você está banido do chat', chatMuted: 'Você está temporariamente silenciado', chatRateLimited: 'Devagar! Muitas mensagens.',
                 chatConnecting: 'Conectando...', chatReconnecting: 'Reconectando...', chatDisconnected: 'Desconectado',
-                chatClearAll: 'Limpar Tudo', chatClearConfirm: 'Excluir todas as mensagens? Isso não pode ser desfeito.', chatCleared: 'Chat limpo'
+                chatClearAll: 'Limpar Tudo', chatClearConfirm: 'Excluir todas as mensagens? Isso não pode ser desfeito.', chatCleared: 'Chat limpo',
+                chatPublic: 'Público', chatDM: 'Mensagens Diretas', chatStartDM: 'Iniciar conversa privada',
+                chatSearchUsers: 'Buscar usuários...', chatNoUsers: 'Nenhum usuário encontrado', chatNewMessage: 'Nova mensagem de',
+                chatNoDMs: 'Sem mensagens privadas ainda', chatTypeSlash: 'Digite / para iniciar MD',
+                privacySettings: 'Configurações de Privacidade', privacyPresets: 'Predefinições Rápidas',
+                privacyPublic: 'Público', privacyFriendsOnly: 'Apenas Amigos', privacyPrivate: 'Privado',
+                privacyProfileVisibility: 'Visibilidade do Perfil', privacyShowOnlineStatus: 'Status Online',
+                privacyShowWatchedHistory: 'Histórico de Visualização', privacyShowFriendsList: 'Lista de Amigos',
+                privacyShowCurrentlyWatching: 'Assistindo Agora', privacyAllowFriendRequests: 'Pedidos de Amizade',
+                privacyAllowMessages: 'Mensagens Diretas', privacyEveryone: 'Todos', privacyFriends: 'Amigos', privacyNobody: 'Ninguém',
+                privacySaved: 'Configurações salvas', privacyPresetApplied: 'Predefinição aplicada',
+                mediaDiskUsage: 'Uso do Disco', mediaDuplicates: 'Duplicados', mediaRestart: 'Reiniciar',
+                diskLoading: 'Carregando informações do disco...', diskTotal: 'Total', diskUsed: 'Usado', diskFree: 'Livre',
+                duplicatesLoading: 'Procurando duplicados...', duplicatesNone: 'Nenhum duplicado encontrado', duplicatesFound: 'duplicados encontrados',
+                duplicateDelete: 'Excluir esta cópia', duplicateConfirm: 'Excluir este duplicado?', duplicateDeleteFiles: 'Também excluir o arquivo do disco?',
+                restartSchedule: 'Agendar Reinício', restartCancel: 'Cancelar Reinício', restartNow: 'Reiniciar Agora',
+                restartIn: 'Reiniciar em', restartReason: 'Motivo (opcional)', restartScheduled: 'Reinício agendado',
+                restartCancelled: 'Reinício cancelado', restartConfirm: 'Agendar reinício do servidor?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupos', duplicatesItems: 'itens', duplicateCopies: 'cópias', duplicateKeep: 'Manter',
+                notificationToggleTitle: 'Ativar/desativar notificações de nova mídia',
+                // Moderator Panel translations
+                modPanelTitle: 'Painel do Moderador', modUsers: 'Usuários', modBans: 'Banimentos', modLog: 'Registro',
+                modSearchUser: 'Buscar Usuário', modSearchPlaceholder: 'Buscar usuário para gerenciar...',
+                modManageUser: 'Gerenciar Usuário', modModeratorStatus: 'Status de Moderador',
+                modNotModerator: 'Não é Moderador', modLevel1: 'Nível 1', modLevel2: 'Nível 2', modLevel3: 'Nível 3',
+                modApply: 'Aplicar', modChatStyle: 'Estilo do Chat', modNicknameColor: 'Cor do Apelido', modMessageColor: 'Cor da Mensagem',
+                modClear: 'Limpar', modTextStyle: 'Estilo do Texto', modNormal: 'Normal', modBold: 'Negrito', modItalic: 'Itálico', modBoth: 'Ambos',
+                modResetStyle: 'Redefinir Estilo', modApplyStyle: 'Aplicar Estilo', modPenalties: 'Penalidades',
+                modSnooze: 'Silenciar', modChatBan: 'Ban do Chat', modMediaBan: 'Ban de Mídia', modDuration: 'Duração', modPerm: 'Perm',
+                modReasonOptional: 'Motivo (opcional)', modEnterReason: 'Digite o motivo...', modCancel: 'Cancelar', modApplyPenalty: 'Aplicar Penalidade',
+                modCurrentModerators: 'Moderadores Atuais', modNoModerators: 'Sem moderadores',
+                modSearchBans: 'Buscar Banimentos', modSearchBannedUsers: 'Buscar usuários banidos...', modActiveBans: 'Banimentos Ativos', modNoActiveBans: 'Sem banimentos ativos',
+                modModeratorActions: 'Ações do Moderador', modSampleMessage: 'Texto de mensagem de exemplo',
+                modUserWillBeMuted: 'O usuário será silenciado por', modMinutes: 'minutos', modHours: 'horas', modDays: 'dias', modWeeks: 'semanas',
+                modAllModerators: 'Todos os Moderadores', modNoActions: 'Nenhuma ação registrada',
+                modDeletes: 'exclusões', modActions: 'ações',
+                changeLanguage: 'Alterar Idioma'
             },
             ru: {
                 requestMedia: 'Запросить Медиа', manageRequests: 'Управление Запросами', requestDescription: '📬 Запросите Любимый Контент!',
@@ -329,6 +486,14 @@
                 mediaActions: 'Действия', mediaChange: 'Изменить', mediaChangeTime: 'Изменить время', mediaSoon: 'Скоро', mediaDays: 'дней', mediaPlays: 'просмотров',
                 mediaMinutes: 'мин', mediaGB: 'ГБ', mediaMB: 'МБ', mediaPage: 'Страница', mediaOf: 'из', mediaPrev: 'Назад', mediaNext: 'Вперёд', mediaGo: 'Перейти',
                 mediaTypeScheduled: 'Запланировано', mediaSettings: 'Настройки', mediaIncludeTypes: 'Включить типы:', mediaTypesHint: 'Выберите типы для отображения',
+                mediaDiskUsage: 'Использование диска', mediaDuplicates: 'Дубликаты', mediaRestart: 'Перезапуск',
+                diskDrive: 'Диск', diskTotal: 'Всего', diskUsed: 'Занято', diskFree: 'Свободно', diskLoading: 'Загрузка информации о диске...',
+                duplicatesLoading: 'Поиск дубликатов...', duplicatesNone: 'Дубликаты не найдены', duplicatesFound: 'дубликатов найдено',
+                duplicateDelete: 'Удалить', duplicateDeleteFiles: 'Удалить файлы тоже', duplicateConfirm: 'Удалить этот дубликат?',
+                restartSchedule: 'Запланировать перезапуск', restartCancel: 'Отменить перезапуск', restartNow: 'Перезапустить сейчас',
+                restartIn: 'Перезапуск через', restartReason: 'Причина (необязательно)', restartScheduled: 'Перезапуск запланирован',
+                restartCancelled: 'Перезапуск отменён', restartConfirm: 'Запланировать перезапуск сервера?',
+                restart1Min: '1 мин', restart2Min: '2 мин', restart5Min: '5 мин', restart10Min: '10 мин',
                 requestDeleteRequest: 'Запросить удаление', requestDeleteMedia: 'Запросить удаление медиа', deletionRequests: 'Запросы на Удаление', noDeletionRequests: 'Нет запросов на удаление',
                 deleteNow: 'Удалить ~1ч', schedule1Day: '1 День', schedule1Week: '1 Неделя', schedule1Month: '1 Месяц', rejectDeletion: 'Отклонить', approveDeleteRequest: 'Одобрить',
                 alreadyRequested: 'Удаление Запрошено', deletionApproved: 'ОДОБРЕНО', deletionRejected: 'ОТКЛОНЕНО', deletionPending: 'ОЖИДАНИЕ',
@@ -345,7 +510,45 @@
                 chatBan: 'Заблокировать', chatUnban: 'Разблокировать', chatMute: 'Заглушить', chatBanFromMedia: 'Заблокировать медиа', chatMinutes: 'минут',
                 chatBanned: 'Вы заблокированы в чате', chatMuted: 'Вы временно заглушены', chatRateLimited: 'Помедленнее! Слишком много сообщений.',
                 chatConnecting: 'Подключение...', chatReconnecting: 'Переподключение...', chatDisconnected: 'Отключено',
-                chatClearAll: 'Очистить всё', chatClearConfirm: 'Удалить все сообщения? Это действие нельзя отменить.', chatCleared: 'Чат очищен'
+                chatClearAll: 'Очистить всё', chatClearConfirm: 'Удалить все сообщения? Это действие нельзя отменить.', chatCleared: 'Чат очищен',
+                chatPublic: 'Публичный', chatDM: 'Личные сообщения', chatStartDM: 'Начать приватный разговор',
+                chatSearchUsers: 'Поиск пользователей...', chatNoUsers: 'Пользователи не найдены', chatNewMessage: 'Новое сообщение от',
+                chatNoDMs: 'Пока нет личных сообщений', chatTypeSlash: 'Введите / для ЛС',
+                privacySettings: 'Настройки конфиденциальности', privacyPresets: 'Быстрые настройки',
+                privacyPublic: 'Публичный', privacyFriendsOnly: 'Только друзья', privacyPrivate: 'Приватный',
+                privacyProfileVisibility: 'Видимость профиля', privacyShowOnlineStatus: 'Онлайн статус',
+                privacyShowWatchedHistory: 'История просмотров', privacyShowFriendsList: 'Список друзей',
+                privacyShowCurrentlyWatching: 'Сейчас смотрит', privacyAllowFriendRequests: 'Запросы в друзья',
+                privacyAllowMessages: 'Личные сообщения', privacyEveryone: 'Все', privacyFriends: 'Друзья', privacyNobody: 'Никто',
+                privacySaved: 'Настройки сохранены', privacyPresetApplied: 'Настройка применена',
+                mediaDiskUsage: 'Использование диска', mediaDuplicates: 'Дубликаты', mediaRestart: 'Перезапуск',
+                diskLoading: 'Загрузка информации о диске...', diskTotal: 'Всего', diskUsed: 'Использовано', diskFree: 'Свободно',
+                duplicatesLoading: 'Поиск дубликатов...', duplicatesNone: 'Дубликаты не найдены', duplicatesFound: 'дубликатов найдено',
+                duplicateDelete: 'Удалить эту копию', duplicateConfirm: 'Удалить этот дубликат?', duplicateDeleteFiles: 'Также удалить файл с диска?',
+                restartSchedule: 'Запланировать перезапуск', restartCancel: 'Отменить перезапуск', restartNow: 'Перезапустить сейчас',
+                restartIn: 'Перезапуск через', restartReason: 'Причина (необязательно)', restartScheduled: 'Перезапуск запланирован',
+                restartCancelled: 'Перезапуск отменён', restartConfirm: 'Запланировать перезапуск сервера?',
+                restart1Min: '1 мин', restart2Min: '2 мин', restart5Min: '5 мин', restart10Min: '10 мин',
+                // Additional UI translations
+                duplicatesGroups: 'групп', duplicatesItems: 'элементов', duplicateCopies: 'копий', duplicateKeep: 'Оставить',
+                notificationToggleTitle: 'Включить/выключить уведомления о новых медиа',
+                // Moderator Panel translations
+                modPanelTitle: 'Панель Модератора', modUsers: 'Пользователи', modBans: 'Баны', modLog: 'Журнал',
+                modSearchUser: 'Поиск Пользователя', modSearchPlaceholder: 'Найти пользователя для управления...',
+                modManageUser: 'Управление Пользователем', modModeratorStatus: 'Статус Модератора',
+                modNotModerator: 'Не модератор', modLevel1: 'Уровень 1', modLevel2: 'Уровень 2', modLevel3: 'Уровень 3',
+                modApply: 'Применить', modChatStyle: 'Стиль Чата', modNicknameColor: 'Цвет Ника', modMessageColor: 'Цвет Сообщения',
+                modClear: 'Очистить', modTextStyle: 'Стиль Текста', modNormal: 'Обычный', modBold: 'Жирный', modItalic: 'Курсив', modBoth: 'Оба',
+                modResetStyle: 'Сбросить Стиль', modApplyStyle: 'Применить Стиль', modPenalties: 'Наказания',
+                modSnooze: 'Заглушить', modChatBan: 'Бан Чата', modMediaBan: 'Бан Медиа', modDuration: 'Длительность', modPerm: 'Навсегда',
+                modReasonOptional: 'Причина (необязательно)', modEnterReason: 'Введите причину...', modCancel: 'Отмена', modApplyPenalty: 'Применить Наказание',
+                modCurrentModerators: 'Текущие Модераторы', modNoModerators: 'Нет модераторов',
+                modSearchBans: 'Поиск Банов', modSearchBannedUsers: 'Поиск забаненных пользователей...', modActiveBans: 'Активные Баны', modNoActiveBans: 'Нет активных банов',
+                modModeratorActions: 'Действия Модератора', modSampleMessage: 'Пример текста сообщения',
+                modUserWillBeMuted: 'Пользователь будет заглушен на', modMinutes: 'минут', modHours: 'часов', modDays: 'дней', modWeeks: 'недель',
+                modAllModerators: 'Все Модераторы', modNoActions: 'Нет записанных действий',
+                modDeletes: 'удалений', modActions: 'действий',
+                changeLanguage: 'Изменить Язык'
             },
             ja: {
                 requestMedia: 'メディアをリクエスト', manageRequests: 'リクエスト管理', requestDescription: '📬 お気に入りのメディアをリクエスト！',
@@ -380,6 +583,14 @@
                 mediaActions: 'アクション', mediaChange: '変更', mediaChangeTime: '時間変更', mediaSoon: 'もうすぐ', mediaDays: '日', mediaPlays: '回再生',
                 mediaMinutes: '分', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'ページ', mediaOf: '/', mediaPrev: '前へ', mediaNext: '次へ', mediaGo: '移動',
                 mediaTypeScheduled: '予約済み', mediaSettings: '設定', mediaIncludeTypes: '含めるタイプ:', mediaTypesHint: '表示するタイプを選択',
+                mediaDiskUsage: 'ディスク使用量', mediaDuplicates: '重複', mediaRestart: '再起動',
+                diskDrive: 'ドライブ', diskTotal: '合計', diskUsed: '使用中', diskFree: '空き', diskLoading: 'ディスク情報を読み込み中...',
+                duplicatesLoading: '重複をスキャン中...', duplicatesNone: '重複が見つかりません', duplicatesFound: '件の重複',
+                duplicateDelete: '削除', duplicateDeleteFiles: 'ファイルも削除', duplicateConfirm: 'この重複を削除しますか？',
+                restartSchedule: '再起動をスケジュール', restartCancel: '再起動をキャンセル', restartNow: '今すぐ再起動',
+                restartIn: '再起動まで', restartReason: '理由（任意）', restartScheduled: '再起動がスケジュールされました',
+                restartCancelled: '再起動がキャンセルされました', restartConfirm: 'サーバーの再起動をスケジュールしますか？',
+                restart1Min: '1分', restart2Min: '2分', restart5Min: '5分', restart10Min: '10分',
                 requestDeleteRequest: '削除リクエスト', requestDeleteMedia: 'メディア削除リクエスト', deletionRequests: '削除リクエスト', noDeletionRequests: '削除リクエストなし',
                 deleteNow: '即削除', schedule1Day: '1日', schedule1Week: '1週間', schedule1Month: '1ヶ月', rejectDeletion: '却下', approveDeleteRequest: '承認',
                 alreadyRequested: '削除リクエスト済み', deletionApproved: '承認済み', deletionRejected: '却下済み', deletionPending: '保留中',
@@ -396,7 +607,45 @@
                 chatBan: 'BAN', chatUnban: 'BAN解除', chatMute: 'ミュート', chatBanFromMedia: 'メディアBAN', chatMinutes: '分',
                 chatBanned: 'チャットからBANされています', chatMuted: '一時的にミュートされています', chatRateLimited: '少し待ってください！メッセージが多すぎます。',
                 chatConnecting: '接続中...', chatReconnecting: '再接続中...', chatDisconnected: '切断されました',
-                chatClearAll: '全削除', chatClearConfirm: 'すべてのメッセージを削除しますか？この操作は取り消せません。', chatCleared: 'チャットを削除しました'
+                chatClearAll: '全削除', chatClearConfirm: 'すべてのメッセージを削除しますか？この操作は取り消せません。', chatCleared: 'チャットを削除しました',
+                chatPublic: '公開', chatDM: 'ダイレクトメッセージ', chatStartDM: 'プライベート会話を開始',
+                chatSearchUsers: 'ユーザーを検索...', chatNoUsers: 'ユーザーが見つかりません', chatNewMessage: '新着メッセージ',
+                chatNoDMs: 'プライベートメッセージはまだありません', chatTypeSlash: '/ を入力してDMを開始',
+                privacySettings: 'プライバシー設定', privacyPresets: 'クイックプリセット',
+                privacyPublic: '公開', privacyFriendsOnly: '友達のみ', privacyPrivate: '非公開',
+                privacyProfileVisibility: 'プロフィールの表示', privacyShowOnlineStatus: 'オンライン状態',
+                privacyShowWatchedHistory: '視聴履歴', privacyShowFriendsList: 'フレンドリスト',
+                privacyShowCurrentlyWatching: '現在視聴中', privacyAllowFriendRequests: 'フレンドリクエスト',
+                privacyAllowMessages: 'ダイレクトメッセージ', privacyEveryone: '全員', privacyFriends: '友達', privacyNobody: '誰も',
+                privacySaved: '設定を保存しました', privacyPresetApplied: 'プリセットを適用しました',
+                mediaDiskUsage: 'ディスク使用量', mediaDuplicates: '重複', mediaRestart: '再起動',
+                diskLoading: 'ディスク情報を読み込み中...', diskTotal: '合計', diskUsed: '使用中', diskFree: '空き',
+                duplicatesLoading: '重複をスキャン中...', duplicatesNone: '重複は見つかりませんでした', duplicatesFound: '重複が見つかりました',
+                duplicateDelete: 'このコピーを削除', duplicateConfirm: 'この重複を削除しますか？', duplicateDeleteFiles: 'ディスクからファイルも削除しますか？',
+                restartSchedule: '再起動をスケジュール', restartCancel: '再起動をキャンセル', restartNow: '今すぐ再起動',
+                restartIn: '再起動まで', restartReason: '理由（任意）', restartScheduled: '再起動がスケジュールされました',
+                restartCancelled: '再起動がキャンセルされました', restartConfirm: 'サーバーの再起動をスケジュールしますか？',
+                restart1Min: '1分', restart2Min: '2分', restart5Min: '5分', restart10Min: '10分',
+                // Additional UI translations
+                duplicatesGroups: 'グループ', duplicatesItems: 'アイテム', duplicateCopies: 'コピー', duplicateKeep: '保持',
+                notificationToggleTitle: '新しいメディアの通知を有効/無効にする',
+                // Moderator Panel translations
+                modPanelTitle: 'モデレーターパネル', modUsers: 'ユーザー', modBans: 'BAN', modLog: 'ログ',
+                modSearchUser: 'ユーザー検索', modSearchPlaceholder: '管理するユーザーを検索...',
+                modManageUser: 'ユーザー管理', modModeratorStatus: 'モデレーターステータス',
+                modNotModerator: 'モデレーターではない', modLevel1: 'レベル 1', modLevel2: 'レベル 2', modLevel3: 'レベル 3',
+                modApply: '適用', modChatStyle: 'チャットスタイル', modNicknameColor: 'ニックネームの色', modMessageColor: 'メッセージの色',
+                modClear: 'クリア', modTextStyle: 'テキストスタイル', modNormal: '通常', modBold: '太字', modItalic: '斜体', modBoth: '両方',
+                modResetStyle: 'スタイルリセット', modApplyStyle: 'スタイル適用', modPenalties: 'ペナルティ',
+                modSnooze: 'ミュート', modChatBan: 'チャットBAN', modMediaBan: 'メディアBAN', modDuration: '期間', modPerm: '永久',
+                modReasonOptional: '理由（任意）', modEnterReason: '理由を入力...', modCancel: 'キャンセル', modApplyPenalty: 'ペナルティ適用',
+                modCurrentModerators: '現在のモデレーター', modNoModerators: 'モデレーターなし',
+                modSearchBans: 'BAN検索', modSearchBannedUsers: 'BANされたユーザーを検索...', modActiveBans: 'アクティブなBAN', modNoActiveBans: 'アクティブなBANなし',
+                modModeratorActions: 'モデレーター操作', modSampleMessage: 'サンプルメッセージテキスト',
+                modUserWillBeMuted: 'ユーザーは以下の期間ミュートされます', modMinutes: '分', modHours: '時間', modDays: '日', modWeeks: '週',
+                modAllModerators: 'すべてのモデレーター', modNoActions: '記録されたアクションなし',
+                modDeletes: '削除', modActions: 'アクション',
+                changeLanguage: '言語を変更'
             },
             de: {
                 requestMedia: 'Medien Anfordern', manageRequests: 'Anfragen Verwalten', requestDescription: '📬 Fordere deine Lieblingsmedien an!',
@@ -431,6 +680,14 @@
                 mediaActions: 'Aktionen', mediaChange: 'Ändern', mediaChangeTime: 'Zeit ändern', mediaSoon: 'Bald', mediaDays: 'Tage', mediaPlays: 'Wiedergaben',
                 mediaMinutes: 'Min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Seite', mediaOf: 'von', mediaPrev: 'Zurück', mediaNext: 'Weiter', mediaGo: 'Los',
                 mediaTypeScheduled: 'Geplant', mediaSettings: 'Einstellungen', mediaIncludeTypes: 'Medientypen:', mediaTypesHint: 'Anzuzeigende Typen auswählen',
+                mediaDiskUsage: 'Festplattennutzung', mediaDuplicates: 'Duplikate', mediaRestart: 'Neustart',
+                diskDrive: 'Laufwerk', diskTotal: 'Gesamt', diskUsed: 'Belegt', diskFree: 'Frei', diskLoading: 'Lade Festplatteninformationen...',
+                duplicatesLoading: 'Suche nach Duplikaten...', duplicatesNone: 'Keine Duplikate gefunden', duplicatesFound: 'Duplikate gefunden',
+                duplicateDelete: 'Löschen', duplicateDeleteFiles: 'Dateien auch löschen', duplicateConfirm: 'Dieses Duplikat löschen?',
+                restartSchedule: 'Neustart planen', restartCancel: 'Neustart abbrechen', restartNow: 'Jetzt neu starten',
+                restartIn: 'Neustart in', restartReason: 'Grund (optional)', restartScheduled: 'Neustart geplant',
+                restartCancelled: 'Neustart abgebrochen', restartConfirm: 'Server-Neustart planen?',
+                restart1Min: '1 Min', restart2Min: '2 Min', restart5Min: '5 Min', restart10Min: '10 Min',
                 requestDeleteRequest: 'Löschung anfordern', requestDeleteMedia: 'Medienlöschung anfordern', deletionRequests: 'Löschanfragen', noDeletionRequests: 'Keine Löschanfragen',
                 deleteNow: 'Jetzt löschen', schedule1Day: '1 Tag', schedule1Week: '1 Woche', schedule1Month: '1 Monat', rejectDeletion: 'Ablehnen', approveDeleteRequest: 'Genehmigen',
                 alreadyRequested: 'Löschung Angefordert', deletionApproved: 'GENEHMIGT', deletionRejected: 'ABGELEHNT', deletionPending: 'AUSSTEHEND',
@@ -447,7 +704,43 @@
                 chatBan: 'Sperren', chatUnban: 'Entsperren', chatMute: 'Stummschalten', chatBanFromMedia: 'Von Medien sperren', chatMinutes: 'Minuten',
                 chatBanned: 'Du bist vom Chat gesperrt', chatMuted: 'Du bist vorübergehend stummgeschaltet', chatRateLimited: 'Langsamer! Zu viele Nachrichten.',
                 chatConnecting: 'Verbinden...', chatReconnecting: 'Neu verbinden...', chatDisconnected: 'Getrennt',
-                chatClearAll: 'Alle löschen', chatClearConfirm: 'Alle Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.', chatCleared: 'Chat gelöscht'
+                chatClearAll: 'Alle löschen', chatClearConfirm: 'Alle Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.', chatCleared: 'Chat gelöscht',
+                chatPublic: 'Öffentlich', chatDM: 'Direktnachrichten', chatStartDM: 'Private Unterhaltung starten',
+                chatSearchUsers: 'Benutzer suchen...', chatNoUsers: 'Keine Benutzer gefunden', chatNewMessage: 'Neue Nachricht von',
+                chatNoDMs: 'Noch keine privaten Nachrichten', chatTypeSlash: 'Tippe / für DM',
+                privacySettings: 'Datenschutzeinstellungen', privacyPresets: 'Schnellvorlagen',
+                privacyPublic: 'Öffentlich', privacyFriendsOnly: 'Nur Freunde', privacyPrivate: 'Privat',
+                privacyProfileVisibility: 'Profilsichtbarkeit', privacyShowOnlineStatus: 'Online-Status',
+                privacyShowWatchedHistory: 'Wiedergabeverlauf', privacyShowFriendsList: 'Freundesliste',
+                privacyShowCurrentlyWatching: 'Gerade am Schauen', privacyAllowFriendRequests: 'Freundschaftsanfragen',
+                privacyAllowMessages: 'Direktnachrichten', privacyEveryone: 'Alle', privacyFriends: 'Freunde', privacyNobody: 'Niemand',
+                privacySaved: 'Einstellungen gespeichert', privacyPresetApplied: 'Vorlage angewendet',
+                mediaDiskUsage: 'Festplattennutzung', mediaDuplicates: 'Duplikate', mediaRestart: 'Neustart',
+                diskLoading: 'Lade Festplatteninformationen...', diskTotal: 'Gesamt', diskUsed: 'Belegt', diskFree: 'Frei',
+                duplicatesLoading: 'Suche nach Duplikaten...', duplicatesNone: 'Keine Duplikate gefunden', duplicatesFound: 'Duplikate gefunden',
+                duplicateDelete: 'Diese Kopie löschen', duplicateConfirm: 'Dieses Duplikat löschen?', duplicateDeleteFiles: 'Auch Datei von Festplatte löschen?',
+                restartSchedule: 'Neustart planen', restartCancel: 'Neustart abbrechen', restartNow: 'Jetzt neustarten',
+                restartIn: 'Neustart in', restartReason: 'Grund (optional)', restartScheduled: 'Neustart geplant',
+                restartCancelled: 'Neustart abgebrochen', restartConfirm: 'Server-Neustart planen?',
+                restart1Min: '1 Min', restart2Min: '2 Min', restart5Min: '5 Min', restart10Min: '10 Min',
+                duplicatesGroups: 'Gruppen', duplicatesItems: 'Elemente', duplicateCopies: 'Kopien', duplicateKeep: 'Behalten',
+                notificationToggleTitle: 'Neue Medien-Benachrichtigungen aktivieren/deaktivieren',
+                modPanelTitle: 'Moderator-Panel', modUsers: 'Benutzer', modBans: 'Sperren', modLog: 'Protokoll',
+                modSearchUser: 'Benutzer Suchen', modSearchPlaceholder: 'Benutzer zum Verwalten suchen...',
+                modManageUser: 'Benutzer Verwalten', modModeratorStatus: 'Moderator-Status',
+                modNotModerator: 'Kein Moderator', modLevel1: 'Stufe 1', modLevel2: 'Stufe 2', modLevel3: 'Stufe 3',
+                modApply: 'Anwenden', modChatStyle: 'Chat-Stil', modNicknameColor: 'Nickname-Farbe', modMessageColor: 'Nachrichtenfarbe',
+                modClear: 'Löschen', modTextStyle: 'Textstil', modNormal: 'Normal', modBold: 'Fett', modItalic: 'Kursiv', modBoth: 'Beides',
+                modResetStyle: 'Stil Zurücksetzen', modApplyStyle: 'Stil Anwenden', modPenalties: 'Strafen',
+                modSnooze: 'Stummschalten', modChatBan: 'Chat-Sperre', modMediaBan: 'Medien-Sperre', modDuration: 'Dauer', modPerm: 'Permanent',
+                modReasonOptional: 'Grund (optional)', modEnterReason: 'Grund eingeben...', modCancel: 'Abbrechen', modApplyPenalty: 'Strafe Anwenden',
+                modCurrentModerators: 'Aktuelle Moderatoren', modNoModerators: 'Keine Moderatoren',
+                modSearchBans: 'Sperren Suchen', modSearchBannedUsers: 'Gesperrte Benutzer suchen...', modActiveBans: 'Aktive Sperren', modNoActiveBans: 'Keine aktiven Sperren',
+                modModeratorActions: 'Moderator-Aktionen', modSampleMessage: 'Beispielnachricht',
+                modUserWillBeMuted: 'Benutzer wird stummgeschaltet für', modMinutes: 'Minuten', modHours: 'Stunden', modDays: 'Tage', modWeeks: 'Wochen',
+                modAllModerators: 'Alle Moderatoren', modNoActions: 'Keine Aktionen aufgezeichnet',
+                modDeletes: 'Löschungen', modActions: 'Aktionen',
+                changeLanguage: 'Sprache ändern'
             },
             fr: {
                 requestMedia: 'Demander un Média', manageRequests: 'Gérer les Demandes', requestDescription: '📬 Demandez vos Médias Préférés!',
@@ -482,6 +775,14 @@
                 mediaActions: 'Actions', mediaChange: 'Modifier', mediaChangeTime: 'Modifier temps', mediaSoon: 'Bientôt', mediaDays: 'jours', mediaPlays: 'lectures',
                 mediaMinutes: 'min', mediaGB: 'Go', mediaMB: 'Mo', mediaPage: 'Page', mediaOf: 'sur', mediaPrev: 'Précédent', mediaNext: 'Suivant', mediaGo: 'Aller',
                 mediaTypeScheduled: 'Planifiés', mediaSettings: 'Paramètres', mediaIncludeTypes: 'Inclure types:', mediaTypesHint: 'Sélectionner les types à afficher',
+                mediaDiskUsage: 'Utilisation disque', mediaDuplicates: 'Doublons', mediaRestart: 'Redémarrer',
+                diskDrive: 'Disque', diskTotal: 'Total', diskUsed: 'Utilisé', diskFree: 'Libre', diskLoading: 'Chargement des informations du disque...',
+                duplicatesLoading: 'Recherche de doublons...', duplicatesNone: 'Aucun doublon trouvé', duplicatesFound: 'doublons trouvés',
+                duplicateDelete: 'Supprimer', duplicateDeleteFiles: 'Supprimer les fichiers aussi', duplicateConfirm: 'Supprimer ce doublon ?',
+                restartSchedule: 'Planifier redémarrage', restartCancel: 'Annuler redémarrage', restartNow: 'Redémarrer maintenant',
+                restartIn: 'Redémarrage dans', restartReason: 'Raison (facultatif)', restartScheduled: 'Redémarrage planifié',
+                restartCancelled: 'Redémarrage annulé', restartConfirm: 'Planifier le redémarrage du serveur ?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Demander suppression', requestDeleteMedia: 'Demander suppression média', deletionRequests: 'Demandes de Suppression', noDeletionRequests: 'Pas de demandes de suppression',
                 deleteNow: 'Supprimer ~1h', schedule1Day: '1 Jour', schedule1Week: '1 Semaine', schedule1Month: '1 Mois', rejectDeletion: 'Refuser', approveDeleteRequest: 'Approuver',
                 alreadyRequested: 'Suppression Demandée', deletionApproved: 'APPROUVÉ', deletionRejected: 'REFUSÉ', deletionPending: 'EN ATTENTE',
@@ -498,7 +799,45 @@
                 chatBan: 'Bannir', chatUnban: 'Débannir', chatMute: 'Rendre muet', chatBanFromMedia: 'Bannir des Médias', chatMinutes: 'minutes',
                 chatBanned: 'Vous êtes banni du chat', chatMuted: 'Vous êtes temporairement muet', chatRateLimited: 'Doucement ! Trop de messages.',
                 chatConnecting: 'Connexion...', chatReconnecting: 'Reconnexion...', chatDisconnected: 'Déconnecté',
-                chatClearAll: 'Tout effacer', chatClearConfirm: 'Supprimer tous les messages ? Cette action est irréversible.', chatCleared: 'Chat effacé'
+                chatClearAll: 'Tout effacer', chatClearConfirm: 'Supprimer tous les messages ? Cette action est irréversible.', chatCleared: 'Chat effacé',
+                chatPublic: 'Public', chatDM: 'Messages Directs', chatStartDM: 'Démarrer une conversation privée',
+                chatSearchUsers: 'Rechercher des utilisateurs...', chatNoUsers: 'Aucun utilisateur trouvé', chatNewMessage: 'Nouveau message de',
+                chatNoDMs: 'Pas encore de messages privés', chatTypeSlash: 'Tapez / pour démarrer un MD',
+                privacySettings: 'Paramètres de confidentialité', privacyPresets: 'Préréglages rapides',
+                privacyPublic: 'Public', privacyFriendsOnly: 'Amis uniquement', privacyPrivate: 'Privé',
+                privacyProfileVisibility: 'Visibilité du profil', privacyShowOnlineStatus: 'Statut en ligne',
+                privacyShowWatchedHistory: 'Historique de visionnage', privacyShowFriendsList: 'Liste d\'amis',
+                privacyShowCurrentlyWatching: 'En cours de visionnage', privacyAllowFriendRequests: 'Demandes d\'amitié',
+                privacyAllowMessages: 'Messages Directs', privacyEveryone: 'Tout le monde', privacyFriends: 'Amis', privacyNobody: 'Personne',
+                privacySaved: 'Paramètres enregistrés', privacyPresetApplied: 'Préréglage appliqué',
+                mediaDiskUsage: 'Utilisation du disque', mediaDuplicates: 'Doublons', mediaRestart: 'Redémarrer',
+                diskLoading: 'Chargement des informations du disque...', diskTotal: 'Total', diskUsed: 'Utilisé', diskFree: 'Libre',
+                duplicatesLoading: 'Recherche de doublons...', duplicatesNone: 'Aucun doublon trouvé', duplicatesFound: 'doublons trouvés',
+                duplicateDelete: 'Supprimer cette copie', duplicateConfirm: 'Supprimer ce doublon ?', duplicateDeleteFiles: 'Supprimer aussi le fichier du disque ?',
+                restartSchedule: 'Planifier le redémarrage', restartCancel: 'Annuler le redémarrage', restartNow: 'Redémarrer maintenant',
+                restartIn: 'Redémarrage dans', restartReason: 'Raison (optionnel)', restartScheduled: 'Redémarrage planifié',
+                restartCancelled: 'Redémarrage annulé', restartConfirm: 'Planifier le redémarrage du serveur ?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'groupes', duplicatesItems: 'éléments', duplicateCopies: 'copies', duplicateKeep: 'Garder',
+                notificationToggleTitle: 'Activer/désactiver les notifications de nouveaux médias',
+                // Moderator Panel translations
+                modPanelTitle: 'Panneau Modérateur', modUsers: 'Utilisateurs', modBans: 'Bannissements', modLog: 'Journal',
+                modSearchUser: 'Rechercher Utilisateur', modSearchPlaceholder: 'Rechercher un utilisateur à gérer...',
+                modManageUser: 'Gérer Utilisateur', modModeratorStatus: 'Statut Modérateur',
+                modNotModerator: 'Pas Modérateur', modLevel1: 'Niveau 1', modLevel2: 'Niveau 2', modLevel3: 'Niveau 3',
+                modApply: 'Appliquer', modChatStyle: 'Style du Chat', modNicknameColor: 'Couleur du Pseudo', modMessageColor: 'Couleur du Message',
+                modClear: 'Effacer', modTextStyle: 'Style du Texte', modNormal: 'Normal', modBold: 'Gras', modItalic: 'Italique', modBoth: 'Les deux',
+                modResetStyle: 'Réinitialiser le Style', modApplyStyle: 'Appliquer le Style', modPenalties: 'Pénalités',
+                modSnooze: 'Mettre en Sourdine', modChatBan: 'Ban du Chat', modMediaBan: 'Ban Média', modDuration: 'Durée', modPerm: 'Perm',
+                modReasonOptional: 'Raison (facultatif)', modEnterReason: 'Entrez la raison...', modCancel: 'Annuler', modApplyPenalty: 'Appliquer la Pénalité',
+                modCurrentModerators: 'Modérateurs Actuels', modNoModerators: 'Aucun modérateur',
+                modSearchBans: 'Rechercher les Bans', modSearchBannedUsers: 'Rechercher utilisateurs bannis...', modActiveBans: 'Bans Actifs', modNoActiveBans: 'Aucun ban actif',
+                modModeratorActions: 'Actions Modérateur', modSampleMessage: 'Texte de message exemple',
+                modUserWillBeMuted: 'L\'utilisateur sera mis en sourdine pour', modMinutes: 'minutes', modHours: 'heures', modDays: 'jours', modWeeks: 'semaines',
+                modAllModerators: 'Tous les Modérateurs', modNoActions: 'Aucune action enregistrée',
+                modDeletes: 'suppressions', modActions: 'actions',
+                changeLanguage: 'Changer la Langue'
             },
             ko: {
                 requestMedia: '미디어 요청', manageRequests: '요청 관리', requestDescription: '📬 좋아하는 미디어를 요청하세요!',
@@ -533,6 +872,14 @@
                 mediaActions: '작업', mediaChange: '변경', mediaChangeTime: '시간 변경', mediaSoon: '곧', mediaDays: '일', mediaPlays: '재생',
                 mediaMinutes: '분', mediaGB: 'GB', mediaMB: 'MB', mediaPage: '페이지', mediaOf: '/', mediaPrev: '이전', mediaNext: '다음', mediaGo: '이동',
                 mediaTypeScheduled: '예약됨', mediaSettings: '설정', mediaIncludeTypes: '포함 유형:', mediaTypesHint: '표시할 유형 선택',
+                mediaDiskUsage: '디스크 사용량', mediaDuplicates: '중복', mediaRestart: '재시작',
+                diskDrive: '드라이브', diskTotal: '전체', diskUsed: '사용됨', diskFree: '여유', diskLoading: '디스크 정보 로딩 중...',
+                duplicatesLoading: '중복 검색 중...', duplicatesNone: '중복 없음', duplicatesFound: '개의 중복 발견',
+                duplicateDelete: '삭제', duplicateDeleteFiles: '파일도 삭제', duplicateConfirm: '이 중복을 삭제하시겠습니까?',
+                restartSchedule: '재시작 예약', restartCancel: '재시작 취소', restartNow: '지금 재시작',
+                restartIn: '재시작까지', restartReason: '사유 (선택)', restartScheduled: '재시작 예약됨',
+                restartCancelled: '재시작 취소됨', restartConfirm: '서버 재시작을 예약하시겠습니까?',
+                restart1Min: '1분', restart2Min: '2분', restart5Min: '5분', restart10Min: '10분',
                 requestDeleteRequest: '삭제 요청', requestDeleteMedia: '미디어 삭제 요청', deletionRequests: '삭제 요청', noDeletionRequests: '삭제 요청 없음',
                 deleteNow: '즉시 삭제', schedule1Day: '1일', schedule1Week: '1주', schedule1Month: '1개월', rejectDeletion: '거부', approveDeleteRequest: '승인',
                 alreadyRequested: '삭제 요청됨', deletionApproved: '승인됨', deletionRejected: '거부됨', deletionPending: '대기 중',
@@ -549,7 +896,45 @@
                 chatBan: '차단', chatUnban: '차단 해제', chatMute: '음소거', chatBanFromMedia: '미디어 차단', chatMinutes: '분',
                 chatBanned: '채팅이 차단되었습니다', chatMuted: '일시적으로 음소거되었습니다', chatRateLimited: '잠시만요! 메시지가 너무 많습니다.',
                 chatConnecting: '연결 중...', chatReconnecting: '재연결 중...', chatDisconnected: '연결 끊김',
-                chatClearAll: '모두 삭제', chatClearConfirm: '모든 메시지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.', chatCleared: '채팅이 삭제됨'
+                chatClearAll: '모두 삭제', chatClearConfirm: '모든 메시지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.', chatCleared: '채팅이 삭제됨',
+                chatPublic: '공개', chatDM: '다이렉트 메시지', chatStartDM: '비공개 대화 시작',
+                chatSearchUsers: '사용자 검색...', chatNoUsers: '사용자를 찾을 수 없습니다', chatNewMessage: '새 메시지',
+                chatNoDMs: '비공개 메시지가 없습니다', chatTypeSlash: '/ 입력하여 DM 시작',
+                privacySettings: '개인정보 설정', privacyPresets: '빠른 설정',
+                privacyPublic: '공개', privacyFriendsOnly: '친구만', privacyPrivate: '비공개',
+                privacyProfileVisibility: '프로필 공개', privacyShowOnlineStatus: '온라인 상태',
+                privacyShowWatchedHistory: '시청 기록', privacyShowFriendsList: '친구 목록',
+                privacyShowCurrentlyWatching: '현재 시청 중', privacyAllowFriendRequests: '친구 요청',
+                privacyAllowMessages: '다이렉트 메시지', privacyEveryone: '모두', privacyFriends: '친구', privacyNobody: '없음',
+                privacySaved: '설정이 저장되었습니다', privacyPresetApplied: '설정이 적용되었습니다',
+                mediaDiskUsage: '디스크 사용량', mediaDuplicates: '중복', mediaRestart: '재시작',
+                diskLoading: '디스크 정보 로딩 중...', diskTotal: '전체', diskUsed: '사용 중', diskFree: '여유',
+                duplicatesLoading: '중복 검색 중...', duplicatesNone: '중복 없음', duplicatesFound: '중복 발견',
+                duplicateDelete: '이 복사본 삭제', duplicateConfirm: '이 중복을 삭제하시겠습니까?', duplicateDeleteFiles: '디스크에서 파일도 삭제하시겠습니까?',
+                restartSchedule: '재시작 예약', restartCancel: '재시작 취소', restartNow: '지금 재시작',
+                restartIn: '재시작까지', restartReason: '이유 (선택)', restartScheduled: '재시작이 예약됨',
+                restartCancelled: '재시작이 취소됨', restartConfirm: '서버 재시작을 예약하시겠습니까?',
+                restart1Min: '1분', restart2Min: '2분', restart5Min: '5분', restart10Min: '10분',
+                // Additional UI translations
+                duplicatesGroups: '그룹', duplicatesItems: '항목', duplicateCopies: '복사본', duplicateKeep: '유지',
+                notificationToggleTitle: '새 미디어 알림 활성화/비활성화',
+                // Moderator Panel translations
+                modPanelTitle: '관리자 패널', modUsers: '사용자', modBans: '차단', modLog: '로그',
+                modSearchUser: '사용자 검색', modSearchPlaceholder: '관리할 사용자 검색...',
+                modManageUser: '사용자 관리', modModeratorStatus: '관리자 상태',
+                modNotModerator: '관리자 아님', modLevel1: '레벨 1', modLevel2: '레벨 2', modLevel3: '레벨 3',
+                modApply: '적용', modChatStyle: '채팅 스타일', modNicknameColor: '닉네임 색상', modMessageColor: '메시지 색상',
+                modClear: '지우기', modTextStyle: '텍스트 스타일', modNormal: '보통', modBold: '굵게', modItalic: '기울임', modBoth: '둘 다',
+                modResetStyle: '스타일 초기화', modApplyStyle: '스타일 적용', modPenalties: '제재',
+                modSnooze: '음소거', modChatBan: '채팅 차단', modMediaBan: '미디어 차단', modDuration: '기간', modPerm: '영구',
+                modReasonOptional: '사유 (선택)', modEnterReason: '사유 입력...', modCancel: '취소', modApplyPenalty: '제재 적용',
+                modCurrentModerators: '현재 관리자', modNoModerators: '관리자 없음',
+                modSearchBans: '차단 검색', modSearchBannedUsers: '차단된 사용자 검색...', modActiveBans: '활성 차단', modNoActiveBans: '활성 차단 없음',
+                modModeratorActions: '관리자 활동', modSampleMessage: '샘플 메시지 텍스트',
+                modUserWillBeMuted: '사용자가 음소거됩니다', modMinutes: '분', modHours: '시간', modDays: '일', modWeeks: '주',
+                modAllModerators: '모든 관리자', modNoActions: '기록된 활동 없음',
+                modDeletes: '삭제', modActions: '활동',
+                changeLanguage: '언어 변경'
             },
             it: {
                 requestMedia: 'Richiedi Media', manageRequests: 'Gestisci Richieste', requestDescription: '📬 Richiedi i tuoi Media Preferiti!',
@@ -584,6 +969,14 @@
                 mediaActions: 'Azioni', mediaChange: 'Modifica', mediaChangeTime: 'Modifica tempo', mediaSoon: 'Presto', mediaDays: 'giorni', mediaPlays: 'riproduzioni',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'di', mediaPrev: 'Prec', mediaNext: 'Succ', mediaGo: 'Vai',
                 mediaTypeScheduled: 'Pianificati', mediaSettings: 'Impostazioni', mediaIncludeTypes: 'Includi tipi:', mediaTypesHint: 'Seleziona i tipi da mostrare',
+                mediaDiskUsage: 'Uso disco', mediaDuplicates: 'Duplicati', mediaRestart: 'Riavvia',
+                diskDrive: 'Disco', diskTotal: 'Totale', diskUsed: 'Usato', diskFree: 'Libero', diskLoading: 'Caricamento informazioni disco...',
+                duplicatesLoading: 'Ricerca duplicati...', duplicatesNone: 'Nessun duplicato trovato', duplicatesFound: 'duplicati trovati',
+                duplicateDelete: 'Elimina', duplicateDeleteFiles: 'Elimina anche file', duplicateConfirm: 'Eliminare questo duplicato?',
+                restartSchedule: 'Pianifica riavvio', restartCancel: 'Annulla riavvio', restartNow: 'Riavvia ora',
+                restartIn: 'Riavvio tra', restartReason: 'Motivo (opzionale)', restartScheduled: 'Riavvio pianificato',
+                restartCancelled: 'Riavvio annullato', restartConfirm: 'Pianificare il riavvio del server?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Richiedi eliminazione', requestDeleteMedia: 'Richiedi eliminazione media', deletionRequests: 'Richieste di Eliminazione', noDeletionRequests: 'Nessuna richiesta di eliminazione',
                 deleteNow: 'Elimina ~1h', schedule1Day: '1 Giorno', schedule1Week: '1 Settimana', schedule1Month: '1 Mese', rejectDeletion: 'Rifiuta', approveDeleteRequest: 'Approva',
                 alreadyRequested: 'Eliminazione Richiesta', deletionApproved: 'APPROVATO', deletionRejected: 'RIFIUTATO', deletionPending: 'IN ATTESA',
@@ -600,7 +993,45 @@
                 chatBan: 'Banna', chatUnban: 'Sbanna', chatMute: 'Silenzia', chatBanFromMedia: 'Banna dai Media', chatMinutes: 'minuti',
                 chatBanned: 'Sei bannato dalla chat', chatMuted: 'Sei temporaneamente silenziato', chatRateLimited: 'Piano! Troppi messaggi.',
                 chatConnecting: 'Connessione...', chatReconnecting: 'Riconnessione...', chatDisconnected: 'Disconnesso',
-                chatClearAll: 'Cancella tutto', chatClearConfirm: 'Eliminare tutti i messaggi? Non può essere annullato.', chatCleared: 'Chat cancellata'
+                chatClearAll: 'Cancella tutto', chatClearConfirm: 'Eliminare tutti i messaggi? Non può essere annullato.', chatCleared: 'Chat cancellata',
+                chatPublic: 'Pubblico', chatDM: 'Messaggi Diretti', chatStartDM: 'Inizia una conversazione privata',
+                chatSearchUsers: 'Cerca utenti...', chatNoUsers: 'Nessun utente trovato', chatNewMessage: 'Nuovo messaggio da',
+                chatNoDMs: 'Nessun messaggio privato ancora', chatTypeSlash: 'Digita / per iniziare MD',
+                privacySettings: 'Impostazioni Privacy', privacyPresets: 'Preset Rapidi',
+                privacyPublic: 'Pubblico', privacyFriendsOnly: 'Solo Amici', privacyPrivate: 'Privato',
+                privacyProfileVisibility: 'Visibilità Profilo', privacyShowOnlineStatus: 'Stato Online',
+                privacyShowWatchedHistory: 'Cronologia Visualizzazioni', privacyShowFriendsList: 'Lista Amici',
+                privacyShowCurrentlyWatching: 'In Visione', privacyAllowFriendRequests: 'Richieste Amicizia',
+                privacyAllowMessages: 'Messaggi Diretti', privacyEveryone: 'Tutti', privacyFriends: 'Amici', privacyNobody: 'Nessuno',
+                privacySaved: 'Impostazioni salvate', privacyPresetApplied: 'Preset applicato',
+                mediaDiskUsage: 'Utilizzo Disco', mediaDuplicates: 'Duplicati', mediaRestart: 'Riavvia',
+                diskLoading: 'Caricamento info disco...', diskTotal: 'Totale', diskUsed: 'Usato', diskFree: 'Libero',
+                duplicatesLoading: 'Ricerca duplicati...', duplicatesNone: 'Nessun duplicato trovato', duplicatesFound: 'duplicati trovati',
+                duplicateDelete: 'Elimina questa copia', duplicateConfirm: 'Eliminare questo duplicato?', duplicateDeleteFiles: 'Eliminare anche il file dal disco?',
+                restartSchedule: 'Pianifica Riavvio', restartCancel: 'Annulla Riavvio', restartNow: 'Riavvia Ora',
+                restartIn: 'Riavvio tra', restartReason: 'Motivo (opzionale)', restartScheduled: 'Riavvio pianificato',
+                restartCancelled: 'Riavvio annullato', restartConfirm: 'Pianificare il riavvio del server?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'gruppi', duplicatesItems: 'elementi', duplicateCopies: 'copie', duplicateKeep: 'Mantieni',
+                notificationToggleTitle: 'Attiva/disattiva notifiche nuovi media',
+                // Moderator Panel translations
+                modPanelTitle: 'Pannello Moderatore', modUsers: 'Utenti', modBans: 'Ban', modLog: 'Registro',
+                modSearchUser: 'Cerca Utente', modSearchPlaceholder: 'Cerca utente da gestire...',
+                modManageUser: 'Gestisci Utente', modModeratorStatus: 'Stato Moderatore',
+                modNotModerator: 'Non Moderatore', modLevel1: 'Livello 1', modLevel2: 'Livello 2', modLevel3: 'Livello 3',
+                modApply: 'Applica', modChatStyle: 'Stile Chat', modNicknameColor: 'Colore Nickname', modMessageColor: 'Colore Messaggio',
+                modClear: 'Cancella', modTextStyle: 'Stile Testo', modNormal: 'Normale', modBold: 'Grassetto', modItalic: 'Corsivo', modBoth: 'Entrambi',
+                modResetStyle: 'Resetta Stile', modApplyStyle: 'Applica Stile', modPenalties: 'Penalità',
+                modSnooze: 'Silenzia', modChatBan: 'Ban Chat', modMediaBan: 'Ban Media', modDuration: 'Durata', modPerm: 'Perm',
+                modReasonOptional: 'Motivo (opzionale)', modEnterReason: 'Inserisci motivo...', modCancel: 'Annulla', modApplyPenalty: 'Applica Penalità',
+                modCurrentModerators: 'Moderatori Attuali', modNoModerators: 'Nessun moderatore',
+                modSearchBans: 'Cerca Ban', modSearchBannedUsers: 'Cerca utenti bannati...', modActiveBans: 'Ban Attivi', modNoActiveBans: 'Nessun ban attivo',
+                modModeratorActions: 'Azioni Moderatore', modSampleMessage: 'Testo messaggio di esempio',
+                modUserWillBeMuted: 'L\'utente sarà silenziato per', modMinutes: 'minuti', modHours: 'ore', modDays: 'giorni', modWeeks: 'settimane',
+                modAllModerators: 'Tutti i Moderatori', modNoActions: 'Nessuna azione registrata',
+                modDeletes: 'eliminazioni', modActions: 'azioni',
+                changeLanguage: 'Cambia Lingua'
             },
             tr: {
                 requestMedia: 'Medya İste', manageRequests: 'İstekleri Yönet', requestDescription: '📬 Favori Medyanızı İsteyin!',
@@ -635,6 +1066,14 @@
                 mediaActions: 'İşlemler', mediaChange: 'Değiştir', mediaChangeTime: 'Zamanı değiştir', mediaSoon: 'Yakında', mediaDays: 'gün', mediaPlays: 'oynatma',
                 mediaMinutes: 'dk', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Sayfa', mediaOf: '/', mediaPrev: 'Önceki', mediaNext: 'Sonraki', mediaGo: 'Git',
                 mediaTypeScheduled: 'Planlanmış', mediaSettings: 'Ayarlar', mediaIncludeTypes: 'Türleri dahil et:', mediaTypesHint: 'Gösterilecek türleri seçin',
+                mediaDiskUsage: 'Disk Kullanımı', mediaDuplicates: 'Kopyalar', mediaRestart: 'Yeniden Başlat',
+                diskDrive: 'Sürücü', diskTotal: 'Toplam', diskUsed: 'Kullanılan', diskFree: 'Boş', diskLoading: 'Disk bilgileri yükleniyor...',
+                duplicatesLoading: 'Kopyalar aranıyor...', duplicatesNone: 'Kopya bulunamadı', duplicatesFound: 'kopya bulundu',
+                duplicateDelete: 'Sil', duplicateDeleteFiles: 'Dosyaları da sil', duplicateConfirm: 'Bu kopyayı silmek istiyor musunuz?',
+                restartSchedule: 'Yeniden Başlatmayı Planla', restartCancel: 'Yeniden Başlatmayı İptal Et', restartNow: 'Şimdi Yeniden Başlat',
+                restartIn: 'Yeniden başlatma:', restartReason: 'Neden (isteğe bağlı)', restartScheduled: 'Yeniden başlatma planlandı',
+                restartCancelled: 'Yeniden başlatma iptal edildi', restartConfirm: 'Sunucu yeniden başlatması planlanacak mı?',
+                restart1Min: '1 dk', restart2Min: '2 dk', restart5Min: '5 dk', restart10Min: '10 dk',
                 requestDeleteRequest: 'Silme iste', requestDeleteMedia: 'Medya silme iste', deletionRequests: 'Silme İstekleri', noDeletionRequests: 'Silme isteği yok',
                 deleteNow: 'Şimdi sil', schedule1Day: '1 Gün', schedule1Week: '1 Hafta', schedule1Month: '1 Ay', rejectDeletion: 'Reddet', approveDeleteRequest: 'Onayla',
                 alreadyRequested: 'Silme İstendi', deletionApproved: 'ONAYLANDI', deletionRejected: 'REDDEDİLDİ', deletionPending: 'BEKLİYOR',
@@ -651,7 +1090,45 @@
                 chatBan: 'Yasakla', chatUnban: 'Yasağı Kaldır', chatMute: 'Sustur', chatBanFromMedia: 'Medyadan Yasakla', chatMinutes: 'dakika',
                 chatBanned: 'Sohbetten yasaklandınız', chatMuted: 'Geçici olarak susturuldunuz', chatRateLimited: 'Yavaş olun! Çok fazla mesaj.',
                 chatConnecting: 'Bağlanıyor...', chatReconnecting: 'Yeniden bağlanıyor...', chatDisconnected: 'Bağlantı kesildi',
-                chatClearAll: 'Tümünü Temizle', chatClearConfirm: 'Tüm mesajları sil? Bu geri alınamaz.', chatCleared: 'Sohbet temizlendi'
+                chatClearAll: 'Tümünü Temizle', chatClearConfirm: 'Tüm mesajları sil? Bu geri alınamaz.', chatCleared: 'Sohbet temizlendi',
+                chatPublic: 'Herkese Açık', chatDM: 'Direkt Mesajlar', chatStartDM: 'Özel sohbet başlat',
+                chatSearchUsers: 'Kullanıcı ara...', chatNoUsers: 'Kullanıcı bulunamadı', chatNewMessage: 'Yeni mesaj',
+                chatNoDMs: 'Henüz özel mesaj yok', chatTypeSlash: 'DM için / yazın',
+                privacySettings: 'Gizlilik Ayarları', privacyPresets: 'Hızlı Ayarlar',
+                privacyPublic: 'Herkese Açık', privacyFriendsOnly: 'Sadece Arkadaşlar', privacyPrivate: 'Gizli',
+                privacyProfileVisibility: 'Profil Görünürlüğü', privacyShowOnlineStatus: 'Çevrimiçi Durumu',
+                privacyShowWatchedHistory: 'İzleme Geçmişi', privacyShowFriendsList: 'Arkadaş Listesi',
+                privacyShowCurrentlyWatching: 'Şu An İzliyor', privacyAllowFriendRequests: 'Arkadaşlık İstekleri',
+                privacyAllowMessages: 'Direkt Mesajlar', privacyEveryone: 'Herkes', privacyFriends: 'Arkadaşlar', privacyNobody: 'Hiç kimse',
+                privacySaved: 'Ayarlar kaydedildi', privacyPresetApplied: 'Ayar uygulandı',
+                mediaDiskUsage: 'Disk Kullanımı', mediaDuplicates: 'Yinelemeler', mediaRestart: 'Yeniden Başlat',
+                diskLoading: 'Disk bilgisi yükleniyor...', diskTotal: 'Toplam', diskUsed: 'Kullanılan', diskFree: 'Boş',
+                duplicatesLoading: 'Yinelemeler aranıyor...', duplicatesNone: 'Yineleme bulunamadı', duplicatesFound: 'yineleme bulundu',
+                duplicateDelete: 'Bu kopyayı sil', duplicateConfirm: 'Bu yineleme silinsin mi?', duplicateDeleteFiles: 'Dosya da diskten silinsin mi?',
+                restartSchedule: 'Yeniden Başlatma Planla', restartCancel: 'Yeniden Başlatmayı İptal Et', restartNow: 'Şimdi Yeniden Başlat',
+                restartIn: 'Yeniden başlatma', restartReason: 'Neden (isteğe bağlı)', restartScheduled: 'Yeniden başlatma planlandı',
+                restartCancelled: 'Yeniden başlatma iptal edildi', restartConfirm: 'Sunucu yeniden başlatması planlansın mı?',
+                restart1Min: '1 dk', restart2Min: '2 dk', restart5Min: '5 dk', restart10Min: '10 dk',
+                // Additional UI translations
+                duplicatesGroups: 'grup', duplicatesItems: 'öğe', duplicateCopies: 'kopya', duplicateKeep: 'Tut',
+                notificationToggleTitle: 'Yeni medya bildirimlerini aç/kapat',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderatör Paneli', modUsers: 'Kullanıcılar', modBans: 'Yasaklar', modLog: 'Günlük',
+                modSearchUser: 'Kullanıcı Ara', modSearchPlaceholder: 'Yönetilecek kullanıcı ara...',
+                modManageUser: 'Kullanıcı Yönet', modModeratorStatus: 'Moderatör Durumu',
+                modNotModerator: 'Moderatör Değil', modLevel1: 'Seviye 1', modLevel2: 'Seviye 2', modLevel3: 'Seviye 3',
+                modApply: 'Uygula', modChatStyle: 'Sohbet Stili', modNicknameColor: 'Takma Ad Rengi', modMessageColor: 'Mesaj Rengi',
+                modClear: 'Temizle', modTextStyle: 'Metin Stili', modNormal: 'Normal', modBold: 'Kalın', modItalic: 'İtalik', modBoth: 'Her İkisi',
+                modResetStyle: 'Stili Sıfırla', modApplyStyle: 'Stili Uygula', modPenalties: 'Cezalar',
+                modSnooze: 'Sustur', modChatBan: 'Sohbet Yasağı', modMediaBan: 'Medya Yasağı', modDuration: 'Süre', modPerm: 'Kalıcı',
+                modReasonOptional: 'Neden (isteğe bağlı)', modEnterReason: 'Neden girin...', modCancel: 'İptal', modApplyPenalty: 'Ceza Uygula',
+                modCurrentModerators: 'Mevcut Moderatörler', modNoModerators: 'Moderatör yok',
+                modSearchBans: 'Yasakları Ara', modSearchBannedUsers: 'Yasaklı kullanıcıları ara...', modActiveBans: 'Aktif Yasaklar', modNoActiveBans: 'Aktif yasak yok',
+                modModeratorActions: 'Moderatör Eylemleri', modSampleMessage: 'Örnek mesaj metni',
+                modUserWillBeMuted: 'Kullanıcı susturulacak', modMinutes: 'dakika', modHours: 'saat', modDays: 'gün', modWeeks: 'hafta',
+                modAllModerators: 'Tüm Moderatörler', modNoActions: 'Kayıtlı eylem yok',
+                modDeletes: 'silme', modActions: 'eylem',
+                changeLanguage: 'Dili Değiştir'
             },
             pl: {
                 requestMedia: 'Poproś o Media', manageRequests: 'Zarządzaj Prośbami', requestDescription: '📬 Poproś o Ulubione Media!',
@@ -686,6 +1163,14 @@
                 mediaActions: 'Akcje', mediaChange: 'Zmień', mediaChangeTime: 'Zmień czas', mediaSoon: 'Wkrótce', mediaDays: 'dni', mediaPlays: 'odtworzeń',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Strona', mediaOf: 'z', mediaPrev: 'Poprz', mediaNext: 'Nast', mediaGo: 'Idź',
                 mediaTypeScheduled: 'Zaplanowane', mediaSettings: 'Ustawienia', mediaIncludeTypes: 'Uwzględnij typy:', mediaTypesHint: 'Wybierz typy do wyświetlenia',
+                mediaDiskUsage: 'Użycie dysku', mediaDuplicates: 'Duplikaty', mediaRestart: 'Restart',
+                diskDrive: 'Dysk', diskTotal: 'Razem', diskUsed: 'Zajęte', diskFree: 'Wolne', diskLoading: 'Ładowanie informacji o dysku...',
+                duplicatesLoading: 'Szukanie duplikatów...', duplicatesNone: 'Nie znaleziono duplikatów', duplicatesFound: 'duplikatów znaleziono',
+                duplicateDelete: 'Usuń', duplicateDeleteFiles: 'Usuń też pliki', duplicateConfirm: 'Usunąć ten duplikat?',
+                restartSchedule: 'Zaplanuj restart', restartCancel: 'Anuluj restart', restartNow: 'Restartuj teraz',
+                restartIn: 'Restart za', restartReason: 'Powód (opcjonalnie)', restartScheduled: 'Restart zaplanowany',
+                restartCancelled: 'Restart anulowany', restartConfirm: 'Zaplanować restart serwera?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Poproś o usunięcie', requestDeleteMedia: 'Poproś o usunięcie mediów', deletionRequests: 'Prośby o Usunięcie', noDeletionRequests: 'Brak próśb o usunięcie',
                 deleteNow: 'Usuń ~1h', schedule1Day: '1 Dzień', schedule1Week: '1 Tydzień', schedule1Month: '1 Miesiąc', rejectDeletion: 'Odrzuć', approveDeleteRequest: 'Zatwierdź',
                 alreadyRequested: 'Usunięcie Zgłoszone', deletionApproved: 'ZATWIERDZONE', deletionRejected: 'ODRZUCONE', deletionPending: 'OCZEKUJE',
@@ -702,7 +1187,45 @@
                 chatBan: 'Zbanuj', chatUnban: 'Odbanuj', chatMute: 'Wycisz', chatBanFromMedia: 'Zbanuj z Mediów', chatMinutes: 'minut',
                 chatBanned: 'Jesteś zbanowany z czatu', chatMuted: 'Jesteś tymczasowo wyciszony', chatRateLimited: 'Zwolnij! Za dużo wiadomości.',
                 chatConnecting: 'Łączenie...', chatReconnecting: 'Ponowne łączenie...', chatDisconnected: 'Rozłączono',
-                chatClearAll: 'Wyczyść wszystko', chatClearConfirm: 'Usunąć wszystkie wiadomości? Tej operacji nie można cofnąć.', chatCleared: 'Czat wyczyszczony'
+                chatClearAll: 'Wyczyść wszystko', chatClearConfirm: 'Usunąć wszystkie wiadomości? Tej operacji nie można cofnąć.', chatCleared: 'Czat wyczyszczony',
+                chatPublic: 'Publiczny', chatDM: 'Wiadomości Prywatne', chatStartDM: 'Rozpocznij prywatną rozmowę',
+                chatSearchUsers: 'Szukaj użytkowników...', chatNoUsers: 'Nie znaleziono użytkowników', chatNewMessage: 'Nowa wiadomość od',
+                chatNoDMs: 'Brak prywatnych wiadomości', chatTypeSlash: 'Wpisz / aby rozpocząć WP',
+                privacySettings: 'Ustawienia Prywatności', privacyPresets: 'Szybkie Ustawienia',
+                privacyPublic: 'Publiczny', privacyFriendsOnly: 'Tylko Znajomi', privacyPrivate: 'Prywatny',
+                privacyProfileVisibility: 'Widoczność Profilu', privacyShowOnlineStatus: 'Status Online',
+                privacyShowWatchedHistory: 'Historia Oglądania', privacyShowFriendsList: 'Lista Znajomych',
+                privacyShowCurrentlyWatching: 'Aktualnie Ogląda', privacyAllowFriendRequests: 'Zaproszenia do Znajomych',
+                privacyAllowMessages: 'Wiadomości Prywatne', privacyEveryone: 'Wszyscy', privacyFriends: 'Znajomi', privacyNobody: 'Nikt',
+                privacySaved: 'Ustawienia zapisane', privacyPresetApplied: 'Ustawienie zastosowane',
+                mediaDiskUsage: 'Użycie Dysku', mediaDuplicates: 'Duplikaty', mediaRestart: 'Restart',
+                diskLoading: 'Ładowanie informacji o dysku...', diskTotal: 'Razem', diskUsed: 'Użyte', diskFree: 'Wolne',
+                duplicatesLoading: 'Wyszukiwanie duplikatów...', duplicatesNone: 'Nie znaleziono duplikatów', duplicatesFound: 'znaleziono duplikatów',
+                duplicateDelete: 'Usuń tę kopię', duplicateConfirm: 'Usunąć ten duplikat?', duplicateDeleteFiles: 'Usunąć również plik z dysku?',
+                restartSchedule: 'Zaplanuj Restart', restartCancel: 'Anuluj Restart', restartNow: 'Restartuj Teraz',
+                restartIn: 'Restart za', restartReason: 'Powód (opcjonalnie)', restartScheduled: 'Restart zaplanowany',
+                restartCancelled: 'Restart anulowany', restartConfirm: 'Zaplanować restart serwera?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grup', duplicatesItems: 'elementów', duplicateCopies: 'kopii', duplicateKeep: 'Zachowaj',
+                notificationToggleTitle: 'Włącz/wyłącz powiadomienia o nowych mediach',
+                // Moderator Panel translations
+                modPanelTitle: 'Panel Moderatora', modUsers: 'Użytkownicy', modBans: 'Bany', modLog: 'Dziennik',
+                modSearchUser: 'Szukaj Użytkownika', modSearchPlaceholder: 'Szukaj użytkownika do zarządzania...',
+                modManageUser: 'Zarządzaj Użytkownikiem', modModeratorStatus: 'Status Moderatora',
+                modNotModerator: 'Nie jest Moderatorem', modLevel1: 'Poziom 1', modLevel2: 'Poziom 2', modLevel3: 'Poziom 3',
+                modApply: 'Zastosuj', modChatStyle: 'Styl Czatu', modNicknameColor: 'Kolor Nicku', modMessageColor: 'Kolor Wiadomości',
+                modClear: 'Wyczyść', modTextStyle: 'Styl Tekstu', modNormal: 'Normalny', modBold: 'Pogrubiony', modItalic: 'Kursywa', modBoth: 'Oba',
+                modResetStyle: 'Resetuj Styl', modApplyStyle: 'Zastosuj Styl', modPenalties: 'Kary',
+                modSnooze: 'Wycisz', modChatBan: 'Ban na Czacie', modMediaBan: 'Ban Mediów', modDuration: 'Czas Trwania', modPerm: 'Stały',
+                modReasonOptional: 'Powód (opcjonalnie)', modEnterReason: 'Wprowadź powód...', modCancel: 'Anuluj', modApplyPenalty: 'Zastosuj Karę',
+                modCurrentModerators: 'Obecni Moderatorzy', modNoModerators: 'Brak moderatorów',
+                modSearchBans: 'Szukaj Banów', modSearchBannedUsers: 'Szukaj zbanowanych użytkowników...', modActiveBans: 'Aktywne Bany', modNoActiveBans: 'Brak aktywnych banów',
+                modModeratorActions: 'Akcje Moderatora', modSampleMessage: 'Przykładowy tekst wiadomości',
+                modUserWillBeMuted: 'Użytkownik zostanie wyciszony na', modMinutes: 'minut', modHours: 'godzin', modDays: 'dni', modWeeks: 'tygodni',
+                modAllModerators: 'Wszyscy Moderatorzy', modNoActions: 'Brak zarejestrowanych akcji',
+                modDeletes: 'usunięć', modActions: 'akcji',
+                changeLanguage: 'Zmień Język'
             },
             nl: {
                 requestMedia: 'Media Aanvragen', manageRequests: 'Verzoeken Beheren', requestDescription: '📬 Vraag je Favoriete Media Aan!',
@@ -737,6 +1260,14 @@
                 mediaActions: 'Acties', mediaChange: 'Wijzigen', mediaChangeTime: 'Tijd wijzigen', mediaSoon: 'Binnenkort', mediaDays: 'dagen', mediaPlays: 'keer afgespeeld',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Pagina', mediaOf: 'van', mediaPrev: 'Vorige', mediaNext: 'Volgende', mediaGo: 'Ga',
                 mediaTypeScheduled: 'Gepland', mediaSettings: 'Instellingen', mediaIncludeTypes: 'Inclusief types:', mediaTypesHint: 'Selecteer te tonen types',
+                mediaDiskUsage: 'Schijfgebruik', mediaDuplicates: 'Duplicaten', mediaRestart: 'Herstarten',
+                diskDrive: 'Schijf', diskTotal: 'Totaal', diskUsed: 'Gebruikt', diskFree: 'Vrij', diskLoading: 'Schijfinformatie laden...',
+                duplicatesLoading: 'Zoeken naar duplicaten...', duplicatesNone: 'Geen duplicaten gevonden', duplicatesFound: 'duplicaten gevonden',
+                duplicateDelete: 'Verwijderen', duplicateDeleteFiles: 'Bestanden ook verwijderen', duplicateConfirm: 'Dit duplicaat verwijderen?',
+                restartSchedule: 'Herstart plannen', restartCancel: 'Herstart annuleren', restartNow: 'Nu herstarten',
+                restartIn: 'Herstart over', restartReason: 'Reden (optioneel)', restartScheduled: 'Herstart gepland',
+                restartCancelled: 'Herstart geannuleerd', restartConfirm: 'Server herstart plannen?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Verwijdering aanvragen', requestDeleteMedia: 'Media verwijdering aanvragen', deletionRequests: 'Verwijderverzoeken', noDeletionRequests: 'Geen verwijderverzoeken',
                 deleteNow: 'Nu verwijderen', schedule1Day: '1 Dag', schedule1Week: '1 Week', schedule1Month: '1 Maand', rejectDeletion: 'Afwijzen', approveDeleteRequest: 'Goedkeuren',
                 alreadyRequested: 'Verwijdering Aangevraagd', deletionApproved: 'GOEDGEKEURD', deletionRejected: 'AFGEWEZEN', deletionPending: 'WACHTEND',
@@ -753,7 +1284,45 @@
                 chatBan: 'Blokkeren', chatUnban: 'Deblokkeren', chatMute: 'Dempen', chatBanFromMedia: 'Blokkeren van Media', chatMinutes: 'minuten',
                 chatBanned: 'Je bent geblokkeerd van de chat', chatMuted: 'Je bent tijdelijk gedempt', chatRateLimited: 'Rustig aan! Te veel berichten.',
                 chatConnecting: 'Verbinden...', chatReconnecting: 'Opnieuw verbinden...', chatDisconnected: 'Verbinding verbroken',
-                chatClearAll: 'Alles wissen', chatClearConfirm: 'Alle berichten verwijderen? Dit kan niet ongedaan worden gemaakt.', chatCleared: 'Chat gewist'
+                chatClearAll: 'Alles wissen', chatClearConfirm: 'Alle berichten verwijderen? Dit kan niet ongedaan worden gemaakt.', chatCleared: 'Chat gewist',
+                chatPublic: 'Openbaar', chatDM: 'Directe Berichten', chatStartDM: 'Start een privégesprek',
+                chatSearchUsers: 'Gebruikers zoeken...', chatNoUsers: 'Geen gebruikers gevonden', chatNewMessage: 'Nieuw bericht van',
+                chatNoDMs: 'Nog geen privéberichten', chatTypeSlash: 'Typ / om DM te starten',
+                privacySettings: 'Privacy-instellingen', privacyPresets: 'Snelle Voorinstellingen',
+                privacyPublic: 'Openbaar', privacyFriendsOnly: 'Alleen Vrienden', privacyPrivate: 'Privé',
+                privacyProfileVisibility: 'Profielzichtbaarheid', privacyShowOnlineStatus: 'Online Status',
+                privacyShowWatchedHistory: 'Kijkgeschiedenis', privacyShowFriendsList: 'Vriendenlijst',
+                privacyShowCurrentlyWatching: 'Nu aan het Kijken', privacyAllowFriendRequests: 'Vriendschapsverzoeken',
+                privacyAllowMessages: 'Directe Berichten', privacyEveryone: 'Iedereen', privacyFriends: 'Vrienden', privacyNobody: 'Niemand',
+                privacySaved: 'Instellingen opgeslagen', privacyPresetApplied: 'Voorinstelling toegepast',
+                mediaDiskUsage: 'Schijfgebruik', mediaDuplicates: 'Duplicaten', mediaRestart: 'Herstarten',
+                diskLoading: 'Schijfinformatie laden...', diskTotal: 'Totaal', diskUsed: 'Gebruikt', diskFree: 'Vrij',
+                duplicatesLoading: 'Zoeken naar duplicaten...', duplicatesNone: 'Geen duplicaten gevonden', duplicatesFound: 'duplicaten gevonden',
+                duplicateDelete: 'Deze kopie verwijderen', duplicateConfirm: 'Dit duplicaat verwijderen?', duplicateDeleteFiles: 'Ook bestand van schijf verwijderen?',
+                restartSchedule: 'Herstart Plannen', restartCancel: 'Herstart Annuleren', restartNow: 'Nu Herstarten',
+                restartIn: 'Herstart over', restartReason: 'Reden (optioneel)', restartScheduled: 'Herstart gepland',
+                restartCancelled: 'Herstart geannuleerd', restartConfirm: 'Server herstart plannen?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'groepen', duplicatesItems: 'items', duplicateCopies: 'kopieën', duplicateKeep: 'Behouden',
+                notificationToggleTitle: 'Nieuwe media meldingen in-/uitschakelen',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderator Paneel', modUsers: 'Gebruikers', modBans: 'Verboden', modLog: 'Logboek',
+                modSearchUser: 'Gebruiker Zoeken', modSearchPlaceholder: 'Zoek gebruiker om te beheren...',
+                modManageUser: 'Beheer Gebruiker', modModeratorStatus: 'Moderator Status',
+                modNotModerator: 'Geen Moderator', modLevel1: 'Niveau 1', modLevel2: 'Niveau 2', modLevel3: 'Niveau 3',
+                modApply: 'Toepassen', modChatStyle: 'Chat Stijl', modNicknameColor: 'Bijnaam Kleur', modMessageColor: 'Bericht Kleur',
+                modClear: 'Wissen', modTextStyle: 'Tekst Stijl', modNormal: 'Normaal', modBold: 'Vet', modItalic: 'Cursief', modBoth: 'Beide',
+                modResetStyle: 'Stijl Resetten', modApplyStyle: 'Stijl Toepassen', modPenalties: 'Straffen',
+                modSnooze: 'Dempen', modChatBan: 'Chat Verbod', modMediaBan: 'Media Verbod', modDuration: 'Duur', modPerm: 'Permanent',
+                modReasonOptional: 'Reden (optioneel)', modEnterReason: 'Voer reden in...', modCancel: 'Annuleren', modApplyPenalty: 'Straf Toepassen',
+                modCurrentModerators: 'Huidige Moderators', modNoModerators: 'Geen moderators',
+                modSearchBans: 'Verboden Zoeken', modSearchBannedUsers: 'Zoek verbannen gebruikers...', modActiveBans: 'Actieve Verboden', modNoActiveBans: 'Geen actieve verboden',
+                modModeratorActions: 'Moderator Acties', modSampleMessage: 'Voorbeeld berichttekst',
+                modUserWillBeMuted: 'Gebruiker wordt gedempt voor', modMinutes: 'minuten', modHours: 'uur', modDays: 'dagen', modWeeks: 'weken',
+                modAllModerators: 'Alle Moderators', modNoActions: 'Geen acties geregistreerd',
+                modDeletes: 'verwijderingen', modActions: 'acties',
+                changeLanguage: 'Taal Wijzigen'
             },
             ar: {
                 requestMedia: 'طلب وسائط', manageRequests: 'إدارة الطلبات', requestDescription: '📬 اطلب وسائطك المفضلة!',
@@ -788,6 +1357,14 @@
                 mediaActions: 'إجراءات', mediaChange: 'تغيير', mediaChangeTime: 'تغيير الوقت', mediaSoon: 'قريباً', mediaDays: 'أيام', mediaPlays: 'مشاهدات',
                 mediaMinutes: 'دقيقة', mediaGB: 'جيجا', mediaMB: 'ميجا', mediaPage: 'صفحة', mediaOf: 'من', mediaPrev: 'السابق', mediaNext: 'التالي', mediaGo: 'انتقل',
                 mediaTypeScheduled: 'مجدول', mediaSettings: 'الإعدادات', mediaIncludeTypes: 'تضمين الأنواع:', mediaTypesHint: 'اختر الأنواع للعرض',
+                mediaDiskUsage: 'استخدام القرص', mediaDuplicates: 'المكررات', mediaRestart: 'إعادة التشغيل',
+                diskDrive: 'القرص', diskTotal: 'الإجمالي', diskUsed: 'المستخدم', diskFree: 'المتاح', diskLoading: 'جاري تحميل معلومات القرص...',
+                duplicatesLoading: 'جاري البحث عن المكررات...', duplicatesNone: 'لم يتم العثور على مكررات', duplicatesFound: 'مكررات',
+                duplicateDelete: 'حذف', duplicateDeleteFiles: 'حذف الملفات أيضاً', duplicateConfirm: 'حذف هذا المكرر؟',
+                restartSchedule: 'جدولة إعادة التشغيل', restartCancel: 'إلغاء إعادة التشغيل', restartNow: 'إعادة التشغيل الآن',
+                restartIn: 'إعادة التشغيل خلال', restartReason: 'السبب (اختياري)', restartScheduled: 'تم جدولة إعادة التشغيل',
+                restartCancelled: 'تم إلغاء إعادة التشغيل', restartConfirm: 'جدولة إعادة تشغيل الخادم؟',
+                restart1Min: '1 دقيقة', restart2Min: '2 دقيقة', restart5Min: '5 دقائق', restart10Min: '10 دقائق',
                 requestDeleteRequest: 'طلب حذف', requestDeleteMedia: 'طلب حذف الوسائط', deletionRequests: 'طلبات الحذف', noDeletionRequests: 'لا توجد طلبات حذف',
                 deleteNow: 'حذف الآن', schedule1Day: '1 يوم', schedule1Week: '1 أسبوع', schedule1Month: '1 شهر', rejectDeletion: 'رفض', approveDeleteRequest: 'موافقة',
                 alreadyRequested: 'تم طلب الحذف', deletionApproved: 'موافق عليه', deletionRejected: 'مرفوض', deletionPending: 'قيد الانتظار',
@@ -804,7 +1381,45 @@
                 chatBan: 'حظر', chatUnban: 'إلغاء الحظر', chatMute: 'كتم', chatBanFromMedia: 'حظر من الوسائط', chatMinutes: 'دقائق',
                 chatBanned: 'أنت محظور من الدردشة', chatMuted: 'أنت مكتوم مؤقتاً', chatRateLimited: 'ببطء! رسائل كثيرة جداً.',
                 chatConnecting: 'جاري الاتصال...', chatReconnecting: 'إعادة الاتصال...', chatDisconnected: 'غير متصل',
-                chatClearAll: 'مسح الكل', chatClearConfirm: 'حذف جميع الرسائل؟ لا يمكن التراجع عن هذا.', chatCleared: 'تم مسح الدردشة'
+                chatClearAll: 'مسح الكل', chatClearConfirm: 'حذف جميع الرسائل؟ لا يمكن التراجع عن هذا.', chatCleared: 'تم مسح الدردشة',
+                chatPublic: 'عام', chatDM: 'رسائل مباشرة', chatStartDM: 'بدء محادثة خاصة',
+                chatSearchUsers: 'البحث عن مستخدمين...', chatNoUsers: 'لم يتم العثور على مستخدمين', chatNewMessage: 'رسالة جديدة من',
+                chatNoDMs: 'لا توجد رسائل خاصة حتى الآن', chatTypeSlash: 'اكتب / لبدء رسالة مباشرة',
+                privacySettings: 'إعدادات الخصوصية', privacyPresets: 'إعدادات سريعة',
+                privacyPublic: 'عام', privacyFriendsOnly: 'الأصدقاء فقط', privacyPrivate: 'خاص',
+                privacyProfileVisibility: 'رؤية الملف الشخصي', privacyShowOnlineStatus: 'حالة الاتصال',
+                privacyShowWatchedHistory: 'سجل المشاهدة', privacyShowFriendsList: 'قائمة الأصدقاء',
+                privacyShowCurrentlyWatching: 'يشاهد حالياً', privacyAllowFriendRequests: 'طلبات الصداقة',
+                privacyAllowMessages: 'رسائل مباشرة', privacyEveryone: 'الجميع', privacyFriends: 'الأصدقاء', privacyNobody: 'لا أحد',
+                privacySaved: 'تم حفظ الإعدادات', privacyPresetApplied: 'تم تطبيق الإعداد',
+                mediaDiskUsage: 'استخدام القرص', mediaDuplicates: 'التكرارات', mediaRestart: 'إعادة التشغيل',
+                diskLoading: 'جارٍ تحميل معلومات القرص...', diskTotal: 'الإجمالي', diskUsed: 'مستخدم', diskFree: 'حر',
+                duplicatesLoading: 'جارٍ البحث عن التكرارات...', duplicatesNone: 'لم يتم العثور على تكرارات', duplicatesFound: 'تم العثور على تكرارات',
+                duplicateDelete: 'حذف هذه النسخة', duplicateConfirm: 'حذف هذا التكرار؟', duplicateDeleteFiles: 'حذف الملف من القرص أيضاً؟',
+                restartSchedule: 'جدولة إعادة التشغيل', restartCancel: 'إلغاء إعادة التشغيل', restartNow: 'إعادة التشغيل الآن',
+                restartIn: 'إعادة التشغيل في', restartReason: 'السبب (اختياري)', restartScheduled: 'تمت جدولة إعادة التشغيل',
+                restartCancelled: 'تم إلغاء إعادة التشغيل', restartConfirm: 'جدولة إعادة تشغيل الخادم؟',
+                restart1Min: '1 دقيقة', restart2Min: '2 دقيقة', restart5Min: '5 دقائق', restart10Min: '10 دقائق',
+                // Additional UI translations
+                duplicatesGroups: 'مجموعات', duplicatesItems: 'عناصر', duplicateCopies: 'نسخ', duplicateKeep: 'احتفظ',
+                notificationToggleTitle: 'تفعيل/إلغاء تفعيل إشعارات الوسائط الجديدة',
+                // Moderator Panel translations
+                modPanelTitle: 'لوحة المشرف', modUsers: 'المستخدمون', modBans: 'الحظر', modLog: 'السجل',
+                modSearchUser: 'بحث عن مستخدم', modSearchPlaceholder: 'ابحث عن مستخدم للإدارة...',
+                modManageUser: 'إدارة المستخدم', modModeratorStatus: 'حالة المشرف',
+                modNotModerator: 'ليس مشرفاً', modLevel1: 'المستوى 1', modLevel2: 'المستوى 2', modLevel3: 'المستوى 3',
+                modApply: 'تطبيق', modChatStyle: 'نمط الدردشة', modNicknameColor: 'لون الاسم', modMessageColor: 'لون الرسالة',
+                modClear: 'مسح', modTextStyle: 'نمط النص', modNormal: 'عادي', modBold: 'غامق', modItalic: 'مائل', modBoth: 'كلاهما',
+                modResetStyle: 'إعادة تعيين النمط', modApplyStyle: 'تطبيق النمط', modPenalties: 'العقوبات',
+                modSnooze: 'كتم', modChatBan: 'حظر الدردشة', modMediaBan: 'حظر الوسائط', modDuration: 'المدة', modPerm: 'دائم',
+                modReasonOptional: 'السبب (اختياري)', modEnterReason: 'أدخل السبب...', modCancel: 'إلغاء', modApplyPenalty: 'تطبيق العقوبة',
+                modCurrentModerators: 'المشرفون الحاليون', modNoModerators: 'لا يوجد مشرفون',
+                modSearchBans: 'بحث في الحظر', modSearchBannedUsers: 'ابحث عن المحظورين...', modActiveBans: 'الحظر النشط', modNoActiveBans: 'لا يوجد حظر نشط',
+                modModeratorActions: 'إجراءات المشرف', modSampleMessage: 'نص الرسالة النموذجية',
+                modUserWillBeMuted: 'سيتم كتم المستخدم لمدة', modMinutes: 'دقائق', modHours: 'ساعات', modDays: 'أيام', modWeeks: 'أسابيع',
+                modAllModerators: 'جميع المشرفين', modNoActions: 'لا توجد إجراءات مسجلة',
+                modDeletes: 'حذف', modActions: 'إجراءات',
+                changeLanguage: 'تغيير اللغة'
             },
             hi: {
                 requestMedia: 'मीडिया अनुरोध', manageRequests: 'अनुरोध प्रबंधन', requestDescription: '📬 अपनी पसंदीदा मीडिया का अनुरोध करें!',
@@ -839,6 +1454,14 @@
                 mediaActions: 'कार्रवाई', mediaChange: 'बदलें', mediaChangeTime: 'समय बदलें', mediaSoon: 'जल्द', mediaDays: 'दिन', mediaPlays: 'बार चला',
                 mediaMinutes: 'मिनट', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'पृष्ठ', mediaOf: 'का', mediaPrev: 'पिछला', mediaNext: 'अगला', mediaGo: 'जाएं',
                 mediaTypeScheduled: 'शेड्यूल्ड', mediaSettings: 'सेटिंग्स', mediaIncludeTypes: 'प्रकार शामिल करें:', mediaTypesHint: 'दिखाने के लिए प्रकार चुनें',
+                mediaDiskUsage: 'डिस्क उपयोग', mediaDuplicates: 'डुप्लिकेट', mediaRestart: 'पुनः आरंभ',
+                diskDrive: 'ड्राइव', diskTotal: 'कुल', diskUsed: 'उपयोग', diskFree: 'खाली', diskLoading: 'डिस्क जानकारी लोड हो रही है...',
+                duplicatesLoading: 'डुप्लिकेट खोज रहा है...', duplicatesNone: 'कोई डुप्लिकेट नहीं मिला', duplicatesFound: 'डुप्लिकेट मिले',
+                duplicateDelete: 'हटाएं', duplicateDeleteFiles: 'फाइलें भी हटाएं', duplicateConfirm: 'यह डुप्लिकेट हटाएं?',
+                restartSchedule: 'पुनः आरंभ शेड्यूल करें', restartCancel: 'पुनः आरंभ रद्द करें', restartNow: 'अभी पुनः आरंभ करें',
+                restartIn: 'पुनः आरंभ', restartReason: 'कारण (वैकल्पिक)', restartScheduled: 'पुनः आरंभ शेड्यूल किया गया',
+                restartCancelled: 'पुनः आरंभ रद्द', restartConfirm: 'सर्वर पुनः आरंभ शेड्यूल करें?',
+                restart1Min: '1 मिनट', restart2Min: '2 मिनट', restart5Min: '5 मिनट', restart10Min: '10 मिनट',
                 requestDeleteRequest: 'हटाने का अनुरोध', requestDeleteMedia: 'मीडिया हटाने का अनुरोध', deletionRequests: 'हटाने के अनुरोध', noDeletionRequests: 'कोई हटाने के अनुरोध नहीं',
                 deleteNow: 'अभी हटाएं', schedule1Day: '1 दिन', schedule1Week: '1 सप्ताह', schedule1Month: '1 महीना', rejectDeletion: 'अस्वीकार', approveDeleteRequest: 'स्वीकार',
                 alreadyRequested: 'हटाने का अनुरोध किया', deletionApproved: 'स्वीकृत', deletionRejected: 'अस्वीकृत', deletionPending: 'लंबित',
@@ -855,7 +1478,45 @@
                 chatBan: 'प्रतिबंध', chatUnban: 'प्रतिबंध हटाएं', chatMute: 'म्यूट', chatBanFromMedia: 'मीडिया से प्रतिबंध', chatMinutes: 'मिनट',
                 chatBanned: 'आप चैट से प्रतिबंधित हैं', chatMuted: 'आप अस्थायी रूप से म्यूट हैं', chatRateLimited: 'धीरे! बहुत सारे संदेश।',
                 chatConnecting: 'कनेक्ट हो रहा है...', chatReconnecting: 'पुनः कनेक्ट हो रहा है...', chatDisconnected: 'डिस्कनेक्ट',
-                chatClearAll: 'सब साफ करें', chatClearConfirm: 'सभी संदेश हटाएं? यह पूर्ववत नहीं किया जा सकता।', chatCleared: 'चैट साफ़ हो गई'
+                chatClearAll: 'सब साफ करें', chatClearConfirm: 'सभी संदेश हटाएं? यह पूर्ववत नहीं किया जा सकता।', chatCleared: 'चैट साफ़ हो गई',
+                chatPublic: 'सार्वजनिक', chatDM: 'सीधे संदेश', chatStartDM: 'निजी बातचीत शुरू करें',
+                chatSearchUsers: 'उपयोगकर्ता खोजें...', chatNoUsers: 'कोई उपयोगकर्ता नहीं मिला', chatNewMessage: 'नया संदेश',
+                chatNoDMs: 'अभी तक कोई निजी संदेश नहीं', chatTypeSlash: 'DM शुरू करने के लिए / टाइप करें',
+                privacySettings: 'गोपनीयता सेटिंग्स', privacyPresets: 'त्वरित प्रीसेट',
+                privacyPublic: 'सार्वजनिक', privacyFriendsOnly: 'केवल मित्र', privacyPrivate: 'निजी',
+                privacyProfileVisibility: 'प्रोफ़ाइल दृश्यता', privacyShowOnlineStatus: 'ऑनलाइन स्थिति',
+                privacyShowWatchedHistory: 'देखने का इतिहास', privacyShowFriendsList: 'मित्र सूची',
+                privacyShowCurrentlyWatching: 'वर्तमान में देख रहे हैं', privacyAllowFriendRequests: 'मित्रता अनुरोध',
+                privacyAllowMessages: 'सीधे संदेश', privacyEveryone: 'सभी', privacyFriends: 'मित्र', privacyNobody: 'कोई नहीं',
+                privacySaved: 'सेटिंग्स सहेजी गईं', privacyPresetApplied: 'प्रीसेट लागू किया गया',
+                mediaDiskUsage: 'डिस्क उपयोग', mediaDuplicates: 'डुप्लिकेट', mediaRestart: 'पुनः आरंभ',
+                diskLoading: 'डिस्क जानकारी लोड हो रही है...', diskTotal: 'कुल', diskUsed: 'उपयोग', diskFree: 'खाली',
+                duplicatesLoading: 'डुप्लिकेट खोज रहे हैं...', duplicatesNone: 'कोई डुप्लिकेट नहीं मिला', duplicatesFound: 'डुप्लिकेट मिले',
+                duplicateDelete: 'यह कॉपी हटाएं', duplicateConfirm: 'यह डुप्लिकेट हटाएं?', duplicateDeleteFiles: 'डिस्क से फ़ाइल भी हटाएं?',
+                restartSchedule: 'पुनः आरंभ शेड्यूल करें', restartCancel: 'पुनः आरंभ रद्द करें', restartNow: 'अभी पुनः आरंभ करें',
+                restartIn: 'पुनः आरंभ में', restartReason: 'कारण (वैकल्पिक)', restartScheduled: 'पुनः आरंभ शेड्यूल किया गया',
+                restartCancelled: 'पुनः आरंभ रद्द किया गया', restartConfirm: 'सर्वर पुनः आरंभ शेड्यूल करें?',
+                restart1Min: '1 मिनट', restart2Min: '2 मिनट', restart5Min: '5 मिनट', restart10Min: '10 मिनट',
+                // Additional UI translations
+                duplicatesGroups: 'समूह', duplicatesItems: 'आइटम', duplicateCopies: 'प्रतियां', duplicateKeep: 'रखें',
+                notificationToggleTitle: 'नई मीडिया सूचनाएं सक्षम/अक्षम करें',
+                // Moderator Panel translations
+                modPanelTitle: 'मॉडरेटर पैनल', modUsers: 'उपयोगकर्ता', modBans: 'प्रतिबंध', modLog: 'लॉग',
+                modSearchUser: 'उपयोगकर्ता खोजें', modSearchPlaceholder: 'प्रबंधित करने के लिए उपयोगकर्ता खोजें...',
+                modManageUser: 'उपयोगकर्ता प्रबंधन', modModeratorStatus: 'मॉडरेटर स्थिति',
+                modNotModerator: 'मॉडरेटर नहीं', modLevel1: 'स्तर 1', modLevel2: 'स्तर 2', modLevel3: 'स्तर 3',
+                modApply: 'लागू करें', modChatStyle: 'चैट शैली', modNicknameColor: 'उपनाम रंग', modMessageColor: 'संदेश रंग',
+                modClear: 'साफ़ करें', modTextStyle: 'टेक्स्ट शैली', modNormal: 'सामान्य', modBold: 'बोल्ड', modItalic: 'इटैलिक', modBoth: 'दोनों',
+                modResetStyle: 'शैली रीसेट करें', modApplyStyle: 'शैली लागू करें', modPenalties: 'दंड',
+                modSnooze: 'म्यूट', modChatBan: 'चैट प्रतिबंध', modMediaBan: 'मीडिया प्रतिबंध', modDuration: 'अवधि', modPerm: 'स्थायी',
+                modReasonOptional: 'कारण (वैकल्पि���)', modEnterReason: 'कारण दर्ज करें...', modCancel: 'रद्द करें', modApplyPenalty: 'दंड लागू करें',
+                modCurrentModerators: 'वर्तमान मॉडरेटर', modNoModerators: 'कोई मॉडरेटर नहीं',
+                modSearchBans: 'प्रतिबंध खोजें', modSearchBannedUsers: 'प्रतिबंधित उपयोगकर्ता खोजें...', modActiveBans: 'सक्रिय प्रतिबंध', modNoActiveBans: 'कोई सक्रिय प्रतिबंध नहीं',
+                modModeratorActions: 'मॉडरेटर गतिविधियाँ', modSampleMessage: 'नमूना संदेश टेक्स्ट',
+                modUserWillBeMuted: 'उपयोगकर्ता को म्यूट किया जाएगा', modMinutes: 'मिनट', modHours: 'घंटे', modDays: 'दिन', modWeeks: 'सप्ताह',
+                modAllModerators: 'सभी मॉडरेटर', modNoActions: 'कोई गतिविधि दर्ज नहीं',
+                modDeletes: 'हटाए गए', modActions: 'गतिविधियाँ',
+                changeLanguage: 'भाषा बदलें'
             },
             lt: {
                 requestMedia: 'Užsakyti Mediją', manageRequests: 'Tvarkyti Medijos Užklausas', requestDescription: '📬 Užsakykite Savo Mėgstamą Mediją!',
@@ -890,6 +1551,14 @@
                 mediaActions: 'Veiksmai', mediaChange: 'Keisti', mediaChangeTime: 'Keisti laiką', mediaSoon: 'Greitai', mediaDays: 'dienų', mediaPlays: 'peržiūrų',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Puslapis', mediaOf: 'iš', mediaPrev: 'Ankstesnis', mediaNext: 'Kitas', mediaGo: 'Eiti',
                 mediaTypeScheduled: 'Suplanuoti', mediaSettings: 'Nustatymai', mediaIncludeTypes: 'Rodyti tipus:', mediaTypesHint: 'Pasirinkite rodytinus tipus',
+                mediaDiskUsage: 'Disko naudojimas', mediaDuplicates: 'Dublikatai', mediaRestart: 'Paleisti iš naujo',
+                diskDrive: 'Diskas', diskTotal: 'Iš viso', diskUsed: 'Naudojama', diskFree: 'Laisva', diskLoading: 'Kraunama disko informacija...',
+                duplicatesLoading: 'Ieškoma dublikatų...', duplicatesNone: 'Dublikatų nerasta', duplicatesFound: 'dublikatų rasta',
+                duplicateDelete: 'Ištrinti', duplicateDeleteFiles: 'Ištrinti ir failus', duplicateConfirm: 'Ištrinti šį dublikatą?',
+                restartSchedule: 'Planuoti paleidimą', restartCancel: 'Atšaukti paleidimą', restartNow: 'Paleisti dabar',
+                restartIn: 'Paleidimas po', restartReason: 'Priežastis (neprivaloma)', restartScheduled: 'Paleidimas suplanuotas',
+                restartCancelled: 'Paleidimas atšauktas', restartConfirm: 'Planuoti serverio paleidimą iš naujo?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
                 requestDeleteRequest: 'Prašyti ištrinti', requestDeleteMedia: 'Prašyti ištrinti mediją', deletionRequests: 'Ištrynimo Užklausos', noDeletionRequests: 'Ištrynimo užklausų nėra',
                 deleteNow: 'Ištrinti ~1val', schedule1Day: '1 Diena', schedule1Week: '1 Savaitė', schedule1Month: '1 Mėnuo', rejectDeletion: 'Atmesti', approveDeleteRequest: 'Patvirtinti',
                 alreadyRequested: 'Ištrynimas Užsakytas', deletionApproved: 'PATVIRTINTA', deletionRejected: 'ATMESTA', deletionPending: 'LAUKIAMA',
@@ -906,7 +1575,45 @@
                 chatBan: 'Uždrausti', chatUnban: 'Atblokuoti', chatMute: 'Nutildyti', chatBanFromMedia: 'Uždrausti Mediją', chatMinutes: 'minučių',
                 chatBanned: 'Jums uždrausta rašyti', chatMuted: 'Jūs laikinai nutildytas', chatRateLimited: 'Lėčiau! Per daug žinučių.',
                 chatConnecting: 'Jungiamasi...', chatReconnecting: 'Jungiantis iš naujo...', chatDisconnected: 'Atsijungta',
-                chatClearAll: 'Išvalyti viską', chatClearConfirm: 'Ištrinti visas žinutes? Šio veiksmo negalima atšaukti.', chatCleared: 'Pokalbis išvalytas'
+                chatClearAll: 'Išvalyti viską', chatClearConfirm: 'Ištrinti visas žinutes? Šio veiksmo negalima atšaukti.', chatCleared: 'Pokalbis išvalytas',
+                chatPublic: 'Viešas', chatDM: 'Tiesioginės Žinutės', chatStartDM: 'Pradėti privatų pokalbį',
+                chatSearchUsers: 'Ieškoti vartotojų...', chatNoUsers: 'Vartotojų nerasta', chatNewMessage: 'Nauja žinutė nuo',
+                chatNoDMs: 'Kol kas nėra privačių žinučių', chatTypeSlash: 'Rašykite / norėdami pradėti TŽ',
+                privacySettings: 'Privatumo Nustatymai', privacyPresets: 'Greiti Nustatymai',
+                privacyPublic: 'Viešas', privacyFriendsOnly: 'Tik Draugai', privacyPrivate: 'Privatus',
+                privacyProfileVisibility: 'Profilio Matomumas', privacyShowOnlineStatus: 'Prisijungimo Būsena',
+                privacyShowWatchedHistory: 'Peržiūrų Istorija', privacyShowFriendsList: 'Draugų Sąrašas',
+                privacyShowCurrentlyWatching: 'Šiuo Metu Žiūri', privacyAllowFriendRequests: 'Draugystės Užklausos',
+                privacyAllowMessages: 'Tiesioginės Žinutės', privacyEveryone: 'Visi', privacyFriends: 'Draugai', privacyNobody: 'Niekas',
+                privacySaved: 'Nustatymai išsaugoti', privacyPresetApplied: 'Nustatymas pritaikytas',
+                mediaDiskUsage: 'Disko Naudojimas', mediaDuplicates: 'Dublikatai', mediaRestart: 'Paleisti Iš Naujo',
+                diskLoading: 'Kraunama disko informacija...', diskTotal: 'Viso', diskUsed: 'Naudojama', diskFree: 'Laisva',
+                duplicatesLoading: 'Ieškoma dublikatų...', duplicatesNone: 'Dublikatų nerasta', duplicatesFound: 'rasta dublikatų',
+                duplicateDelete: 'Ištrinti šią kopiją', duplicateConfirm: 'Ištrinti šį dublikatą?', duplicateDeleteFiles: 'Taip pat ištrinti failą iš disko?',
+                restartSchedule: 'Planuoti Paleidimą', restartCancel: 'Atšaukti Paleidimą', restartNow: 'Paleisti Dabar',
+                restartIn: 'Paleidimas po', restartReason: 'Priežastis (neprivaloma)', restartScheduled: 'Paleidimas suplanuotas',
+                restartCancelled: 'Paleidimas atšauktas', restartConfirm: 'Planuoti serverio paleidimą iš naujo?',
+                restart1Min: '1 min', restart2Min: '2 min', restart5Min: '5 min', restart10Min: '10 min',
+                // Additional UI translations
+                duplicatesGroups: 'grupių', duplicatesItems: 'elementų', duplicateCopies: 'kopijų', duplicateKeep: 'Palikti',
+                notificationToggleTitle: 'Įjungti/išjungti naujų medijų pranešimus',
+                // Moderator Panel translations
+                modPanelTitle: 'Moderatoriaus Skydelis', modUsers: 'Vartotojai', modBans: 'Draudimai', modLog: 'Žurnalas',
+                modSearchUser: 'Ieškoti Vartotojo', modSearchPlaceholder: 'Ieškoti vartotojo valdymui...',
+                modManageUser: 'Valdyti Vartotoją', modModeratorStatus: 'Moderatoriaus Statusas',
+                modNotModerator: 'Ne Moderatorius', modLevel1: 'Lygis 1', modLevel2: 'Lygis 2', modLevel3: 'Lygis 3',
+                modApply: 'Taikyti', modChatStyle: 'Pokalbio Stilius', modNicknameColor: 'Slapyvardžio Spalva', modMessageColor: 'Žinutės Spalva',
+                modClear: 'Išvalyti', modTextStyle: 'Teksto Stilius', modNormal: 'Normalus', modBold: 'Pusjuodis', modItalic: 'Kursyvas', modBoth: 'Abu',
+                modResetStyle: 'Atstatyti Stilių', modApplyStyle: 'Taikyti Stilių', modPenalties: 'Baudos',
+                modSnooze: 'Nutildyti', modChatBan: 'Pokalbio Draudimas', modMediaBan: 'Medijos Draudimas', modDuration: 'Trukmė', modPerm: 'Nuolat',
+                modReasonOptional: 'Priežastis (neprivaloma)', modEnterReason: 'Įveskite priežastį...', modCancel: 'Atšaukti', modApplyPenalty: 'Taikyti Baudą',
+                modCurrentModerators: 'Dabartiniai Moderatoriai', modNoModerators: 'Nėra moderatorių',
+                modSearchBans: 'Ieškoti Draudimų', modSearchBannedUsers: 'Ieškoti uždraustų vartotojų...', modActiveBans: 'Aktyvūs Draudimai', modNoActiveBans: 'Nėra aktyvių draudimų',
+                modModeratorActions: 'Moderatoriaus Veiksmai', modSampleMessage: 'Pavyzdinė žinutė',
+                modUserWillBeMuted: 'Vartotojas bus nutildytas', modMinutes: 'minučių', modHours: 'valandų', modDays: 'dienų', modWeeks: 'savaičių',
+                modAllModerators: 'Visi Moderatoriai', modNoActions: 'Nėra užregistruotų veiksmų',
+                modDeletes: 'ištrinimų', modActions: 'veiksmų',
+                changeLanguage: 'Keisti Kalbą'
             }
         },
 
@@ -1108,6 +1815,7 @@
             }
 
             this.injectStyles();
+            this.applyElegantFinFix();
             this.observeDetailPages();
             this.observeHomePageCards();
 
@@ -1116,6 +1824,7 @@
 
             // Initialize buttons in order: search first, then others
             this.initSearchField();
+            this.initLanguageButton();
             this.initNotificationToggle();
             this.initRequestButtonWithRetry();
 
@@ -1155,10 +1864,14 @@
             // Initialize playback ban interceptor
             this.initPlaybackBanInterceptor();
 
-            // Social features disabled in stable release
-            // this.initSocialDebug();
-            // this.initFriendsButton();
-            // this.registerOfflineHandler();
+            // Initialize social features debug
+            this.initSocialDebug();
+
+            // Initialize friends button
+            this.initFriendsButton();
+
+            // Register offline handler for when user leaves
+            this.registerOfflineHandler();
         },
 
         /**
@@ -1840,7 +2553,7 @@
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
                     '<div class="social-friend-status" style="color:#888;">Blocked</div>' +
                     '</div></div>' +
-                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + user.userId + '\')">Unblock</button>' +
+                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + self.escapeJs(user.userId) + '\')">Unblock</button>' +
                     '</div>';
             });
             html += '</div>';
@@ -1865,9 +2578,10 @@
                 var statusColor = user.status === 'Online' ? '#4CAF50' :
                                   user.status === 'Away' ? '#FFC107' : '#888';
                 var friendBadge = user.isFriend ? '<span style="color:#4CAF50;font-size:10px;margin-left:4px;">★</span>' : '';
-                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + user.userId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
+                var safeUserId = self.escapeJs(user.userId);
+                var addBtn = !user.isFriend ? '<button class="social-btn-add-friend" onclick="event.stopPropagation();RatingsPlugin.sendFriendRequest(\'' + safeUserId + '\')" style="padding:2px 6px;font-size:10px;margin-left:auto;">Add</button>' : '';
 
-                html += '<div class="social-friend-item social-online-item" data-userid="' + user.userId + '" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
+                html += '<div class="social-friend-item social-online-item" data-userid="' + self.escapeHtml(user.userId) + '" onclick="RatingsPlugin.navigateToProfile(\'' + safeUserId + '\')" style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;">' +
                     '<div style="position:relative;flex-shrink:0;">' +
                     '<div style="background:#333;color:#fff;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;">' +
                     self.escapeHtml(user.username.charAt(0).toUpperCase()) + '</div>' +
@@ -2074,10 +2788,12 @@
             var menu = document.createElement('div');
             menu.id = 'social-friend-menu';
             menu.className = 'social-friend-menu';
+            var safeUserId = this.escapeJs(userId);
+            var safeUsername = this.escapeJs(username);
             menu.innerHTML = `
-                <button onclick="RatingsPlugin.navigateToProfile('${userId}')">View Profile</button>
-                <button onclick="RatingsPlugin.unfriendUser('${userId}', '${username.replace(/'/g, "\\'")}')">Unfriend</button>
-                <button onclick="RatingsPlugin.blockUser('${userId}')" style="color:#e74c3c;">Block</button>
+                <button onclick="RatingsPlugin.navigateToProfile('${safeUserId}')">View Profile</button>
+                <button onclick="RatingsPlugin.unfriendUser('${safeUserId}', '${safeUsername}')">Unfriend</button>
+                <button onclick="RatingsPlugin.blockUser('${safeUserId}')" style="color:#e74c3c;">Block</button>
             `;
 
             // Position near the button
@@ -2158,27 +2874,28 @@
 
                 // Build watching info if available
                 var watchingHtml = '';
+                var safeFriendId = self.escapeJs(friend.userId);
                 if (friend.watching && status !== 'Offline') {
                     var watchTitle = friend.watching.seriesName
                         ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                         : friend.watching.title;
-                    var itemId = friend.watching.itemId;
-                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                    var safeItemId = self.escapeJs(friend.watching.itemId);
+                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + safeItemId + '\')" title="Click to view">' +
                         '<span class="watching-icon">&#9654;</span> ' +
                         self.escapeHtml(watchTitle) +
-                        ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
+                        ' <span class="watching-progress">(' + self.escapeHtml(friend.watching.position) + '/' + self.escapeHtml(friend.watching.duration) + ')</span>' +
                         '</div>';
                 }
 
-                html += '<div class="social-friend-item" data-userid="' + friend.userId + '">' +
-                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
+                html += '<div class="social-friend-item" data-userid="' + self.escapeHtml(friend.userId) + '">' +
+                    '<div class="social-friend-avatar" onclick="RatingsPlugin.navigateToProfile(\'' + safeFriendId + '\')" style="cursor:pointer">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
                     '<div class="social-friend-info">' +
-                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + friend.userId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
+                    '<div class="social-friend-name clickable" onclick="RatingsPlugin.navigateToProfile(\'' + safeFriendId + '\')">' + self.escapeHtml(friend.username) + '</div>' +
                     '<div class="social-friend-status">' + statusText + '</div>' +
                     watchingHtml +
                     '</div>' +
                     '<div class="social-friend-actions">' +
-                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + friend.userId + '\', \'' + self.escapeHtml(friend.username).replace(/'/g, "\\'") + '\')" title="More actions">&#8942;</button>' +
+                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + self.escapeJs(friend.userId) + '\', \'' + self.escapeJs(friend.username) + '\')" title="More actions">&#8942;</button>' +
                     '</div></div>';
             });
             content.innerHTML = html;
@@ -2216,8 +2933,8 @@
                         '<div class="social-friend-status">Wants to be friends</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + id + '\')">Accept</button>' +
-                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + id + '\')">Reject</button>' +
+                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + self.escapeJs(id) + '\')">Accept</button>' +
+                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + self.escapeJs(id) + '\')">Reject</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -2229,8 +2946,9 @@
                 outgoing.forEach(function (req) {
                     var username = req.ToUsername || req.toUsername || '?';
                     var id = req.Id || req.id;
+                    var safeId = self.escapeJs(id);
                     var initial = username[0].toUpperCase();
-                    html += '<div class="social-request-item" data-requestid="' + id + '">' +
+                    html += '<div class="social-request-item" data-requestid="' + self.escapeHtml(id) + '">' +
                         '<div class="social-request-info">' +
                         '<div class="social-friend-avatar">' + initial + '</div>' +
                         '<div class="social-friend-info">' +
@@ -2238,7 +2956,7 @@
                         '<div class="social-friend-status">Request pending</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + id + '\')">Cancel</button>' +
+                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + safeId + '\')">Cancel</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -2928,7 +3646,7 @@
                 var watchTitle = friend.watching.seriesName
                     ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                     : friend.watching.title;
-                var itemId = friend.watching.itemId;
+                var itemId = self.escapeJs(friend.watching.itemId);
                 var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
                     '<span class="watching-icon">&#9654;</span> ' +
                     self.escapeHtml(watchTitle) +
@@ -2996,7 +3714,7 @@
                 var watchTitle = data.watching.seriesName
                     ? data.watching.seriesName + ' ' + data.watching.episodeInfo
                     : data.watching.title;
-                var itemId = data.watching.itemId;
+                var itemId = self.escapeJs(data.watching.itemId);
                 var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
                     '<span class="watching-icon">&#9654;</span> ' +
                     self.escapeHtml(watchTitle) +
@@ -3186,6 +3904,7 @@
             var html = '';
             users.forEach(function (user) {
                 var initial = (user.username || '?')[0].toUpperCase();
+                var safeUserId = self.escapeJs(user.userId);
                 var buttonHtml;
 
                 if (user.isFriend) {
@@ -3193,14 +3912,14 @@
                 } else if (user.hasPendingRequest) {
                     buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
                 } else if (user.hasIncomingRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + user.userId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + safeUserId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
                 } else if (user.canSendRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + user.userId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + safeUserId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
                 } else {
                     buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
                 }
 
-                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + user.userId + '\')" style="justify-content:space-between;cursor:pointer;">' +
+                html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + safeUserId + '\')" style="justify-content:space-between;cursor:pointer;">' +
                     '<div style="display:flex;align-items:center;">' +
                     '<div class="social-friend-avatar">' + initial + '</div>' +
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
@@ -3291,9 +4010,54 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            if (text == null) return '';
             var div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = String(text);
             return div.innerHTML;
+        },
+
+        /**
+         * Escape a string for safe use in JavaScript string contexts (onclick handlers, etc.)
+         * Escapes backslashes first, then quotes
+         */
+        escapeJs: function (text) {
+            if (text == null) return '';
+            return String(text)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r')
+                .replace(/</g, '\\x3c')
+                .replace(/>/g, '\\x3e');
+        },
+
+        /**
+         * Sanitize HTML string by removing dangerous elements and attributes
+         * Use this before innerHTML when HTML structure is needed
+         */
+        sanitizeHtml: function (html) {
+            if (html == null) return '';
+            var str = String(html);
+            // Remove script tags and contents
+            str = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+            // Remove event handlers
+            str = str.replace(/\s*on\w+\s*=\s*(['"])[^'"]*\1/gi, '');
+            str = str.replace(/\s*on\w+\s*=\s*[^\s>]+/gi, '');
+            // Remove javascript: URLs
+            str = str.replace(/javascript\s*:/gi, '');
+            // Remove data: URLs in sensitive attributes
+            str = str.replace(/(href|src|action)\s*=\s*(['"])?\s*data:/gi, '$1=$2#');
+            return str;
+        },
+
+        /**
+         * Safely set innerHTML with sanitization
+         */
+        safeSetHtml: function (element, html) {
+            if (element && html != null) {
+                element.innerHTML = this.sanitizeHtml(html);
+            }
         },
 
         /**
@@ -7337,6 +8101,130 @@
                     }
                 }
 
+                /* Language Button and Dropdown */
+                #languageBtn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: transparent !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    padding: 8px !important;
+                    border-radius: 50% !important;
+                    transition: background 0.2s ease !important;
+                    color: #fff !important;
+                    position: relative !important;
+                }
+
+                #languageBtn:hover {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                }
+
+                #languageBtn svg {
+                    width: 22px !important;
+                    height: 22px !important;
+                    fill: currentColor !important;
+                }
+
+                #languageBtn .lang-code {
+                    position: absolute !important;
+                    bottom: 2px !important;
+                    right: 2px !important;
+                    font-size: 8px !important;
+                    font-weight: 700 !important;
+                    background: rgba(0, 164, 220, 0.9) !important;
+                    color: #fff !important;
+                    padding: 1px 3px !important;
+                    border-radius: 3px !important;
+                    text-transform: uppercase !important;
+                }
+
+                #languageDropdown {
+                    position: fixed !important;
+                    min-width: 180px !important;
+                    max-height: 400px !important;
+                    overflow-y: auto !important;
+                    background: #1a1a1a !important;
+                    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+                    z-index: 2147483647 !important;
+                    display: none;
+                    padding: 6px 0 !important;
+                }
+
+                #languageDropdown.visible {
+                    display: block !important;
+                }
+
+                #languageDropdown .lang-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 10px 16px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s ease !important;
+                    color: #ccc !important;
+                    font-size: 13px !important;
+                    gap: 10px !important;
+                }
+
+                #languageDropdown .lang-item:hover {
+                    background: rgba(255, 255, 255, 0.08) !important;
+                    color: #fff !important;
+                }
+
+                #languageDropdown .lang-item.active {
+                    background: rgba(0, 164, 220, 0.2) !important;
+                    color: #00a4dc !important;
+                }
+
+                #languageDropdown .lang-item .lang-code-badge {
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    padding: 2px 6px !important;
+                    border-radius: 4px !important;
+                    text-transform: uppercase !important;
+                    min-width: 24px !important;
+                    text-align: center !important;
+                }
+
+                #languageDropdown .lang-item.active .lang-code-badge {
+                    background: rgba(0, 164, 220, 0.3) !important;
+                }
+
+                #languageDropdown .lang-item .lang-name {
+                    flex: 1 !important;
+                }
+
+                #languageDropdown .lang-item .lang-check {
+                    color: #00a4dc !important;
+                    font-size: 14px !important;
+                    opacity: 0;
+                }
+
+                #languageDropdown .lang-item.active .lang-check {
+                    opacity: 1;
+                }
+
+                /* Scrollbar styling for language dropdown */
+                #languageDropdown::-webkit-scrollbar {
+                    width: 6px !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-track {
+                    background: transparent !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    border-radius: 3px !important;
+                }
+
+                #languageDropdown::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3) !important;
+                }
+
                 /* Media Management Button Styles */
                 #mediaManagementBtn {
                     display: flex !important;
@@ -7760,304 +8648,6 @@
                     font-size: 12px;
                 }
 
-                /* Disk Usage Tab */
-                .disk-usage-summary {
-                    display: flex;
-                    justify-content: center;
-                    gap: 30px;
-                    padding: 15px;
-                    background: #252525;
-                    border-bottom: 1px solid #333;
-                    color: #fff;
-                }
-
-                .disk-usage-container {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 20px;
-                    padding: 20px;
-                }
-
-                .disk-card {
-                    background: #252525;
-                    border-radius: 8px;
-                    padding: 20px;
-                }
-
-                .disk-header {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 15px;
-                }
-
-                .disk-name {
-                    font-weight: 600;
-                    color: #fff;
-                    font-size: 16px;
-                }
-
-                .disk-label {
-                    color: #888;
-                    font-size: 14px;
-                }
-
-                .disk-bar-container {
-                    background: #333;
-                    border-radius: 6px;
-                    height: 20px;
-                    overflow: hidden;
-                    margin-bottom: 15px;
-                }
-
-                .disk-bar {
-                    height: 100%;
-                    border-radius: 6px;
-                    transition: width 0.3s ease;
-                }
-
-                .disk-stats {
-                    display: grid;
-                    gap: 8px;
-                    color: #ddd;
-                    font-size: 13px;
-                }
-
-                .disk-stat-label {
-                    color: #888;
-                }
-
-                .disk-mounts {
-                    margin-top: 10px;
-                    font-size: 11px;
-                    color: #666;
-                }
-
-                /* Duplicates Tab */
-                .duplicates-header {
-                    padding: 15px 20px;
-                    background: #252525;
-                    border-bottom: 1px solid #333;
-                    color: #fff;
-                    font-weight: 500;
-                }
-
-                .duplicates-container {
-                    padding: 20px;
-                }
-
-                .duplicate-group {
-                    background: #252525;
-                    border-radius: 8px;
-                    margin-bottom: 15px;
-                    overflow: hidden;
-                }
-
-                .duplicate-group-header {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 15px;
-                    background: #333;
-                    color: #fff;
-                }
-
-                .imdb-id {
-                    font-weight: 500;
-                }
-
-                .duplicate-count {
-                    color: #888;
-                }
-
-                .duplicate-items {
-                    padding: 10px;
-                }
-
-                .duplicate-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px;
-                    border-bottom: 1px solid #333;
-                }
-
-                .duplicate-item:last-child {
-                    border-bottom: none;
-                }
-
-                .duplicate-info {
-                    flex: 1;
-                }
-
-                .duplicate-name {
-                    color: #fff;
-                    font-weight: 500;
-                }
-
-                .duplicate-path {
-                    color: #666;
-                    font-size: 11px;
-                    margin-top: 4px;
-                    word-break: break-all;
-                }
-
-                .duplicate-size {
-                    color: #52b54b;
-                    margin-top: 4px;
-                }
-
-                .duplicate-actions {
-                    margin-left: 15px;
-                }
-
-                .delete-duplicate-btn {
-                    background: #e74c3c;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 8px 12px;
-                    cursor: pointer;
-                    font-size: 14px;
-                }
-
-                .delete-duplicate-btn:hover {
-                    background: #c0392b;
-                }
-
-                /* Restart Panel Tab */
-                .restart-panel {
-                    padding: 40px;
-                    display: flex;
-                    justify-content: center;
-                }
-
-                .restart-schedule-form {
-                    text-align: center;
-                }
-
-                .restart-schedule-form h3 {
-                    color: #fff;
-                    margin-bottom: 20px;
-                }
-
-                .restart-options {
-                    display: flex;
-                    gap: 10px;
-                    justify-content: center;
-                    margin-bottom: 20px;
-                }
-
-                .restart-time-btn {
-                    background: #52b54b;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 12px 24px;
-                    color: #fff;
-                    font-size: 14px;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                }
-
-                .restart-time-btn:hover {
-                    background: #3d8b3d;
-                }
-
-                .restart-reason-input input {
-                    padding: 10px 15px;
-                    border: 1px solid #444;
-                    border-radius: 6px;
-                    background: #333;
-                    color: #fff;
-                    width: 300px;
-                    font-size: 14px;
-                }
-
-                .restart-status-active {
-                    text-align: center;
-                }
-
-                .restart-countdown {
-                    margin-bottom: 15px;
-                }
-
-                .countdown-label {
-                    display: block;
-                    color: #888;
-                    margin-bottom: 5px;
-                }
-
-                .countdown-time {
-                    font-size: 48px;
-                    font-weight: bold;
-                    color: #e74c3c;
-                }
-
-                .restart-reason {
-                    color: #aaa;
-                    margin-bottom: 20px;
-                }
-
-                .cancel-restart-btn {
-                    background: #e74c3c;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 12px 30px;
-                    color: #fff;
-                    font-size: 16px;
-                    cursor: pointer;
-                }
-
-                .cancel-restart-btn:hover {
-                    background: #c0392b;
-                }
-
-                /* Server Restart Toast */
-                .server-restart-toast {
-                    position: fixed;
-                    bottom: 20px;
-                    left: 20px;
-                    background: #1a1a1a;
-                    border: 1px solid #e74c3c;
-                    border-radius: 12px;
-                    padding: 15px 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    z-index: 999999;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-                    transform: translateX(-120%);
-                    transition: transform 0.3s ease;
-                }
-
-                .server-restart-toast.show {
-                    transform: translateX(0);
-                }
-
-                .restart-toast-icon {
-                    font-size: 24px;
-                    animation: spin 2s linear infinite;
-                }
-
-                @keyframes spin {
-                    100% { transform: rotate(360deg); }
-                }
-
-                .restart-toast-title {
-                    color: #fff;
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-
-                .restart-toast-countdown {
-                    color: #e74c3c;
-                    font-size: 24px;
-                    font-weight: bold;
-                }
-
-                .restart-toast-reason {
-                    color: #888;
-                    font-size: 12px;
-                    display: none;
-                }
-
                 /* Settings Tab */
                 .media-settings-tab {
                     font-size: 16px !important;
@@ -8121,6 +8711,362 @@
                 .media-type-checkbox.checked {
                     background: rgba(0, 164, 220, 0.2);
                     border: 1px solid #00a4dc;
+                }
+
+                /* Disk Usage Styles */
+                .disk-usage-summary {
+                    display: flex;
+                    justify-content: center;
+                    gap: 30px;
+                    padding: 15px 20px;
+                    background: #1a1a1a;
+                    border-bottom: 1px solid #333;
+                    color: #ccc;
+                    font-size: 14px;
+                }
+
+                .disk-usage-summary span {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+
+                .disk-usage-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 20px;
+                    padding: 20px;
+                }
+
+                .disk-card {
+                    background: #252525;
+                    border-radius: 10px;
+                    padding: 20px;
+                    border: 1px solid #333;
+                }
+
+                .disk-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+
+                .disk-name {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+
+                .disk-label {
+                    font-size: 14px;
+                    color: #888;
+                }
+
+                .disk-bar-container {
+                    height: 20px;
+                    background: #333;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    margin-bottom: 15px;
+                }
+
+                .disk-bar {
+                    height: 100%;
+                    border-radius: 10px;
+                    transition: width 0.3s ease;
+                }
+
+                .disk-stats {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    font-size: 14px;
+                    color: #ccc;
+                }
+
+                .disk-stat-label {
+                    color: #888;
+                    margin-right: 5px;
+                }
+
+                .disk-mounts {
+                    margin-top: 12px;
+                    padding-top: 12px;
+                    border-top: 1px solid #333;
+                    font-size: 12px;
+                    color: #666;
+                    word-break: break-all;
+                }
+
+                /* Duplicates Styles */
+                .duplicates-header {
+                    padding: 15px 20px;
+                    background: #252525;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 500;
+                    border-bottom: 1px solid #333;
+                }
+
+                .duplicates-container {
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .duplicate-group {
+                    background: #252525;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    border: 1px solid #333;
+                }
+
+                .duplicate-group-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 15px;
+                    background: #1a1a1a;
+                    border-bottom: 1px solid #333;
+                }
+
+                .imdb-id {
+                    font-size: 14px;
+                    color: #f5c518;
+                    font-weight: 500;
+                }
+
+                .duplicate-count {
+                    font-size: 12px;
+                    color: #888;
+                    background: #333;
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                }
+
+                .duplicate-items {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .duplicate-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #333;
+                }
+
+                .duplicate-item:last-child {
+                    border-bottom: none;
+                }
+
+                .duplicate-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .duplicate-name {
+                    font-size: 14px;
+                    color: #fff;
+                    font-weight: 500;
+                    margin-bottom: 4px;
+                }
+
+                .duplicate-path {
+                    font-size: 12px;
+                    color: #888;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 4px;
+                }
+
+                .duplicate-size {
+                    font-size: 12px;
+                    color: #52b54b;
+                }
+
+                .duplicate-actions {
+                    margin-left: 15px;
+                }
+
+                .delete-duplicate-btn {
+                    background: transparent;
+                    border: none;
+                    font-size: 18px;
+                    cursor: pointer;
+                    opacity: 0.7;
+                    transition: opacity 0.2s;
+                }
+
+                .delete-duplicate-btn:hover {
+                    opacity: 1;
+                }
+
+                /* Restart Panel Styles */
+                .restart-panel {
+                    padding: 40px 20px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .restart-schedule-form {
+                    background: #252525;
+                    border-radius: 12px;
+                    padding: 30px;
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                }
+
+                .restart-schedule-form h3 {
+                    color: #fff;
+                    margin: 0 0 25px 0;
+                    font-size: 18px;
+                }
+
+                .restart-options {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+
+                .restart-time-btn {
+                    padding: 15px 20px;
+                    background: #333;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .restart-time-btn:hover {
+                    background: #e74c3c;
+                }
+
+                .restart-reason-input input {
+                    width: 100%;
+                    padding: 12px 15px;
+                    background: #333;
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+
+                .restart-status-active {
+                    background: #252525;
+                    border-radius: 12px;
+                    padding: 40px;
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                    border: 2px solid #e74c3c;
+                }
+
+                .restart-countdown {
+                    margin-bottom: 20px;
+                }
+
+                .countdown-label {
+                    display: block;
+                    color: #888;
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                }
+
+                .countdown-time {
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                }
+
+                .restart-reason {
+                    color: #ccc;
+                    margin-bottom: 25px;
+                    font-style: italic;
+                }
+
+                .cancel-restart-btn {
+                    padding: 12px 30px;
+                    background: #333;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .cancel-restart-btn:hover {
+                    background: #52b54b;
+                }
+
+                /* Server Restart Toast Notification (bottom-left) */
+                .server-restart-toast {
+                    display: none;
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                    border: 1px solid #e74c3c;
+                    border-radius: 12px;
+                    padding: 15px 20px;
+                    z-index: 99999999;
+                    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+                    animation: slideInLeft 0.3s ease;
+                }
+
+                @keyframes slideInLeft {
+                    from { transform: translateX(-100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+
+                .server-restart-toast.show {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+
+                .restart-toast-icon {
+                    font-size: 32px;
+                    animation: spin 2s linear infinite;
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                .restart-toast-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .restart-toast-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+
+                .restart-toast-countdown {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #e74c3c;
+                }
+
+                .restart-toast-reason {
+                    font-size: 12px;
+                    color: #888;
+                    display: none;
                 }
 
                 /* Deletion Dialog */
@@ -11451,6 +12397,47 @@
         },
 
         /**
+         * Apply CSS fixes for ElegantFin theme compatibility on mobile.
+         * Only injects styles when ElegantFin is detected (skinBody class present).
+         */
+        applyElegantFinFix: function () {
+            // Check if ElegantFin theme is active by looking for skinBody class
+            const checkAndApplyFix = function () {
+                if (!document.body.classList.contains('skinBody')) {
+                    return; // ElegantFin not detected, skip
+                }
+
+                // Only inject if not already present
+                if (document.getElementById('elegantFinCompatStyles')) {
+                    return;
+                }
+
+                const style = document.createElement('style');
+                style.id = 'elegantFinCompatStyles';
+                style.textContent = `
+                    /* ElegantFin theme compatibility - mobile only */
+                    @media screen and (max-width: 600px) {
+                        .skinBody {
+                            padding-top: 0 !important;
+                        }
+                        .tabs-viewmenubar.emby-tabs {
+                            padding-top: 0 !important;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                console.log('[Ratings] ElegantFin theme detected - applied mobile compatibility fix');
+            };
+
+            // Check immediately
+            checkAndApplyFix();
+
+            // Also check after a short delay (theme may load after our script)
+            setTimeout(checkAndApplyFix, 1000);
+            setTimeout(checkAndApplyFix, 3000);
+        },
+
+        /**
          * Observe detail pages for item changes
          */
         observeDetailPages: function () {
@@ -11653,20 +12640,20 @@
             if (status.isSelf) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
             } else if (status.hasBlocked) {
-                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + profile.userId + '\')">Unblock</button>';
+                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(profile.userId) + '\')">Unblock</button>';
             } else if (status.isBlockedBy) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
             } else if (status.isFriend) {
-                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + profile.userId + '\', \'' + self.escapeHtml(username).replace(/'/g, "\\'") + '\')">Remove Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(profile.userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
             } else if (status.hasPendingOutgoing) {
                 actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
             } else if (status.hasPendingIncoming) {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + status.incomingRequestId + '\')">Accept Request</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + status.incomingRequestId + '\')">Reject</button>';
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept Request</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
             } else {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + profile.userId + '\')">Add Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + profile.userId + '\')">Block</button>';
+                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(profile.userId) + '\')">Add Friend</button>' +
+                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
             }
 
             var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
@@ -13781,6 +14768,163 @@
         },
 
         /**
+         * Initialize language selector button in header
+         */
+        initLanguageButton: function () {
+            const self = this;
+            try {
+                // Check if already exists
+                if (document.getElementById('languageBtn')) {
+                    return;
+                }
+
+                // Language names mapping
+                const langNames = {
+                    en: 'English', es: 'Español', zh: '中文', pt: 'Português', ru: 'Русский',
+                    ja: '日本語', de: 'Deutsch', fr: 'Français', ko: '한국어', it: 'Italiano',
+                    tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands', ar: 'العربية', hi: 'हिन्दी', lt: 'Lietuvių'
+                };
+
+                const createLanguageButton = () => {
+                    try {
+                        // Check if already exists
+                        if (document.getElementById('languageBtn')) {
+                            return;
+                        }
+
+                        const buttonGroup = document.getElementById('ratingsButtonGroup');
+                        if (!buttonGroup) {
+                            // Retry later
+                            setTimeout(createLanguageButton, 500);
+                            return;
+                        }
+
+                        // Create the language button
+                        const btn = document.createElement('button');
+                        btn.id = 'languageBtn';
+                        btn.className = 'ratingsGroupBtn';
+                        btn.setAttribute('type', 'button');
+                        btn.setAttribute('title', self.t('changeLanguage'));
+                        btn.style.position = 'relative';
+
+                        // Globe icon with current language code badge
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg><span class="lang-code">${self.currentLanguage.toUpperCase()}</span>`;
+
+                        // Create dropdown container
+                        const dropdown = document.createElement('div');
+                        dropdown.id = 'languageDropdown';
+
+                        // Build dropdown items
+                        let dropdownHtml = '';
+                        self.validLanguages.forEach(code => {
+                            const isActive = code === self.currentLanguage ? ' active' : '';
+                            dropdownHtml += `<div class="lang-item${isActive}" data-lang="${code}">
+                                <span class="lang-code-badge">${code}</span>
+                                <span class="lang-name">${langNames[code]}</span>
+                                <span class="lang-check">✓</span>
+                            </div>`;
+                        });
+                        dropdown.innerHTML = dropdownHtml;
+                        document.body.appendChild(dropdown);
+
+                        // Position dropdown below button
+                        const positionDropdown = () => {
+                            const rect = btn.getBoundingClientRect();
+                            dropdown.style.top = (rect.bottom + 4) + 'px';
+                            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                            dropdown.style.left = 'auto';
+                        };
+
+                        // Toggle dropdown on click
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (dropdown.classList.contains('visible')) {
+                                dropdown.classList.remove('visible');
+                            } else {
+                                positionDropdown();
+                                dropdown.classList.add('visible');
+                            }
+                        });
+
+                        // Handle language selection
+                        dropdown.addEventListener('click', (e) => {
+                            const langItem = e.target.closest('.lang-item');
+                            if (!langItem) return;
+
+                            const newLang = langItem.dataset.lang;
+                            if (newLang && newLang !== self.currentLanguage) {
+                                // Update active state
+                                dropdown.querySelectorAll('.lang-item').forEach(item => {
+                                    item.classList.toggle('active', item.dataset.lang === newLang);
+                                });
+
+                                // Set language
+                                self.setLanguage(newLang);
+
+                                // Update button badge
+                                const badge = btn.querySelector('.lang-code');
+                                if (badge) {
+                                    badge.textContent = newLang.toUpperCase();
+                                }
+
+                                // Update button title
+                                btn.setAttribute('title', self.t('changeLanguage'));
+                            }
+
+                            // Close dropdown
+                            dropdown.classList.remove('visible');
+                        });
+
+                        // Close dropdown when clicking outside
+                        document.addEventListener('click', (e) => {
+                            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Close dropdown on escape
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                dropdown.classList.remove('visible');
+                            }
+                        });
+
+                        // Insert button into button group
+                        buttonGroup.appendChild(btn);
+
+                        // Trigger responsive scaling
+                        setTimeout(() => {
+                            if (typeof self.triggerResponsiveUpdate === 'function') {
+                                self.triggerResponsiveUpdate();
+                            }
+                        }, 100);
+
+                    } catch (err) {
+                        console.error('[Ratings] Error creating language button:', err);
+                    }
+                };
+
+                // Wait for button group to exist
+                const waitForButtonGroup = () => {
+                    if (document.getElementById('ratingsButtonGroup')) {
+                        createLanguageButton();
+                    } else {
+                        setTimeout(waitForButtonGroup, 500);
+                    }
+                };
+
+                setTimeout(waitForButtonGroup, 300);
+
+            } catch (err) {
+                console.error('[Ratings] Error initializing language button:', err);
+            }
+        },
+
+        /**
          * Initialize notification toggle in header
          */
         initNotificationToggle: function () {
@@ -13831,7 +14975,7 @@
                         toggleContainer.id = 'notificationToggle';
                         toggleContainer.className = 'ratingsGroupBtn';
                         toggleContainer.setAttribute('type', 'button');
-                        toggleContainer.setAttribute('title', 'Enable/disable new media notifications');
+                        toggleContainer.setAttribute('title', self.t('notificationToggleTitle'));
                         toggleContainer.style.position = 'relative';
 
                         // Create bell icon SVG
@@ -14995,10 +16139,11 @@
             if (modal) {
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
-                // Set current tab to 'all' (default when opening)
+
+                // Reset to 'All Types' tab when opening
                 this.mediaListState.currentTab = 'all';
 
-                // Reset visual tab selection
+                // Reset visual tab selection to first tab (All Types)
                 const tabs = modal.querySelectorAll('#mediaManagementTabs .media-tab');
                 tabs.forEach((tab, index) => {
                     if (index === 0) {
@@ -15008,7 +16153,7 @@
                     }
                 });
 
-                // Reset panel visibility
+                // Show correct panels for media list view
                 const controls = document.getElementById('mediaManagementControls');
                 const settings = document.getElementById('mediaManagementSettings');
                 const body = document.getElementById('mediaManagementBody');
@@ -15740,6 +16885,24 @@
                         body.style.display = 'none';
                         pagination.style.display = 'none';
                         self.loadMediaTypeSettings();
+                    } else if (tabType === 'diskusage') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadDiskUsage();
+                    } else if (tabType === 'duplicates') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadDuplicates();
+                    } else if (tabType === 'restart') {
+                        controls.style.display = 'none';
+                        settings.style.display = 'none';
+                        body.style.display = 'block';
+                        pagination.style.display = 'none';
+                        self.loadRestartPanel();
                     } else {
                         controls.style.display = 'flex';
                         settings.style.display = 'none';
@@ -15748,18 +16911,6 @@
 
                         if (tabType === 'scheduled') {
                             self.loadScheduledMediaList();
-                        } else if (tabType === 'diskusage') {
-                            pagination.style.display = 'none';
-                            controls.style.display = 'none';
-                            self.loadDiskUsage();
-                        } else if (tabType === 'duplicates') {
-                            pagination.style.display = 'none';
-                            controls.style.display = 'none';
-                            self.loadDuplicates();
-                        } else if (tabType === 'restart') {
-                            pagination.style.display = 'none';
-                            controls.style.display = 'none';
-                            self.loadRestartPanel();
                         } else {
                             self.loadMediaList();
                         }
@@ -15978,7 +17129,7 @@
         },
 
         // ===============================================
-        // Media Management v2 - Disk Usage, Duplicates, Restart
+        // Disk Usage, Duplicates, Server Restart Functions
         // ===============================================
 
         /**
@@ -16074,7 +17225,7 @@
                     return;
                 }
 
-                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} groups, ${data.TotalDuplicateItems} items - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
+                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
                 html += '<div class="duplicates-container">';
 
                 duplicates.forEach(group => {
@@ -16082,7 +17233,7 @@
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
                                 <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)} - ${self.escapeHtml(group.Title)}</span>
-                                <span class="duplicate-count">${group.ItemCount} copies (${group.TotalSizeGB} GB)</span>
+                                <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
                             </div>
                             <div class="duplicate-items">
                     `;
@@ -16092,14 +17243,14 @@
                             <div class="duplicate-item" data-item-id="${item.ItemId}">
                                 <div class="duplicate-info">
                                     <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
-                                    <div class="duplicate-path">${self.escapeHtml(item.Path || 'Unknown path')}</div>
+                                    <div class="duplicate-path">${self.escapeHtml(item.Path || self.t('unknown'))}</div>
                                     <div class="duplicate-size">${item.SizeGB} GB</div>
                                 </div>
                                 ${index > 0 ? `
                                     <div class="duplicate-actions">
                                         <button class="delete-duplicate-btn" data-item-id="${item.ItemId}" title="${self.t('duplicateDelete')}">🗑️</button>
                                     </div>
-                                ` : '<div class="duplicate-actions"><span style="color:#52b54b">✓ Keep</span></div>'}
+                                ` : `<div class="duplicate-actions"><span style="color:#52b54b">✓ ${self.t('duplicateKeep')}</span></div>`}
                             </div>
                         `;
                     });
@@ -20934,37 +22085,73 @@
                 return;
             }
 
-            // Sort items by cached ratings
-            const sortedItems = [...items].sort((a, b) => {
-                const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
-                const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+            // Find items without cached ratings
+            const uncachedIds = items
+                .filter(item => !self.ratingsCache[item.Id])
+                .map(item => item.Id);
 
-                // Items without ratings go to the end
-                if (ratingA === -1 && ratingB === -1) return 0;
-                if (ratingA === -1) return 1;
-                if (ratingB === -1) return -1;
+            // Helper function to perform the actual sort
+            const performSort = () => {
+                const sortedItems = [...items].sort((a, b) => {
+                    const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                    const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
 
-                // Sort by direction
-                if (direction === 'desc') {
-                    return ratingB - ratingA; // Highest first
-                } else {
-                    return ratingA - ratingB; // Lowest first
+                    // Items without ratings go to the end
+                    if (ratingA === -1 && ratingB === -1) return 0;
+                    if (ratingA === -1) return 1;
+                    if (ratingB === -1) return -1;
+
+                    // Sort by direction
+                    if (direction === 'desc') {
+                        return ratingB - ratingA; // Highest first
+                    } else {
+                        return ratingA - ratingB; // Lowest first
+                    }
+                });
+
+                // Update items data to reflect new order
+                const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
+                genreRow.setAttribute('data-items', newItemsData);
+
+                // Re-render cards with lazy loading
+                self.renderGenreCards(genreRow, sortedItems, baseUrl);
+
+                // Update sort state and button styles
+                genreRow.setAttribute('data-sort-state', direction);
+                const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
+                buttons.forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
+                });
+            };
+
+            // If there are uncached ratings, fetch them first
+            if (uncachedIds.length > 0) {
+                // Show loading indicator on button
+                const activeBtn = genreRow.querySelector(`.netflix-sort-btn[data-sort="${direction}"]`);
+                if (activeBtn) {
+                    activeBtn.innerHTML = '⏳';
+                    activeBtn.disabled = true;
                 }
-            });
 
-            // Update items data to reflect new order
-            const newItemsData = btoa(encodeURIComponent(JSON.stringify(sortedItems)));
-            genreRow.setAttribute('data-items', newItemsData);
-
-            // Re-render cards with lazy loading
-            self.renderGenreCards(genreRow, sortedItems, baseUrl);
-
-            // Update sort state and button styles
-            genreRow.setAttribute('data-sort-state', direction);
-            const buttons = genreRow.querySelectorAll('.netflix-sort-btn');
-            buttons.forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-sort') === direction);
-            });
+                self.fetchRatingsForItems(uncachedIds).then(() => {
+                    // Restore button
+                    if (activeBtn) {
+                        activeBtn.innerHTML = direction === 'desc' ? '▲' : '▼';
+                        activeBtn.disabled = false;
+                    }
+                    performSort();
+                }).catch(() => {
+                    // Restore button even on error
+                    if (activeBtn) {
+                        activeBtn.innerHTML = direction === 'desc' ? '▲' : '▼';
+                        activeBtn.disabled = false;
+                    }
+                    performSort(); // Still sort with available data
+                });
+            } else {
+                // All ratings cached, sort immediately
+                performSort();
+            }
         },
 
         /**
@@ -21355,21 +22542,89 @@
         },
 
         /**
-         * Sort library cards by custom ratings
+         * Sort library cards by custom ratings - fetches ALL items from library
          */
         sortLibraryCards: function (direction) {
             const self = this;
 
-            // Media types we want to sort
+            // Get parent ID from URL to fetch all items
+            const parentId = self.getParentIdFromUrl();
+
+            // Find the items container
+            const itemsContainer = self.findLibraryItemsContainer();
+            if (!itemsContainer) {
+                return;
+            }
+
+            // Store original HTML if not already stored (for restore)
+            if (!itemsContainer.dataset.originalHtml) {
+                itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
+            }
+
+            // Show loading on the sort button instead of inserting a div
+            const sortBtn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
+            const originalBtnHtml = sortBtn ? sortBtn.innerHTML : null;
+            if (sortBtn) {
+                sortBtn.innerHTML = '⏳';
+                sortBtn.disabled = true;
+                sortBtn.style.opacity = '0.7';
+            }
+
+            const restoreBtn = () => {
+                if (sortBtn && originalBtnHtml) {
+                    sortBtn.innerHTML = originalBtnHtml;
+                    sortBtn.disabled = false;
+                    sortBtn.style.opacity = '';
+                }
+            };
+
+            // Fetch ALL items from library
+            self.fetchAllLibraryItems(parentId).then(items => {
+                if (items.length === 0) {
+                    restoreBtn();
+                    return;
+                }
+
+                // Get all item IDs that need ratings
+                const uncachedIds = items
+                    .filter(item => self.ratingsCache[item.Id] === undefined)
+                    .map(item => item.Id);
+
+                // Fetch ratings then sort
+                const ratingsPromise = uncachedIds.length > 0
+                    ? self.fetchRatingsForItems(uncachedIds)
+                    : Promise.resolve();
+
+                ratingsPromise.then(() => {
+                    restoreBtn();
+
+                    // Sort items by rating
+                    const sortedItems = [...items].sort((a, b) => {
+                        const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                        const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+
+                        if (ratingA === -1 && ratingB === -1) return 0;
+                        if (ratingA === -1) return 1;
+                        if (ratingB === -1) return -1;
+
+                        return direction === 'desc' ? ratingB - ratingA : ratingA - ratingB;
+                    });
+
+                    // Rebuild cards with sorted items
+                    self.rebuildLibraryCards(itemsContainer, sortedItems);
+                }).catch(() => {
+                    restoreBtn();
+                });
+            }).catch(() => {
+                restoreBtn();
+            });
+        },
+
+        /**
+         * Find the library items container
+         */
+        findLibraryItemsContainer: function () {
             const mediaTypes = ['Movie', 'Series', 'Episode', 'Season', 'MusicAlbum', 'Audio', 'MusicVideo', 'Video', 'BoxSet'];
-
-            // Find the items container that has actual media cards (not library folders)
-            // There can be multiple .itemsContainer on the page - find the one with MOST media cards
-            let itemsContainer = null;
-            let cards = [];
-            let maxMediaCards = 0;
-
-            // Try multiple container selectors
             const containerSelectors = [
                 '.itemsContainer.vertical-wrap',
                 '.itemsContainer.padded-left.padded-right',
@@ -21377,68 +22632,113 @@
                 '.itemsContainer'
             ];
 
-            let allContainers = [];
+            let itemsContainer = null;
+            let maxMediaCards = 0;
+
             for (const selector of containerSelectors) {
-                allContainers = document.querySelectorAll(selector);
-                if (allContainers.length > 0) break;
-            }
-
-            for (const container of allContainers) {
-                // Get cards from this container - try multiple selectors
-                let containerCards = Array.from(container.querySelectorAll('.card[data-id]'));
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.querySelectorAll('[data-id].card'));
-                }
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.querySelectorAll('.card'));
-                }
-                if (containerCards.length === 0) {
-                    containerCards = Array.from(container.children).filter(el => el.classList.contains('card') || el.hasAttribute('data-id'));
-                }
-
-                // Filter to only media types
-                const mediaCards = containerCards.filter(card => {
-                    const dataType = card.getAttribute('data-type');
-                    return mediaTypes.includes(dataType);
-                });
-
-                // Use the container with the MOST media cards
-                if (mediaCards.length > maxMediaCards) {
-                    maxMediaCards = mediaCards.length;
-                    itemsContainer = container;
-                    cards = mediaCards;
+                const containers = document.querySelectorAll(selector);
+                for (const container of containers) {
+                    let cards = Array.from(container.querySelectorAll('.card[data-id]'));
+                    if (cards.length === 0) {
+                        cards = Array.from(container.querySelectorAll('.card'));
+                    }
+                    const mediaCards = cards.filter(card => mediaTypes.includes(card.getAttribute('data-type')));
+                    if (mediaCards.length > maxMediaCards) {
+                        maxMediaCards = mediaCards.length;
+                        itemsContainer = container;
+                    }
                 }
             }
+            return itemsContainer;
+        },
 
-            if (!itemsContainer || cards.length === 0) {
-                return;
+        /**
+         * Fetch ALL items from a library (handles pagination)
+         */
+        fetchAllLibraryItems: function (parentId) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const userId = ApiClient.getCurrentUserId();
+
+            let deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Build URL - if no parentId, get all items
+            let url = `${baseUrl}/Users/${userId}/Items?`;
+            url += 'IncludeItemTypes=Movie,Series&Recursive=true&SortBy=SortName&SortOrder=Ascending&Limit=10000';
+            url += '&Fields=PrimaryImageAspectRatio,BasicSyncInfo';
+            if (parentId) {
+                url += `&ParentId=${parentId}`;
             }
 
-            // Store original order if not already stored
-            if (!itemsContainer.dataset.originalOrder) {
-                const originalIds = cards.map(card => card.getAttribute('data-id') || '').join(',');
-                itemsContainer.dataset.originalOrder = originalIds;
-            }
-
-            // Collect item IDs that need ratings fetched
-            const itemIds = [];
-            cards.forEach(card => {
-                // Try data-id first, then fallback
-                const itemId = card.getAttribute('data-id') || self.getItemIdFromCard(card);
-                if (itemId && self.ratingsCache[itemId] === undefined) {
-                    itemIds.push(itemId);
+            return fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
                 }
+            })
+            .then(response => response.json())
+            .then(data => data.Items || []);
+        },
+
+        /**
+         * Generate a device ID for API calls
+         */
+        generateDeviceId: function () {
+            const deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            localStorage.setItem('_deviceId2', deviceId);
+            return deviceId;
+        },
+
+        /**
+         * Rebuild library cards with sorted items
+         */
+        rebuildLibraryCards: function (container, items) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+
+            // Build cards HTML matching Jellyfin's card structure
+            let html = '';
+            items.forEach(item => {
+                const imageUrl = item.ImageTags && item.ImageTags.Primary
+                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=300&fillWidth=200&quality=96`
+                    : '';
+
+                html += `
+                    <a href="#!/details?id=${item.Id}"
+                       class="card overflowPortraitCard card-hoverable card-withuserdata"
+                       data-id="${item.Id}"
+                       data-type="${item.Type}">
+                        <div class="cardBox visualCardBox">
+                            <div class="cardScalable visualCardBox-cardScalable">
+                                <div class="cardPadder cardPadder-overflowPortrait"></div>
+                                <div class="cardContent">
+                                    ${imageUrl
+                                        ? `<div class="cardImageContainer coveredImage" style="background-image:url('${imageUrl}');"></div>`
+                                        : `<div class="cardImageContainer coveredImage defaultCardBackground defaultCardBackground1"><span class="cardImageIcon material-icons movie"></span></div>`
+                                    }
+                                </div>
+                            </div>
+                            <div class="cardFooter visualCardBox-cardFooter">
+                                <div class="cardText cardTextCentered">${self.escapeHtml(item.Name)}</div>
+                                ${item.ProductionYear ? `<div class="cardText cardText-secondary cardTextCentered">${item.ProductionYear}</div>` : ''}
+                            </div>
+                        </div>
+                    </a>
+                `;
             });
 
-            // If we need to fetch ratings, do it first then sort
-            if (itemIds.length > 0) {
-                self.fetchRatingsForItems(itemIds).then(() => {
-                    self.performLibrarySort(itemsContainer, cards, direction);
-                });
-            } else {
-                // All ratings cached, sort immediately
-                self.performLibrarySort(itemsContainer, cards, direction);
-            }
+            container.innerHTML = html;
+
+            // Re-apply any plugin badges
+            self.processCards();
         },
 
         /**
@@ -21550,29 +22850,39 @@
          * Restore original order of library cards
          */
         restoreLibraryCardsOrder: function () {
-            const itemsContainer = document.querySelector('.itemsContainer');
-            if (!itemsContainer || !itemsContainer.dataset.originalOrder) return;
+            const self = this;
+            const itemsContainer = self.findLibraryItemsContainer();
+            if (!itemsContainer) return;
 
-            const originalIds = itemsContainer.dataset.originalOrder.split(',');
-            const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
+            // Restore from original HTML if available
+            if (itemsContainer.dataset.originalHtml) {
+                itemsContainer.innerHTML = itemsContainer.dataset.originalHtml;
+                delete itemsContainer.dataset.originalHtml;
+                // Re-apply plugin badges
+                self.processCards();
+                return;
+            }
 
-            // Create a map of id to card
-            const cardMap = new Map();
-            cards.forEach(card => {
-                const id = card.getAttribute('data-id') || '';
-                cardMap.set(id, card);
-            });
+            // Fallback: restore from original order IDs
+            if (itemsContainer.dataset.originalOrder) {
+                const originalIds = itemsContainer.dataset.originalOrder.split(',');
+                const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
 
-            // Re-append in original order
-            originalIds.forEach(id => {
-                const card = cardMap.get(id);
-                if (card) {
-                    itemsContainer.appendChild(card);
-                }
-            });
+                const cardMap = new Map();
+                cards.forEach(card => {
+                    const id = card.getAttribute('data-id') || '';
+                    cardMap.set(id, card);
+                });
 
-            // Clear stored order
-            delete itemsContainer.dataset.originalOrder;
+                originalIds.forEach(id => {
+                    const card = cardMap.get(id);
+                    if (card) {
+                        itemsContainer.appendChild(card);
+                    }
+                });
+
+                delete itemsContainer.dataset.originalOrder;
+            }
         },
 
         /**
@@ -21699,9 +23009,11 @@
                 }
 
                 const baseUrl = ApiClient.serverAddress();
+                console.log('[Chat] Fetching config from:', baseUrl + '/Ratings/Config');
                 fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
                     .then(function (r) { return r.json(); })
                     .then(function (config) {
+                        console.log('[Chat] Config received, EnableChat:', config.EnableChat);
                         self.chatEnabled = config.EnableChat === true;
                         self.chatConfig = {
                             hasGifSupport: config.HasGifSupport === true,
@@ -21714,10 +23026,14 @@
                         self.chatNotifyPublic = config.ChatNotifyPublic !== false;
                         self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
                         if (self.chatEnabled) {
+                            console.log('[Chat] Chat is enabled, calling initChat');
                             self.initChat();
+                        } else {
+                            console.log('[Chat] Chat is disabled in config');
                         }
                     })
-                    .catch(function () {
+                    .catch(function (err) {
+                        console.log('[Chat] Config fetch error:', err);
                         self.chatEnabled = false;
                     });
             };
@@ -21730,6 +23046,7 @@
          */
         initChat: function () {
             const self = this;
+            console.log('[Chat] initChat called');
 
             // Find and replace cast button
             this.injectChatButton();
@@ -21738,6 +23055,7 @@
             this.createChatWindow();
 
             // Start heartbeat for presence
+            console.log('[Chat] About to call startChatHeartbeat');
             this.startChatHeartbeat();
 
             // Check ban status
@@ -21813,9 +23131,9 @@
                             </span>
                         </div>
                         <div class="chat-header-right">
-                            <button class="chat-header-btn" id="chatClearAllBtn" title="Clear All Messages" style="display:none;">🗑️</button>
-                            <button class="chat-header-btn" id="chatSettingsBtn" title="Moderator Panel" style="display:none;">⚙️</button>
-                            <button class="chat-header-btn" id="chatCloseBtn" title="Close">✕</button>
+                            <button class="chat-header-btn" id="chatClearAllBtn" title="${this.t('chatClearAll')}" style="display:none;">🗑️</button>
+                            <button class="chat-header-btn" id="chatSettingsBtn" title="${this.t('modPanelTitle')}" style="display:none;">⚙️</button>
+                            <button class="chat-header-btn" id="chatCloseBtn" title="${this.t('modCancel')}">✕</button>
                         </div>
                     </div>
                     <div class="chat-tabs" id="chatTabs">
@@ -21886,37 +23204,37 @@
             const modWindowHtml = `
                 <div id="modWindow" class="mod-window">
                     <div class="mod-window-header">
-                        <span class="mod-window-title">Moderator Panel</span>
+                        <span class="mod-window-title">${this.t('modPanelTitle')}</span>
                         <button class="mod-window-close" id="modWindowClose">✕</button>
                     </div>
                     <div class="mod-window-body">
                         <div class="chat-mod-sidebar">
-                            <button class="chat-mod-sidebar-btn active" data-mod-section="users" title="Users">
+                            <button class="chat-mod-sidebar-btn active" data-mod-section="users" title="${this.t('modUsers')}">
                                 <span class="chat-mod-sidebar-icon">👥</span>
-                                <span class="chat-mod-sidebar-label">Users</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modUsers')}</span>
                             </button>
-                            <button class="chat-mod-sidebar-btn" data-mod-section="bans" title="Bans">
+                            <button class="chat-mod-sidebar-btn" data-mod-section="bans" title="${this.t('modBans')}">
                                 <span class="chat-mod-sidebar-icon">🚫</span>
-                                <span class="chat-mod-sidebar-label">Bans</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modBans')}</span>
                             </button>
-                            <button class="chat-mod-sidebar-btn" data-mod-section="actions" title="Actions">
+                            <button class="chat-mod-sidebar-btn" data-mod-section="actions" title="${this.t('modLog')}">
                                 <span class="chat-mod-sidebar-icon">📋</span>
-                                <span class="chat-mod-sidebar-label">Log</span>
+                                <span class="chat-mod-sidebar-label">${this.t('modLog')}</span>
                             </button>
                         </div>
                         <div class="chat-mod-content">
                             <!-- Users Section - User Management -->
                             <div class="chat-mod-section visible" id="chatModSectionUsers">
-                                <div class="chat-mod-section-title">Search User</div>
+                                <div class="chat-mod-section-title">${this.t('modSearchUser')}</div>
                                 <div class="chat-mod-user-search">
                                     <div class="chat-mod-user-search-wrapper">
-                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="Search for a user to manage...">
+                                        <input type="text" class="chat-mod-user-search-input" id="chatModUserSearchInput" placeholder="${this.t('modSearchPlaceholder')}">
                                         <div class="chat-mod-user-search-dropdown" id="chatModUserSearchDropdown"></div>
                                     </div>
                                 </div>
                                 <div class="chat-mod-action-panel" id="chatModActionPanel">
                                     <div class="chat-mod-action-header">
-                                        <span class="chat-mod-action-title">Manage User</span>
+                                        <span class="chat-mod-action-title">${this.t('modManageUser')}</span>
                                         <button class="chat-mod-action-close" id="chatModActionClose">×</button>
                                     </div>
                                     <div class="chat-mod-action-target" id="chatModActionTarget">
@@ -21925,122 +23243,122 @@
                                         <span class="chat-mod-user-status" id="chatModUserStatus"></span>
                                     </div>
                                     <!-- Moderator Controls -->
-                                    <div class="chat-mod-action-label">Moderator Status</div>
+                                    <div class="chat-mod-action-label">${this.t('modModeratorStatus')}</div>
                                     <div class="chat-mod-moderator-controls" id="chatModModeratorControls">
                                         <div class="chat-mod-mod-row" id="chatModModRow">
                                             <select class="chat-mod-level-select" id="chatModUserLevel">
-                                                <option value="0">Not a Moderator</option>
-                                                <option value="1">Level 1</option>
-                                                <option value="2">Level 2</option>
-                                                <option value="3">Level 3</option>
+                                                <option value="0">${this.t('modNotModerator')}</option>
+                                                <option value="1">${this.t('modLevel1')}</option>
+                                                <option value="2">${this.t('modLevel2')}</option>
+                                                <option value="3">${this.t('modLevel3')}</option>
                                             </select>
-                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">Apply</button>
+                                            <button type="button" class="chat-mod-apply-btn" id="chatModApplyModBtn" style="background:#00a4dc;">${this.t('modApply')}</button>
                                         </div>
                                     </div>
                                     <!-- Style Controls -->
-                                    <div class="chat-mod-action-label">Chat Style</div>
+                                    <div class="chat-mod-action-label">${this.t('modChatStyle')}</div>
                                     <div class="chat-mod-color-row">
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Nickname Color</span>
+                                            <span class="chat-mod-color-label">${this.t('modNicknameColor')}</span>
                                             <div class="chat-mod-color-input-wrapper">
                                                 <input type="color" class="chat-mod-color-picker" id="chatModNicknameColor" value="#ffffff">
                                                 <input type="text" class="chat-mod-color-hex" id="chatModNicknameHex" placeholder="#ffffff" maxlength="7">
-                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="Clear">×</button>
+                                                <button class="chat-mod-color-clear" id="chatModNicknameClear" title="${this.t('modClear')}">×</button>
                                             </div>
                                         </div>
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Message Color</span>
+                                            <span class="chat-mod-color-label">${this.t('modMessageColor')}</span>
                                             <div class="chat-mod-color-input-wrapper">
                                                 <input type="color" class="chat-mod-color-picker" id="chatModMessageColor" value="#cccccc">
                                                 <input type="text" class="chat-mod-color-hex" id="chatModMessageHex" placeholder="#cccccc" maxlength="7">
-                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="Clear">×</button>
+                                                <button class="chat-mod-color-clear" id="chatModMessageClear" title="${this.t('modClear')}">×</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="chat-mod-color-row">
                                         <div class="chat-mod-color-group">
-                                            <span class="chat-mod-color-label">Text Style</span>
+                                            <span class="chat-mod-color-label">${this.t('modTextStyle')}</span>
                                             <div style="display:flex;gap:8px;">
-                                                <button class="chat-mod-style-btn" data-style="">Normal</button>
-                                                <button class="chat-mod-style-btn" data-style="bold">Bold</button>
-                                                <button class="chat-mod-style-btn" data-style="italic">Italic</button>
-                                                <button class="chat-mod-style-btn" data-style="bold-italic">Both</button>
+                                                <button class="chat-mod-style-btn" data-style="">${this.t('modNormal')}</button>
+                                                <button class="chat-mod-style-btn" data-style="bold">${this.t('modBold')}</button>
+                                                <button class="chat-mod-style-btn" data-style="italic">${this.t('modItalic')}</button>
+                                                <button class="chat-mod-style-btn" data-style="bold-italic">${this.t('modBoth')}</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="chat-mod-color-preview" id="chatModColorPreview">
-                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">Sample message text</span>
+                                        <span id="chatModPreviewNickname" style="font-weight:600;">Username</span>: <span id="chatModPreviewMessage">${this.t('modSampleMessage')}</span>
                                     </div>
                                     <div class="chat-mod-action-buttons" style="margin-bottom:16px;">
-                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">Reset Style</button>
-                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">Apply Style</button>
+                                        <button class="chat-mod-cancel-btn" id="chatModStyleResetBtn">${this.t('modResetStyle')}</button>
+                                        <button class="chat-mod-apply-btn" id="chatModStyleApplyBtn" style="background:#00a4dc;">${this.t('modApplyStyle')}</button>
                                     </div>
                                     <!-- Penalty Controls -->
-                                    <div class="chat-mod-action-label">Penalties</div>
+                                    <div class="chat-mod-action-label">${this.t('modPenalties')}</div>
                                     <div class="chat-mod-type-grid" id="chatModTypeGrid">
                                         <button type="button" class="chat-mod-type-btn selected" data-action-type="snooze">
                                             <div class="chat-mod-type-icon">😴</div>
-                                            <div class="chat-mod-type-label">Snooze</div>
+                                            <div class="chat-mod-type-label">${this.t('modSnooze')}</div>
                                         </button>
                                         <button type="button" class="chat-mod-type-btn" data-action-type="chat">
                                             <div class="chat-mod-type-icon">💬</div>
-                                            <div class="chat-mod-type-label">Chat Ban</div>
+                                            <div class="chat-mod-type-label">${this.t('modChatBan')}</div>
                                         </button>
                                         <button type="button" class="chat-mod-type-btn" data-action-type="media">
                                             <div class="chat-mod-type-icon">🎬</div>
-                                            <div class="chat-mod-type-label">Media Ban</div>
+                                            <div class="chat-mod-type-label">${this.t('modMediaBan')}</div>
                                         </button>
                                     </div>
-                                    <div class="chat-mod-action-label">Duration</div>
+                                    <div class="chat-mod-action-label">${this.t('modDuration')}</div>
                                     <div class="chat-mod-duration-presets" id="chatModDurationPresets">
                                         <button type="button" class="chat-mod-duration-btn selected" data-duration="10">10m</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="60">1h</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="1440">1d</button>
                                         <button type="button" class="chat-mod-duration-btn" data-duration="10080">1w</button>
-                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">Perm</button>
+                                        <button type="button" class="chat-mod-duration-btn" data-duration="0">${this.t('modPerm')}</button>
                                     </div>
-                                    <div class="chat-mod-action-label">Reason (optional)</div>
-                                    <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="Enter reason...">
-                                    <div class="chat-mod-preview" id="chatModPreview">User will be muted for 10 minutes</div>
+                                    <div class="chat-mod-action-label">${this.t('modReasonOptional')}</div>
+                                    <input type="text" class="chat-mod-reason-input" id="chatModReasonInput" placeholder="${this.t('modEnterReason')}">
+                                    <div class="chat-mod-preview" id="chatModPreview">${this.t('modUserWillBeMuted')} 10 ${this.t('modMinutes')}</div>
                                     <div class="chat-mod-action-buttons">
-                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">Cancel</button>
-                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">Apply Penalty</button>
+                                        <button type="button" class="chat-mod-cancel-btn" id="chatModCancelBtn">${this.t('modCancel')}</button>
+                                        <button type="button" class="chat-mod-apply-btn" id="chatModApplyBtn">${this.t('modApplyPenalty')}</button>
                                     </div>
                                 </div>
-                                <div class="chat-mod-section-title" style="margin-top:20px;">Current Moderators</div>
+                                <div class="chat-mod-section-title" style="margin-top:20px;">${this.t('modCurrentModerators')}</div>
                                 <div class="chat-mod-list" id="chatModList">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">👥</div>
-                                        <div>No moderators</div>
+                                        <div>${this.t('modNoModerators')}</div>
                                     </div>
                                 </div>
                             </div>
                             <!-- Bans Section -->
                             <div class="chat-mod-section" id="chatModSectionBans">
-                                <div class="chat-mod-section-title">Search Bans</div>
+                                <div class="chat-mod-section-title">${this.t('modSearchBans')}</div>
                                 <div class="chat-mod-ban-search">
-                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="Search banned users...">
+                                    <input type="text" class="chat-mod-user-search-input" id="chatModBanSearchInput" placeholder="${this.t('modSearchBannedUsers')}">
                                 </div>
-                                <div class="chat-mod-section-title" style="margin-top:12px;">Active Bans</div>
+                                <div class="chat-mod-section-title" style="margin-top:12px;">${this.t('modActiveBans')}</div>
                                 <div class="chat-mod-list" id="chatModBanList">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">🚫</div>
-                                        <div>No active bans</div>
+                                        <div>${this.t('modNoActiveBans')}</div>
                                     </div>
                                 </div>
                             </div>
                             <!-- Actions Section -->
                             <div class="chat-mod-section" id="chatModSectionActions">
-                                <div class="chat-mod-section-title">Moderator Actions</div>
+                                <div class="chat-mod-section-title">${this.t('modModeratorActions')}</div>
                                 <div style="margin-bottom:12px;">
                                     <select class="chat-mod-level-select" id="chatModActionsFilter" style="width:100%;">
-                                        <option value="">All Moderators</option>
+                                        <option value="">${this.t('modAllModerators')}</option>
                                     </select>
                                 </div>
                                 <div class="chat-mod-action-log" id="chatModActionLog">
                                     <div class="chat-mod-empty">
                                         <div class="chat-mod-empty-icon">📋</div>
-                                        <div>No actions recorded</div>
+                                        <div>${this.t('modNoActions')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -22617,9 +23935,15 @@
          */
         startChatHeartbeat: function () {
             const self = this;
+            console.log('[Chat] startChatHeartbeat called');
             const heartbeat = function () {
-                if (!window.ApiClient) return;
+                console.log('[Chat] heartbeat function called, ApiClient:', !!window.ApiClient);
+                if (!window.ApiClient) {
+                    console.log('[Chat] No ApiClient, skipping heartbeat');
+                    return;
+                }
                 const baseUrl = ApiClient.serverAddress();
+                console.log('[Chat] Sending heartbeat to:', baseUrl + '/Ratings/Chat/Heartbeat');
                 // Server determines admin status - no need to send from client
                 fetch(baseUrl + '/Ratings/Chat/Heartbeat', {
                     method: 'POST',
@@ -22629,8 +23953,10 @@
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
+                    console.log('[Chat] Heartbeat response:', data);
                     self.chatIsAdmin = data.isAdmin || data.IsAdmin || false;
                     self.chatIsModerator = data.isModerator || data.IsModerator || false;
+                    console.log('[Chat] isAdmin:', self.chatIsAdmin, 'isModerator:', self.chatIsModerator);
                     // Show moderator tab if user is admin or moderator
                     self.showModeratorTab();
                     // Add class to chat window for CSS styling of action buttons
@@ -22640,7 +23966,9 @@
                         chatWindow.classList.toggle('chat-is-mod', self.chatIsModerator);
                     }
                 })
-                .catch(function () {});
+                .catch(function (err) {
+                    console.log('[Chat] Heartbeat error:', err);
+                });
             };
             heartbeat();
             setInterval(heartbeat, 30000);
@@ -23429,7 +24757,7 @@
                 const canManageMods = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3);
 
                 if (!mods || mods.length === 0) {
-                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>' + self.t('modNoModerators') + '</div></div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
                         // API returns PascalCase, handle both for safety
@@ -23447,10 +24775,10 @@
                             + '<span class="chat-mod-item-level" style="background:' + self.getModLevelColor(modLevel) + ';">L' + modLevel + '</span>'
                             + '<div>'
                             + '<div class="chat-mod-item-name">' + self.escapeHtml(modUserName) + '</div>'
-                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' deletes · ' + actionCount + ' actions</div>'
+                            + '<div class="chat-mod-item-stats">' + dailyDeleteCount + '/' + dailyDeleteLimit + ' ' + self.t('modDeletes') + ' · ' + actionCount + ' ' + self.t('modActions') + '</div>'
                             + '</div>'
                             + '</div>'
-                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">Remove</button>' : '')
+                            + (canRemove ? '<button class="chat-mod-item-btn" data-remove-mod-id="' + self.escapeHtml(modId) + '" data-mod-name="' + self.escapeHtml(modUserName) + '">' + self.t('chatRemoveMod') + '</button>' : '')
                             + '</div>';
                     }).join('');
 
@@ -23464,7 +24792,7 @@
                 // Update actions filter
                 const filter = document.getElementById('chatModActionsFilter');
                 if (filter) {
-                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                    filter.innerHTML = '<option value="">' + self.t('modAllModerators') + '</option>' + mods.map(function (mod) {
                         const modUserId = mod.UserId || mod.userId;
                         const modUserName = mod.UserName || mod.userName || 'Unknown';
                         return '<option value="' + self.escapeHtml(modUserId) + '">' + self.escapeHtml(modUserName) + '</option>';
@@ -23473,7 +24801,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModList');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>No moderators</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">👥</div><div>' + self.t('modNoModerators') + '</div></div>';
             });
         },
 
@@ -23500,7 +24828,7 @@
                 console.error('[Ratings] Failed to load bans:', err);
                 self._cachedBans = [];
                 const list = document.getElementById('chatModBanList');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>' + self.t('modNoActiveBans') + '</div></div>';
             });
         },
 
@@ -23517,7 +24845,7 @@
 
             if (!bans || bans.length === 0) {
                 console.log('[Ratings] No bans to display');
-                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>No active bans</div></div>';
+                list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">🚫</div><div>' + self.t('modNoActiveBans') + '</div></div>';
             } else {
                 list.innerHTML = bans.map(function (ban) {
                     // API returns PascalCase, handle both
@@ -23604,7 +24932,7 @@
                 if (!list) return;
 
                 if (!actions || actions.length === 0) {
-                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+                    list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>' + self.t('modNoActions') + '</div></div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
                         // Handle both PascalCase and camelCase from API
@@ -23623,7 +24951,7 @@
                                 if (d.durationMinutes) {
                                     parts.push(self.formatDuration(d.durationMinutes));
                                 } else if (d.permanent) {
-                                    parts.push('permanent');
+                                    parts.push(self.t('modPerm'));
                                 }
                                 if (d.reason) {
                                     parts.push('"' + d.reason + '"');
@@ -23653,7 +24981,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModActionLog');
-                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>No actions recorded</div></div>';
+                if (list) list.innerHTML = '<div class="chat-mod-empty"><div class="chat-mod-empty-icon">📋</div><div>' + self.t('modNoActions') + '</div></div>';
             });
         },
 
@@ -24699,11 +26027,11 @@
                 if (addSection) addSection.style.display = canManageMods ? '' : 'none';
 
                 if (!mods || mods.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoModerators') + '</div>';
                 } else {
                     list.innerHTML = mods.map(function (mod) {
                         const levelBadge = '<span class="chat-mod-level" style="background:' + self.getModLevelColor(mod.level) + ';">L' + mod.level + '</span>';
-                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' deletes | ' + mod.actionCount + ' actions</span>';
+                        const statsText = '<span class="chat-mod-stats">' + mod.dailyDeleteCount + '/' + mod.dailyDeleteLimit + ' ' + self.t('modDeletes') + ' | ' + mod.actionCount + ' ' + self.t('modActions') + '</span>';
                         const canRemove = self.chatIsAdmin || (self.chatModInfo && self.chatModInfo.level >= 3 && mod.level < 3);
 
                         return '<div class="chat-admin-item">'
@@ -24723,7 +26051,7 @@
                 // Update actions filter
                 const filter = document.getElementById('chatActionsFilter');
                 if (filter) {
-                    filter.innerHTML = '<option value="">All Moderators</option>' + mods.map(function (mod) {
+                    filter.innerHTML = '<option value="">' + self.t('modAllModerators') + '</option>' + mods.map(function (mod) {
                         return '<option value="' + self.escapeHtml(mod.userId) + '">' + self.escapeHtml(mod.userName) + '</option>';
                     }).join('');
                     filter.onchange = function () {
@@ -24733,7 +26061,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatModeratorList');
-                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No moderators</div>';
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoModerators') + '</div>';
             });
         },
 
@@ -24770,7 +26098,7 @@
                 const list = document.getElementById('chatActionsList');
                 if (!list) return;
                 if (!actions || actions.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoActions') + '</div>';
                 } else {
                     list.innerHTML = actions.map(function (action) {
                         // Handle both PascalCase and camelCase from API
@@ -24789,7 +26117,7 @@
                                 if (d.durationMinutes) {
                                     parts.push(self.formatDuration(d.durationMinutes));
                                 } else if (d.permanent) {
-                                    parts.push('permanent');
+                                    parts.push(self.t('modPerm'));
                                 }
                                 if (d.reason) {
                                     parts.push('"' + d.reason + '"');
@@ -24819,7 +26147,7 @@
             })
             .catch(function () {
                 const list = document.getElementById('chatActionsList');
-                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No actions recorded</div>';
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">' + self.t('modNoActions') + '</div>';
             });
         },
 

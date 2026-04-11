@@ -369,64 +369,6 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
-        /// Gets all ratings by a specific user.
-        /// </summary>
-        /// <param name="userId">User ID.</param>
-        /// <returns>List of all ratings by the user, ordered by most recently updated.</returns>
-        public List<UserRating> GetUserRatings(Guid userId)
-        {
-            lock (_lock)
-            {
-                return _ratings.Values
-                    .Where(r => r.UserId == userId)
-                    .OrderByDescending(r => r.UpdatedAt)
-                    .ToList();
-            }
-        }
-
-        /// <summary>
-        /// Gets rating statistics for an item.
-        /// </summary>
-        /// <param name="itemId">Item ID.</param>
-        /// <param name="userId">Optional user ID to include user's rating.</param>
-        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
-        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
-        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
-        /// <returns>Rating statistics.</returns>
-        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
-        {
-            lock (_lock)
-            {
-                // Use internal method for provider ID fallback
-                var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
-                var stats = new RatingStats
-                {
-                    ItemId = itemId,
-                    TotalRatings = itemRatings.Count
-                };
-
-                if (itemRatings.Any())
-                {
-                    stats.AverageRating = Math.Round(itemRatings.Average(r => r.Rating), 2);
-
-                    // Calculate distribution
-                    for (int i = 1; i <= 10; i++)
-                    {
-                        stats.Distribution[i - 1] = itemRatings.Count(r => r.Rating == i);
-                    }
-                }
-
-                if (userId.HasValue)
-                {
-                    var userRating = itemRatings.FirstOrDefault(r => r.UserId == userId.Value);
-                    stats.UserRating = userRating?.Rating;
-                }
-
-                return stats;
-            }
-        }
-
-        /// <summary>
         /// Internal helper for GetItemRatings without lock (for use within already-locked methods).
         /// </summary>
         private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId, string? aniDbId = null)
@@ -463,6 +405,64 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
 
             return ratings;
+        }
+
+        /// <summary>
+        /// Gets all ratings by a specific user.
+        /// </summary>
+        /// <param name="userId">User ID.</param>
+        /// <returns>List of all ratings by the user, ordered by most recently updated.</returns>
+        public List<UserRating> GetUserRatings(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.UpdatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets rating statistics for an item.
+        /// </summary>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="userId">Optional user ID to include user's rating.</param>
+        /// <param name="tmdbId">Optional TMDB ID for fallback lookup.</param>
+        /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
+        /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
+        /// <returns>Rating statistics.</returns>
+        public RatingStats GetRatingStats(Guid itemId, Guid? userId = null, string? tmdbId = null, string? imdbId = null, string? aniDbId = null)
+        {
+            lock (_lock)
+            {
+                // Use GetItemRatings which already handles provider ID fallback
+                var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
+                var stats = new RatingStats
+                {
+                    ItemId = itemId,
+                    TotalRatings = itemRatings.Count
+                };
+
+                if (itemRatings.Any())
+                {
+                    stats.AverageRating = Math.Round(itemRatings.Average(r => r.Rating), 2);
+
+                    // Calculate distribution
+                    for (int i = 1; i <= 10; i++)
+                    {
+                        stats.Distribution[i - 1] = itemRatings.Count(r => r.Rating == i);
+                    }
+                }
+
+                if (userId.HasValue)
+                {
+                    var userRating = itemRatings.FirstOrDefault(r => r.UserId == userId.Value);
+                    stats.UserRating = userRating?.Rating;
+                }
+
+                return stats;
+            }
         }
 
         /// <summary>
@@ -1213,15 +1213,22 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Sets or updates a like/dislike on a review.
         /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <param name="userId">User ID who is liking/disliking.</param>
+        /// <param name="isLike">True for like, false for dislike.</param>
+        /// <returns>The created or updated ReviewLike.</returns>
         public async Task<ReviewLike> SetReviewLikeAsync(Guid reviewerUserId, Guid itemId, Guid userId, bool isLike)
         {
             lock (_lock)
             {
+                // Can't like your own review
                 if (reviewerUserId == userId)
                 {
                     throw new InvalidOperationException("Cannot like your own review");
                 }
 
+                // Find existing like/dislike
                 var existing = _reviewLikes.Values.FirstOrDefault(l =>
                     l.ReviewerUserId == reviewerUserId &&
                     l.ItemId == itemId &&
@@ -1229,6 +1236,7 @@ namespace Jellyfin.Plugin.Ratings.Data
 
                 if (existing != null)
                 {
+                    // Toggle off if same action
                     if (existing.IsLike == isLike)
                     {
                         _reviewLikes.Remove(existing.Id);
@@ -1236,12 +1244,14 @@ namespace Jellyfin.Plugin.Ratings.Data
                         return existing;
                     }
 
+                    // Update to opposite action
                     existing.IsLike = isLike;
                     existing.CreatedAt = DateTime.UtcNow;
                     _ = SaveReviewLikesAsync();
                     return existing;
                 }
 
+                // Create new like/dislike
                 var newLike = new ReviewLike
                 {
                     ReviewerUserId = reviewerUserId,
@@ -1259,6 +1269,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Gets the like/dislike counts for a review.
         /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <returns>Tuple of (likeCount, dislikeCount).</returns>
         public (int LikeCount, int DislikeCount) GetReviewLikeCounts(Guid reviewerUserId, Guid itemId)
         {
             lock (_lock)
@@ -1274,6 +1287,10 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Gets the current user's like/dislike status for a review.
         /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <param name="userId">Current user's ID.</param>
+        /// <returns>True if liked, false if disliked, null if no vote.</returns>
         public bool? GetUserReviewLike(Guid reviewerUserId, Guid itemId, Guid userId)
         {
             lock (_lock)
@@ -1290,6 +1307,10 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Updates a rating's review text.
         /// </summary>
+        /// <param name="userId">User ID.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="reviewText">Review text (null to clear).</param>
+        /// <returns>The updated rating or null if not found.</returns>
         public async Task<UserRating?> UpdateReviewTextAsync(Guid userId, Guid itemId, string? reviewText)
         {
             lock (_lock)
