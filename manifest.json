@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.250.0",
+        "changelog": "Sort dropdown for Netflix and library view - Local, Personal, IMDB, Release Date, Newly Added",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.250.0/Jellyfin.Plugin.Ratings_2.0.250.0.zip",
+        "checksum": "495465d0c85b52da2ec6f07f8c09a6ba",
+        "timestamp": "2026-04-11T22:00:00Z"
+      },
+      {
         "version": "2.0.249.0",
         "changelog": "Netflix view: sort by Local Rating, IMDB, Release Date, or Newly Added",
         "targetAbi": "10.11.0.0",
