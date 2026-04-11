@@ -14987,8 +14987,14 @@
                             }
                         });
 
-                        // Insert button into button group
-                        buttonGroup.appendChild(btn);
+                        // Insert button AFTER search field (not at beginning)
+                        const searchField = document.getElementById('headerSearchField');
+                        if (searchField) {
+                            searchField.insertAdjacentElement('afterend', btn);
+                        } else {
+                            // If no search field, append to end
+                            buttonGroup.appendChild(btn);
+                        }
 
                         // Add tooltip
                         self.addTooltipToButton(btn, 'changeLanguage');
@@ -15005,16 +15011,18 @@
                     }
                 };
 
-                // Wait for button group to exist
+                // Wait for button group AND search field to exist
                 const waitForButtonGroup = () => {
-                    if (document.getElementById('ratingsButtonGroup')) {
+                    const buttonGroup = document.getElementById('ratingsButtonGroup');
+                    const searchField = document.getElementById('headerSearchField');
+                    if (buttonGroup && searchField) {
                         createLanguageButton();
                     } else {
                         setTimeout(waitForButtonGroup, 500);
                     }
                 };
 
-                setTimeout(waitForButtonGroup, 300);
+                setTimeout(waitForButtonGroup, 500);
 
             } catch (err) {
                 console.error('[Ratings] Error initializing language button:', err);
