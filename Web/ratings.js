@@ -2251,7 +2251,7 @@
                 // Initial load of data
                 self.loadFriendsData();
 
-                // Setup visibility check - hide on login page
+                // Setup visibility check - hide on login page and during video playback
                 setInterval(function () {
                     try {
                         var friendsBtn = document.getElementById('social-friends-btn');
@@ -2261,7 +2261,11 @@
                         var isLoginPage = self.isOnLoginPage();
                         var hasToken = window.ApiClient && ApiClient.accessToken();
 
-                        if (isLoginPage || !hasToken) {
+                        // Check if video is playing (fullscreen)
+                        var videoPlayer = document.querySelector('.videoPlayerContainer');
+                        var isVideoPlaying = videoPlayer && !videoPlayer.classList.contains('hide');
+
+                        if (isLoginPage || !hasToken || isVideoPlaying) {
                             friendsBtn.style.display = 'none';
                             if (friendsPanel) friendsPanel.classList.remove('open');
                         } else {
