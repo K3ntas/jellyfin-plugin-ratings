@@ -91,6 +91,7 @@
                 alreadyAskedTooltip: 'You have already requested to keep this media. Your vote has been counted.',
                 keepCounterTooltip: '{current} of {threshold} requests needed to cancel deletion',
                 sortHighest: 'Highest rated first', sortLowest: 'Lowest rated first',
+                sortByLocalRating: 'Local Rating', sortByPersonalRating: 'Personal Rating', sortByImdb: 'IMDB', sortByReleaseDate: 'Release Date', sortByNewlyAdded: 'Newly Added',
                 newEpisode: '+1 episode', newEpisodes: '+{count} episodes', typeMovie: 'Movie', typeSeries: 'Series', typeAnime: 'Anime', typeOther: 'Other',
                 timeAgo: 'ago', timeJustNow: 'just now', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Media Management', mediaSearch: 'Search...', mediaTypeAll: 'All Types', mediaTypeMovie: 'Movies', mediaTypeSeries: 'Series',
@@ -187,6 +188,7 @@
                 alreadyAskedTooltip: 'Ya has solicitado conservar este contenido. Tu voto ha sido contado.',
                 keepCounterTooltip: '{current} de {threshold} solicitudes necesarias para cancelar la eliminación',
                 sortHighest: 'Mayor calificación primero', sortLowest: 'Menor calificación primero',
+                sortByLocalRating: 'Calificación Local', sortByPersonalRating: 'Mi Calificación', sortByImdb: 'IMDB', sortByReleaseDate: 'Fecha de Estreno', sortByNewlyAdded: 'Recién Agregado',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodios', typeMovie: 'Película', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Otro',
                 timeAgo: 'hace', timeJustNow: 'ahora mismo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Contenido', mediaManagementTitle: 'Gestión de Contenido', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Películas', mediaTypeSeries: 'Series',
@@ -287,6 +289,7 @@
                 alreadyAskedTooltip: '您已请求保留此媒体。您的投票已被计入。',
                 keepCounterTooltip: '取消删除需要 {current}/{threshold} 个请求',
                 sortHighest: '最高评分优先', sortLowest: '最低评分优先',
+                sortByLocalRating: '本地评分', sortByPersonalRating: '我的评分', sortByImdb: 'IMDB', sortByReleaseDate: '发布日期', sortByNewlyAdded: '最新添加',
                 newEpisode: '+1 集', newEpisodes: '+{count} 集', typeMovie: '电影', typeSeries: '剧集', typeAnime: '动漫', typeOther: '其他',
                 timeAgo: '前', timeJustNow: '刚刚', timeMinutes: '分钟', timeHours: '小时', timeDays: '天',
                 mediaManagement: '媒体', mediaManagementTitle: '媒体管理', mediaSearch: '搜索...', mediaTypeAll: '全部类型', mediaTypeMovie: '电影', mediaTypeSeries: '剧集',
@@ -387,6 +390,7 @@
                 alreadyAskedTooltip: 'Você já solicitou manter esta mídia. Seu voto foi contabilizado.',
                 keepCounterTooltip: '{current} de {threshold} pedidos necessários para cancelar a exclusão',
                 sortHighest: 'Melhor avaliados primeiro', sortLowest: 'Pior avaliados primeiro',
+                sortByLocalRating: 'Avaliação Local', sortByPersonalRating: 'Minha Avaliação', sortByImdb: 'IMDB', sortByReleaseDate: 'Data de Lançamento', sortByNewlyAdded: 'Recém Adicionado',
                 newEpisode: '+1 episódio', newEpisodes: '+{count} episódios', typeMovie: 'Filme', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Outro',
                 timeAgo: 'atrás', timeJustNow: 'agora mesmo', timeMinutes: 'min', timeHours: 'h', timeDays: 'd',
                 mediaManagement: 'Mídia', mediaManagementTitle: 'Gerenciamento de Mídia', mediaSearch: 'Buscar...', mediaTypeAll: 'Todos', mediaTypeMovie: 'Filmes', mediaTypeSeries: 'Séries',
@@ -487,6 +491,7 @@
                 alreadyAskedTooltip: 'Вы уже запросили сохранение этого медиа. Ваш голос учтён.',
                 keepCounterTooltip: '{current} из {threshold} запросов для отмены удаления',
                 sortHighest: 'Высший рейтинг первым', sortLowest: 'Низший рейтинг первым',
+                sortByLocalRating: 'Локальный рейтинг', sortByPersonalRating: 'Мой рейтинг', sortByImdb: 'IMDB', sortByReleaseDate: 'Дата выхода', sortByNewlyAdded: 'Недавно добавленные',
                 newEpisode: '+1 эпизод', newEpisodes: '+{count} эпизодов', typeMovie: 'Фильм', typeSeries: 'Сериал', typeAnime: 'Аниме', typeOther: 'Другое',
                 timeAgo: 'назад', timeJustNow: 'только что', timeMinutes: 'мин', timeHours: 'ч', timeDays: 'д',
                 mediaManagement: 'Медиа', mediaManagementTitle: 'Управление Медиа', mediaSearch: 'Поиск...', mediaTypeAll: 'Все Типы', mediaTypeMovie: 'Фильмы', mediaTypeSeries: 'Сериалы',
@@ -587,6 +592,7 @@
                 alreadyAskedTooltip: 'このメディアの保持をすでにリクエスト済みです。あなたの投票はカウントされています。',
                 keepCounterTooltip: '削除キャンセルに必要なリクエスト: {current}/{threshold}',
                 sortHighest: '高評価順', sortLowest: '低評価順',
+                sortByLocalRating: 'ローカル評価', sortByPersonalRating: 'マイ評価', sortByImdb: 'IMDB', sortByReleaseDate: '公開日', sortByNewlyAdded: '新規追加',
                 newEpisode: '+1 エピソード', newEpisodes: '+{count} エピソード', typeMovie: '映画', typeSeries: 'シリーズ', typeAnime: 'アニメ', typeOther: 'その他',
                 timeAgo: '前', timeJustNow: 'たった今', timeMinutes: '分', timeHours: '時間', timeDays: '日',
                 mediaManagement: 'メディア', mediaManagementTitle: 'メディア管理', mediaSearch: '検索...', mediaTypeAll: 'すべて', mediaTypeMovie: '映画', mediaTypeSeries: 'シリーズ',
@@ -687,6 +693,7 @@
                 alreadyAskedTooltip: 'Sie haben bereits angefragt, dieses Medium zu behalten. Ihre Stimme wurde gezählt.',
                 keepCounterTooltip: '{current} von {threshold} Anfragen zum Abbrechen der Löschung',
                 sortHighest: 'Höchste Bewertung zuerst', sortLowest: 'Niedrigste Bewertung zuerst',
+                sortByLocalRating: 'Lokale Bewertung', sortByPersonalRating: 'Meine Bewertung', sortByImdb: 'IMDB', sortByReleaseDate: 'Erscheinungsdatum', sortByNewlyAdded: 'Neu hinzugefügt',
                 newEpisode: '+1 Episode', newEpisodes: '+{count} Episoden', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Sonstiges',
                 timeAgo: 'vor', timeJustNow: 'gerade eben', timeMinutes: 'Min', timeHours: 'Std', timeDays: 'T',
                 mediaManagement: 'Medien', mediaManagementTitle: 'Medienverwaltung', mediaSearch: 'Suchen...', mediaTypeAll: 'Alle Typen', mediaTypeMovie: 'Filme', mediaTypeSeries: 'Serien',
@@ -785,6 +792,7 @@
                 alreadyAskedTooltip: 'Vous avez déjà demandé à garder ce média. Votre vote a été compté.',
                 keepCounterTooltip: '{current} sur {threshold} demandes nécessaires pour annuler la suppression',
                 sortHighest: 'Mieux notés en premier', sortLowest: 'Moins bien notés en premier',
+                sortByLocalRating: 'Note locale', sortByPersonalRating: 'Ma note', sortByImdb: 'IMDB', sortByReleaseDate: 'Date de sortie', sortByNewlyAdded: 'Récemment ajouté',
                 newEpisode: '+1 épisode', newEpisodes: '+{count} épisodes', typeMovie: 'Film', typeSeries: 'Série', typeAnime: 'Anime', typeOther: 'Autre',
                 timeAgo: 'il y a', timeJustNow: 'à l\'instant', timeMinutes: 'min', timeHours: 'h', timeDays: 'j',
                 mediaManagement: 'Médias', mediaManagementTitle: 'Gestion des Médias', mediaSearch: 'Rechercher...', mediaTypeAll: 'Tous Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Séries',
@@ -885,6 +893,7 @@
                 alreadyAskedTooltip: '이미 이 미디어 유지를 요청했습니다. 투표가 집계되었습니다.',
                 keepCounterTooltip: '삭제 취소에 필요한 요청: {current}/{threshold}',
                 sortHighest: '높은 평점순', sortLowest: '낮은 평점순',
+                sortByLocalRating: '로컬 평점', sortByPersonalRating: '내 평점', sortByImdb: 'IMDB', sortByReleaseDate: '출시일', sortByNewlyAdded: '최근 추가',
                 newEpisode: '+1 에피소드', newEpisodes: '+{count} 에피소드', typeMovie: '영화', typeSeries: '시리즈', typeAnime: '애니메이션', typeOther: '기타',
                 timeAgo: '전', timeJustNow: '방금', timeMinutes: '분', timeHours: '시간', timeDays: '일',
                 mediaManagement: '미디어', mediaManagementTitle: '미디어 관리', mediaSearch: '검색...', mediaTypeAll: '모든 유형', mediaTypeMovie: '영화', mediaTypeSeries: '시리즈',
@@ -985,6 +994,7 @@
                 alreadyAskedTooltip: 'Hai già richiesto di mantenere questo media. Il tuo voto è stato conteggiato.',
                 keepCounterTooltip: '{current} di {threshold} richieste necessarie per annullare l\'eliminazione',
                 sortHighest: 'Più votati per primi', sortLowest: 'Meno votati per primi',
+                sortByLocalRating: 'Voto locale', sortByPersonalRating: 'Il mio voto', sortByImdb: 'IMDB', sortByReleaseDate: 'Data di uscita', sortByNewlyAdded: 'Aggiunto di recente',
                 newEpisode: '+1 episodio', newEpisodes: '+{count} episodi', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Altro',
                 timeAgo: 'fa', timeJustNow: 'adesso', timeMinutes: 'min', timeHours: 'h', timeDays: 'g',
                 mediaManagement: 'Media', mediaManagementTitle: 'Gestione Media', mediaSearch: 'Cerca...', mediaTypeAll: 'Tutti i Tipi', mediaTypeMovie: 'Film', mediaTypeSeries: 'Serie',
@@ -1085,6 +1095,7 @@
                 alreadyAskedTooltip: 'Bu medyayı tutmak için zaten istek gönderdiniz. Oyunuz sayıldı.',
                 keepCounterTooltip: 'Silmeyi iptal etmek için gereken: {current}/{threshold} istek',
                 sortHighest: 'En yüksek puan önce', sortLowest: 'En düşük puan önce',
+                sortByLocalRating: 'Yerel Puan', sortByPersonalRating: 'Benim Puanım', sortByImdb: 'IMDB', sortByReleaseDate: 'Yayın Tarihi', sortByNewlyAdded: 'Yeni Eklenen',
                 newEpisode: '+1 bölüm', newEpisodes: '+{count} bölüm', typeMovie: 'Film', typeSeries: 'Dizi', typeAnime: 'Anime', typeOther: 'Diğer',
                 timeAgo: 'önce', timeJustNow: 'şimdi', timeMinutes: 'dk', timeHours: 'sa', timeDays: 'g',
                 mediaManagement: 'Medya', mediaManagementTitle: 'Medya Yönetimi', mediaSearch: 'Ara...', mediaTypeAll: 'Tüm Türler', mediaTypeMovie: 'Filmler', mediaTypeSeries: 'Diziler',
@@ -1185,6 +1196,7 @@
                 alreadyAskedTooltip: 'Już poprosiłeś o zachowanie tego medium. Twój głos został policzony.',
                 keepCounterTooltip: '{current} z {threshold} próśb potrzebnych do anulowania usunięcia',
                 sortHighest: 'Najwyżej ocenione', sortLowest: 'Najniżej ocenione',
+                sortByLocalRating: 'Ocena lokalna', sortByPersonalRating: 'Moja ocena', sortByImdb: 'IMDB', sortByReleaseDate: 'Data premiery', sortByNewlyAdded: 'Ostatnio dodane',
                 newEpisode: '+1 odcinek', newEpisodes: '+{count} odcinków', typeMovie: 'Film', typeSeries: 'Serial', typeAnime: 'Anime', typeOther: 'Inne',
                 timeAgo: 'temu', timeJustNow: 'przed chwilą', timeMinutes: 'min', timeHours: 'godz', timeDays: 'dni',
                 mediaManagement: 'Media', mediaManagementTitle: 'Zarządzanie Mediami', mediaSearch: 'Szukaj...', mediaTypeAll: 'Wszystkie Typy', mediaTypeMovie: 'Filmy', mediaTypeSeries: 'Seriale',
@@ -1285,6 +1297,7 @@
                 alreadyAskedTooltip: 'Je hebt al gevraagd om deze media te behouden. Je stem is geteld.',
                 keepCounterTooltip: '{current} van {threshold} verzoeken nodig om verwijdering te annuleren',
                 sortHighest: 'Hoogst beoordeeld eerst', sortLowest: 'Laagst beoordeeld eerst',
+                sortByLocalRating: 'Lokale beoordeling', sortByPersonalRating: 'Mijn beoordeling', sortByImdb: 'IMDB', sortByReleaseDate: 'Releasedatum', sortByNewlyAdded: 'Recent toegevoegd',
                 newEpisode: '+1 aflevering', newEpisodes: '+{count} afleveringen', typeMovie: 'Film', typeSeries: 'Serie', typeAnime: 'Anime', typeOther: 'Anders',
                 timeAgo: 'geleden', timeJustNow: 'zojuist', timeMinutes: 'min', timeHours: 'u', timeDays: 'd',
                 mediaManagement: 'Media', mediaManagementTitle: 'Mediabeheer', mediaSearch: 'Zoeken...', mediaTypeAll: 'Alle Types', mediaTypeMovie: 'Films', mediaTypeSeries: 'Series',
@@ -1385,6 +1398,7 @@
                 alreadyAskedTooltip: 'لقد طلبت بالفعل الاحتفاظ بهذا المحتوى. تم احتساب صوتك.',
                 keepCounterTooltip: '{current} من {threshold} طلبات مطلوبة لإلغاء الحذف',
                 sortHighest: 'الأعلى تقييماً أولاً', sortLowest: 'الأدنى تقييماً أولاً',
+                sortByLocalRating: 'التقييم المحلي', sortByPersonalRating: 'تقييمي', sortByImdb: 'IMDB', sortByReleaseDate: 'تاريخ الإصدار', sortByNewlyAdded: 'المضاف حديثاً',
                 newEpisode: '+1 حلقة', newEpisodes: '+{count} حلقات', typeMovie: 'فيلم', typeSeries: 'مسلسل', typeAnime: 'أنمي', typeOther: 'أخرى',
                 timeAgo: 'مضت', timeJustNow: 'الآن', timeMinutes: 'دقيقة', timeHours: 'ساعة', timeDays: 'يوم',
                 mediaManagement: 'الوسائط', mediaManagementTitle: 'إدارة الوسائط', mediaSearch: 'بحث...', mediaTypeAll: 'جميع الأنواع', mediaTypeMovie: 'أفلام', mediaTypeSeries: 'مسلسلات',
@@ -1485,6 +1499,7 @@
                 alreadyAskedTooltip: 'आपने इस मीडिया को रखने का अनुरोध पहले ही कर दिया है। आपका वोट गिना गया है।',
                 keepCounterTooltip: 'हटाना रद्द करने के लिए आवश्यक: {current}/{threshold} अनुरोध',
                 sortHighest: 'उच्चतम रेटिंग पहले', sortLowest: 'निम्नतम रेटिंग पहले',
+                sortByLocalRating: 'स्थानीय रेटिंग', sortByPersonalRating: 'मेरी रेटिंग', sortByImdb: 'IMDB', sortByReleaseDate: 'रिलीज़ तिथि', sortByNewlyAdded: 'हाल ही में जोड़ा गया',
                 newEpisode: '+1 एपिसोड', newEpisodes: '+{count} एपिसोड', typeMovie: 'फिल्म', typeSeries: 'श्रृंखला', typeAnime: 'एनीमे', typeOther: 'अन्य',
                 timeAgo: 'पहले', timeJustNow: 'अभी', timeMinutes: 'मिनट', timeHours: 'घंटे', timeDays: 'दिन',
                 mediaManagement: 'मीडिया', mediaManagementTitle: 'मीडिया प्रबंधन', mediaSearch: 'खोजें...', mediaTypeAll: 'सभी प्रकार', mediaTypeMovie: 'फिल्में', mediaTypeSeries: 'श्रृंखला',
@@ -1585,6 +1600,7 @@
                 alreadyAskedTooltip: 'Jūs jau paprašėte palikti šią mediją. Jūsų balsas suskaičiuotas.',
                 keepCounterTooltip: '{current} iš {threshold} prašymų reikia ištrynimui atšaukti',
                 sortHighest: 'Aukščiausiai įvertinti', sortLowest: 'Žemiausiai įvertinti',
+                sortByLocalRating: 'Vietinis įvertinimas', sortByPersonalRating: 'Mano įvertinimas', sortByImdb: 'IMDB', sortByReleaseDate: 'Išleidimo data', sortByNewlyAdded: 'Neseniai pridėta',
                 newEpisode: '+1 serija', newEpisodes: '+{count} serijos', typeMovie: 'Filmas', typeSeries: 'Serialas', typeAnime: 'Anime', typeOther: 'Kita',
                 timeAgo: 'prieš', timeJustNow: 'ką tik', timeMinutes: 'min', timeHours: 'val', timeDays: 'd',
                 mediaManagement: 'Medija', mediaManagementTitle: 'Medijos Valdymas', mediaSearch: 'Ieškoti...', mediaTypeAll: 'Visi Tipai', mediaTypeMovie: 'Filmai', mediaTypeSeries: 'Serialai',
@@ -1878,6 +1894,9 @@
 
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
+
+            // Initialize home page duplicate hiding
+            this.initHomeDuplicateHiding();
 
             // Initialize responsive scaling
             this.updateResponsiveScaling();
@@ -7286,6 +7305,34 @@
                     background: rgba(229, 9, 20, 1);
                 }
 
+                .netflix-sort-dropdown {
+                    background: rgba(255, 255, 255, 0.15);
+                    border: none;
+                    color: #fff;
+                    height: 28px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    padding: 0 8px;
+                    transition: all 0.2s ease;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 4px center;
+                    padding-right: 20px;
+                }
+
+                .netflix-sort-dropdown:hover {
+                    background-color: rgba(255, 255, 255, 0.3);
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                }
+
+                .netflix-sort-dropdown option {
+                    background: #1a1a1a;
+                    color: #fff;
+                }
+
                 /* Library View Sort Buttons (non-Netflix view) */
                 .library-sort-container {
                     display: inline-flex;
@@ -7339,6 +7386,38 @@
 
                 .library-sort-btn.active:hover {
                     color: #00a4dc;
+                }
+
+                .library-sort-dropdown {
+                    background: transparent;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    color: inherit;
+                    height: 30px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    padding: 0 24px 0 8px;
+                    margin: 0 4px;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 4px center;
+                    flex-shrink: 0;
+                }
+
+                .library-sort-dropdown:hover {
+                    border-color: rgba(255, 255, 255, 0.5);
+                }
+
+                .library-sort-dropdown:focus {
+                    outline: none;
+                    border-color: #00a4dc;
+                }
+
+                .library-sort-dropdown option {
+                    background: #1a1a1a;
+                    color: #fff;
                 }
 
                 .netflix-row-wrapper {
@@ -14891,8 +14970,30 @@
                     return;
                 }
 
-                // Language names mapping
-                const langNames = {
+                // Check config if header language button is enabled
+                const checkConfigAndCreate = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndCreate, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.ShowHeaderLanguageButton === false) {
+                                return; // Don't create language button
+                            }
+                            proceedWithCreation();
+                        })
+                        .catch(() => {
+                            // Default to showing if config fails
+                            proceedWithCreation();
+                        });
+                };
+
+                const proceedWithCreation = () => {
+                    // Language names mapping
+                    const langNames = {
                     en: 'English', es: 'Español', zh: '中文', pt: 'Português', ru: 'Русский',
                     ja: '日本語', de: 'Deutsch', fr: 'Français', ko: '한국어', it: 'Italiano',
                     tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands', ar: 'العربية', hi: 'हिन्दी', lt: 'Lietuvių'
@@ -15040,6 +15141,9 @@
                 };
 
                 setTimeout(waitForButtonGroup, 500);
+                }; // end proceedWithCreation
+
+                checkConfigAndCreate();
 
             } catch (err) {
                 console.error('[Ratings] Error initializing language button:', err);
@@ -15943,6 +16047,127 @@
                 dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
                 attachTabHandlers();
             });
+        },
+
+        // ===============================================
+        // Home Page Duplicate Hiding
+        // ===============================================
+
+        /**
+         * Initialize home page duplicate hiding
+         * Hides duplicate series/movie cards on home page rows
+         */
+        initHomeDuplicateHiding: function () {
+            const self = this;
+            try {
+                // Check config first
+                const checkConfigAndInit = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndInit, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.HideHomeDuplicates === false) {
+                                return; // Feature disabled
+                            }
+                            self.setupHomeDuplicateObserver();
+                        })
+                        .catch(() => {
+                            // Default to enabled if config fails
+                            self.setupHomeDuplicateObserver();
+                        });
+                };
+
+                checkConfigAndInit();
+            } catch (err) {
+                console.error('[Ratings] Error initializing home duplicate hiding:', err);
+            }
+        },
+
+        /**
+         * Setup MutationObserver to watch for home page rows and hide duplicates
+         */
+        setupHomeDuplicateObserver: function () {
+            const self = this;
+
+            const hideDuplicatesInRow = (row) => {
+                // Find all card links in this row
+                const cards = row.querySelectorAll('.card[data-id], a.card');
+                if (cards.length === 0) return;
+
+                const seenIds = new Set();
+
+                cards.forEach(card => {
+                    // Get the unique identifier - SeriesId for episodes/seasons, or item Id for movies
+                    let uniqueId = card.getAttribute('data-seriesid') ||
+                                   card.getAttribute('data-id') ||
+                                   card.querySelector('[data-id]')?.getAttribute('data-id');
+
+                    // Also check href for item ID
+                    if (!uniqueId) {
+                        const href = card.getAttribute('href') || '';
+                        const match = href.match(/id=([a-f0-9-]+)/i);
+                        if (match) uniqueId = match[1];
+                    }
+
+                    if (!uniqueId) return;
+
+                    if (seenIds.has(uniqueId)) {
+                        // This is a duplicate, hide it
+                        card.style.display = 'none';
+                    } else {
+                        seenIds.add(uniqueId);
+                        // Make sure it's visible (in case it was hidden before)
+                        if (card.style.display === 'none') {
+                            card.style.display = '';
+                        }
+                    }
+                });
+            };
+
+            const processHomePage = () => {
+                // Check if we're on home page
+                const hash = window.location.hash;
+                if (hash && hash !== '#/' && hash !== '#!/' && !hash.includes('home')) {
+                    return; // Not on home page
+                }
+
+                // Find all scrollSlider rows (home page carousels)
+                const rows = document.querySelectorAll('.itemsContainer.scrollSlider, .section .itemsContainer');
+                rows.forEach(row => {
+                    hideDuplicatesInRow(row);
+                });
+            };
+
+            // Process on page load
+            setTimeout(processHomePage, 1000);
+
+            // Watch for new cards being added
+            const observer = new MutationObserver((mutations) => {
+                let shouldProcess = false;
+                for (const mutation of mutations) {
+                    if (mutation.addedNodes.length > 0) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === 1 && (node.classList?.contains('card') || node.querySelector?.('.card'))) {
+                                shouldProcess = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (shouldProcess) break;
+                }
+                if (shouldProcess) {
+                    setTimeout(processHomePage, 100);
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // Also process on navigation
+            window.addEventListener('hashchange', () => setTimeout(processHomePage, 500));
         },
 
         // ===============================================
@@ -21954,7 +22179,7 @@
             const deviceId = ApiClient.deviceId();
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            const fetchUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio&EnableTotalRecordCount=true&Limit=500`;
+            const fetchUrl = `${baseUrl}/Items?ParentId=${parentId}&IncludeItemTypes=Movie,Series&Recursive=true&Fields=Genres,PrimaryImageAspectRatio,PremiereDate,DateCreated,CommunityRating&EnableTotalRecordCount=true&Limit=10000`;
             // Get all items to extract genres
             fetch(fetchUrl, {
                 method: 'GET',
@@ -22057,14 +22282,23 @@
                 Id: item.Id,
                 Name: item.Name,
                 ImageTags: item.ImageTags,
-                CommunityRating: item.CommunityRating
+                CommunityRating: item.CommunityRating,
+                PremiereDate: item.PremiereDate,
+                DateCreated: item.DateCreated
             })))));
 
             return `
-                <div class="netflix-genre-row" data-genre="${this.escapeHtml(genre)}" data-genre-id="${genreId}" data-items="${itemsData}" data-sort-state="none">
+                <div class="netflix-genre-row" data-genre="${this.escapeHtml(genre)}" data-genre-id="${genreId}" data-items="${itemsData}" data-sort-state="none" data-sort-field="local">
                     <div class="netflix-genre-title">
                         <span class="netflix-genre-title-text">${this.escapeHtml(genre)}</span>
                         <span class="netflix-sort-buttons">
+                            <select class="netflix-sort-dropdown">
+                                <option value="local" selected>${this.t('sortByLocalRating')}</option>
+                                <option value="personal">${this.t('sortByPersonalRating')}</option>
+                                <option value="imdb">${this.t('sortByImdb')}</option>
+                                <option value="release">${this.t('sortByReleaseDate')}</option>
+                                <option value="added">${this.t('sortByNewlyAdded')}</option>
+                            </select>
                             <button class="netflix-sort-btn" data-sort="desc" title="${this.t('sortHighest')}">▲</button>
                             <button class="netflix-sort-btn" data-sort="asc" title="${this.t('sortLowest')}">▼</button>
                         </span>
@@ -22138,6 +22372,7 @@
         attachSortHandlers: function (container, baseUrl) {
             const self = this;
             const sortButtons = container.querySelectorAll('.netflix-sort-btn');
+            const sortDropdowns = container.querySelectorAll('.netflix-sort-dropdown');
 
             sortButtons.forEach(btn => {
                 btn.addEventListener('click', function (e) {
@@ -22149,6 +22384,7 @@
 
                     const sortDirection = btn.getAttribute('data-sort'); // 'asc' or 'desc'
                     const currentSortState = genreRow.getAttribute('data-sort-state');
+                    const sortField = genreRow.getAttribute('data-sort-field') || 'local';
 
                     // If clicking same sort direction again, shuffle randomly
                     if (currentSortState === sortDirection) {
@@ -22156,16 +22392,34 @@
                         return;
                     }
 
-                    // Sort by rating
-                    self.sortGenreRow(genreRow, sortDirection, baseUrl);
+                    // Sort by selected field
+                    self.sortGenreRow(genreRow, sortDirection, sortField, baseUrl);
+                });
+            });
+
+            // Handle dropdown changes
+            sortDropdowns.forEach(dropdown => {
+                dropdown.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    const genreRow = dropdown.closest('.netflix-genre-row');
+                    if (!genreRow) return;
+
+                    const sortField = dropdown.value;
+                    genreRow.setAttribute('data-sort-field', sortField);
+
+                    // If already sorted, re-sort with new field
+                    const currentSortState = genreRow.getAttribute('data-sort-state');
+                    if (currentSortState && currentSortState !== 'none') {
+                        self.sortGenreRow(genreRow, currentSortState, sortField, baseUrl);
+                    }
                 });
             });
         },
 
         /**
-         * Sort a genre row by custom ratings
+         * Sort a genre row by selected field
          */
-        sortGenreRow: function (genreRow, direction, baseUrl) {
+        sortGenreRow: function (genreRow, direction, sortField, baseUrl) {
             const self = this;
             const rowContent = genreRow.querySelector('.netflix-row-content');
             if (!rowContent) return;
@@ -22182,27 +22436,50 @@
                 return;
             }
 
-            // Find items without cached ratings
-            const uncachedIds = items
+            // Find items without cached ratings (needed for local and personal ratings)
+            const uncachedIds = (sortField === 'local' || sortField === 'personal') ? items
                 .filter(item => !self.ratingsCache[item.Id])
-                .map(item => item.Id);
+                .map(item => item.Id) : [];
 
             // Helper function to perform the actual sort
             const performSort = () => {
                 const sortedItems = [...items].sort((a, b) => {
-                    const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
-                    const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+                    let valueA, valueB;
 
-                    // Items without ratings go to the end
-                    if (ratingA === -1 && ratingB === -1) return 0;
-                    if (ratingA === -1) return 1;
-                    if (ratingB === -1) return -1;
+                    switch (sortField) {
+                        case 'personal':
+                            valueA = self.ratingsCache[a.Id] ? (self.ratingsCache[a.Id].UserRating || -1) : -1;
+                            valueB = self.ratingsCache[b.Id] ? (self.ratingsCache[b.Id].UserRating || -1) : -1;
+                            break;
+                        case 'imdb':
+                            valueA = a.CommunityRating || -1;
+                            valueB = b.CommunityRating || -1;
+                            break;
+                        case 'release':
+                            valueA = a.PremiereDate ? new Date(a.PremiereDate).getTime() : -1;
+                            valueB = b.PremiereDate ? new Date(b.PremiereDate).getTime() : -1;
+                            break;
+                        case 'added':
+                            valueA = a.DateCreated ? new Date(a.DateCreated).getTime() : -1;
+                            valueB = b.DateCreated ? new Date(b.DateCreated).getTime() : -1;
+                            break;
+                        case 'local':
+                        default:
+                            valueA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                            valueB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+                            break;
+                    }
+
+                    // Items without values go to the end
+                    if (valueA === -1 && valueB === -1) return 0;
+                    if (valueA === -1) return 1;
+                    if (valueB === -1) return -1;
 
                     // Sort by direction
                     if (direction === 'desc') {
-                        return ratingB - ratingA; // Highest first
+                        return valueB - valueA; // Highest/newest first
                     } else {
-                        return ratingA - ratingB; // Lowest first
+                        return valueA - valueB; // Lowest/oldest first
                     }
                 });
 
@@ -22579,6 +22856,23 @@
 
             if (!targetContainer) return false;
 
+            // Create a marker span to track if our buttons exist (for detection)
+            const marker = document.createElement('span');
+            marker.id = 'librarySortContainer';
+            marker.style.cssText = 'display:none;';
+
+            // Create sort field dropdown
+            const dropdown = document.createElement('select');
+            dropdown.id = 'librarySortDropdown';
+            dropdown.className = 'library-sort-dropdown';
+            dropdown.innerHTML = `
+                <option value="local" selected>${self.t('sortByLocalRating')}</option>
+                <option value="personal">${self.t('sortByPersonalRating')}</option>
+                <option value="imdb">${self.t('sortByImdb')}</option>
+                <option value="release">${self.t('sortByReleaseDate')}</option>
+                <option value="added">${self.t('sortByNewlyAdded')}</option>
+            `;
+
             // Create buttons - minimal inline styles, let CSS handle hover/active
             const btn1 = document.createElement('button');
             btn1.id = 'librarySortDesc';
@@ -22598,29 +22892,20 @@
             btn2.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
             btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
 
-            // Create a marker span to track if our buttons exist (for detection)
-            const marker = document.createElement('span');
-            marker.id = 'librarySortContainer';
-            marker.style.cssText = 'display:none;';
+            // Always append at the end of toolbar (after filter button)
+            targetContainer.appendChild(marker);
+            targetContainer.appendChild(dropdown);
+            targetContainer.appendChild(btn1);
+            targetContainer.appendChild(btn2);
 
-            // Insert buttons directly into toolbar
-            if (insertBefore) {
-                targetContainer.insertBefore(marker, insertBefore);
-                targetContainer.insertBefore(btn2, insertBefore);
-                targetContainer.insertBefore(btn1, btn2);
-            } else {
-                targetContainer.appendChild(marker);
-                targetContainer.appendChild(btn1);
-                targetContainer.appendChild(btn2);
-            }
-
-            // Attach click handlers
+            // Attach click handlers for sort buttons
             [btn1, btn2].forEach(btn => {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
 
                     const sortDirection = btn.getAttribute('data-sort');
+                    const sortField = dropdown.value;
                     const wasActive = btn.classList.contains('active');
 
                     btn1.classList.remove('active');
@@ -22630,19 +22915,30 @@
                         self.restoreLibraryCardsOrder();
                     } else {
                         btn.classList.add('active');
-                        self.sortLibraryCards(sortDirection);
+                        self.sortLibraryCards(sortDirection, sortField);
                     }
                 });
+            });
+
+            // Re-sort when dropdown changes if already sorted
+            dropdown.addEventListener('change', function (e) {
+                e.stopPropagation();
+                const activeBtn = btn1.classList.contains('active') ? btn1 : (btn2.classList.contains('active') ? btn2 : null);
+                if (activeBtn) {
+                    const sortDirection = activeBtn.getAttribute('data-sort');
+                    self.sortLibraryCards(sortDirection, dropdown.value);
+                }
             });
 
             return true;
         },
 
         /**
-         * Sort library cards by custom ratings - fetches ALL items from library
+         * Sort library cards by selected field - fetches ALL items from library
          */
-        sortLibraryCards: function (direction) {
+        sortLibraryCards: function (direction, sortField) {
             const self = this;
+            sortField = sortField || 'local';
 
             // Get parent ID from URL to fetch all items
             const parentId = self.getParentIdFromUrl();
@@ -22682,10 +22978,10 @@
                     return;
                 }
 
-                // Get all item IDs that need ratings
-                const uncachedIds = items
+                // Get all item IDs that need ratings (for local and personal rating sort)
+                const uncachedIds = (sortField === 'local' || sortField === 'personal') ? items
                     .filter(item => self.ratingsCache[item.Id] === undefined)
-                    .map(item => item.Id);
+                    .map(item => item.Id) : [];
 
                 // Fetch ratings then sort
                 const ratingsPromise = uncachedIds.length > 0
@@ -22695,16 +22991,39 @@
                 ratingsPromise.then(() => {
                     restoreBtn();
 
-                    // Sort items by rating
+                    // Sort items by selected field
                     const sortedItems = [...items].sort((a, b) => {
-                        const ratingA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
-                        const ratingB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+                        let valueA, valueB;
 
-                        if (ratingA === -1 && ratingB === -1) return 0;
-                        if (ratingA === -1) return 1;
-                        if (ratingB === -1) return -1;
+                        switch (sortField) {
+                            case 'personal':
+                                valueA = self.ratingsCache[a.Id] ? (self.ratingsCache[a.Id].UserRating || -1) : -1;
+                                valueB = self.ratingsCache[b.Id] ? (self.ratingsCache[b.Id].UserRating || -1) : -1;
+                                break;
+                            case 'imdb':
+                                valueA = a.CommunityRating || -1;
+                                valueB = b.CommunityRating || -1;
+                                break;
+                            case 'release':
+                                valueA = a.PremiereDate ? new Date(a.PremiereDate).getTime() : -1;
+                                valueB = b.PremiereDate ? new Date(b.PremiereDate).getTime() : -1;
+                                break;
+                            case 'added':
+                                valueA = a.DateCreated ? new Date(a.DateCreated).getTime() : -1;
+                                valueB = b.DateCreated ? new Date(b.DateCreated).getTime() : -1;
+                                break;
+                            case 'local':
+                            default:
+                                valueA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
+                                valueB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
+                                break;
+                        }
 
-                        return direction === 'desc' ? ratingB - ratingA : ratingA - ratingB;
+                        if (valueA === -1 && valueB === -1) return 0;
+                        if (valueA === -1) return 1;
+                        if (valueB === -1) return -1;
+
+                        return direction === 'desc' ? valueB - valueA : valueA - valueB;
                     });
 
                     // Rebuild cards with sorted items
@@ -22764,7 +23083,7 @@
             // Build URL - if no parentId, get all items
             let url = `${baseUrl}/Users/${userId}/Items?`;
             url += 'IncludeItemTypes=Movie,Series&Recursive=true&SortBy=SortName&SortOrder=Ascending&Limit=10000';
-            url += '&Fields=PrimaryImageAspectRatio,BasicSyncInfo';
+            url += '&Fields=PrimaryImageAspectRatio,BasicSyncInfo,PremiereDate,DateCreated,CommunityRating';
             if (parentId) {
                 url += `&ParentId=${parentId}`;
             }

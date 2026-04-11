@@ -23,10 +23,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             EnableNewMediaNotifications = true;
             EnableEpisodeGrouping = true;
             ShowLanguageSwitch = true;
+            ShowHeaderLanguageButton = true;
             ShowSearchButton = true;
             ShowNotificationToggle = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
+            HideHomeDuplicates = true;
 
             // Media management settings
             EnableMediaManagement = true;
@@ -142,9 +144,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public bool EnableEpisodeGrouping { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the language switch (EN/LT) is shown.
+        /// Gets or sets a value indicating whether the language switch is shown in the request modal.
         /// </summary>
         public bool ShowLanguageSwitch { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the language button is shown in the header.
+        /// </summary>
+        public bool ShowHeaderLanguageButton { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the search button is shown in the header.
@@ -168,6 +175,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Replaces the Sync Play button with a dropdown showing 50 most recently added media items.
         /// </summary>
         public bool ShowLatestMediaButton { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether duplicate cards are hidden on the home page.
+        /// </summary>
+        public bool HideHomeDuplicates { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the Media Management feature is enabled for admins.

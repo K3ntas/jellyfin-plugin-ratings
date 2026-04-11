@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.336.0",
+        "changelog": "Sort dropdown, hide home duplicates, language settings fix",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.336.0/jellyfin-plugin-ratings_1.0.336.0.zip",
+        "checksum": "d17c714bb5e6833f6631c646b5fb5351",
+        "timestamp": "2026-04-11T23:00:00Z"
+      },
+      {
         "version": "1.0.335.0",
         "changelog": "Clear All per-tab, admin DM conversation deletion",
         "targetAbi": "10.11.0.0",
