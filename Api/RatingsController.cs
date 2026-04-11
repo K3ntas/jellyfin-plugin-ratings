@@ -807,6 +807,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
                     NotificationsEnabledByDefault = config?.NotificationsEnabledByDefault ?? true,
                     ShowLatestMediaButton = config?.ShowLatestMediaButton ?? true,
+                    HideHomeDuplicates = config?.HideHomeDuplicates ?? true,
 
                     // Media management settings
                     EnableMediaManagement = config?.EnableMediaManagement ?? true,

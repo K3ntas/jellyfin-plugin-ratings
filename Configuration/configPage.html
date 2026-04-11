@@ -196,6 +196,16 @@
                                 </div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkHideHomeDuplicates" type="checkbox" is="emby-checkbox" />
+                                    <span>Hide Duplicate Cards on Home</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Hide duplicate series/movie cards on the <span style="color: #e57373;">home page</span> rows (Recently Added, Continue Watching, etc.).
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1081,6 +1091,7 @@
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
+                    document.querySelector('#chkHideHomeDuplicates').checked = config.HideHomeDuplicates !== false;
 
                     // Media management settings
                     document.querySelector('#chkEnableMediaManagement').checked = config.EnableMediaManagement !== false;
@@ -1184,6 +1195,7 @@
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
+                    config.HideHomeDuplicates = document.querySelector('#chkHideHomeDuplicates').checked;
 
                     // Media management settings
                     config.EnableMediaManagement = document.querySelector('#chkEnableMediaManagement').checked;

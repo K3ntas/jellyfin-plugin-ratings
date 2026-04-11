@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.251.0",
+        "changelog": "Hide duplicate cards on home page (Recently Added, Continue Watching, etc.)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.251.0/Jellyfin.Plugin.Ratings_2.0.251.0.zip",
+        "checksum": "1f405be64f9718b6d0a0ed7fd68cf32a",
+        "timestamp": "2026-04-11T22:30:00Z"
+      },
+      {
         "version": "2.0.250.0",
         "changelog": "Sort dropdown for Netflix and library view - Local, Personal, IMDB, Release Date, Newly Added",
         "targetAbi": "10.11.0.0",

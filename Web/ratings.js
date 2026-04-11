@@ -1895,6 +1895,9 @@
             // Initialize latest media button (replaces sync play)
             this.initLatestMediaButton();
 
+            // Initialize home page duplicate hiding
+            this.initHomeDuplicateHiding();
+
             // Initialize responsive scaling
             this.updateResponsiveScaling();
 
@@ -16044,6 +16047,127 @@
                 dropdown.innerHTML = buildTabsHeader('leaving') + `<div class="latest-empty">${self.t('latestMediaError')}</div>`;
                 attachTabHandlers();
             });
+        },
+
+        // ===============================================
+        // Home Page Duplicate Hiding
+        // ===============================================
+
+        /**
+         * Initialize home page duplicate hiding
+         * Hides duplicate series/movie cards on home page rows
+         */
+        initHomeDuplicateHiding: function () {
+            const self = this;
+            try {
+                // Check config first
+                const checkConfigAndInit = () => {
+                    if (!window.ApiClient) {
+                        setTimeout(checkConfigAndInit, 1000);
+                        return;
+                    }
+                    const baseUrl = ApiClient.serverAddress();
+                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
+                        .then(response => response.json())
+                        .then(config => {
+                            if (config.HideHomeDuplicates === false) {
+                                return; // Feature disabled
+                            }
+                            self.setupHomeDuplicateObserver();
+                        })
+                        .catch(() => {
+                            // Default to enabled if config fails
+                            self.setupHomeDuplicateObserver();
+                        });
+                };
+
+                checkConfigAndInit();
+            } catch (err) {
+                console.error('[Ratings] Error initializing home duplicate hiding:', err);
+            }
+        },
+
+        /**
+         * Setup MutationObserver to watch for home page rows and hide duplicates
+         */
+        setupHomeDuplicateObserver: function () {
+            const self = this;
+
+            const hideDuplicatesInRow = (row) => {
+                // Find all card links in this row
+                const cards = row.querySelectorAll('.card[data-id], a.card');
+                if (cards.length === 0) return;
+
+                const seenIds = new Set();
+
+                cards.forEach(card => {
+                    // Get the unique identifier - SeriesId for episodes/seasons, or item Id for movies
+                    let uniqueId = card.getAttribute('data-seriesid') ||
+                                   card.getAttribute('data-id') ||
+                                   card.querySelector('[data-id]')?.getAttribute('data-id');
+
+                    // Also check href for item ID
+                    if (!uniqueId) {
+                        const href = card.getAttribute('href') || '';
+                        const match = href.match(/id=([a-f0-9-]+)/i);
+                        if (match) uniqueId = match[1];
+                    }
+
+                    if (!uniqueId) return;
+
+                    if (seenIds.has(uniqueId)) {
+                        // This is a duplicate, hide it
+                        card.style.display = 'none';
+                    } else {
+                        seenIds.add(uniqueId);
+                        // Make sure it's visible (in case it was hidden before)
+                        if (card.style.display === 'none') {
+                            card.style.display = '';
+                        }
+                    }
+                });
+            };
+
+            const processHomePage = () => {
+                // Check if we're on home page
+                const hash = window.location.hash;
+                if (hash && hash !== '#/' && hash !== '#!/' && !hash.includes('home')) {
+                    return; // Not on home page
+                }
+
+                // Find all scrollSlider rows (home page carousels)
+                const rows = document.querySelectorAll('.itemsContainer.scrollSlider, .section .itemsContainer');
+                rows.forEach(row => {
+                    hideDuplicatesInRow(row);
+                });
+            };
+
+            // Process on page load
+            setTimeout(processHomePage, 1000);
+
+            // Watch for new cards being added
+            const observer = new MutationObserver((mutations) => {
+                let shouldProcess = false;
+                for (const mutation of mutations) {
+                    if (mutation.addedNodes.length > 0) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === 1 && (node.classList?.contains('card') || node.querySelector?.('.card'))) {
+                                shouldProcess = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (shouldProcess) break;
+                }
+                if (shouldProcess) {
+                    setTimeout(processHomePage, 100);
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // Also process on navigation
+            window.addEventListener('hashchange', () => setTimeout(processHomePage, 500));
         },
 
         // ===============================================
