@@ -14994,6 +14994,7 @@
             const iconOpacity = (style.iconOpacity || 100) / 100;
 
             styleEl.textContent = `
+                /* Group container */
                 #ratingsButtonGroup {
                     background: ${bgColor} !important;
                     border: ${borderStyle} !important;
@@ -15001,22 +15002,57 @@
                     ${glowShadow}
                 }
 
-                .ratingsGroupBtn {
+                /* ALL buttons inside the group */
+                #ratingsButtonGroup button,
+                #ratingsButtonGroup .ratingsGroupBtn,
+                #ratingsButtonGroup > div,
+                #ratingsButtonGroup #languageBtn,
+                #ratingsButtonGroup #requestMediaBtn,
+                #ratingsButtonGroup #notificationToggle,
+                #ratingsButtonGroup #latestMediaBtn,
+                #ratingsButtonGroup #mediaManagementBtn,
+                #ratingsButtonGroup #chatBtn,
+                #ratingsButtonGroup #friendsBtn {
                     color: ${style.buttonColor} !important;
                     opacity: ${iconOpacity} !important;
                 }
 
-                .ratingsGroupBtn:hover {
-                    background: ${style.buttonHoverBg} !important;
-                    opacity: 1 !important;
+                /* ALL SVGs inside the group */
+                #ratingsButtonGroup svg,
+                #ratingsButtonGroup button svg,
+                #ratingsButtonGroup .ratingsGroupBtn svg {
+                    fill: ${style.buttonColor} !important;
+                    opacity: ${iconOpacity} !important;
                 }
 
-                #requestMediaBtn {
+                /* Language badge text */
+                #ratingsButtonGroup #languageBtn .lang-code,
+                #ratingsButtonGroup .lang-code {
+                    color: ${style.buttonColor} !important;
+                }
+
+                /* Search field styling */
+                #ratingsButtonGroup #headerSearchField,
+                #ratingsButtonGroup #headerSearchField input,
+                #ratingsButtonGroup #headerSearchInput {
                     color: ${style.buttonColor} !important;
                     opacity: ${iconOpacity} !important;
                 }
 
-                #requestMediaBtn:hover {
+                #ratingsButtonGroup #headerSearchField svg {
+                    fill: ${style.buttonColor} !important;
+                }
+
+                /* Hover states for ALL buttons */
+                #ratingsButtonGroup button:hover,
+                #ratingsButtonGroup .ratingsGroupBtn:hover,
+                #ratingsButtonGroup #languageBtn:hover,
+                #ratingsButtonGroup #requestMediaBtn:hover,
+                #ratingsButtonGroup #notificationToggle:hover,
+                #ratingsButtonGroup #latestMediaBtn:hover,
+                #ratingsButtonGroup #mediaManagementBtn:hover,
+                #ratingsButtonGroup #chatBtn:hover,
+                #ratingsButtonGroup #friendsBtn:hover {
                     background: ${style.buttonHoverBg} !important;
                     opacity: 1 !important;
                 }
