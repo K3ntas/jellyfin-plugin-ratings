@@ -1168,6 +1168,7 @@
 
             // Header button styling - helper functions
             function hexToRgb(hex) {
+                hex = hex || '#282828';
                 var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
                 return result ? {
                     r: parseInt(result[1], 16),
@@ -1177,11 +1178,12 @@
             }
 
             function rgbToHex(r, g, b) {
-                return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+                return '#' + [r, g, b].map(function(x) { return x.toString(16).padStart(2, '0'); }).join('');
             }
 
             function parseRgba(str) {
-                var match = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                if (!str) return { r: 40, g: 40, b: 40, a: 0.95 };
+                var match = str.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
                 if (match) {
                     return {
                         r: parseInt(match[1]),
@@ -1190,7 +1192,6 @@
                         a: match[4] !== undefined ? parseFloat(match[4]) : 1
                     };
                 }
-                // Try hex
                 if (str.startsWith('#')) {
                     var rgb = hexToRgb(str);
                     return { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
@@ -1198,15 +1199,14 @@
                 return { r: 40, g: 40, b: 40, a: 0.95 };
             }
 
-            function buildRgba(colorPicker, opacitySlider) {
-                var hex = colorPicker ? colorPicker.value : '#282828';
-                var opacity = opacitySlider ? (parseInt(opacitySlider.value) / 100) : 1;
+            function buildRgba(hex, opacity) {
                 var rgb = hexToRgb(hex);
                 return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + opacity + ')';
             }
 
             function syncColorPickerFromText(textInput, colorPicker, opacitySlider, opacityLabel) {
-                var val = textInput.value.trim();
+                if (!textInput || !colorPicker) return;
+                var val = textInput.value ? textInput.value.trim() : '';
                 var parsed = parseRgba(val);
                 colorPicker.value = rgbToHex(parsed.r, parsed.g, parsed.b);
                 if (opacitySlider) {
@@ -1215,21 +1215,25 @@
                 }
             }
 
-            function syncTextFromColorPicker(colorPicker, opacitySlider, textInput) {
-                textInput.value = buildRgba(colorPicker, opacitySlider);
-            }
-
             function updateHeaderBtnPreview() {
                 var preview = document.getElementById('headerBtnPreview');
                 if (!preview) return;
 
-                var bg = document.querySelector('#txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
-                var borderColor = document.querySelector('#txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
-                var borderRadius = (document.querySelector('#txtHeaderBtnGroupRadius').value || document.querySelector('#sliderHeaderBtnGroupRadius').value || 25) + 'px';
-                var btnColor = document.querySelector('#txtHeaderBtnColor').value || '#ffffff';
-                var hoverBg = document.querySelector('#txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
-                var glowEnabled = document.querySelector('#chkHeaderBtnGlowEffect').checked;
-                var glowColor = document.querySelector('#txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
+                var bgEl = document.getElementById('txtHeaderBtnGroupBg');
+                var borderEl = document.getElementById('txtHeaderBtnGroupBorder');
+                var radiusEl = document.getElementById('txtHeaderBtnGroupRadius');
+                var btnColorEl = document.getElementById('txtHeaderBtnColor');
+                var hoverEl = document.getElementById('txtHeaderBtnHoverBg');
+                var glowChkEl = document.getElementById('chkHeaderBtnGlowEffect');
+                var glowColorEl = document.getElementById('txtHeaderBtnGlowColor');
+
+                var bg = (bgEl && bgEl.value) || 'rgba(40, 40, 40, 0.95)';
+                var borderColor = (borderEl && borderEl.value) || 'rgba(255, 255, 255, 0.15)';
+                var borderRadius = ((radiusEl && radiusEl.value) || 25) + 'px';
+                var btnColor = (btnColorEl && btnColorEl.value) || '#ffffff';
+                var hoverBg = (hoverEl && hoverEl.value) || 'rgba(255, 255, 255, 0.15)';
+                var glowEnabled = glowChkEl && glowChkEl.checked;
+                var glowColor = (glowColorEl && glowColorEl.value) || 'rgba(255, 255, 255, 0.3)';
 
                 preview.style.background = bg;
                 preview.style.border = '1px solid ' + borderColor;
@@ -1244,64 +1248,71 @@
                 });
             }
 
-            // Initialize header button styling controls
-            document.addEventListener('DOMContentLoaded', function() {
+            // Initialize header button styling controls - called after config loads
+            var hdrBtnControlsInitialized = false;
+            function initHeaderBtnControls() {
+                if (hdrBtnControlsInitialized) return;
+                hdrBtnControlsInitialized = true;
+
                 // Color + opacity pairs
                 var colorPairs = [
-                    { color: '#colorHeaderBtnGroupBg', text: '#txtHeaderBtnGroupBg', slider: '#sliderHeaderBtnGroupBgOpacity', label: '#valHeaderBtnGroupBgOpacity' },
-                    { color: '#colorHeaderBtnGroupBorder', text: '#txtHeaderBtnGroupBorder', slider: '#sliderHeaderBtnGroupBorderOpacity', label: '#valHeaderBtnGroupBorderOpacity' },
-                    { color: '#colorHeaderBtnHoverBg', text: '#txtHeaderBtnHoverBg', slider: '#sliderHeaderBtnHoverOpacity', label: '#valHeaderBtnHoverOpacity' },
-                    { color: '#colorHeaderBtnGlowColor', text: '#txtHeaderBtnGlowColor', slider: '#sliderHeaderBtnGlowOpacity', label: '#valHeaderBtnGlowOpacity' }
+                    { color: 'colorHeaderBtnGroupBg', text: 'txtHeaderBtnGroupBg', slider: 'sliderHeaderBtnGroupBgOpacity', label: 'valHeaderBtnGroupBgOpacity' },
+                    { color: 'colorHeaderBtnGroupBorder', text: 'txtHeaderBtnGroupBorder', slider: 'sliderHeaderBtnGroupBorderOpacity', label: 'valHeaderBtnGroupBorderOpacity' },
+                    { color: 'colorHeaderBtnHoverBg', text: 'txtHeaderBtnHoverBg', slider: 'sliderHeaderBtnHoverOpacity', label: 'valHeaderBtnHoverOpacity' },
+                    { color: 'colorHeaderBtnGlowColor', text: 'txtHeaderBtnGlowColor', slider: 'sliderHeaderBtnGlowOpacity', label: 'valHeaderBtnGlowOpacity' }
                 ];
 
                 colorPairs.forEach(function(pair) {
-                    var colorEl = document.querySelector(pair.color);
-                    var textEl = document.querySelector(pair.text);
-                    var sliderEl = document.querySelector(pair.slider);
-                    var labelEl = document.querySelector(pair.label);
+                    var colorEl = document.getElementById(pair.color);
+                    var textEl = document.getElementById(pair.text);
+                    var sliderEl = document.getElementById(pair.slider);
+                    var labelEl = document.getElementById(pair.label);
 
                     if (colorEl && textEl) {
                         // Color picker change -> update text
                         colorEl.addEventListener('input', function() {
-                            syncTextFromColorPicker(colorEl, sliderEl, textEl);
+                            var opacity = sliderEl ? (parseInt(sliderEl.value) / 100) : 1;
+                            textEl.value = buildRgba(colorEl.value, opacity);
                             updateHeaderBtnPreview();
                         });
                         // Slider change -> update text and label
                         if (sliderEl) {
                             sliderEl.addEventListener('input', function() {
+                                var opacity = parseInt(sliderEl.value) / 100;
                                 if (labelEl) labelEl.textContent = sliderEl.value + '%';
-                                syncTextFromColorPicker(colorEl, sliderEl, textEl);
+                                textEl.value = buildRgba(colorEl.value, opacity);
                                 updateHeaderBtnPreview();
                             });
                         }
                         // Text change -> sync color picker and slider
-                        textEl.addEventListener('change', function() {
+                        textEl.addEventListener('input', function() {
                             syncColorPickerFromText(textEl, colorEl, sliderEl, labelEl);
                             updateHeaderBtnPreview();
                         });
                     }
                 });
 
-                // Simple color (no opacity)
-                var btnColorPicker = document.querySelector('#colorHeaderBtnColor');
-                var btnColorText = document.querySelector('#txtHeaderBtnColor');
+                // Simple color (no opacity) - button icon color
+                var btnColorPicker = document.getElementById('colorHeaderBtnColor');
+                var btnColorText = document.getElementById('txtHeaderBtnColor');
                 if (btnColorPicker && btnColorText) {
                     btnColorPicker.addEventListener('input', function() {
                         btnColorText.value = btnColorPicker.value;
                         updateHeaderBtnPreview();
                     });
-                    btnColorText.addEventListener('change', function() {
-                        if (btnColorText.value.match(/^#[0-9a-fA-F]{6}$/)) {
-                            btnColorPicker.value = btnColorText.value;
+                    btnColorText.addEventListener('input', function() {
+                        var val = btnColorText.value.trim();
+                        if (val.match(/^#[0-9a-fA-F]{6}$/i)) {
+                            btnColorPicker.value = val;
                         }
                         updateHeaderBtnPreview();
                     });
                 }
 
                 // Border radius slider + number sync
-                var radiusSlider = document.querySelector('#sliderHeaderBtnGroupRadius');
-                var radiusNum = document.querySelector('#txtHeaderBtnGroupRadius');
-                var radiusLabel = document.querySelector('#valHeaderBtnGroupRadius');
+                var radiusSlider = document.getElementById('sliderHeaderBtnGroupRadius');
+                var radiusNum = document.getElementById('txtHeaderBtnGroupRadius');
+                var radiusLabel = document.getElementById('valHeaderBtnGroupRadius');
                 if (radiusSlider && radiusNum) {
                     radiusSlider.addEventListener('input', function() {
                         radiusNum.value = radiusSlider.value;
@@ -1316,11 +1327,11 @@
                 }
 
                 // Glow checkbox
-                var glowChk = document.querySelector('#chkHeaderBtnGlowEffect');
+                var glowChk = document.getElementById('chkHeaderBtnGlowEffect');
                 if (glowChk) {
                     glowChk.addEventListener('change', updateHeaderBtnPreview);
                 }
-            });
+            }
 
             // Badge profile management
             var badgeProfiles = [];
@@ -1662,54 +1673,56 @@
                     var hdrRadius = config.HeaderButtonGroupBorderRadius || 25;
 
                     // Set text inputs
-                    document.querySelector('#txtHeaderBtnGroupBg').value = hdrBg;
-                    document.querySelector('#txtHeaderBtnGroupBorder').value = hdrBorder;
-                    document.querySelector('#txtHeaderBtnGroupRadius').value = hdrRadius;
-                    document.querySelector('#txtHeaderBtnColor').value = hdrBtnColor;
-                    document.querySelector('#txtHeaderBtnHoverBg').value = hdrHover;
-                    document.querySelector('#chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
-                    document.querySelector('#txtHeaderBtnGlowColor').value = hdrGlow;
+                    document.getElementById('txtHeaderBtnGroupBg').value = hdrBg;
+                    document.getElementById('txtHeaderBtnGroupBorder').value = hdrBorder;
+                    document.getElementById('txtHeaderBtnGroupRadius').value = hdrRadius;
+                    document.getElementById('txtHeaderBtnColor').value = hdrBtnColor;
+                    document.getElementById('txtHeaderBtnHoverBg').value = hdrHover;
+                    document.getElementById('chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
+                    document.getElementById('txtHeaderBtnGlowColor').value = hdrGlow;
 
                     // Sync color pickers and sliders from text values
                     syncColorPickerFromText(
-                        document.querySelector('#txtHeaderBtnGroupBg'),
-                        document.querySelector('#colorHeaderBtnGroupBg'),
-                        document.querySelector('#sliderHeaderBtnGroupBgOpacity'),
-                        document.querySelector('#valHeaderBtnGroupBgOpacity')
+                        document.getElementById('txtHeaderBtnGroupBg'),
+                        document.getElementById('colorHeaderBtnGroupBg'),
+                        document.getElementById('sliderHeaderBtnGroupBgOpacity'),
+                        document.getElementById('valHeaderBtnGroupBgOpacity')
                     );
                     syncColorPickerFromText(
-                        document.querySelector('#txtHeaderBtnGroupBorder'),
-                        document.querySelector('#colorHeaderBtnGroupBorder'),
-                        document.querySelector('#sliderHeaderBtnGroupBorderOpacity'),
-                        document.querySelector('#valHeaderBtnGroupBorderOpacity')
+                        document.getElementById('txtHeaderBtnGroupBorder'),
+                        document.getElementById('colorHeaderBtnGroupBorder'),
+                        document.getElementById('sliderHeaderBtnGroupBorderOpacity'),
+                        document.getElementById('valHeaderBtnGroupBorderOpacity')
                     );
                     syncColorPickerFromText(
-                        document.querySelector('#txtHeaderBtnHoverBg'),
-                        document.querySelector('#colorHeaderBtnHoverBg'),
-                        document.querySelector('#sliderHeaderBtnHoverOpacity'),
-                        document.querySelector('#valHeaderBtnHoverOpacity')
+                        document.getElementById('txtHeaderBtnHoverBg'),
+                        document.getElementById('colorHeaderBtnHoverBg'),
+                        document.getElementById('sliderHeaderBtnHoverOpacity'),
+                        document.getElementById('valHeaderBtnHoverOpacity')
                     );
                     syncColorPickerFromText(
-                        document.querySelector('#txtHeaderBtnGlowColor'),
-                        document.querySelector('#colorHeaderBtnGlowColor'),
-                        document.querySelector('#sliderHeaderBtnGlowOpacity'),
-                        document.querySelector('#valHeaderBtnGlowOpacity')
+                        document.getElementById('txtHeaderBtnGlowColor'),
+                        document.getElementById('colorHeaderBtnGlowColor'),
+                        document.getElementById('sliderHeaderBtnGlowOpacity'),
+                        document.getElementById('valHeaderBtnGlowOpacity')
                     );
 
                     // Sync simple color picker
-                    var btnColorPicker = document.querySelector('#colorHeaderBtnColor');
-                    if (btnColorPicker && hdrBtnColor.match(/^#[0-9a-fA-F]{6}$/)) {
+                    var btnColorPicker = document.getElementById('colorHeaderBtnColor');
+                    if (btnColorPicker && hdrBtnColor.match(/^#[0-9a-fA-F]{6}$/i)) {
                         btnColorPicker.value = hdrBtnColor;
                     }
 
                     // Sync radius slider
-                    var radiusSlider = document.querySelector('#sliderHeaderBtnGroupRadius');
-                    var radiusLabel = document.querySelector('#valHeaderBtnGroupRadius');
+                    var radiusSlider = document.getElementById('sliderHeaderBtnGroupRadius');
+                    var radiusLabel = document.getElementById('valHeaderBtnGroupRadius');
                     if (radiusSlider) {
                         radiusSlider.value = hdrRadius;
                         if (radiusLabel) radiusLabel.textContent = hdrRadius + 'px';
                     }
 
+                    // Initialize controls and update preview
+                    initHeaderBtnControls();
                     updateHeaderBtnPreview();
 
                     Dashboard.hideLoadingMsg();
@@ -1812,13 +1825,13 @@
                     config.ModeratorActionRateLimitPerMinute = parseInt(document.querySelector('#txtModeratorActionRateLimitPerMinute').value) || 10;
 
                     // Header button group styling
-                    config.HeaderButtonGroupBackground = document.querySelector('#txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
-                    config.HeaderButtonGroupBorderColor = document.querySelector('#txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
-                    config.HeaderButtonGroupBorderRadius = parseInt(document.querySelector('#txtHeaderBtnGroupRadius').value) || 25;
-                    config.HeaderButtonColor = document.querySelector('#txtHeaderBtnColor').value || '#ffffff';
-                    config.HeaderButtonHoverBackground = document.querySelector('#txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
-                    config.HeaderButtonGlowEffect = document.querySelector('#chkHeaderBtnGlowEffect').checked;
-                    config.HeaderButtonGlowColor = document.querySelector('#txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
+                    config.HeaderButtonGroupBackground = document.getElementById('txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
+                    config.HeaderButtonGroupBorderColor = document.getElementById('txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGroupBorderRadius = parseInt(document.getElementById('txtHeaderBtnGroupRadius').value) || 25;
+                    config.HeaderButtonColor = document.getElementById('txtHeaderBtnColor').value || '#ffffff';
+                    config.HeaderButtonHoverBackground = document.getElementById('txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;
+                    config.HeaderButtonGlowColor = document.getElementById('txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
