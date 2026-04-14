@@ -92,6 +92,185 @@
                                 <textarea id="txtBadgeDisplayProfiles" style="display: none;"></textarea>
                             </div>
 
+                            <!-- Header Button Group Styling -->
+                            <div style="margin-top: 1.5em;" class="hdr-btn-styling">
+                                <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">Header Button Group Styling</h3>
+                                <div class="fieldDescription" style="margin-bottom: 15px;">
+                                    Customize the appearance of the header toolbar buttons (Search, Language, Request, etc.)
+                                </div>
+
+                                <div class="hdr-styling-grid">
+                                    <!-- Group Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Group Background</div>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkHeaderBtnTransparentBg" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Transparent (use site color)</span>
+                                        </label>
+                                        <div id="groupBgControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorHeaderBtnGroupBg" class="hdr-color-picker" value="#282828" />
+                                                <input type="text" id="txtHeaderBtnGroupBg" class="hdr-color-text" placeholder="rgba(40,40,40,0.95)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderHeaderBtnGroupBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
+                                                <span class="hdr-slider-value" id="valHeaderBtnGroupBgOpacity">95%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Group Border -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Group Border</div>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkHeaderBtnNoBorder" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">No border</span>
+                                        </label>
+                                        <div id="groupBorderControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorHeaderBtnGroupBorder" class="hdr-color-picker" value="#ffffff" />
+                                                <input type="text" id="txtHeaderBtnGroupBorder" class="hdr-color-text" placeholder="rgba(255,255,255,0.15)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderHeaderBtnGroupBorderOpacity" class="hdr-slider" min="0" max="100" value="15" />
+                                                <span class="hdr-slider-value" id="valHeaderBtnGroupBorderOpacity">15%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Button Icon Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Button Icons</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorHeaderBtnColor" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtHeaderBtnColor" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderHeaderBtnIconOpacity" class="hdr-slider" min="0" max="100" value="100" />
+                                            <span class="hdr-slider-value" id="valHeaderBtnIconOpacity">100%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Language Text Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Language Text</div>
+                                        <div class="fieldDescription" style="margin-bottom: 8px; font-size: 0.8em; color: #888;">
+                                            Color of "EN", "ES", etc. inside globe
+                                        </div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorLanguageText" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtLanguageTextColor" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Button Hover Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Button Hover</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorHeaderBtnHoverBg" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtHeaderBtnHoverBg" class="hdr-color-text" placeholder="rgba(255,255,255,0.15)" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderHeaderBtnHoverOpacity" class="hdr-slider" min="0" max="100" value="15" />
+                                            <span class="hdr-slider-value" id="valHeaderBtnHoverOpacity">15%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Border Radius -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Border Radius</div>
+                                        <div class="hdr-slider-row hdr-slider-row-main">
+                                            <input type="range" id="sliderHeaderBtnGroupRadius" class="hdr-slider" min="0" max="50" value="25" />
+                                            <span class="hdr-slider-value" id="valHeaderBtnGroupRadius">25px</span>
+                                        </div>
+                                        <input type="number" id="txtHeaderBtnGroupRadius" class="hdr-num-input" min="0" max="50" value="25" />
+                                    </div>
+
+                                    <!-- Glow Effect -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Glow Effect</div>
+                                        <label class="hdr-toggle">
+                                            <input type="checkbox" id="chkHeaderBtnGlowEffect" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Enable</span>
+                                        </label>
+                                        <div class="hdr-color-row" style="margin-top: 8px;">
+                                            <input type="color" id="colorHeaderBtnGlowColor" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtHeaderBtnGlowColor" class="hdr-color-text" placeholder="rgba(255,255,255,0.3)" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Intensity</span>
+                                            <input type="range" id="sliderHeaderBtnGlowOpacity" class="hdr-slider" min="0" max="100" value="30" />
+                                            <span class="hdr-slider-value" id="valHeaderBtnGlowOpacity">30%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Search Field Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Search Field Background</div>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkSearchFieldMatchGroupBg" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Match group background</span>
+                                        </label>
+                                        <div id="searchFieldBgControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorSearchFieldBg" class="hdr-color-picker" value="#282828" />
+                                                <input type="text" id="txtSearchFieldBg" class="hdr-color-text" placeholder="rgba(40,40,40,0.95)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderSearchFieldBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
+                                                <span class="hdr-slider-value" id="valSearchFieldBgOpacity">95%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Overall Group Opacity -->
+                                    <div class="hdr-style-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(100,180,255,0.1), rgba(100,180,255,0.05));">
+                                        <div class="hdr-style-label" style="font-size: 1em;">Overall Group Opacity</div>
+                                        <div class="fieldDescription" style="margin-bottom: 12px; font-size: 0.85em; color: #888;">
+                                            Controls transparency of the ENTIRE button group (background + buttons + icons + border - everything)
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderHeaderGroupOverallOpacity" class="hdr-slider" min="0" max="100" value="100" style="flex: 2;" />
+                                            <span class="hdr-slider-value" id="valHeaderGroupOverallOpacity">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Live Preview -->
+                                <div class="hdr-preview-container">
+                                    <div class="hdr-preview-label">Live Preview</div>
+                                    <div class="hdr-preview-area">
+                                        <div id="headerBtnPreview" class="hdr-preview-buttons">
+                                            <button type="button" class="preview-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                                            </button>
+                                            <button type="button" class="preview-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                            </button>
+                                            <button type="button" class="preview-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                                            </button>
+                                            <button type="button" class="preview-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                                            </button>
+                                            <button type="button" class="preview-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -783,6 +962,220 @@
                 background: rgba(255,68,68,0.35);
             }
 
+            /* Header Button Styling - Modern UI */
+            .hdr-styling-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+            .hdr-style-card {
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 12px;
+                padding: 16px;
+                transition: border-color 0.2s, background 0.2s;
+            }
+            .hdr-style-card:hover {
+                border-color: rgba(255,255,255,0.15);
+                background: rgba(255,255,255,0.05);
+            }
+            .hdr-style-label {
+                font-size: 0.9em;
+                font-weight: 600;
+                color: #e0e0e0;
+                margin-bottom: 12px;
+                letter-spacing: 0.3px;
+            }
+            .hdr-color-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .hdr-color-picker {
+                width: 42px;
+                height: 42px;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                padding: 0;
+                background: transparent;
+                overflow: hidden;
+            }
+            .hdr-color-picker::-webkit-color-swatch-wrapper {
+                padding: 0;
+            }
+            .hdr-color-picker::-webkit-color-swatch {
+                border: 2px solid rgba(255,255,255,0.2);
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+            .hdr-color-picker::-moz-color-swatch {
+                border: 2px solid rgba(255,255,255,0.2);
+                border-radius: 50%;
+            }
+            .hdr-color-text {
+                flex: 1;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 8px;
+                padding: 10px 12px;
+                color: #fff;
+                font-size: 0.9em;
+                font-family: monospace;
+                transition: border-color 0.2s;
+            }
+            .hdr-color-text:focus {
+                outline: none;
+                border-color: rgba(100,180,255,0.5);
+            }
+            .hdr-slider-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 12px;
+            }
+            .hdr-slider-row-main {
+                margin-top: 0;
+            }
+            .hdr-slider-label {
+                font-size: 0.8em;
+                color: #888;
+                min-width: 55px;
+            }
+            .hdr-slider {
+                flex: 1;
+                height: 6px;
+                -webkit-appearance: none;
+                appearance: none;
+                background: rgba(255,255,255,0.1);
+                border-radius: 3px;
+                outline: none;
+                cursor: pointer;
+            }
+            .hdr-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 18px;
+                height: 18px;
+                background: linear-gradient(135deg, #64b5f6, #42a5f5);
+                border-radius: 50%;
+                cursor: pointer;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                transition: transform 0.15s;
+            }
+            .hdr-slider::-webkit-slider-thumb:hover {
+                transform: scale(1.15);
+            }
+            .hdr-slider::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+                background: linear-gradient(135deg, #64b5f6, #42a5f5);
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            }
+            .hdr-slider-value {
+                font-size: 0.85em;
+                color: #64b5f6;
+                font-weight: 600;
+                min-width: 45px;
+                text-align: right;
+            }
+            .hdr-num-input {
+                width: 70px;
+                margin-top: 10px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 8px;
+                padding: 8px 10px;
+                color: #fff;
+                font-size: 0.9em;
+                text-align: center;
+            }
+            .hdr-toggle {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+            }
+            .hdr-toggle input {
+                display: none;
+            }
+            .hdr-toggle-slider {
+                width: 44px;
+                height: 24px;
+                background: rgba(255,255,255,0.15);
+                border-radius: 12px;
+                position: relative;
+                transition: background 0.25s;
+            }
+            .hdr-toggle-slider::after {
+                content: '';
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 18px;
+                height: 18px;
+                background: #fff;
+                border-radius: 50%;
+                transition: transform 0.25s;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .hdr-toggle input:checked + .hdr-toggle-slider {
+                background: linear-gradient(135deg, #64b5f6, #42a5f5);
+            }
+            .hdr-toggle input:checked + .hdr-toggle-slider::after {
+                transform: translateX(20px);
+            }
+            .hdr-toggle-text {
+                font-size: 0.85em;
+                color: #aaa;
+            }
+            .hdr-preview-container {
+                background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 12px;
+                padding: 20px;
+                margin-top: 10px;
+            }
+            .hdr-preview-label {
+                font-size: 0.85em;
+                color: #666;
+                margin-bottom: 15px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .hdr-preview-area {
+                display: flex;
+                justify-content: center;
+                padding: 20px;
+            }
+            .hdr-preview-buttons {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 10px;
+                gap: 4px;
+                transition: all 0.3s ease;
+            }
+            .hdr-preview-buttons .preview-btn {
+                background: transparent;
+                border: none;
+                padding: 8px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: background 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .hdr-preview-buttons .preview-btn svg {
+                width: 22px;
+                height: 22px;
+                fill: currentColor;
+            }
+
             /* Axis dropdown */
             .axis-dropdown {
                 position: absolute;
@@ -836,6 +1229,251 @@
                 var group = document.getElementById(groupId);
                 if (!group) return;
                 group.classList.toggle('collapsed');
+            }
+
+            // Header button styling - helper functions
+            function hexToRgb(hex) {
+                hex = hex || '#282828';
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 40, g: 40, b: 40 };
+            }
+
+            function rgbToHex(r, g, b) {
+                return '#' + [r, g, b].map(function(x) { return x.toString(16).padStart(2, '0'); }).join('');
+            }
+
+            function parseRgba(str) {
+                if (!str) return { r: 40, g: 40, b: 40, a: 0.95 };
+                var match = str.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
+                if (match) {
+                    return {
+                        r: parseInt(match[1]),
+                        g: parseInt(match[2]),
+                        b: parseInt(match[3]),
+                        a: match[4] !== undefined ? parseFloat(match[4]) : 1
+                    };
+                }
+                if (str.startsWith('#')) {
+                    var rgb = hexToRgb(str);
+                    return { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
+                }
+                return { r: 40, g: 40, b: 40, a: 0.95 };
+            }
+
+            function buildRgba(hex, opacity) {
+                var rgb = hexToRgb(hex);
+                return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + opacity + ')';
+            }
+
+            function syncColorPickerFromText(textInput, colorPicker, opacitySlider, opacityLabel) {
+                if (!textInput || !colorPicker) return;
+                var val = textInput.value ? textInput.value.trim() : '';
+                var parsed = parseRgba(val);
+                colorPicker.value = rgbToHex(parsed.r, parsed.g, parsed.b);
+                if (opacitySlider) {
+                    opacitySlider.value = Math.round(parsed.a * 100);
+                    if (opacityLabel) opacityLabel.textContent = Math.round(parsed.a * 100) + '%';
+                }
+            }
+
+            function updateHeaderBtnPreview() {
+                var preview = document.getElementById('headerBtnPreview');
+                if (!preview) return;
+
+                var transparentBgChk = document.getElementById('chkHeaderBtnTransparentBg');
+                var noBorderChk = document.getElementById('chkHeaderBtnNoBorder');
+                var bgEl = document.getElementById('txtHeaderBtnGroupBg');
+                var borderEl = document.getElementById('txtHeaderBtnGroupBorder');
+                var radiusEl = document.getElementById('txtHeaderBtnGroupRadius');
+                var btnColorEl = document.getElementById('txtHeaderBtnColor');
+                var iconOpacityEl = document.getElementById('sliderHeaderBtnIconOpacity');
+                var hoverEl = document.getElementById('txtHeaderBtnHoverBg');
+                var glowChkEl = document.getElementById('chkHeaderBtnGlowEffect');
+                var glowColorEl = document.getElementById('txtHeaderBtnGlowColor');
+                var overallOpacityEl = document.getElementById('sliderHeaderGroupOverallOpacity');
+
+                var transparentBg = transparentBgChk && transparentBgChk.checked;
+                var noBorder = noBorderChk && noBorderChk.checked;
+                var bg = transparentBg ? 'transparent' : ((bgEl && bgEl.value) || 'rgba(40, 40, 40, 0.95)');
+                var borderColor = noBorder ? 'transparent' : ((borderEl && borderEl.value) || 'rgba(255, 255, 255, 0.15)');
+                var borderRadius = ((radiusEl && radiusEl.value) || 25) + 'px';
+                var btnColor = (btnColorEl && btnColorEl.value) || '#ffffff';
+                var iconOpacity = iconOpacityEl ? (parseInt(iconOpacityEl.value) / 100) : 1;
+                var hoverBg = (hoverEl && hoverEl.value) || 'rgba(255, 255, 255, 0.15)';
+                var glowEnabled = glowChkEl && glowChkEl.checked;
+                var glowColor = (glowColorEl && glowColorEl.value) || 'rgba(255, 255, 255, 0.3)';
+                var overallOpacity = overallOpacityEl ? (parseInt(overallOpacityEl.value) / 100) : 1;
+
+                // Toggle visibility of color controls based on checkboxes
+                var bgControls = document.getElementById('groupBgControls');
+                var borderControls = document.getElementById('groupBorderControls');
+                if (bgControls) bgControls.style.opacity = transparentBg ? '0.4' : '1';
+                if (borderControls) borderControls.style.opacity = noBorder ? '0.4' : '1';
+
+                preview.style.background = bg;
+                preview.style.border = noBorder ? 'none' : ('1px solid ' + borderColor);
+                preview.style.borderRadius = borderRadius;
+                preview.style.boxShadow = glowEnabled ? '0 0 20px ' + glowColor : 'none';
+                preview.style.opacity = overallOpacity;
+
+                var btns = preview.querySelectorAll('.preview-btn');
+                btns.forEach(function(btn) {
+                    btn.style.color = btnColor;
+                    btn.style.opacity = iconOpacity;
+                    btn.onmouseenter = function() { this.style.background = hoverBg; };
+                    btn.onmouseleave = function() { this.style.background = 'transparent'; };
+                });
+            }
+
+            // Initialize header button styling controls - called after config loads
+            var hdrBtnControlsInitialized = false;
+            function initHeaderBtnControls() {
+                if (hdrBtnControlsInitialized) return;
+                hdrBtnControlsInitialized = true;
+
+                // Color + opacity pairs
+                var colorPairs = [
+                    { color: 'colorHeaderBtnGroupBg', text: 'txtHeaderBtnGroupBg', slider: 'sliderHeaderBtnGroupBgOpacity', label: 'valHeaderBtnGroupBgOpacity' },
+                    { color: 'colorHeaderBtnGroupBorder', text: 'txtHeaderBtnGroupBorder', slider: 'sliderHeaderBtnGroupBorderOpacity', label: 'valHeaderBtnGroupBorderOpacity' },
+                    { color: 'colorHeaderBtnHoverBg', text: 'txtHeaderBtnHoverBg', slider: 'sliderHeaderBtnHoverOpacity', label: 'valHeaderBtnHoverOpacity' },
+                    { color: 'colorHeaderBtnGlowColor', text: 'txtHeaderBtnGlowColor', slider: 'sliderHeaderBtnGlowOpacity', label: 'valHeaderBtnGlowOpacity' },
+                    { color: 'colorSearchFieldBg', text: 'txtSearchFieldBg', slider: 'sliderSearchFieldBgOpacity', label: 'valSearchFieldBgOpacity' }
+                ];
+
+                colorPairs.forEach(function(pair) {
+                    var colorEl = document.getElementById(pair.color);
+                    var textEl = document.getElementById(pair.text);
+                    var sliderEl = document.getElementById(pair.slider);
+                    var labelEl = document.getElementById(pair.label);
+
+                    if (colorEl && textEl) {
+                        // Color picker change -> update text
+                        colorEl.addEventListener('input', function() {
+                            var opacity = sliderEl ? (parseInt(sliderEl.value) / 100) : 1;
+                            textEl.value = buildRgba(colorEl.value, opacity);
+                            updateHeaderBtnPreview();
+                        });
+                        // Slider change -> update text and label
+                        if (sliderEl) {
+                            sliderEl.addEventListener('input', function() {
+                                var opacity = parseInt(sliderEl.value) / 100;
+                                if (labelEl) labelEl.textContent = sliderEl.value + '%';
+                                textEl.value = buildRgba(colorEl.value, opacity);
+                                updateHeaderBtnPreview();
+                            });
+                        }
+                        // Text change -> sync color picker and slider
+                        textEl.addEventListener('input', function() {
+                            syncColorPickerFromText(textEl, colorEl, sliderEl, labelEl);
+                            updateHeaderBtnPreview();
+                        });
+                    }
+                });
+
+                // Simple color (no opacity) - button icon color
+                var btnColorPicker = document.getElementById('colorHeaderBtnColor');
+                var btnColorText = document.getElementById('txtHeaderBtnColor');
+                if (btnColorPicker && btnColorText) {
+                    btnColorPicker.addEventListener('input', function() {
+                        btnColorText.value = btnColorPicker.value;
+                        updateHeaderBtnPreview();
+                    });
+                    btnColorText.addEventListener('input', function() {
+                        var val = btnColorText.value.trim();
+                        if (val.match(/^#[0-9a-fA-F]{6}$/i)) {
+                            btnColorPicker.value = val;
+                        }
+                        updateHeaderBtnPreview();
+                    });
+                }
+
+                // Language text color (simple color, no opacity)
+                var langColorPicker = document.getElementById('colorLanguageText');
+                var langColorText = document.getElementById('txtLanguageTextColor');
+                if (langColorPicker && langColorText) {
+                    langColorPicker.addEventListener('input', function() {
+                        langColorText.value = langColorPicker.value;
+                    });
+                    langColorText.addEventListener('input', function() {
+                        var val = langColorText.value.trim();
+                        if (val.match(/^#[0-9a-fA-F]{6}$/i)) {
+                            langColorPicker.value = val;
+                        }
+                    });
+                }
+
+                // Border radius slider + number sync
+                var radiusSlider = document.getElementById('sliderHeaderBtnGroupRadius');
+                var radiusNum = document.getElementById('txtHeaderBtnGroupRadius');
+                var radiusLabel = document.getElementById('valHeaderBtnGroupRadius');
+                if (radiusSlider && radiusNum) {
+                    radiusSlider.addEventListener('input', function() {
+                        radiusNum.value = radiusSlider.value;
+                        if (radiusLabel) radiusLabel.textContent = radiusSlider.value + 'px';
+                        updateHeaderBtnPreview();
+                    });
+                    radiusNum.addEventListener('input', function() {
+                        radiusSlider.value = radiusNum.value;
+                        if (radiusLabel) radiusLabel.textContent = radiusNum.value + 'px';
+                        updateHeaderBtnPreview();
+                    });
+                }
+
+                // Glow checkbox
+                var glowChk = document.getElementById('chkHeaderBtnGlowEffect');
+                if (glowChk) {
+                    glowChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // Overall group opacity slider
+                var overallOpacitySlider = document.getElementById('sliderHeaderGroupOverallOpacity');
+                var overallOpacityLabel = document.getElementById('valHeaderGroupOverallOpacity');
+                if (overallOpacitySlider) {
+                    overallOpacitySlider.addEventListener('input', function() {
+                        if (overallOpacityLabel) overallOpacityLabel.textContent = overallOpacitySlider.value + '%';
+                        updateHeaderBtnPreview();
+                    });
+                }
+
+                // Transparent background checkbox
+                var transparentBgChk = document.getElementById('chkHeaderBtnTransparentBg');
+                if (transparentBgChk) {
+                    transparentBgChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // No border checkbox
+                var noBorderChk = document.getElementById('chkHeaderBtnNoBorder');
+                if (noBorderChk) {
+                    noBorderChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // Icon opacity slider
+                var iconOpacitySlider = document.getElementById('sliderHeaderBtnIconOpacity');
+                var iconOpacityLabel = document.getElementById('valHeaderBtnIconOpacity');
+                if (iconOpacitySlider) {
+                    iconOpacitySlider.addEventListener('input', function() {
+                        if (iconOpacityLabel) iconOpacityLabel.textContent = iconOpacitySlider.value + '%';
+                        updateHeaderBtnPreview();
+                    });
+                }
+
+                // Search field match group bg checkbox
+                var searchFieldMatchChk = document.getElementById('chkSearchFieldMatchGroupBg');
+                var searchFieldBgControls = document.getElementById('searchFieldBgControls');
+                if (searchFieldMatchChk && searchFieldBgControls) {
+                    function updateSearchFieldControlsVisibility() {
+                        searchFieldBgControls.style.display = searchFieldMatchChk.checked ? 'none' : 'block';
+                    }
+                    searchFieldMatchChk.addEventListener('change', function() {
+                        updateSearchFieldControlsVisibility();
+                        updateHeaderBtnPreview();
+                    });
+                    updateSearchFieldControlsVisibility();
+                }
             }
 
             // Badge profile management
@@ -1169,6 +1807,116 @@
                     document.querySelector('#txtModLevel3MediaBanMaxDays').value = config.ModLevel3MediaBanMaxDays || 7;
                     document.querySelector('#txtModeratorActionRateLimitPerMinute').value = config.ModeratorActionRateLimitPerMinute || 10;
 
+                    // Header button group styling - load and sync all controls
+                    var hdrTransparentBg = config.HeaderButtonTransparentBg || false;
+                    var hdrBg = config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)';
+                    var hdrNoBorder = config.HeaderButtonNoBorder || false;
+                    var hdrBorder = config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)';
+                    var hdrBtnColor = config.HeaderButtonColor || '#ffffff';
+                    var hdrIconOpacity = config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100;
+                    var hdrHover = config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)';
+                    var hdrGlow = config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)';
+                    var hdrRadius = config.HeaderButtonGroupBorderRadius || 25;
+
+                    // Set checkboxes
+                    document.getElementById('chkHeaderBtnTransparentBg').checked = hdrTransparentBg;
+                    document.getElementById('chkHeaderBtnNoBorder').checked = hdrNoBorder;
+
+                    // Set text inputs
+                    document.getElementById('txtHeaderBtnGroupBg').value = hdrBg;
+                    document.getElementById('txtHeaderBtnGroupBorder').value = hdrBorder;
+                    document.getElementById('txtHeaderBtnGroupRadius').value = hdrRadius;
+                    document.getElementById('txtHeaderBtnColor').value = hdrBtnColor;
+
+                    // Set language text color
+                    var langTextColor = config.LanguageTextColor || '#ffffff';
+                    document.getElementById('txtLanguageTextColor').value = langTextColor;
+                    var langColorPicker = document.getElementById('colorLanguageText');
+                    if (langColorPicker && langTextColor.match(/^#[0-9a-fA-F]{6}$/i)) {
+                        langColorPicker.value = langTextColor;
+                    }
+
+                    document.getElementById('txtHeaderBtnHoverBg').value = hdrHover;
+                    document.getElementById('chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
+                    document.getElementById('txtHeaderBtnGlowColor').value = hdrGlow;
+
+                    // Set icon opacity slider
+                    var iconOpacitySlider = document.getElementById('sliderHeaderBtnIconOpacity');
+                    var iconOpacityLabel = document.getElementById('valHeaderBtnIconOpacity');
+                    if (iconOpacitySlider) {
+                        iconOpacitySlider.value = hdrIconOpacity;
+                        if (iconOpacityLabel) iconOpacityLabel.textContent = hdrIconOpacity + '%';
+                    }
+
+                    // Set overall group opacity slider
+                    var hdrOverallOpacity = config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100;
+                    var overallOpacitySlider = document.getElementById('sliderHeaderGroupOverallOpacity');
+                    var overallOpacityLabel = document.getElementById('valHeaderGroupOverallOpacity');
+                    if (overallOpacitySlider) {
+                        overallOpacitySlider.value = hdrOverallOpacity;
+                        if (overallOpacityLabel) overallOpacityLabel.textContent = hdrOverallOpacity + '%';
+                    }
+
+                    // Set search field background controls
+                    var searchFieldMatchGroupBg = config.SearchFieldMatchGroupBg !== false;
+                    var searchFieldBg = config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)';
+                    document.getElementById('chkSearchFieldMatchGroupBg').checked = searchFieldMatchGroupBg;
+                    document.getElementById('txtSearchFieldBg').value = searchFieldBg;
+                    var searchFieldBgControls = document.getElementById('searchFieldBgControls');
+                    if (searchFieldBgControls) {
+                        searchFieldBgControls.style.display = searchFieldMatchGroupBg ? 'none' : 'block';
+                    }
+
+                    // Sync color pickers and sliders from text values
+                    syncColorPickerFromText(
+                        document.getElementById('txtHeaderBtnGroupBg'),
+                        document.getElementById('colorHeaderBtnGroupBg'),
+                        document.getElementById('sliderHeaderBtnGroupBgOpacity'),
+                        document.getElementById('valHeaderBtnGroupBgOpacity')
+                    );
+                    syncColorPickerFromText(
+                        document.getElementById('txtHeaderBtnGroupBorder'),
+                        document.getElementById('colorHeaderBtnGroupBorder'),
+                        document.getElementById('sliderHeaderBtnGroupBorderOpacity'),
+                        document.getElementById('valHeaderBtnGroupBorderOpacity')
+                    );
+                    syncColorPickerFromText(
+                        document.getElementById('txtHeaderBtnHoverBg'),
+                        document.getElementById('colorHeaderBtnHoverBg'),
+                        document.getElementById('sliderHeaderBtnHoverOpacity'),
+                        document.getElementById('valHeaderBtnHoverOpacity')
+                    );
+                    syncColorPickerFromText(
+                        document.getElementById('txtHeaderBtnGlowColor'),
+                        document.getElementById('colorHeaderBtnGlowColor'),
+                        document.getElementById('sliderHeaderBtnGlowOpacity'),
+                        document.getElementById('valHeaderBtnGlowOpacity')
+                    );
+                    syncColorPickerFromText(
+                        document.getElementById('txtSearchFieldBg'),
+                        document.getElementById('colorSearchFieldBg'),
+                        document.getElementById('sliderSearchFieldBgOpacity'),
+                        document.getElementById('valSearchFieldBgOpacity')
+                    );
+
+                    // Sync simple color picker
+                    var btnColorPicker = document.getElementById('colorHeaderBtnColor');
+                    if (btnColorPicker && hdrBtnColor.match(/^#[0-9a-fA-F]{6}$/i)) {
+                        btnColorPicker.value = hdrBtnColor;
+                    }
+
+                    // Sync radius slider
+                    var radiusSlider = document.getElementById('sliderHeaderBtnGroupRadius');
+                    var radiusLabel = document.getElementById('valHeaderBtnGroupRadius');
+                    if (radiusSlider) {
+                        radiusSlider.value = hdrRadius;
+                        if (radiusLabel) radiusLabel.textContent = hdrRadius + 'px';
+                    }
+
+                    // Initialize controls and update preview
+                    initHeaderBtnControls();
+                    updateHeaderBtnPreview();
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -1267,6 +2015,22 @@
                     config.ModLevel2TempBanMaxDays = parseInt(document.querySelector('#txtModLevel2TempBanMaxDays').value) || 7;
                     config.ModLevel3MediaBanMaxDays = parseInt(document.querySelector('#txtModLevel3MediaBanMaxDays').value) || 7;
                     config.ModeratorActionRateLimitPerMinute = parseInt(document.querySelector('#txtModeratorActionRateLimitPerMinute').value) || 10;
+
+                    // Header button group styling
+                    config.HeaderButtonTransparentBg = document.getElementById('chkHeaderBtnTransparentBg').checked;
+                    config.HeaderButtonGroupBackground = document.getElementById('txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
+                    config.HeaderButtonNoBorder = document.getElementById('chkHeaderBtnNoBorder').checked;
+                    config.HeaderButtonGroupBorderColor = document.getElementById('txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGroupBorderRadius = parseInt(document.getElementById('txtHeaderBtnGroupRadius').value) || 25;
+                    config.HeaderButtonColor = document.getElementById('txtHeaderBtnColor').value || '#ffffff';
+                    config.LanguageTextColor = document.getElementById('txtLanguageTextColor').value || '#ffffff';
+                    config.HeaderButtonIconOpacity = parseInt(document.getElementById('sliderHeaderBtnIconOpacity').value) || 100;
+                    config.HeaderButtonHoverBackground = document.getElementById('txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;
+                    config.HeaderButtonGlowColor = document.getElementById('txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
+                    config.HeaderGroupOverallOpacity = parseInt(document.getElementById('sliderHeaderGroupOverallOpacity').value) || 100;
+                    config.SearchFieldMatchGroupBg = document.getElementById('chkSearchFieldMatchGroupBg').checked;
+                    config.SearchFieldBackground = document.getElementById('txtSearchFieldBg').value || 'rgba(40, 40, 40, 0.95)';
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

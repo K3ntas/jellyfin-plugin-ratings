@@ -78,6 +78,9 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Badge display profiles (JSON array of resolution-based profiles)
             BadgeDisplayProfiles = string.Empty;
 
+            // Sorting options
+            EnableImdbSorting = true;
+
             // Language settings
             DefaultLanguage = "en";
 
@@ -105,6 +108,22 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ModLevel2TempBanMaxDays = 7;
             ModLevel3MediaBanMaxDays = 7;
             ModeratorActionRateLimitPerMinute = 10;
+
+            // Header button group styling
+            HeaderButtonTransparentBg = false;
+            HeaderButtonGroupBackground = "rgba(40, 40, 40, 0.95)";
+            SearchFieldMatchGroupBg = true;
+            SearchFieldBackground = "rgba(40, 40, 40, 0.95)";
+            LanguageTextColor = "#ffffff";
+            HeaderButtonNoBorder = false;
+            HeaderButtonGroupBorderColor = "rgba(255, 255, 255, 0.15)";
+            HeaderButtonGroupBorderRadius = 25;
+            HeaderButtonColor = "#ffffff";
+            HeaderButtonIconOpacity = 100;
+            HeaderButtonHoverBackground = "rgba(255, 255, 255, 0.15)";
+            HeaderButtonGlowEffect = false;
+            HeaderButtonGlowColor = "rgba(255, 255, 255, 0.3)";
+            HeaderGroupOverallOpacity = 100;
         }
 
         /// <summary>
@@ -336,6 +355,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public string BadgeDisplayProfiles { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether IMDB sorting is shown in the library sort dropdown.
+        /// </summary>
+        public bool EnableImdbSorting { get; set; }
+
+        /// <summary>
         /// Gets or sets the default language for the plugin UI.
         /// Supported: en, es, zh, pt, ru, ja, de, fr, ko, it, tr, pl, nl, ar, hi, lt
         /// </summary>
@@ -436,5 +460,77 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the rate limit for moderator actions per minute.
         /// </summary>
         public int ModeratorActionRateLimitPerMinute { get; set; }
+
+        // Header button group styling
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the background is transparent.
+        /// </summary>
+        public bool HeaderButtonTransparentBg { get; set; }
+
+        /// <summary>
+        /// Gets or sets the background color for the header button group (supports rgba).
+        /// </summary>
+        public string HeaderButtonGroupBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether search field background matches group background.
+        /// </summary>
+        public bool SearchFieldMatchGroupBg { get; set; }
+
+        /// <summary>
+        /// Gets or sets the search field background color (supports rgba).
+        /// </summary>
+        public string SearchFieldBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets the language text color inside the globe button.
+        /// </summary>
+        public string LanguageTextColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the border is hidden.
+        /// </summary>
+        public bool HeaderButtonNoBorder { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border color for the header button group (supports rgba).
+        /// </summary>
+        public string HeaderButtonGroupBorderColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border radius in pixels for the header button group.
+        /// </summary>
+        public int HeaderButtonGroupBorderRadius { get; set; }
+
+        /// <summary>
+        /// Gets or sets the icon/text color for header buttons.
+        /// </summary>
+        public string HeaderButtonColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the icon opacity (0-100).
+        /// </summary>
+        public int HeaderButtonIconOpacity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hover background color for header buttons (supports rgba).
+        /// </summary>
+        public string HeaderButtonHoverBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether glow effect is enabled for the button group.
+        /// </summary>
+        public bool HeaderButtonGlowEffect { get; set; }
+
+        /// <summary>
+        /// Gets or sets the glow color for the button group (supports rgba).
+        /// </summary>
+        public string HeaderButtonGlowColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the overall opacity of the entire button group (0-100).
+        /// </summary>
+        public int HeaderGroupOverallOpacity { get; set; }
     }
 }
