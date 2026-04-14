@@ -199,6 +199,27 @@
                                         </div>
                                     </div>
 
+                                    <!-- Search Field Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Search Field Background</div>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkSearchFieldMatchGroupBg" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Match group background</span>
+                                        </label>
+                                        <div id="searchFieldBgControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorSearchFieldBg" class="hdr-color-picker" value="#282828" />
+                                                <input type="text" id="txtSearchFieldBg" class="hdr-color-text" placeholder="rgba(40,40,40,0.95)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderSearchFieldBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
+                                                <span class="hdr-slider-value" id="valSearchFieldBgOpacity">95%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Overall Group Opacity -->
                                     <div class="hdr-style-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(100,180,255,0.1), rgba(100,180,255,0.05));">
                                         <div class="hdr-style-label" style="font-size: 1em;">Overall Group Opacity</div>
@@ -1307,7 +1328,8 @@
                     { color: 'colorHeaderBtnGroupBg', text: 'txtHeaderBtnGroupBg', slider: 'sliderHeaderBtnGroupBgOpacity', label: 'valHeaderBtnGroupBgOpacity' },
                     { color: 'colorHeaderBtnGroupBorder', text: 'txtHeaderBtnGroupBorder', slider: 'sliderHeaderBtnGroupBorderOpacity', label: 'valHeaderBtnGroupBorderOpacity' },
                     { color: 'colorHeaderBtnHoverBg', text: 'txtHeaderBtnHoverBg', slider: 'sliderHeaderBtnHoverOpacity', label: 'valHeaderBtnHoverOpacity' },
-                    { color: 'colorHeaderBtnGlowColor', text: 'txtHeaderBtnGlowColor', slider: 'sliderHeaderBtnGlowOpacity', label: 'valHeaderBtnGlowOpacity' }
+                    { color: 'colorHeaderBtnGlowColor', text: 'txtHeaderBtnGlowColor', slider: 'sliderHeaderBtnGlowOpacity', label: 'valHeaderBtnGlowOpacity' },
+                    { color: 'colorSearchFieldBg', text: 'txtSearchFieldBg', slider: 'sliderSearchFieldBgOpacity', label: 'valSearchFieldBgOpacity' }
                 ];
 
                 colorPairs.forEach(function(pair) {
@@ -1410,6 +1432,20 @@
                         if (iconOpacityLabel) iconOpacityLabel.textContent = iconOpacitySlider.value + '%';
                         updateHeaderBtnPreview();
                     });
+                }
+
+                // Search field match group bg checkbox
+                var searchFieldMatchChk = document.getElementById('chkSearchFieldMatchGroupBg');
+                var searchFieldBgControls = document.getElementById('searchFieldBgControls');
+                if (searchFieldMatchChk && searchFieldBgControls) {
+                    function updateSearchFieldControlsVisibility() {
+                        searchFieldBgControls.style.display = searchFieldMatchChk.checked ? 'none' : 'block';
+                    }
+                    searchFieldMatchChk.addEventListener('change', function() {
+                        updateSearchFieldControlsVisibility();
+                        updateHeaderBtnPreview();
+                    });
+                    updateSearchFieldControlsVisibility();
                 }
             }
 
@@ -1785,6 +1821,16 @@
                         if (overallOpacityLabel) overallOpacityLabel.textContent = hdrOverallOpacity + '%';
                     }
 
+                    // Set search field background controls
+                    var searchFieldMatchGroupBg = config.SearchFieldMatchGroupBg !== false;
+                    var searchFieldBg = config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)';
+                    document.getElementById('chkSearchFieldMatchGroupBg').checked = searchFieldMatchGroupBg;
+                    document.getElementById('txtSearchFieldBg').value = searchFieldBg;
+                    var searchFieldBgControls = document.getElementById('searchFieldBgControls');
+                    if (searchFieldBgControls) {
+                        searchFieldBgControls.style.display = searchFieldMatchGroupBg ? 'none' : 'block';
+                    }
+
                     // Sync color pickers and sliders from text values
                     syncColorPickerFromText(
                         document.getElementById('txtHeaderBtnGroupBg'),
@@ -1809,6 +1855,12 @@
                         document.getElementById('colorHeaderBtnGlowColor'),
                         document.getElementById('sliderHeaderBtnGlowOpacity'),
                         document.getElementById('valHeaderBtnGlowOpacity')
+                    );
+                    syncColorPickerFromText(
+                        document.getElementById('txtSearchFieldBg'),
+                        document.getElementById('colorSearchFieldBg'),
+                        document.getElementById('sliderSearchFieldBgOpacity'),
+                        document.getElementById('valSearchFieldBgOpacity')
                     );
 
                     // Sync simple color picker
@@ -1940,6 +1992,8 @@
                     config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;
                     config.HeaderButtonGlowColor = document.getElementById('txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
                     config.HeaderGroupOverallOpacity = parseInt(document.getElementById('sliderHeaderGroupOverallOpacity').value) || 100;
+                    config.SearchFieldMatchGroupBg = document.getElementById('chkSearchFieldMatchGroupBg').checked;
+                    config.SearchFieldBackground = document.getElementById('txtSearchFieldBg').value || 'rgba(40, 40, 40, 0.95)';
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

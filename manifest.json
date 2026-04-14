@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.264.0",
+        "changelog": "Add search field background color with option to match group background",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.264.0/Jellyfin.Plugin.Ratings_2.0.264.0.zip",
+        "checksum": "5baff8ce4eccbd8e8a32ff21f378fe54",
+        "timestamp": "2026-04-14T17:30:00Z"
+      },
+      {
         "version": "2.0.263.0",
         "changelog": "Add Overall Group Opacity slider - master transparency control for entire button group",
         "targetAbi": "10.11.0.0",

@@ -112,6 +112,8 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Header button group styling
             HeaderButtonTransparentBg = false;
             HeaderButtonGroupBackground = "rgba(40, 40, 40, 0.95)";
+            SearchFieldMatchGroupBg = true;
+            SearchFieldBackground = "rgba(40, 40, 40, 0.95)";
             HeaderButtonNoBorder = false;
             HeaderButtonGroupBorderColor = "rgba(255, 255, 255, 0.15)";
             HeaderButtonGroupBorderRadius = 25;
@@ -469,6 +471,16 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the background color for the header button group (supports rgba).
         /// </summary>
         public string HeaderButtonGroupBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether search field background matches group background.
+        /// </summary>
+        public bool SearchFieldMatchGroupBg { get; set; }
+
+        /// <summary>
+        /// Gets or sets the search field background color (supports rgba).
+        /// </summary>
+        public string SearchFieldBackground { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the border is hidden.

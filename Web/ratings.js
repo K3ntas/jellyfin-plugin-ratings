@@ -4177,7 +4177,9 @@
                             buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
                             glowEffect: config.HeaderButtonGlowEffect || false,
                             glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)',
-                            overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100
+                            overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100,
+                            searchFieldMatchGroupBg: config.SearchFieldMatchGroupBg !== false,
+                            searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)'
                         };
                         self.applyHeaderButtonStyles();
                     })
@@ -14994,6 +14996,7 @@
             const glowShadow = style.glowEffect ? `box-shadow: 0 0 15px ${style.glowColor} !important;` : '';
             const iconOpacity = (style.iconOpacity || 100) / 100;
             const overallOpacity = (style.overallOpacity !== undefined ? style.overallOpacity : 100) / 100;
+            const searchFieldBg = style.searchFieldMatchGroupBg ? bgColor : style.searchFieldBackground;
 
             styleEl.textContent = `
                 /* Group container */
@@ -15035,6 +15038,11 @@
                 }
 
                 /* Search field styling */
+                #ratingsButtonGroup #headerSearchField {
+                    background: ${searchFieldBg} !important;
+                    border-radius: 15px !important;
+                }
+
                 #ratingsButtonGroup #headerSearchField,
                 #ratingsButtonGroup #headerSearchField input,
                 #ratingsButtonGroup #headerSearchInput {
