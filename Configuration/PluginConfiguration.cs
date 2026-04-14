@@ -78,6 +78,9 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Badge display profiles (JSON array of resolution-based profiles)
             BadgeDisplayProfiles = string.Empty;
 
+            // Sorting options
+            EnableImdbSorting = true;
+
             // Language settings
             DefaultLanguage = "en";
 
@@ -334,6 +337,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Format: [{"minWidth":0,"maxWidth":1920,"offsetX":0,"offsetY":0,"hideText":false,"sizePercent":0,"removeBackground":false}]
         /// </summary>
         public string BadgeDisplayProfiles { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether IMDB sorting is shown in the library sort dropdown.
+        /// </summary>
+        public bool EnableImdbSorting { get; set; }
 
         /// <summary>
         /// Gets or sets the default language for the plugin UI.

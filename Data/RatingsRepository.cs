@@ -424,6 +424,39 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets all distinct item IDs that have ratings with their average rating and count.
+        /// Used for efficient library sorting by rating.
+        /// </summary>
+        /// <returns>Dictionary mapping ItemId to (AverageRating, RatingCount).</returns>
+        public Dictionary<Guid, (double AverageRating, int RatingCount)> GetAllItemRatingStats()
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .GroupBy(r => r.ItemId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => (Math.Round(g.Average(r => r.Rating), 2), g.Count()));
+            }
+        }
+
+        /// <summary>
+        /// Gets all items rated by a specific user with their personal rating.
+        /// Used for efficient library sorting by personal rating.
+        /// </summary>
+        /// <param name="userId">User ID.</param>
+        /// <returns>Dictionary mapping ItemId to UserRating value.</returns>
+        public Dictionary<Guid, int> GetUserRatingsMap(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .Where(r => r.UserId == userId)
+                    .ToDictionary(r => r.ItemId, r => r.Rating);
+            }
+        }
+
+        /// <summary>
         /// Gets rating statistics for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>

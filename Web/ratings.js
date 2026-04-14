@@ -12,6 +12,7 @@
         validLanguages: ['en', 'es', 'zh', 'pt', 'ru', 'ja', 'de', 'fr', 'ko', 'it', 'tr', 'pl', 'nl', 'ar', 'hi', 'lt'], // Supported languages
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
+        enableImdbSorting: true, // Whether IMDB sorting option is shown (loaded from config)
 
         // Chat state
         chatEnabled: false, // Whether chat feature is enabled (loaded from config)
@@ -4163,10 +4164,12 @@
                     .then(function (r) { return r.json(); })
                     .then(function (config) {
                         self.ratingsEnabled = config.EnableRatings !== false;
+                        self.enableImdbSorting = config.EnableImdbSorting !== false;
                     })
                     .catch(function () {
                         // Default to enabled on error
                         self.ratingsEnabled = true;
+                        self.enableImdbSorting = true;
                     });
             };
 
@@ -13302,8 +13305,10 @@
 
         /**
          * Load ratings for item
+         * @param {string} itemId - The item ID
+         * @param {number} [knownUserRating] - Optional user rating to use (avoids race condition after submit)
          */
-        loadRatings: function (itemId) {
+        loadRatings: function (itemId, knownUserRating) {
             const self = this;
             const statsElement = this.queryInVisiblePage('#ratingsPluginStats');
 
@@ -13343,11 +13348,15 @@
                     return response.json();
                 })
                 .then(stats => {
+                    // Use knownUserRating if provided (avoids race condition after submit)
+                    // Otherwise use server response
+                    var userRating = knownUserRating !== undefined ? knownUserRating : (stats.UserRating || 0);
+
                     // Track user's current rating for toggle-off feature
-                    self.currentUserRating = stats.UserRating || 0;
+                    self.currentUserRating = userRating;
 
                     // For collections (no UserRating), show average in stars; otherwise show user's rating
-                    var displayRating = stats.UserRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
+                    var displayRating = userRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
                     self.updateStarDisplay(displayRating);
 
                     let statsHtml = '';
@@ -13438,8 +13447,8 @@
                     // Immediately update the star display for instant feedback
                     self.updateStarDisplay(rating);
 
-                    // Then reload full stats from server
-                    self.loadRatings(itemId);
+                    // Then reload full stats from server (pass rating to avoid race condition)
+                    self.loadRatings(itemId, rating);
 
                     if (window.require) {
                         require(['toast'], function(toast) {
@@ -13496,7 +13505,7 @@
                     // Clear the current rating
                     self.currentUserRating = 0;
                     self.updateStarDisplay(0);
-                    self.loadRatings(itemId);
+                    self.loadRatings(itemId, 0);
 
                     if (window.require) {
                         require(['toast'], function(toast) {
@@ -13722,7 +13731,7 @@
             .then(() => {
                 self.currentUserRating = rating;
                 self.updateStarDisplay(rating);
-                self.loadRatings(itemId);
+                self.loadRatings(itemId, rating);
 
                 if (window.require) {
                     require(['toast'], function(toast) {
@@ -16490,36 +16499,37 @@
          * Open Media Management Modal
          */
         openMediaManagementModal: function () {
+            const self = this;
             const modal = document.getElementById('mediaManagementModal');
             if (modal) {
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
 
-                // Reset to 'All Types' tab when opening
-                this.mediaListState.currentTab = 'all';
+                // Default to 'Disk Usage' tab when opening
+                this.mediaListState.currentTab = 'diskusage';
 
-                // Reset visual tab selection to first tab (All Types)
+                // Activate the Disk Usage tab
                 const tabs = modal.querySelectorAll('#mediaManagementTabs .media-tab');
-                tabs.forEach((tab, index) => {
-                    if (index === 0) {
+                tabs.forEach(tab => {
+                    if (tab.getAttribute('data-type') === 'diskusage') {
                         tab.classList.add('active');
                     } else {
                         tab.classList.remove('active');
                     }
                 });
 
-                // Show correct panels for media list view
+                // Show correct panels for disk usage view (no controls/pagination needed)
                 const controls = document.getElementById('mediaManagementControls');
                 const settings = document.getElementById('mediaManagementSettings');
                 const body = document.getElementById('mediaManagementBody');
                 const pagination = document.getElementById('mediaManagementPagination');
 
-                if (controls) controls.style.display = 'flex';
+                if (controls) controls.style.display = 'none';
                 if (settings) settings.style.display = 'none';
                 if (body) body.style.display = 'block';
-                if (pagination) pagination.style.display = 'flex';
+                if (pagination) pagination.style.display = 'none';
 
-                this.loadMediaList();
+                self.loadDiskUsage();
             }
         },
 
@@ -16530,7 +16540,7 @@
             page: 1,
             totalPages: 1,
             requestId: 0,
-            currentTab: 'all' // 'all', 'scheduled', 'settings', or specific type
+            currentTab: 'diskusage' // 'diskusage', 'all', 'scheduled', 'settings', or specific type
         },
 
         /**
@@ -17200,8 +17210,8 @@
                 return; // Exit now, will be called again after fetch
             }
 
-            // Build tabs HTML
-            let html = `<button class="media-tab active" data-type="">${self.t('mediaTypeAll')}</button>`;
+            // Build tabs HTML - Disk Usage is default active tab
+            let html = `<button class="media-tab" data-type="">${self.t('mediaTypeAll')}</button>`;
 
             // Add tabs for each selected media type
             self.selectedMediaTypes.forEach(type => {
@@ -17209,9 +17219,9 @@
                 html += `<button class="media-tab" data-type="${self.escapeHtml(type)}">${self.escapeHtml(label)}</button>`;
             });
 
-            // Always add Scheduled, Disk Usage, Duplicates, Restart, and Settings tabs at the end
+            // Always add Scheduled, Disk Usage (active by default), Duplicates, Restart, and Settings tabs at the end
             html += `<button class="media-tab" data-type="scheduled">${self.t('mediaTypeScheduled')}</button>`;
-            html += `<button class="media-tab" data-type="diskusage">${self.t('mediaDiskUsage')}</button>`;
+            html += `<button class="media-tab active" data-type="diskusage">${self.t('mediaDiskUsage')}</button>`;
             html += `<button class="media-tab" data-type="duplicates">${self.t('mediaDuplicates')}</button>`;
             html += `<button class="media-tab" data-type="restart">${self.t('mediaRestart')}</button>`;
             html += `<button class="media-tab media-settings-tab" data-type="settings" title="${self.t('mediaSettings')}">⚙</button>`;
@@ -22320,6 +22330,7 @@
                 DateCreated: item.DateCreated
             })))));
 
+            const imdbOpt = this.enableImdbSorting ? `<option value="imdb">${this.t('sortByImdb')}</option>` : '';
             return `
                 <div class="netflix-genre-row" data-genre="${this.escapeHtml(genre)}" data-genre-id="${genreId}" data-items="${itemsData}" data-sort-state="none" data-sort-field="local">
                     <div class="netflix-genre-title">
@@ -22328,7 +22339,7 @@
                             <select class="netflix-sort-dropdown">
                                 <option value="local" selected>${this.t('sortByLocalRating')}</option>
                                 <option value="personal">${this.t('sortByPersonalRating')}</option>
-                                <option value="imdb">${this.t('sortByImdb')}</option>
+                                ${imdbOpt}
                                 <option value="release">${this.t('sortByReleaseDate')}</option>
                                 <option value="added">${this.t('sortByNewlyAdded')}</option>
                             </select>
@@ -22762,7 +22773,7 @@
                         return; // Already exists and visible
                     }
                     // Remove ALL orphaned sort buttons
-                    document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                 }
 
                 // Try to inject buttons
@@ -22803,7 +22814,7 @@
 
                 if (!containerInToolbar && toolbar.isConnected) {
                     // Remove ALL existing sort buttons globally before injecting
-                    document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                     self.injectLibrarySortButtons();
                 }
             });
@@ -22840,7 +22851,7 @@
             if (containerInToolbar && containerInToolbar.isConnected) return true;
 
             // Remove ALL existing sort buttons globally (prevents duplicates)
-            document.querySelectorAll('#librarySortContainer, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+            document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
 
             let targetContainer = null;
             let insertBefore = null;
@@ -22898,10 +22909,11 @@
             const dropdown = document.createElement('select');
             dropdown.id = 'librarySortDropdown';
             dropdown.className = 'library-sort-dropdown';
+            const imdbOption = self.enableImdbSorting ? `<option value="imdb">${self.t('sortByImdb')}</option>` : '';
             dropdown.innerHTML = `
                 <option value="local" selected>${self.t('sortByLocalRating')}</option>
                 <option value="personal">${self.t('sortByPersonalRating')}</option>
-                <option value="imdb">${self.t('sortByImdb')}</option>
+                ${imdbOption}
                 <option value="release">${self.t('sortByReleaseDate')}</option>
                 <option value="added">${self.t('sortByNewlyAdded')}</option>
             `;
@@ -22966,15 +22978,23 @@
             return true;
         },
 
+        // Library sort state for pagination
+        librarySortState: {
+            active: false,
+            sortField: 'local',
+            direction: 'desc',
+            page: 1,
+            totalPages: 1,
+            totalCount: 0
+        },
+
         /**
-         * Sort library cards by selected field - fetches ALL items from library
+         * Sort library cards by selected field - uses server-side sorting with pagination
          */
-        sortLibraryCards: function (direction, sortField) {
+        sortLibraryCards: function (direction, sortField, page) {
             const self = this;
             sortField = sortField || 'local';
-
-            // Get parent ID from URL to fetch all items
-            const parentId = self.getParentIdFromUrl();
+            page = page || 1;
 
             // Find the items container
             const itemsContainer = self.findLibraryItemsContainer();
@@ -22987,7 +23007,7 @@
                 itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
             }
 
-            // Show loading on the sort button instead of inserting a div
+            // Show loading on the sort button
             const sortBtn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
             const originalBtnHtml = sortBtn ? sortBtn.innerHTML : null;
             if (sortBtn) {
@@ -23004,69 +23024,108 @@
                 }
             };
 
-            // Fetch ALL items from library
-            self.fetchAllLibraryItems(parentId).then(items => {
-                if (items.length === 0) {
-                    restoreBtn();
+            // Use new server-side sorted endpoint
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const url = `${baseUrl}/Ratings/SortedLibrary?sortBy=${sortField}&direction=${direction}&page=${page}&limit=100`;
+
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                restoreBtn();
+
+                if (!data.items || data.items.length === 0) {
+                    // No items with ratings - show message
+                    itemsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No rated items found</div>';
+                    self.librarySortState.active = false;
                     return;
                 }
 
-                // Get all item IDs that need ratings (for local and personal rating sort)
-                const uncachedIds = (sortField === 'local' || sortField === 'personal') ? items
-                    .filter(item => self.ratingsCache[item.Id] === undefined)
-                    .map(item => item.Id) : [];
+                // Update sort state
+                self.librarySortState = {
+                    active: true,
+                    sortField: sortField,
+                    direction: direction,
+                    page: data.page,
+                    totalPages: data.totalPages,
+                    totalCount: data.totalCount
+                };
 
-                // Fetch ratings then sort
-                const ratingsPromise = uncachedIds.length > 0
-                    ? self.fetchRatingsForItems(uncachedIds)
-                    : Promise.resolve();
+                // Rebuild cards with sorted items
+                self.rebuildLibraryCards(itemsContainer, data.items.map(item => ({
+                    Id: item.Id,
+                    Name: item.Name,
+                    ProductionYear: item.Year,
+                    Type: item.Type,
+                    ImageTags: item.ImageUrl ? { Primary: true } : {},
+                    _imageUrl: item.ImageUrl,
+                    CommunityRating: item.CommunityRating,
+                    Rating: item.Rating
+                })));
 
-                ratingsPromise.then(() => {
-                    restoreBtn();
-
-                    // Sort items by selected field
-                    const sortedItems = [...items].sort((a, b) => {
-                        let valueA, valueB;
-
-                        switch (sortField) {
-                            case 'personal':
-                                valueA = self.ratingsCache[a.Id] ? (self.ratingsCache[a.Id].UserRating || -1) : -1;
-                                valueB = self.ratingsCache[b.Id] ? (self.ratingsCache[b.Id].UserRating || -1) : -1;
-                                break;
-                            case 'imdb':
-                                valueA = a.CommunityRating || -1;
-                                valueB = b.CommunityRating || -1;
-                                break;
-                            case 'release':
-                                valueA = a.PremiereDate ? new Date(a.PremiereDate).getTime() : -1;
-                                valueB = b.PremiereDate ? new Date(b.PremiereDate).getTime() : -1;
-                                break;
-                            case 'added':
-                                valueA = a.DateCreated ? new Date(a.DateCreated).getTime() : -1;
-                                valueB = b.DateCreated ? new Date(b.DateCreated).getTime() : -1;
-                                break;
-                            case 'local':
-                            default:
-                                valueA = self.ratingsCache[a.Id] ? self.ratingsCache[a.Id].AverageRating : -1;
-                                valueB = self.ratingsCache[b.Id] ? self.ratingsCache[b.Id].AverageRating : -1;
-                                break;
-                        }
-
-                        if (valueA === -1 && valueB === -1) return 0;
-                        if (valueA === -1) return 1;
-                        if (valueB === -1) return -1;
-
-                        return direction === 'desc' ? valueB - valueA : valueA - valueB;
-                    });
-
-                    // Rebuild cards with sorted items
-                    self.rebuildLibraryCards(itemsContainer, sortedItems);
-                }).catch(() => {
-                    restoreBtn();
-                });
-            }).catch(() => {
+                // Update or create pagination controls
+                self.updateSortPagination(itemsContainer);
+            })
+            .catch(err => {
                 restoreBtn();
             });
+        },
+
+        /**
+         * Update pagination controls for sorted library view
+         */
+        updateSortPagination: function (container) {
+            const self = this;
+            const state = self.librarySortState;
+
+            // Remove existing custom pagination
+            const existingPagination = document.getElementById('ratingsSortPagination');
+            if (existingPagination) existingPagination.remove();
+
+            if (!state.active || state.totalPages <= 1) return;
+
+            // Create pagination container
+            const pagination = document.createElement('div');
+            pagination.id = 'ratingsSortPagination';
+            pagination.style.cssText = 'display: flex; justify-content: center; align-items: center; padding: 20px; gap: 15px;';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'paper-icon-button-light';
+            prevBtn.innerHTML = '←';
+            prevBtn.disabled = state.page <= 1;
+            prevBtn.style.cssText = 'font-size: 20px; padding: 8px 16px; cursor: pointer;';
+            prevBtn.onclick = () => self.sortLibraryCards(state.direction, state.sortField, state.page - 1);
+
+            const pageInfo = document.createElement('span');
+            pageInfo.style.cssText = 'color: #999; font-size: 14px;';
+            const start = (state.page - 1) * 100 + 1;
+            const end = Math.min(state.page * 100, state.totalCount);
+            pageInfo.textContent = `${start}-${end} of ${state.totalCount}`;
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'paper-icon-button-light';
+            nextBtn.innerHTML = '→';
+            nextBtn.disabled = state.page >= state.totalPages;
+            nextBtn.style.cssText = 'font-size: 20px; padding: 8px 16px; cursor: pointer;';
+            nextBtn.onclick = () => self.sortLibraryCards(state.direction, state.sortField, state.page + 1);
+
+            pagination.appendChild(prevBtn);
+            pagination.appendChild(pageInfo);
+            pagination.appendChild(nextBtn);
+
+            // Insert after container
+            container.parentNode.insertBefore(pagination, container.nextSibling);
         },
 
         /**
@@ -23156,9 +23215,13 @@
             // Build cards HTML matching Jellyfin's card structure
             let html = '';
             items.forEach(item => {
-                const imageUrl = item.ImageTags && item.ImageTags.Primary
-                    ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=300&fillWidth=200&quality=96`
-                    : '';
+                // Use _imageUrl from new API, or construct from ImageTags
+                let imageUrl = '';
+                if (item._imageUrl) {
+                    imageUrl = `${baseUrl}${item._imageUrl}?fillHeight=300&fillWidth=200&quality=96`;
+                } else if (item.ImageTags && item.ImageTags.Primary) {
+                    imageUrl = `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=300&fillWidth=200&quality=96`;
+                }
 
                 html += `
                     <a href="#!/details?id=${item.Id}"
@@ -23302,6 +23365,13 @@
             const self = this;
             const itemsContainer = self.findLibraryItemsContainer();
             if (!itemsContainer) return;
+
+            // Remove custom pagination
+            const existingPagination = document.getElementById('ratingsSortPagination');
+            if (existingPagination) existingPagination.remove();
+
+            // Reset sort state
+            self.librarySortState.active = false;
 
             // Restore from original HTML if available
             if (itemsContainer.dataset.originalHtml) {

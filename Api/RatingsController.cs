@@ -562,6 +562,203 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets library items sorted by rating with pagination.
+        /// Only returns items that have ratings (for local/personal sort).
+        /// This is much faster than fetching all library items.
+        /// </summary>
+        /// <param name="sortBy">Sort field: local, personal, imdb, release, added.</param>
+        /// <param name="direction">Sort direction: asc or desc.</param>
+        /// <param name="page">Page number (1-based).</param>
+        /// <param name="limit">Items per page (max 200).</param>
+        /// <param name="parentId">Optional parent library ID to filter by.</param>
+        /// <returns>Paginated list of sorted items.</returns>
+        [HttpGet("SortedLibrary")]
+        public async Task<ActionResult> GetSortedLibrary(
+            [FromQuery] string sortBy = "local",
+            [FromQuery] string direction = "desc",
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 100,
+            [FromQuery] string? parentId = null)
+        {
+            try
+            {
+                // Try to get user from authentication
+                var userId = User.GetUserId();
+
+                // If standard auth didn't work, try to get from session token
+                if (userId == Guid.Empty)
+                {
+                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                        if (tokenMatch.Success)
+                        {
+                            var token = tokenMatch.Groups[1].Value;
+                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                            if (session != null)
+                            {
+                                userId = session.UserId;
+                            }
+                        }
+                    }
+                }
+
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Cap limit to prevent abuse
+                limit = Math.Clamp(limit, 1, 200);
+                page = Math.Max(1, page);
+
+                List<object> sortedItems;
+                int totalCount;
+
+                if (sortBy == "local" || sortBy == "personal")
+                {
+                    // For rating-based sorts, only fetch items that have ratings
+                    Dictionary<Guid, double> itemRatings;
+
+                    if (sortBy == "personal")
+                    {
+                        // Get user's personal ratings
+                        var userRatings = _repository.GetUserRatingsMap(userId);
+                        itemRatings = userRatings.ToDictionary(kv => kv.Key, kv => (double)kv.Value);
+                    }
+                    else
+                    {
+                        // Get all items with local ratings
+                        var allRatings = _repository.GetAllItemRatingStats();
+                        itemRatings = allRatings.ToDictionary(kv => kv.Key, kv => kv.Value.AverageRating);
+                    }
+
+                    if (itemRatings.Count == 0)
+                    {
+                        return Ok(new { items = new List<object>(), totalCount = 0, page, limit });
+                    }
+
+                    // Sort item IDs by rating
+                    var sortedIds = direction == "desc"
+                        ? itemRatings.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList()
+                        : itemRatings.OrderBy(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+                    totalCount = sortedIds.Count;
+
+                    // Paginate
+                    var pageIds = sortedIds.Skip((page - 1) * limit).Take(limit).ToArray();
+
+                    // Fetch item details from Jellyfin for this page only
+                    var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        ItemIds = pageIds,
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo }
+                    };
+
+                    var items = _libraryManager.GetItemList(query);
+
+                    // Build response maintaining sort order
+                    sortedItems = pageIds
+                        .Select(id => items.FirstOrDefault(i => i.Id == id))
+                        .Where(item => item != null)
+                        .Select(item => new
+                        {
+                            Id = item!.Id.ToString("N"),
+                            Name = item.Name,
+                            Year = item.ProductionYear,
+                            Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : (item is MediaBrowser.Controller.Entities.MusicVideo ? "MusicVideo" : "Series"),
+                            ImageUrl = item.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true
+                                ? $"/Items/{item.Id}/Images/Primary"
+                                : null,
+                            Rating = itemRatings.TryGetValue(item.Id, out var r) ? r : (double?)null,
+                            CommunityRating = item.CommunityRating,
+                            PremiereDate = item.PremiereDate,
+                            DateCreated = item.DateCreated
+                        })
+                        .Cast<object>()
+                        .ToList();
+                }
+                else
+                {
+                    // For non-rating sorts (imdb, release, added), use Jellyfin's native sorting
+                    // but only on items that have local ratings (to keep consistent with rating feature)
+                    var allRatings = _repository.GetAllItemRatingStats();
+
+                    if (allRatings.Count == 0)
+                    {
+                        return Ok(new { items = new List<object>(), totalCount = 0, page, limit });
+                    }
+
+                    var ratedItemIds = allRatings.Keys.ToArray();
+
+                    var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        ItemIds = ratedItemIds,
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo }
+                    };
+
+                    var items = _libraryManager.GetItemList(query);
+
+                    // Sort by requested field
+                    IEnumerable<MediaBrowser.Controller.Entities.BaseItem> sorted = sortBy switch
+                    {
+                        "imdb" => direction == "desc"
+                            ? items.OrderByDescending(i => i.CommunityRating ?? -1)
+                            : items.OrderBy(i => i.CommunityRating ?? -1),
+                        "release" => direction == "desc"
+                            ? items.OrderByDescending(i => i.PremiereDate ?? DateTime.MinValue)
+                            : items.OrderBy(i => i.PremiereDate ?? DateTime.MinValue),
+                        "added" => direction == "desc"
+                            ? items.OrderByDescending(i => i.DateCreated)
+                            : items.OrderBy(i => i.DateCreated),
+                        _ => items.OrderByDescending(i => allRatings.TryGetValue(i.Id, out var r) ? r.AverageRating : -1)
+                    };
+
+                    var sortedList = sorted.ToList();
+                    totalCount = sortedList.Count;
+
+                    // Paginate
+                    sortedItems = sortedList
+                        .Skip((page - 1) * limit)
+                        .Take(limit)
+                        .Select(item => new
+                        {
+                            Id = item.Id.ToString("N"),
+                            Name = item.Name,
+                            Year = item.ProductionYear,
+                            Type = item is MediaBrowser.Controller.Entities.Movies.Movie ? "Movie" : (item is MediaBrowser.Controller.Entities.MusicVideo ? "MusicVideo" : "Series"),
+                            ImageUrl = item.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true
+                                ? $"/Items/{item.Id}/Images/Primary"
+                                : null,
+                            Rating = allRatings.TryGetValue(item.Id, out var r) ? r.AverageRating : (double?)null,
+                            CommunityRating = item.CommunityRating,
+                            PremiereDate = item.PremiereDate,
+                            DateCreated = item.DateCreated
+                        })
+                        .Cast<object>()
+                        .ToList();
+                }
+
+                return Ok(new
+                {
+                    items = sortedItems,
+                    totalCount,
+                    page,
+                    limit,
+                    totalPages = (int)Math.Ceiling((double)totalCount / limit)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting sorted library");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Deletes the current user's rating for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
@@ -855,6 +1052,9 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Badge display profiles
                     BadgeDisplayProfiles = config?.BadgeDisplayProfiles ?? string.Empty,
+
+                    // Sorting options
+                    EnableImdbSorting = config?.EnableImdbSorting ?? true,
 
                     // Social features
                     EnableFriendsButton = config?.EnableFriendsButton ?? false,
@@ -1918,7 +2118,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Build query for media items
                 var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
                 {
-                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
                     Recursive = true
                 };
 
@@ -1940,7 +2140,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     query.ParentId = parentGuid;
                     // When filtering by library, include all types from that library
-                    query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series };
+                    query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo };
                 }
 
                 // Apply search filter
@@ -3447,7 +3647,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         #region Admin - Duplicate Finder
 
         /// <summary>
-        /// Finds duplicate media items by IMDB ID (Movies only, Series excluded).
+        /// Finds duplicate media items - Movies/Series by IMDB ID, Music by title.
+        /// Episodes are excluded (they share IMDB ID with parent series).
         /// </summary>
         [HttpGet("Admin/Duplicates")]
         public async Task<ActionResult> GetDuplicates()
@@ -3460,74 +3661,64 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Admin access required");
                 }
 
-                // Only query Movies - Series episodes share the same IMDB ID and aren't true duplicates
-                var allItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                var duplicateGroups = new List<object>();
+
+                // 1. Check Movies and Series by IMDB ID (NOT Episodes - they share parent's IMDB)
+                var videoItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
                 {
-                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series },
                     Recursive = true
                 });
 
-                var duplicates = allItems
+                var videoDuplicates = videoItems
                     .Where(i => i.ProviderIds?.ContainsKey("Imdb") == true && !string.IsNullOrEmpty(i.ProviderIds["Imdb"]))
                     .GroupBy(i => i.ProviderIds["Imdb"])
                     .Where(g => g.Count() > 1)
-                    .Select(g =>
-                    {
-                        var items = g.Select(i =>
-                        {
-                            double sizeGB = 0;
-                            string quality = "Unknown";
-                            try
-                            {
-                                if (!string.IsNullOrEmpty(i.Path) && System.IO.File.Exists(i.Path))
-                                {
-                                    var fileInfo = new FileInfo(i.Path);
-                                    sizeGB = Math.Round(fileInfo.Length / 1073741824.0, 2);
-                                }
-
-                                // Try to determine quality from video stream
-                                var mediaStreams = i.GetMediaStreams();
-                                var videoStream = mediaStreams?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Video);
-                                if (videoStream != null && videoStream.Height.HasValue)
-                                {
-                                    var height = videoStream.Height.Value;
-                                    quality = height >= 2160 ? "4K" : height >= 1080 ? "1080p" : height >= 720 ? "720p" : height >= 480 ? "480p" : "SD";
-                                }
-                            }
-                            catch { }
-
-                            return new
-                            {
-                                ItemId = i.Id,
-                                Name = i.Name,
-                                Path = i.Path,
-                                SizeGB = sizeGB,
-                                DateAdded = i.DateCreated,
-                                Quality = quality,
-                                Container = System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
-                            };
-                        }).OrderByDescending(x => x.SizeGB).ToList();
-
-                        return new
-                        {
-                            ImdbId = g.Key,
-                            Title = g.First().Name,
-                            Year = g.First().ProductionYear,
-                            Items = items,
-                            TotalSizeGB = Math.Round(items.Sum(x => x.SizeGB), 2),
-                            ItemCount = items.Count
-                        };
-                    })
-                    .OrderByDescending(d => d.TotalSizeGB)
+                    .Select(g => BuildDuplicateGroup(g.Key, g.First().Name, g.First().ProductionYear, g.ToList(), "Video"))
                     .ToList();
 
-                var potentialSavings = duplicates.Sum(d => d.TotalSizeGB - d.Items.Max(i => i.SizeGB));
+                duplicateGroups.AddRange(videoDuplicates);
+
+                // 2. Check Music by normalized title (artist + title)
+                var musicItems = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Audio },
+                    Recursive = true
+                });
+
+                var musicDuplicates = musicItems
+                    .Where(i => !string.IsNullOrEmpty(i.Name))
+                    .GroupBy(i =>
+                    {
+                        // Group by normalized: artist + title (lowercase, trimmed)
+                        var artist = (i as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
+                        var title = i.Name?.Trim().ToLowerInvariant() ?? "";
+                        return $"{artist.Trim().ToLowerInvariant()}|{title}";
+                    })
+                    .Where(g => g.Count() > 1 && !string.IsNullOrEmpty(g.Key.Split('|').LastOrDefault()))
+                    .Select(g =>
+                    {
+                        var first = g.First();
+                        var artist = (first as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
+                        var displayTitle = string.IsNullOrEmpty(artist) ? first.Name : $"{artist} - {first.Name}";
+                        return BuildDuplicateGroup(g.Key, displayTitle, first.ProductionYear, g.ToList(), "Music");
+                    })
+                    .ToList();
+
+                duplicateGroups.AddRange(musicDuplicates);
+
+                // Sort all by size descending
+                var sortedDuplicates = duplicateGroups
+                    .OrderByDescending(d => ((dynamic)d).TotalSizeGB)
+                    .ToList();
+
+                var potentialSavings = sortedDuplicates.Sum(d => (double)((dynamic)d).TotalSizeGB - ((IEnumerable<dynamic>)((dynamic)d).Items).Max(i => (double)i.SizeGB));
 
                 return Ok(new
                 {
-                    Duplicates = duplicates,
-                    TotalDuplicateGroups = duplicates.Count,
-                    TotalDuplicateItems = duplicates.Sum(d => d.ItemCount),
+                    Duplicates = sortedDuplicates,
+                    TotalDuplicateGroups = sortedDuplicates.Count,
+                    TotalDuplicateItems = sortedDuplicates.Sum(d => (int)((dynamic)d).ItemCount),
                     PotentialSavingsGB = Math.Round(potentialSavings, 2)
                 });
             }
@@ -3536,6 +3727,70 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error finding duplicates");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        /// <summary>
+        /// Helper to build duplicate group object.
+        /// </summary>
+        private object BuildDuplicateGroup(string groupKey, string title, int? year, List<MediaBrowser.Controller.Entities.BaseItem> items, string mediaType)
+        {
+            var itemDetails = items.Select(i =>
+            {
+                double sizeGB = 0;
+                string quality = "Unknown";
+                try
+                {
+                    if (!string.IsNullOrEmpty(i.Path) && System.IO.File.Exists(i.Path))
+                    {
+                        var fileInfo = new FileInfo(i.Path);
+                        sizeGB = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                    }
+
+                    // Try to determine quality from video stream (for video items)
+                    if (mediaType == "Video")
+                    {
+                        var mediaStreams = i.GetMediaStreams();
+                        var videoStream = mediaStreams?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Video);
+                        if (videoStream != null && videoStream.Height.HasValue)
+                        {
+                            var height = videoStream.Height.Value;
+                            quality = height >= 2160 ? "4K" : height >= 1080 ? "1080p" : height >= 720 ? "720p" : height >= 480 ? "480p" : "SD";
+                        }
+                    }
+                    else if (mediaType == "Music")
+                    {
+                        // For music, show bitrate as quality
+                        var audioStream = i.GetMediaStreams()?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Audio);
+                        if (audioStream?.BitRate != null)
+                        {
+                            quality = $"{audioStream.BitRate / 1000}kbps";
+                        }
+                    }
+                }
+                catch { }
+
+                return new
+                {
+                    ItemId = i.Id,
+                    Name = i.Name,
+                    Path = i.Path,
+                    SizeGB = sizeGB,
+                    DateAdded = i.DateCreated,
+                    Quality = quality,
+                    Container = System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
+                };
+            }).OrderByDescending(x => x.SizeGB).ToList();
+
+            return new
+            {
+                ImdbId = groupKey,
+                Title = title,
+                Year = year,
+                MediaType = mediaType,
+                Items = itemDetails,
+                TotalSizeGB = Math.Round(itemDetails.Sum(x => x.SizeGB), 2),
+                ItemCount = itemDetails.Count
+            };
         }
 
         /// <summary>
