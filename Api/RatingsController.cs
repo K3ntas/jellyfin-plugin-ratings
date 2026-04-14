@@ -1068,7 +1068,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ChatMaxMessageLength = config?.ChatMaxMessageLength ?? 500,
                     ChatRateLimitPerMinute = config?.ChatRateLimitPerMinute ?? 10,
                     ChatNotifyPublic = config?.ChatNotifyPublic ?? true,
-                    ChatNotifyPrivate = config?.ChatNotifyPrivate ?? true
+                    ChatNotifyPrivate = config?.ChatNotifyPrivate ?? true,
+
+                    // Header button group styling
+                    HeaderButtonGroupBackground = config?.HeaderButtonGroupBackground ?? "rgba(40, 40, 40, 0.95)",
+                    HeaderButtonGroupBorderColor = config?.HeaderButtonGroupBorderColor ?? "rgba(255, 255, 255, 0.15)",
+                    HeaderButtonGroupBorderRadius = config?.HeaderButtonGroupBorderRadius ?? 25,
+                    HeaderButtonColor = config?.HeaderButtonColor ?? "#ffffff",
+                    HeaderButtonHoverBackground = config?.HeaderButtonHoverBackground ?? "rgba(255, 255, 255, 0.15)",
+                    HeaderButtonGlowEffect = config?.HeaderButtonGlowEffect ?? false,
+                    HeaderButtonGlowColor = config?.HeaderButtonGlowColor ?? "rgba(255, 255, 255, 0.3)"
                 });
             }
             catch (Exception ex)

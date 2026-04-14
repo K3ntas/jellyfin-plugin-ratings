@@ -92,6 +92,78 @@
                                 <textarea id="txtBadgeDisplayProfiles" style="display: none;"></textarea>
                             </div>
 
+                            <!-- Header Button Group Styling -->
+                            <div style="margin-top: 1.5em;">
+                                <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">Header Button Group Styling</h3>
+                                <div class="fieldDescription" style="margin-bottom: 10px;">
+                                    Customize the appearance of the header toolbar buttons (Search, Language, Request, etc.)
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnGroupBg">Group Background</label>
+                                        <input id="txtHeaderBtnGroupBg" type="text" is="emby-input" placeholder="rgba(40, 40, 40, 0.95)" />
+                                        <div class="fieldDescription">Background color (supports rgba for transparency)</div>
+                                    </div>
+
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnGroupBorder">Group Border Color</label>
+                                        <input id="txtHeaderBtnGroupBorder" type="text" is="emby-input" placeholder="rgba(255, 255, 255, 0.15)" />
+                                        <div class="fieldDescription">Border color (supports rgba)</div>
+                                    </div>
+
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnGroupRadius">Border Radius (px)</label>
+                                        <input id="txtHeaderBtnGroupRadius" type="number" is="emby-input" min="0" max="50" step="1" placeholder="25" />
+                                        <div class="fieldDescription">Corner roundness (0 = square)</div>
+                                    </div>
+
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnColor">Button Icon Color</label>
+                                        <input id="txtHeaderBtnColor" type="text" is="emby-input" placeholder="#ffffff" />
+                                        <div class="fieldDescription">Icon/text color for buttons</div>
+                                    </div>
+
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnHoverBg">Button Hover Background</label>
+                                        <input id="txtHeaderBtnHoverBg" type="text" is="emby-input" placeholder="rgba(255, 255, 255, 0.15)" />
+                                        <div class="fieldDescription">Background on hover</div>
+                                    </div>
+
+                                    <div class="inputContainer">
+                                        <label class="inputLabel inputLabelUnfocused" for="txtHeaderBtnGlowColor">Glow Color</label>
+                                        <input id="txtHeaderBtnGlowColor" type="text" is="emby-input" placeholder="rgba(255, 255, 255, 0.3)" />
+                                        <div class="fieldDescription">Glow/shadow color (if enabled)</div>
+                                    </div>
+                                </div>
+
+                                <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 10px;">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkHeaderBtnGlowEffect" type="checkbox" is="emby-checkbox" />
+                                        <span>Enable Glow Effect</span>
+                                    </label>
+                                    <div class="fieldDescription checkboxFieldDescription">
+                                        Add a subtle glow/shadow effect around the button group.
+                                    </div>
+                                </div>
+
+                                <!-- Live Preview -->
+                                <div style="margin-top: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px;">
+                                    <div class="fieldDescription" style="margin-bottom: 10px;">Preview:</div>
+                                    <div id="headerBtnPreview" style="display: inline-flex; align-items: center; padding: 4px 10px; gap: 4px;">
+                                        <button type="button" class="preview-btn" style="background: transparent; border: none; padding: 8px; border-radius: 50%; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: currentColor;"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                                        </button>
+                                        <button type="button" class="preview-btn" style="background: transparent; border: none; padding: 8px; border-radius: 50%; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                                        </button>
+                                        <button type="button" class="preview-btn" style="background: transparent; border: none; padding: 8px; border-radius: 50%; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: currentColor;"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -838,6 +910,51 @@
                 group.classList.toggle('collapsed');
             }
 
+            // Header button preview
+            function updateHeaderBtnPreview() {
+                var preview = document.getElementById('headerBtnPreview');
+                if (!preview) return;
+
+                var bg = document.querySelector('#txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
+                var borderColor = document.querySelector('#txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
+                var borderRadius = (document.querySelector('#txtHeaderBtnGroupRadius').value || 25) + 'px';
+                var btnColor = document.querySelector('#txtHeaderBtnColor').value || '#ffffff';
+                var hoverBg = document.querySelector('#txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
+                var glowEnabled = document.querySelector('#chkHeaderBtnGlowEffect').checked;
+                var glowColor = document.querySelector('#txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
+
+                // Apply to preview container
+                preview.style.background = bg;
+                preview.style.border = '1px solid ' + borderColor;
+                preview.style.borderRadius = borderRadius;
+                preview.style.boxShadow = glowEnabled ? '0 0 15px ' + glowColor : 'none';
+
+                // Apply to preview buttons
+                var btns = preview.querySelectorAll('.preview-btn');
+                btns.forEach(function(btn) {
+                    btn.style.color = btnColor;
+                    btn.onmouseenter = function() { this.style.background = hoverBg; };
+                    btn.onmouseleave = function() { this.style.background = 'transparent'; };
+                });
+            }
+
+            // Attach live preview listeners after DOM ready
+            document.addEventListener('DOMContentLoaded', function() {
+                var previewInputs = ['#txtHeaderBtnGroupBg', '#txtHeaderBtnGroupBorder', '#txtHeaderBtnGroupRadius',
+                                     '#txtHeaderBtnColor', '#txtHeaderBtnHoverBg', '#txtHeaderBtnGlowColor'];
+                previewInputs.forEach(function(sel) {
+                    var el = document.querySelector(sel);
+                    if (el) {
+                        el.addEventListener('input', updateHeaderBtnPreview);
+                        el.addEventListener('change', updateHeaderBtnPreview);
+                    }
+                });
+                var glowChk = document.querySelector('#chkHeaderBtnGlowEffect');
+                if (glowChk) {
+                    glowChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+            });
+
             // Badge profile management
             var badgeProfiles = [];
 
@@ -1169,6 +1286,16 @@
                     document.querySelector('#txtModLevel3MediaBanMaxDays').value = config.ModLevel3MediaBanMaxDays || 7;
                     document.querySelector('#txtModeratorActionRateLimitPerMinute').value = config.ModeratorActionRateLimitPerMinute || 10;
 
+                    // Header button group styling
+                    document.querySelector('#txtHeaderBtnGroupBg').value = config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)';
+                    document.querySelector('#txtHeaderBtnGroupBorder').value = config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)';
+                    document.querySelector('#txtHeaderBtnGroupRadius').value = config.HeaderButtonGroupBorderRadius || 25;
+                    document.querySelector('#txtHeaderBtnColor').value = config.HeaderButtonColor || '#ffffff';
+                    document.querySelector('#txtHeaderBtnHoverBg').value = config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)';
+                    document.querySelector('#chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
+                    document.querySelector('#txtHeaderBtnGlowColor').value = config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)';
+                    updateHeaderBtnPreview();
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -1267,6 +1394,15 @@
                     config.ModLevel2TempBanMaxDays = parseInt(document.querySelector('#txtModLevel2TempBanMaxDays').value) || 7;
                     config.ModLevel3MediaBanMaxDays = parseInt(document.querySelector('#txtModLevel3MediaBanMaxDays').value) || 7;
                     config.ModeratorActionRateLimitPerMinute = parseInt(document.querySelector('#txtModeratorActionRateLimitPerMinute').value) || 10;
+
+                    // Header button group styling
+                    config.HeaderButtonGroupBackground = document.querySelector('#txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
+                    config.HeaderButtonGroupBorderColor = document.querySelector('#txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGroupBorderRadius = parseInt(document.querySelector('#txtHeaderBtnGroupRadius').value) || 25;
+                    config.HeaderButtonColor = document.querySelector('#txtHeaderBtnColor').value || '#ffffff';
+                    config.HeaderButtonHoverBackground = document.querySelector('#txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
+                    config.HeaderButtonGlowEffect = document.querySelector('#chkHeaderBtnGlowEffect').checked;
+                    config.HeaderButtonGlowColor = document.querySelector('#txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

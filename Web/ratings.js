@@ -4165,11 +4165,23 @@
                     .then(function (config) {
                         self.ratingsEnabled = config.EnableRatings !== false;
                         self.enableImdbSorting = config.EnableImdbSorting !== false;
+                        // Header button styling
+                        self.headerButtonStyle = {
+                            groupBackground: config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)',
+                            groupBorderColor: config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)',
+                            groupBorderRadius: config.HeaderButtonGroupBorderRadius || 25,
+                            buttonColor: config.HeaderButtonColor || '#ffffff',
+                            buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
+                            glowEffect: config.HeaderButtonGlowEffect || false,
+                            glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)'
+                        };
+                        self.applyHeaderButtonStyles();
                     })
                     .catch(function () {
                         // Default to enabled on error
                         self.ratingsEnabled = true;
                         self.enableImdbSorting = true;
+                        self.headerButtonStyle = null;
                     });
             };
 
@@ -14947,9 +14959,69 @@
 
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
+
+                // Apply custom styles if already loaded
+                if (self.headerButtonStyle) {
+                    self.applyHeaderButtonStyles();
+                }
             };
 
             setTimeout(tryCreate, 500);
+        },
+
+        /**
+         * Apply dynamic header button styles from config
+         */
+        applyHeaderButtonStyles: function () {
+            const self = this;
+            const style = self.headerButtonStyle;
+            if (!style) return;
+
+            // Create or update dynamic stylesheet for header buttons
+            let styleEl = document.getElementById('ratingsHeaderBtnStyles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'ratingsHeaderBtnStyles';
+                document.head.appendChild(styleEl);
+            }
+
+            const glowShadow = style.glowEffect ? `box-shadow: 0 0 15px ${style.glowColor} !important;` : '';
+
+            styleEl.textContent = `
+                #ratingsButtonGroup {
+                    background: ${style.groupBackground} !important;
+                    border: 1px solid ${style.groupBorderColor} !important;
+                    border-radius: ${style.groupBorderRadius}px !important;
+                    ${glowShadow}
+                }
+
+                .ratingsGroupBtn {
+                    color: ${style.buttonColor} !important;
+                }
+
+                .ratingsGroupBtn:hover {
+                    background: ${style.buttonHoverBg} !important;
+                }
+
+                #requestMediaBtn {
+                    color: ${style.buttonColor} !important;
+                }
+
+                #requestMediaBtn:hover {
+                    background: ${style.buttonHoverBg} !important;
+                }
+
+                /* Mobile - maintain styling */
+                @media screen and (max-width: 600px) {
+                    #ratingsButtonGroup {
+                        background: ${style.groupBackground} !important;
+                        border: none !important;
+                        border-bottom: 1px solid ${style.groupBorderColor} !important;
+                        border-radius: 0 !important;
+                        ${style.glowEffect ? `box-shadow: 0 2px 10px ${style.glowColor} !important;` : ''}
+                    }
+                }
+            `;
         },
 
         /**
@@ -22949,6 +23021,11 @@
                     e.preventDefault();
                     e.stopPropagation();
 
+                    // Prevent concurrent sort operations
+                    if (self.librarySortState.isSorting) {
+                        return;
+                    }
+
                     const sortDirection = btn.getAttribute('data-sort');
                     const sortField = dropdown.value;
                     const wasActive = btn.classList.contains('active');
@@ -22981,6 +23058,7 @@
         // Library sort state for pagination
         librarySortState: {
             active: false,
+            isSorting: false,
             sortField: 'local',
             direction: 'desc',
             page: 1,
@@ -22996,9 +23074,16 @@
             sortField = sortField || 'local';
             page = page || 1;
 
+            // Prevent concurrent sort operations
+            if (self.librarySortState.isSorting) {
+                return;
+            }
+            self.librarySortState.isSorting = true;
+
             // Find the items container
             const itemsContainer = self.findLibraryItemsContainer();
             if (!itemsContainer) {
+                self.librarySortState.isSorting = false;
                 return;
             }
 
@@ -23007,20 +23092,37 @@
                 itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
             }
 
-            // Show loading on the sort button
+            // Get both buttons and store their original HTML
+            const btnDesc = document.getElementById('librarySortDesc');
+            const btnAsc = document.getElementById('librarySortAsc');
             const sortBtn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
             const originalBtnHtml = sortBtn ? sortBtn.innerHTML : null;
+
+            // Disable both buttons during sorting
+            if (btnDesc) {
+                btnDesc.disabled = true;
+                btnDesc.style.opacity = '0.7';
+            }
+            if (btnAsc) {
+                btnAsc.disabled = true;
+                btnAsc.style.opacity = '0.7';
+            }
             if (sortBtn) {
                 sortBtn.innerHTML = '⏳';
-                sortBtn.disabled = true;
-                sortBtn.style.opacity = '0.7';
             }
 
             const restoreBtn = () => {
+                self.librarySortState.isSorting = false;
+                if (btnDesc) {
+                    btnDesc.disabled = false;
+                    btnDesc.style.opacity = '';
+                }
+                if (btnAsc) {
+                    btnAsc.disabled = false;
+                    btnAsc.style.opacity = '';
+                }
                 if (sortBtn && originalBtnHtml) {
                     sortBtn.innerHTML = originalBtnHtml;
-                    sortBtn.disabled = false;
-                    sortBtn.style.opacity = '';
                 }
             };
 
@@ -23055,6 +23157,7 @@
                 // Update sort state
                 self.librarySortState = {
                     active: true,
+                    isSorting: false,
                     sortField: sortField,
                     direction: direction,
                     page: data.page,
@@ -23372,6 +23475,7 @@
 
             // Reset sort state
             self.librarySortState.active = false;
+            self.librarySortState.isSorting = false;
 
             // Restore from original HTML if available
             if (itemsContainer.dataset.originalHtml) {
