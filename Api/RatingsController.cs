@@ -1071,10 +1071,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ChatNotifyPrivate = config?.ChatNotifyPrivate ?? true,
 
                     // Header button group styling
+                    HeaderButtonTransparentBg = config?.HeaderButtonTransparentBg ?? false,
                     HeaderButtonGroupBackground = config?.HeaderButtonGroupBackground ?? "rgba(40, 40, 40, 0.95)",
+                    HeaderButtonNoBorder = config?.HeaderButtonNoBorder ?? false,
                     HeaderButtonGroupBorderColor = config?.HeaderButtonGroupBorderColor ?? "rgba(255, 255, 255, 0.15)",
                     HeaderButtonGroupBorderRadius = config?.HeaderButtonGroupBorderRadius ?? 25,
                     HeaderButtonColor = config?.HeaderButtonColor ?? "#ffffff",
+                    HeaderButtonIconOpacity = config?.HeaderButtonIconOpacity ?? 100,
                     HeaderButtonHoverBackground = config?.HeaderButtonHoverBackground ?? "rgba(255, 255, 255, 0.15)",
                     HeaderButtonGlowEffect = config?.HeaderButtonGlowEffect ?? false,
                     HeaderButtonGlowColor = config?.HeaderButtonGlowColor ?? "rgba(255, 255, 255, 0.3)"

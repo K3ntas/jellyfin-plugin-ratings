@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.261.0",
+        "changelog": "Add transparent background toggle, no border toggle, button icon opacity slider",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.261.0/Jellyfin.Plugin.Ratings_2.0.261.0.zip",
+        "checksum": "0cd9d4332b7619f67b641d0b95180a7a",
+        "timestamp": "2026-04-14T16:00:00Z"
+      },
+      {
         "version": "2.0.260.0",
         "changelog": "Fix header button styling controls not working",
         "targetAbi": "10.11.0.0",

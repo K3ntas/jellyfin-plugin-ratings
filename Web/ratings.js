@@ -4167,10 +4167,13 @@
                         self.enableImdbSorting = config.EnableImdbSorting !== false;
                         // Header button styling
                         self.headerButtonStyle = {
+                            transparentBg: config.HeaderButtonTransparentBg || false,
                             groupBackground: config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)',
+                            noBorder: config.HeaderButtonNoBorder || false,
                             groupBorderColor: config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)',
                             groupBorderRadius: config.HeaderButtonGroupBorderRadius || 25,
                             buttonColor: config.HeaderButtonColor || '#ffffff',
+                            iconOpacity: config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100,
                             buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
                             glowEffect: config.HeaderButtonGlowEffect || false,
                             glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)'
@@ -14985,38 +14988,45 @@
                 document.head.appendChild(styleEl);
             }
 
+            const bgColor = style.transparentBg ? 'transparent' : style.groupBackground;
+            const borderStyle = style.noBorder ? 'none' : `1px solid ${style.groupBorderColor}`;
             const glowShadow = style.glowEffect ? `box-shadow: 0 0 15px ${style.glowColor} !important;` : '';
+            const iconOpacity = (style.iconOpacity || 100) / 100;
 
             styleEl.textContent = `
                 #ratingsButtonGroup {
-                    background: ${style.groupBackground} !important;
-                    border: 1px solid ${style.groupBorderColor} !important;
+                    background: ${bgColor} !important;
+                    border: ${borderStyle} !important;
                     border-radius: ${style.groupBorderRadius}px !important;
                     ${glowShadow}
                 }
 
                 .ratingsGroupBtn {
                     color: ${style.buttonColor} !important;
+                    opacity: ${iconOpacity} !important;
                 }
 
                 .ratingsGroupBtn:hover {
                     background: ${style.buttonHoverBg} !important;
+                    opacity: 1 !important;
                 }
 
                 #requestMediaBtn {
                     color: ${style.buttonColor} !important;
+                    opacity: ${iconOpacity} !important;
                 }
 
                 #requestMediaBtn:hover {
                     background: ${style.buttonHoverBg} !important;
+                    opacity: 1 !important;
                 }
 
                 /* Mobile - maintain styling */
                 @media screen and (max-width: 600px) {
                     #ratingsButtonGroup {
-                        background: ${style.groupBackground} !important;
+                        background: ${bgColor} !important;
                         border: none !important;
-                        border-bottom: 1px solid ${style.groupBorderColor} !important;
+                        border-bottom: ${style.noBorder ? 'none' : `1px solid ${style.groupBorderColor}`} !important;
                         border-radius: 0 !important;
                         ${style.glowEffect ? `box-shadow: 0 2px 10px ${style.glowColor} !important;` : ''}
                     }

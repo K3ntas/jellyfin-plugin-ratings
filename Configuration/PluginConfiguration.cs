@@ -110,10 +110,13 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ModeratorActionRateLimitPerMinute = 10;
 
             // Header button group styling
+            HeaderButtonTransparentBg = false;
             HeaderButtonGroupBackground = "rgba(40, 40, 40, 0.95)";
+            HeaderButtonNoBorder = false;
             HeaderButtonGroupBorderColor = "rgba(255, 255, 255, 0.15)";
             HeaderButtonGroupBorderRadius = 25;
             HeaderButtonColor = "#ffffff";
+            HeaderButtonIconOpacity = 100;
             HeaderButtonHoverBackground = "rgba(255, 255, 255, 0.15)";
             HeaderButtonGlowEffect = false;
             HeaderButtonGlowColor = "rgba(255, 255, 255, 0.3)";
@@ -457,9 +460,19 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         // Header button group styling
 
         /// <summary>
+        /// Gets or sets a value indicating whether the background is transparent.
+        /// </summary>
+        public bool HeaderButtonTransparentBg { get; set; }
+
+        /// <summary>
         /// Gets or sets the background color for the header button group (supports rgba).
         /// </summary>
         public string HeaderButtonGroupBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the border is hidden.
+        /// </summary>
+        public bool HeaderButtonNoBorder { get; set; }
 
         /// <summary>
         /// Gets or sets the border color for the header button group (supports rgba).
@@ -475,6 +488,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the icon/text color for header buttons.
         /// </summary>
         public string HeaderButtonColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the icon opacity (0-100).
+        /// </summary>
+        public int HeaderButtonIconOpacity { get; set; }
 
         /// <summary>
         /// Gets or sets the hover background color for header buttons (supports rgba).

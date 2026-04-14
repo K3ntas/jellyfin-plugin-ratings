@@ -103,37 +103,56 @@
                                     <!-- Group Background -->
                                     <div class="hdr-style-card">
                                         <div class="hdr-style-label">Group Background</div>
-                                        <div class="hdr-color-row">
-                                            <input type="color" id="colorHeaderBtnGroupBg" class="hdr-color-picker" value="#282828" />
-                                            <input type="text" id="txtHeaderBtnGroupBg" class="hdr-color-text" placeholder="rgba(40,40,40,0.95)" />
-                                        </div>
-                                        <div class="hdr-slider-row">
-                                            <span class="hdr-slider-label">Opacity</span>
-                                            <input type="range" id="sliderHeaderBtnGroupBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
-                                            <span class="hdr-slider-value" id="valHeaderBtnGroupBgOpacity">95%</span>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkHeaderBtnTransparentBg" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Transparent (use site color)</span>
+                                        </label>
+                                        <div id="groupBgControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorHeaderBtnGroupBg" class="hdr-color-picker" value="#282828" />
+                                                <input type="text" id="txtHeaderBtnGroupBg" class="hdr-color-text" placeholder="rgba(40,40,40,0.95)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderHeaderBtnGroupBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
+                                                <span class="hdr-slider-value" id="valHeaderBtnGroupBgOpacity">95%</span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Group Border -->
                                     <div class="hdr-style-card">
                                         <div class="hdr-style-label">Group Border</div>
-                                        <div class="hdr-color-row">
-                                            <input type="color" id="colorHeaderBtnGroupBorder" class="hdr-color-picker" value="#ffffff" />
-                                            <input type="text" id="txtHeaderBtnGroupBorder" class="hdr-color-text" placeholder="rgba(255,255,255,0.15)" />
-                                        </div>
-                                        <div class="hdr-slider-row">
-                                            <span class="hdr-slider-label">Opacity</span>
-                                            <input type="range" id="sliderHeaderBtnGroupBorderOpacity" class="hdr-slider" min="0" max="100" value="15" />
-                                            <span class="hdr-slider-value" id="valHeaderBtnGroupBorderOpacity">15%</span>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkHeaderBtnNoBorder" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">No border</span>
+                                        </label>
+                                        <div id="groupBorderControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorHeaderBtnGroupBorder" class="hdr-color-picker" value="#ffffff" />
+                                                <input type="text" id="txtHeaderBtnGroupBorder" class="hdr-color-text" placeholder="rgba(255,255,255,0.15)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderHeaderBtnGroupBorderOpacity" class="hdr-slider" min="0" max="100" value="15" />
+                                                <span class="hdr-slider-value" id="valHeaderBtnGroupBorderOpacity">15%</span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Button Icon Color -->
                                     <div class="hdr-style-card">
-                                        <div class="hdr-style-label">Button Icon Color</div>
+                                        <div class="hdr-style-label">Button Icons</div>
                                         <div class="hdr-color-row">
                                             <input type="color" id="colorHeaderBtnColor" class="hdr-color-picker" value="#ffffff" />
                                             <input type="text" id="txtHeaderBtnColor" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderHeaderBtnIconOpacity" class="hdr-slider" min="0" max="100" value="100" />
+                                            <span class="hdr-slider-value" id="valHeaderBtnIconOpacity">100%</span>
                                         </div>
                                     </div>
 
@@ -1219,30 +1238,43 @@
                 var preview = document.getElementById('headerBtnPreview');
                 if (!preview) return;
 
+                var transparentBgChk = document.getElementById('chkHeaderBtnTransparentBg');
+                var noBorderChk = document.getElementById('chkHeaderBtnNoBorder');
                 var bgEl = document.getElementById('txtHeaderBtnGroupBg');
                 var borderEl = document.getElementById('txtHeaderBtnGroupBorder');
                 var radiusEl = document.getElementById('txtHeaderBtnGroupRadius');
                 var btnColorEl = document.getElementById('txtHeaderBtnColor');
+                var iconOpacityEl = document.getElementById('sliderHeaderBtnIconOpacity');
                 var hoverEl = document.getElementById('txtHeaderBtnHoverBg');
                 var glowChkEl = document.getElementById('chkHeaderBtnGlowEffect');
                 var glowColorEl = document.getElementById('txtHeaderBtnGlowColor');
 
-                var bg = (bgEl && bgEl.value) || 'rgba(40, 40, 40, 0.95)';
-                var borderColor = (borderEl && borderEl.value) || 'rgba(255, 255, 255, 0.15)';
+                var transparentBg = transparentBgChk && transparentBgChk.checked;
+                var noBorder = noBorderChk && noBorderChk.checked;
+                var bg = transparentBg ? 'transparent' : ((bgEl && bgEl.value) || 'rgba(40, 40, 40, 0.95)');
+                var borderColor = noBorder ? 'transparent' : ((borderEl && borderEl.value) || 'rgba(255, 255, 255, 0.15)');
                 var borderRadius = ((radiusEl && radiusEl.value) || 25) + 'px';
                 var btnColor = (btnColorEl && btnColorEl.value) || '#ffffff';
+                var iconOpacity = iconOpacityEl ? (parseInt(iconOpacityEl.value) / 100) : 1;
                 var hoverBg = (hoverEl && hoverEl.value) || 'rgba(255, 255, 255, 0.15)';
                 var glowEnabled = glowChkEl && glowChkEl.checked;
                 var glowColor = (glowColorEl && glowColorEl.value) || 'rgba(255, 255, 255, 0.3)';
 
+                // Toggle visibility of color controls based on checkboxes
+                var bgControls = document.getElementById('groupBgControls');
+                var borderControls = document.getElementById('groupBorderControls');
+                if (bgControls) bgControls.style.opacity = transparentBg ? '0.4' : '1';
+                if (borderControls) borderControls.style.opacity = noBorder ? '0.4' : '1';
+
                 preview.style.background = bg;
-                preview.style.border = '1px solid ' + borderColor;
+                preview.style.border = noBorder ? 'none' : ('1px solid ' + borderColor);
                 preview.style.borderRadius = borderRadius;
                 preview.style.boxShadow = glowEnabled ? '0 0 20px ' + glowColor : 'none';
 
                 var btns = preview.querySelectorAll('.preview-btn');
                 btns.forEach(function(btn) {
                     btn.style.color = btnColor;
+                    btn.style.opacity = iconOpacity;
                     btn.onmouseenter = function() { this.style.background = hoverBg; };
                     btn.onmouseleave = function() { this.style.background = 'transparent'; };
                 });
@@ -1330,6 +1362,28 @@
                 var glowChk = document.getElementById('chkHeaderBtnGlowEffect');
                 if (glowChk) {
                     glowChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // Transparent background checkbox
+                var transparentBgChk = document.getElementById('chkHeaderBtnTransparentBg');
+                if (transparentBgChk) {
+                    transparentBgChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // No border checkbox
+                var noBorderChk = document.getElementById('chkHeaderBtnNoBorder');
+                if (noBorderChk) {
+                    noBorderChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // Icon opacity slider
+                var iconOpacitySlider = document.getElementById('sliderHeaderBtnIconOpacity');
+                var iconOpacityLabel = document.getElementById('valHeaderBtnIconOpacity');
+                if (iconOpacitySlider) {
+                    iconOpacitySlider.addEventListener('input', function() {
+                        if (iconOpacityLabel) iconOpacityLabel.textContent = iconOpacitySlider.value + '%';
+                        updateHeaderBtnPreview();
+                    });
                 }
             }
 
@@ -1665,12 +1719,19 @@
                     document.querySelector('#txtModeratorActionRateLimitPerMinute').value = config.ModeratorActionRateLimitPerMinute || 10;
 
                     // Header button group styling - load and sync all controls
+                    var hdrTransparentBg = config.HeaderButtonTransparentBg || false;
                     var hdrBg = config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)';
+                    var hdrNoBorder = config.HeaderButtonNoBorder || false;
                     var hdrBorder = config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)';
                     var hdrBtnColor = config.HeaderButtonColor || '#ffffff';
+                    var hdrIconOpacity = config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100;
                     var hdrHover = config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)';
                     var hdrGlow = config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)';
                     var hdrRadius = config.HeaderButtonGroupBorderRadius || 25;
+
+                    // Set checkboxes
+                    document.getElementById('chkHeaderBtnTransparentBg').checked = hdrTransparentBg;
+                    document.getElementById('chkHeaderBtnNoBorder').checked = hdrNoBorder;
 
                     // Set text inputs
                     document.getElementById('txtHeaderBtnGroupBg').value = hdrBg;
@@ -1680,6 +1741,14 @@
                     document.getElementById('txtHeaderBtnHoverBg').value = hdrHover;
                     document.getElementById('chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
                     document.getElementById('txtHeaderBtnGlowColor').value = hdrGlow;
+
+                    // Set icon opacity slider
+                    var iconOpacitySlider = document.getElementById('sliderHeaderBtnIconOpacity');
+                    var iconOpacityLabel = document.getElementById('valHeaderBtnIconOpacity');
+                    if (iconOpacitySlider) {
+                        iconOpacitySlider.value = hdrIconOpacity;
+                        if (iconOpacityLabel) iconOpacityLabel.textContent = hdrIconOpacity + '%';
+                    }
 
                     // Sync color pickers and sliders from text values
                     syncColorPickerFromText(
@@ -1825,10 +1894,13 @@
                     config.ModeratorActionRateLimitPerMinute = parseInt(document.querySelector('#txtModeratorActionRateLimitPerMinute').value) || 10;
 
                     // Header button group styling
+                    config.HeaderButtonTransparentBg = document.getElementById('chkHeaderBtnTransparentBg').checked;
                     config.HeaderButtonGroupBackground = document.getElementById('txtHeaderBtnGroupBg').value || 'rgba(40, 40, 40, 0.95)';
+                    config.HeaderButtonNoBorder = document.getElementById('chkHeaderBtnNoBorder').checked;
                     config.HeaderButtonGroupBorderColor = document.getElementById('txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
                     config.HeaderButtonGroupBorderRadius = parseInt(document.getElementById('txtHeaderBtnGroupRadius').value) || 25;
                     config.HeaderButtonColor = document.getElementById('txtHeaderBtnColor').value || '#ffffff';
+                    config.HeaderButtonIconOpacity = parseInt(document.getElementById('sliderHeaderBtnIconOpacity').value) || 100;
                     config.HeaderButtonHoverBackground = document.getElementById('txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
                     config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;
                     config.HeaderButtonGlowColor = document.getElementById('txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
