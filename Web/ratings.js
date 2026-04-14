@@ -4179,7 +4179,8 @@
                             glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)',
                             overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100,
                             searchFieldMatchGroupBg: config.SearchFieldMatchGroupBg !== false,
-                            searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)'
+                            searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)',
+                            languageTextColor: config.LanguageTextColor || '#ffffff'
                         };
                         self.applyHeaderButtonStyles();
                     })
@@ -15034,7 +15035,7 @@
                 /* Language badge text */
                 #ratingsButtonGroup #languageBtn .lang-code,
                 #ratingsButtonGroup .lang-code {
-                    color: ${style.buttonColor} !important;
+                    color: ${style.languageTextColor} !important;
                 }
 
                 /* Search field styling */

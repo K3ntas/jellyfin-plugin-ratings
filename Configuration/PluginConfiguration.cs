@@ -114,6 +114,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             HeaderButtonGroupBackground = "rgba(40, 40, 40, 0.95)";
             SearchFieldMatchGroupBg = true;
             SearchFieldBackground = "rgba(40, 40, 40, 0.95)";
+            LanguageTextColor = "#ffffff";
             HeaderButtonNoBorder = false;
             HeaderButtonGroupBorderColor = "rgba(255, 255, 255, 0.15)";
             HeaderButtonGroupBorderRadius = 25;
@@ -481,6 +482,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the search field background color (supports rgba).
         /// </summary>
         public string SearchFieldBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets the language text color inside the globe button.
+        /// </summary>
+        public string LanguageTextColor { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the border is hidden.

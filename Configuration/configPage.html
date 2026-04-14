@@ -156,6 +156,18 @@
                                         </div>
                                     </div>
 
+                                    <!-- Language Text Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Language Text</div>
+                                        <div class="fieldDescription" style="margin-bottom: 8px; font-size: 0.8em; color: #888;">
+                                            Color of "EN", "ES", etc. inside globe
+                                        </div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorLanguageText" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtLanguageTextColor" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                    </div>
+
                                     <!-- Button Hover Background -->
                                     <div class="hdr-style-card">
                                         <div class="hdr-style-label">Button Hover</div>
@@ -1379,6 +1391,21 @@
                     });
                 }
 
+                // Language text color (simple color, no opacity)
+                var langColorPicker = document.getElementById('colorLanguageText');
+                var langColorText = document.getElementById('txtLanguageTextColor');
+                if (langColorPicker && langColorText) {
+                    langColorPicker.addEventListener('input', function() {
+                        langColorText.value = langColorPicker.value;
+                    });
+                    langColorText.addEventListener('input', function() {
+                        var val = langColorText.value.trim();
+                        if (val.match(/^#[0-9a-fA-F]{6}$/i)) {
+                            langColorPicker.value = val;
+                        }
+                    });
+                }
+
                 // Border radius slider + number sync
                 var radiusSlider = document.getElementById('sliderHeaderBtnGroupRadius');
                 var radiusNum = document.getElementById('txtHeaderBtnGroupRadius');
@@ -1800,6 +1827,15 @@
                     document.getElementById('txtHeaderBtnGroupBorder').value = hdrBorder;
                     document.getElementById('txtHeaderBtnGroupRadius').value = hdrRadius;
                     document.getElementById('txtHeaderBtnColor').value = hdrBtnColor;
+
+                    // Set language text color
+                    var langTextColor = config.LanguageTextColor || '#ffffff';
+                    document.getElementById('txtLanguageTextColor').value = langTextColor;
+                    var langColorPicker = document.getElementById('colorLanguageText');
+                    if (langColorPicker && langTextColor.match(/^#[0-9a-fA-F]{6}$/i)) {
+                        langColorPicker.value = langTextColor;
+                    }
+
                     document.getElementById('txtHeaderBtnHoverBg').value = hdrHover;
                     document.getElementById('chkHeaderBtnGlowEffect').checked = config.HeaderButtonGlowEffect || false;
                     document.getElementById('txtHeaderBtnGlowColor').value = hdrGlow;
@@ -1987,6 +2023,7 @@
                     config.HeaderButtonGroupBorderColor = document.getElementById('txtHeaderBtnGroupBorder').value || 'rgba(255, 255, 255, 0.15)';
                     config.HeaderButtonGroupBorderRadius = parseInt(document.getElementById('txtHeaderBtnGroupRadius').value) || 25;
                     config.HeaderButtonColor = document.getElementById('txtHeaderBtnColor').value || '#ffffff';
+                    config.LanguageTextColor = document.getElementById('txtLanguageTextColor').value || '#ffffff';
                     config.HeaderButtonIconOpacity = parseInt(document.getElementById('sliderHeaderBtnIconOpacity').value) || 100;
                     config.HeaderButtonHoverBackground = document.getElementById('txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
                     config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;

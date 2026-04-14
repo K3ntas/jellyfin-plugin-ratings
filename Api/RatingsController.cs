@@ -1083,7 +1083,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     HeaderButtonGlowColor = config?.HeaderButtonGlowColor ?? "rgba(255, 255, 255, 0.3)",
                     HeaderGroupOverallOpacity = config?.HeaderGroupOverallOpacity ?? 100,
                     SearchFieldMatchGroupBg = config?.SearchFieldMatchGroupBg ?? true,
-                    SearchFieldBackground = config?.SearchFieldBackground ?? "rgba(40, 40, 40, 0.95)"
+                    SearchFieldBackground = config?.SearchFieldBackground ?? "rgba(40, 40, 40, 0.95)",
+                    LanguageTextColor = config?.LanguageTextColor ?? "#ffffff"
                 });
             }
             catch (Exception ex)
