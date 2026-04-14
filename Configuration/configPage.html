@@ -198,6 +198,19 @@
                                             <span class="hdr-slider-value" id="valHeaderBtnGlowOpacity">30%</span>
                                         </div>
                                     </div>
+
+                                    <!-- Overall Group Opacity -->
+                                    <div class="hdr-style-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(100,180,255,0.1), rgba(100,180,255,0.05));">
+                                        <div class="hdr-style-label" style="font-size: 1em;">Overall Group Opacity</div>
+                                        <div class="fieldDescription" style="margin-bottom: 12px; font-size: 0.85em; color: #888;">
+                                            Controls transparency of the ENTIRE button group (background + buttons + icons + border - everything)
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderHeaderGroupOverallOpacity" class="hdr-slider" min="0" max="100" value="100" style="flex: 2;" />
+                                            <span class="hdr-slider-value" id="valHeaderGroupOverallOpacity">100%</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Live Preview -->
@@ -1248,6 +1261,7 @@
                 var hoverEl = document.getElementById('txtHeaderBtnHoverBg');
                 var glowChkEl = document.getElementById('chkHeaderBtnGlowEffect');
                 var glowColorEl = document.getElementById('txtHeaderBtnGlowColor');
+                var overallOpacityEl = document.getElementById('sliderHeaderGroupOverallOpacity');
 
                 var transparentBg = transparentBgChk && transparentBgChk.checked;
                 var noBorder = noBorderChk && noBorderChk.checked;
@@ -1259,6 +1273,7 @@
                 var hoverBg = (hoverEl && hoverEl.value) || 'rgba(255, 255, 255, 0.15)';
                 var glowEnabled = glowChkEl && glowChkEl.checked;
                 var glowColor = (glowColorEl && glowColorEl.value) || 'rgba(255, 255, 255, 0.3)';
+                var overallOpacity = overallOpacityEl ? (parseInt(overallOpacityEl.value) / 100) : 1;
 
                 // Toggle visibility of color controls based on checkboxes
                 var bgControls = document.getElementById('groupBgControls');
@@ -1270,6 +1285,7 @@
                 preview.style.border = noBorder ? 'none' : ('1px solid ' + borderColor);
                 preview.style.borderRadius = borderRadius;
                 preview.style.boxShadow = glowEnabled ? '0 0 20px ' + glowColor : 'none';
+                preview.style.opacity = overallOpacity;
 
                 var btns = preview.querySelectorAll('.preview-btn');
                 btns.forEach(function(btn) {
@@ -1362,6 +1378,16 @@
                 var glowChk = document.getElementById('chkHeaderBtnGlowEffect');
                 if (glowChk) {
                     glowChk.addEventListener('change', updateHeaderBtnPreview);
+                }
+
+                // Overall group opacity slider
+                var overallOpacitySlider = document.getElementById('sliderHeaderGroupOverallOpacity');
+                var overallOpacityLabel = document.getElementById('valHeaderGroupOverallOpacity');
+                if (overallOpacitySlider) {
+                    overallOpacitySlider.addEventListener('input', function() {
+                        if (overallOpacityLabel) overallOpacityLabel.textContent = overallOpacitySlider.value + '%';
+                        updateHeaderBtnPreview();
+                    });
                 }
 
                 // Transparent background checkbox
@@ -1750,6 +1776,15 @@
                         if (iconOpacityLabel) iconOpacityLabel.textContent = hdrIconOpacity + '%';
                     }
 
+                    // Set overall group opacity slider
+                    var hdrOverallOpacity = config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100;
+                    var overallOpacitySlider = document.getElementById('sliderHeaderGroupOverallOpacity');
+                    var overallOpacityLabel = document.getElementById('valHeaderGroupOverallOpacity');
+                    if (overallOpacitySlider) {
+                        overallOpacitySlider.value = hdrOverallOpacity;
+                        if (overallOpacityLabel) overallOpacityLabel.textContent = hdrOverallOpacity + '%';
+                    }
+
                     // Sync color pickers and sliders from text values
                     syncColorPickerFromText(
                         document.getElementById('txtHeaderBtnGroupBg'),
@@ -1904,6 +1939,7 @@
                     config.HeaderButtonHoverBackground = document.getElementById('txtHeaderBtnHoverBg').value || 'rgba(255, 255, 255, 0.15)';
                     config.HeaderButtonGlowEffect = document.getElementById('chkHeaderBtnGlowEffect').checked;
                     config.HeaderButtonGlowColor = document.getElementById('txtHeaderBtnGlowColor').value || 'rgba(255, 255, 255, 0.3)';
+                    config.HeaderGroupOverallOpacity = parseInt(document.getElementById('sliderHeaderGroupOverallOpacity').value) || 100;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

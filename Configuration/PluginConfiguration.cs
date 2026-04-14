@@ -120,6 +120,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             HeaderButtonHoverBackground = "rgba(255, 255, 255, 0.15)";
             HeaderButtonGlowEffect = false;
             HeaderButtonGlowColor = "rgba(255, 255, 255, 0.3)";
+            HeaderGroupOverallOpacity = 100;
         }
 
         /// <summary>
@@ -508,5 +509,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the glow color for the button group (supports rgba).
         /// </summary>
         public string HeaderButtonGlowColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the overall opacity of the entire button group (0-100).
+        /// </summary>
+        public int HeaderGroupOverallOpacity { get; set; }
     }
 }

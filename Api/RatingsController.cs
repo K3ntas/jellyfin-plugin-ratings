@@ -1080,7 +1080,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     HeaderButtonIconOpacity = config?.HeaderButtonIconOpacity ?? 100,
                     HeaderButtonHoverBackground = config?.HeaderButtonHoverBackground ?? "rgba(255, 255, 255, 0.15)",
                     HeaderButtonGlowEffect = config?.HeaderButtonGlowEffect ?? false,
-                    HeaderButtonGlowColor = config?.HeaderButtonGlowColor ?? "rgba(255, 255, 255, 0.3)"
+                    HeaderButtonGlowColor = config?.HeaderButtonGlowColor ?? "rgba(255, 255, 255, 0.3)",
+                    HeaderGroupOverallOpacity = config?.HeaderGroupOverallOpacity ?? 100
                 });
             }
             catch (Exception ex)

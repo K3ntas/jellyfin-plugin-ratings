@@ -4176,7 +4176,8 @@
                             iconOpacity: config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100,
                             buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
                             glowEffect: config.HeaderButtonGlowEffect || false,
-                            glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)'
+                            glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)',
+                            overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100
                         };
                         self.applyHeaderButtonStyles();
                     })
@@ -14992,6 +14993,7 @@
             const borderStyle = style.noBorder ? 'none' : `1px solid ${style.groupBorderColor}`;
             const glowShadow = style.glowEffect ? `box-shadow: 0 0 15px ${style.glowColor} !important;` : '';
             const iconOpacity = (style.iconOpacity || 100) / 100;
+            const overallOpacity = (style.overallOpacity !== undefined ? style.overallOpacity : 100) / 100;
 
             styleEl.textContent = `
                 /* Group container */
@@ -14999,6 +15001,7 @@
                     background: ${bgColor} !important;
                     border: ${borderStyle} !important;
                     border-radius: ${style.groupBorderRadius}px !important;
+                    opacity: ${overallOpacity} !important;
                     ${glowShadow}
                 }
 
