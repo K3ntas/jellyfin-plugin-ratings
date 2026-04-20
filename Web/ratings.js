@@ -14978,21 +14978,22 @@
                         compatStyle.textContent = `
                             /* Editor's Choice Plugin Compatibility - Mobile Only */
                             @media screen and (max-width: 600px) {
-                                /* Push the tabs down to account for ratings bar */
-                                .homeSectionsContainer.editorsChoiceAdded .emby-tabs,
-                                .editorsChoiceAdded ~ .emby-tabs,
-                                body:has(.editorsChoiceAdded) .tabs-viewmenubar {
+                                /* Fix Hero Mode - Editor's Choice uses transform: translateY(-120px) on #homeTab */
+                                /* This pushes tabs off-screen, we need to counteract it */
+                                .editorsChoiceHeroMode #homeTab {
+                                    transform: translateY(-72px) !important; /* -120px + 48px for our bar */
+                                }
+
+                                /* Non-hero mode: push content down */
+                                body:not(.editorsChoiceHeroMode) .homeSectionsContainer.editorsChoiceAdded {
                                     margin-top: 48px !important;
                                 }
 
-                                /* Ensure proper stacking */
-                                .editorsChoiceContainer {
-                                    margin-top: 48px !important;
-                                }
-
-                                /* Fix any sticky/fixed tab positioning */
-                                body:has(.editorsChoiceAdded) .emby-tabs-slider {
-                                    top: 104px !important;
+                                /* Ensure tabs are visible and properly positioned */
+                                .editorsChoiceHeroMode .tabs-viewmenubar,
+                                .editorsChoiceHeroMode .emby-tabs {
+                                    position: relative !important;
+                                    z-index: 100 !important;
                                 }
                             }
                         `;
