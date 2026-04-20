@@ -4173,6 +4173,26 @@
                         // Star display options
                         self.starDisplayMode = config.StarDisplayMode || '10-stars';
                         self.quickRatingMode = config.QuickRatingMode === true;
+
+                        // Star widget text options
+                        self.starWidgetConfig = {
+                            showRatingStats: config.ShowRatingStats !== false,
+                            ratingStatsFormat: config.RatingStatsFormat || '{avg}/10 - {count} rating{s}',
+                            showYourRating: config.ShowYourRating !== false,
+                            yourRatingFormat: config.YourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)',
+                            // Styling
+                            background: config.StarWidgetBackground || 'rgba(0, 0, 0, 0.6)',
+                            borderEnabled: config.StarWidgetBorderEnabled === true,
+                            borderColor: config.StarWidgetBorderColor || 'rgba(255, 255, 255, 0.3)',
+                            borderRadius: config.StarWidgetBorderRadius || 6,
+                            glowEffect: config.StarWidgetGlowEffect === true,
+                            glowColor: config.StarWidgetGlowColor || 'rgba(255, 215, 0, 0.5)',
+                            filledColor: config.StarFilledColor || '#ffd700',
+                            emptyColor: config.StarEmptyColor || '#555555',
+                            hoverColor: config.StarHoverColor || '#ffd700',
+                            customCSS: config.StarWidgetCustomCSS || ''
+                        };
+
                         // Header button styling
                         self.headerButtonStyle = {
                             transparentBg: config.HeaderButtonTransparentBg || false,
@@ -4191,12 +4211,14 @@
                             languageTextColor: config.LanguageTextColor || '#ffffff'
                         };
                         self.applyHeaderButtonStyles();
+                        self.applyStarWidgetStyles();
                     })
                     .catch(function () {
                         // Default to enabled on error
                         self.ratingsEnabled = true;
                         self.enableImdbSorting = true;
                         self.headerButtonStyle = null;
+                        self.starWidgetConfig = null;
                     });
             };
 
@@ -13363,10 +13385,28 @@
                         });
                     }
 
-                    star.addEventListener('mouseenter', () => {
+                    // For half-star mode, detect which half is being hovered
+                    star.addEventListener('mousemove', (e) => {
                         const starIndex = parseInt(star.getAttribute('data-star-index'));
-                        self.highlightStars(starIndex * 2); // Highlight up to this star
+                        const rect = star.getBoundingClientRect();
+                        const isLeftHalf = (e.clientX - rect.left) < (rect.width / 2);
+                        const rating = isLeftHalf ? (starIndex * 2 - 1) : (starIndex * 2);
+                        self.highlightStars(rating);
                     });
+
+                    // Hover on left/right halves for visual feedback
+                    if (leftHalf) {
+                        leftHalf.addEventListener('mouseenter', () => {
+                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            self.highlightStars(rating);
+                        });
+                    }
+                    if (rightHalf) {
+                        rightHalf.addEventListener('mouseenter', () => {
+                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            self.highlightStars(rating);
+                        });
+                    }
                 } else {
                     // Standard click (10-stars or 5-stars mode)
                     star.addEventListener('click', () => {
@@ -13519,12 +13559,25 @@
                     self.updateStarDisplay(displayRating);
 
                     let statsHtml = '';
-                    if (stats.TotalRatings > 0) {
-                        statsHtml = `<span class="ratings-plugin-average">${stats.AverageRating.toFixed(1)}/10</span> - <span class="ratings-plugin-count-link" data-item-id="${itemId}">${stats.TotalRatings} rating${stats.TotalRatings !== 1 ? 's' : ''}</span>`;
-                        if (stats.UserRating) {
-                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10 (click stars to edit)</div>`;
-                        }
-                    } else {
+                    const cfg = self.starWidgetConfig || {};
+                    const showStats = cfg.showRatingStats !== false;
+                    const showYourRating = cfg.showYourRating !== false;
+                    const statsFormat = cfg.ratingStatsFormat || '{avg}/10 - {count} rating{s}';
+                    const yourRatingFormat = cfg.yourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)';
+
+                    if (stats.TotalRatings > 0 && showStats) {
+                        // Build stats text from format
+                        let statsText = statsFormat
+                            .replace('{avg}', stats.AverageRating.toFixed(1))
+                            .replace('{count}', stats.TotalRatings)
+                            .replace('{s}', stats.TotalRatings !== 1 ? 's' : '');
+                        statsHtml = `<span class="ratings-plugin-average">${statsText}</span> <span class="ratings-plugin-count-link" data-item-id="${itemId}" style="cursor:pointer; text-decoration: underline;">(view all)</span>`;
+                    }
+
+                    if (stats.UserRating && showYourRating) {
+                        let yourText = yourRatingFormat.replace('{rating}', stats.UserRating);
+                        statsHtml += `<div class="ratings-plugin-your-rating">${yourText}</div>`;
+                    } else if (stats.TotalRatings === 0 && showStats) {
                         statsHtml = 'No ratings yet. Be the first to rate!';
                     }
 
@@ -15306,6 +15359,72 @@
                         ${style.glowEffect ? `box-shadow: 0 2px 10px ${style.glowColor} !important;` : ''}
                     }
                 }
+            `;
+        },
+
+        /**
+         * Apply dynamic star widget styles from config
+         */
+        applyStarWidgetStyles: function () {
+            const self = this;
+            const config = self.starWidgetConfig;
+            if (!config) return;
+
+            // Create or update dynamic stylesheet for star widget
+            let styleEl = document.getElementById('ratingsStarWidgetStyles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'ratingsStarWidgetStyles';
+                document.head.appendChild(styleEl);
+            }
+
+            const borderStyle = config.borderEnabled ? `border: 1px solid ${config.borderColor} !important;` : '';
+            const glowStyle = config.glowEffect ? `box-shadow: 0 0 15px ${config.glowColor} !important;` : '';
+
+            styleEl.textContent = `
+                /* Star widget container */
+                .ratings-plugin-container {
+                    background: ${config.background} !important;
+                    border-radius: ${config.borderRadius}px !important;
+                    ${borderStyle}
+                    ${glowStyle}
+                }
+
+                /* Star colors */
+                .ratings-plugin-star {
+                    color: ${config.emptyColor} !important;
+                }
+
+                .ratings-plugin-star.filled {
+                    color: ${config.filledColor} !important;
+                }
+
+                .ratings-plugin-star:hover,
+                .ratings-plugin-star.hover {
+                    color: ${config.hoverColor} !important;
+                }
+
+                /* Half-filled state for 5-star mode */
+                .ratings-plugin-star.half-filled {
+                    background: linear-gradient(90deg, ${config.filledColor} 50%, ${config.emptyColor} 50%) !important;
+                    -webkit-background-clip: text !important;
+                    -webkit-text-fill-color: transparent !important;
+                    background-clip: text !important;
+                }
+
+                .ratings-plugin-star.half-hover {
+                    background: linear-gradient(90deg, ${config.hoverColor} 50%, ${config.emptyColor} 50%) !important;
+                    -webkit-background-clip: text !important;
+                    -webkit-text-fill-color: transparent !important;
+                    background-clip: text !important;
+                }
+
+                /* Rating stats text color */
+                .ratings-plugin-average {
+                    color: ${config.filledColor} !important;
+                }
+
+                ${config.customCSS}
             `;
         },
 

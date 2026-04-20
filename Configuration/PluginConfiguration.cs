@@ -86,6 +86,24 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             StarDisplayMode = "10-stars";  // "10-stars" (default), "5-stars-half", "5-stars"
             QuickRatingMode = false;  // false = modal (default), true = one-click rating
 
+            // Star widget text options
+            ShowRatingStats = true;
+            RatingStatsFormat = "{avg}/10 - {count} rating{s}";
+            ShowYourRating = true;
+            YourRatingFormat = "Your rating: {rating}/10 (click stars to edit)";
+
+            // Star widget styling
+            StarWidgetBackground = "rgba(0, 0, 0, 0.6)";
+            StarWidgetBorderEnabled = false;
+            StarWidgetBorderColor = "rgba(255, 255, 255, 0.3)";
+            StarWidgetBorderRadius = 6;
+            StarWidgetGlowEffect = false;
+            StarWidgetGlowColor = "rgba(255, 215, 0, 0.5)";
+            StarFilledColor = "#ffd700";
+            StarEmptyColor = "#555555";
+            StarHoverColor = "#ffd700";
+            StarWidgetCustomCSS = string.Empty;
+
             // Language settings
             DefaultLanguage = "en";
 
@@ -381,6 +399,80 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// When false (default), clicking opens a rating modal with review option.
         /// </summary>
         public bool QuickRatingMode { get; set; }
+
+        // Star widget text options
+
+        /// <summary>
+        /// Gets or sets a value indicating whether rating stats are shown (e.g., "8.0/10 - 1 rating").
+        /// </summary>
+        public bool ShowRatingStats { get; set; }
+
+        /// <summary>
+        /// Gets or sets the format for rating stats. Placeholders: {avg}, {count}, {s} (plural suffix).
+        /// </summary>
+        public string RatingStatsFormat { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether "Your rating" text is shown.
+        /// </summary>
+        public bool ShowYourRating { get; set; }
+
+        /// <summary>
+        /// Gets or sets the format for "Your rating" text. Placeholder: {rating}.
+        /// </summary>
+        public string YourRatingFormat { get; set; }
+
+        // Star widget styling
+
+        /// <summary>
+        /// Gets or sets the background color of the star widget (supports rgba).
+        /// </summary>
+        public string StarWidgetBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the star widget has a border.
+        /// </summary>
+        public bool StarWidgetBorderEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border color of the star widget (supports rgba).
+        /// </summary>
+        public string StarWidgetBorderColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border radius of the star widget in pixels.
+        /// </summary>
+        public int StarWidgetBorderRadius { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether glow effect is enabled for the star widget.
+        /// </summary>
+        public bool StarWidgetGlowEffect { get; set; }
+
+        /// <summary>
+        /// Gets or sets the glow color for the star widget (supports rgba).
+        /// </summary>
+        public string StarWidgetGlowColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the color of filled stars.
+        /// </summary>
+        public string StarFilledColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the color of empty stars.
+        /// </summary>
+        public string StarEmptyColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the color of stars on hover.
+        /// </summary>
+        public string StarHoverColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets custom CSS for the star widget (for animations and advanced styling).
+        /// </summary>
+        public string StarWidgetCustomCSS { get; set; }
 
         /// <summary>
         /// Gets or sets the default language for the plugin UI.

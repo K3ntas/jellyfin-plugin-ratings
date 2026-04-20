@@ -1092,6 +1092,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                     StarDisplayMode = config?.StarDisplayMode ?? "10-stars",
                     QuickRatingMode = config?.QuickRatingMode ?? false,
 
+                    // Star widget text options
+                    ShowRatingStats = config?.ShowRatingStats ?? true,
+                    RatingStatsFormat = config?.RatingStatsFormat ?? "{avg}/10 - {count} rating{s}",
+                    ShowYourRating = config?.ShowYourRating ?? true,
+                    YourRatingFormat = config?.YourRatingFormat ?? "Your rating: {rating}/10 (click stars to edit)",
+
+                    // Star widget styling
+                    StarWidgetBackground = config?.StarWidgetBackground ?? "rgba(0, 0, 0, 0.6)",
+                    StarWidgetBorderEnabled = config?.StarWidgetBorderEnabled ?? false,
+                    StarWidgetBorderColor = config?.StarWidgetBorderColor ?? "rgba(255, 255, 255, 0.3)",
+                    StarWidgetBorderRadius = config?.StarWidgetBorderRadius ?? 6,
+                    StarWidgetGlowEffect = config?.StarWidgetGlowEffect ?? false,
+                    StarWidgetGlowColor = config?.StarWidgetGlowColor ?? "rgba(255, 215, 0, 0.5)",
+                    StarFilledColor = config?.StarFilledColor ?? "#ffd700",
+                    StarEmptyColor = config?.StarEmptyColor ?? "#555555",
+                    StarHoverColor = config?.StarHoverColor ?? "#ffd700",
+                    StarWidgetCustomCSS = config?.StarWidgetCustomCSS ?? string.Empty,
+
                     // Social features
                     EnableFriendsButton = config?.EnableFriendsButton ?? false,
 
