@@ -1908,6 +1908,9 @@
             // Initialize library sort buttons for non-Netflix view
             this.initLibrarySortButtons();
 
+            // Initialize Editor's Choice plugin compatibility
+            this.initEditorsChoiceCompatibility();
+
             // Initialize new media notifications
             this.initNotifications();
 
@@ -14942,6 +14945,74 @@
             button.addEventListener('mouseleave', function () {
                 self.hideHeaderTooltip();
             });
+        },
+
+        /**
+         * Initialize Editor's Choice plugin compatibility
+         * Detects if Editor's Choice is active and adjusts positioning to prevent overlap
+         */
+        initEditorsChoiceCompatibility: function () {
+            const self = this;
+            let editorsChoiceDetected = false;
+            let styleInjected = false;
+
+            const checkAndFix = () => {
+                // Only apply on mobile
+                if (window.innerWidth > 600) {
+                    return;
+                }
+
+                // Check if Editor's Choice plugin is active
+                const editorsChoiceActive = document.querySelector('.homeSectionsContainer.editorsChoiceAdded') ||
+                                           document.querySelector('.editorsChoiceContainer');
+
+                if (editorsChoiceActive && !styleInjected) {
+                    editorsChoiceDetected = true;
+                    styleInjected = true;
+
+                    // Inject compatibility CSS
+                    let compatStyle = document.getElementById('ratingsEditorsChoiceCompat');
+                    if (!compatStyle) {
+                        compatStyle = document.createElement('style');
+                        compatStyle.id = 'ratingsEditorsChoiceCompat';
+                        compatStyle.textContent = `
+                            /* Editor's Choice Plugin Compatibility - Mobile Only */
+                            @media screen and (max-width: 600px) {
+                                /* Push the tabs down to account for ratings bar */
+                                .homeSectionsContainer.editorsChoiceAdded .emby-tabs,
+                                .editorsChoiceAdded ~ .emby-tabs,
+                                body:has(.editorsChoiceAdded) .tabs-viewmenubar {
+                                    margin-top: 48px !important;
+                                }
+
+                                /* Ensure proper stacking */
+                                .editorsChoiceContainer {
+                                    margin-top: 48px !important;
+                                }
+
+                                /* Fix any sticky/fixed tab positioning */
+                                body:has(.editorsChoiceAdded) .emby-tabs-slider {
+                                    top: 104px !important;
+                                }
+                            }
+                        `;
+                        document.head.appendChild(compatStyle);
+                        console.log('RatingsPlugin: Editor\'s Choice compatibility CSS injected');
+                    }
+                }
+            };
+
+            // Check periodically (Editor's Choice loads dynamically)
+            setInterval(checkAndFix, 1000);
+
+            // Also check on navigation
+            if (window.Emby && window.Emby.Page) {
+                try {
+                    Emby.Page.addEventListener('pageshow', checkAndFix);
+                } catch (e) {
+                    // Ignore if not available
+                }
+            }
         },
 
         /**
