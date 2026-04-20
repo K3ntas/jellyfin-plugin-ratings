@@ -327,6 +327,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkSearchExcludeEpisodes" type="checkbox" is="emby-checkbox" />
+                                    <span>Exclude Episodes from Search</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When enabled, search results will only show Movies and Series (no individual episodes).
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkShowLanguageSwitch" type="checkbox" is="emby-checkbox" />
                                     <span>Show Language Switch</span>
                                 </label>
@@ -1724,6 +1734,7 @@
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
+                    document.querySelector('#chkSearchExcludeEpisodes').checked = config.SearchExcludeEpisodes !== false;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
                     document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
@@ -1938,6 +1949,7 @@
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
+                    config.SearchExcludeEpisodes = document.querySelector('#chkSearchExcludeEpisodes').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;

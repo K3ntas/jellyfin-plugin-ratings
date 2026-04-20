@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowLanguageSwitch = true;
             ShowHeaderLanguageButton = true;
             ShowSearchButton = true;
+            SearchExcludeEpisodes = true;
             ShowNotificationToggle = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
@@ -176,6 +177,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the search button is shown in the header.
         /// </summary>
         public bool ShowSearchButton { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether episodes are excluded from search results.
+        /// </summary>
+        public bool SearchExcludeEpisodes { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the notification toggle is shown in the header.

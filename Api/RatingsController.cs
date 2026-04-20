@@ -1001,6 +1001,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowHeaderLanguageButton = config?.ShowHeaderLanguageButton ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
+                    SearchExcludeEpisodes = config?.SearchExcludeEpisodes ?? true,
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
                     NotificationsEnabledByDefault = config?.NotificationsEnabledByDefault ?? true,
                     ShowLatestMediaButton = config?.ShowLatestMediaButton ?? true,

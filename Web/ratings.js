@@ -14652,6 +14652,7 @@
                             if (config.ShowSearchButton === false) {
                                 return; // Don't create search field
                             }
+                            self.searchExcludeEpisodes = config.SearchExcludeEpisodes !== false;
                             createSearchField();
                         })
                         .catch(() => {
@@ -18357,7 +18358,10 @@
                 const baseUrl = ApiClient.serverAddress();
 
                 // Use Jellyfin's search hints API - search entire library
-                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode,Audio,MusicAlbum,MusicArtist&Limit=20`;
+                const includeTypes = self.searchExcludeEpisodes
+                    ? 'Movie,Series,Audio,MusicAlbum,MusicArtist'
+                    : 'Movie,Series,Episode,Audio,MusicAlbum,MusicArtist';
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=${includeTypes}&Limit=20`;
 
                 const response = await fetch(searchUrl, {
                     headers: {
