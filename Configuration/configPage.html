@@ -5,7 +5,7 @@
     <title>Ratings Plugin</title>
 </head>
 <body>
-    <div id="ratingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div id="ratingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
         <div data-role="content">
             <div class="content-primary">
                 <form id="ratingsConfigForm">
@@ -42,7 +42,178 @@
                                 <div class="fieldDescription">Maximum rating value (default: 10)</div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="selectStarDisplayMode">Star Display Mode</label>
+                                <select id="selectStarDisplayMode" is="emby-select">
+                                    <option value="10-stars">10 Stars (default)</option>
+                                    <option value="5-stars">5 Stars (compact)</option>
+                                    <option value="5-stars-half">5 Stars with Half-Star (Plex-like)</option>
+                                </select>
+                                <div class="fieldDescription">
+                                    Choose how rating stars are displayed. 10 Stars shows all 10 clickable stars.
+                                    5 Stars shows 5 larger stars (each = 2 points). Half-Star allows clicking left/right half for odd/even values.
+                                </div>
+                            </div>
+
                             <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkQuickRatingMode" type="checkbox" is="emby-checkbox" />
+                                    <span>Quick Rating Mode</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When enabled, clicking a star immediately submits the rating without showing a confirmation dialog.
+                                    When disabled (default), a modal opens allowing users to add an optional review.
+                                </div>
+                            </div>
+
+                            <!-- Star Widget Styling -->
+                            <div style="margin-top: 1.5em;" class="star-widget-styling">
+                                <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">Star Widget Styling</h3>
+                                <div class="fieldDescription" style="margin-bottom: 15px;">
+                                    Customize the appearance of the rating stars widget shown on media detail pages.
+                                </div>
+
+                                <!-- Live Preview -->
+                                <div class="star-preview-container" style="margin-bottom: 20px; padding: 20px; background: #1a1a1a; border-radius: 8px;">
+                                    <div class="fieldDescription" style="margin-bottom: 10px; color: #888;">Live Preview:</div>
+                                    <div id="starWidgetPreview" class="star-widget-preview" style="display: inline-flex; flex-direction: column; align-items: center; padding: 0.3em 0.6em; border-radius: 6px; background: rgba(0, 0, 0, 0.6);">
+                                        <div class="preview-stars" style="display: flex; gap: 0.1em; font-size: 1.6em;">
+                                            <span class="preview-star filled" style="color: #ffd700; cursor: pointer;">★</span>
+                                            <span class="preview-star filled" style="color: #ffd700; cursor: pointer;">★</span>
+                                            <span class="preview-star filled" style="color: #ffd700; cursor: pointer;">★</span>
+                                            <span class="preview-star filled" style="color: #ffd700; cursor: pointer;">★</span>
+                                            <span class="preview-star" style="color: #555; cursor: pointer;">★</span>
+                                        </div>
+                                        <div class="preview-stats" id="previewStats" style="font-size: 0.85em; color: #bbb; margin-top: 0.2em;">
+                                            <span style="color: #ffd700; font-weight: 600;">8.0</span>/10 - 5 ratings
+                                        </div>
+                                        <div class="preview-your-rating" id="previewYourRating" style="font-size: 0.8em; color: #888; margin-top: 0.15em;">
+                                            Your rating: 8/10 (click stars to edit)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="star-styling-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                                    <!-- Text Options -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Text Options</div>
+
+                                        <label class="hdr-toggle" style="display: flex; align-items: center; margin-bottom: 12px;">
+                                            <input type="checkbox" id="chkShowRatingStats" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text" style="margin-left: 8px;">Show rating stats</span>
+                                        </label>
+                                        <div class="inputContainer" style="margin-bottom: 12px;">
+                                            <label class="inputLabel inputLabelUnfocused" for="txtRatingStatsFormat">Stats format</label>
+                                            <input id="txtRatingStatsFormat" type="text" is="emby-input" placeholder="{avg}/10 - {count} rating{s}" />
+                                            <div class="fieldDescription" style="font-size: 0.75em;">{avg}, {count}, {s} = plural</div>
+                                        </div>
+
+                                        <label class="hdr-toggle" style="display: flex; align-items: center; margin-bottom: 12px;">
+                                            <input type="checkbox" id="chkShowYourRating" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text" style="margin-left: 8px;">Show "Your rating" text</span>
+                                        </label>
+                                        <div class="inputContainer">
+                                            <label class="inputLabel inputLabelUnfocused" for="txtYourRatingFormat">Your rating format</label>
+                                            <input id="txtYourRatingFormat" type="text" is="emby-input" placeholder="Your rating: {rating}/10" />
+                                            <div class="fieldDescription" style="font-size: 0.75em;">{rating} = user's rating</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Star Colors -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Star Colors</div>
+
+                                        <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 10px;">
+                                            <label style="min-width: 80px; color: #aaa;">Filled:</label>
+                                            <input type="color" id="colorStarFilled" class="hdr-color-picker" value="#ffd700" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                            <input type="text" id="txtStarFilledColor" class="hdr-color-text" value="#ffd700" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 10px;">
+                                            <label style="min-width: 80px; color: #aaa;">Empty:</label>
+                                            <input type="color" id="colorStarEmpty" class="hdr-color-picker" value="#555555" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                            <input type="text" id="txtStarEmptyColor" class="hdr-color-text" value="#555555" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <label style="min-width: 80px; color: #aaa;">Hover:</label>
+                                            <input type="color" id="colorStarHover" class="hdr-color-picker" value="#ffd700" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                            <input type="text" id="txtStarHoverColor" class="hdr-color-text" value="#ffd700" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Background -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Background</div>
+
+                                        <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 10px;">
+                                            <input type="color" id="colorStarWidgetBg" class="hdr-color-picker" value="#000000" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                            <input type="text" id="txtStarWidgetBg" class="hdr-color-text" value="rgba(0, 0, 0, 0.6)" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="min-width: 60px; color: #aaa; font-size: 0.85em;">Opacity</span>
+                                            <input type="range" id="sliderStarWidgetBgOpacity" min="0" max="100" value="60" style="flex: 1;" />
+                                            <span id="valStarWidgetBgOpacity" style="min-width: 40px; color: #aaa;">60%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Border -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Border</div>
+
+                                        <label class="hdr-toggle" style="display: flex; align-items: center; margin-bottom: 12px;">
+                                            <input type="checkbox" id="chkStarWidgetBorder" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text" style="margin-left: 8px;">Enable border</span>
+                                        </label>
+
+                                        <div id="starBorderControls">
+                                            <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 10px;">
+                                                <input type="color" id="colorStarWidgetBorder" class="hdr-color-picker" value="#ffffff" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                                <input type="text" id="txtStarWidgetBorder" class="hdr-color-text" value="rgba(255, 255, 255, 0.3)" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <span style="min-width: 60px; color: #aaa; font-size: 0.85em;">Radius</span>
+                                                <input type="range" id="sliderStarWidgetRadius" min="0" max="30" value="6" style="flex: 1;" />
+                                                <span id="valStarWidgetRadius" style="min-width: 40px; color: #aaa;">6px</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Glow Effect -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Glow Effect</div>
+
+                                        <label class="hdr-toggle" style="display: flex; align-items: center; margin-bottom: 12px;">
+                                            <input type="checkbox" id="chkStarWidgetGlow" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text" style="margin-left: 8px;">Enable glow</span>
+                                        </label>
+
+                                        <div id="starGlowControls">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <input type="color" id="colorStarWidgetGlow" class="hdr-color-picker" value="#ffd700" style="width: 40px; height: 30px; border: none; cursor: pointer;" />
+                                                <input type="text" id="txtStarWidgetGlow" class="hdr-color-text" value="rgba(255, 215, 0, 0.5)" style="flex: 1; padding: 5px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom CSS -->
+                                    <div class="star-style-card" style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px; grid-column: 1 / -1;">
+                                        <div class="star-style-label" style="font-weight: 500; margin-bottom: 10px; color: #e0e0e0;">Custom CSS (Advanced)</div>
+                                        <div class="fieldDescription" style="margin-bottom: 10px; font-size: 0.8em; color: #888;">
+                                            Add custom CSS for animations. Use <code>.ratings-plugin-container</code>, <code>.ratings-plugin-star</code>, etc.
+                                        </div>
+                                        <textarea id="txtStarWidgetCustomCSS" style="width: 100%; height: 80px; background: #1a1a1a; border: 1px solid #444; color: #fff; font-family: monospace; font-size: 12px; padding: 8px; border-radius: 4px;" placeholder="/* Example: pulse animation */
+@keyframes starPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.ratings-plugin-star.filled { animation: starPulse 2s infinite; }"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 1.5em;">
                                 <label class="emby-checkbox-label">
                                     <input id="chkEnableNetflixView" type="checkbox" is="emby-checkbox" />
                                     <span>Enable Netflix-Style View</span>
@@ -322,6 +493,16 @@
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription">
                                     Show the custom search button in the header.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkSearchExcludeEpisodes" type="checkbox" is="emby-checkbox" />
+                                    <span>Exclude Episodes from Search</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When enabled, search results will only show Movies and Series (no individual episodes).
                                 </div>
                             </div>
 
@@ -1476,6 +1657,219 @@
                 }
             }
 
+            // Star Widget Styling - Live Preview
+            function updateStarWidgetPreview() {
+                var preview = document.getElementById('starWidgetPreview');
+                if (!preview) return;
+
+                // Text visibility
+                var showStats = document.getElementById('chkShowRatingStats');
+                var showYourRating = document.getElementById('chkShowYourRating');
+                var previewStats = document.getElementById('previewStats');
+                var previewYourRating = document.getElementById('previewYourRating');
+
+                if (previewStats) previewStats.style.display = (showStats && showStats.checked) ? 'block' : 'none';
+                if (previewYourRating) previewYourRating.style.display = (showYourRating && showYourRating.checked) ? 'block' : 'none';
+
+                // Background
+                var bgEl = document.getElementById('txtStarWidgetBg');
+                preview.style.background = bgEl ? bgEl.value : 'rgba(0, 0, 0, 0.6)';
+
+                // Border
+                var borderEnabled = document.getElementById('chkStarWidgetBorder');
+                var borderColorEl = document.getElementById('txtStarWidgetBorder');
+                var borderRadiusEl = document.getElementById('sliderStarWidgetRadius');
+                var hasBorder = borderEnabled && borderEnabled.checked;
+                preview.style.border = hasBorder ? ('1px solid ' + (borderColorEl ? borderColorEl.value : 'rgba(255,255,255,0.3)')) : 'none';
+                preview.style.borderRadius = (borderRadiusEl ? borderRadiusEl.value : 6) + 'px';
+
+                // Glow
+                var glowEnabled = document.getElementById('chkStarWidgetGlow');
+                var glowColorEl = document.getElementById('txtStarWidgetGlow');
+                var hasGlow = glowEnabled && glowEnabled.checked;
+                preview.style.boxShadow = hasGlow ? ('0 0 15px ' + (glowColorEl ? glowColorEl.value : 'rgba(255,215,0,0.5)')) : 'none';
+
+                // Star colors
+                var filledColorEl = document.getElementById('txtStarFilledColor');
+                var emptyColorEl = document.getElementById('txtStarEmptyColor');
+                var filledColor = filledColorEl ? filledColorEl.value : '#ffd700';
+                var emptyColor = emptyColorEl ? emptyColorEl.value : '#555';
+
+                var stars = preview.querySelectorAll('.preview-star');
+                stars.forEach(function(star) {
+                    if (star.classList.contains('filled')) {
+                        star.style.color = filledColor;
+                    } else {
+                        star.style.color = emptyColor;
+                    }
+                });
+
+                // Update stats text color to match filled star color
+                if (previewStats) {
+                    var avgSpan = previewStats.querySelector('span');
+                    if (avgSpan) avgSpan.style.color = filledColor;
+                }
+
+                // Toggle border controls visibility
+                var starBorderControls = document.getElementById('starBorderControls');
+                if (starBorderControls) starBorderControls.style.opacity = hasBorder ? '1' : '0.4';
+
+                // Toggle glow controls visibility
+                var starGlowControls = document.getElementById('starGlowControls');
+                if (starGlowControls) starGlowControls.style.opacity = hasGlow ? '1' : '0.4';
+            }
+
+            function loadStarWidgetStyling(config) {
+                // Background
+                var bgColor = config.StarWidgetBackground || 'rgba(0, 0, 0, 0.6)';
+                document.getElementById('txtStarWidgetBg').value = bgColor;
+                var bgParsed = parseRgba(bgColor);
+                document.getElementById('colorStarWidgetBg').value = rgbToHex(bgParsed.r, bgParsed.g, bgParsed.b);
+                document.getElementById('sliderStarWidgetBgOpacity').value = Math.round(bgParsed.a * 100);
+                document.getElementById('valStarWidgetBgOpacity').textContent = Math.round(bgParsed.a * 100) + '%';
+
+                // Border
+                document.getElementById('chkStarWidgetBorder').checked = config.StarWidgetBorderEnabled === true;
+                var borderColor = config.StarWidgetBorderColor || 'rgba(255, 255, 255, 0.3)';
+                document.getElementById('txtStarWidgetBorder').value = borderColor;
+                var borderParsed = parseRgba(borderColor);
+                document.getElementById('colorStarWidgetBorder').value = rgbToHex(borderParsed.r, borderParsed.g, borderParsed.b);
+                document.getElementById('sliderStarWidgetRadius').value = config.StarWidgetBorderRadius || 6;
+                document.getElementById('valStarWidgetRadius').textContent = (config.StarWidgetBorderRadius || 6) + 'px';
+
+                // Glow
+                document.getElementById('chkStarWidgetGlow').checked = config.StarWidgetGlowEffect === true;
+                var glowColor = config.StarWidgetGlowColor || 'rgba(255, 215, 0, 0.5)';
+                document.getElementById('txtStarWidgetGlow').value = glowColor;
+                var glowParsed = parseRgba(glowColor);
+                document.getElementById('colorStarWidgetGlow').value = rgbToHex(glowParsed.r, glowParsed.g, glowParsed.b);
+
+                // Star colors
+                var filledColor = config.StarFilledColor || '#ffd700';
+                var emptyColor = config.StarEmptyColor || '#555555';
+                var hoverColor = config.StarHoverColor || '#ffd700';
+
+                document.getElementById('txtStarFilledColor').value = filledColor;
+                document.getElementById('colorStarFilled').value = filledColor.startsWith('#') ? filledColor : '#ffd700';
+                document.getElementById('txtStarEmptyColor').value = emptyColor;
+                document.getElementById('colorStarEmpty').value = emptyColor.startsWith('#') ? emptyColor : '#555555';
+                document.getElementById('txtStarHoverColor').value = hoverColor;
+                document.getElementById('colorStarHover').value = hoverColor.startsWith('#') ? hoverColor : '#ffd700';
+
+                // Custom CSS
+                document.getElementById('txtStarWidgetCustomCSS').value = config.StarWidgetCustomCSS || '';
+
+                // Initialize controls
+                initStarWidgetControls();
+
+                // Update preview
+                updateStarWidgetPreview();
+            }
+
+            var starWidgetControlsInitialized = false;
+            function initStarWidgetControls() {
+                if (starWidgetControlsInitialized) return;
+                starWidgetControlsInitialized = true;
+
+                // Text toggles
+                ['chkShowRatingStats', 'chkShowYourRating'].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.addEventListener('change', updateStarWidgetPreview);
+                });
+
+                // Background color picker + opacity
+                var bgColorPicker = document.getElementById('colorStarWidgetBg');
+                var bgTextInput = document.getElementById('txtStarWidgetBg');
+                var bgOpacitySlider = document.getElementById('sliderStarWidgetBgOpacity');
+                var bgOpacityLabel = document.getElementById('valStarWidgetBgOpacity');
+
+                if (bgColorPicker && bgTextInput && bgOpacitySlider) {
+                    bgColorPicker.addEventListener('input', function() {
+                        var opacity = parseInt(bgOpacitySlider.value) / 100;
+                        bgTextInput.value = buildRgba(bgColorPicker.value, opacity);
+                        updateStarWidgetPreview();
+                    });
+                    bgOpacitySlider.addEventListener('input', function() {
+                        bgOpacityLabel.textContent = bgOpacitySlider.value + '%';
+                        var opacity = parseInt(bgOpacitySlider.value) / 100;
+                        bgTextInput.value = buildRgba(bgColorPicker.value, opacity);
+                        updateStarWidgetPreview();
+                    });
+                    bgTextInput.addEventListener('input', function() {
+                        syncColorPickerFromText(bgTextInput, bgColorPicker, bgOpacitySlider, bgOpacityLabel);
+                        updateStarWidgetPreview();
+                    });
+                }
+
+                // Border toggle and controls
+                var borderChk = document.getElementById('chkStarWidgetBorder');
+                if (borderChk) borderChk.addEventListener('change', updateStarWidgetPreview);
+
+                var borderColorPicker = document.getElementById('colorStarWidgetBorder');
+                var borderTextInput = document.getElementById('txtStarWidgetBorder');
+                if (borderColorPicker && borderTextInput) {
+                    borderColorPicker.addEventListener('input', function() {
+                        borderTextInput.value = 'rgba(' + hexToRgb(borderColorPicker.value).r + ', ' + hexToRgb(borderColorPicker.value).g + ', ' + hexToRgb(borderColorPicker.value).b + ', 0.3)';
+                        updateStarWidgetPreview();
+                    });
+                    borderTextInput.addEventListener('input', updateStarWidgetPreview);
+                }
+
+                var radiusSlider = document.getElementById('sliderStarWidgetRadius');
+                var radiusLabel = document.getElementById('valStarWidgetRadius');
+                if (radiusSlider) {
+                    radiusSlider.addEventListener('input', function() {
+                        if (radiusLabel) radiusLabel.textContent = radiusSlider.value + 'px';
+                        updateStarWidgetPreview();
+                    });
+                }
+
+                // Glow toggle and controls
+                var glowChk = document.getElementById('chkStarWidgetGlow');
+                if (glowChk) glowChk.addEventListener('change', updateStarWidgetPreview);
+
+                var glowColorPicker = document.getElementById('colorStarWidgetGlow');
+                var glowTextInput = document.getElementById('txtStarWidgetGlow');
+                if (glowColorPicker && glowTextInput) {
+                    glowColorPicker.addEventListener('input', function() {
+                        glowTextInput.value = 'rgba(' + hexToRgb(glowColorPicker.value).r + ', ' + hexToRgb(glowColorPicker.value).g + ', ' + hexToRgb(glowColorPicker.value).b + ', 0.5)';
+                        updateStarWidgetPreview();
+                    });
+                    glowTextInput.addEventListener('input', updateStarWidgetPreview);
+                }
+
+                // Star color pickers
+                ['Filled', 'Empty', 'Hover'].forEach(function(type) {
+                    var colorPicker = document.getElementById('colorStar' + type);
+                    var textInput = document.getElementById('txtStar' + type + 'Color');
+                    if (colorPicker && textInput) {
+                        colorPicker.addEventListener('input', function() {
+                            textInput.value = colorPicker.value;
+                            updateStarWidgetPreview();
+                        });
+                        textInput.addEventListener('input', function() {
+                            if (textInput.value.match(/^#[0-9a-f]{6}$/i)) {
+                                colorPicker.value = textInput.value;
+                            }
+                            updateStarWidgetPreview();
+                        });
+                    }
+                });
+
+                // Hover preview on stars
+                var previewStars = document.querySelectorAll('#starWidgetPreview .preview-star');
+                var hoverColorEl = document.getElementById('txtStarHoverColor');
+                previewStars.forEach(function(star, index) {
+                    star.addEventListener('mouseenter', function() {
+                        var hoverColor = hoverColorEl ? hoverColorEl.value : '#ffd700';
+                        previewStars.forEach(function(s, i) {
+                            if (i <= index) s.style.color = hoverColor;
+                        });
+                    });
+                    star.addEventListener('mouseleave', updateStarWidgetPreview);
+                });
+            }
+
             // Badge profile management
             var badgeProfiles = [];
 
@@ -1718,12 +2112,26 @@
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
 
+                    // Star display options
+                    document.querySelector('#selectStarDisplayMode').value = config.StarDisplayMode || '10-stars';
+                    document.querySelector('#chkQuickRatingMode').checked = config.QuickRatingMode === true;
+
+                    // Star widget text options
+                    document.querySelector('#chkShowRatingStats').checked = config.ShowRatingStats !== false;
+                    document.querySelector('#txtRatingStatsFormat').value = config.RatingStatsFormat || '{avg}/10 - {count} rating{s}';
+                    document.querySelector('#chkShowYourRating').checked = config.ShowYourRating !== false;
+                    document.querySelector('#txtYourRatingFormat').value = config.YourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)';
+
+                    // Star widget styling
+                    loadStarWidgetStyling(config);
+
                     // UI toggles
                     document.querySelector('#selectDefaultLanguage').value = config.DefaultLanguage || 'en';
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
+                    document.querySelector('#chkSearchExcludeEpisodes').checked = config.SearchExcludeEpisodes !== false;
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
                     document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
@@ -1932,12 +2340,35 @@
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
 
+                    // Star display options
+                    config.StarDisplayMode = document.querySelector('#selectStarDisplayMode').value;
+                    config.QuickRatingMode = document.querySelector('#chkQuickRatingMode').checked;
+
+                    // Star widget text options
+                    config.ShowRatingStats = document.querySelector('#chkShowRatingStats').checked;
+                    config.RatingStatsFormat = document.querySelector('#txtRatingStatsFormat').value;
+                    config.ShowYourRating = document.querySelector('#chkShowYourRating').checked;
+                    config.YourRatingFormat = document.querySelector('#txtYourRatingFormat').value;
+
+                    // Star widget styling
+                    config.StarWidgetBackground = document.querySelector('#txtStarWidgetBg').value;
+                    config.StarWidgetBorderEnabled = document.querySelector('#chkStarWidgetBorder').checked;
+                    config.StarWidgetBorderColor = document.querySelector('#txtStarWidgetBorder').value;
+                    config.StarWidgetBorderRadius = parseInt(document.querySelector('#sliderStarWidgetRadius').value) || 6;
+                    config.StarWidgetGlowEffect = document.querySelector('#chkStarWidgetGlow').checked;
+                    config.StarWidgetGlowColor = document.querySelector('#txtStarWidgetGlow').value;
+                    config.StarFilledColor = document.querySelector('#txtStarFilledColor').value;
+                    config.StarEmptyColor = document.querySelector('#txtStarEmptyColor').value;
+                    config.StarHoverColor = document.querySelector('#txtStarHoverColor').value;
+                    config.StarWidgetCustomCSS = document.querySelector('#txtStarWidgetCustomCSS').value;
+
                     // UI toggles
                     config.DefaultLanguage = document.querySelector('#selectDefaultLanguage').value;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
+                    config.SearchExcludeEpisodes = document.querySelector('#chkSearchExcludeEpisodes').checked;
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;

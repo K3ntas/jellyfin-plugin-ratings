@@ -615,6 +615,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                 limit = Math.Clamp(limit, 1, 200);
                 page = Math.Max(1, page);
 
+                // Parse parentId for library filtering
+                Guid? parentGuid = null;
+                HashSet<Guid>? libraryItemIds = null;
+                if (!string.IsNullOrEmpty(parentId) && Guid.TryParse(parentId, out var parsedParentId))
+                {
+                    parentGuid = parsedParentId;
+                    // Get all items from this library to filter ratings
+                    var libraryQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        ParentId = parsedParentId,
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
+                        Recursive = true
+                    };
+                    var libraryItems = _libraryManager.GetItemList(libraryQuery);
+                    libraryItemIds = libraryItems.Select(i => i.Id).ToHashSet();
+                }
+
                 List<object> sortedItems;
                 int totalCount;
 
@@ -634,6 +651,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                         // Get all items with local ratings
                         var allRatings = _repository.GetAllItemRatingStats();
                         itemRatings = allRatings.ToDictionary(kv => kv.Key, kv => kv.Value.AverageRating);
+                    }
+
+                    // Filter by library if parentId was provided
+                    if (libraryItemIds != null)
+                    {
+                        itemRatings = itemRatings.Where(kv => libraryItemIds.Contains(kv.Key))
+                            .ToDictionary(kv => kv.Key, kv => kv.Value);
                     }
 
                     if (itemRatings.Count == 0)
@@ -686,6 +710,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // For non-rating sorts (imdb, release, added), use Jellyfin's native sorting
                     // but only on items that have local ratings (to keep consistent with rating feature)
                     var allRatings = _repository.GetAllItemRatingStats();
+
+                    // Filter by library if parentId was provided
+                    if (libraryItemIds != null)
+                    {
+                        allRatings = allRatings.Where(kv => libraryItemIds.Contains(kv.Key))
+                            .ToDictionary(kv => kv.Key, kv => kv.Value);
+                    }
 
                     if (allRatings.Count == 0)
                     {
@@ -1001,6 +1032,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowHeaderLanguageButton = config?.ShowHeaderLanguageButton ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
+                    SearchExcludeEpisodes = config?.SearchExcludeEpisodes ?? true,
                     ShowNotificationToggle = config?.ShowNotificationToggle ?? true,
                     NotificationsEnabledByDefault = config?.NotificationsEnabledByDefault ?? true,
                     ShowLatestMediaButton = config?.ShowLatestMediaButton ?? true,
@@ -1055,6 +1087,28 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Sorting options
                     EnableImdbSorting = config?.EnableImdbSorting ?? true,
+
+                    // Star display options
+                    StarDisplayMode = config?.StarDisplayMode ?? "10-stars",
+                    QuickRatingMode = config?.QuickRatingMode ?? false,
+
+                    // Star widget text options
+                    ShowRatingStats = config?.ShowRatingStats ?? true,
+                    RatingStatsFormat = config?.RatingStatsFormat ?? "{avg}/10 - {count} rating{s}",
+                    ShowYourRating = config?.ShowYourRating ?? true,
+                    YourRatingFormat = config?.YourRatingFormat ?? "Your rating: {rating}/10 (click stars to edit)",
+
+                    // Star widget styling
+                    StarWidgetBackground = config?.StarWidgetBackground ?? "rgba(0, 0, 0, 0.6)",
+                    StarWidgetBorderEnabled = config?.StarWidgetBorderEnabled ?? false,
+                    StarWidgetBorderColor = config?.StarWidgetBorderColor ?? "rgba(255, 255, 255, 0.3)",
+                    StarWidgetBorderRadius = config?.StarWidgetBorderRadius ?? 6,
+                    StarWidgetGlowEffect = config?.StarWidgetGlowEffect ?? false,
+                    StarWidgetGlowColor = config?.StarWidgetGlowColor ?? "rgba(255, 215, 0, 0.5)",
+                    StarFilledColor = config?.StarFilledColor ?? "#ffd700",
+                    StarEmptyColor = config?.StarEmptyColor ?? "#555555",
+                    StarHoverColor = config?.StarHoverColor ?? "#ffd700",
+                    StarWidgetCustomCSS = config?.StarWidgetCustomCSS ?? string.Empty,
 
                     // Social features
                     EnableFriendsButton = config?.EnableFriendsButton ?? false,

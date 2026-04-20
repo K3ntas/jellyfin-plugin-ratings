@@ -13,6 +13,8 @@
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
         enableImdbSorting: true, // Whether IMDB sorting option is shown (loaded from config)
+        starDisplayMode: '10-stars', // '10-stars' (default), '5-stars-half', '5-stars'
+        quickRatingMode: false, // false = modal (default), true = one-click rating
 
         // Chat state
         chatEnabled: false, // Whether chat feature is enabled (loaded from config)
@@ -1907,6 +1909,9 @@
 
             // Initialize library sort buttons for non-Netflix view
             this.initLibrarySortButtons();
+
+            // Initialize Editor's Choice plugin compatibility
+            this.initEditorsChoiceCompatibility();
 
             // Initialize new media notifications
             this.initNotifications();
@@ -4165,6 +4170,29 @@
                     .then(function (config) {
                         self.ratingsEnabled = config.EnableRatings !== false;
                         self.enableImdbSorting = config.EnableImdbSorting !== false;
+                        // Star display options
+                        self.starDisplayMode = config.StarDisplayMode || '10-stars';
+                        self.quickRatingMode = config.QuickRatingMode === true;
+
+                        // Star widget text options
+                        self.starWidgetConfig = {
+                            showRatingStats: config.ShowRatingStats !== false,
+                            ratingStatsFormat: config.RatingStatsFormat || '{avg}/10 - {count} rating{s}',
+                            showYourRating: config.ShowYourRating !== false,
+                            yourRatingFormat: config.YourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)',
+                            // Styling
+                            background: config.StarWidgetBackground || 'rgba(0, 0, 0, 0.6)',
+                            borderEnabled: config.StarWidgetBorderEnabled === true,
+                            borderColor: config.StarWidgetBorderColor || 'rgba(255, 255, 255, 0.3)',
+                            borderRadius: config.StarWidgetBorderRadius || 6,
+                            glowEffect: config.StarWidgetGlowEffect === true,
+                            glowColor: config.StarWidgetGlowColor || 'rgba(255, 215, 0, 0.5)',
+                            filledColor: config.StarFilledColor || '#ffd700',
+                            emptyColor: config.StarEmptyColor || '#555555',
+                            hoverColor: config.StarHoverColor || '#ffd700',
+                            customCSS: config.StarWidgetCustomCSS || ''
+                        };
+
                         // Header button styling
                         self.headerButtonStyle = {
                             transparentBg: config.HeaderButtonTransparentBg || false,
@@ -4183,12 +4211,14 @@
                             languageTextColor: config.LanguageTextColor || '#ffffff'
                         };
                         self.applyHeaderButtonStyles();
+                        self.applyStarWidgetStyles();
                     })
                     .catch(function () {
                         // Default to enabled on error
                         self.ratingsEnabled = true;
                         self.enableImdbSorting = true;
                         self.headerButtonStyle = null;
+                        self.starWidgetConfig = null;
                     });
             };
 
@@ -4363,6 +4393,59 @@
 
                 .ratings-plugin-star.filled {
                     color: #ffd700;
+                }
+
+                /* 5-star mode with larger stars */
+                .ratings-plugin-star.ratings-plugin-star-5mode {
+                    font-size: 1.4em;
+                }
+                @media (min-width: 1200px) {
+                    .ratings-plugin-star.ratings-plugin-star-5mode {
+                        font-size: 1.6em;
+                    }
+                }
+
+                /* Half-star mode styles */
+                .ratings-plugin-star.ratings-plugin-star-half {
+                    position: relative;
+                    font-size: 1.4em;
+                }
+                @media (min-width: 1200px) {
+                    .ratings-plugin-star.ratings-plugin-star-half {
+                        font-size: 1.6em;
+                    }
+                }
+
+                .ratings-plugin-star-half .star-half-left,
+                .ratings-plugin-star-half .star-half-right {
+                    position: absolute;
+                    top: 0;
+                    width: 50%;
+                    height: 100%;
+                    cursor: pointer;
+                    z-index: 1;
+                }
+                .ratings-plugin-star-half .star-half-left {
+                    left: 0;
+                }
+                .ratings-plugin-star-half .star-half-right {
+                    right: 0;
+                }
+
+                /* Half-filled state (left half gold, right half gray) */
+                .ratings-plugin-star.half-filled {
+                    background: linear-gradient(90deg, #ffd700 50%, #555 50%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .ratings-plugin-star.half-hover {
+                    background: linear-gradient(90deg, #ffd700 50%, #555 50%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    transform: scale(1.1);
                 }
 
                 .ratings-plugin-stats {
@@ -13238,12 +13321,31 @@
         },
 
         /**
-         * Generate star HTML
+         * Generate star HTML based on starDisplayMode
+         * Modes: '10-stars' (default), '5-stars-half', '5-stars'
          */
         generateStars: function () {
             let html = '';
-            for (let i = 1; i <= 10; i++) {
-                html += `<span class="ratings-plugin-star" data-rating="${i}">★</span>`;
+            const mode = this.starDisplayMode || '10-stars';
+
+            if (mode === '5-stars') {
+                // 5 stars, each represents 2 rating points (2, 4, 6, 8, 10)
+                for (let i = 1; i <= 5; i++) {
+                    html += `<span class="ratings-plugin-star ratings-plugin-star-5mode" data-rating="${i * 2}" data-star-index="${i}">★</span>`;
+                }
+            } else if (mode === '5-stars-half') {
+                // 5 stars with half-star support (click left = odd, right = even)
+                for (let i = 1; i <= 5; i++) {
+                    html += `<span class="ratings-plugin-star ratings-plugin-star-half" data-star-index="${i}">` +
+                        `<span class="star-half-left" data-rating="${i * 2 - 1}"></span>` +
+                        `<span class="star-half-right" data-rating="${i * 2}"></span>` +
+                        `★</span>`;
+                }
+            } else {
+                // Default: 10 stars
+                for (let i = 1; i <= 10; i++) {
+                    html += `<span class="ratings-plugin-star" data-rating="${i}">★</span>`;
+                }
             }
             return html;
         },
@@ -13260,23 +13362,63 @@
                 : document.querySelectorAll('.ratings-plugin-star');
             const popup = this.queryInVisiblePage('#ratingsPluginPopup');
             const starsContainer = this.queryInVisiblePage('#ratingsPluginStars');
+            const mode = this.starDisplayMode || '10-stars';
 
             stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    // Check if clicking the same rating - toggle off (delete)
-                    if (self.currentUserRating === rating) {
-                        self.deleteRating(itemId);
-                    } else {
-                        // Open rating modal with review textarea
-                        self.openRatingModal(itemId, rating);
-                    }
-                });
+                if (mode === '5-stars-half') {
+                    // Half-star mode: click on left/right halves
+                    const leftHalf = star.querySelector('.star-half-left');
+                    const rightHalf = star.querySelector('.star-half-right');
 
-                star.addEventListener('mouseenter', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    this.highlightStars(rating);
-                });
+                    if (leftHalf) {
+                        leftHalf.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            self.handleStarClick(itemId, rating);
+                        });
+                    }
+                    if (rightHalf) {
+                        rightHalf.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            self.handleStarClick(itemId, rating);
+                        });
+                    }
+
+                    // For half-star mode, detect which half is being hovered
+                    star.addEventListener('mousemove', (e) => {
+                        const starIndex = parseInt(star.getAttribute('data-star-index'));
+                        const rect = star.getBoundingClientRect();
+                        const isLeftHalf = (e.clientX - rect.left) < (rect.width / 2);
+                        const rating = isLeftHalf ? (starIndex * 2 - 1) : (starIndex * 2);
+                        self.highlightStars(rating);
+                    });
+
+                    // Hover on left/right halves for visual feedback
+                    if (leftHalf) {
+                        leftHalf.addEventListener('mouseenter', () => {
+                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            self.highlightStars(rating);
+                        });
+                    }
+                    if (rightHalf) {
+                        rightHalf.addEventListener('mouseenter', () => {
+                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            self.highlightStars(rating);
+                        });
+                    }
+                } else {
+                    // Standard click (10-stars or 5-stars mode)
+                    star.addEventListener('click', () => {
+                        const rating = parseInt(star.getAttribute('data-rating'));
+                        self.handleStarClick(itemId, rating);
+                    });
+
+                    star.addEventListener('mouseenter', () => {
+                        const rating = parseInt(star.getAttribute('data-rating'));
+                        self.highlightStars(rating);
+                    });
+                }
             });
 
             starsContainer.addEventListener('mouseleave', () => {
@@ -13306,6 +13448,22 @@
         },
 
         /**
+         * Handle star click - either submit directly (quick mode) or open modal
+         */
+        handleStarClick: function (itemId, rating) {
+            // Check if clicking the same rating - toggle off (delete)
+            if (this.currentUserRating === rating) {
+                this.deleteRating(itemId);
+            } else if (this.quickRatingMode) {
+                // Quick mode: submit rating directly without modal
+                this.submitRating(itemId, rating);
+            } else {
+                // Default: open rating modal with review textarea
+                this.openRatingModal(itemId, rating);
+            }
+        },
+
+        /**
          * Highlight stars up to rating
          */
         highlightStars: function (rating) {
@@ -13313,13 +13471,35 @@
             const stars = visiblePage
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
-            stars.forEach((star, index) => {
-                if (index < rating) {
-                    star.classList.add('hover');
-                } else {
-                    star.classList.remove('hover');
-                }
-            });
+            const mode = this.starDisplayMode || '10-stars';
+
+            if (mode === '5-stars' || mode === '5-stars-half') {
+                // For 5-star modes, rating is 1-10 but we have 5 stars
+                // Star at index i represents rating (i+1)*2
+                const starCount = Math.ceil(rating / 2);
+                stars.forEach((star, index) => {
+                    if (index < starCount) {
+                        star.classList.add('hover');
+                        // For half-star mode, handle partial fill
+                        if (mode === '5-stars-half' && index === starCount - 1 && rating % 2 === 1) {
+                            star.classList.add('half-hover');
+                        } else {
+                            star.classList.remove('half-hover');
+                        }
+                    } else {
+                        star.classList.remove('hover', 'half-hover');
+                    }
+                });
+            } else {
+                // Default 10-star mode
+                stars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.classList.add('hover');
+                    } else {
+                        star.classList.remove('hover');
+                    }
+                });
+            }
         },
 
         /**
@@ -13379,12 +13559,25 @@
                     self.updateStarDisplay(displayRating);
 
                     let statsHtml = '';
-                    if (stats.TotalRatings > 0) {
-                        statsHtml = `<span class="ratings-plugin-average">${stats.AverageRating.toFixed(1)}/10</span> - <span class="ratings-plugin-count-link" data-item-id="${itemId}">${stats.TotalRatings} rating${stats.TotalRatings !== 1 ? 's' : ''}</span>`;
-                        if (stats.UserRating) {
-                            statsHtml += `<div class="ratings-plugin-your-rating">Your rating: ${stats.UserRating}/10 (click stars to edit)</div>`;
-                        }
-                    } else {
+                    const cfg = self.starWidgetConfig || {};
+                    const showStats = cfg.showRatingStats !== false;
+                    const showYourRating = cfg.showYourRating !== false;
+                    const statsFormat = cfg.ratingStatsFormat || '{avg}/10 - {count} rating{s}';
+                    const yourRatingFormat = cfg.yourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)';
+
+                    if (stats.TotalRatings > 0 && showStats) {
+                        // Build stats text from format
+                        let statsText = statsFormat
+                            .replace('{avg}', stats.AverageRating.toFixed(1))
+                            .replace('{count}', stats.TotalRatings)
+                            .replace('{s}', stats.TotalRatings !== 1 ? 's' : '');
+                        statsHtml = `<span class="ratings-plugin-average">${statsText}</span> <span class="ratings-plugin-count-link" data-item-id="${itemId}" style="cursor:pointer; text-decoration: underline;">(view all)</span>`;
+                    }
+
+                    if (stats.UserRating && showYourRating) {
+                        let yourText = yourRatingFormat.replace('{rating}', stats.UserRating);
+                        statsHtml += `<div class="ratings-plugin-your-rating">${yourText}</div>`;
+                    } else if (stats.TotalRatings === 0 && showStats) {
                         statsHtml = 'No ratings yet. Be the first to rate!';
                     }
 
@@ -13400,20 +13593,37 @@
         },
 
         /**
-         * Update star display
+         * Update star display based on starDisplayMode
          */
         updateStarDisplay: function (rating) {
             const visiblePage = this.getVisibleDetailPage();
             const stars = visiblePage
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
+            const mode = this.starDisplayMode || '10-stars';
 
-            stars.forEach((star, index) => {
-                star.classList.remove('filled', 'hover');
-                if (index < rating) {
-                    star.classList.add('filled');
-                }
-            });
+            if (mode === '5-stars' || mode === '5-stars-half') {
+                // For 5-star modes, rating is 1-10 but we have 5 stars
+                const fullStars = Math.floor(rating / 2);
+                const hasHalf = rating % 2 === 1;
+
+                stars.forEach((star, index) => {
+                    star.classList.remove('filled', 'hover', 'half-filled', 'half-hover');
+                    if (index < fullStars) {
+                        star.classList.add('filled');
+                    } else if (index === fullStars && hasHalf && mode === '5-stars-half') {
+                        star.classList.add('half-filled');
+                    }
+                });
+            } else {
+                // Default 10-star mode
+                stars.forEach((star, index) => {
+                    star.classList.remove('filled', 'hover');
+                    if (index < rating) {
+                        star.classList.add('filled');
+                    }
+                });
+            }
         },
 
         /**
@@ -14652,6 +14862,7 @@
                             if (config.ShowSearchButton === false) {
                                 return; // Don't create search field
                             }
+                            self.searchExcludeEpisodes = config.SearchExcludeEpisodes !== false;
                             createSearchField();
                         })
                         .catch(() => {
@@ -14944,6 +15155,75 @@
         },
 
         /**
+         * Initialize Editor's Choice plugin compatibility
+         * Detects if Editor's Choice is active and adjusts positioning to prevent overlap
+         */
+        initEditorsChoiceCompatibility: function () {
+            const self = this;
+            let editorsChoiceDetected = false;
+            let styleInjected = false;
+
+            const checkAndFix = () => {
+                // Only apply on mobile
+                if (window.innerWidth > 600) {
+                    return;
+                }
+
+                // Check if Editor's Choice plugin is active
+                const editorsChoiceActive = document.querySelector('.homeSectionsContainer.editorsChoiceAdded') ||
+                                           document.querySelector('.editorsChoiceContainer');
+
+                if (editorsChoiceActive && !styleInjected) {
+                    editorsChoiceDetected = true;
+                    styleInjected = true;
+
+                    // Inject compatibility CSS
+                    let compatStyle = document.getElementById('ratingsEditorsChoiceCompat');
+                    if (!compatStyle) {
+                        compatStyle = document.createElement('style');
+                        compatStyle.id = 'ratingsEditorsChoiceCompat';
+                        compatStyle.textContent = `
+                            /* Editor's Choice Plugin Compatibility - Mobile Only */
+                            @media screen and (max-width: 600px) {
+                                /* Fix Hero Mode - Editor's Choice uses transform: translateY(-120px) on #homeTab */
+                                /* This pushes tabs off-screen, we need to counteract it */
+                                .editorsChoiceHeroMode #homeTab {
+                                    transform: translateY(-72px) !important; /* -120px + 48px for our bar */
+                                }
+
+                                /* Non-hero mode: push content down */
+                                body:not(.editorsChoiceHeroMode) .homeSectionsContainer.editorsChoiceAdded {
+                                    margin-top: 48px !important;
+                                }
+
+                                /* Ensure tabs are visible and properly positioned */
+                                .editorsChoiceHeroMode .tabs-viewmenubar,
+                                .editorsChoiceHeroMode .emby-tabs {
+                                    position: relative !important;
+                                    z-index: 100 !important;
+                                }
+                            }
+                        `;
+                        document.head.appendChild(compatStyle);
+                        console.log('RatingsPlugin: Editor\'s Choice compatibility CSS injected');
+                    }
+                }
+            };
+
+            // Check periodically (Editor's Choice loads dynamically)
+            setInterval(checkAndFix, 1000);
+
+            // Also check on navigation
+            if (window.Emby && window.Emby.Page) {
+                try {
+                    Emby.Page.addEventListener('pageshow', checkAndFix);
+                } catch (e) {
+                    // Ignore if not available
+                }
+            }
+        },
+
+        /**
          * Initialize unified button group container
          */
         initButtonGroup: function () {
@@ -15079,6 +15359,72 @@
                         ${style.glowEffect ? `box-shadow: 0 2px 10px ${style.glowColor} !important;` : ''}
                     }
                 }
+            `;
+        },
+
+        /**
+         * Apply dynamic star widget styles from config
+         */
+        applyStarWidgetStyles: function () {
+            const self = this;
+            const config = self.starWidgetConfig;
+            if (!config) return;
+
+            // Create or update dynamic stylesheet for star widget
+            let styleEl = document.getElementById('ratingsStarWidgetStyles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'ratingsStarWidgetStyles';
+                document.head.appendChild(styleEl);
+            }
+
+            const borderStyle = config.borderEnabled ? `border: 1px solid ${config.borderColor} !important;` : '';
+            const glowStyle = config.glowEffect ? `box-shadow: 0 0 15px ${config.glowColor} !important;` : '';
+
+            styleEl.textContent = `
+                /* Star widget container */
+                .ratings-plugin-container {
+                    background: ${config.background} !important;
+                    border-radius: ${config.borderRadius}px !important;
+                    ${borderStyle}
+                    ${glowStyle}
+                }
+
+                /* Star colors */
+                .ratings-plugin-star {
+                    color: ${config.emptyColor} !important;
+                }
+
+                .ratings-plugin-star.filled {
+                    color: ${config.filledColor} !important;
+                }
+
+                .ratings-plugin-star:hover,
+                .ratings-plugin-star.hover {
+                    color: ${config.hoverColor} !important;
+                }
+
+                /* Half-filled state for 5-star mode */
+                .ratings-plugin-star.half-filled {
+                    background: linear-gradient(90deg, ${config.filledColor} 50%, ${config.emptyColor} 50%) !important;
+                    -webkit-background-clip: text !important;
+                    -webkit-text-fill-color: transparent !important;
+                    background-clip: text !important;
+                }
+
+                .ratings-plugin-star.half-hover {
+                    background: linear-gradient(90deg, ${config.hoverColor} 50%, ${config.emptyColor} 50%) !important;
+                    -webkit-background-clip: text !important;
+                    -webkit-text-fill-color: transparent !important;
+                    background-clip: text !important;
+                }
+
+                /* Rating stats text color */
+                .ratings-plugin-average {
+                    color: ${config.filledColor} !important;
+                }
+
+                ${config.customCSS}
             `;
         },
 
@@ -18357,7 +18703,10 @@
                 const baseUrl = ApiClient.serverAddress();
 
                 // Use Jellyfin's search hints API - search entire library
-                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=Movie,Series,Episode,Audio,MusicAlbum,MusicArtist&Limit=20`;
+                const includeTypes = self.searchExcludeEpisodes
+                    ? 'Movie,Series,Audio,MusicAlbum,MusicArtist'
+                    : 'Movie,Series,Episode,Audio,MusicAlbum,MusicArtist';
+                const searchUrl = `${baseUrl}/Search/Hints?SearchTerm=${encodeURIComponent(query)}&UserId=${userId}&IncludeItemTypes=${includeTypes}&Limit=20`;
 
                 const response = await fetch(searchUrl, {
                     headers: {
@@ -23191,7 +23540,18 @@
             let deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            const url = `${baseUrl}/Ratings/SortedLibrary?sortBy=${sortField}&direction=${direction}&page=${page}&limit=100`;
+            // Detect current library from URL (parentId or topParentId)
+            const hash = window.location.hash || '';
+            let libraryId = '';
+            const parentMatch = hash.match(/[?&](?:parentId|topParentId)=([a-f0-9-]+)/i);
+            if (parentMatch) {
+                libraryId = parentMatch[1];
+            }
+
+            let url = `${baseUrl}/Ratings/SortedLibrary?sortBy=${sortField}&direction=${direction}&page=${page}&limit=100`;
+            if (libraryId) {
+                url += `&parentId=${encodeURIComponent(libraryId)}`;
+            }
 
             fetch(url, {
                 method: 'GET',
