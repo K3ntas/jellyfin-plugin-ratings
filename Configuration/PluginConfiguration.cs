@@ -82,6 +82,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             // Sorting options
             EnableImdbSorting = true;
 
+            // Star display options
+            StarDisplayMode = "10-stars";  // "10-stars" (default), "5-stars-half", "5-stars"
+            QuickRatingMode = false;  // false = modal (default), true = one-click rating
+
             // Language settings
             DefaultLanguage = "en";
 
@@ -364,6 +368,19 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether IMDB sorting is shown in the library sort dropdown.
         /// </summary>
         public bool EnableImdbSorting { get; set; }
+
+        /// <summary>
+        /// Gets or sets the star display mode.
+        /// Options: "10-stars" (default), "5-stars-half" (half-star precision), "5-stars" (5 stars mapping to even values).
+        /// </summary>
+        public string StarDisplayMode { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether quick rating mode is enabled.
+        /// When true, clicking a star immediately submits the rating without a modal.
+        /// When false (default), clicking opens a rating modal with review option.
+        /// </summary>
+        public bool QuickRatingMode { get; set; }
 
         /// <summary>
         /// Gets or sets the default language for the plugin UI.

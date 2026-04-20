@@ -13,6 +13,8 @@
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
         enableImdbSorting: true, // Whether IMDB sorting option is shown (loaded from config)
+        starDisplayMode: '10-stars', // '10-stars' (default), '5-stars-half', '5-stars'
+        quickRatingMode: false, // false = modal (default), true = one-click rating
 
         // Chat state
         chatEnabled: false, // Whether chat feature is enabled (loaded from config)
@@ -4168,6 +4170,9 @@
                     .then(function (config) {
                         self.ratingsEnabled = config.EnableRatings !== false;
                         self.enableImdbSorting = config.EnableImdbSorting !== false;
+                        // Star display options
+                        self.starDisplayMode = config.StarDisplayMode || '10-stars';
+                        self.quickRatingMode = config.QuickRatingMode === true;
                         // Header button styling
                         self.headerButtonStyle = {
                             transparentBg: config.HeaderButtonTransparentBg || false,
@@ -4366,6 +4371,59 @@
 
                 .ratings-plugin-star.filled {
                     color: #ffd700;
+                }
+
+                /* 5-star mode with larger stars */
+                .ratings-plugin-star.ratings-plugin-star-5mode {
+                    font-size: 1.4em;
+                }
+                @media (min-width: 1200px) {
+                    .ratings-plugin-star.ratings-plugin-star-5mode {
+                        font-size: 1.6em;
+                    }
+                }
+
+                /* Half-star mode styles */
+                .ratings-plugin-star.ratings-plugin-star-half {
+                    position: relative;
+                    font-size: 1.4em;
+                }
+                @media (min-width: 1200px) {
+                    .ratings-plugin-star.ratings-plugin-star-half {
+                        font-size: 1.6em;
+                    }
+                }
+
+                .ratings-plugin-star-half .star-half-left,
+                .ratings-plugin-star-half .star-half-right {
+                    position: absolute;
+                    top: 0;
+                    width: 50%;
+                    height: 100%;
+                    cursor: pointer;
+                    z-index: 1;
+                }
+                .ratings-plugin-star-half .star-half-left {
+                    left: 0;
+                }
+                .ratings-plugin-star-half .star-half-right {
+                    right: 0;
+                }
+
+                /* Half-filled state (left half gold, right half gray) */
+                .ratings-plugin-star.half-filled {
+                    background: linear-gradient(90deg, #ffd700 50%, #555 50%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .ratings-plugin-star.half-hover {
+                    background: linear-gradient(90deg, #ffd700 50%, #555 50%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    transform: scale(1.1);
                 }
 
                 .ratings-plugin-stats {
@@ -13241,12 +13299,31 @@
         },
 
         /**
-         * Generate star HTML
+         * Generate star HTML based on starDisplayMode
+         * Modes: '10-stars' (default), '5-stars-half', '5-stars'
          */
         generateStars: function () {
             let html = '';
-            for (let i = 1; i <= 10; i++) {
-                html += `<span class="ratings-plugin-star" data-rating="${i}">★</span>`;
+            const mode = this.starDisplayMode || '10-stars';
+
+            if (mode === '5-stars') {
+                // 5 stars, each represents 2 rating points (2, 4, 6, 8, 10)
+                for (let i = 1; i <= 5; i++) {
+                    html += `<span class="ratings-plugin-star ratings-plugin-star-5mode" data-rating="${i * 2}" data-star-index="${i}">★</span>`;
+                }
+            } else if (mode === '5-stars-half') {
+                // 5 stars with half-star support (click left = odd, right = even)
+                for (let i = 1; i <= 5; i++) {
+                    html += `<span class="ratings-plugin-star ratings-plugin-star-half" data-star-index="${i}">` +
+                        `<span class="star-half-left" data-rating="${i * 2 - 1}"></span>` +
+                        `<span class="star-half-right" data-rating="${i * 2}"></span>` +
+                        `★</span>`;
+                }
+            } else {
+                // Default: 10 stars
+                for (let i = 1; i <= 10; i++) {
+                    html += `<span class="ratings-plugin-star" data-rating="${i}">★</span>`;
+                }
             }
             return html;
         },
@@ -13263,23 +13340,45 @@
                 : document.querySelectorAll('.ratings-plugin-star');
             const popup = this.queryInVisiblePage('#ratingsPluginPopup');
             const starsContainer = this.queryInVisiblePage('#ratingsPluginStars');
+            const mode = this.starDisplayMode || '10-stars';
 
             stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    // Check if clicking the same rating - toggle off (delete)
-                    if (self.currentUserRating === rating) {
-                        self.deleteRating(itemId);
-                    } else {
-                        // Open rating modal with review textarea
-                        self.openRatingModal(itemId, rating);
-                    }
-                });
+                if (mode === '5-stars-half') {
+                    // Half-star mode: click on left/right halves
+                    const leftHalf = star.querySelector('.star-half-left');
+                    const rightHalf = star.querySelector('.star-half-right');
 
-                star.addEventListener('mouseenter', () => {
-                    const rating = parseInt(star.getAttribute('data-rating'));
-                    this.highlightStars(rating);
-                });
+                    if (leftHalf) {
+                        leftHalf.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            self.handleStarClick(itemId, rating);
+                        });
+                    }
+                    if (rightHalf) {
+                        rightHalf.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            self.handleStarClick(itemId, rating);
+                        });
+                    }
+
+                    star.addEventListener('mouseenter', () => {
+                        const starIndex = parseInt(star.getAttribute('data-star-index'));
+                        self.highlightStars(starIndex * 2); // Highlight up to this star
+                    });
+                } else {
+                    // Standard click (10-stars or 5-stars mode)
+                    star.addEventListener('click', () => {
+                        const rating = parseInt(star.getAttribute('data-rating'));
+                        self.handleStarClick(itemId, rating);
+                    });
+
+                    star.addEventListener('mouseenter', () => {
+                        const rating = parseInt(star.getAttribute('data-rating'));
+                        self.highlightStars(rating);
+                    });
+                }
             });
 
             starsContainer.addEventListener('mouseleave', () => {
@@ -13309,6 +13408,22 @@
         },
 
         /**
+         * Handle star click - either submit directly (quick mode) or open modal
+         */
+        handleStarClick: function (itemId, rating) {
+            // Check if clicking the same rating - toggle off (delete)
+            if (this.currentUserRating === rating) {
+                this.deleteRating(itemId);
+            } else if (this.quickRatingMode) {
+                // Quick mode: submit rating directly without modal
+                this.submitRating(itemId, rating);
+            } else {
+                // Default: open rating modal with review textarea
+                this.openRatingModal(itemId, rating);
+            }
+        },
+
+        /**
          * Highlight stars up to rating
          */
         highlightStars: function (rating) {
@@ -13316,13 +13431,35 @@
             const stars = visiblePage
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
-            stars.forEach((star, index) => {
-                if (index < rating) {
-                    star.classList.add('hover');
-                } else {
-                    star.classList.remove('hover');
-                }
-            });
+            const mode = this.starDisplayMode || '10-stars';
+
+            if (mode === '5-stars' || mode === '5-stars-half') {
+                // For 5-star modes, rating is 1-10 but we have 5 stars
+                // Star at index i represents rating (i+1)*2
+                const starCount = Math.ceil(rating / 2);
+                stars.forEach((star, index) => {
+                    if (index < starCount) {
+                        star.classList.add('hover');
+                        // For half-star mode, handle partial fill
+                        if (mode === '5-stars-half' && index === starCount - 1 && rating % 2 === 1) {
+                            star.classList.add('half-hover');
+                        } else {
+                            star.classList.remove('half-hover');
+                        }
+                    } else {
+                        star.classList.remove('hover', 'half-hover');
+                    }
+                });
+            } else {
+                // Default 10-star mode
+                stars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.classList.add('hover');
+                    } else {
+                        star.classList.remove('hover');
+                    }
+                });
+            }
         },
 
         /**
@@ -13403,20 +13540,37 @@
         },
 
         /**
-         * Update star display
+         * Update star display based on starDisplayMode
          */
         updateStarDisplay: function (rating) {
             const visiblePage = this.getVisibleDetailPage();
             const stars = visiblePage
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
+            const mode = this.starDisplayMode || '10-stars';
 
-            stars.forEach((star, index) => {
-                star.classList.remove('filled', 'hover');
-                if (index < rating) {
-                    star.classList.add('filled');
-                }
-            });
+            if (mode === '5-stars' || mode === '5-stars-half') {
+                // For 5-star modes, rating is 1-10 but we have 5 stars
+                const fullStars = Math.floor(rating / 2);
+                const hasHalf = rating % 2 === 1;
+
+                stars.forEach((star, index) => {
+                    star.classList.remove('filled', 'hover', 'half-filled', 'half-hover');
+                    if (index < fullStars) {
+                        star.classList.add('filled');
+                    } else if (index === fullStars && hasHalf && mode === '5-stars-half') {
+                        star.classList.add('half-filled');
+                    }
+                });
+            } else {
+                // Default 10-star mode
+                stars.forEach((star, index) => {
+                    star.classList.remove('filled', 'hover');
+                    if (index < rating) {
+                        star.classList.add('filled');
+                    }
+                });
+            }
         },
 
         /**
@@ -23267,7 +23421,18 @@
             let deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            const url = `${baseUrl}/Ratings/SortedLibrary?sortBy=${sortField}&direction=${direction}&page=${page}&limit=100`;
+            // Detect current library from URL (parentId or topParentId)
+            const hash = window.location.hash || '';
+            let libraryId = '';
+            const parentMatch = hash.match(/[?&](?:parentId|topParentId)=([a-f0-9-]+)/i);
+            if (parentMatch) {
+                libraryId = parentMatch[1];
+            }
+
+            let url = `${baseUrl}/Ratings/SortedLibrary?sortBy=${sortField}&direction=${direction}&page=${page}&limit=100`;
+            if (libraryId) {
+                url += `&parentId=${encodeURIComponent(libraryId)}`;
+            }
 
             fetch(url, {
                 method: 'GET',

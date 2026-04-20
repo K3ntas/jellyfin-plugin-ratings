@@ -5,7 +5,7 @@
     <title>Ratings Plugin</title>
 </head>
 <body>
-    <div id="ratingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div id="ratingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
         <div data-role="content">
             <div class="content-primary">
                 <form id="ratingsConfigForm">
@@ -40,6 +40,30 @@
                                 <label class="inputLabel inputLabelUnfocused" for="txtMaxRating">Maximum Rating</label>
                                 <input id="txtMaxRating" type="number" is="emby-input" min="1" max="10" step="1" />
                                 <div class="fieldDescription">Maximum rating value (default: 10)</div>
+                            </div>
+
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="selectStarDisplayMode">Star Display Mode</label>
+                                <select id="selectStarDisplayMode" is="emby-select">
+                                    <option value="10-stars">10 Stars (default)</option>
+                                    <option value="5-stars">5 Stars (compact)</option>
+                                    <option value="5-stars-half">5 Stars with Half-Star (Plex-like)</option>
+                                </select>
+                                <div class="fieldDescription">
+                                    Choose how rating stars are displayed. 10 Stars shows all 10 clickable stars.
+                                    5 Stars shows 5 larger stars (each = 2 points). Half-Star allows clicking left/right half for odd/even values.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkQuickRatingMode" type="checkbox" is="emby-checkbox" />
+                                    <span>Quick Rating Mode</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    When enabled, clicking a star immediately submits the rating without showing a confirmation dialog.
+                                    When disabled (default), a modal opens allowing users to add an optional review.
+                                </div>
                             </div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
@@ -1728,6 +1752,10 @@
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
 
+                    // Star display options
+                    document.querySelector('#selectStarDisplayMode').value = config.StarDisplayMode || '10-stars';
+                    document.querySelector('#chkQuickRatingMode').checked = config.QuickRatingMode === true;
+
                     // UI toggles
                     document.querySelector('#selectDefaultLanguage').value = config.DefaultLanguage || 'en';
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
@@ -1942,6 +1970,10 @@
                     config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
+
+                    // Star display options
+                    config.StarDisplayMode = document.querySelector('#selectStarDisplayMode').value;
+                    config.QuickRatingMode = document.querySelector('#chkQuickRatingMode').checked;
 
                     // UI toggles
                     config.DefaultLanguage = document.querySelector('#selectDefaultLanguage').value;

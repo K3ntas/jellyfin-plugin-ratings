@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.269.0",
+        "changelog": "Fix sorting mixing libraries, add 5-star display mode, add quick rating mode",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.269.0/Jellyfin.Plugin.Ratings_2.0.269.0.zip",
+        "checksum": "71f40b050f0c25a7bedf169e5cb4f574",
+        "timestamp": "2026-04-20T23:00:00Z"
+      },
+      {
         "version": "2.0.268.0",
         "changelog": "Fix: Editor's Choice Hero Mode compatibility - Home/Favorites tabs now visible on mobile",
         "targetAbi": "10.11.0.0",

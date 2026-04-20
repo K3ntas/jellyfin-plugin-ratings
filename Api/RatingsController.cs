@@ -615,6 +615,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                 limit = Math.Clamp(limit, 1, 200);
                 page = Math.Max(1, page);
 
+                // Parse parentId for library filtering
+                Guid? parentGuid = null;
+                HashSet<Guid>? libraryItemIds = null;
+                if (!string.IsNullOrEmpty(parentId) && Guid.TryParse(parentId, out var parsedParentId))
+                {
+                    parentGuid = parsedParentId;
+                    // Get all items from this library to filter ratings
+                    var libraryQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        ParentId = parsedParentId,
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
+                        Recursive = true
+                    };
+                    var libraryItems = _libraryManager.GetItemList(libraryQuery);
+                    libraryItemIds = libraryItems.Select(i => i.Id).ToHashSet();
+                }
+
                 List<object> sortedItems;
                 int totalCount;
 
@@ -634,6 +651,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                         // Get all items with local ratings
                         var allRatings = _repository.GetAllItemRatingStats();
                         itemRatings = allRatings.ToDictionary(kv => kv.Key, kv => kv.Value.AverageRating);
+                    }
+
+                    // Filter by library if parentId was provided
+                    if (libraryItemIds != null)
+                    {
+                        itemRatings = itemRatings.Where(kv => libraryItemIds.Contains(kv.Key))
+                            .ToDictionary(kv => kv.Key, kv => kv.Value);
                     }
 
                     if (itemRatings.Count == 0)
@@ -686,6 +710,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // For non-rating sorts (imdb, release, added), use Jellyfin's native sorting
                     // but only on items that have local ratings (to keep consistent with rating feature)
                     var allRatings = _repository.GetAllItemRatingStats();
+
+                    // Filter by library if parentId was provided
+                    if (libraryItemIds != null)
+                    {
+                        allRatings = allRatings.Where(kv => libraryItemIds.Contains(kv.Key))
+                            .ToDictionary(kv => kv.Key, kv => kv.Value);
+                    }
 
                     if (allRatings.Count == 0)
                     {
@@ -1056,6 +1087,10 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // Sorting options
                     EnableImdbSorting = config?.EnableImdbSorting ?? true,
+
+                    // Star display options
+                    StarDisplayMode = config?.StarDisplayMode ?? "10-stars",
+                    QuickRatingMode = config?.QuickRatingMode ?? false,
 
                     // Social features
                     EnableFriendsButton = config?.EnableFriendsButton ?? false,
