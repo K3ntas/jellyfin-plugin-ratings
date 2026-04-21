@@ -98,6 +98,22 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        /// <summary>
+        /// Checks if the request has admin rights (via session admin OR API key).
+        /// API keys have implicit admin rights since only admins can create them.
+        /// </summary>
+        private bool IsAdminRequest(Guid userId)
+        {
+            // If authenticated but no userId, it's an API key (implicit admin)
+            if (userId == Guid.Empty && User.Identity?.IsAuthenticated == true)
+            {
+                return true;
+            }
+
+            // Otherwise check if user is admin
+            return IsJellyfinAdmin(userId);
+        }
+
         // Pre-compiled regex patterns with timeout protection against ReDoS
         private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
         private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
@@ -1238,12 +1254,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can send test notifications");
                 }
@@ -1560,31 +1571,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                // Try to get user from authentication
                 var userId = User.GetUserId();
 
-                // If userId is empty but request is authenticated, it's an API key
-                // API keys have implicit admin rights, so allow access to admin endpoints
-                bool isApiKeyAuth = userId == Guid.Empty && User.Identity?.IsAuthenticated == true;
-
-                if (!isApiKeyAuth)
+                if (!IsAdminRequest(userId))
                 {
-                    // For session-based auth, verify user exists and is admin
-                    if (userId == Guid.Empty)
-                    {
-                        return Unauthorized("User not authenticated");
-                    }
-
-                    var user = _userManager.GetUserById(userId);
-                    if (user == null)
-                    {
-                        return Unauthorized("User not found");
-                    }
-
-                    if (!IsJellyfinAdmin(userId))
-                    {
-                        return Forbid("Only administrators can view all requests");
-                    }
+                    return Forbid("Only administrators can view all requests");
                 }
                 // API key auth passes through - has implicit admin rights
 
@@ -1640,19 +1631,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                // Verify user exists
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can update request status");
                 }
@@ -1959,12 +1938,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can snooze requests");
                 }
@@ -2032,12 +2006,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can unsnooze requests");
                 }
@@ -2166,12 +2135,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can access media management");
                 }
@@ -2467,12 +2431,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can schedule deletions");
                 }
@@ -2575,12 +2534,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can cancel scheduled deletions");
                 }
@@ -2934,12 +2888,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can view all deletion requests");
                 }
@@ -2998,12 +2947,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can action deletion requests");
                 }
@@ -3131,12 +3075,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can create bans");
                 }
@@ -3216,12 +3155,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can view bans");
                 }
@@ -3280,12 +3214,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can lift bans");
                 }
@@ -3563,7 +3492,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3744,7 +3673,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3893,7 +3822,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3950,7 +3879,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -4001,7 +3930,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -4044,7 +3973,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
