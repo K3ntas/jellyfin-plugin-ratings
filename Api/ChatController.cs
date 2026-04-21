@@ -454,7 +454,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets chat configuration. API keys are NOT exposed to clients.
         /// </summary>
         [HttpGet("Config")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetChatConfig()
         {
             var config = Plugin.Instance?.Configuration;
@@ -478,7 +478,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Supports both Tenor and Klipy APIs.
         /// </summary>
         [HttpGet("GifSearch")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SearchGifs([FromQuery] string query, [FromQuery] int limit = 20)
         {
             var config = Plugin.Instance?.Configuration;
@@ -703,7 +703,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets recent chat messages.
         /// </summary>
         [HttpGet("Messages")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetMessages([FromQuery] DateTime? since, [FromQuery] int limit = 100)
         {
             var config = Plugin.Instance?.Configuration;
@@ -744,7 +744,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sends a chat message.
         /// </summary>
         [HttpPost("Messages")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SendMessage([FromBody] ChatMessageDto dto)
         {
             var config = Plugin.Instance?.Configuration;
@@ -826,7 +826,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Deletes a chat message (admin/moderator only for others' messages).
         /// </summary>
         [HttpDelete("Messages/{messageId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> DeleteMessage([FromRoute] Guid messageId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -889,7 +889,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets online users. Requires authentication.
         /// </summary>
         [HttpGet("Users/Online")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetOnlineUsers()
         {
             var config = Plugin.Instance?.Configuration;
@@ -916,7 +916,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Admin status is determined SERVER-SIDE from Jellyfin permissions.
         /// </summary>
         [HttpPost("Heartbeat")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> Heartbeat()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -943,7 +943,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sets typing status.
         /// </summary>
         [HttpPost("Typing")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SetTyping([FromQuery] bool isTyping)
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -956,7 +956,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Marks messages as read.
         /// </summary>
         [HttpPost("MarkRead")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> MarkRead([FromQuery] Guid messageId)
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -969,7 +969,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets unread message count.
         /// </summary>
         [HttpGet("UnreadCount")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetUnreadCount()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -985,7 +985,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all moderators (admin only).
         /// </summary>
         [HttpGet("Moderators")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetModerators()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -999,7 +999,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Adds a moderator. Admin can add any level, Level 3 can add Level 1-2.
         /// </summary>
         [HttpPost("Moderators")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> AddModerator([FromQuery] Guid targetUserId, [FromQuery] int level = 1)
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -1059,7 +1059,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Removes a moderator. Admin can remove any, Level 3 can remove Level 1-2.
         /// </summary>
         [HttpDelete("Moderators/{moderatorId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> RemoveModerator([FromRoute] Guid moderatorId)
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -1102,7 +1102,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// - media: Level 3+ / Admin
         /// </summary>
         [HttpPost("Ban")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> BanUser(
             [FromQuery] [Required] Guid targetUserId,
             [FromQuery] [Required] string banType,
@@ -1247,7 +1247,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Unbans a user.
         /// </summary>
         [HttpDelete("Ban/{banId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> UnbanUser([FromRoute] Guid banId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1275,7 +1275,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all active bans.
         /// </summary>
         [HttpGet("Bans")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetBans()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1292,7 +1292,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Checks if current user is banned.
         /// </summary>
         [HttpGet("BanStatus")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetBanStatus()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -1313,7 +1313,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all users for moderator selection (admin only).
         /// </summary>
         [HttpGet("Users/All")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetAllUsers()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -1337,7 +1337,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Clears all chat messages (admin only).
         /// </summary>
         [HttpDelete("Messages/Clear")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> ClearAllMessages()
         {
             var userId = await GetCurrentUserIdAsync().ConfigureAwait(false);
@@ -1360,7 +1360,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets users for DM autocomplete.
         /// </summary>
         [HttpGet("DM/Users")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetDMUsers([FromQuery] string? query)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1390,7 +1390,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets DM conversation list for current user.
         /// </summary>
         [HttpGet("DM/Conversations")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetConversations()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1420,7 +1420,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets messages in a DM thread. SECURITY: Verifies user is participant.
         /// </summary>
         [HttpGet("DM/{otherUserId}/Messages")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetDMMessages(
             [FromRoute] Guid otherUserId,
             [FromQuery] DateTime? since,
@@ -1456,7 +1456,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sends a DM to another user. SECURITY: Rate limited, sanitized.
         /// </summary>
         [HttpPost("DM/{otherUserId}/Messages")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SendDM(
             [FromRoute] Guid otherUserId,
             [FromBody] PrivateMessageDto dto)
@@ -1562,7 +1562,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets total unread DM count.
         /// </summary>
         [HttpGet("DM/Unread")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetUnreadDMCount()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1578,7 +1578,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Deletes own DM message.
         /// </summary>
         [HttpDelete("DM/Messages/{messageId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> DeleteDM([FromRoute] Guid messageId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1597,7 +1597,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Deletes entire DM conversation (admin only). Used to clean up conversations with deleted accounts.
         /// </summary>
         [HttpDelete("DM/{otherUserId}/Conversation")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> DeleteDMConversation([FromRoute] Guid otherUserId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1621,7 +1621,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets public chat unread count.
         /// </summary>
         [HttpGet("Public/Unread")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetPublicUnreadCount()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1637,7 +1637,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Marks public chat as read for current user.
         /// </summary>
         [HttpPost("Public/MarkRead")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> MarkPublicChatRead()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1655,7 +1655,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets moderator stats including action counts (admin/mod only).
         /// </summary>
         [HttpGet("Moderators/Stats")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetModeratorStats()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
@@ -1690,7 +1690,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets moderator action log (admin/mod only).
         /// </summary>
         [HttpGet("Moderators/Actions")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetModeratorActions(
             [FromQuery] Guid? moderatorId,
             [FromQuery] int limit = 100)
@@ -1706,7 +1706,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Updates a moderator's level (admin only for level 3, level 3+ for 1-2).
         /// </summary>
         [HttpPut("Moderators/{moderatorId}/Level")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> UpdateModeratorLevel(
             [FromRoute] Guid moderatorId,
             [FromQuery] int level)
@@ -1750,7 +1750,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sets user style override (Level 1+ mods).
         /// </summary>
         [HttpPost("Users/{targetUserId}/Style")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SetUserStyle(
             [FromRoute] Guid targetUserId,
             [FromQuery] string? nicknameColor,
@@ -1811,7 +1811,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Removes user style override (Level 1+ mods).
         /// </summary>
         [HttpDelete("Users/{targetUserId}/Style")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> RemoveUserStyle([FromRoute] Guid targetUserId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1835,7 +1835,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets all user style overrides (mods only).
         /// </summary>
         [HttpGet("Users/Styles")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetAllUserStyles()
         {
             var config = Plugin.Instance?.Configuration;
@@ -1859,7 +1859,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sets media quota for a user (Level 3+ / Admin).
         /// </summary>
         [HttpPost("Users/{targetUserId}/Quota")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> SetMediaQuota(
             [FromRoute] Guid targetUserId,
             [FromQuery] int dailyLimit = 0,
@@ -1919,7 +1919,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Removes media quota for a user (Level 3+ / Admin).
         /// </summary>
         [HttpDelete("Users/{targetUserId}/Quota")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> RemoveMediaQuota([FromRoute] Guid targetUserId)
         {
             var config = Plugin.Instance?.Configuration;
@@ -1944,7 +1944,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets current user's moderator info (level, limits, etc.).
         /// </summary>
         [HttpGet("Moderators/Me")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult> GetMyModeratorInfo()
         {
             var userId = await RequireAuthAsync().ConfigureAwait(false);
