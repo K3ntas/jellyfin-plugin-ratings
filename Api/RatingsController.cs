@@ -1259,12 +1259,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Only administrators can send test notifications");
                 }
 
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
                 // Try to get a random movie, series, or episode from the library
                 Models.NewMediaNotification notification;
                 try
@@ -2140,11 +2134,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Forbid("Only administrators can access media management");
                 }
 
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
+                // Get user for play count data (null for API key auth)
+                var user = userId != Guid.Empty ? _userManager.GetUserById(userId) : null;
 
                 // Cap pageSize to prevent abuse
                 pageSize = Math.Clamp(pageSize, 1, 200);
@@ -2250,7 +2241,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                             catch { }
                         }
 
-                        if (sortField == "playcount")
+                        if (sortField == "playcount" && user != null)
                         {
                             if (item is MediaBrowser.Controller.Entities.Movies.Movie playMovie)
                             {
@@ -2340,39 +2331,45 @@ namespace Jellyfin.Plugin.Ratings.Api
                         }
                         catch { }
 
-                        try
+                        if (user != null)
                         {
-                            var userData = _userDataManager.GetUserData(user, item);
-                            if (userData != null)
+                            try
                             {
-                                stat.PlayCount = userData.PlayCount;
+                                var userData = _userDataManager.GetUserData(user, item);
+                                if (userData != null)
+                                {
+                                    stat.PlayCount = userData.PlayCount;
+                                }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                     else if (item is MediaBrowser.Controller.Entities.TV.Series series)
                     {
                         // Series: sum play counts from all episodes
-                        try
+                        if (user != null)
                         {
-                            var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                            try
                             {
-                                IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
-                                AncestorIds = new[] { series.Id },
-                                Recursive = true
-                            };
-                            var episodes = _libraryManager.GetItemList(episodeQuery);
-
-                            foreach (var episode in episodes)
-                            {
-                                var epUserData = _userDataManager.GetUserData(user, episode);
-                                if (epUserData != null)
+                                var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
                                 {
-                                    stat.PlayCount += epUserData.PlayCount;
+                                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                                    AncestorIds = new[] { series.Id },
+                                    Recursive = true
+                                };
+                                var episodes = _libraryManager.GetItemList(episodeQuery);
+
+                                foreach (var episode in episodes)
+                                {
+                                    var epUserData = _userDataManager.GetUserData(user, episode);
+                                    if (epUserData != null)
+                                    {
+                                        stat.PlayCount += epUserData.PlayCount;
+                                    }
                                 }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                 }
 
