@@ -1563,43 +1563,30 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Try to get user from authentication
                 var userId = User.GetUserId();
 
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+                // If userId is empty but request is authenticated, it's an API key
+                // API keys have implicit admin rights, so allow access to admin endpoints
+                bool isApiKeyAuth = userId == Guid.Empty && User.Identity?.IsAuthenticated == true;
 
-                    if (!string.IsNullOrEmpty(authHeader))
+                if (!isApiKeyAuth)
+                {
+                    // For session-based auth, verify user exists and is admin
+                    if (userId == Guid.Empty)
                     {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
+                        return Unauthorized("User not authenticated");
+                    }
+
+                    var user = _userManager.GetUserById(userId);
+                    if (user == null)
+                    {
+                        return Unauthorized("User not found");
+                    }
+
+                    if (!IsJellyfinAdmin(userId))
+                    {
+                        return Forbid("Only administrators can view all requests");
                     }
                 }
-
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                // Verify user exists
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
-                if (!IsJellyfinAdmin(userId))
-                {
-                    return Forbid("Only administrators can view all requests");
-                }
+                // API key auth passes through - has implicit admin rights
 
                 var requests = await _repository.GetAllMediaRequestsAsync().ConfigureAwait(false);
                 return Ok(requests);
