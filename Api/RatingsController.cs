@@ -98,6 +98,22 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        /// <summary>
+        /// Checks if the request has admin rights (via session admin OR API key).
+        /// API keys have implicit admin rights since only admins can create them.
+        /// </summary>
+        private bool IsAdminRequest(Guid userId)
+        {
+            // If authenticated but no userId, it's an API key (implicit admin)
+            if (userId == Guid.Empty && User.Identity?.IsAuthenticated == true)
+            {
+                return true;
+            }
+
+            // Otherwise check if user is admin
+            return IsJellyfinAdmin(userId);
+        }
+
         // Pre-compiled regex patterns with timeout protection against ReDoS
         private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
         private static readonly Regex HtmlTagRegex = new(@"<[^>]*?>", RegexOptions.Compiled, RegexTimeout);
@@ -205,6 +221,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="review">Optional review text.</param>
         /// <returns>The created or updated rating.</returns>
         [HttpPost("Items/{itemId}/Rating")]
+        [Authorize]
         public async Task<ActionResult<UserRating>> SetRating(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] [Range(1, 10)] int rating,
@@ -324,6 +341,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>Rating statistics.</returns>
         [HttpGet("Items/{itemId}/Stats")]
+        [Authorize]
         public async Task<ActionResult<RatingStats>> GetRatingStats([FromRoute] [Required] Guid itemId)
         {
             try
@@ -457,6 +475,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userId">Optional user ID. If not provided, returns ratings for the authenticated user.</param>
         /// <returns>List of all ratings by the user.</returns>
         [HttpGet("Users/{userId}/Ratings")]
+        [Authorize]
         public async Task<ActionResult<List<UserRating>>> GetUserRatings([FromRoute] Guid? userId = null)
         {
             try
@@ -516,6 +535,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all ratings by the current user.</returns>
         [HttpGet("MyRatings")]
+        [Authorize]
         public async Task<ActionResult<List<UserRating>>> GetMyRatings()
         {
             try
@@ -573,6 +593,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="parentId">Optional parent library ID to filter by.</param>
         /// <returns>Paginated list of sorted items.</returns>
         [HttpGet("SortedLibrary")]
+        [Authorize]
         public async Task<ActionResult> GetSortedLibrary(
             [FromQuery] string sortBy = "local",
             [FromQuery] string direction = "desc",
@@ -795,6 +816,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Items/{itemId}/Rating")]
+        [Authorize]
         public async Task<ActionResult> DeleteRating([FromRoute] [Required] Guid itemId)
         {
             try
@@ -850,6 +872,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">Item ID.</param>
         /// <returns>List of detailed ratings with usernames.</returns>
         [HttpGet("Items/{itemId}/DetailedRatings")]
+        [Authorize]
         public async Task<ActionResult<List<UserRatingDetail>>> GetDetailedRatings([FromRoute] [Required] Guid itemId)
         {
             try
@@ -904,6 +927,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="isLike">True for like, false for dislike.</param>
         /// <returns>Success status.</returns>
         [HttpPost("Reviews/{reviewerUserId}/{itemId}/Like")]
+        [Authorize]
         public async Task<ActionResult> LikeReview(
             [FromRoute] [Required] Guid reviewerUserId,
             [FromRoute] [Required] Guid itemId,
@@ -961,6 +985,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="review">Review text (empty to clear).</param>
         /// <returns>The updated rating.</returns>
         [HttpPut("Items/{itemId}/Review")]
+        [Authorize]
         public async Task<ActionResult<UserRating>> UpdateReview(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] string? review = null)
@@ -1154,7 +1179,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="since">ISO 8601 timestamp to get notifications since.</param>
         /// <returns>List of notifications.</returns>
         [HttpGet("Notifications")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult<List<Models.NewMediaNotification>>> GetNotifications([FromQuery] string? since = null)
         {
             try
@@ -1200,6 +1225,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="message">Optional custom message for the notification.</param>
         /// <returns>The created test notification.</returns>
         [HttpPost("Notifications/Test")]
+        [Authorize]
         public async Task<ActionResult<Models.NewMediaNotification>> SendTestNotification([FromQuery] string? message = null)
         {
             try
@@ -1228,20 +1254,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can send test notifications");
-                }
-
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
                 }
 
                 // Try to get a random movie, series, or episode from the library
@@ -1414,6 +1429,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The media request data.</param>
         /// <returns>The created request.</returns>
         [HttpPost("Requests")]
+        [Authorize]
         public async Task<ActionResult<MediaRequest>> CreateMediaRequest([FromBody] [Required] MediaRequestDto request)
         {
             try
@@ -1544,50 +1560,18 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all media requests.</returns>
         [HttpGet("Requests")]
+        [Authorize]
         public async Task<ActionResult<List<MediaRequest>>> GetMediaRequests()
         {
             try
             {
-                // Try to get user from authentication
                 var userId = User.GetUserId();
 
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
-
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                // Check if user exists - admin check will be done on client side
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can view all requests");
                 }
+                // API key auth passes through - has implicit admin rights
 
                 var requests = await _repository.GetAllMediaRequestsAsync().ConfigureAwait(false);
                 return Ok(requests);
@@ -1608,6 +1592,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Status")]
+        [Authorize]
         public async Task<ActionResult<MediaRequest>> UpdateRequestStatus(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string status,
@@ -1640,19 +1625,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                // Check if user exists - admin check will be done on client side
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can update request status");
                 }
@@ -1687,6 +1660,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="requestId">The request ID to delete.</param>
         /// <returns>Success or failure.</returns>
         [HttpDelete("Requests/{requestId}")]
+        [Authorize]
         public async Task<ActionResult> DeleteRequest([FromRoute] [Required] Guid requestId)
         {
             try
@@ -1762,6 +1736,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of requests made by the current user.</returns>
         [HttpGet("Requests/My")]
+        [Authorize]
         public async Task<ActionResult<List<MediaRequest>>> GetMyRequests()
         {
             try
@@ -1821,6 +1796,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The updated request data.</param>
         /// <returns>The updated request.</returns>
         [HttpPut("Requests/{requestId}")]
+        [Authorize]
         public async Task<ActionResult<MediaRequest>> UpdateMediaRequest(
             [FromRoute] [Required] Guid requestId,
             [FromBody] [Required] MediaRequestDto request)
@@ -1925,6 +1901,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="snoozedUntil">The date until which to snooze (ISO 8601 format).</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Snooze")]
+        [Authorize]
         public async Task<ActionResult<MediaRequest>> SnoozeRequest(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string snoozedUntil)
@@ -1955,12 +1932,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can snooze requests");
                 }
@@ -1999,6 +1971,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="requestId">The request ID.</param>
         /// <returns>The updated request.</returns>
         [HttpPost("Requests/{requestId}/Unsnooze")]
+        [Authorize]
         public async Task<ActionResult<MediaRequest>> UnsnoozeRequest([FromRoute] [Required] Guid requestId)
         {
             try
@@ -2027,12 +2000,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can unsnooze requests");
                 }
@@ -2059,6 +2027,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>Request count info.</returns>
         [HttpGet("Requests/Count")]
+        [Authorize]
         public async Task<ActionResult> GetRequestCount()
         {
             try
@@ -2124,6 +2093,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="pageSize">Items per page (default 50).</param>
         /// <returns>Paginated list of media items with stats.</returns>
         [HttpGet("Media")]
+        [Authorize]
         public async Task<ActionResult<object>> GetMediaItems(
             [FromQuery] string? search = null,
             [FromQuery] string? type = null,
@@ -2159,21 +2129,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can access media management");
                 }
 
-                var user = _userManager.GetUserById(userId);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
+                // Get user for play count data (null for API key auth)
+                var user = userId != Guid.Empty ? _userManager.GetUserById(userId) : null;
 
                 // Cap pageSize to prevent abuse
                 pageSize = Math.Clamp(pageSize, 1, 200);
@@ -2279,7 +2241,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                             catch { }
                         }
 
-                        if (sortField == "playcount")
+                        if (sortField == "playcount" && user != null)
                         {
                             if (item is MediaBrowser.Controller.Entities.Movies.Movie playMovie)
                             {
@@ -2369,39 +2331,45 @@ namespace Jellyfin.Plugin.Ratings.Api
                         }
                         catch { }
 
-                        try
+                        if (user != null)
                         {
-                            var userData = _userDataManager.GetUserData(user, item);
-                            if (userData != null)
+                            try
                             {
-                                stat.PlayCount = userData.PlayCount;
+                                var userData = _userDataManager.GetUserData(user, item);
+                                if (userData != null)
+                                {
+                                    stat.PlayCount = userData.PlayCount;
+                                }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                     else if (item is MediaBrowser.Controller.Entities.TV.Series series)
                     {
                         // Series: sum play counts from all episodes
-                        try
+                        if (user != null)
                         {
-                            var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                            try
                             {
-                                IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
-                                AncestorIds = new[] { series.Id },
-                                Recursive = true
-                            };
-                            var episodes = _libraryManager.GetItemList(episodeQuery);
-
-                            foreach (var episode in episodes)
-                            {
-                                var epUserData = _userDataManager.GetUserData(user, episode);
-                                if (epUserData != null)
+                                var episodeQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
                                 {
-                                    stat.PlayCount += epUserData.PlayCount;
+                                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                                    AncestorIds = new[] { series.Id },
+                                    Recursive = true
+                                };
+                                var episodes = _libraryManager.GetItemList(episodeQuery);
+
+                                foreach (var episode in episodes)
+                                {
+                                    var epUserData = _userDataManager.GetUserData(user, episode);
+                                    if (epUserData != null)
+                                    {
+                                        stat.PlayCount += epUserData.PlayCount;
+                                    }
                                 }
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                 }
 
@@ -2428,6 +2396,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="delayDays">Number of days until deletion.</param>
         /// <returns>The scheduled deletion.</returns>
         [HttpPost("Media/{itemId}/ScheduleDeletion")]
+        [Authorize]
         public async Task<ActionResult<ScheduledDeletion>> ScheduleDeletion(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] int? delayDays = null,
@@ -2459,12 +2428,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can schedule deletions");
                 }
@@ -2538,6 +2502,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">The item ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Media/{itemId}/ScheduleDeletion")]
+        [Authorize]
         public async Task<ActionResult> CancelScheduledDeletion([FromRoute] [Required] Guid itemId)
         {
             try
@@ -2566,12 +2531,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can cancel scheduled deletions");
                 }
@@ -2604,7 +2564,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of scheduled deletions with keep request info.</returns>
         [HttpGet("ScheduledDeletions")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult<List<object>>> GetScheduledDeletions()
         {
             try
@@ -2665,7 +2625,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="itemId">The item ID.</param>
         /// <returns>Result of the keep request.</returns>
         [HttpPost("KeepRequest/{itemId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult<object>> SubmitKeepRequest([FromRoute] [Required] Guid itemId)
         {
             try
@@ -2759,6 +2719,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="request">The deletion request data.</param>
         /// <returns>The created deletion request.</returns>
         [HttpPost("DeletionRequests")]
+        [Authorize]
         public async Task<ActionResult<DeletionRequest>> CreateDeletionRequest([FromBody] [Required] DeletionRequestDto request)
         {
             try
@@ -2895,6 +2856,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>List of all deletion requests.</returns>
         [HttpGet("DeletionRequests")]
+        [Authorize]
         public async Task<ActionResult<List<DeletionRequest>>> GetDeletionRequests()
         {
             try
@@ -2923,12 +2885,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can view all deletion requests");
                 }
@@ -2953,6 +2910,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="rejectionReason">Optional rejection reason when rejecting.</param>
         /// <returns>The updated deletion request.</returns>
         [HttpPost("DeletionRequests/{requestId}/Action")]
+        [Authorize]
         public async Task<ActionResult<DeletionRequest>> ActionDeletionRequest(
             [FromRoute] [Required] Guid requestId,
             [FromQuery] [Required] string action,
@@ -2986,12 +2944,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                if (userId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Only administrators can action deletion requests");
                 }
@@ -3110,6 +3063,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="duration">Duration: 1d, 1w, 1m, or permanent.</param>
         /// <returns>The created ban.</returns>
         [HttpPost("Bans")]
+        [Authorize]
         public async Task<ActionResult<UserBan>> CreateBan(
             [FromQuery] [Required] Guid userId,
             [FromQuery] [Required] string banType,
@@ -3118,12 +3072,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can create bans");
                 }
@@ -3197,17 +3146,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banType">The ban type.</param>
         /// <returns>List of active bans.</returns>
         [HttpGet("Bans")]
+        [Authorize]
         public async Task<ActionResult<List<UserBan>>> GetBans([FromQuery] [Required] string banType)
         {
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can view bans");
                 }
@@ -3228,6 +3173,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banType">The ban type.</param>
         /// <returns>Ban info or null.</returns>
         [HttpGet("Bans/Check")]
+        [Authorize]
         public async Task<ActionResult> CheckBan([FromQuery] [Required] string banType)
         {
             try
@@ -3259,17 +3205,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="banId">The ban ID.</param>
         /// <returns>Success status.</returns>
         [HttpDelete("Bans/{banId}")]
+        [Authorize]
         public async Task<ActionResult> LiftBan([FromRoute] [Required] Guid banId)
         {
             try
             {
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (adminId == Guid.Empty)
-                {
-                    return Unauthorized("User not authenticated");
-                }
-
-                if (!IsJellyfinAdmin(adminId))
+                if (!IsAdminRequest(adminId))
                 {
                     return Forbid("Only administrators can lift bans");
                 }
@@ -3541,12 +3483,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets disk usage information for all physical drives.
         /// </summary>
         [HttpGet("Admin/DiskUsage")]
+        [Authorize]
         public async Task<ActionResult> GetDiskUsage()
         {
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3721,12 +3664,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Episodes are excluded (they share IMDB ID with parent series).
         /// </summary>
         [HttpGet("Admin/Duplicates")]
+        [Authorize]
         public async Task<ActionResult> GetDuplicates()
         {
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3867,6 +3811,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Deletes a duplicate item.
         /// </summary>
         [HttpDelete("Admin/Duplicates/{itemId}")]
+        [Authorize]
         public async Task<ActionResult> DeleteDuplicate(
             [FromRoute] [Required] Guid itemId,
             [FromQuery] bool deleteFile = false)
@@ -3874,7 +3819,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3925,12 +3870,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Schedules a server restart with countdown notification.
         /// </summary>
         [HttpPost("Admin/ScheduleRestart")]
+        [Authorize]
         public async Task<ActionResult> ScheduleRestart([FromBody] RestartRequest request)
         {
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -3975,12 +3921,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Cancels a scheduled server restart.
         /// </summary>
         [HttpDelete("Admin/ScheduleRestart")]
+        [Authorize]
         public async Task<ActionResult> CancelRestart()
         {
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
@@ -4017,12 +3964,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets the current restart status.
         /// </summary>
         [HttpGet("Admin/RestartStatus")]
+        [Authorize]
         public async Task<ActionResult> GetRestartStatus()
         {
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
-                if (!IsJellyfinAdmin(userId))
+                if (!IsAdminRequest(userId))
                 {
                     return Forbid("Admin access required");
                 }
