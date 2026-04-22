@@ -39,6 +39,13 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _keepRequestsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _reviewLikesWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
+
+        // Secondary indexes for fast lookups (O(1) instead of O(n))
+        private Dictionary<Guid, List<UserRating>> _ratingsByItemId;
+        private Dictionary<string, List<UserRating>> _ratingsByTmdbId;
+        private Dictionary<string, List<UserRating>> _ratingsByImdbId;
+        private Dictionary<string, List<UserRating>> _ratingsByAniDbId;
+
         private Dictionary<Guid, ReviewLike> _reviewLikes;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
         private List<NewMediaNotification> _notifications;
@@ -67,6 +74,10 @@ namespace Jellyfin.Plugin.Ratings.Data
             _logger = logger;
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings");
             _ratings = new Dictionary<Guid, UserRating>();
+            _ratingsByItemId = new Dictionary<Guid, List<UserRating>>();
+            _ratingsByTmdbId = new Dictionary<string, List<UserRating>>();
+            _ratingsByImdbId = new Dictionary<string, List<UserRating>>();
+            _ratingsByAniDbId = new Dictionary<string, List<UserRating>>();
             _reviewLikes = new Dictionary<Guid, ReviewLike>();
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
             _notifications = new List<NewMediaNotification>();
@@ -149,6 +160,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                     if (ratings != null)
                     {
                         _ratings = ratings.ToDictionary(r => r.Id);
+                        RebuildRatingIndexes();
                         _logger.LogInformation("Loaded {Count} ratings from disk", _ratings.Count);
                     }
                 }
@@ -157,6 +169,144 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 _logger.LogError(ex, "Error loading ratings from disk");
             }
+        }
+
+        /// <summary>
+        /// Rebuilds all secondary indexes for ratings. Must be called inside lock.
+        /// </summary>
+        private void RebuildRatingIndexes()
+        {
+            _ratingsByItemId = new Dictionary<Guid, List<UserRating>>();
+            _ratingsByTmdbId = new Dictionary<string, List<UserRating>>();
+            _ratingsByImdbId = new Dictionary<string, List<UserRating>>();
+            _ratingsByAniDbId = new Dictionary<string, List<UserRating>>();
+
+            foreach (var rating in _ratings.Values)
+            {
+                AddRatingToIndexes(rating);
+            }
+        }
+
+        /// <summary>
+        /// Adds a rating to all applicable indexes. Must be called inside lock.
+        /// </summary>
+        private void AddRatingToIndexes(UserRating rating)
+        {
+            // Index by ItemId
+            if (!_ratingsByItemId.TryGetValue(rating.ItemId, out var itemList))
+            {
+                itemList = new List<UserRating>();
+                _ratingsByItemId[rating.ItemId] = itemList;
+            }
+
+            itemList.Add(rating);
+
+            // Index by TmdbId
+            if (!string.IsNullOrEmpty(rating.TmdbId))
+            {
+                if (!_ratingsByTmdbId.TryGetValue(rating.TmdbId, out var tmdbList))
+                {
+                    tmdbList = new List<UserRating>();
+                    _ratingsByTmdbId[rating.TmdbId] = tmdbList;
+                }
+
+                tmdbList.Add(rating);
+            }
+
+            // Index by ImdbId
+            if (!string.IsNullOrEmpty(rating.ImdbId))
+            {
+                if (!_ratingsByImdbId.TryGetValue(rating.ImdbId, out var imdbList))
+                {
+                    imdbList = new List<UserRating>();
+                    _ratingsByImdbId[rating.ImdbId] = imdbList;
+                }
+
+                imdbList.Add(rating);
+            }
+
+            // Index by AniDbId
+            if (!string.IsNullOrEmpty(rating.AniDbId))
+            {
+                if (!_ratingsByAniDbId.TryGetValue(rating.AniDbId, out var anidbList))
+                {
+                    anidbList = new List<UserRating>();
+                    _ratingsByAniDbId[rating.AniDbId] = anidbList;
+                }
+
+                anidbList.Add(rating);
+            }
+        }
+
+        /// <summary>
+        /// Removes a rating from all indexes. Must be called inside lock.
+        /// </summary>
+        private void RemoveRatingFromIndexes(UserRating rating)
+        {
+            // Remove from ItemId index
+            if (_ratingsByItemId.TryGetValue(rating.ItemId, out var itemList))
+            {
+                itemList.Remove(rating);
+                if (itemList.Count == 0)
+                {
+                    _ratingsByItemId.Remove(rating.ItemId);
+                }
+            }
+
+            // Remove from TmdbId index
+            if (!string.IsNullOrEmpty(rating.TmdbId) && _ratingsByTmdbId.TryGetValue(rating.TmdbId, out var tmdbList))
+            {
+                tmdbList.Remove(rating);
+                if (tmdbList.Count == 0)
+                {
+                    _ratingsByTmdbId.Remove(rating.TmdbId);
+                }
+            }
+
+            // Remove from ImdbId index
+            if (!string.IsNullOrEmpty(rating.ImdbId) && _ratingsByImdbId.TryGetValue(rating.ImdbId, out var imdbList))
+            {
+                imdbList.Remove(rating);
+                if (imdbList.Count == 0)
+                {
+                    _ratingsByImdbId.Remove(rating.ImdbId);
+                }
+            }
+
+            // Remove from AniDbId index
+            if (!string.IsNullOrEmpty(rating.AniDbId) && _ratingsByAniDbId.TryGetValue(rating.AniDbId, out var anidbList))
+            {
+                anidbList.Remove(rating);
+                if (anidbList.Count == 0)
+                {
+                    _ratingsByAniDbId.Remove(rating.AniDbId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates indexes when a rating's ItemId changes. Must be called inside lock.
+        /// </summary>
+        private void UpdateRatingItemIdIndex(UserRating rating, Guid oldItemId)
+        {
+            // Remove from old ItemId index
+            if (_ratingsByItemId.TryGetValue(oldItemId, out var oldList))
+            {
+                oldList.Remove(rating);
+                if (oldList.Count == 0)
+                {
+                    _ratingsByItemId.Remove(oldItemId);
+                }
+            }
+
+            // Add to new ItemId index
+            if (!_ratingsByItemId.TryGetValue(rating.ItemId, out var newList))
+            {
+                newList = new List<UserRating>();
+                _ratingsByItemId[rating.ItemId] = newList;
+            }
+
+            newList.Add(rating);
         }
 
         /// <summary>
@@ -232,7 +382,9 @@ namespace Jellyfin.Plugin.Ratings.Data
                     // Update ItemId if it changed (media was replaced)
                     if (existing.ItemId != itemId)
                     {
+                        var oldItemId = existing.ItemId;
                         existing.ItemId = itemId;
+                        UpdateRatingItemIdIndex(existing, oldItemId);
                     }
 
                     // Update provider IDs if they were missing
@@ -273,6 +425,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 };
 
                 _ratings[newRating.Id] = newRating;
+                AddRatingToIndexes(newRating);
                 _ = SaveRatingsAsync();
                 return newRating;
             }
@@ -333,69 +486,59 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                var ratings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
-
-                // If no ratings by ItemId, try provider ID fallback
-                if (ratings.Count == 0 && !string.IsNullOrEmpty(tmdbId))
-                {
-                    ratings = _ratings.Values.Where(r => r.TmdbId == tmdbId).ToList();
-                }
-
-                if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
-                {
-                    ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
-                }
-
-                if (ratings.Count == 0 && !string.IsNullOrEmpty(aniDbId))
-                {
-                    ratings = _ratings.Values.Where(r => r.AniDbId == aniDbId).ToList();
-                }
-
-                // Auto-migrate ItemIds for ratings found by provider ID
-                bool needsSave = false;
-                foreach (var rating in ratings.Where(r => r.ItemId != itemId))
-                {
-                    rating.ItemId = itemId;
-                    needsSave = true;
-                }
-
-                if (needsSave)
-                {
-                    _ = SaveRatingsAsync();
-                }
-
-                return ratings;
+                return GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
             }
         }
 
         /// <summary>
         /// Internal helper for GetItemRatings without lock (for use within already-locked methods).
+        /// Uses secondary indexes for O(1) lookup instead of O(n) scan.
         /// </summary>
         private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId, string? aniDbId = null)
         {
-            var ratings = _ratings.Values.Where(r => r.ItemId == itemId).ToList();
+            // Use index for O(1) lookup by ItemId
+            List<UserRating> ratings;
+            if (_ratingsByItemId.TryGetValue(itemId, out var itemList))
+            {
+                ratings = itemList.ToList();
+            }
+            else
+            {
+                ratings = new List<UserRating>();
+            }
 
-            // If no ratings by ItemId, try provider ID fallback
+            // If no ratings by ItemId, try provider ID fallback using indexes
             if (ratings.Count == 0 && !string.IsNullOrEmpty(tmdbId))
             {
-                ratings = _ratings.Values.Where(r => r.TmdbId == tmdbId).ToList();
+                if (_ratingsByTmdbId.TryGetValue(tmdbId, out var tmdbList))
+                {
+                    ratings = tmdbList.ToList();
+                }
             }
 
             if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
             {
-                ratings = _ratings.Values.Where(r => r.ImdbId == imdbId).ToList();
+                if (_ratingsByImdbId.TryGetValue(imdbId, out var imdbList))
+                {
+                    ratings = imdbList.ToList();
+                }
             }
 
             if (ratings.Count == 0 && !string.IsNullOrEmpty(aniDbId))
             {
-                ratings = _ratings.Values.Where(r => r.AniDbId == aniDbId).ToList();
+                if (_ratingsByAniDbId.TryGetValue(aniDbId, out var anidbList))
+                {
+                    ratings = anidbList.ToList();
+                }
             }
 
             // Auto-migrate ItemIds for ratings found by provider ID
             bool needsSave = false;
             foreach (var rating in ratings.Where(r => r.ItemId != itemId))
             {
+                var oldItemId = rating.ItemId;
                 rating.ItemId = itemId;
+                UpdateRatingItemIdIndex(rating, oldItemId);
                 needsSave = true;
             }
 
@@ -499,6 +642,54 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets rating statistics for multiple items in a single lock acquisition.
+        /// Much more efficient than calling GetRatingStats for each item separately.
+        /// </summary>
+        /// <param name="items">List of tuples containing (ItemId, TmdbId, ImdbId, AniDbId).</param>
+        /// <param name="userId">Optional user ID to include user's rating.</param>
+        /// <returns>Dictionary of item ID to rating statistics.</returns>
+        public Dictionary<string, RatingStats> GetBatchRatingStats(
+            List<(Guid ItemId, string? TmdbId, string? ImdbId, string? AniDbId)> items,
+            Guid? userId = null)
+        {
+            var result = new Dictionary<string, RatingStats>();
+
+            lock (_lock)
+            {
+                foreach (var (itemId, tmdbId, imdbId, aniDbId) in items)
+                {
+                    var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
+                    var stats = new RatingStats
+                    {
+                        ItemId = itemId,
+                        TotalRatings = itemRatings.Count
+                    };
+
+                    if (itemRatings.Count > 0)
+                    {
+                        stats.AverageRating = Math.Round(itemRatings.Average(r => r.Rating), 2);
+
+                        // Calculate distribution
+                        for (int i = 1; i <= 10; i++)
+                        {
+                            stats.Distribution[i - 1] = itemRatings.Count(r => r.Rating == i);
+                        }
+                    }
+
+                    if (userId.HasValue)
+                    {
+                        var userRating = itemRatings.FirstOrDefault(r => r.UserId == userId.Value);
+                        stats.UserRating = userRating?.Rating;
+                    }
+
+                    result[itemId.ToString()] = stats;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Deletes a user's rating for an item.
         /// </summary>
         /// <param name="userId">User ID.</param>
@@ -511,6 +702,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 var existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
                 if (existing != null)
                 {
+                    RemoveRatingFromIndexes(existing);
                     _ratings.Remove(existing.Id);
                     _ = SaveRatingsAsync();
                     return true;

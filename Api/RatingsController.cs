@@ -468,15 +468,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var userId = User.GetUserId();
-                var result = new Dictionary<string, RatingStats>();
 
-                // Batch fetch items from library manager
-                var items = ids.Select(id => _libraryManager.GetItemById(id))
-                    .Where(item => item != null)
-                    .ToList();
-
-                foreach (var item in items)
+                // Batch fetch items from library manager and extract provider IDs
+                var itemsWithProviders = new List<(Guid ItemId, string? TmdbId, string? ImdbId, string? AniDbId)>();
+                foreach (var id in ids)
                 {
+                    var item = _libraryManager.GetItemById(id);
                     if (item == null) continue;
 
                     string? tmdbId = null;
@@ -489,9 +486,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                         item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                     }
 
-                    var stats = _repository.GetRatingStats(item.Id, userId != Guid.Empty ? userId : null, tmdbId, imdbId, aniDbId);
-                    result[item.Id.ToString()] = stats;
+                    itemsWithProviders.Add((item.Id, tmdbId, imdbId, aniDbId));
                 }
+
+                // Use batch method - single lock acquisition for all items
+                var result = _repository.GetBatchRatingStats(itemsWithProviders, userId != Guid.Empty ? userId : null);
 
                 return Ok(result);
             }
