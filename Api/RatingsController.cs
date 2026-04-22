@@ -792,29 +792,22 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
                 else
                 {
-                    // For non-rating sorts (imdb, release, added), use Jellyfin's native sorting
-                    // but only on items that have local ratings (to keep consistent with rating feature)
+                    // For non-rating sorts (imdb, release, added), show ALL items from library
+                    // Get rating stats for display purposes only (not filtering)
                     var allRatings = _repository.GetAllItemRatingStats();
 
-                    // Filter by library if parentId was provided
-                    if (libraryItemIds != null)
-                    {
-                        allRatings = allRatings.Where(kv => libraryItemIds.Contains(kv.Key))
-                            .ToDictionary(kv => kv.Key, kv => kv.Value);
-                    }
-
-                    if (allRatings.Count == 0)
-                    {
-                        return Ok(new { items = new List<object>(), totalCount = 0, page, limit });
-                    }
-
-                    var ratedItemIds = allRatings.Keys.ToArray();
-
+                    // Query ALL items from the library (not just rated ones)
                     var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
                     {
-                        ItemIds = ratedItemIds,
-                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo }
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
+                        Recursive = true
                     };
+
+                    // Filter by library if parentId was provided
+                    if (parentGuid.HasValue)
+                    {
+                        query.ParentId = parentGuid.Value;
+                    }
 
                     var items = _libraryManager.GetItemList(query);
 
