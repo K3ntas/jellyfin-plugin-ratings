@@ -682,7 +682,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                         stats.UserRating = userRating?.Rating;
                     }
 
-                    result[itemId.ToString()] = stats;
+                    result[itemId.ToString("N")] = stats;
                 }
             }
 
