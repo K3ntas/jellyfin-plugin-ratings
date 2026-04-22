@@ -438,6 +438,71 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets rating stats for multiple items in a single request.
+        /// This is much more efficient than calling GetRatingStats for each item individually.
+        /// </summary>
+        /// <param name="itemIds">Comma-separated list of item IDs.</param>
+        /// <returns>Dictionary of item ID to rating stats.</returns>
+        [HttpGet("Items/BatchStats")]
+        [Authorize]
+        public ActionResult<Dictionary<string, RatingStats>> GetBatchRatingStats([FromQuery] [Required] string itemIds)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(itemIds))
+                {
+                    return BadRequest("itemIds is required");
+                }
+
+                var ids = itemIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(id => id.Trim())
+                    .Where(id => Guid.TryParse(id, out _))
+                    .Select(id => Guid.Parse(id))
+                    .Distinct()
+                    .Take(100) // Limit to 100 items per request
+                    .ToList();
+
+                if (ids.Count == 0)
+                {
+                    return BadRequest("No valid item IDs provided");
+                }
+
+                var userId = User.GetUserId();
+                var result = new Dictionary<string, RatingStats>();
+
+                // Batch fetch items from library manager
+                var items = ids.Select(id => _libraryManager.GetItemById(id))
+                    .Where(item => item != null)
+                    .ToList();
+
+                foreach (var item in items)
+                {
+                    if (item == null) continue;
+
+                    string? tmdbId = null;
+                    string? imdbId = null;
+                    string? aniDbId = null;
+                    if (item.ProviderIds != null)
+                    {
+                        item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
+                        item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                        item.ProviderIds.TryGetValue("AniDB", out aniDbId);
+                    }
+
+                    var stats = _repository.GetRatingStats(item.Id, userId != Guid.Empty ? userId : null, tmdbId, imdbId, aniDbId);
+                    result[item.Id.ToString()] = stats;
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting batch rating stats");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Gets the current user's rating for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>

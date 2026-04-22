@@ -14243,6 +14243,111 @@
             });
         },
 
+        // Batch queue for rating fetches
+        _pendingRatingQueue: [],
+        _batchFetchTimer: null,
+
+        /**
+         * Queue a card for batch rating fetch
+         */
+        queueCardForRating: function (imageContainer, itemId) {
+            const self = this;
+
+            // Check cache first
+            if (self.ratingsCache[itemId] !== undefined) {
+                if (self.ratingsCache[itemId] !== null) {
+                    self.createAndPositionOverlay(imageContainer, self.ratingsCache[itemId], itemId);
+                }
+                return;
+            }
+
+            // Add to queue
+            self._pendingRatingQueue.push({ imageContainer, itemId });
+
+            // Debounce batch fetch - wait 100ms for more items
+            if (self._batchFetchTimer) {
+                clearTimeout(self._batchFetchTimer);
+            }
+            self._batchFetchTimer = setTimeout(() => {
+                self.fetchBatchRatings();
+            }, 100);
+        },
+
+        /**
+         * Fetch ratings for all queued items in a single batch request
+         */
+        fetchBatchRatings: function () {
+            const self = this;
+            if (self._pendingRatingQueue.length === 0) return;
+
+            // Get all pending items and clear queue
+            const pendingItems = self._pendingRatingQueue.slice();
+            self._pendingRatingQueue = [];
+
+            // Filter out items already in cache
+            const uncachedItems = pendingItems.filter(item => self.ratingsCache[item.itemId] === undefined);
+            if (uncachedItems.length === 0) {
+                // All items were cached, apply them
+                pendingItems.forEach(item => {
+                    if (self.ratingsCache[item.itemId] !== null) {
+                        self.createAndPositionOverlay(item.imageContainer, self.ratingsCache[item.itemId], item.itemId);
+                    }
+                });
+                return;
+            }
+
+            // Build batch request
+            const itemIds = uncachedItems.map(item => item.itemId).join(',');
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Items/BatchStats?itemIds=${encodeURIComponent(itemIds)}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(batchStats => {
+                // Update cache and apply overlays
+                pendingItems.forEach(item => {
+                    const stats = batchStats[item.itemId];
+                    if (stats && stats.TotalRatings > 0) {
+                        self.ratingsCache[item.itemId] = stats;
+                        self.createAndPositionOverlay(item.imageContainer, stats, item.itemId);
+                    } else {
+                        self.ratingsCache[item.itemId] = null;
+                    }
+                });
+            })
+            .catch(err => {
+                console.error('Batch rating fetch failed:', err);
+                // Mark all as null to avoid retrying
+                pendingItems.forEach(item => {
+                    self.ratingsCache[item.itemId] = null;
+                });
+            });
+        },
+
         /**
          * Observe home page cards and add rating overlays
          */
@@ -14272,8 +14377,8 @@
                             return;
                         }
 
-                        // Fetch rating for this item (with caching)
-                        self.addCardRating(imageContainer, itemId);
+                        // Queue for batch fetch instead of fetching immediately
+                        self.queueCardForRating(imageContainer, itemId);
 
                         // Stop observing this card once we've processed it
                         // Note: Leaving badges are handled by updateDeletionBadges() which runs periodically
@@ -14404,63 +14509,8 @@
          */
         addCardRating: function (card, itemId) {
             if (!this.ratingsEnabled) return;
-            const self = this;
-
-            // Check cache first
-            if (self.ratingsCache[itemId] !== undefined) {
-                // Use cached data
-                if (self.ratingsCache[itemId] !== null) {
-                    const stats = self.ratingsCache[itemId];
-                    self.createAndPositionOverlay(card, stats, itemId);
-                }
-                return;
-            }
-
-            const baseUrl = ApiClient.serverAddress();
-            const accessToken = ApiClient.accessToken();
-            const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
-
-            let deviceId = localStorage.getItem('_deviceId2');
-            if (!deviceId) {
-                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    const r = Math.random() * 16 | 0;
-                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
-                localStorage.setItem('_deviceId2', deviceId);
-            }
-
-            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
-
-            fetch(url, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(stats => {
-                    // Only show if there's at least one rating
-                    if (stats.TotalRatings > 0) {
-                        // Cache the stats
-                        self.ratingsCache[itemId] = stats;
-                        self.createAndPositionOverlay(card, stats, itemId);
-                    } else {
-                        // Cache as null (no ratings)
-                        self.ratingsCache[itemId] = null;
-                    }
-                })
-                .catch(err => {
-                    // Cache as null on error to avoid retrying
-                    self.ratingsCache[itemId] = null;
-                });
+            // Use the batch queue for better performance
+            this.queueCardForRating(card, itemId);
         },
 
         /**
@@ -23770,17 +23820,23 @@
 
             container.innerHTML = html;
 
-            // Re-apply any plugin badges
-            self.processCards();
+            // Rating badges will be applied automatically by the MutationObserver
+            // that watches for new cards in observeHomePageCards
         },
 
         /**
-         * Fetch ratings for multiple items in batch
+         * Fetch ratings for multiple items in batch using the batch API
          */
         fetchRatingsForItems: function (itemIds) {
             const self = this;
             const baseUrl = ApiClient.serverAddress();
             const accessToken = ApiClient.accessToken();
+
+            // Filter out already cached items
+            const uncachedIds = itemIds.filter(id => self.ratingsCache[id] === undefined);
+            if (uncachedIds.length === 0) {
+                return Promise.resolve();
+            }
 
             let deviceId = localStorage.getItem('_deviceId2');
             if (!deviceId) {
@@ -23794,42 +23850,47 @@
 
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            // Fetch ratings in parallel (limit concurrent requests)
-            const batchSize = 20;
+            // Split into batches of 100 (API limit)
+            const batchSize = 100;
             const batches = [];
-            for (let i = 0; i < itemIds.length; i += batchSize) {
-                batches.push(itemIds.slice(i, i + batchSize));
+            for (let i = 0; i < uncachedIds.length; i += batchSize) {
+                batches.push(uncachedIds.slice(i, i + batchSize));
             }
 
             const fetchBatch = (ids) => {
-                return Promise.all(ids.map(itemId => {
-                    const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
-                    return fetch(url, {
-                        method: 'GET',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Emby-Authorization': authHeader
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(stats => {
-                        if (stats.TotalRatings > 0) {
+                const url = `${baseUrl}/Ratings/Items/BatchStats?itemIds=${encodeURIComponent(ids.join(','))}`;
+                return fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Emby-Authorization': authHeader
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(batchStats => {
+                    // Update cache with results
+                    ids.forEach(itemId => {
+                        const stats = batchStats[itemId];
+                        if (stats && stats.TotalRatings > 0) {
                             self.ratingsCache[itemId] = stats;
                         } else {
                             self.ratingsCache[itemId] = null;
                         }
-                    })
-                    .catch(() => {
+                    });
+                })
+                .catch(err => {
+                    console.error('Batch fetch failed:', err);
+                    ids.forEach(itemId => {
                         self.ratingsCache[itemId] = null;
                     });
-                }));
+                });
             };
 
-            // Process batches sequentially to avoid overwhelming the server
+            // Process batches sequentially
             return batches.reduce((promise, batch) => {
                 return promise.then(() => fetchBatch(batch));
             }, Promise.resolve());
@@ -23899,8 +23960,7 @@
             if (itemsContainer.dataset.originalHtml) {
                 itemsContainer.innerHTML = itemsContainer.dataset.originalHtml;
                 delete itemsContainer.dataset.originalHtml;
-                // Re-apply plugin badges
-                self.processCards();
+                // Rating badges will be re-applied by MutationObserver
                 return;
             }
 
@@ -23927,11 +23987,15 @@
         },
 
         /**
-         * Apply rating badges to Netflix cards
+         * Apply rating badges to Netflix cards using batch fetch
          */
         applyNetflixRatingBadges: function (container) {
             const self = this;
             const cards = container.querySelectorAll('.netflix-card[data-item-id]');
+            const cardMap = new Map(); // itemId -> card elements
+            const uncachedIds = [];
+
+            // First pass: apply cached ratings, collect uncached IDs
             cards.forEach(card => {
                 const itemId = card.getAttribute('data-item-id');
                 if (!itemId) return;
@@ -23946,47 +24010,67 @@
                     return;
                 }
 
-                // Fetch rating from API
-                const baseUrl = ApiClient.serverAddress();
-                const accessToken = ApiClient.accessToken();
-                const url = `${baseUrl}/Ratings/Items/${itemId}/Stats`;
-
-                let deviceId = localStorage.getItem('_deviceId2');
-                if (!deviceId) {
-                    deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                        const r = Math.random() * 16 | 0;
-                        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                        return v.toString(16);
-                    });
-                    localStorage.setItem('_deviceId2', deviceId);
+                // Track card for later update
+                if (!cardMap.has(itemId)) {
+                    cardMap.set(itemId, []);
+                    uncachedIds.push(itemId);
                 }
+                cardMap.get(itemId).push(card);
+            });
 
-                const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+            // If all cached, we're done
+            if (uncachedIds.length === 0) return;
 
-                fetch(url, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(stats => {
-                        if (stats.TotalRatings > 0) {
-                            self.ratingsCache[itemId] = stats;
-                            card.classList.add('has-rating');
-                            card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
-                        } else {
-                            self.ratingsCache[itemId] = null;
+            // Fetch ratings in batch
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+
+            let deviceId = localStorage.getItem('_deviceId2');
+            if (!deviceId) {
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('_deviceId2', deviceId);
+            }
+
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Items/BatchStats?itemIds=${encodeURIComponent(uncachedIds.join(','))}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(batchStats => {
+                uncachedIds.forEach(itemId => {
+                    const stats = batchStats[itemId];
+                    if (stats && stats.TotalRatings > 0) {
+                        self.ratingsCache[itemId] = stats;
+                        const cardsForItem = cardMap.get(itemId);
+                        if (cardsForItem) {
+                            cardsForItem.forEach(card => {
+                                card.classList.add('has-rating');
+                                card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+                            });
                         }
-                    })
-                    .catch(() => {
+                    } else {
                         self.ratingsCache[itemId] = null;
-                    });
+                    }
+                });
+            })
+            .catch(err => {
+                console.error('Batch fetch failed:', err);
+                uncachedIds.forEach(itemId => {
+                    self.ratingsCache[itemId] = null;
+                });
             });
         },
 
