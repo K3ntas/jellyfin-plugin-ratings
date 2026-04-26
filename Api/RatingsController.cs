@@ -952,6 +952,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     var userLike = currentUserId != Guid.Empty
                         ? _repository.GetUserReviewLike(r.UserId, itemId, currentUserId)
                         : null;
+                    var commentCount = _repository.GetReviewCommentCount(r.UserId, itemId);
 
                     return new UserRatingDetail
                     {
@@ -963,7 +964,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                         HasReview = !string.IsNullOrWhiteSpace(r.ReviewText),
                         LikeCount = likeCounts.LikeCount,
                         DislikeCount = likeCounts.DislikeCount,
-                        UserLiked = userLike
+                        UserLiked = userLike,
+                        CommentCount = commentCount
                     };
                 }).OrderByDescending(r => r.Rating).ThenBy(r => r.Username).ToList();
 
@@ -1031,6 +1033,139 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error liking review for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Gets comments for a review.
+        /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <returns>List of comments.</returns>
+        [HttpGet("Reviews/{reviewerUserId}/{itemId}/Comments")]
+        [Authorize]
+        public ActionResult<List<object>> GetReviewComments(
+            [FromRoute] [Required] Guid reviewerUserId,
+            [FromRoute] [Required] Guid itemId)
+        {
+            try
+            {
+                var comments = _repository.GetReviewComments(reviewerUserId, itemId);
+                var result = comments.Select(c =>
+                {
+                    var user = _userManager.GetUserById(c.CommenterId);
+                    return new
+                    {
+                        Id = c.Id,
+                        CommenterId = c.CommenterId,
+                        CommenterName = user?.Username ?? "Unknown",
+                        Text = c.Text,
+                        CreatedAt = c.CreatedAt
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting review comments");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Adds a comment to a review.
+        /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="text">Comment text.</param>
+        /// <returns>The created comment.</returns>
+        [HttpPost("Reviews/{reviewerUserId}/{itemId}/Comments")]
+        [Authorize]
+        public async Task<ActionResult> AddReviewComment(
+            [FromRoute] [Required] Guid reviewerUserId,
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] [Required] string text)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                // Sanitize comment text
+                var sanitizedText = SanitizeInput(text, 500);
+                if (string.IsNullOrWhiteSpace(sanitizedText))
+                {
+                    return BadRequest("Comment text is required");
+                }
+
+                // Verify review exists
+                var rating = _repository.GetUserRating(reviewerUserId, itemId);
+                if (rating == null || string.IsNullOrWhiteSpace(rating.ReviewText))
+                {
+                    return NotFound("Review not found");
+                }
+
+                var comment = new Models.ReviewComment
+                {
+                    ReviewerUserId = reviewerUserId,
+                    ItemId = itemId,
+                    CommenterId = userId,
+                    Text = sanitizedText
+                };
+
+                await _repository.AddReviewCommentAsync(comment).ConfigureAwait(false);
+
+                var user = _userManager.GetUserById(userId);
+                return Ok(new
+                {
+                    Id = comment.Id,
+                    CommenterId = comment.CommenterId,
+                    CommenterName = user?.Username ?? "Unknown",
+                    Text = comment.Text,
+                    CreatedAt = comment.CreatedAt
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding review comment");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a review comment.
+        /// </summary>
+        /// <param name="commentId">Comment ID to delete.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Reviews/Comments/{commentId}")]
+        [Authorize]
+        public async Task<ActionResult> DeleteReviewComment(
+            [FromRoute] [Required] Guid commentId)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var deleted = await _repository.DeleteReviewCommentAsync(commentId, userId).ConfigureAwait(false);
+                if (!deleted)
+                {
+                    return NotFound("Comment not found or you don't have permission to delete it");
+                }
+
+                return Ok(new { Success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting review comment");
                 return StatusCode(500, "Internal server error");
             }
         }

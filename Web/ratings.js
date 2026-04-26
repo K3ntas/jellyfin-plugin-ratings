@@ -67,11 +67,6 @@
         _configCache: null, // Cached config object
         _configPromise: null, // Promise for in-flight config request
 
-        // Scheduled deletions caching
-        _scheduledDeletionsCache: null, // Cached deletions array
-        _scheduledDeletionsPromise: null, // Promise for in-flight request
-        _scheduledDeletionsCacheTime: 0, // When cache was last updated
-
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
             gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -176,7 +171,10 @@
                 changeLanguage: 'Change Language',
                 testNotificationTooltip: 'Send test notification',
                 notificationsOn: 'Notifications enabled',
-                notificationsOff: 'Notifications disabled'
+                notificationsOff: 'Notifications disabled',
+                userReviews: 'User Reviews', noReviews: 'No reviews yet. Be the first to write one!', errorLoadingReviews: 'Error loading reviews',
+                showMore: 'Show more', showLess: 'Show less', today: 'Today', yesterday: 'Yesterday',
+                daysAgo: 'days ago', weekAgo: 'week ago', weeksAgo: 'weeks ago', monthAgo: 'month ago', monthsAgo: 'months ago'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -1689,7 +1687,10 @@
                 changeLanguage: 'Keisti Kalbą',
                 testNotificationTooltip: 'Siųsti bandomąjį pranešimą',
                 notificationsOn: 'Pranešimai įjungti',
-                notificationsOff: 'Pranešimai išjungti'
+                notificationsOff: 'Pranešimai išjungti',
+                userReviews: 'Vartotojų Apžvalgos', noReviews: 'Dar nėra apžvalgų. Būkite pirmas!', errorLoadingReviews: 'Klaida kraunant apžvalgas',
+                showMore: 'Rodyti daugiau', showLess: 'Rodyti mažiau', today: 'Šiandien', yesterday: 'Vakar',
+                daysAgo: 'dienos atgal', weekAgo: 'savaitė atgal', weeksAgo: 'savaitės atgal', monthAgo: 'mėnuo atgal', monthsAgo: 'mėnesiai atgal'
             }
         },
 
@@ -1913,65 +1914,6 @@
                 });
 
             return this._configPromise;
-        },
-
-        /**
-         * Get scheduled deletions with caching (30 second TTL).
-         * Prevents duplicate API calls during page load.
-         * @param {boolean} forceRefresh - Force a fresh fetch
-         * @returns {Promise<Array>} Array of scheduled deletions
-         */
-        getScheduledDeletions: function (forceRefresh) {
-            var self = this;
-            var CACHE_TTL = 30000; // 30 seconds
-
-            // Return cached data if still valid
-            if (!forceRefresh && this._scheduledDeletionsCache && (Date.now() - this._scheduledDeletionsCacheTime) < CACHE_TTL) {
-                return Promise.resolve(this._scheduledDeletionsCache);
-            }
-
-            // Return existing promise if request is in flight
-            if (this._scheduledDeletionsPromise) {
-                return this._scheduledDeletionsPromise;
-            }
-
-            // Check if ApiClient is ready
-            if (!window.ApiClient) {
-                return Promise.resolve([]);
-            }
-
-            var baseUrl = ApiClient.serverAddress();
-            this._scheduledDeletionsPromise = fetch(baseUrl + '/Ratings/ScheduledDeletions', {
-                method: 'GET',
-                credentials: 'include',
-                headers: this.getChatAuthHeaders()
-            })
-            .then(function (response) {
-                if (!response.ok) return [];
-                return response.json();
-            })
-            .then(function (deletions) {
-                self._scheduledDeletionsCache = deletions || [];
-                self._scheduledDeletionsCacheTime = Date.now();
-                self._scheduledDeletionsPromise = null;
-
-                // Also update the itemId-keyed cache for badge lookups
-                self.scheduledDeletionsCache = {};
-                (deletions || []).forEach(function (d) {
-                    if (d && d.ItemId) {
-                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
-                    }
-                });
-
-                return self._scheduledDeletionsCache;
-            })
-            .catch(function (err) {
-                self._scheduledDeletionsPromise = null;
-                console.error('Failed to load scheduled deletions:', err);
-                return [];
-            });
-
-            return this._scheduledDeletionsPromise;
         },
 
         /**
@@ -4898,6 +4840,325 @@
                 .review-like-btn.disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
+                }
+
+                /* User Reviews Section on Detail Page */
+                .user-reviews-section {
+                    margin: 2em 0;
+                    padding: 0 1em;
+                }
+                .user-reviews-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                    margin-bottom: 1em;
+                }
+                .user-reviews-title {
+                    font-size: 1.4em;
+                    font-weight: 600;
+                    color: #fff;
+                    margin: 0;
+                }
+                .user-reviews-count {
+                    color: #888;
+                    font-size: 1.1em;
+                }
+                .user-reviews-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 1em;
+                }
+                .user-review-card {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 1em;
+                    border: 1px solid #333;
+                    transition: border-color 0.2s ease, transform 0.2s ease;
+                }
+                .user-review-card:hover {
+                    border-color: #555;
+                    transform: translateY(-2px);
+                }
+                .user-review-card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8em;
+                    margin-bottom: 0.8em;
+                }
+                .user-review-avatar {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #333;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    flex-shrink: 0;
+                }
+                .user-review-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .user-review-avatar-placeholder {
+                    color: #888;
+                    font-size: 1.2em;
+                }
+                .user-review-user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .user-review-username {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 0.95em;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .user-review-timestamp {
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                .user-review-rating {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3em;
+                    color: #ffd700;
+                    font-weight: 600;
+                    font-size: 0.95em;
+                }
+                .user-review-rating-star {
+                    font-size: 1.1em;
+                }
+                .user-review-text {
+                    color: #ccc;
+                    line-height: 1.5;
+                    margin-bottom: 0.8em;
+                    font-size: 0.92em;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    max-height: 100px;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .user-review-text.expanded {
+                    max-height: none;
+                }
+                .user-review-text.truncated::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 30px;
+                    background: linear-gradient(transparent, #1a1a1a);
+                }
+                .user-review-expand {
+                    color: #4CAF50;
+                    cursor: pointer;
+                    font-size: 0.85em;
+                    margin-bottom: 0.8em;
+                }
+                .user-review-expand:hover {
+                    text-decoration: underline;
+                }
+                .user-review-actions {
+                    display: flex;
+                    gap: 0.8em;
+                    align-items: center;
+                    padding-top: 0.5em;
+                    border-top: 1px solid #2a2a2a;
+                }
+                .user-review-action-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3em;
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    padding: 0.4em 0.6em;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.85em;
+                    transition: all 0.2s ease;
+                }
+                .user-review-action-btn:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #bbb;
+                }
+                .user-review-action-btn.liked {
+                    color: #4CAF50;
+                }
+                .user-review-action-btn.disliked {
+                    color: #f44336;
+                }
+                .user-review-action-btn.own-review {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                .user-reviews-empty {
+                    text-align: center;
+                    color: #666;
+                    padding: 2em;
+                    font-style: italic;
+                }
+                .user-reviews-loading {
+                    text-align: center;
+                    color: #888;
+                    padding: 2em;
+                }
+                .user-review-user-link {
+                    cursor: pointer;
+                    text-decoration: none;
+                    color: inherit;
+                }
+                .user-review-user-link:hover .user-review-username {
+                    color: #4CAF50;
+                    text-decoration: underline;
+                }
+                .user-review-avatar.clickable {
+                    cursor: pointer;
+                    transition: transform 0.2s ease;
+                }
+                .user-review-avatar.clickable:hover {
+                    transform: scale(1.1);
+                }
+                /* Review Comments Modal */
+                .review-comments-modal {
+                    min-width: 400px;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .review-comments-list {
+                    flex: 1;
+                    overflow-y: auto;
+                    max-height: 300px;
+                    margin-bottom: 1em;
+                }
+                .review-comment-item {
+                    display: flex;
+                    gap: 0.8em;
+                    padding: 0.8em;
+                    border-bottom: 1px solid #333;
+                }
+                .review-comment-item:last-child {
+                    border-bottom: none;
+                }
+                .review-comment-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #333;
+                    flex-shrink: 0;
+                    overflow: hidden;
+                    cursor: pointer;
+                }
+                .review-comment-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .review-comment-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .review-comment-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                    margin-bottom: 0.3em;
+                }
+                .review-comment-username {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 0.9em;
+                    cursor: pointer;
+                }
+                .review-comment-username:hover {
+                    color: #4CAF50;
+                    text-decoration: underline;
+                }
+                .review-comment-time {
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                .review-comment-text {
+                    color: #ccc;
+                    font-size: 0.9em;
+                    line-height: 1.4;
+                    word-break: break-word;
+                }
+                .review-comment-delete {
+                    background: none;
+                    border: none;
+                    color: #666;
+                    cursor: pointer;
+                    padding: 0.2em;
+                    font-size: 0.9em;
+                }
+                .review-comment-delete:hover {
+                    color: #f44336;
+                }
+                .review-comments-empty {
+                    text-align: center;
+                    color: #666;
+                    padding: 2em;
+                    font-style: italic;
+                }
+                .review-comment-input-area {
+                    display: flex;
+                    gap: 0.5em;
+                    padding-top: 0.5em;
+                    border-top: 1px solid #333;
+                }
+                .review-comment-input {
+                    flex: 1;
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    padding: 0.6em;
+                    color: #fff;
+                    font-size: 0.9em;
+                    resize: none;
+                    min-height: 40px;
+                }
+                .review-comment-input:focus {
+                    outline: none;
+                    border-color: #4CAF50;
+                }
+                .review-comment-send {
+                    background: #4CAF50;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    padding: 0 1em;
+                    cursor: pointer;
+                    font-size: 0.9em;
+                }
+                .review-comment-send:hover {
+                    background: #45a049;
+                }
+                .review-comment-send:disabled {
+                    background: #333;
+                    cursor: not-allowed;
+                }
+                @media (max-width: 600px) {
+                    .review-comments-modal {
+                        min-width: unset;
+                        width: 95vw;
+                    }
+                }
+                @media (max-width: 600px) {
+                    .user-reviews-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .user-review-card {
+                        padding: 0.8em;
+                    }
                 }
 
                 /* Card overlay ratings */
@@ -13240,6 +13501,7 @@
                 if (detailRibbon) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
+                    self.injectUserReviewsSection(itemId);
                 } else if (attempts >= maxAttempts) {
                     // Give up after max attempts
                     clearInterval(checkInterval);
@@ -14282,6 +14544,460 @@
                     });
                 }
             });
+        },
+
+        /**
+         * Inject user reviews section on detail page
+         */
+        injectUserReviewsSection: function (itemId) {
+            const self = this;
+            const visiblePage = this.getVisibleDetailPage();
+            if (!visiblePage) return;
+
+            // Check if already injected
+            if (visiblePage.querySelector('.user-reviews-section')) {
+                return;
+            }
+
+            // Find insertion point - after itemDetailsGroup (which contains Studios)
+            const detailsGroup = visiblePage.querySelector('.itemDetailsGroup');
+            if (!detailsGroup) return;
+
+            // Create reviews section
+            const reviewsSection = document.createElement('div');
+            reviewsSection.className = 'user-reviews-section';
+            reviewsSection.innerHTML = `
+                <div class="user-reviews-header">
+                    <h2 class="user-reviews-title">${this.t('userReviews') || 'User Reviews'}</h2>
+                    <span class="user-reviews-count"></span>
+                </div>
+                <div class="user-reviews-grid">
+                    <div class="user-reviews-loading">${this.t('loading') || 'Loading...'}</div>
+                </div>
+            `;
+
+            // Insert after itemDetailsGroup (after Studios row)
+            detailsGroup.parentNode.insertBefore(reviewsSection, detailsGroup.nextSibling);
+
+            // Load reviews
+            this.loadUserReviews(itemId, reviewsSection);
+        },
+
+        /**
+         * Load user reviews from API
+         */
+        loadUserReviews: function (itemId, container) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Items/${itemId}/DetailedRatings`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(ratings => {
+                // Filter to only those with reviews
+                const reviews = (ratings || []).filter(r => r.HasReview && r.ReviewText);
+
+                // Sort by likes (most liked first)
+                reviews.sort((a, b) => {
+                    const aScore = (a.LikeCount || 0) - (a.DislikeCount || 0);
+                    const bScore = (b.LikeCount || 0) - (b.DislikeCount || 0);
+                    return bScore - aScore;
+                });
+
+                self.renderUserReviewCards(reviews, itemId, container);
+            })
+            .catch(err => {
+                const grid = container.querySelector('.user-reviews-grid');
+                if (grid) {
+                    grid.innerHTML = `<div class="user-reviews-empty">${self.t('errorLoadingReviews') || 'Error loading reviews'}</div>`;
+                }
+            });
+        },
+
+        /**
+         * Render user review cards
+         */
+        renderUserReviewCards: function (reviews, itemId, container) {
+            const self = this;
+            const grid = container.querySelector('.user-reviews-grid');
+            const countEl = container.querySelector('.user-reviews-count');
+            const currentUserId = ApiClient.getCurrentUserId();
+            const baseUrl = ApiClient.serverAddress();
+
+            if (countEl) {
+                countEl.textContent = `(${reviews.length})`;
+            }
+
+            if (!reviews || reviews.length === 0) {
+                grid.innerHTML = `<div class="user-reviews-empty">${this.t('noReviews') || 'No reviews yet. Be the first to write one!'}</div>`;
+                return;
+            }
+
+            let html = '';
+            reviews.forEach(review => {
+                const isOwnReview = review.UserId === currentUserId;
+                const avatarUrl = `${baseUrl}/Users/${review.UserId}/Images/Primary?height=80&quality=90`;
+                const timestamp = this.formatReviewTimestamp(review.CreatedAt);
+                const likedClass = review.UserLiked === true ? ' liked' : '';
+                const dislikedClass = review.UserLiked === false ? ' disliked' : '';
+                const ownClass = isOwnReview ? ' own-review' : '';
+                const commentCount = review.CommentCount || 0;
+
+                html += `
+                    <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
+                        <div class="user-review-card-header">
+                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}">
+                                <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
+                                <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
+                            </div>
+                            <a class="user-review-user-link" data-user-id="${review.UserId}">
+                                <div class="user-review-user-info">
+                                    <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
+                                    <div class="user-review-timestamp">${timestamp}</div>
+                                </div>
+                            </a>
+                            <div class="user-review-rating">
+                                <span class="user-review-rating-star">★</span>
+                                <span>${review.Rating}/10</span>
+                            </div>
+                        </div>
+                        <div class="user-review-text" data-full-text="${this.escapeHtml(review.ReviewText)}">${this.escapeHtml(review.ReviewText)}</div>
+                        <div class="user-review-actions">
+                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like" ${isOwnReview ? 'disabled' : ''}>
+                                👍 <span class="like-count">${review.LikeCount || 0}</span>
+                            </button>
+                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike" ${isOwnReview ? 'disabled' : ''}>
+                                👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
+                            </button>
+                            <button class="user-review-action-btn" data-action="comment">
+                                💬 <span class="comment-count">${commentCount}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+
+            // Check for truncated text and add expand buttons
+            grid.querySelectorAll('.user-review-text').forEach(textEl => {
+                if (textEl.scrollHeight > textEl.clientHeight) {
+                    textEl.classList.add('truncated');
+                    const expandBtn = document.createElement('div');
+                    expandBtn.className = 'user-review-expand';
+                    expandBtn.textContent = self.t('showMore') || 'Show more';
+                    textEl.parentNode.insertBefore(expandBtn, textEl.nextSibling);
+
+                    expandBtn.addEventListener('click', function() {
+                        if (textEl.classList.contains('expanded')) {
+                            textEl.classList.remove('expanded');
+                            textEl.classList.add('truncated');
+                            this.textContent = self.t('showMore') || 'Show more';
+                        } else {
+                            textEl.classList.add('expanded');
+                            textEl.classList.remove('truncated');
+                            this.textContent = self.t('showLess') || 'Show less';
+                        }
+                    });
+                }
+            });
+
+            // Add like/dislike handlers
+            grid.querySelectorAll('.user-review-action-btn[data-action="like"]:not(.own-review), .user-review-action-btn[data-action="dislike"]:not(.own-review)').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.user-review-card');
+                    const reviewerUserId = card.getAttribute('data-user-id');
+                    const action = this.getAttribute('data-action');
+                    const isLike = action === 'like';
+                    self.handleReviewCardLike(reviewerUserId, itemId, isLike, card);
+                });
+            });
+
+            // Add comment button handlers
+            grid.querySelectorAll('.user-review-action-btn[data-action="comment"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.user-review-card');
+                    const reviewerUserId = card.getAttribute('data-user-id');
+                    self.openReviewCommentsModal(reviewerUserId, itemId, card);
+                });
+            });
+
+            // Add user profile click handlers
+            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const userId = this.getAttribute('data-user-id');
+                    self.navigateToUserProfile(userId);
+                });
+            });
+        },
+
+        /**
+         * Format review timestamp
+         */
+        formatReviewTimestamp: function (dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return this.t('today') || 'Today';
+            } else if (diffDays === 1) {
+                return this.t('yesterday') || 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} ${this.t('daysAgo') || 'days ago'}`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `${weeks} ${weeks === 1 ? (this.t('weekAgo') || 'week ago') : (this.t('weeksAgo') || 'weeks ago')}`;
+            } else if (diffDays < 365) {
+                const months = Math.floor(diffDays / 30);
+                return `${months} ${months === 1 ? (this.t('monthAgo') || 'month ago') : (this.t('monthsAgo') || 'months ago')}`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        },
+
+        /**
+         * Handle like/dislike on review card
+         */
+        handleReviewCardLike: function (reviewerUserId, itemId, isLike, card) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Like?isLike=${isLike}`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(result => {
+                const likeBtn = card.querySelector('[data-action="like"]');
+                const dislikeBtn = card.querySelector('[data-action="dislike"]');
+
+                likeBtn.querySelector('.like-count').textContent = result.LikeCount;
+                dislikeBtn.querySelector('.dislike-count').textContent = result.DislikeCount;
+
+                likeBtn.classList.remove('liked');
+                dislikeBtn.classList.remove('disliked');
+
+                if (result.UserLiked === true) {
+                    likeBtn.classList.add('liked');
+                } else if (result.UserLiked === false) {
+                    dislikeBtn.classList.add('disliked');
+                }
+            })
+            .catch(err => {
+                console.error('Error toggling review like:', err);
+            });
+        },
+
+        /**
+         * Open comments modal for a review
+         */
+        openReviewCommentsModal: function (reviewerUserId, itemId, card) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const currentUserId = ApiClient.getCurrentUserId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'reviewCommentsModalOverlay';
+
+            overlay.innerHTML = `
+                <div class="ratings-modal review-comments-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">Comments</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="review-comments-list">
+                        <div class="review-comments-empty">Loading...</div>
+                    </div>
+                    <div class="review-comment-input-area">
+                        <textarea class="review-comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
+                        <button class="review-comment-send" disabled>Send</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const listContainer = overlay.querySelector('.review-comments-list');
+            const input = overlay.querySelector('.review-comment-input');
+            const sendBtn = overlay.querySelector('.review-comment-send');
+
+            // Enable/disable send button based on input
+            input.addEventListener('input', function() {
+                sendBtn.disabled = this.value.trim().length === 0;
+            });
+
+            // Send comment on Enter (without shift)
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.value.trim().length > 0) {
+                        sendBtn.click();
+                    }
+                }
+            });
+
+            // Send comment handler
+            sendBtn.addEventListener('click', function() {
+                const text = input.value.trim();
+                if (!text) return;
+
+                sendBtn.disabled = true;
+                input.disabled = true;
+
+                const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Comments?text=${encodeURIComponent(text)}`;
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.json())
+                .then(newComment => {
+                    input.value = '';
+                    input.disabled = false;
+                    sendBtn.disabled = true;
+                    loadComments();
+                    // Update comment count on the card
+                    const countEl = card.querySelector('.comment-count');
+                    if (countEl) {
+                        countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error adding comment:', err);
+                    input.disabled = false;
+                    sendBtn.disabled = false;
+                });
+            });
+
+            // Load comments function
+            function loadComments() {
+                const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Comments`;
+
+                fetch(url, {
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.json())
+                .then(comments => {
+                    if (!comments || comments.length === 0) {
+                        listContainer.innerHTML = '<div class="review-comments-empty">No comments yet. Be the first!</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    comments.forEach(c => {
+                        const avatarUrl = `${baseUrl}/Users/${c.CommenterId}/Images/Primary?height=64`;
+                        const isOwn = c.CommenterId === currentUserId;
+                        const deleteBtn = isOwn ? `<button class="review-comment-delete" data-comment-id="${c.Id}" title="Delete">🗑️</button>` : '';
+
+                        html += `
+                            <div class="review-comment-item" data-comment-id="${c.Id}">
+                                <div class="review-comment-avatar" data-user-id="${c.CommenterId}">
+                                    <img src="${avatarUrl}" onerror="this.style.display='none'">
+                                </div>
+                                <div class="review-comment-content">
+                                    <div class="review-comment-header">
+                                        <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.CommenterName || 'Unknown')}</span>
+                                        <span class="review-comment-time">${self.formatReviewTimestamp(c.CreatedAt)}</span>
+                                        ${deleteBtn}
+                                    </div>
+                                    <div class="review-comment-text">${self.escapeHtml(c.Text)}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    listContainer.innerHTML = html;
+
+                    // Add delete handlers
+                    listContainer.querySelectorAll('.review-comment-delete').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const commentId = this.getAttribute('data-comment-id');
+                            if (confirm('Delete this comment?')) {
+                                fetch(`${baseUrl}/Ratings/Reviews/Comments/${commentId}`, {
+                                    method: 'DELETE',
+                                    credentials: 'include',
+                                    headers: { 'X-Emby-Authorization': authHeader }
+                                })
+                                .then(r => {
+                                    if (r.ok) {
+                                        loadComments();
+                                        // Update comment count on the card
+                                        const countEl = card.querySelector('.comment-count');
+                                        if (countEl) {
+                                            const cnt = parseInt(countEl.textContent || '0');
+                                            countEl.textContent = Math.max(0, cnt - 1);
+                                        }
+                                    }
+                                })
+                                .catch(err => console.error('Error deleting comment:', err));
+                            }
+                        });
+                    });
+
+                    // Add user profile click handlers
+                    listContainer.querySelectorAll('.review-comment-avatar, .review-comment-username').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const userId = this.getAttribute('data-user-id');
+                            overlay.remove(); // Close comments modal first
+                            self.navigateToUserProfile(userId);
+                        });
+                    });
+                })
+                .catch(err => {
+                    console.error('Error loading comments:', err);
+                    listContainer.innerHTML = '<div class="review-comments-empty">Error loading comments</div>';
+                });
+            }
+
+            // Initial load
+            loadComments();
+
+            // Close handlers
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+        },
+
+        /**
+         * Navigate to user profile page
+         */
+        navigateToUserProfile: function (userId) {
+            if (!userId) return;
+            this.showProfilePage(userId);
         },
 
         sanitizeUrl: function (url) {
@@ -16021,14 +16737,18 @@
             const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
             const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch both: latest items and scheduled deletions (using cache for deletions)
+            // Fetch both: latest items and scheduled deletions
             Promise.all([
                 fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
                 }).then(r => r.json()).catch(() => ({ Items: [] })),
-                self.getScheduledDeletions()
+                fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.json()).catch(() => [])
             ])
             .then(([mediaData, deletions]) => {
                 // Count new media items
@@ -16401,8 +17121,17 @@
                 return;
             }
 
-            // Fetch scheduled deletions (using cache)
-            self.getScheduledDeletions()
+            const baseUrl = ApiClient.serverAddress();
+            const authHeader = ApiClient._serverInfo?.AccessToken ?
+                `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
+
+            // Fetch scheduled deletions
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Authorization': authHeader }
+            })
+            .then(r => r.json())
             .then(deletions => {
                 // Filter out cancelled ones and sort by DeleteAt (soonest first)
                 const activeDeletions = (deletions || [])
@@ -17522,8 +18251,20 @@
             pagination.style.display = 'none';
             pagination.innerHTML = '';
 
-            // Fetch scheduled deletions (using cache)
-            self.getScheduledDeletions()
+            const baseUrl = ApiClient.serverAddress();
+            const token = ApiClient.accessToken();
+
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                headers: {
+                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load scheduled deletions');
+                return response.json();
+            })
             .then(deletions => {
                 // Check if this request is still current
                 if (thisRequestId !== self.mediaListState.requestId) {
@@ -18301,7 +19042,7 @@
         },
 
         /**
-         * Load scheduled deletions from API (uses cached getScheduledDeletions)
+         * Load scheduled deletions from API
          */
         loadScheduledDeletions: function () {
             const self = this;
@@ -18310,10 +19051,31 @@
                 return;
             }
 
-            // Use cached getScheduledDeletions (30s TTL handles freshness)
-            self.getScheduledDeletions().then(function () {
-                // Cache is already updated by getScheduledDeletions
+            const baseUrl = ApiClient.serverAddress();
+
+            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(response => {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(deletions => {
+                if (!deletions || !Array.isArray(deletions)) return;
+                // Build cache by itemId
+                self.scheduledDeletionsCache = {};
+                deletions.forEach(d => {
+                    if (d && d.ItemId) {
+                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                    }
+                });
+                // Update badges immediately
                 self.updateDeletionBadges();
+            })
+            .catch(err => {
+                // Silent fail - don't spam console
             });
         },
 
@@ -22364,12 +23126,34 @@
         },
 
         /**
-         * Check if Netflix view is enabled in plugin config (uses cached config)
+         * Check if Netflix view is enabled in plugin config
          */
         checkNetflixViewEnabled: function () {
-            return this.getConfig().then(config => {
-                return config.EnableNetflixView === true;
-            }).catch(() => false);
+            return new Promise((resolve) => {
+                try {
+                    if (!window.ApiClient) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const baseUrl = ApiClient.serverAddress();
+                    const url = `${baseUrl}/Ratings/Config`;
+
+                    fetch(url, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                    .then(response => response.json())
+                    .then(config => {
+                        resolve(config.EnableNetflixView === true);
+                    })
+                    .catch(() => {
+                        resolve(false);
+                    });
+                } catch (err) {
+                    resolve(false);
+                }
+            });
         },
 
         /**

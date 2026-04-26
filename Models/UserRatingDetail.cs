@@ -51,5 +51,10 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// Gets or sets a value indicating whether the current user liked this review.
         /// </summary>
         public bool? UserLiked { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of comments on the review.
+        /// </summary>
+        public int CommentCount { get; set; }
     }
 }
