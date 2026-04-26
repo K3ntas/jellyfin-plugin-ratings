@@ -438,6 +438,70 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Gets rating stats for multiple items in a single request.
+        /// This is much more efficient than calling GetRatingStats for each item individually.
+        /// </summary>
+        /// <param name="itemIds">Comma-separated list of item IDs.</param>
+        /// <returns>Dictionary of item ID to rating stats.</returns>
+        [HttpGet("Items/BatchStats")]
+        [Authorize]
+        public ActionResult<Dictionary<string, RatingStats>> GetBatchRatingStats([FromQuery] [Required] string itemIds)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(itemIds))
+                {
+                    return BadRequest("itemIds is required");
+                }
+
+                var ids = itemIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(id => id.Trim())
+                    .Where(id => Guid.TryParse(id, out _))
+                    .Select(id => Guid.Parse(id))
+                    .Distinct()
+                    .Take(100) // Limit to 100 items per request
+                    .ToList();
+
+                if (ids.Count == 0)
+                {
+                    return BadRequest("No valid item IDs provided");
+                }
+
+                var userId = User.GetUserId();
+
+                // Batch fetch items from library manager and extract provider IDs
+                var itemsWithProviders = new List<(Guid ItemId, string? TmdbId, string? ImdbId, string? AniDbId)>();
+                foreach (var id in ids)
+                {
+                    var item = _libraryManager.GetItemById(id);
+                    if (item == null) continue;
+
+                    string? tmdbId = null;
+                    string? imdbId = null;
+                    string? aniDbId = null;
+                    if (item.ProviderIds != null)
+                    {
+                        item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
+                        item.ProviderIds.TryGetValue("Imdb", out imdbId);
+                        item.ProviderIds.TryGetValue("AniDB", out aniDbId);
+                    }
+
+                    itemsWithProviders.Add((item.Id, tmdbId, imdbId, aniDbId));
+                }
+
+                // Use batch method - single lock acquisition for all items
+                var result = _repository.GetBatchRatingStats(itemsWithProviders, userId != Guid.Empty ? userId : null);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting batch rating stats");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Gets the current user's rating for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
@@ -728,29 +792,22 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
                 else
                 {
-                    // For non-rating sorts (imdb, release, added), use Jellyfin's native sorting
-                    // but only on items that have local ratings (to keep consistent with rating feature)
+                    // For non-rating sorts (imdb, release, added), show ALL items from library
+                    // Get rating stats for display purposes only (not filtering)
                     var allRatings = _repository.GetAllItemRatingStats();
 
-                    // Filter by library if parentId was provided
-                    if (libraryItemIds != null)
-                    {
-                        allRatings = allRatings.Where(kv => libraryItemIds.Contains(kv.Key))
-                            .ToDictionary(kv => kv.Key, kv => kv.Value);
-                    }
-
-                    if (allRatings.Count == 0)
-                    {
-                        return Ok(new { items = new List<object>(), totalCount = 0, page, limit });
-                    }
-
-                    var ratedItemIds = allRatings.Keys.ToArray();
-
+                    // Query ALL items from the library (not just rated ones)
                     var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
                     {
-                        ItemIds = ratedItemIds,
-                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo }
+                        IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
+                        Recursive = true
                     };
+
+                    // Filter by library if parentId was provided
+                    if (parentGuid.HasValue)
+                    {
+                        query.ParentId = parentGuid.Value;
+                    }
 
                     var items = _libraryManager.GetItemList(query);
 
