@@ -5146,67 +5146,6 @@
                     background: #333;
                     cursor: not-allowed;
                 }
-                /* User Profile Modal */
-                .user-profile-modal {
-                    min-width: 350px;
-                    max-width: 450px;
-                }
-                .user-profile-content {
-                    padding: 1em;
-                }
-                .user-profile-loading,
-                .user-profile-error {
-                    text-align: center;
-                    color: #888;
-                    padding: 2em;
-                }
-                .user-profile-header-section {
-                    display: flex;
-                    gap: 1em;
-                    margin-bottom: 1em;
-                }
-                .user-profile-avatar {
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    background: #333;
-                    flex-shrink: 0;
-                    overflow: hidden;
-                }
-                .user-profile-avatar img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                .user-profile-info {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-                .user-profile-name {
-                    font-size: 1.4em;
-                    font-weight: 600;
-                    color: #fff;
-                    margin-bottom: 0.3em;
-                }
-                .user-profile-meta {
-                    font-size: 0.85em;
-                    color: #888;
-                    margin-bottom: 0.2em;
-                }
-                .user-profile-bio {
-                    color: #ccc;
-                    line-height: 1.5;
-                    padding-top: 1em;
-                    border-top: 1px solid #333;
-                }
-                @media (max-width: 600px) {
-                    .user-profile-modal {
-                        min-width: unset;
-                        width: 95vw;
-                    }
-                }
                 @media (max-width: 600px) {
                     .review-comments-modal {
                         min-width: unset;
@@ -14985,7 +14924,7 @@
                                 </div>
                                 <div class="review-comment-content">
                                     <div class="review-comment-header">
-                                        <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.Username || 'Unknown')}</span>
+                                        <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.CommenterName || 'Unknown')}</span>
                                         <span class="review-comment-time">${self.formatReviewTimestamp(c.CreatedAt)}</span>
                                         ${deleteBtn}
                                     </div>
@@ -15053,82 +14992,11 @@
         },
 
         /**
-         * Show user profile popup
+         * Navigate to user profile page
          */
         navigateToUserProfile: function (userId) {
             if (!userId) return;
-
-            const self = this;
-            const baseUrl = ApiClient.serverAddress();
-            const accessToken = ApiClient.accessToken();
-            const deviceId = ApiClient.deviceId();
-            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
-
-            // Close any existing popup
-            const existing = document.getElementById('userProfilePopup');
-            if (existing) existing.remove();
-
-            // Create popup overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'ratings-modal-overlay';
-            overlay.id = 'userProfilePopup';
-
-            overlay.innerHTML = `
-                <div class="ratings-modal user-profile-modal">
-                    <div class="ratings-modal-header">
-                        <span class="ratings-modal-title">User Profile</span>
-                        <button class="ratings-modal-close">&times;</button>
-                    </div>
-                    <div class="user-profile-content">
-                        <div class="user-profile-loading">Loading...</div>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(overlay);
-
-            const content = overlay.querySelector('.user-profile-content');
-
-            // Fetch user info and profile
-            Promise.all([
-                fetch(`${baseUrl}/Users/${userId}`, {
-                    credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.ok ? r.json() : null).catch(() => null),
-                fetch(`${baseUrl}/Social/Profile/${userId}`, {
-                    credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.ok ? r.json() : null).catch(() => null)
-            ])
-            .then(([userInfo, profile]) => {
-                const username = userInfo?.Name || profile?.Username || 'Unknown User';
-                const avatarUrl = `${baseUrl}/Users/${userId}/Images/Primary?height=128`;
-                const memberSince = userInfo?.DateCreated ? new Date(userInfo.DateCreated).toLocaleDateString() : 'Unknown';
-                const lastActive = userInfo?.LastActivityDate ? self.formatReviewTimestamp(userInfo.LastActivityDate) : 'Unknown';
-                const bio = profile?.Bio || '';
-
-                content.innerHTML = `
-                    <div class="user-profile-header-section">
-                        <div class="user-profile-avatar">
-                            <img src="${avatarUrl}" onerror="this.style.display='none'">
-                        </div>
-                        <div class="user-profile-info">
-                            <div class="user-profile-name">${self.escapeHtml(username)}</div>
-                            <div class="user-profile-meta">Member since ${memberSince}</div>
-                            <div class="user-profile-meta">Last active: ${lastActive}</div>
-                        </div>
-                    </div>
-                    ${bio ? `<div class="user-profile-bio">${self.escapeHtml(bio)}</div>` : ''}
-                `;
-            })
-            .catch(err => {
-                console.error('Error loading user profile:', err);
-                content.innerHTML = '<div class="user-profile-error">Error loading profile</div>';
-            });
-
-            // Close handlers
-            overlay.querySelector('.ratings-modal-close').addEventListener('click', () => overlay.remove());
-            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+            this.showProfilePage(userId);
         },
 
         sanitizeUrl: function (url) {
