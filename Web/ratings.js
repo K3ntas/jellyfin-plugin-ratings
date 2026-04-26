@@ -63,6 +63,10 @@
         userSearchVisible: false, // Whether user search dropdown is visible
         modSelectedTextStyle: '', // Selected text style for user
 
+        // Config caching to avoid redundant API calls
+        _configCache: null, // Cached config object
+        _configPromise: null, // Promise for in-flight config request
+
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
             gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -1720,43 +1724,36 @@
         },
 
         /**
-         * Load badge display profiles from server config
+         * Load badge display profiles from server config (uses cached config)
          */
         loadBadgeDisplayProfiles: function () {
             if (!this.ratingsEnabled) return;
             const self = this;
-            if (!window.ApiClient) return;
 
-            const baseUrl = ApiClient.serverAddress();
-            fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                .then(function (response) { return response.json(); })
-                .then(function (config) {
-                    if (config.BadgeDisplayProfiles) {
-                        try {
-                            var raw = JSON.parse(config.BadgeDisplayProfiles);
-                            // Migrate old minWidth/maxWidth format to new minValue/maxValue + axis
-                            self.badgeDisplayProfiles = raw.map(function (p) {
-                                if (p.minWidth !== undefined && p.minValue === undefined) {
-                                    p.minValue = p.minWidth;
-                                }
-                                if (p.maxWidth !== undefined && p.maxValue === undefined) {
-                                    p.maxValue = p.maxWidth;
-                                }
-                                if (!p.axis) p.axis = 'horizontal';
-                                return p;
-                            });
-                        } catch (e) {
-                            self.badgeDisplayProfiles = [];
-                        }
-                    } else {
+            this.getConfig().then(function (config) {
+                if (config.BadgeDisplayProfiles) {
+                    try {
+                        var raw = JSON.parse(config.BadgeDisplayProfiles);
+                        // Migrate old minWidth/maxWidth format to new minValue/maxValue + axis
+                        self.badgeDisplayProfiles = raw.map(function (p) {
+                            if (p.minWidth !== undefined && p.minValue === undefined) {
+                                p.minValue = p.minWidth;
+                            }
+                            if (p.maxWidth !== undefined && p.maxValue === undefined) {
+                                p.maxValue = p.maxWidth;
+                            }
+                            if (!p.axis) p.axis = 'horizontal';
+                            return p;
+                        });
+                    } catch (e) {
                         self.badgeDisplayProfiles = [];
                     }
-                    // Apply to any existing rating widget
-                    self.applyBadgeProfile();
-                })
-                .catch(function () {
+                } else {
                     self.badgeDisplayProfiles = [];
-                });
+                }
+                // Apply to any existing rating widget
+                self.applyBadgeProfile();
+            });
         },
 
         /**
@@ -1853,6 +1850,67 @@
         },
 
         /**
+         * Get plugin config with caching. Fetches once and returns cached value.
+         * @returns {Promise<object>} Config object
+         */
+        getConfig: function () {
+            var self = this;
+
+            // Return cached config immediately
+            if (this._configCache) {
+                return Promise.resolve(this._configCache);
+            }
+
+            // Return existing promise if request is in flight
+            if (this._configPromise) {
+                return this._configPromise;
+            }
+
+            // Check if ApiClient is ready
+            if (!window.ApiClient) {
+                // Return a promise that retries when ApiClient is ready
+                return new Promise(function (resolve) {
+                    var checkApi = function () {
+                        if (window.ApiClient) {
+                            self.getConfig().then(resolve);
+                        } else {
+                            setTimeout(checkApi, 500);
+                        }
+                    };
+                    checkApi();
+                });
+            }
+
+            // Fetch config and cache it
+            var baseUrl = ApiClient.serverAddress();
+            this._configPromise = fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
+                .then(function (response) { return response.json(); })
+                .then(function (config) {
+                    self._configCache = config;
+                    self._configPromise = null;
+                    return config;
+                })
+                .catch(function (err) {
+                    self._configPromise = null;
+                    console.error('Failed to load config:', err);
+                    // Return default config on error
+                    return {
+                        EnableRatings: true,
+                        EnableRequestButton: true,
+                        EnableImdbSorting: true,
+                        ShowNotificationToggle: true,
+                        ShowLatestMediaButton: true,
+                        EnableNetflixView: false,
+                        EnableMediaManagement: true,
+                        EnableChat: false,
+                        EnableFriendsButton: false
+                    };
+                });
+
+            return this._configPromise;
+        },
+
+        /**
          * Initialize the ratings plugin
          */
         init: function () {
@@ -1868,17 +1926,13 @@
             const savedLang = localStorage.getItem('ratingsPluginLanguage');
             if (savedLang && this.validLanguages.includes(savedLang)) {
                 this.currentLanguage = savedLang;
-            } else if (window.ApiClient) {
-                // No valid saved preference, try to load default from server
-                const baseUrl = ApiClient.serverAddress();
-                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                    .then(function (response) { return response.json(); })
-                    .then(function (config) {
-                        if (config.DefaultLanguage && self.validLanguages.includes(config.DefaultLanguage)) {
-                            self.currentLanguage = config.DefaultLanguage;
-                        }
-                    })
-                    .catch(function () { /* Use default 'en' */ });
+            } else {
+                // No valid saved preference, try to load default from server (uses cached config)
+                this.getConfig().then(function (config) {
+                    if (config.DefaultLanguage && self.validLanguages.includes(config.DefaultLanguage)) {
+                        self.currentLanguage = config.DefaultLanguage;
+                    }
+                });
             }
 
             this.injectStyles();
@@ -2103,35 +2157,30 @@
 
             var tryInit = function () {
                 attempts++;
-                if (!window.ApiClient) {
-                    if (attempts < 15) {
-                        setTimeout(tryInit, 1000);
-                    }
-                    return;
-                }
 
-                // Check config once to see if friends button is enabled
+                // Check config once to see if friends button is enabled (uses cached config)
                 if (!configChecked) {
                     configChecked = true;
-                    var baseUrl = ApiClient.serverAddress();
-                    fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                        .then(function (r) { return r.json(); })
-                        .then(function (config) {
-                            if (config.EnableFriendsButton === true) {
-                                self.friendsButtonEnabled = true;
-                                tryInit(); // Continue with init
-                            } else {
-                                self.friendsButtonEnabled = false;
-                            }
-                        })
-                        .catch(function () {
+                    self.getConfig().then(function (config) {
+                        if (config.EnableFriendsButton === true) {
+                            self.friendsButtonEnabled = true;
+                            tryInit(); // Continue with init
+                        } else {
                             self.friendsButtonEnabled = false;
-                        });
+                        }
+                    });
                     return;
                 }
 
                 // Don't continue if not enabled
                 if (!self.friendsButtonEnabled) {
+                    return;
+                }
+
+                if (!window.ApiClient) {
+                    if (attempts < 15) {
+                        setTimeout(tryInit, 1000);
+                    }
                     return;
                 }
 
@@ -4149,80 +4198,60 @@
         },
 
         /**
-         * Load the EnableRatings flag from server config with retry.
+         * Load the EnableRatings flag from server config.
          * Sets ratingsEnabled to false if disabled, which gates widget injection and card ratings.
+         * Uses cached config to avoid redundant API calls.
          */
         loadRatingsEnabledFlag: function () {
             const self = this;
-            var attempts = 0;
 
-            var tryLoad = function () {
-                attempts++;
-                if (!window.ApiClient) {
-                    if (attempts < 15) {
-                        setTimeout(tryLoad, 1000);
-                    }
-                    return;
-                }
-                var baseUrl = ApiClient.serverAddress();
-                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                    .then(function (r) { return r.json(); })
-                    .then(function (config) {
-                        self.ratingsEnabled = config.EnableRatings !== false;
-                        self.enableImdbSorting = config.EnableImdbSorting !== false;
-                        // Star display options
-                        self.starDisplayMode = config.StarDisplayMode || '10-stars';
-                        self.quickRatingMode = config.QuickRatingMode === true;
+            // Use cached config
+            this.getConfig().then(function (config) {
+                self.ratingsEnabled = config.EnableRatings !== false;
+                self.enableImdbSorting = config.EnableImdbSorting !== false;
+                // Star display options
+                self.starDisplayMode = config.StarDisplayMode || '10-stars';
+                self.quickRatingMode = config.QuickRatingMode === true;
 
-                        // Star widget text options
-                        self.starWidgetConfig = {
-                            showRatingStats: config.ShowRatingStats !== false,
-                            ratingStatsFormat: config.RatingStatsFormat || '{avg}/10 - {count} rating{s}',
-                            showYourRating: config.ShowYourRating !== false,
-                            yourRatingFormat: config.YourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)',
-                            // Styling
-                            background: config.StarWidgetBackground || 'rgba(0, 0, 0, 0.6)',
-                            borderEnabled: config.StarWidgetBorderEnabled === true,
-                            borderColor: config.StarWidgetBorderColor || 'rgba(255, 255, 255, 0.3)',
-                            borderRadius: config.StarWidgetBorderRadius || 6,
-                            glowEffect: config.StarWidgetGlowEffect === true,
-                            glowColor: config.StarWidgetGlowColor || 'rgba(255, 215, 0, 0.5)',
-                            filledColor: config.StarFilledColor || '#ffd700',
-                            emptyColor: config.StarEmptyColor || '#555555',
-                            hoverColor: config.StarHoverColor || '#ffd700',
-                            customCSS: config.StarWidgetCustomCSS || ''
-                        };
+                // Star widget text options
+                self.starWidgetConfig = {
+                    showRatingStats: config.ShowRatingStats !== false,
+                    ratingStatsFormat: config.RatingStatsFormat || '{avg}/10 - {count} rating{s}',
+                    showYourRating: config.ShowYourRating !== false,
+                    yourRatingFormat: config.YourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)',
+                    // Styling
+                    background: config.StarWidgetBackground || 'rgba(0, 0, 0, 0.6)',
+                    borderEnabled: config.StarWidgetBorderEnabled === true,
+                    borderColor: config.StarWidgetBorderColor || 'rgba(255, 255, 255, 0.3)',
+                    borderRadius: config.StarWidgetBorderRadius || 6,
+                    glowEffect: config.StarWidgetGlowEffect === true,
+                    glowColor: config.StarWidgetGlowColor || 'rgba(255, 215, 0, 0.5)',
+                    filledColor: config.StarFilledColor || '#ffd700',
+                    emptyColor: config.StarEmptyColor || '#555555',
+                    hoverColor: config.StarHoverColor || '#ffd700',
+                    customCSS: config.StarWidgetCustomCSS || ''
+                };
 
-                        // Header button styling
-                        self.headerButtonStyle = {
-                            transparentBg: config.HeaderButtonTransparentBg || false,
-                            groupBackground: config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)',
-                            noBorder: config.HeaderButtonNoBorder || false,
-                            groupBorderColor: config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)',
-                            groupBorderRadius: config.HeaderButtonGroupBorderRadius || 25,
-                            buttonColor: config.HeaderButtonColor || '#ffffff',
-                            iconOpacity: config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100,
-                            buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
-                            glowEffect: config.HeaderButtonGlowEffect || false,
-                            glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)',
-                            overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100,
-                            searchFieldMatchGroupBg: config.SearchFieldMatchGroupBg !== false,
-                            searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)',
-                            languageTextColor: config.LanguageTextColor || '#ffffff'
-                        };
-                        self.applyHeaderButtonStyles();
-                        self.applyStarWidgetStyles();
-                    })
-                    .catch(function () {
-                        // Default to enabled on error
-                        self.ratingsEnabled = true;
-                        self.enableImdbSorting = true;
-                        self.headerButtonStyle = null;
-                        self.starWidgetConfig = null;
-                    });
-            };
-
-            setTimeout(tryLoad, 500);
+                // Header button styling
+                self.headerButtonStyle = {
+                    transparentBg: config.HeaderButtonTransparentBg || false,
+                    groupBackground: config.HeaderButtonGroupBackground || 'rgba(40, 40, 40, 0.95)',
+                    noBorder: config.HeaderButtonNoBorder || false,
+                    groupBorderColor: config.HeaderButtonGroupBorderColor || 'rgba(255, 255, 255, 0.15)',
+                    groupBorderRadius: config.HeaderButtonGroupBorderRadius || 25,
+                    buttonColor: config.HeaderButtonColor || '#ffffff',
+                    iconOpacity: config.HeaderButtonIconOpacity !== undefined ? config.HeaderButtonIconOpacity : 100,
+                    buttonHoverBg: config.HeaderButtonHoverBackground || 'rgba(255, 255, 255, 0.15)',
+                    glowEffect: config.HeaderButtonGlowEffect || false,
+                    glowColor: config.HeaderButtonGlowColor || 'rgba(255, 255, 255, 0.3)',
+                    overallOpacity: config.HeaderGroupOverallOpacity !== undefined ? config.HeaderGroupOverallOpacity : 100,
+                    searchFieldMatchGroupBg: config.SearchFieldMatchGroupBg !== false,
+                    searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)',
+                    languageTextColor: config.LanguageTextColor || '#ffffff'
+                };
+                self.applyHeaderButtonStyles();
+                self.applyStarWidgetStyles();
+            });
         },
 
         /**
@@ -4241,27 +4270,12 @@
                         return; // Already initialized
                     }
 
-                    // Check if ApiClient is ready
-                    if (!window.ApiClient) {
-                        if (attempts < maxAttempts) {
-                            setTimeout(tryInit, 1000);
-                        }
-                        return;
-                    }
-
-                    // Check if request button is enabled in config
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.EnableRequestButton === true) {
-                                self.initRequestButton();
-                            }
-                        })
-                        .catch(() => {
-                            // Default to showing button if config fails
+                    // Check if request button is enabled in config (uses cached config)
+                    self.getConfig().then(config => {
+                        if (config.EnableRequestButton === true) {
                             self.initRequestButton();
-                        });
+                        }
+                    });
                 } catch (err) {
                     console.error('Request button init attempt failed:', err);
                     if (attempts < maxAttempts) {
@@ -14899,26 +14913,15 @@
                     return;
                 }
 
-                // Check config if search button should be shown
+                // Check config if search button should be shown (uses cached config)
                 const checkConfigAndCreate = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndCreate, 1000);
-                        return;
-                    }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.ShowSearchButton === false) {
-                                return; // Don't create search field
-                            }
-                            self.searchExcludeEpisodes = config.SearchExcludeEpisodes !== false;
-                            createSearchField();
-                        })
-                        .catch(() => {
-                            // Default to showing if config fails
-                            createSearchField();
-                        });
+                    self.getConfig().then(config => {
+                        if (config.ShowSearchButton === false) {
+                            return; // Don't create search field
+                        }
+                        self.searchExcludeEpisodes = config.SearchExcludeEpisodes !== false;
+                        createSearchField();
+                    });
                 };
 
                 // Wait for DOM to be ready
@@ -15489,25 +15492,14 @@
                     return;
                 }
 
-                // Check config if header language button is enabled
+                // Check config if header language button is enabled (uses cached config)
                 const checkConfigAndCreate = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndCreate, 1000);
-                        return;
-                    }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.ShowHeaderLanguageButton === false) {
-                                return; // Don't create language button
-                            }
-                            proceedWithCreation();
-                        })
-                        .catch(() => {
-                            // Default to showing if config fails
-                            proceedWithCreation();
-                        });
+                    self.getConfig().then(config => {
+                        if (config.ShowHeaderLanguageButton === false) {
+                            return; // Don't create language button
+                        }
+                        proceedWithCreation();
+                    });
                 };
 
                 const proceedWithCreation = () => {
@@ -15680,25 +15672,14 @@
                     return;
                 }
 
-                // Check config if notifications are enabled
+                // Check config if notifications are enabled (uses cached config)
                 const checkConfigAndCreate = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndCreate, 1000);
-                        return;
-                    }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.ShowNotificationToggle === false) {
-                                return; // Don't create notification toggle
-                            }
-                            createNotificationToggle(config);
-                        })
-                        .catch(() => {
-                            // Default to showing if config fails
-                            createNotificationToggle();
-                        });
+                    self.getConfig().then(config => {
+                        if (config.ShowNotificationToggle === false) {
+                            return; // Don't create notification toggle
+                        }
+                        createNotificationToggle(config);
+                    });
                 };
 
                 const createNotificationToggle = (config) => {
@@ -15818,25 +15799,14 @@
                     return;
                 }
 
-                // Check config if latest media button is enabled
+                // Check config if latest media button is enabled (uses cached config)
                 const checkConfigAndCreate = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndCreate, 1000);
-                        return;
-                    }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.ShowLatestMediaButton === false) {
-                                return; // Don't create button
-                            }
-                            createLatestMediaButton();
-                        })
-                        .catch(() => {
-                            // Default to showing if config fails
-                            createLatestMediaButton();
-                        });
+                    self.getConfig().then(config => {
+                        if (config.ShowLatestMediaButton === false) {
+                            return; // Don't create button
+                        }
+                        createLatestMediaButton();
+                    });
                 };
 
                 const createLatestMediaButton = () => {
@@ -16579,28 +16549,13 @@
         initHomeDuplicateHiding: function () {
             const self = this;
             try {
-                // Check config first
-                const checkConfigAndInit = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndInit, 1000);
-                        return;
+                // Check config first (uses cached config)
+                self.getConfig().then(config => {
+                    if (config.HideHomeDuplicates === false) {
+                        return; // Feature disabled
                     }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.HideHomeDuplicates === false) {
-                                return; // Feature disabled
-                            }
-                            self.setupHomeDuplicateObserver();
-                        })
-                        .catch(() => {
-                            // Default to enabled if config fails
-                            self.setupHomeDuplicateObserver();
-                        });
-                };
-
-                checkConfigAndInit();
+                    self.setupHomeDuplicateObserver();
+                });
             } catch (err) {
                 console.error('[Ratings] Error initializing home duplicate hiding:', err);
             }
@@ -16754,34 +16709,19 @@
                     return;
                 }
 
-                // Check config and admin status
+                // Check config and admin status (uses cached config)
                 const checkConfigAndCreate = () => {
-                    if (!window.ApiClient) {
-                        setTimeout(checkConfigAndCreate, 1000);
-                        return;
-                    }
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                        .then(response => response.json())
-                        .then(config => {
-                            if (config.EnableMediaManagement === false) {
-                                return; // Don't create button
+                    self.getConfig().then(config => {
+                        if (config.EnableMediaManagement === false) {
+                            return; // Don't create button
+                        }
+                        // Check if admin
+                        self.checkIfAdmin().then(isAdmin => {
+                            if (isAdmin) {
+                                createMediaManagementButton();
                             }
-                            // Check if admin
-                            self.checkIfAdmin().then(isAdmin => {
-                                if (isAdmin) {
-                                    createMediaManagementButton();
-                                }
-                            });
-                        })
-                        .catch((err) => {
-                            // Default to checking admin status
-                            self.checkIfAdmin().then(isAdmin => {
-                                if (isAdmin) {
-                                    createMediaManagementButton();
-                                }
-                            });
                         });
+                    });
                 };
 
                 const createMediaManagementButton = () => {
@@ -18944,47 +18884,31 @@
         },
 
         /**
-         * Load appropriate interface based on user role
+         * Load appropriate interface based on user role (uses cached config)
          */
         loadRequestInterface: function () {
             const self = this;
             try {
                 // Fetch config first to check EnableAdminRequests
-                const baseUrl = ApiClient.serverAddress();
-                fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                    .then(response => response.json())
-                    .then(config => {
-                        // Check if user is admin
-                        self.checkIfAdmin().then(isAdmin => {
-                            if (isAdmin) {
-                                if (config.EnableAdminRequests) {
-                                    // Admin can create requests - show tabs
-                                    self.loadAdminWithTabs(config);
-                                } else {
-                                    // Admin cannot create requests - show manage only
-                                    self.loadAdminInterface();
-                                }
+                self.getConfig().then(config => {
+                    // Check if user is admin
+                    self.checkIfAdmin().then(isAdmin => {
+                        if (isAdmin) {
+                            if (config.EnableAdminRequests) {
+                                // Admin can create requests - show tabs
+                                self.loadAdminWithTabs(config);
                             } else {
-                                self.loadUserInterface();
-                            }
-                        }).catch(err => {
-                            console.error('Error checking admin status:', err);
-                            self.loadUserInterface();
-                        });
-                    })
-                    .catch(err => {
-                        console.error('Error fetching config:', err);
-                        // Fallback: check admin and show appropriate interface
-                        self.checkIfAdmin().then(isAdmin => {
-                            if (isAdmin) {
+                                // Admin cannot create requests - show manage only
                                 self.loadAdminInterface();
-                            } else {
-                                self.loadUserInterface();
                             }
-                        }).catch(() => {
+                        } else {
                             self.loadUserInterface();
-                        });
+                        }
+                    }).catch(err => {
+                        console.error('Error checking admin status:', err);
+                        self.loadUserInterface();
                     });
+                });
             } catch (err) {
                 console.error('Error loading request interface:', err);
             }
@@ -19778,7 +19702,7 @@
         },
 
         /**
-         * Load user interface for making requests
+         * Load user interface for making requests (uses cached config)
          */
         loadUserInterface: function () {
             const self = this;
@@ -19791,16 +19715,9 @@
             this.markDoneRequestsAsViewed();
 
             // Fetch config and render with custom settings
-            const baseUrl = ApiClient.serverAddress();
-            fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                .then(response => response.json())
-                .then(config => {
-                    self.renderUserInterface(modalBody, modalTitle, config);
-                })
-                .catch(() => {
-                    // Fallback with default config
-                    self.renderUserInterface(modalBody, modalTitle, {});
-                });
+            self.getConfig().then(config => {
+                self.renderUserInterface(modalBody, modalTitle, config);
+            });
         },
 
         /**
@@ -20400,7 +20317,7 @@
         },
 
         /**
-         * Load admin interface for managing requests
+         * Load admin interface for managing requests (uses cached config)
          */
         loadAdminInterface: function () {
             const self = this;
@@ -20413,44 +20330,38 @@
             modalBody.innerHTML = '<p style="text-align: center; color: #999;">' + this.t('loading') + '</p>';
 
             // Fetch config and then render with tabs
-            const baseUrl = ApiClient.serverAddress();
-            fetch(`${baseUrl}/Ratings/Config`, { method: 'GET', credentials: 'include' })
-                .then(response => response.json())
-                .then(config => {
-                    // Show tabs: Manage Requests + Deletion Requests
-                    const tabsHtml = `
-                        <div class="admin-tabs">
-                            <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
-                            <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
-                        </div>
-                        <div class="admin-tab-content" id="adminTabContent"></div>
-                    `;
-                    modalBody.innerHTML = tabsHtml;
+            self.getConfig().then(config => {
+                // Show tabs: Manage Requests + Deletion Requests
+                const tabsHtml = `
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
+                        <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
+                    </div>
+                    <div class="admin-tab-content" id="adminTabContent"></div>
+                `;
+                modalBody.innerHTML = tabsHtml;
 
-                    // Update tab badges with pending counts
-                    self.updateAdminTabBadges();
+                // Update tab badges with pending counts
+                self.updateAdminTabBadges();
 
-                    // Attach tab handlers
-                    const tabs = modalBody.querySelectorAll('.admin-tab');
-                    tabs.forEach(tab => {
-                        tab.addEventListener('click', (e) => {
-                            tabs.forEach(t => t.classList.remove('active'));
-                            e.target.closest('.admin-tab').classList.add('active');
-                            const tabName = e.target.closest('.admin-tab').getAttribute('data-tab');
-                            if (tabName === 'deletions') {
-                                self.renderDeletionRequestsTab(config);
-                            } else {
-                                self.renderAdminInterfaceInTab(config);
-                            }
-                        });
+                // Attach tab handlers
+                const tabs = modalBody.querySelectorAll('.admin-tab');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        e.target.closest('.admin-tab').classList.add('active');
+                        const tabName = e.target.closest('.admin-tab').getAttribute('data-tab');
+                        if (tabName === 'deletions') {
+                            self.renderDeletionRequestsTab(config);
+                        } else {
+                            self.renderAdminInterfaceInTab(config);
+                        }
                     });
-
-                    // Load manage tab by default
-                    self.renderAdminInterfaceInTab(config);
-                })
-                .catch(() => {
-                    self.renderAdminInterface(modalBody, {});
                 });
+
+                // Load manage tab by default
+                self.renderAdminInterfaceInTab(config);
+            });
         },
 
         /**
@@ -22024,32 +21935,13 @@
         },
 
         /**
-         * Check if notifications are enabled
+         * Check if notifications are enabled (uses cached config)
          */
         checkNotificationsEnabled: function () {
-            return new Promise((resolve) => {
-                try {
-                    if (!window.ApiClient) {
-                        resolve(false);
-                        return;
-                    }
-
-                    const baseUrl = ApiClient.serverAddress();
-                    fetch(`${baseUrl}/Ratings/Config`, {
-                        method: 'GET',
-                        credentials: 'include'
-                    })
-                        .then(response => response.json())
-                        .then(config => {
-                            resolve(config.EnableNewMediaNotifications === true);
-                        })
-                        .catch(() => {
-                            resolve(false);
-                        });
-                } catch (err) {
-                    resolve(false);
-                }
-            });
+            const self = this;
+            return this.getConfig().then(config => {
+                return config.EnableNewMediaNotifications === true;
+            }).catch(() => false);
         },
 
         /**
@@ -24117,47 +24009,28 @@
         },
 
         /**
-         * Initialize chat with retry logic
+         * Initialize chat with retry logic (uses cached config)
          */
         initChatWithRetry: function () {
             const self = this;
-            let attempts = 0;
-            const maxAttempts = 15;
 
-            const tryInit = function () {
-                attempts++;
-                if (!window.ApiClient) {
-                    if (attempts < maxAttempts) {
-                        setTimeout(tryInit, 1000);
-                    }
-                    return;
+            // Use cached config
+            this.getConfig().then(function (config) {
+                self.chatEnabled = config.EnableChat === true;
+                self.chatConfig = {
+                    hasGifSupport: config.HasGifSupport === true,
+                    allowGifs: config.ChatAllowGifs !== false,
+                    allowEmojis: config.ChatAllowEmojis !== false,
+                    maxMessageLength: config.ChatMaxMessageLength || 500,
+                    rateLimitPerMinute: config.ChatRateLimitPerMinute || 10
+                };
+                // Notification settings
+                self.chatNotifyPublic = config.ChatNotifyPublic !== false;
+                self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
+                if (self.chatEnabled) {
+                    self.initChat();
                 }
-
-                const baseUrl = ApiClient.serverAddress();
-                fetch(baseUrl + '/Ratings/Config', { method: 'GET', credentials: 'include' })
-                    .then(function (r) { return r.json(); })
-                    .then(function (config) {
-                        self.chatEnabled = config.EnableChat === true;
-                        self.chatConfig = {
-                            hasGifSupport: config.HasGifSupport === true,
-                            allowGifs: config.ChatAllowGifs !== false,
-                            allowEmojis: config.ChatAllowEmojis !== false,
-                            maxMessageLength: config.ChatMaxMessageLength || 500,
-                            rateLimitPerMinute: config.ChatRateLimitPerMinute || 10
-                        };
-                        // Notification settings
-                        self.chatNotifyPublic = config.ChatNotifyPublic !== false;
-                        self.chatNotifyPrivate = config.ChatNotifyPrivate !== false;
-                        if (self.chatEnabled) {
-                            self.initChat();
-                        }
-                    })
-                    .catch(function () {
-                        self.chatEnabled = false;
-                    });
-            };
-
-            setTimeout(tryInit, 1000);
+            });
         },
 
         /**
