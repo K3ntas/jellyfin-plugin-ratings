@@ -13,7 +13,7 @@
         "changelog": "Fix: Close comments modal when clicking user profile",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.286.0/Jellyfin.Plugin.Ratings_2.0.286.0.zip",
-        "checksum": "03f4e498e6d6142274c08501ab24e9db",
+        "checksum": "069663e958f6c21b786a0eeadbe50339",
         "timestamp": "2026-04-26T15:40:00Z"
       },
       {
