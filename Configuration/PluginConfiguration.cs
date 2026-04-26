@@ -147,6 +147,22 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             HeaderButtonGlowEffect = false;
             HeaderButtonGlowColor = "rgba(255, 255, 255, 0.3)";
             HeaderGroupOverallOpacity = 100;
+
+            // User Reviews Card Styling
+            ReviewCardBackground = "rgba(30, 30, 30, 0.95)";
+            ReviewCardNoBorder = false;
+            ReviewCardBorderColor = "rgba(255, 255, 255, 0.1)";
+            ReviewCardBorderRadius = 12;
+            ReviewCardUsernameColor = "#ffffff";
+            ReviewCardTimestampColor = "#888888";
+            ReviewCardTextColor = "#cccccc";
+            ReviewCardRatingColor = "#ffd700";
+            ReviewCardActionBtnColor = "#888888";
+            ReviewCardActionBtnHoverColor = "#ffffff";
+            ReviewCardLikedColor = "#4CAF50";
+            ReviewCardDislikedColor = "#f44336";
+            ReviewCardHoverBackground = "rgba(255, 255, 255, 0.05)";
+            ReviewCardOverallOpacity = 100;
         }
 
         /// <summary>
@@ -647,5 +663,77 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the overall opacity of the entire button group (0-100).
         /// </summary>
         public int HeaderGroupOverallOpacity { get; set; }
+
+        // ========== User Reviews Card Styling ==========
+
+        /// <summary>
+        /// Gets or sets the background color for review cards.
+        /// </summary>
+        public string ReviewCardBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether review card border is hidden.
+        /// </summary>
+        public bool ReviewCardNoBorder { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border color for review cards.
+        /// </summary>
+        public string ReviewCardBorderColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the border radius for review cards.
+        /// </summary>
+        public int ReviewCardBorderRadius { get; set; }
+
+        /// <summary>
+        /// Gets or sets the username text color in review cards.
+        /// </summary>
+        public string ReviewCardUsernameColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the timestamp text color in review cards.
+        /// </summary>
+        public string ReviewCardTimestampColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the review text color in review cards.
+        /// </summary>
+        public string ReviewCardTextColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the rating star/number color in review cards.
+        /// </summary>
+        public string ReviewCardRatingColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the action button (like/dislike/comment) color.
+        /// </summary>
+        public string ReviewCardActionBtnColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the action button hover color.
+        /// </summary>
+        public string ReviewCardActionBtnHoverColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the liked button active color.
+        /// </summary>
+        public string ReviewCardLikedColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the disliked button active color.
+        /// </summary>
+        public string ReviewCardDislikedColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hover background for review cards.
+        /// </summary>
+        public string ReviewCardHoverBackground { get; set; }
+
+        /// <summary>
+        /// Gets or sets the overall opacity of review cards (0-100).
+        /// </summary>
+        public int ReviewCardOverallOpacity { get; set; }
     }
 }

@@ -4255,8 +4255,28 @@
                     searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)',
                     languageTextColor: config.LanguageTextColor || '#ffffff'
                 };
+
+                // Review card styling
+                self.reviewCardStyle = {
+                    background: config.ReviewCardBackground || 'rgba(30, 30, 30, 0.95)',
+                    noBorder: config.ReviewCardNoBorder || false,
+                    borderColor: config.ReviewCardBorderColor || 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: config.ReviewCardBorderRadius || 12,
+                    usernameColor: config.ReviewCardUsernameColor || '#ffffff',
+                    timestampColor: config.ReviewCardTimestampColor || '#888888',
+                    textColor: config.ReviewCardTextColor || '#cccccc',
+                    ratingColor: config.ReviewCardRatingColor || '#ffd700',
+                    actionBtnColor: config.ReviewCardActionBtnColor || '#888888',
+                    actionBtnHoverColor: config.ReviewCardActionBtnHoverColor || '#ffffff',
+                    likedColor: config.ReviewCardLikedColor || '#4CAF50',
+                    dislikedColor: config.ReviewCardDislikedColor || '#f44336',
+                    hoverBackground: config.ReviewCardHoverBackground || 'rgba(255, 255, 255, 0.05)',
+                    overallOpacity: config.ReviewCardOverallOpacity !== undefined ? config.ReviewCardOverallOpacity : 100
+                };
+
                 self.applyHeaderButtonStyles();
                 self.applyStarWidgetStyles();
+                self.applyReviewCardStyles();
             });
         },
 
@@ -16258,6 +16278,84 @@
                 }
 
                 ${config.customCSS}
+            `;
+        },
+
+        applyReviewCardStyles: function () {
+            const self = this;
+            const style = self.reviewCardStyle;
+            if (!style) return;
+
+            // Create or update dynamic stylesheet for review cards
+            let styleEl = document.getElementById('ratingsReviewCardStyles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'ratingsReviewCardStyles';
+                document.head.appendChild(styleEl);
+            }
+
+            const borderStyle = style.noBorder ? 'none' : `1px solid ${style.borderColor}`;
+            const overallOpacity = (style.overallOpacity !== undefined ? style.overallOpacity : 100) / 100;
+
+            styleEl.textContent = `
+                /* User Review Card Base */
+                .user-review-card {
+                    background: ${style.background} !important;
+                    border: ${borderStyle} !important;
+                    border-radius: ${style.borderRadius}px !important;
+                    opacity: ${overallOpacity} !important;
+                }
+
+                .user-review-card:hover {
+                    background: ${style.hoverBackground} !important;
+                }
+
+                /* Username */
+                .user-review-username {
+                    color: ${style.usernameColor} !important;
+                }
+
+                /* Timestamp */
+                .user-review-timestamp {
+                    color: ${style.timestampColor} !important;
+                }
+
+                /* Review Text */
+                .user-review-text {
+                    color: ${style.textColor} !important;
+                }
+
+                /* Gradient fade for truncated text */
+                .user-review-text.truncated::after {
+                    background: linear-gradient(transparent, ${style.background}) !important;
+                }
+
+                /* Rating Stars */
+                .user-review-rating {
+                    color: ${style.ratingColor} !important;
+                }
+                .user-review-rating-star {
+                    color: ${style.ratingColor} !important;
+                }
+
+                /* Action Buttons */
+                .user-review-action-btn {
+                    color: ${style.actionBtnColor} !important;
+                }
+
+                .user-review-action-btn:hover {
+                    color: ${style.actionBtnHoverColor} !important;
+                }
+
+                /* Liked Button */
+                .user-review-action-btn.liked {
+                    color: ${style.likedColor} !important;
+                }
+
+                /* Disliked Button */
+                .user-review-action-btn.disliked {
+                    color: ${style.dislikedColor} !important;
+                }
             `;
         },
 
