@@ -5009,6 +5009,210 @@
                     color: #888;
                     padding: 2em;
                 }
+                .user-review-user-link {
+                    cursor: pointer;
+                    text-decoration: none;
+                    color: inherit;
+                }
+                .user-review-user-link:hover .user-review-username {
+                    color: #4CAF50;
+                    text-decoration: underline;
+                }
+                .user-review-avatar.clickable {
+                    cursor: pointer;
+                    transition: transform 0.2s ease;
+                }
+                .user-review-avatar.clickable:hover {
+                    transform: scale(1.1);
+                }
+                /* Review Comments Modal */
+                .review-comments-modal {
+                    min-width: 400px;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .review-comments-list {
+                    flex: 1;
+                    overflow-y: auto;
+                    max-height: 300px;
+                    margin-bottom: 1em;
+                }
+                .review-comment-item {
+                    display: flex;
+                    gap: 0.8em;
+                    padding: 0.8em;
+                    border-bottom: 1px solid #333;
+                }
+                .review-comment-item:last-child {
+                    border-bottom: none;
+                }
+                .review-comment-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #333;
+                    flex-shrink: 0;
+                    overflow: hidden;
+                    cursor: pointer;
+                }
+                .review-comment-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .review-comment-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .review-comment-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                    margin-bottom: 0.3em;
+                }
+                .review-comment-username {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 0.9em;
+                    cursor: pointer;
+                }
+                .review-comment-username:hover {
+                    color: #4CAF50;
+                    text-decoration: underline;
+                }
+                .review-comment-time {
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                .review-comment-text {
+                    color: #ccc;
+                    font-size: 0.9em;
+                    line-height: 1.4;
+                    word-break: break-word;
+                }
+                .review-comment-delete {
+                    background: none;
+                    border: none;
+                    color: #666;
+                    cursor: pointer;
+                    padding: 0.2em;
+                    font-size: 0.9em;
+                }
+                .review-comment-delete:hover {
+                    color: #f44336;
+                }
+                .review-comments-empty {
+                    text-align: center;
+                    color: #666;
+                    padding: 2em;
+                    font-style: italic;
+                }
+                .review-comment-input-area {
+                    display: flex;
+                    gap: 0.5em;
+                    padding-top: 0.5em;
+                    border-top: 1px solid #333;
+                }
+                .review-comment-input {
+                    flex: 1;
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    padding: 0.6em;
+                    color: #fff;
+                    font-size: 0.9em;
+                    resize: none;
+                    min-height: 40px;
+                }
+                .review-comment-input:focus {
+                    outline: none;
+                    border-color: #4CAF50;
+                }
+                .review-comment-send {
+                    background: #4CAF50;
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    padding: 0 1em;
+                    cursor: pointer;
+                    font-size: 0.9em;
+                }
+                .review-comment-send:hover {
+                    background: #45a049;
+                }
+                .review-comment-send:disabled {
+                    background: #333;
+                    cursor: not-allowed;
+                }
+                /* User Profile Modal */
+                .user-profile-modal {
+                    min-width: 350px;
+                    max-width: 450px;
+                }
+                .user-profile-content {
+                    padding: 1em;
+                }
+                .user-profile-loading,
+                .user-profile-error {
+                    text-align: center;
+                    color: #888;
+                    padding: 2em;
+                }
+                .user-profile-header-section {
+                    display: flex;
+                    gap: 1em;
+                    margin-bottom: 1em;
+                }
+                .user-profile-avatar {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background: #333;
+                    flex-shrink: 0;
+                    overflow: hidden;
+                }
+                .user-profile-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .user-profile-info {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                .user-profile-name {
+                    font-size: 1.4em;
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 0.3em;
+                }
+                .user-profile-meta {
+                    font-size: 0.85em;
+                    color: #888;
+                    margin-bottom: 0.2em;
+                }
+                .user-profile-bio {
+                    color: #ccc;
+                    line-height: 1.5;
+                    padding-top: 1em;
+                    border-top: 1px solid #333;
+                }
+                @media (max-width: 600px) {
+                    .user-profile-modal {
+                        min-width: unset;
+                        width: 95vw;
+                    }
+                }
+                @media (max-width: 600px) {
+                    .review-comments-modal {
+                        min-width: unset;
+                        width: 95vw;
+                    }
+                }
                 @media (max-width: 600px) {
                     .user-reviews-grid {
                         grid-template-columns: 1fr;
@@ -14506,18 +14710,21 @@
                 const likedClass = review.UserLiked === true ? ' liked' : '';
                 const dislikedClass = review.UserLiked === false ? ' disliked' : '';
                 const ownClass = isOwnReview ? ' own-review' : '';
+                const commentCount = review.CommentCount || 0;
 
                 html += `
                     <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
                         <div class="user-review-card-header">
-                            <div class="user-review-avatar">
+                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}">
                                 <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
                                 <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
                             </div>
-                            <div class="user-review-user-info">
-                                <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
-                                <div class="user-review-timestamp">${timestamp}</div>
-                            </div>
+                            <a class="user-review-user-link" data-user-id="${review.UserId}">
+                                <div class="user-review-user-info">
+                                    <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
+                                    <div class="user-review-timestamp">${timestamp}</div>
+                                </div>
+                            </a>
                             <div class="user-review-rating">
                                 <span class="user-review-rating-star">★</span>
                                 <span>${review.Rating}/10</span>
@@ -14530,6 +14737,9 @@
                             </button>
                             <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike" ${isOwnReview ? 'disabled' : ''}>
                                 👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
+                            </button>
+                            <button class="user-review-action-btn" data-action="comment">
+                                💬 <span class="comment-count">${commentCount}</span>
                             </button>
                         </div>
                     </div>
@@ -14562,13 +14772,31 @@
             });
 
             // Add like/dislike handlers
-            grid.querySelectorAll('.user-review-action-btn:not(.own-review)').forEach(btn => {
+            grid.querySelectorAll('.user-review-action-btn[data-action="like"]:not(.own-review), .user-review-action-btn[data-action="dislike"]:not(.own-review)').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const card = this.closest('.user-review-card');
                     const reviewerUserId = card.getAttribute('data-user-id');
                     const action = this.getAttribute('data-action');
                     const isLike = action === 'like';
                     self.handleReviewCardLike(reviewerUserId, itemId, isLike, card);
+                });
+            });
+
+            // Add comment button handlers
+            grid.querySelectorAll('.user-review-action-btn[data-action="comment"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.user-review-card');
+                    const reviewerUserId = card.getAttribute('data-user-id');
+                    self.openReviewCommentsModal(reviewerUserId, itemId, card);
+                });
+            });
+
+            // Add user profile click handlers
+            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const userId = this.getAttribute('data-user-id');
+                    self.navigateToUserProfile(userId);
                 });
             });
         },
@@ -14640,6 +14868,267 @@
             .catch(err => {
                 console.error('Error toggling review like:', err);
             });
+        },
+
+        /**
+         * Open comments modal for a review
+         */
+        openReviewCommentsModal: function (reviewerUserId, itemId, card) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const currentUserId = ApiClient.getCurrentUserId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'reviewCommentsModalOverlay';
+
+            overlay.innerHTML = `
+                <div class="ratings-modal review-comments-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">Comments</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="review-comments-list">
+                        <div class="review-comments-empty">Loading...</div>
+                    </div>
+                    <div class="review-comment-input-area">
+                        <textarea class="review-comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
+                        <button class="review-comment-send" disabled>Send</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const listContainer = overlay.querySelector('.review-comments-list');
+            const input = overlay.querySelector('.review-comment-input');
+            const sendBtn = overlay.querySelector('.review-comment-send');
+
+            // Enable/disable send button based on input
+            input.addEventListener('input', function() {
+                sendBtn.disabled = this.value.trim().length === 0;
+            });
+
+            // Send comment on Enter (without shift)
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.value.trim().length > 0) {
+                        sendBtn.click();
+                    }
+                }
+            });
+
+            // Send comment handler
+            sendBtn.addEventListener('click', function() {
+                const text = input.value.trim();
+                if (!text) return;
+
+                sendBtn.disabled = true;
+                input.disabled = true;
+
+                const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Comments?text=${encodeURIComponent(text)}`;
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.json())
+                .then(newComment => {
+                    input.value = '';
+                    input.disabled = false;
+                    sendBtn.disabled = true;
+                    loadComments();
+                    // Update comment count on the card
+                    const countEl = card.querySelector('.comment-count');
+                    if (countEl) {
+                        countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error adding comment:', err);
+                    input.disabled = false;
+                    sendBtn.disabled = false;
+                });
+            });
+
+            // Load comments function
+            function loadComments() {
+                const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Comments`;
+
+                fetch(url, {
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                })
+                .then(r => r.json())
+                .then(comments => {
+                    if (!comments || comments.length === 0) {
+                        listContainer.innerHTML = '<div class="review-comments-empty">No comments yet. Be the first!</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    comments.forEach(c => {
+                        const avatarUrl = `${baseUrl}/Users/${c.CommenterId}/Images/Primary?height=64`;
+                        const isOwn = c.CommenterId === currentUserId;
+                        const deleteBtn = isOwn ? `<button class="review-comment-delete" data-comment-id="${c.Id}" title="Delete">🗑️</button>` : '';
+
+                        html += `
+                            <div class="review-comment-item" data-comment-id="${c.Id}">
+                                <div class="review-comment-avatar" data-user-id="${c.CommenterId}">
+                                    <img src="${avatarUrl}" onerror="this.style.display='none'">
+                                </div>
+                                <div class="review-comment-content">
+                                    <div class="review-comment-header">
+                                        <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.Username || 'Unknown')}</span>
+                                        <span class="review-comment-time">${self.formatReviewTimestamp(c.CreatedAt)}</span>
+                                        ${deleteBtn}
+                                    </div>
+                                    <div class="review-comment-text">${self.escapeHtml(c.Text)}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    listContainer.innerHTML = html;
+
+                    // Add delete handlers
+                    listContainer.querySelectorAll('.review-comment-delete').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const commentId = this.getAttribute('data-comment-id');
+                            if (confirm('Delete this comment?')) {
+                                fetch(`${baseUrl}/Ratings/Reviews/Comments/${commentId}`, {
+                                    method: 'DELETE',
+                                    credentials: 'include',
+                                    headers: { 'X-Emby-Authorization': authHeader }
+                                })
+                                .then(r => {
+                                    if (r.ok) {
+                                        loadComments();
+                                        // Update comment count on the card
+                                        const countEl = card.querySelector('.comment-count');
+                                        if (countEl) {
+                                            const cnt = parseInt(countEl.textContent || '0');
+                                            countEl.textContent = Math.max(0, cnt - 1);
+                                        }
+                                    }
+                                })
+                                .catch(err => console.error('Error deleting comment:', err));
+                            }
+                        });
+                    });
+
+                    // Add user profile click handlers
+                    listContainer.querySelectorAll('.review-comment-avatar, .review-comment-username').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const userId = this.getAttribute('data-user-id');
+                            self.navigateToUserProfile(userId);
+                        });
+                    });
+                })
+                .catch(err => {
+                    console.error('Error loading comments:', err);
+                    listContainer.innerHTML = '<div class="review-comments-empty">Error loading comments</div>';
+                });
+            }
+
+            // Initial load
+            loadComments();
+
+            // Close handlers
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
+                overlay.remove();
+            });
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+        },
+
+        /**
+         * Show user profile popup
+         */
+        navigateToUserProfile: function (userId) {
+            if (!userId) return;
+
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            // Close any existing popup
+            const existing = document.getElementById('userProfilePopup');
+            if (existing) existing.remove();
+
+            // Create popup overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'ratings-modal-overlay';
+            overlay.id = 'userProfilePopup';
+
+            overlay.innerHTML = `
+                <div class="ratings-modal user-profile-modal">
+                    <div class="ratings-modal-header">
+                        <span class="ratings-modal-title">User Profile</span>
+                        <button class="ratings-modal-close">&times;</button>
+                    </div>
+                    <div class="user-profile-content">
+                        <div class="user-profile-loading">Loading...</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const content = overlay.querySelector('.user-profile-content');
+
+            // Fetch user info and profile
+            Promise.all([
+                fetch(`${baseUrl}/Users/${userId}`, {
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch(`${baseUrl}/Social/Profile/${userId}`, {
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.ok ? r.json() : null).catch(() => null)
+            ])
+            .then(([userInfo, profile]) => {
+                const username = userInfo?.Name || profile?.Username || 'Unknown User';
+                const avatarUrl = `${baseUrl}/Users/${userId}/Images/Primary?height=128`;
+                const memberSince = userInfo?.DateCreated ? new Date(userInfo.DateCreated).toLocaleDateString() : 'Unknown';
+                const lastActive = userInfo?.LastActivityDate ? self.formatReviewTimestamp(userInfo.LastActivityDate) : 'Unknown';
+                const bio = profile?.Bio || '';
+
+                content.innerHTML = `
+                    <div class="user-profile-header-section">
+                        <div class="user-profile-avatar">
+                            <img src="${avatarUrl}" onerror="this.style.display='none'">
+                        </div>
+                        <div class="user-profile-info">
+                            <div class="user-profile-name">${self.escapeHtml(username)}</div>
+                            <div class="user-profile-meta">Member since ${memberSince}</div>
+                            <div class="user-profile-meta">Last active: ${lastActive}</div>
+                        </div>
+                    </div>
+                    ${bio ? `<div class="user-profile-bio">${self.escapeHtml(bio)}</div>` : ''}
+                `;
+            })
+            .catch(err => {
+                console.error('Error loading user profile:', err);
+                content.innerHTML = '<div class="user-profile-error">Error loading profile</div>';
+            });
+
+            // Close handlers
+            overlay.querySelector('.ratings-modal-close').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
         },
 
         sanitizeUrl: function (url) {

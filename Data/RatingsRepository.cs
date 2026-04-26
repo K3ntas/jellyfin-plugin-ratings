@@ -38,6 +38,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _keepRequestsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _reviewLikesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _reviewCommentsWriteLock = new(1, 1);
         private Dictionary<Guid, UserRating> _ratings;
 
         // Secondary indexes for fast lookups (O(1) instead of O(n))
@@ -62,6 +63,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
         private Dictionary<Guid, MediaQuota> _mediaQuotas;
         private List<KeepRequest> _keepRequests;
+        private Dictionary<Guid, ReviewComment> _reviewComments;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RatingsRepository"/> class.
@@ -93,6 +95,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _userStyleOverrides = new Dictionary<Guid, UserStyleOverride>();
             _mediaQuotas = new Dictionary<Guid, MediaQuota>();
             _keepRequests = new List<KeepRequest>();
+            _reviewComments = new Dictionary<Guid, ReviewComment>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -115,6 +118,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadMediaQuotas();
             LoadKeepRequests();
             LoadReviewLikes();
+            LoadReviewComments();
         }
 
         /// <summary>
@@ -1433,6 +1437,135 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 _reviewLikesWriteLock.Release();
             }
+        }
+
+        /// <summary>
+        /// Loads review comments from disk.
+        /// </summary>
+        private void LoadReviewComments()
+        {
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "review_comments.json");
+                if (File.Exists(filePath))
+                {
+                    var json = File.ReadAllText(filePath);
+                    var comments = JsonSerializer.Deserialize<List<ReviewComment>>(json);
+                    if (comments != null)
+                    {
+                        _reviewComments = comments.ToDictionary(c => c.Id);
+                        _logger.LogInformation("Loaded {Count} review comments from disk", _reviewComments.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading review comments from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves review comments to disk.
+        /// </summary>
+        private async Task SaveReviewCommentsAsync()
+        {
+            await _reviewCommentsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "review_comments.json");
+                List<ReviewComment> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _reviewComments.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+                _logger.LogDebug("Saved {Count} review comments to disk", snapshot.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving review comments to disk");
+            }
+            finally
+            {
+                _reviewCommentsWriteLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Adds a comment to a review.
+        /// </summary>
+        /// <param name="comment">The review comment to add.</param>
+        /// <returns>The created comment.</returns>
+        public async Task<ReviewComment> AddReviewCommentAsync(ReviewComment comment)
+        {
+            lock (_lock)
+            {
+                _reviewComments[comment.Id] = comment;
+            }
+
+            await SaveReviewCommentsAsync().ConfigureAwait(false);
+            return comment;
+        }
+
+        /// <summary>
+        /// Gets all comments for a specific review.
+        /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <returns>List of comments for the review.</returns>
+        public List<ReviewComment> GetReviewComments(Guid reviewerUserId, Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _reviewComments.Values
+                    .Where(c => c.ReviewerUserId == reviewerUserId && c.ItemId == itemId)
+                    .OrderBy(c => c.CreatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the comment count for a specific review.
+        /// </summary>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <returns>Number of comments on the review.</returns>
+        public int GetReviewCommentCount(Guid reviewerUserId, Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _reviewComments.Values
+                    .Count(c => c.ReviewerUserId == reviewerUserId && c.ItemId == itemId);
+            }
+        }
+
+        /// <summary>
+        /// Deletes a review comment.
+        /// </summary>
+        /// <param name="commentId">Comment ID to delete.</param>
+        /// <param name="userId">User requesting deletion (must be comment owner).</param>
+        /// <returns>True if deleted, false otherwise.</returns>
+        public async Task<bool> DeleteReviewCommentAsync(Guid commentId, Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_reviewComments.TryGetValue(commentId, out var comment))
+                {
+                    if (comment.CommenterId == userId)
+                    {
+                        _reviewComments.Remove(commentId);
+                        _ = SaveReviewCommentsAsync();
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
