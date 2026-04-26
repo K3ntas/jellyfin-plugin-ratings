@@ -4850,7 +4850,7 @@
                 .user-reviews-header {
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
+                    gap: 0.5em;
                     margin-bottom: 1em;
                 }
                 .user-reviews-title {
@@ -4861,7 +4861,7 @@
                 }
                 .user-reviews-count {
                     color: #888;
-                    font-size: 0.9em;
+                    font-size: 1.1em;
                 }
                 .user-reviews-grid {
                     display: grid;
