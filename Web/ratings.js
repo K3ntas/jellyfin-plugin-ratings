@@ -67,6 +67,11 @@
         _configCache: null, // Cached config object
         _configPromise: null, // Promise for in-flight config request
 
+        // Scheduled deletions caching
+        _scheduledDeletionsCache: null, // Cached deletions array
+        _scheduledDeletionsPromise: null, // Promise for in-flight request
+        _scheduledDeletionsCacheTime: 0, // When cache was last updated
+
         emojiCategories: {
             smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐'],
             gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✍️', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -1908,6 +1913,65 @@
                 });
 
             return this._configPromise;
+        },
+
+        /**
+         * Get scheduled deletions with caching (30 second TTL).
+         * Prevents duplicate API calls during page load.
+         * @param {boolean} forceRefresh - Force a fresh fetch
+         * @returns {Promise<Array>} Array of scheduled deletions
+         */
+        getScheduledDeletions: function (forceRefresh) {
+            var self = this;
+            var CACHE_TTL = 30000; // 30 seconds
+
+            // Return cached data if still valid
+            if (!forceRefresh && this._scheduledDeletionsCache && (Date.now() - this._scheduledDeletionsCacheTime) < CACHE_TTL) {
+                return Promise.resolve(this._scheduledDeletionsCache);
+            }
+
+            // Return existing promise if request is in flight
+            if (this._scheduledDeletionsPromise) {
+                return this._scheduledDeletionsPromise;
+            }
+
+            // Check if ApiClient is ready
+            if (!window.ApiClient) {
+                return Promise.resolve([]);
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            this._scheduledDeletionsPromise = fetch(baseUrl + '/Ratings/ScheduledDeletions', {
+                method: 'GET',
+                credentials: 'include',
+                headers: this.getChatAuthHeaders()
+            })
+            .then(function (response) {
+                if (!response.ok) return [];
+                return response.json();
+            })
+            .then(function (deletions) {
+                self._scheduledDeletionsCache = deletions || [];
+                self._scheduledDeletionsCacheTime = Date.now();
+                self._scheduledDeletionsPromise = null;
+
+                // Also update the itemId-keyed cache for badge lookups
+                self.scheduledDeletionsCache = {};
+                (deletions || []).forEach(function (d) {
+                    if (d && d.ItemId) {
+                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                    }
+                });
+
+                return self._scheduledDeletionsCache;
+            })
+            .catch(function (err) {
+                self._scheduledDeletionsPromise = null;
+                console.error('Failed to load scheduled deletions:', err);
+                return [];
+            });
+
+            return this._scheduledDeletionsPromise;
         },
 
         /**
@@ -15957,18 +16021,14 @@
             const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
             const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch both: latest items and scheduled deletions
+            // Fetch both: latest items and scheduled deletions (using cache for deletions)
             Promise.all([
                 fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
                 }).then(r => r.json()).catch(() => ({ Items: [] })),
-                fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.json()).catch(() => [])
+                self.getScheduledDeletions()
             ])
             .then(([mediaData, deletions]) => {
                 // Count new media items
@@ -16341,17 +16401,8 @@
                 return;
             }
 
-            const baseUrl = ApiClient.serverAddress();
-            const authHeader = ApiClient._serverInfo?.AccessToken ?
-                `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
-
-            // Fetch scheduled deletions
-            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
-            })
-            .then(r => r.json())
+            // Fetch scheduled deletions (using cache)
+            self.getScheduledDeletions()
             .then(deletions => {
                 // Filter out cancelled ones and sort by DeleteAt (soonest first)
                 const activeDeletions = (deletions || [])
@@ -17471,20 +17522,8 @@
             pagination.style.display = 'none';
             pagination.innerHTML = '';
 
-            const baseUrl = ApiClient.serverAddress();
-            const token = ApiClient.accessToken();
-
-            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
-                method: 'GET',
-                headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
-                },
-                credentials: 'include'
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to load scheduled deletions');
-                return response.json();
-            })
+            // Fetch scheduled deletions (using cache)
+            self.getScheduledDeletions()
             .then(deletions => {
                 // Check if this request is still current
                 if (thisRequestId !== self.mediaListState.requestId) {
@@ -18262,7 +18301,7 @@
         },
 
         /**
-         * Load scheduled deletions from API
+         * Load scheduled deletions from API (uses cached getScheduledDeletions)
          */
         loadScheduledDeletions: function () {
             const self = this;
@@ -18271,31 +18310,10 @@
                 return;
             }
 
-            const baseUrl = ApiClient.serverAddress();
-
-            fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: this.getChatAuthHeaders()
-            })
-            .then(response => {
-                if (!response.ok) return null;
-                return response.json();
-            })
-            .then(deletions => {
-                if (!deletions || !Array.isArray(deletions)) return;
-                // Build cache by itemId
-                self.scheduledDeletionsCache = {};
-                deletions.forEach(d => {
-                    if (d && d.ItemId) {
-                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
-                    }
-                });
-                // Update badges immediately
+            // Use cached getScheduledDeletions (30s TTL handles freshness)
+            self.getScheduledDeletions().then(function () {
+                // Cache is already updated by getScheduledDeletions
                 self.updateDeletionBadges();
-            })
-            .catch(err => {
-                // Silent fail - don't spam console
             });
         },
 
@@ -22346,34 +22364,12 @@
         },
 
         /**
-         * Check if Netflix view is enabled in plugin config
+         * Check if Netflix view is enabled in plugin config (uses cached config)
          */
         checkNetflixViewEnabled: function () {
-            return new Promise((resolve) => {
-                try {
-                    if (!window.ApiClient) {
-                        resolve(false);
-                        return;
-                    }
-
-                    const baseUrl = ApiClient.serverAddress();
-                    const url = `${baseUrl}/Ratings/Config`;
-
-                    fetch(url, {
-                        method: 'GET',
-                        credentials: 'include'
-                    })
-                    .then(response => response.json())
-                    .then(config => {
-                        resolve(config.EnableNetflixView === true);
-                    })
-                    .catch(() => {
-                        resolve(false);
-                    });
-                } catch (err) {
-                    resolve(false);
-                }
-            });
+            return this.getConfig().then(config => {
+                return config.EnableNetflixView === true;
+            }).catch(() => false);
         },
 
         /**
