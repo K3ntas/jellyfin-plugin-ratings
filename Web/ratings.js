@@ -171,7 +171,10 @@
                 changeLanguage: 'Change Language',
                 testNotificationTooltip: 'Send test notification',
                 notificationsOn: 'Notifications enabled',
-                notificationsOff: 'Notifications disabled'
+                notificationsOff: 'Notifications disabled',
+                userReviews: 'User Reviews', noReviews: 'No reviews yet. Be the first to write one!', errorLoadingReviews: 'Error loading reviews',
+                showMore: 'Show more', showLess: 'Show less', today: 'Today', yesterday: 'Yesterday',
+                daysAgo: 'days ago', weekAgo: 'week ago', weeksAgo: 'weeks ago', monthAgo: 'month ago', monthsAgo: 'months ago'
             },
             es: {
                 requestMedia: 'Solicitar Contenido', manageRequests: 'Gestionar Solicitudes', requestDescription: '📬 ¡Solicita tu Contenido Favorito!',
@@ -1684,7 +1687,10 @@
                 changeLanguage: 'Keisti Kalbą',
                 testNotificationTooltip: 'Siųsti bandomąjį pranešimą',
                 notificationsOn: 'Pranešimai įjungti',
-                notificationsOff: 'Pranešimai išjungti'
+                notificationsOff: 'Pranešimai išjungti',
+                userReviews: 'Vartotojų Apžvalgos', noReviews: 'Dar nėra apžvalgų. Būkite pirmas!', errorLoadingReviews: 'Klaida kraunant apžvalgas',
+                showMore: 'Rodyti daugiau', showLess: 'Rodyti mažiau', today: 'Šiandien', yesterday: 'Vakar',
+                daysAgo: 'dienos atgal', weekAgo: 'savaitė atgal', weeksAgo: 'savaitės atgal', monthAgo: 'mėnuo atgal', monthsAgo: 'mėnesiai atgal'
             }
         },
 
@@ -4834,6 +4840,182 @@
                 .review-like-btn.disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
+                }
+
+                /* User Reviews Section on Detail Page */
+                .user-reviews-section {
+                    margin: 2em 0;
+                    padding: 0 1em;
+                }
+                .user-reviews-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 1em;
+                }
+                .user-reviews-title {
+                    font-size: 1.4em;
+                    font-weight: 600;
+                    color: #fff;
+                    margin: 0;
+                }
+                .user-reviews-count {
+                    color: #888;
+                    font-size: 0.9em;
+                }
+                .user-reviews-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 1em;
+                }
+                .user-review-card {
+                    background: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 1em;
+                    border: 1px solid #333;
+                    transition: border-color 0.2s ease, transform 0.2s ease;
+                }
+                .user-review-card:hover {
+                    border-color: #555;
+                    transform: translateY(-2px);
+                }
+                .user-review-card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8em;
+                    margin-bottom: 0.8em;
+                }
+                .user-review-avatar {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #333;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    flex-shrink: 0;
+                }
+                .user-review-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .user-review-avatar-placeholder {
+                    color: #888;
+                    font-size: 1.2em;
+                }
+                .user-review-user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .user-review-username {
+                    font-weight: 600;
+                    color: #fff;
+                    font-size: 0.95em;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .user-review-timestamp {
+                    font-size: 0.8em;
+                    color: #666;
+                }
+                .user-review-rating {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3em;
+                    color: #ffd700;
+                    font-weight: 600;
+                    font-size: 0.95em;
+                }
+                .user-review-rating-star {
+                    font-size: 1.1em;
+                }
+                .user-review-text {
+                    color: #ccc;
+                    line-height: 1.5;
+                    margin-bottom: 0.8em;
+                    font-size: 0.92em;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    max-height: 100px;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .user-review-text.expanded {
+                    max-height: none;
+                }
+                .user-review-text.truncated::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 30px;
+                    background: linear-gradient(transparent, #1a1a1a);
+                }
+                .user-review-expand {
+                    color: #4CAF50;
+                    cursor: pointer;
+                    font-size: 0.85em;
+                    margin-bottom: 0.8em;
+                }
+                .user-review-expand:hover {
+                    text-decoration: underline;
+                }
+                .user-review-actions {
+                    display: flex;
+                    gap: 0.8em;
+                    align-items: center;
+                    padding-top: 0.5em;
+                    border-top: 1px solid #2a2a2a;
+                }
+                .user-review-action-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3em;
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    padding: 0.4em 0.6em;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.85em;
+                    transition: all 0.2s ease;
+                }
+                .user-review-action-btn:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #bbb;
+                }
+                .user-review-action-btn.liked {
+                    color: #4CAF50;
+                }
+                .user-review-action-btn.disliked {
+                    color: #f44336;
+                }
+                .user-review-action-btn.own-review {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+                .user-reviews-empty {
+                    text-align: center;
+                    color: #666;
+                    padding: 2em;
+                    font-style: italic;
+                }
+                .user-reviews-loading {
+                    text-align: center;
+                    color: #888;
+                    padding: 2em;
+                }
+                @media (max-width: 600px) {
+                    .user-reviews-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .user-review-card {
+                        padding: 0.8em;
+                    }
                 }
 
                 /* Card overlay ratings */
@@ -13176,6 +13358,7 @@
                 if (detailRibbon) {
                     clearInterval(checkInterval);
                     self.injectRatingComponent(itemId);
+                    self.injectUserReviewsSection(itemId);
                 } else if (attempts >= maxAttempts) {
                     // Give up after max attempts
                     clearInterval(checkInterval);
@@ -14217,6 +14400,245 @@
                         toast('Error: ' + err.message);
                     });
                 }
+            });
+        },
+
+        /**
+         * Inject user reviews section on detail page
+         */
+        injectUserReviewsSection: function (itemId) {
+            const self = this;
+            const visiblePage = this.getVisibleDetailPage();
+            if (!visiblePage) return;
+
+            // Check if already injected
+            if (visiblePage.querySelector('.user-reviews-section')) {
+                return;
+            }
+
+            // Find insertion point - after detailPagePrimaryContent
+            const primaryContent = visiblePage.querySelector('.detailPagePrimaryContent');
+            if (!primaryContent) return;
+
+            // Create reviews section
+            const reviewsSection = document.createElement('div');
+            reviewsSection.className = 'user-reviews-section';
+            reviewsSection.innerHTML = `
+                <div class="user-reviews-header">
+                    <h2 class="user-reviews-title">${this.t('userReviews') || 'User Reviews'}</h2>
+                    <span class="user-reviews-count"></span>
+                </div>
+                <div class="user-reviews-grid">
+                    <div class="user-reviews-loading">${this.t('loading') || 'Loading...'}</div>
+                </div>
+            `;
+
+            // Insert after primaryContent
+            primaryContent.parentNode.insertBefore(reviewsSection, primaryContent.nextSibling);
+
+            // Load reviews
+            this.loadUserReviews(itemId, reviewsSection);
+        },
+
+        /**
+         * Load user reviews from API
+         */
+        loadUserReviews: function (itemId, container) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            fetch(`${baseUrl}/Ratings/Items/${itemId}/Detailed`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(ratings => {
+                // Filter to only those with reviews
+                const reviews = (ratings || []).filter(r => r.HasReview && r.ReviewText);
+
+                // Sort by likes (most liked first)
+                reviews.sort((a, b) => {
+                    const aScore = (a.LikeCount || 0) - (a.DislikeCount || 0);
+                    const bScore = (b.LikeCount || 0) - (b.DislikeCount || 0);
+                    return bScore - aScore;
+                });
+
+                self.renderUserReviewCards(reviews, itemId, container);
+            })
+            .catch(err => {
+                const grid = container.querySelector('.user-reviews-grid');
+                if (grid) {
+                    grid.innerHTML = `<div class="user-reviews-empty">${self.t('errorLoadingReviews') || 'Error loading reviews'}</div>`;
+                }
+            });
+        },
+
+        /**
+         * Render user review cards
+         */
+        renderUserReviewCards: function (reviews, itemId, container) {
+            const self = this;
+            const grid = container.querySelector('.user-reviews-grid');
+            const countEl = container.querySelector('.user-reviews-count');
+            const currentUserId = ApiClient.getCurrentUserId();
+            const baseUrl = ApiClient.serverAddress();
+
+            if (countEl) {
+                countEl.textContent = `(${reviews.length})`;
+            }
+
+            if (!reviews || reviews.length === 0) {
+                grid.innerHTML = `<div class="user-reviews-empty">${this.t('noReviews') || 'No reviews yet. Be the first to write one!'}</div>`;
+                return;
+            }
+
+            let html = '';
+            reviews.forEach(review => {
+                const isOwnReview = review.UserId === currentUserId;
+                const avatarUrl = `${baseUrl}/Users/${review.UserId}/Images/Primary?height=80&quality=90`;
+                const timestamp = this.formatReviewTimestamp(review.CreatedAt);
+                const likedClass = review.UserLiked === true ? ' liked' : '';
+                const dislikedClass = review.UserLiked === false ? ' disliked' : '';
+                const ownClass = isOwnReview ? ' own-review' : '';
+
+                html += `
+                    <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
+                        <div class="user-review-card-header">
+                            <div class="user-review-avatar">
+                                <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
+                                <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
+                            </div>
+                            <div class="user-review-user-info">
+                                <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
+                                <div class="user-review-timestamp">${timestamp}</div>
+                            </div>
+                            <div class="user-review-rating">
+                                <span class="user-review-rating-star">★</span>
+                                <span>${review.Rating}/10</span>
+                            </div>
+                        </div>
+                        <div class="user-review-text" data-full-text="${this.escapeHtml(review.ReviewText)}">${this.escapeHtml(review.ReviewText)}</div>
+                        <div class="user-review-actions">
+                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like" ${isOwnReview ? 'disabled' : ''}>
+                                👍 <span class="like-count">${review.LikeCount || 0}</span>
+                            </button>
+                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike" ${isOwnReview ? 'disabled' : ''}>
+                                👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+
+            // Check for truncated text and add expand buttons
+            grid.querySelectorAll('.user-review-text').forEach(textEl => {
+                if (textEl.scrollHeight > textEl.clientHeight) {
+                    textEl.classList.add('truncated');
+                    const expandBtn = document.createElement('div');
+                    expandBtn.className = 'user-review-expand';
+                    expandBtn.textContent = self.t('showMore') || 'Show more';
+                    textEl.parentNode.insertBefore(expandBtn, textEl.nextSibling);
+
+                    expandBtn.addEventListener('click', function() {
+                        if (textEl.classList.contains('expanded')) {
+                            textEl.classList.remove('expanded');
+                            textEl.classList.add('truncated');
+                            this.textContent = self.t('showMore') || 'Show more';
+                        } else {
+                            textEl.classList.add('expanded');
+                            textEl.classList.remove('truncated');
+                            this.textContent = self.t('showLess') || 'Show less';
+                        }
+                    });
+                }
+            });
+
+            // Add like/dislike handlers
+            grid.querySelectorAll('.user-review-action-btn:not(.own-review)').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.user-review-card');
+                    const reviewerUserId = card.getAttribute('data-user-id');
+                    const action = this.getAttribute('data-action');
+                    const isLike = action === 'like';
+                    self.handleReviewCardLike(reviewerUserId, itemId, isLike, card);
+                });
+            });
+        },
+
+        /**
+         * Format review timestamp
+         */
+        formatReviewTimestamp: function (dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return this.t('today') || 'Today';
+            } else if (diffDays === 1) {
+                return this.t('yesterday') || 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} ${this.t('daysAgo') || 'days ago'}`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `${weeks} ${weeks === 1 ? (this.t('weekAgo') || 'week ago') : (this.t('weeksAgo') || 'weeks ago')}`;
+            } else if (diffDays < 365) {
+                const months = Math.floor(diffDays / 30);
+                return `${months} ${months === 1 ? (this.t('monthAgo') || 'month ago') : (this.t('monthsAgo') || 'months ago')}`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        },
+
+        /**
+         * Handle like/dislike on review card
+         */
+        handleReviewCardLike: function (reviewerUserId, itemId, isLike, card) {
+            const self = this;
+            const baseUrl = ApiClient.serverAddress();
+            const accessToken = ApiClient.accessToken();
+            const deviceId = ApiClient.deviceId();
+            const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
+
+            const url = `${baseUrl}/Ratings/Reviews/${reviewerUserId}/${itemId}/Like?isLike=${isLike}`;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Emby-Authorization': authHeader
+                }
+            })
+            .then(r => r.json())
+            .then(result => {
+                const likeBtn = card.querySelector('[data-action="like"]');
+                const dislikeBtn = card.querySelector('[data-action="dislike"]');
+
+                likeBtn.querySelector('.like-count').textContent = result.LikeCount;
+                dislikeBtn.querySelector('.dislike-count').textContent = result.DislikeCount;
+
+                likeBtn.classList.remove('liked');
+                dislikeBtn.classList.remove('disliked');
+
+                if (result.UserLiked === true) {
+                    likeBtn.classList.add('liked');
+                } else if (result.UserLiked === false) {
+                    dislikeBtn.classList.add('disliked');
+                }
+            })
+            .catch(err => {
+                console.error('Error toggling review like:', err);
             });
         },
 

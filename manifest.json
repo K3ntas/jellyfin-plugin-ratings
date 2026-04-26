@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.280.0",
+        "changelog": "User Reviews section on detail page - display review cards with avatars, ratings, likes/dislikes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.280.0/Jellyfin.Plugin.Ratings_2.0.280.0.zip",
+        "checksum": "5bb07fca95c76b69da8f46584fffbe79",
+        "timestamp": "2026-04-26T14:00:00Z"
+      },
+      {
         "version": "2.0.279.0",
         "changelog": "Performance: Cache config on frontend - eliminates 10+ redundant API calls on page load",
         "targetAbi": "10.11.0.0",
