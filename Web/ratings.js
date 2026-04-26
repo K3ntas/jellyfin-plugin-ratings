@@ -14450,7 +14450,7 @@
             const deviceId = ApiClient.deviceId();
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
-            fetch(`${baseUrl}/Ratings/Items/${itemId}/Detailed`, {
+            fetch(`${baseUrl}/Ratings/Items/${itemId}/DetailedRatings`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
