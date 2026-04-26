@@ -14966,6 +14966,7 @@
                     listContainer.querySelectorAll('.review-comment-avatar, .review-comment-username').forEach(el => {
                         el.addEventListener('click', function() {
                             const userId = this.getAttribute('data-user-id');
+                            overlay.remove(); // Close comments modal first
                             self.navigateToUserProfile(userId);
                         });
                     });
