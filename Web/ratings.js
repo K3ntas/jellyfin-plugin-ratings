@@ -14416,9 +14416,9 @@
                 return;
             }
 
-            // Find insertion point - after detailPagePrimaryContent
-            const primaryContent = visiblePage.querySelector('.detailPagePrimaryContent');
-            if (!primaryContent) return;
+            // Find insertion point - after itemDetailsGroup (which contains Studios)
+            const detailsGroup = visiblePage.querySelector('.itemDetailsGroup');
+            if (!detailsGroup) return;
 
             // Create reviews section
             const reviewsSection = document.createElement('div');
@@ -14433,8 +14433,8 @@
                 </div>
             `;
 
-            // Insert after primaryContent
-            primaryContent.parentNode.insertBefore(reviewsSection, primaryContent.nextSibling);
+            // Insert after itemDetailsGroup (after Studios row)
+            detailsGroup.parentNode.insertBefore(reviewsSection, detailsGroup.nextSibling);
 
             // Load reviews
             this.loadUserReviews(itemId, reviewsSection);

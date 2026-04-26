@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.282.0",
+        "changelog": "Fix: User Reviews placement - now appears after Studios row",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.282.0/Jellyfin.Plugin.Ratings_2.0.282.0.zip",
+        "checksum": "a627dbe0f95effe0a3f9db18bff8f2fa",
+        "timestamp": "2026-04-26T14:20:00Z"
+      },
+      {
         "version": "2.0.281.0",
         "changelog": "Fix: User Reviews API endpoint URL",
         "targetAbi": "10.11.0.0",
