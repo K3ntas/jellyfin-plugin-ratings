@@ -14758,6 +14758,11 @@
                     self.navigateToUserProfile(userId);
                 });
             });
+
+            // Apply review card styles (ensure styles are loaded)
+            if (self.reviewCardStyle) {
+                self.applyReviewCardStyles();
+            }
         },
 
         /**
