@@ -12740,10 +12740,11 @@
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: #101010;
+                    background: rgba(0, 0, 0, 0.5);
                     z-index: 99999;
                     overflow-y: auto;
                     animation: profileFadeIn 0.2s ease;
+                    cursor: pointer;
                 }
                 @keyframes profileFadeIn {
                     from { opacity: 0; }
@@ -12751,8 +12752,12 @@
                 }
                 .social-profile-container {
                     max-width: 900px;
-                    margin: 0 auto;
+                    margin: 40px auto;
                     padding: 20px;
+                    background: #101010;
+                    border-radius: 12px;
+                    cursor: default;
+                    position: relative;
                 }
                 .social-profile-back {
                     display: inline-flex;
@@ -13136,6 +13141,13 @@
             page.className = 'social-profile-page';
             page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
             document.body.appendChild(page);
+
+            // Close when clicking backdrop (outside container)
+            page.addEventListener('click', function(e) {
+                if (e.target === page) {
+                    self.closeProfilePage();
+                }
+            });
 
             // Fetch profile data
             var baseUrl = ApiClient.serverAddress();
@@ -14674,11 +14686,11 @@
                 html += `
                     <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
                         <div class="user-review-card-header">
-                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}">
+                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}" title="${self.t('clickToViewProfile') || 'Click to view profile'}">
                                 <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
                                 <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
                             </div>
-                            <a class="user-review-user-link" data-user-id="${review.UserId}">
+                            <a class="user-review-user-link" data-user-id="${review.UserId}" title="${self.t('clickToViewProfile') || 'Click to view profile'}">
                                 <div class="user-review-user-info">
                                     <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
                                     <div class="user-review-timestamp">${timestamp}</div>
