@@ -1355,7 +1355,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                     HeaderGroupOverallOpacity = config?.HeaderGroupOverallOpacity ?? 100,
                     SearchFieldMatchGroupBg = config?.SearchFieldMatchGroupBg ?? true,
                     SearchFieldBackground = config?.SearchFieldBackground ?? "rgba(40, 40, 40, 0.95)",
-                    LanguageTextColor = config?.LanguageTextColor ?? "#ffffff"
+                    LanguageTextColor = config?.LanguageTextColor ?? "#ffffff",
+
+                    // Review card styling
+                    ReviewCardBackground = config?.ReviewCardBackground ?? "rgba(30, 30, 30, 0.95)",
+                    ReviewCardNoBorder = config?.ReviewCardNoBorder ?? false,
+                    ReviewCardBorderColor = config?.ReviewCardBorderColor ?? "rgba(255, 255, 255, 0.1)",
+                    ReviewCardBorderRadius = config?.ReviewCardBorderRadius ?? 12,
+                    ReviewCardUsernameColor = config?.ReviewCardUsernameColor ?? "#ffffff",
+                    ReviewCardTimestampColor = config?.ReviewCardTimestampColor ?? "#888888",
+                    ReviewCardTextColor = config?.ReviewCardTextColor ?? "#cccccc",
+                    ReviewCardRatingColor = config?.ReviewCardRatingColor ?? "#ffd700",
+                    ReviewCardActionBtnColor = config?.ReviewCardActionBtnColor ?? "#888888",
+                    ReviewCardActionBtnHoverColor = config?.ReviewCardActionBtnHoverColor ?? "#ffffff",
+                    ReviewCardLikedColor = config?.ReviewCardLikedColor ?? "#4CAF50",
+                    ReviewCardDislikedColor = config?.ReviewCardDislikedColor ?? "#f44336",
+                    ReviewCardHoverBackground = config?.ReviewCardHoverBackground ?? "rgba(255, 255, 255, 0.05)",
+                    ReviewCardOverallOpacity = config?.ReviewCardOverallOpacity ?? 100
                 });
             }
             catch (Exception ex)

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.289.0",
+        "changelog": "Fix: Review Card Styling - add missing properties to Config API endpoint",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.289.0/Jellyfin.Plugin.Ratings_2.0.289.0.zip",
+        "checksum": "d51849cd8ddf543294fd5e2f941d3356",
+        "timestamp": "2026-04-26T22:00:00Z"
+      },
+      {
         "version": "2.0.288.0",
         "changelog": "Fix: Review Card Styling now applies correctly on detail pages",
         "targetAbi": "10.11.0.0",
