@@ -14707,10 +14707,10 @@
                         </div>
                         <div class="user-review-text" data-full-text="${this.escapeHtml(review.ReviewText)}">${this.escapeHtml(review.ReviewText)}</div>
                         <div class="user-review-actions">
-                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like" ${isOwnReview ? 'disabled' : ''}>
+                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like">
                                 👍 <span class="like-count">${review.LikeCount || 0}</span>
                             </button>
-                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike" ${isOwnReview ? 'disabled' : ''}>
+                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike">
                                 👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
                             </button>
                             <button class="user-review-action-btn" data-action="comment">

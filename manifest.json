@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.293.0",
+        "changelog": "Fix: Self-rating funny messages now trigger on click (removed disabled attribute)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.293.0/Jellyfin.Plugin.Ratings_2.0.293.0.zip",
+        "checksum": "6c91975cb03f149d52de483486ba4765",
+        "timestamp": "2026-04-28T20:30:00Z"
+      },
+      {
         "version": "2.0.292.0",
         "changelog": "Fun: 65+ funny/sarcastic messages when trying to rate your own review",
         "targetAbi": "10.11.0.0",
