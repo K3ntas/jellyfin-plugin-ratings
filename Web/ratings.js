@@ -5017,10 +5017,6 @@
                 .user-review-action-btn.disliked {
                     color: #f44336;
                 }
-                .user-review-action-btn.own-review {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
                 .user-reviews-empty {
                     text-align: center;
                     color: #666;
