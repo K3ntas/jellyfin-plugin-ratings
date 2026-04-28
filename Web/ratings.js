@@ -4274,6 +4274,9 @@
                     overallOpacity: config.ReviewCardOverallOpacity !== undefined ? config.ReviewCardOverallOpacity : 100
                 };
 
+                // Review card options
+                self.showReviewProfileTooltip = config.ShowReviewProfileTooltip !== false;
+
                 self.applyHeaderButtonStyles();
                 self.applyStarWidgetStyles();
                 self.applyReviewCardStyles();
@@ -14683,14 +14686,15 @@
                 const ownClass = isOwnReview ? ' own-review' : '';
                 const commentCount = review.CommentCount || 0;
 
+                const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
                 html += `
                     <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
                         <div class="user-review-card-header">
-                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}" title="${self.t('clickToViewProfile') || 'Click to view profile'}">
+                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
                                 <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
                                 <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
                             </div>
-                            <a class="user-review-user-link" data-user-id="${review.UserId}" title="${self.t('clickToViewProfile') || 'Click to view profile'}">
+                            <a class="user-review-user-link" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
                                 <div class="user-review-user-info">
                                     <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
                                     <div class="user-review-timestamp">${timestamp}</div>

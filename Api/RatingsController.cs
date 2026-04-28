@@ -1371,7 +1371,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ReviewCardLikedColor = config?.ReviewCardLikedColor ?? "#4CAF50",
                     ReviewCardDislikedColor = config?.ReviewCardDislikedColor ?? "#f44336",
                     ReviewCardHoverBackground = config?.ReviewCardHoverBackground ?? "rgba(255, 255, 255, 0.05)",
-                    ReviewCardOverallOpacity = config?.ReviewCardOverallOpacity ?? 100
+                    ReviewCardOverallOpacity = config?.ReviewCardOverallOpacity ?? 100,
+                    ShowReviewProfileTooltip = config?.ShowReviewProfileTooltip ?? true
                 });
             }
             catch (Exception ex)

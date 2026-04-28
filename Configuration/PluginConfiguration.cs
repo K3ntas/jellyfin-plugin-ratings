@@ -163,6 +163,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ReviewCardDislikedColor = "#f44336";
             ReviewCardHoverBackground = "rgba(255, 255, 255, 0.05)";
             ReviewCardOverallOpacity = 100;
+            ShowReviewProfileTooltip = true;
         }
 
         /// <summary>
@@ -735,5 +736,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the overall opacity of review cards (0-100).
         /// </summary>
         public int ReviewCardOverallOpacity { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to show profile tooltip on review cards.
+        /// </summary>
+        public bool ShowReviewProfileTooltip { get; set; }
     }
 }

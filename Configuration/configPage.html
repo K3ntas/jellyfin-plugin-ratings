@@ -596,6 +596,15 @@
                                             <span class="hdr-slider-value" id="valReviewCardOverallOpacity">100%</span>
                                         </div>
                                     </div>
+
+                                    <!-- Show Profile Tooltip -->
+                                    <div class="hdr-style-card" style="grid-column: 1 / -1;">
+                                        <label class="hdr-toggle">
+                                            <input type="checkbox" id="chkShowReviewProfileTooltip" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Show "Click to view profile" tooltip on username/avatar hover</span>
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <!-- Live Preview -->
@@ -2876,6 +2885,9 @@
                         if (rcOverallLabel) rcOverallLabel.textContent = rcOverallOpacity + '%';
                     }
 
+                    // Set profile tooltip checkbox
+                    document.getElementById('chkShowReviewProfileTooltip').checked = config.ShowReviewProfileTooltip !== false;
+
                     // Initialize review card controls and update preview
                     initReviewCardControls();
                     updateReviewCardPreview();
@@ -3033,6 +3045,7 @@
                     config.ReviewCardDislikedColor = document.getElementById('txtReviewCardDisliked').value || '#f44336';
                     config.ReviewCardHoverBackground = document.getElementById('txtReviewCardHoverBg').value || 'rgba(255, 255, 255, 0.05)';
                     config.ReviewCardOverallOpacity = parseInt(document.getElementById('sliderReviewCardOverallOpacity').value) || 100;
+                    config.ShowReviewProfileTooltip = document.getElementById('chkShowReviewProfileTooltip').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
