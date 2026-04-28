@@ -442,6 +442,200 @@
                                 </div>
                             </div>
 
+                            <!-- User Reviews Card Styling -->
+                            <div style="margin-top: 2em;" class="review-card-styling">
+                                <h3 class="sectionTitle" style="font-size: 1.1em; margin-bottom: 0.3em;">User Reviews Card Styling</h3>
+                                <div class="fieldDescription" style="margin-bottom: 15px;">
+                                    Customize the appearance of user review cards on media detail pages
+                                </div>
+
+                                <div class="hdr-styling-grid">
+                                    <!-- Card Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Card Background</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardBg" class="hdr-color-picker" value="#1e1e1e" />
+                                            <input type="text" id="txtReviewCardBg" class="hdr-color-text" placeholder="rgba(30,30,30,0.95)" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderReviewCardBgOpacity" class="hdr-slider" min="0" max="100" value="95" />
+                                            <span class="hdr-slider-value" id="valReviewCardBgOpacity">95%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Border -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Card Border</div>
+                                        <label class="hdr-toggle" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="chkReviewCardNoBorder" />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">No border</span>
+                                        </label>
+                                        <div id="reviewCardBorderControls">
+                                            <div class="hdr-color-row">
+                                                <input type="color" id="colorReviewCardBorder" class="hdr-color-picker" value="#ffffff" />
+                                                <input type="text" id="txtReviewCardBorder" class="hdr-color-text" placeholder="rgba(255,255,255,0.1)" />
+                                            </div>
+                                            <div class="hdr-slider-row">
+                                                <span class="hdr-slider-label">Opacity</span>
+                                                <input type="range" id="sliderReviewCardBorderOpacity" class="hdr-slider" min="0" max="100" value="10" />
+                                                <span class="hdr-slider-value" id="valReviewCardBorderOpacity">10%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Username Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Username</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardUsername" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtReviewCardUsername" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Timestamp Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Timestamp</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardTimestamp" class="hdr-color-picker" value="#888888" />
+                                            <input type="text" id="txtReviewCardTimestamp" class="hdr-color-text" placeholder="#888888" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Review Text Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Review Text</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardText" class="hdr-color-picker" value="#cccccc" />
+                                            <input type="text" id="txtReviewCardText" class="hdr-color-text" placeholder="#cccccc" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Rating Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Rating Stars</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardRating" class="hdr-color-picker" value="#ffd700" />
+                                            <input type="text" id="txtReviewCardRating" class="hdr-color-text" placeholder="#ffd700" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Action Buttons</div>
+                                        <div class="fieldDescription" style="margin-bottom: 8px; font-size: 0.8em; color: #888;">
+                                            Like, Dislike, Comment buttons
+                                        </div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardActionBtn" class="hdr-color-picker" value="#888888" />
+                                            <input type="text" id="txtReviewCardActionBtn" class="hdr-color-text" placeholder="#888888" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons Hover -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Buttons Hover</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardActionBtnHover" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtReviewCardActionBtnHover" class="hdr-color-text" placeholder="#ffffff" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Liked Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Liked (Active)</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardLiked" class="hdr-color-picker" value="#4CAF50" />
+                                            <input type="text" id="txtReviewCardLiked" class="hdr-color-text" placeholder="#4CAF50" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Disliked Color -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Disliked (Active)</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardDisliked" class="hdr-color-picker" value="#f44336" />
+                                            <input type="text" id="txtReviewCardDisliked" class="hdr-color-text" placeholder="#f44336" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Hover Background -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Card Hover</div>
+                                        <div class="hdr-color-row">
+                                            <input type="color" id="colorReviewCardHoverBg" class="hdr-color-picker" value="#ffffff" />
+                                            <input type="text" id="txtReviewCardHoverBg" class="hdr-color-text" placeholder="rgba(255,255,255,0.05)" />
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderReviewCardHoverOpacity" class="hdr-slider" min="0" max="100" value="5" />
+                                            <span class="hdr-slider-value" id="valReviewCardHoverOpacity">5%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Border Radius -->
+                                    <div class="hdr-style-card">
+                                        <div class="hdr-style-label">Border Radius</div>
+                                        <div class="hdr-slider-row hdr-slider-row-main">
+                                            <input type="range" id="sliderReviewCardRadius" class="hdr-slider" min="0" max="30" value="12" />
+                                            <span class="hdr-slider-value" id="valReviewCardRadius">12px</span>
+                                        </div>
+                                        <input type="number" id="txtReviewCardRadius" class="hdr-num-input" min="0" max="30" value="12" />
+                                    </div>
+
+                                    <!-- Overall Opacity -->
+                                    <div class="hdr-style-card" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(100,180,255,0.1), rgba(100,180,255,0.05));">
+                                        <div class="hdr-style-label" style="font-size: 1em;">Overall Card Opacity</div>
+                                        <div class="fieldDescription" style="margin-bottom: 12px; font-size: 0.85em; color: #888;">
+                                            Controls transparency of the entire review card
+                                        </div>
+                                        <div class="hdr-slider-row">
+                                            <span class="hdr-slider-label">Opacity</span>
+                                            <input type="range" id="sliderReviewCardOverallOpacity" class="hdr-slider" min="0" max="100" value="100" style="flex: 2;" />
+                                            <span class="hdr-slider-value" id="valReviewCardOverallOpacity">100%</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Show Profile Tooltip -->
+                                    <div class="hdr-style-card" style="grid-column: 1 / -1;">
+                                        <label class="hdr-toggle">
+                                            <input type="checkbox" id="chkShowReviewProfileTooltip" checked />
+                                            <span class="hdr-toggle-slider"></span>
+                                            <span class="hdr-toggle-text">Show "Click to view profile" tooltip on username/avatar hover</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Live Preview -->
+                                <div class="hdr-preview-container">
+                                    <div class="hdr-preview-label">LIVE PREVIEW</div>
+                                    <div class="hdr-preview-area" style="padding: 20px;">
+                                        <div id="reviewCardPreview" class="review-card-preview">
+                                            <div class="preview-review-card">
+                                                <div class="preview-review-header">
+                                                    <div class="preview-review-avatar">T</div>
+                                                    <div class="preview-review-user-info">
+                                                        <span class="preview-review-username">TestUser</span>
+                                                        <span class="preview-review-timestamp">Today</span>
+                                                    </div>
+                                                    <div class="preview-review-rating">
+                                                        <span class="preview-review-star">★</span>
+                                                        <span>8/10</span>
+                                                    </div>
+                                                </div>
+                                                <div class="preview-review-text">Great movie! Really enjoyed the plot twists and character development throughout the story.</div>
+                                                <div class="preview-review-actions">
+                                                    <button type="button" class="preview-action-btn preview-liked">👍 <span>5</span></button>
+                                                    <button type="button" class="preview-action-btn">👎 <span>1</span></button>
+                                                    <button type="button" class="preview-action-btn">💬 <span>3</span></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1398,6 +1592,99 @@
             .backup-warning-icon {
                 font-size: 1.4em;
             }
+
+            /* Review Card Preview Styles */
+            .review-card-preview {
+                display: flex;
+                justify-content: center;
+            }
+            .preview-review-card {
+                width: 320px;
+                padding: 14px;
+                border-radius: 12px;
+                background: rgba(30, 30, 30, 0.95);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.2s ease;
+            }
+            .preview-review-card:hover {
+                background: rgba(40, 40, 40, 0.95);
+            }
+            .preview-review-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .preview-review-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: #444;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 1.1em;
+                color: #fff;
+            }
+            .preview-review-user-info {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .preview-review-username {
+                font-weight: 600;
+                color: #fff;
+                font-size: 0.95em;
+            }
+            .preview-review-timestamp {
+                color: #888;
+                font-size: 0.8em;
+            }
+            .preview-review-rating {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-weight: 600;
+                color: #888;
+            }
+            .preview-review-star {
+                color: #ffd700;
+                font-size: 1.1em;
+            }
+            .preview-review-text {
+                color: #ccc;
+                font-size: 0.9em;
+                line-height: 1.4;
+                margin-bottom: 12px;
+            }
+            .preview-review-actions {
+                display: flex;
+                gap: 12px;
+            }
+            .preview-action-btn {
+                background: none;
+                border: none;
+                color: #888;
+                cursor: pointer;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s;
+            }
+            .preview-action-btn:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.1);
+            }
+            .preview-action-btn.preview-liked {
+                color: #4CAF50;
+            }
+            .preview-action-btn.preview-disliked {
+                color: #f44336;
+            }
         </style>
 
         <script type="text/javascript">
@@ -1654,6 +1941,207 @@
                         updateHeaderBtnPreview();
                     });
                     updateSearchFieldControlsVisibility();
+                }
+            }
+
+            // Review Card Styling - Live Preview
+            function updateReviewCardPreview() {
+                var preview = document.getElementById('reviewCardPreview');
+                if (!preview) return;
+
+                var card = preview.querySelector('.preview-review-card');
+                if (!card) return;
+
+                var noBorderChk = document.getElementById('chkReviewCardNoBorder');
+                var bgEl = document.getElementById('txtReviewCardBg');
+                var borderEl = document.getElementById('txtReviewCardBorder');
+                var radiusEl = document.getElementById('sliderReviewCardRadius');
+                var usernameColorEl = document.getElementById('txtReviewCardUsername');
+                var timestampColorEl = document.getElementById('txtReviewCardTimestamp');
+                var textColorEl = document.getElementById('txtReviewCardText');
+                var ratingColorEl = document.getElementById('txtReviewCardRating');
+                var actionBtnColorEl = document.getElementById('txtReviewCardActionBtn');
+                var actionBtnHoverEl = document.getElementById('txtReviewCardActionBtnHover');
+                var likedColorEl = document.getElementById('txtReviewCardLiked');
+                var dislikedColorEl = document.getElementById('txtReviewCardDisliked');
+                var hoverBgEl = document.getElementById('txtReviewCardHoverBg');
+                var overallOpacityEl = document.getElementById('sliderReviewCardOverallOpacity');
+
+                var noBorder = noBorderChk && noBorderChk.checked;
+                var bg = (bgEl && bgEl.value) || 'rgba(30, 30, 30, 0.95)';
+                var borderColor = noBorder ? 'transparent' : ((borderEl && borderEl.value) || 'rgba(255, 255, 255, 0.1)');
+                var borderRadius = ((radiusEl && radiusEl.value) || 12) + 'px';
+                var usernameColor = (usernameColorEl && usernameColorEl.value) || '#ffffff';
+                var timestampColor = (timestampColorEl && timestampColorEl.value) || '#888888';
+                var textColor = (textColorEl && textColorEl.value) || '#cccccc';
+                var ratingColor = (ratingColorEl && ratingColorEl.value) || '#ffd700';
+                var actionBtnColor = (actionBtnColorEl && actionBtnColorEl.value) || '#888888';
+                var actionBtnHoverColor = (actionBtnHoverEl && actionBtnHoverEl.value) || '#ffffff';
+                var likedColor = (likedColorEl && likedColorEl.value) || '#4CAF50';
+                var dislikedColor = (dislikedColorEl && dislikedColorEl.value) || '#f44336';
+                var hoverBg = (hoverBgEl && hoverBgEl.value) || 'rgba(255, 255, 255, 0.05)';
+                var overallOpacity = overallOpacityEl ? (parseInt(overallOpacityEl.value) / 100) : 1;
+
+                // Toggle visibility of border controls
+                var borderControls = document.getElementById('reviewCardBorderControls');
+                if (borderControls) borderControls.style.opacity = noBorder ? '0.4' : '1';
+
+                // Apply styles to card
+                card.style.background = bg;
+                card.style.border = noBorder ? 'none' : ('1px solid ' + borderColor);
+                card.style.borderRadius = borderRadius;
+                card.style.opacity = overallOpacity;
+
+                // Username
+                var usernameEl = card.querySelector('.preview-review-username');
+                if (usernameEl) usernameEl.style.color = usernameColor;
+
+                // Timestamp
+                var timestampEl = card.querySelector('.preview-review-timestamp');
+                if (timestampEl) timestampEl.style.color = timestampColor;
+
+                // Review text
+                var textEl = card.querySelector('.preview-review-text');
+                if (textEl) textEl.style.color = textColor;
+
+                // Rating star
+                var starEl = card.querySelector('.preview-review-star');
+                if (starEl) starEl.style.color = ratingColor;
+
+                // Action buttons
+                var actionBtns = card.querySelectorAll('.preview-action-btn');
+                actionBtns.forEach(function(btn) {
+                    if (btn.classList.contains('preview-liked')) {
+                        btn.style.color = likedColor;
+                    } else if (btn.classList.contains('preview-disliked')) {
+                        btn.style.color = dislikedColor;
+                    } else {
+                        btn.style.color = actionBtnColor;
+                    }
+                    btn.onmouseenter = function() {
+                        if (!this.classList.contains('preview-liked') && !this.classList.contains('preview-disliked')) {
+                            this.style.color = actionBtnHoverColor;
+                        }
+                        this.style.background = 'rgba(255,255,255,0.1)';
+                    };
+                    btn.onmouseleave = function() {
+                        if (this.classList.contains('preview-liked')) {
+                            this.style.color = likedColor;
+                        } else if (this.classList.contains('preview-disliked')) {
+                            this.style.color = dislikedColor;
+                        } else {
+                            this.style.color = actionBtnColor;
+                        }
+                        this.style.background = 'transparent';
+                    };
+                });
+
+                // Card hover effect
+                card.onmouseenter = function() { this.style.background = hoverBg; };
+                card.onmouseleave = function() { this.style.background = bg; };
+            }
+
+            // Initialize review card styling controls
+            var reviewCardControlsInitialized = false;
+            function initReviewCardControls() {
+                if (reviewCardControlsInitialized) return;
+                reviewCardControlsInitialized = true;
+
+                // Color + opacity pairs
+                var colorPairs = [
+                    { color: 'colorReviewCardBg', text: 'txtReviewCardBg', slider: 'sliderReviewCardBgOpacity', label: 'valReviewCardBgOpacity' },
+                    { color: 'colorReviewCardBorder', text: 'txtReviewCardBorder', slider: 'sliderReviewCardBorderOpacity', label: 'valReviewCardBorderOpacity' },
+                    { color: 'colorReviewCardHoverBg', text: 'txtReviewCardHoverBg', slider: 'sliderReviewCardHoverOpacity', label: 'valReviewCardHoverOpacity' }
+                ];
+
+                colorPairs.forEach(function(pair) {
+                    var colorEl = document.getElementById(pair.color);
+                    var textEl = document.getElementById(pair.text);
+                    var sliderEl = document.getElementById(pair.slider);
+                    var labelEl = document.getElementById(pair.label);
+
+                    if (colorEl && textEl) {
+                        colorEl.addEventListener('input', function() {
+                            var opacity = sliderEl ? (parseInt(sliderEl.value) / 100) : 1;
+                            textEl.value = buildRgba(colorEl.value, opacity);
+                            updateReviewCardPreview();
+                        });
+                        if (sliderEl) {
+                            sliderEl.addEventListener('input', function() {
+                                var opacity = parseInt(sliderEl.value) / 100;
+                                if (labelEl) labelEl.textContent = sliderEl.value + '%';
+                                textEl.value = buildRgba(colorEl.value, opacity);
+                                updateReviewCardPreview();
+                            });
+                        }
+                        textEl.addEventListener('input', function() {
+                            syncColorPickerFromText(textEl, colorEl, sliderEl, labelEl);
+                            updateReviewCardPreview();
+                        });
+                    }
+                });
+
+                // Simple colors (no opacity)
+                var simpleColors = [
+                    { color: 'colorReviewCardUsername', text: 'txtReviewCardUsername' },
+                    { color: 'colorReviewCardTimestamp', text: 'txtReviewCardTimestamp' },
+                    { color: 'colorReviewCardText', text: 'txtReviewCardText' },
+                    { color: 'colorReviewCardRating', text: 'txtReviewCardRating' },
+                    { color: 'colorReviewCardActionBtn', text: 'txtReviewCardActionBtn' },
+                    { color: 'colorReviewCardActionBtnHover', text: 'txtReviewCardActionBtnHover' },
+                    { color: 'colorReviewCardLiked', text: 'txtReviewCardLiked' },
+                    { color: 'colorReviewCardDisliked', text: 'txtReviewCardDisliked' }
+                ];
+
+                simpleColors.forEach(function(pair) {
+                    var colorEl = document.getElementById(pair.color);
+                    var textEl = document.getElementById(pair.text);
+                    if (colorEl && textEl) {
+                        colorEl.addEventListener('input', function() {
+                            textEl.value = colorEl.value;
+                            updateReviewCardPreview();
+                        });
+                        textEl.addEventListener('input', function() {
+                            var val = textEl.value.trim();
+                            if (val.match(/^#[0-9a-fA-F]{6}$/i)) {
+                                colorEl.value = val;
+                            }
+                            updateReviewCardPreview();
+                        });
+                    }
+                });
+
+                // Border radius slider + number sync
+                var radiusSlider = document.getElementById('sliderReviewCardRadius');
+                var radiusNum = document.getElementById('txtReviewCardRadius');
+                var radiusLabel = document.getElementById('valReviewCardRadius');
+                if (radiusSlider && radiusNum) {
+                    radiusSlider.addEventListener('input', function() {
+                        radiusNum.value = radiusSlider.value;
+                        if (radiusLabel) radiusLabel.textContent = radiusSlider.value + 'px';
+                        updateReviewCardPreview();
+                    });
+                    radiusNum.addEventListener('input', function() {
+                        radiusSlider.value = radiusNum.value;
+                        if (radiusLabel) radiusLabel.textContent = radiusNum.value + 'px';
+                        updateReviewCardPreview();
+                    });
+                }
+
+                // No border checkbox
+                var noBorderChk = document.getElementById('chkReviewCardNoBorder');
+                if (noBorderChk) {
+                    noBorderChk.addEventListener('change', updateReviewCardPreview);
+                }
+
+                // Overall opacity slider
+                var overallOpacitySlider = document.getElementById('sliderReviewCardOverallOpacity');
+                var overallOpacityLabel = document.getElementById('valReviewCardOverallOpacity');
+                if (overallOpacitySlider) {
+                    overallOpacitySlider.addEventListener('input', function() {
+                        if (overallOpacityLabel) overallOpacityLabel.textContent = overallOpacitySlider.value + '%';
+                        updateReviewCardPreview();
+                    });
                 }
             }
 
@@ -2325,6 +2813,85 @@
                     initHeaderBtnControls();
                     updateHeaderBtnPreview();
 
+                    // Review card styling - load and sync all controls
+                    var rcBg = config.ReviewCardBackground || 'rgba(30, 30, 30, 0.95)';
+                    var rcNoBorder = config.ReviewCardNoBorder || false;
+                    var rcBorder = config.ReviewCardBorderColor || 'rgba(255, 255, 255, 0.1)';
+                    var rcRadius = config.ReviewCardBorderRadius !== undefined ? config.ReviewCardBorderRadius : 12;
+                    var rcUsername = config.ReviewCardUsernameColor || '#ffffff';
+                    var rcTimestamp = config.ReviewCardTimestampColor || '#888888';
+                    var rcText = config.ReviewCardTextColor || '#cccccc';
+                    var rcRating = config.ReviewCardRatingColor || '#ffd700';
+                    var rcActionBtn = config.ReviewCardActionBtnColor || '#888888';
+                    var rcActionBtnHover = config.ReviewCardActionBtnHoverColor || '#ffffff';
+                    var rcLiked = config.ReviewCardLikedColor || '#4CAF50';
+                    var rcDisliked = config.ReviewCardDislikedColor || '#f44336';
+                    var rcHover = config.ReviewCardHoverBackground || 'rgba(255, 255, 255, 0.05)';
+                    var rcOverallOpacity = config.ReviewCardOverallOpacity !== undefined ? config.ReviewCardOverallOpacity : 100;
+
+                    // Set checkboxes
+                    document.getElementById('chkReviewCardNoBorder').checked = rcNoBorder;
+
+                    // Set text inputs
+                    document.getElementById('txtReviewCardBg').value = rcBg;
+                    document.getElementById('txtReviewCardBorder').value = rcBorder;
+                    document.getElementById('txtReviewCardRadius').value = rcRadius;
+                    document.getElementById('txtReviewCardUsername').value = rcUsername;
+                    document.getElementById('txtReviewCardTimestamp').value = rcTimestamp;
+                    document.getElementById('txtReviewCardText').value = rcText;
+                    document.getElementById('txtReviewCardRating').value = rcRating;
+                    document.getElementById('txtReviewCardActionBtn').value = rcActionBtn;
+                    document.getElementById('txtReviewCardActionBtnHover').value = rcActionBtnHover;
+                    document.getElementById('txtReviewCardLiked').value = rcLiked;
+                    document.getElementById('txtReviewCardDisliked').value = rcDisliked;
+                    document.getElementById('txtReviewCardHoverBg').value = rcHover;
+
+                    // Sync color pickers from text values
+                    syncColorPickerFromText(document.getElementById('txtReviewCardBg'), document.getElementById('colorReviewCardBg'), document.getElementById('sliderReviewCardBgOpacity'), document.getElementById('valReviewCardBgOpacity'));
+                    syncColorPickerFromText(document.getElementById('txtReviewCardBorder'), document.getElementById('colorReviewCardBorder'), document.getElementById('sliderReviewCardBorderOpacity'), document.getElementById('valReviewCardBorderOpacity'));
+                    syncColorPickerFromText(document.getElementById('txtReviewCardHoverBg'), document.getElementById('colorReviewCardHoverBg'), document.getElementById('sliderReviewCardHoverOpacity'), document.getElementById('valReviewCardHoverOpacity'));
+
+                    // Sync simple color pickers
+                    var rcUsernameColorPicker = document.getElementById('colorReviewCardUsername');
+                    if (rcUsernameColorPicker && rcUsername.match(/^#[0-9a-fA-F]{6}$/i)) rcUsernameColorPicker.value = rcUsername;
+                    var rcTimestampColorPicker = document.getElementById('colorReviewCardTimestamp');
+                    if (rcTimestampColorPicker && rcTimestamp.match(/^#[0-9a-fA-F]{6}$/i)) rcTimestampColorPicker.value = rcTimestamp;
+                    var rcTextColorPicker = document.getElementById('colorReviewCardText');
+                    if (rcTextColorPicker && rcText.match(/^#[0-9a-fA-F]{6}$/i)) rcTextColorPicker.value = rcText;
+                    var rcRatingColorPicker = document.getElementById('colorReviewCardRating');
+                    if (rcRatingColorPicker && rcRating.match(/^#[0-9a-fA-F]{6}$/i)) rcRatingColorPicker.value = rcRating;
+                    var rcActionBtnColorPicker = document.getElementById('colorReviewCardActionBtn');
+                    if (rcActionBtnColorPicker && rcActionBtn.match(/^#[0-9a-fA-F]{6}$/i)) rcActionBtnColorPicker.value = rcActionBtn;
+                    var rcActionBtnHoverColorPicker = document.getElementById('colorReviewCardActionBtnHover');
+                    if (rcActionBtnHoverColorPicker && rcActionBtnHover.match(/^#[0-9a-fA-F]{6}$/i)) rcActionBtnHoverColorPicker.value = rcActionBtnHover;
+                    var rcLikedColorPicker = document.getElementById('colorReviewCardLiked');
+                    if (rcLikedColorPicker && rcLiked.match(/^#[0-9a-fA-F]{6}$/i)) rcLikedColorPicker.value = rcLiked;
+                    var rcDislikedColorPicker = document.getElementById('colorReviewCardDisliked');
+                    if (rcDislikedColorPicker && rcDisliked.match(/^#[0-9a-fA-F]{6}$/i)) rcDislikedColorPicker.value = rcDisliked;
+
+                    // Set radius slider
+                    var rcRadiusSlider = document.getElementById('sliderReviewCardRadius');
+                    var rcRadiusLabel = document.getElementById('valReviewCardRadius');
+                    if (rcRadiusSlider) {
+                        rcRadiusSlider.value = rcRadius;
+                        if (rcRadiusLabel) rcRadiusLabel.textContent = rcRadius + 'px';
+                    }
+
+                    // Set overall opacity slider
+                    var rcOverallSlider = document.getElementById('sliderReviewCardOverallOpacity');
+                    var rcOverallLabel = document.getElementById('valReviewCardOverallOpacity');
+                    if (rcOverallSlider) {
+                        rcOverallSlider.value = rcOverallOpacity;
+                        if (rcOverallLabel) rcOverallLabel.textContent = rcOverallOpacity + '%';
+                    }
+
+                    // Set profile tooltip checkbox
+                    document.getElementById('chkShowReviewProfileTooltip').checked = config.ShowReviewProfileTooltip !== false;
+
+                    // Initialize review card controls and update preview
+                    initReviewCardControls();
+                    updateReviewCardPreview();
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -2462,6 +3029,23 @@
                     config.HeaderGroupOverallOpacity = parseInt(document.getElementById('sliderHeaderGroupOverallOpacity').value) || 100;
                     config.SearchFieldMatchGroupBg = document.getElementById('chkSearchFieldMatchGroupBg').checked;
                     config.SearchFieldBackground = document.getElementById('txtSearchFieldBg').value || 'rgba(40, 40, 40, 0.95)';
+
+                    // User Reviews Card Styling
+                    config.ReviewCardBackground = document.getElementById('txtReviewCardBg').value || 'rgba(30, 30, 30, 0.95)';
+                    config.ReviewCardNoBorder = document.getElementById('chkReviewCardNoBorder').checked;
+                    config.ReviewCardBorderColor = document.getElementById('txtReviewCardBorder').value || 'rgba(255, 255, 255, 0.1)';
+                    config.ReviewCardBorderRadius = parseInt(document.getElementById('sliderReviewCardRadius').value) || 12;
+                    config.ReviewCardUsernameColor = document.getElementById('txtReviewCardUsername').value || '#ffffff';
+                    config.ReviewCardTimestampColor = document.getElementById('txtReviewCardTimestamp').value || '#888888';
+                    config.ReviewCardTextColor = document.getElementById('txtReviewCardText').value || '#cccccc';
+                    config.ReviewCardRatingColor = document.getElementById('txtReviewCardRating').value || '#ffd700';
+                    config.ReviewCardActionBtnColor = document.getElementById('txtReviewCardActionBtn').value || '#888888';
+                    config.ReviewCardActionBtnHoverColor = document.getElementById('txtReviewCardActionBtnHover').value || '#ffffff';
+                    config.ReviewCardLikedColor = document.getElementById('txtReviewCardLiked').value || '#4CAF50';
+                    config.ReviewCardDislikedColor = document.getElementById('txtReviewCardDisliked').value || '#f44336';
+                    config.ReviewCardHoverBackground = document.getElementById('txtReviewCardHoverBg').value || 'rgba(255, 255, 255, 0.05)';
+                    config.ReviewCardOverallOpacity = parseInt(document.getElementById('sliderReviewCardOverallOpacity').value) || 100;
+                    config.ShowReviewProfileTooltip = document.getElementById('chkShowReviewProfileTooltip').checked;
 
                     ApiClient.updatePluginConfiguration(RatingsConfig.pluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

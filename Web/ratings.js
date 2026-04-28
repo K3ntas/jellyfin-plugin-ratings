@@ -4255,8 +4255,31 @@
                     searchFieldBackground: config.SearchFieldBackground || 'rgba(40, 40, 40, 0.95)',
                     languageTextColor: config.LanguageTextColor || '#ffffff'
                 };
+
+                // Review card styling
+                self.reviewCardStyle = {
+                    background: config.ReviewCardBackground || 'rgba(30, 30, 30, 0.95)',
+                    noBorder: config.ReviewCardNoBorder || false,
+                    borderColor: config.ReviewCardBorderColor || 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: config.ReviewCardBorderRadius || 12,
+                    usernameColor: config.ReviewCardUsernameColor || '#ffffff',
+                    timestampColor: config.ReviewCardTimestampColor || '#888888',
+                    textColor: config.ReviewCardTextColor || '#cccccc',
+                    ratingColor: config.ReviewCardRatingColor || '#ffd700',
+                    actionBtnColor: config.ReviewCardActionBtnColor || '#888888',
+                    actionBtnHoverColor: config.ReviewCardActionBtnHoverColor || '#ffffff',
+                    likedColor: config.ReviewCardLikedColor || '#4CAF50',
+                    dislikedColor: config.ReviewCardDislikedColor || '#f44336',
+                    hoverBackground: config.ReviewCardHoverBackground || 'rgba(255, 255, 255, 0.05)',
+                    overallOpacity: config.ReviewCardOverallOpacity !== undefined ? config.ReviewCardOverallOpacity : 100
+                };
+
+                // Review card options
+                self.showReviewProfileTooltip = config.ShowReviewProfileTooltip !== false;
+
                 self.applyHeaderButtonStyles();
                 self.applyStarWidgetStyles();
+                self.applyReviewCardStyles();
             });
         },
 
@@ -4993,10 +5016,6 @@
                 }
                 .user-review-action-btn.disliked {
                     color: #f44336;
-                }
-                .user-review-action-btn.own-review {
-                    opacity: 0.5;
-                    cursor: not-allowed;
                 }
                 .user-reviews-empty {
                     text-align: center;
@@ -12720,10 +12739,11 @@
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: #101010;
+                    background: rgba(0, 0, 0, 0.5);
                     z-index: 99999;
                     overflow-y: auto;
                     animation: profileFadeIn 0.2s ease;
+                    cursor: pointer;
                 }
                 @keyframes profileFadeIn {
                     from { opacity: 0; }
@@ -12731,8 +12751,12 @@
                 }
                 .social-profile-container {
                     max-width: 900px;
-                    margin: 0 auto;
+                    margin: 40px auto;
                     padding: 20px;
+                    background: #101010;
+                    border-radius: 12px;
+                    cursor: default;
+                    position: relative;
                 }
                 .social-profile-back {
                     display: inline-flex;
@@ -13116,6 +13140,13 @@
             page.className = 'social-profile-page';
             page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
             document.body.appendChild(page);
+
+            // Close when clicking backdrop (outside container)
+            page.addEventListener('click', function(e) {
+                if (e.target === page) {
+                    self.closeProfilePage();
+                }
+            });
 
             // Fetch profile data
             var baseUrl = ApiClient.serverAddress();
@@ -14651,14 +14682,15 @@
                 const ownClass = isOwnReview ? ' own-review' : '';
                 const commentCount = review.CommentCount || 0;
 
+                const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
                 html += `
                     <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
                         <div class="user-review-card-header">
-                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}">
+                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
                                 <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
                                 <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
                             </div>
-                            <a class="user-review-user-link" data-user-id="${review.UserId}">
+                            <a class="user-review-user-link" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
                                 <div class="user-review-user-info">
                                     <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
                                     <div class="user-review-timestamp">${timestamp}</div>
@@ -14671,10 +14703,10 @@
                         </div>
                         <div class="user-review-text" data-full-text="${this.escapeHtml(review.ReviewText)}">${this.escapeHtml(review.ReviewText)}</div>
                         <div class="user-review-actions">
-                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like" ${isOwnReview ? 'disabled' : ''}>
+                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like">
                                 👍 <span class="like-count">${review.LikeCount || 0}</span>
                             </button>
-                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike" ${isOwnReview ? 'disabled' : ''}>
+                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike">
                                 👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
                             </button>
                             <button class="user-review-action-btn" data-action="comment">
@@ -14721,6 +14753,14 @@
                 });
             });
 
+            // Add click handler for own review buttons - show funny message
+            grid.querySelectorAll('.user-review-action-btn.own-review').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.showSelfRatingMessage();
+                });
+            });
+
             // Add comment button handlers
             grid.querySelectorAll('.user-review-action-btn[data-action="comment"]').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -14738,6 +14778,156 @@
                     self.navigateToUserProfile(userId);
                 });
             });
+
+            // Apply review card styles (ensure styles are loaded)
+            if (self.reviewCardStyle) {
+                self.applyReviewCardStyles();
+            }
+        },
+
+        /**
+         * Show funny message when user tries to rate their own review
+         */
+        showSelfRatingMessage: function () {
+            const messages = [
+                // Narcissism jokes
+                "Whoa there, Narcissus! Put down the mirror.",
+                "Your ego called. It says it's full.",
+                "Self-love is great, but this is just sad.",
+                "Even your reflection thinks this is too much.",
+                "Narcissism level: Expert. Rating blocked.",
+                "Your mirror already gives you enough validation.",
+
+                // Sarcastic
+                "Oh wow, rating yourself? Groundbreaking.",
+                "Shocking news: You think you're great. We got it.",
+                "Let me guess... you were going to give yourself 5 stars?",
+                "Sorry, the 'I'm amazing' button is broken.",
+                "Plot twist: You can't be your own cheerleader here.",
+                "Nice try, but no participation trophies today.",
+                "The audacity is impressive. The answer is still no.",
+                "Did you really think that would work?",
+                "I admire the confidence, but absolutely not.",
+
+                // Funny observations
+                "That's like laughing at your own jokes. Don't.",
+                "Sir/Ma'am, this is a Wendy's. And also no.",
+                "Your mom already thinks you're special. That's enough.",
+                "Save some validation for the rest of us.",
+                "Even politicians don't vote for themselves this obviously.",
+                "This isn't Tinder. You can't swipe right on yourself.",
+                "The system has detected excessive self-appreciation.",
+                "Achievement unlocked: Shameless Self-Promotion (denied).",
+
+                // Adult/Edgy humor
+                "Liking your own stuff? That's basically public self-pleasure.",
+                "This is the rating equivalent of talking to yourself. Weird.",
+                "Even OnlyFans creators don't sub to themselves.",
+                "Go touch grass instead of touching that button.",
+                "Your hand must be tired from patting your own back.",
+                "Is your other hand busy high-fiving yourself too?",
+                "Found the person who likes their own Facebook posts.",
+                "Main character syndrome detected. Access denied.",
+
+                // Pop culture references
+                "You're not Kanye. You can't interrupt yourself.",
+                "Not even Thanos had this much self-love.",
+                "The council has reviewed your request. Denied.",
+                "Error 403: Self-admiration limit exceeded.",
+                "Your application for self-praise has been rejected.",
+                "The algorithm has determined you're too thirsty.",
+
+                // Witty comebacks
+                "Confidence is sexy. This is just desperate.",
+                "There's self-care, and then there's whatever this is.",
+                "Maybe ask your imaginary friend to rate it instead?",
+                "Your review is valid. Your vote for it isn't.",
+                "We appreciate your enthusiasm for yourself. Still no.",
+                "Self-rating? In this economy?",
+                "Bold strategy. Let's see if it pays off. Spoiler: It won't.",
+                "The lion, the witch, and the audacity of this click.",
+
+                // Therapy suggestions
+                "Have you considered that validation should come from others?",
+                "A therapist might help with that self-esteem. Just saying.",
+                "External validation is healthier. Try that.",
+                "This level of self-love requires professional help.",
+                "The need for self-approval is strong with this one.",
+
+                // Technical humor
+                "Error: SelfLoveOverflow exception thrown.",
+                "Task failed successfully: Ego remains intact.",
+                "Runtime error: Cannot reference self in rating context.",
+                "Warning: Recursive self-appreciation detected.",
+                "System.out.println('Nice try, buddy.');",
+                "SELECT validation FROM others WHERE you = 'not_yourself';",
+
+                // Roasts
+                "I've seen less desperation at a singles bar.",
+                "Your review isn't THAT good. Trust me.",
+                "Even your pet wouldn't rate your review.",
+                "The button is disabled, unlike your ego apparently.",
+                "No amount of clicking will make this okay.",
+                "You must be exhausted from carrying that ego around."
+            ];
+
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            this.showSelfRatingToast(randomMessage);
+        },
+
+        /**
+         * Show toast notification for self-rating attempt
+         */
+        showSelfRatingToast: function (message) {
+            // Remove existing toast if any
+            const existing = document.getElementById('selfRatingToast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'selfRatingToast';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+                color: white;
+                padding: 16px 28px;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 500;
+                z-index: 999999;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                animation: selfRatingToastIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                max-width: 90vw;
+                text-align: center;
+            `;
+            toast.textContent = message;
+
+            // Add animation keyframes if not exists
+            if (!document.getElementById('selfRatingToastStyles')) {
+                const style = document.createElement('style');
+                style.id = 'selfRatingToastStyles';
+                style.textContent = `
+                    @keyframes selfRatingToastIn {
+                        0% { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.8); }
+                        100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+                    }
+                    @keyframes selfRatingToastOut {
+                        0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+                        100% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.9); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(toast);
+
+            // Auto-remove after 3.5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'selfRatingToastOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         },
 
         /**
@@ -16258,6 +16448,84 @@
                 }
 
                 ${config.customCSS}
+            `;
+        },
+
+        applyReviewCardStyles: function () {
+            const self = this;
+            const style = self.reviewCardStyle;
+            if (!style) return;
+
+            // Create or update dynamic stylesheet for review cards
+            let styleEl = document.getElementById('ratingsReviewCardStyles');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'ratingsReviewCardStyles';
+                document.head.appendChild(styleEl);
+            }
+
+            const borderStyle = style.noBorder ? 'none' : `1px solid ${style.borderColor}`;
+            const overallOpacity = (style.overallOpacity !== undefined ? style.overallOpacity : 100) / 100;
+
+            styleEl.textContent = `
+                /* User Review Card Base */
+                .user-review-card {
+                    background: ${style.background} !important;
+                    border: ${borderStyle} !important;
+                    border-radius: ${style.borderRadius}px !important;
+                    opacity: ${overallOpacity} !important;
+                }
+
+                .user-review-card:hover {
+                    background: ${style.hoverBackground} !important;
+                }
+
+                /* Username */
+                .user-review-username {
+                    color: ${style.usernameColor} !important;
+                }
+
+                /* Timestamp */
+                .user-review-timestamp {
+                    color: ${style.timestampColor} !important;
+                }
+
+                /* Review Text */
+                .user-review-text {
+                    color: ${style.textColor} !important;
+                }
+
+                /* Gradient fade for truncated text */
+                .user-review-text.truncated::after {
+                    background: linear-gradient(transparent, ${style.background}) !important;
+                }
+
+                /* Rating Stars */
+                .user-review-rating {
+                    color: ${style.ratingColor} !important;
+                }
+                .user-review-rating-star {
+                    color: ${style.ratingColor} !important;
+                }
+
+                /* Action Buttons */
+                .user-review-action-btn {
+                    color: ${style.actionBtnColor} !important;
+                }
+
+                .user-review-action-btn:hover {
+                    color: ${style.actionBtnHoverColor} !important;
+                }
+
+                /* Liked Button */
+                .user-review-action-btn.liked {
+                    color: ${style.likedColor} !important;
+                }
+
+                /* Disliked Button */
+                .user-review-action-btn.disliked {
+                    color: ${style.dislikedColor} !important;
+                }
             `;
         },
 
