@@ -1245,6 +1245,28 @@
         </div>
 
         <style>
+            /* Full width layout for settings */
+            #ratingsConfigPage .content-primary {
+                max-width: 100%;
+                padding-right: 2em;
+            }
+
+            /* Two-column layout for wide screens */
+            @media (min-width: 1200px) {
+                #ratingsConfigForm {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 16px;
+                    align-items: start;
+                }
+                #ratingsConfigForm > h2.sectionTitle {
+                    grid-column: 1 / -1;
+                }
+                #ratingsConfigForm > .button-submit-container {
+                    grid-column: 1 / -1;
+                }
+            }
+
             /* Collapsible settings groups */
             .settings-group {
                 border: 1px solid rgba(255,255,255,0.1);

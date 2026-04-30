@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.299.0",
+        "changelog": "Dashboard: 5 sections (activity, top rated, active users, rating distribution, requests). Settings: full-width layout for wide screens",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.299.0/Jellyfin.Plugin.Ratings_2.0.299.0.zip",
+        "checksum": "6405090386cec9ce1b3eedc7fae6fdc3",
+        "timestamp": "2026-04-30T17:00:00Z"
+      },
+      {
         "version": "2.0.298.0",
         "changelog": "Dashboard: Unified activity feed showing ratings, reviews, requests, and comments with modern UI styling",
         "targetAbi": "10.11.0.0",

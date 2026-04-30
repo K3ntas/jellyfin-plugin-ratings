@@ -25,10 +25,10 @@
                 </div>
             </div>
 
-            <!-- Main Content Grid -->
-            <div class="dashboard-grid">
+            <!-- Main Content Grid - 3 columns -->
+            <div class="dashboard-grid-3">
                 <!-- Recent Activity -->
-                <div class="dashboard-section activity-section">
+                <div class="dashboard-section">
                     <h3 class="section-title">Recent Activity</h3>
                     <div id="recent-activity" class="activity-list">
                         <div class="activity-empty">Loading...</div>
@@ -36,9 +36,36 @@
                 </div>
 
                 <!-- Top Rated -->
-                <div class="dashboard-section top-rated-section">
+                <div class="dashboard-section">
                     <h3 class="section-title">Top Rated</h3>
-                    <div id="top-rated-items" class="top-rated-grid">
+                    <div id="top-rated-items" class="top-rated-list">
+                        <div class="activity-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Most Active Users -->
+                <div class="dashboard-section">
+                    <h3 class="section-title">Most Active Users</h3>
+                    <div id="most-active-users" class="users-list">
+                        <div class="activity-empty">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row - 2 columns -->
+            <div class="dashboard-grid-2">
+                <!-- Rating Distribution -->
+                <div class="dashboard-section">
+                    <h3 class="section-title">Rating Distribution</h3>
+                    <div id="rating-distribution" class="distribution-chart">
+                        <div class="activity-empty">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Recent Requests -->
+                <div class="dashboard-section">
+                    <h3 class="section-title">Recent Requests</h3>
+                    <div id="recent-requests" class="requests-list">
                         <div class="activity-empty">Loading...</div>
                     </div>
                 </div>
@@ -57,9 +84,15 @@
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .stat-card {
@@ -93,23 +126,43 @@
         }
 
         .stat-label {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: rgba(255, 255, 255, 0.5);
             margin-top: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        /* Dashboard Grid */
-        .dashboard-grid {
+        /* Dashboard Grids */
+        .dashboard-grid-3 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
-        @media (max-width: 1000px) {
-            .dashboard-grid {
+        .dashboard-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid-3 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .dashboard-grid-3 > .dashboard-section:last-child {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .dashboard-grid-3,
+            .dashboard-grid-2 {
                 grid-template-columns: 1fr;
+            }
+            .dashboard-grid-3 > .dashboard-section:last-child {
+                grid-column: auto;
             }
         }
 
@@ -118,36 +171,37 @@
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
+            min-height: 200px;
         }
 
         .section-title {
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 500;
-            margin: 0 0 16px 0;
-            padding-bottom: 12px;
+            margin: 0 0 12px 0;
+            padding-bottom: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             color: rgba(255, 255, 255, 0.9);
         }
 
         /* Activity List */
         .activity-list {
-            max-height: 450px;
+            max-height: 320px;
             overflow-y: auto;
         }
 
         .activity-empty {
             color: rgba(255, 255, 255, 0.4);
             text-align: center;
-            padding: 32px 16px;
+            padding: 24px 16px;
             font-size: 0.9em;
         }
 
         .activity-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            padding: 12px 0;
+            gap: 10px;
+            padding: 10px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -156,13 +210,13 @@
         }
 
         .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
             flex-shrink: 0;
         }
 
@@ -172,7 +226,7 @@
         }
 
         .activity-main {
-            font-size: 0.9em;
+            font-size: 0.85em;
             line-height: 1.4;
             color: rgba(255, 255, 255, 0.85);
         }
@@ -187,11 +241,11 @@
         }
 
         .activity-detail {
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
         .preview-text {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: rgba(255, 255, 255, 0.5);
             font-style: italic;
             display: block;
@@ -200,99 +254,73 @@
             white-space: nowrap;
         }
 
-        .request-status {
-            font-size: 0.75em;
-            padding: 2px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        .status-completed {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
-        }
-
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-        }
-
-        .status-default {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.6);
-        }
-
         .activity-time {
-            font-size: 0.75em;
+            font-size: 0.7em;
             color: rgba(255, 255, 255, 0.35);
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
         .activity-rating {
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: 700;
             color: #ffd700;
             flex-shrink: 0;
         }
 
         .activity-rating span {
-            font-size: 0.6em;
+            font-size: 0.55em;
             font-weight: 400;
             color: rgba(255, 255, 255, 0.4);
         }
 
-        /* Top Rated Grid */
-        .top-rated-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        /* Top Rated List */
+        .top-rated-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .top-item {
+            display: flex;
+            align-items: center;
             gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .top-rated-card {
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            position: relative;
-            transition: transform 0.2s;
+        .top-item:last-child {
+            border-bottom: none;
         }
 
-        .top-rated-card:hover {
-            transform: scale(1.03);
-        }
-
-        .top-rated-rank {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            background: rgba(0, 0, 0, 0.75);
+        .top-rank {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 215, 0, 0.15);
             color: #ffd700;
-            font-size: 0.7em;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
             font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            z-index: 1;
+            flex-shrink: 0;
         }
 
-        .top-rated-poster {
-            width: 100%;
-            aspect-ratio: 2/3;
+        .top-poster {
+            width: 36px;
+            height: 54px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 4px;
             background: rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
         }
 
-        .top-rated-placeholder {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+        .top-info {
+            flex: 1;
+            min-width: 0;
         }
 
-        .top-rated-info {
-            padding: 8px 4px 0;
-        }
-
-        .top-rated-title {
-            font-size: 0.8em;
+        .top-title {
+            font-size: 0.85em;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
@@ -300,50 +328,230 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        .top-rated-year {
-            font-size: 0.7em;
+        .top-meta {
+            font-size: 0.75em;
             color: rgba(255, 255, 255, 0.4);
         }
 
-        .top-rated-rating {
-            font-size: 0.75em;
-            margin-top: 4px;
+        .top-score {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #ffd700;
+            flex-shrink: 0;
+        }
+
+        /* Users List */
+        .users-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .user-item {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .top-rated-rating .star {
-            color: #ffd700;
+        .user-item:last-child {
+            border-bottom: none;
         }
 
-        .top-rated-rating .score {
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #00a4dc 0%, #0077a3 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
             font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 0.9em;
+            font-weight: 500;
             color: rgba(255, 255, 255, 0.9);
         }
 
-        .top-rated-rating .count {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.9em;
+        .user-stats {
+            font-size: 0.75em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .user-count {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #00a4dc;
+            flex-shrink: 0;
+        }
+
+        /* Distribution Chart */
+        .distribution-chart {
+            padding: 10px 0;
+        }
+
+        .dist-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .dist-label {
+            width: 30px;
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+
+        .dist-bar-container {
+            flex: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .dist-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00a4dc 0%, #0077a3 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            min-width: 2px;
+        }
+
+        .dist-bar.high {
+            background: linear-gradient(90deg, #4caf50 0%, #2e7d32 100%);
+        }
+
+        .dist-bar.mid {
+            background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        .dist-bar.low {
+            background: linear-gradient(90deg, #f44336 0%, #c62828 100%);
+        }
+
+        .dist-count {
+            width: 40px;
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Requests List */
+        .requests-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .request-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .request-item:last-child {
+            border-bottom: none;
+        }
+
+        .request-type-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .request-type-icon.movie {
+            background: rgba(156, 39, 176, 0.2);
+            color: #ce93d8;
+        }
+
+        .request-type-icon.tv {
+            background: rgba(33, 150, 243, 0.2);
+            color: #64b5f6;
+        }
+
+        .request-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .request-title {
+            font-size: 0.85em;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .request-meta {
+            font-size: 0.75em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .request-status {
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .request-status.pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .request-status.completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .request-status.rejected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
         }
 
         /* Scrollbar Styling */
-        .activity-list::-webkit-scrollbar {
-            width: 6px;
+        .activity-list::-webkit-scrollbar,
+        .top-rated-list::-webkit-scrollbar,
+        .users-list::-webkit-scrollbar,
+        .requests-list::-webkit-scrollbar {
+            width: 5px;
         }
 
-        .activity-list::-webkit-scrollbar-track {
+        .activity-list::-webkit-scrollbar-track,
+        .top-rated-list::-webkit-scrollbar-track,
+        .users-list::-webkit-scrollbar-track,
+        .requests-list::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.02);
             border-radius: 3px;
         }
 
-        .activity-list::-webkit-scrollbar-thumb {
+        .activity-list::-webkit-scrollbar-thumb,
+        .top-rated-list::-webkit-scrollbar-thumb,
+        .users-list::-webkit-scrollbar-thumb,
+        .requests-list::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
-        }
-
-        .activity-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.15);
         }
     </style>
 </div>

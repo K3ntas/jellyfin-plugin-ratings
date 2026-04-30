@@ -4460,6 +4460,123 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        /// <summary>
+        /// Get most active users by rating count.
+        /// </summary>
+        /// <param name="limit">Maximum number of users to return.</param>
+        /// <returns>Most active users list.</returns>
+        [HttpGet("MostActiveUsers")]
+        [Authorize]
+        public ActionResult GetMostActiveUsers([FromQuery] int limit = 5)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 20);
+                var recentRatings = _repository.GetRecentRatings(500);
+
+                var userStats = recentRatings
+                    .GroupBy(r => r.UserId)
+                    .Select(g => new
+                    {
+                        UserId = g.Key,
+                        RatingCount = g.Count(),
+                        ReviewCount = g.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)),
+                        AverageRating = g.Average(r => r.Rating),
+                        LastActive = g.Max(r => r.UpdatedAt)
+                    })
+                    .OrderByDescending(u => u.RatingCount)
+                    .Take(limit)
+                    .ToList();
+
+                var result = userStats.Select(u =>
+                {
+                    var user = _userManager.GetUserById(u.UserId);
+                    return new
+                    {
+                        UserId = u.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        RatingCount = u.RatingCount,
+                        ReviewCount = u.ReviewCount,
+                        AverageRating = Math.Round(u.AverageRating, 1),
+                        LastActive = u.LastActive
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting most active users");
+                return Ok(new List<object>());
+            }
+        }
+
+        /// <summary>
+        /// Get rating distribution (count of each rating value).
+        /// </summary>
+        /// <returns>Rating distribution data.</returns>
+        [HttpGet("RatingDistribution")]
+        [Authorize]
+        public ActionResult GetRatingDistribution()
+        {
+            try
+            {
+                var recentRatings = _repository.GetRecentRatings(1000);
+
+                var distribution = Enumerable.Range(1, 10)
+                    .Select(rating => new
+                    {
+                        Rating = rating,
+                        Count = recentRatings.Count(r => r.Rating == rating)
+                    })
+                    .ToList();
+
+                return Ok(distribution);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting rating distribution");
+                return Ok(Enumerable.Range(1, 10).Select(r => new { Rating = r, Count = 0 }));
+            }
+        }
+
+        /// <summary>
+        /// Get recent media requests for dashboard.
+        /// </summary>
+        /// <param name="limit">Maximum number of requests to return.</param>
+        /// <returns>Recent requests list.</returns>
+        [HttpGet("RecentRequests")]
+        [Authorize]
+        public ActionResult GetRecentRequests([FromQuery] int limit = 5)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 20);
+                var requests = _repository.GetRecentMediaRequests(limit);
+
+                var result = requests.Select(r =>
+                {
+                    var user = _userManager.GetUserById(r.UserId);
+                    return new
+                    {
+                        Id = r.Id.ToString("N"),
+                        Title = r.Title,
+                        Type = r.Type,
+                        Status = r.Status,
+                        UserName = user?.Username ?? "Unknown",
+                        CreatedAt = r.CreatedAt
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent requests");
+                return Ok(new List<object>());
+            }
+        }
+
         #endregion
     }
 
