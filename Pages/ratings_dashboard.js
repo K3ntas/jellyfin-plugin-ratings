@@ -74,9 +74,10 @@ export default function (view, params) {
         const color = getActivityColor(item.Type);
         const description = getActivityDescription(item);
         const detail = getActivityDetail(item);
+        const clickable = item.ItemId ? `onclick="location.href='#!/details?id=${item.ItemId}'" style="cursor:pointer;"` : '';
 
         return `
-            <div class="activity-item">
+            <div class="activity-item" ${clickable}>
                 <div class="activity-icon" style="background: ${color}20; color: ${color};">${icon}</div>
                 <div class="activity-content">
                     <div class="activity-main">
@@ -156,7 +157,7 @@ export default function (view, params) {
                     ? window.ApiClient.getUrl(item.ImageUrl + '?fillHeight=80&fillWidth=54&quality=96')
                     : '';
                 html += `
-                    <a href="#!/details?id=${item.Id}" class="top-item" style="text-decoration: none; color: inherit;">
+                    <a href="#!/details?id=${item.Id}" class="top-item">
                         <div class="top-rank">${index + 1}</div>
                         ${imageUrl
                             ? `<img src="${imageUrl}" class="top-poster" alt="">`
@@ -194,15 +195,16 @@ export default function (view, params) {
             let html = '';
             data.forEach(user => {
                 const initial = user.UserName.charAt(0).toUpperCase();
+                // Link to user profile page
                 html += `
-                    <div class="user-item">
+                    <a href="#!/useredit.html?userId=${user.UserId}" class="user-item">
                         <div class="user-avatar">${initial}</div>
                         <div class="user-info">
                             <div class="user-name">${escapeHtml(user.UserName)}</div>
                             <div class="user-stats">${user.ReviewCount} review${user.ReviewCount !== 1 ? 's' : ''} &bull; avg ${user.AverageRating}</div>
                         </div>
                         <div class="user-count">${user.RatingCount}</div>
-                    </div>
+                    </a>
                 `;
             });
             container.innerHTML = html;
@@ -236,7 +238,7 @@ export default function (view, params) {
                 const barClass = item.Rating >= 8 ? 'high' : item.Rating >= 5 ? 'mid' : 'low';
 
                 html += `
-                    <div class="dist-row">
+                    <div class="dist-row clickable" onclick="showItemsByRating(${item.Rating})" title="Click to view all ${item.Rating}-star rated items">
                         <div class="dist-label">${item.Rating}</div>
                         <div class="dist-bar-container">
                             <div class="dist-bar ${barClass}" style="width: ${percentage}%;"></div>
@@ -249,6 +251,72 @@ export default function (view, params) {
         })
         .catch(err => {
             document.getElementById('rating-distribution').innerHTML = '<div class="activity-empty">Failed to load</div>';
+        });
+    }
+
+    // Global function to show items by rating
+    window.showItemsByRating = function(rating) {
+        showRatingModal(rating);
+    };
+
+    function showRatingModal(rating) {
+        // Create modal to show items with this rating
+        const modalId = 'rating-items-modal';
+        let modal = document.getElementById(modalId);
+        if (modal) modal.remove();
+
+        modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'rating-modal-overlay';
+        modal.innerHTML = `
+            <div class="rating-modal">
+                <div class="rating-modal-header">
+                    <h3>Items Rated ${rating}/10</h3>
+                    <button class="rating-modal-close" onclick="document.getElementById('${modalId}').remove()">&times;</button>
+                </div>
+                <div class="rating-modal-content" id="rating-modal-items">
+                    <div class="activity-empty">Loading...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+        // Fetch items with this rating
+        const url = window.ApiClient.getUrl(`Ratings/ItemsByRating?rating=${rating}&limit=50`);
+        fetch(url, {
+            method: 'GET',
+            headers: { 'X-Emby-Authorization': getAuthHeader() }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('rating-modal-items');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="activity-empty">No items with this rating</div>';
+                return;
+            }
+
+            let html = '<div class="rating-modal-grid">';
+            data.forEach(item => {
+                const imageUrl = item.ImageUrl
+                    ? window.ApiClient.getUrl(item.ImageUrl + '?fillHeight=150&fillWidth=100&quality=96')
+                    : '';
+                html += `
+                    <a href="#!/details?id=${item.Id}" class="rating-modal-item" onclick="document.getElementById('${modalId}').remove()">
+                        ${imageUrl
+                            ? `<img src="${imageUrl}" class="rating-modal-poster" alt="">`
+                            : '<div class="rating-modal-poster rating-modal-placeholder"></div>'
+                        }
+                        <div class="rating-modal-title">${escapeHtml(item.Name)}</div>
+                        <div class="rating-modal-meta">${item.Year || ''}</div>
+                    </a>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('rating-modal-items').innerHTML = '<div class="activity-empty">Failed to load</div>';
         });
     }
 
@@ -272,8 +340,9 @@ export default function (view, params) {
                 const typeClass = request.Type === 'movie' ? 'movie' : 'tv';
                 const statusClass = (request.Status || 'pending').toLowerCase();
 
+                // Click to open requests in settings
                 html += `
-                    <div class="request-item">
+                    <div class="request-item clickable" onclick="openRequestsPage('${request.Id}')" title="Click to manage requests">
                         <div class="request-type-icon ${typeClass}">${typeIcon}</div>
                         <div class="request-info">
                             <div class="request-title">${escapeHtml(request.Title)}</div>
@@ -289,6 +358,16 @@ export default function (view, params) {
             document.getElementById('recent-requests').innerHTML = '<div class="activity-empty">Failed to load</div>';
         });
     }
+
+    // Global function to open requests page
+    window.openRequestsPage = function(requestId) {
+        // Navigate to settings page where requests are managed
+        // Store the request ID to highlight it
+        if (requestId) {
+            sessionStorage.setItem('highlightRequestId', requestId);
+        }
+        location.href = '#!/configurationpage?name=Ratings';
+    };
 
     function getAuthHeader() {
         const token = window.ApiClient.accessToken();

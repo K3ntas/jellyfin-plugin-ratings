@@ -4577,6 +4577,55 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        /// <summary>
+        /// Get items filtered by specific rating value.
+        /// </summary>
+        /// <param name="rating">Rating value to filter by (1-10).</param>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Items with the specified rating.</returns>
+        [HttpGet("ItemsByRating")]
+        [Authorize]
+        public ActionResult GetItemsByRating([FromQuery] int rating, [FromQuery] int limit = 50)
+        {
+            try
+            {
+                rating = Math.Clamp(rating, 1, 10);
+                limit = Math.Clamp(limit, 1, 100);
+
+                var recentRatings = _repository.GetRecentRatings(1000);
+                var itemsWithRating = recentRatings
+                    .Where(r => r.Rating == rating)
+                    .GroupBy(r => r.ItemId)
+                    .Select(g => g.First())
+                    .Take(limit)
+                    .ToList();
+
+                var result = new List<object>();
+                foreach (var r in itemsWithRating)
+                {
+                    var mediaItem = _libraryManager.GetItemById(r.ItemId);
+                    if (mediaItem == null) continue;
+
+                    var hasImage = mediaItem.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true;
+
+                    result.Add(new
+                    {
+                        Id = r.ItemId.ToString("N"),
+                        Name = mediaItem.Name,
+                        Year = mediaItem.ProductionYear,
+                        ImageUrl = hasImage ? $"/Items/{r.ItemId}/Images/Primary" : null
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting items by rating");
+                return Ok(new List<object>());
+            }
+        }
+
         #endregion
     }
 

@@ -1245,23 +1245,42 @@
         </div>
 
         <style>
-            /* Full width layout for settings */
-            #ratingsConfigPage .content-primary {
-                max-width: 100%;
-                padding-right: 2em;
+            /* Full width layout for settings - override Jellyfin defaults */
+            #ratingsConfigPage .content-primary,
+            #ratingsConfigPage [data-role="content"],
+            .pluginConfigurationPage .content-primary {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding-right: 3em;
             }
 
-            /* Two-column layout for wide screens */
-            @media (min-width: 1200px) {
+            #ratingsConfigForm {
+                max-width: 100%;
+            }
+
+            /* Three-column layout for wide screens */
+            @media (min-width: 1600px) {
+                #ratingsConfigForm {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 16px;
+                    align-items: start;
+                }
+                #ratingsConfigForm > h2.sectionTitle,
+                #ratingsConfigForm > .button-submit-container {
+                    grid-column: 1 / -1;
+                }
+            }
+
+            /* Two-column layout for medium screens */
+            @media (min-width: 1100px) and (max-width: 1599px) {
                 #ratingsConfigForm {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     gap: 16px;
                     align-items: start;
                 }
-                #ratingsConfigForm > h2.sectionTitle {
-                    grid-column: 1 / -1;
-                }
+                #ratingsConfigForm > h2.sectionTitle,
                 #ratingsConfigForm > .button-submit-container {
                     grid-column: 1 / -1;
                 }

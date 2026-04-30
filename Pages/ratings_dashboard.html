@@ -553,5 +553,152 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
         }
+
+        /* Clickable elements */
+        .clickable {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .clickable:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .top-item, .user-item {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-radius: 6px;
+            margin: -4px -8px;
+            padding: 12px 8px;
+        }
+
+        .top-item:hover, .user-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .activity-item[onclick] {
+            cursor: pointer;
+            transition: background 0.15s;
+            border-radius: 6px;
+            margin: 0 -8px;
+            padding: 10px 8px;
+        }
+
+        .activity-item[onclick]:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Rating Modal */
+        .rating-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .rating-modal {
+            background: #1a1a1a;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .rating-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rating-modal-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #ffd700;
+        }
+
+        .rating-modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .rating-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .rating-modal-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .rating-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 16px;
+        }
+
+        .rating-modal-item {
+            text-decoration: none;
+            color: inherit;
+            text-align: center;
+            transition: transform 0.15s;
+        }
+
+        .rating-modal-item:hover {
+            transform: scale(1.05);
+        }
+
+        .rating-modal-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .rating-modal-placeholder {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+        }
+
+        .rating-modal-title {
+            margin-top: 8px;
+            font-size: 0.8em;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .rating-modal-meta {
+            font-size: 0.7em;
+            color: rgba(255, 255, 255, 0.4);
+        }
     </style>
 </div>
