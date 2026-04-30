@@ -4266,6 +4266,136 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         #endregion
+
+        #region Dashboard Stats
+
+        /// <summary>
+        /// Get overall rating statistics for the dashboard.
+        /// </summary>
+        /// <returns>Overall statistics.</returns>
+        [HttpGet("Stats")]
+        [Authorize]
+        public ActionResult GetOverallStats()
+        {
+            try
+            {
+                var allRatings = _repository.GetAllItemRatingStats();
+                var totalRatings = allRatings.Values.Sum(r => r.RatingCount);
+                var totalUsers = _repository.GetAllUserIds().Count;
+                var totalReviews = _repository.GetReviewCount();
+
+                double avgRating = 0;
+                if (allRatings.Count > 0)
+                {
+                    avgRating = allRatings.Values.Average(r => r.AverageRating);
+                }
+
+                return Ok(new
+                {
+                    TotalRatings = totalRatings,
+                    TotalUsers = totalUsers,
+                    TotalReviews = totalReviews,
+                    AverageRating = Math.Round(avgRating, 1),
+                    TotalItems = allRatings.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting overall stats");
+                return Ok(new { TotalRatings = 0, TotalUsers = 0, TotalReviews = 0, AverageRating = 0.0, TotalItems = 0 });
+            }
+        }
+
+        /// <summary>
+        /// Get recent rating activity.
+        /// </summary>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Recent activity list.</returns>
+        [HttpGet("RecentActivity")]
+        [Authorize]
+        public ActionResult GetRecentActivity([FromQuery] int limit = 10)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 50);
+                var recentRatings = _repository.GetRecentRatings(limit);
+
+                var result = new List<object>();
+                foreach (var rating in recentRatings)
+                {
+                    var item = _libraryManager.GetItemById(rating.ItemId);
+                    var user = _userManager.GetUserById(rating.UserId);
+
+                    result.Add(new
+                    {
+                        ItemId = rating.ItemId.ToString("N"),
+                        ItemName = item?.Name ?? "Unknown",
+                        UserId = rating.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        Rating = rating.Rating,
+                        Timestamp = rating.UpdatedAt
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent activity");
+                return Ok(new List<object>());
+            }
+        }
+
+        /// <summary>
+        /// Get top rated items.
+        /// </summary>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Top rated items list.</returns>
+        [HttpGet("TopRated")]
+        [Authorize]
+        public ActionResult GetTopRatedItems([FromQuery] int limit = 10)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 50);
+                var allRatings = _repository.GetAllItemRatingStats();
+
+                var topItems = allRatings
+                    .Where(r => r.Value.RatingCount >= 1)
+                    .OrderByDescending(r => r.Value.AverageRating)
+                    .ThenByDescending(r => r.Value.RatingCount)
+                    .Take(limit)
+                    .ToList();
+
+                var result = new List<object>();
+                foreach (var item in topItems)
+                {
+                    var mediaItem = _libraryManager.GetItemById(item.Key);
+                    if (mediaItem == null) continue;
+
+                    var hasImage = mediaItem.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true;
+
+                    result.Add(new
+                    {
+                        Id = item.Key.ToString("N"),
+                        Name = mediaItem.Name,
+                        Year = mediaItem.ProductionYear,
+                        AverageRating = item.Value.AverageRating,
+                        TotalRatings = item.Value.RatingCount,
+                        ImageUrl = hasImage ? $"/Items/{item.Key}/Images/Primary" : null
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top rated items");
+                return Ok(new List<object>());
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>
