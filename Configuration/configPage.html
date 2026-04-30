@@ -1245,11 +1245,50 @@
         </div>
 
         <style>
-            /* Collapsible settings groups */
+            /* Full width layout for settings - override Jellyfin defaults */
+            #ratingsConfigPage .content-primary,
+            #ratingsConfigPage [data-role="content"],
+            .pluginConfigurationPage .content-primary {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding-right: 3em;
+            }
+
+            #ratingsConfigForm {
+                max-width: 100%;
+                column-count: 3;
+                column-gap: 16px;
+            }
+
+            #ratingsConfigForm > h2.sectionTitle,
+            #ratingsConfigForm > .button-submit-container {
+                column-span: all;
+                margin-bottom: 16px;
+            }
+
+            .settings-group {
+                break-inside: avoid;
+                margin-bottom: 16px;
+            }
+
+            /* Two columns for medium screens */
+            @media (max-width: 1400px) {
+                #ratingsConfigForm {
+                    column-count: 2;
+                }
+            }
+
+            /* Single column for small screens */
+            @media (max-width: 900px) {
+                #ratingsConfigForm {
+                    column-count: 1;
+                }
+            }
+
+            /* Collapsible settings groups - border and radius only, margin handled above */
             .settings-group {
                 border: 1px solid rgba(255,255,255,0.1);
                 border-radius: 8px;
-                margin-bottom: 12px;
             }
             .settings-group-header {
                 display: flex;

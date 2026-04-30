@@ -4266,6 +4266,367 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         #endregion
+
+        #region Dashboard Stats
+
+        /// <summary>
+        /// Get overall rating statistics for the dashboard.
+        /// </summary>
+        /// <returns>Overall statistics.</returns>
+        [HttpGet("Stats")]
+        [Authorize]
+        public ActionResult GetOverallStats()
+        {
+            try
+            {
+                var allRatings = _repository.GetAllItemRatingStats();
+                var totalRatings = allRatings.Values.Sum(r => r.RatingCount);
+                var totalUsers = _repository.GetAllUserIds().Count;
+                var totalReviews = _repository.GetReviewCount();
+
+                double avgRating = 0;
+                if (allRatings.Count > 0)
+                {
+                    avgRating = allRatings.Values.Average(r => r.AverageRating);
+                }
+
+                return Ok(new
+                {
+                    TotalRatings = totalRatings,
+                    TotalUsers = totalUsers,
+                    TotalReviews = totalReviews,
+                    AverageRating = Math.Round(avgRating, 1),
+                    TotalItems = allRatings.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting overall stats");
+                return Ok(new { TotalRatings = 0, TotalUsers = 0, TotalReviews = 0, AverageRating = 0.0, TotalItems = 0 });
+            }
+        }
+
+        /// <summary>
+        /// Get unified recent activity feed (ratings, reviews, requests, comments).
+        /// </summary>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Recent activity list.</returns>
+        [HttpGet("RecentActivity")]
+        [Authorize]
+        public ActionResult GetRecentActivity([FromQuery] int limit = 20)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 100);
+                var activities = new List<ActivityItem>();
+
+                // Get recent ratings (includes reviews)
+                var recentRatings = _repository.GetRecentRatings(limit);
+                foreach (var rating in recentRatings)
+                {
+                    var item = _libraryManager.GetItemById(rating.ItemId);
+                    var user = _userManager.GetUserById(rating.UserId);
+                    var hasReview = !string.IsNullOrWhiteSpace(rating.ReviewText);
+
+                    activities.Add(new ActivityItem
+                    {
+                        Type = hasReview ? "review" : "rating",
+                        UserId = rating.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        ItemId = rating.ItemId.ToString("N"),
+                        ItemName = item?.Name ?? "Unknown",
+                        Rating = rating.Rating,
+                        ReviewPreview = hasReview ? (rating.ReviewText!.Length > 80 ? rating.ReviewText.Substring(0, 80) + "..." : rating.ReviewText) : null,
+                        Timestamp = rating.UpdatedAt
+                    });
+                }
+
+                // Get recent media requests
+                var recentRequests = _repository.GetRecentMediaRequests(limit);
+                foreach (var request in recentRequests)
+                {
+                    var user = _userManager.GetUserById(request.UserId);
+
+                    activities.Add(new ActivityItem
+                    {
+                        Type = "request",
+                        UserId = request.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        ItemName = request.Title,
+                        RequestType = request.Type,
+                        RequestStatus = request.Status,
+                        Timestamp = request.CreatedAt
+                    });
+                }
+
+                // Get recent review comments
+                var recentComments = _repository.GetRecentReviewComments(limit);
+                foreach (var comment in recentComments)
+                {
+                    var commenter = _userManager.GetUserById(comment.CommenterId);
+                    var reviewer = _userManager.GetUserById(comment.ReviewerUserId);
+                    var item = _libraryManager.GetItemById(comment.ItemId);
+
+                    activities.Add(new ActivityItem
+                    {
+                        Type = "comment",
+                        UserId = comment.CommenterId.ToString("N"),
+                        UserName = commenter?.Username ?? "Unknown",
+                        ItemId = comment.ItemId.ToString("N"),
+                        ItemName = item?.Name ?? "Unknown",
+                        TargetUserName = reviewer?.Username ?? "Unknown",
+                        CommentPreview = comment.Text.Length > 80 ? comment.Text.Substring(0, 80) + "..." : comment.Text,
+                        Timestamp = comment.CreatedAt
+                    });
+                }
+
+                // Sort all activities by timestamp and take limit
+                var result = activities
+                    .OrderByDescending(a => a.Timestamp)
+                    .Take(limit)
+                    .ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent activity");
+                return Ok(new List<object>());
+            }
+        }
+
+        private class ActivityItem
+        {
+            public string Type { get; set; } = string.Empty;
+            public string UserId { get; set; } = string.Empty;
+            public string UserName { get; set; } = string.Empty;
+            public string? ItemId { get; set; }
+            public string ItemName { get; set; } = string.Empty;
+            public int? Rating { get; set; }
+            public string? ReviewPreview { get; set; }
+            public string? RequestType { get; set; }
+            public string? RequestStatus { get; set; }
+            public string? TargetUserName { get; set; }
+            public string? CommentPreview { get; set; }
+            public DateTime Timestamp { get; set; }
+        }
+
+        /// <summary>
+        /// Get top rated items.
+        /// </summary>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Top rated items list.</returns>
+        [HttpGet("TopRated")]
+        [Authorize]
+        public ActionResult GetTopRatedItems([FromQuery] int limit = 10)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 50);
+                var allRatings = _repository.GetAllItemRatingStats();
+
+                var topItems = allRatings
+                    .Where(r => r.Value.RatingCount >= 1)
+                    .OrderByDescending(r => r.Value.AverageRating)
+                    .ThenByDescending(r => r.Value.RatingCount)
+                    .Take(limit)
+                    .ToList();
+
+                var result = new List<object>();
+                foreach (var item in topItems)
+                {
+                    var mediaItem = _libraryManager.GetItemById(item.Key);
+                    if (mediaItem == null) continue;
+
+                    var hasImage = mediaItem.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true;
+
+                    result.Add(new
+                    {
+                        Id = item.Key.ToString("N"),
+                        Name = mediaItem.Name,
+                        Year = mediaItem.ProductionYear,
+                        AverageRating = item.Value.AverageRating,
+                        TotalRatings = item.Value.RatingCount,
+                        ImageUrl = hasImage ? $"/Items/{item.Key}/Images/Primary" : null
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top rated items");
+                return Ok(new List<object>());
+            }
+        }
+
+        /// <summary>
+        /// Get most active users by rating count.
+        /// </summary>
+        /// <param name="limit">Maximum number of users to return.</param>
+        /// <returns>Most active users list.</returns>
+        [HttpGet("MostActiveUsers")]
+        [Authorize]
+        public ActionResult GetMostActiveUsers([FromQuery] int limit = 5)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 20);
+                var recentRatings = _repository.GetRecentRatings(500);
+
+                var userStats = recentRatings
+                    .GroupBy(r => r.UserId)
+                    .Select(g => new
+                    {
+                        UserId = g.Key,
+                        RatingCount = g.Count(),
+                        ReviewCount = g.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)),
+                        AverageRating = g.Average(r => r.Rating),
+                        LastActive = g.Max(r => r.UpdatedAt)
+                    })
+                    .OrderByDescending(u => u.RatingCount)
+                    .Take(limit)
+                    .ToList();
+
+                var result = userStats.Select(u =>
+                {
+                    var user = _userManager.GetUserById(u.UserId);
+                    return new
+                    {
+                        UserId = u.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        RatingCount = u.RatingCount,
+                        ReviewCount = u.ReviewCount,
+                        AverageRating = Math.Round(u.AverageRating, 1),
+                        LastActive = u.LastActive
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting most active users");
+                return Ok(new List<object>());
+            }
+        }
+
+        /// <summary>
+        /// Get rating distribution (count of each rating value).
+        /// </summary>
+        /// <returns>Rating distribution data.</returns>
+        [HttpGet("RatingDistribution")]
+        [Authorize]
+        public ActionResult GetRatingDistribution()
+        {
+            try
+            {
+                var recentRatings = _repository.GetRecentRatings(1000);
+
+                var distribution = Enumerable.Range(1, 10)
+                    .Select(rating => new
+                    {
+                        Rating = rating,
+                        Count = recentRatings.Count(r => r.Rating == rating)
+                    })
+                    .ToList();
+
+                return Ok(distribution);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting rating distribution");
+                return Ok(Enumerable.Range(1, 10).Select(r => new { Rating = r, Count = 0 }));
+            }
+        }
+
+        /// <summary>
+        /// Get recent media requests for dashboard.
+        /// </summary>
+        /// <param name="limit">Maximum number of requests to return.</param>
+        /// <returns>Recent requests list.</returns>
+        [HttpGet("RecentRequests")]
+        [Authorize]
+        public ActionResult GetRecentRequests([FromQuery] int limit = 5)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 20);
+                var requests = _repository.GetRecentMediaRequests(limit);
+
+                var result = requests.Select(r =>
+                {
+                    var user = _userManager.GetUserById(r.UserId);
+                    return new
+                    {
+                        Id = r.Id.ToString("N"),
+                        Title = r.Title,
+                        Type = r.Type,
+                        Status = r.Status,
+                        UserName = user?.Username ?? "Unknown",
+                        CreatedAt = r.CreatedAt
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent requests");
+                return Ok(new List<object>());
+            }
+        }
+
+        /// <summary>
+        /// Get items filtered by specific rating value.
+        /// </summary>
+        /// <param name="rating">Rating value to filter by (1-10).</param>
+        /// <param name="limit">Maximum number of items to return.</param>
+        /// <returns>Items with the specified rating.</returns>
+        [HttpGet("ItemsByRating")]
+        [Authorize]
+        public ActionResult GetItemsByRating([FromQuery] int rating, [FromQuery] int limit = 50)
+        {
+            try
+            {
+                rating = Math.Clamp(rating, 1, 10);
+                limit = Math.Clamp(limit, 1, 100);
+
+                var recentRatings = _repository.GetRecentRatings(1000);
+                var itemsWithRating = recentRatings
+                    .Where(r => r.Rating == rating)
+                    .GroupBy(r => r.ItemId)
+                    .Select(g => g.First())
+                    .Take(limit)
+                    .ToList();
+
+                var result = new List<object>();
+                foreach (var r in itemsWithRating)
+                {
+                    var mediaItem = _libraryManager.GetItemById(r.ItemId);
+                    if (mediaItem == null) continue;
+
+                    var hasImage = mediaItem.ImageInfos?.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary) == true;
+
+                    result.Add(new
+                    {
+                        Id = r.ItemId.ToString("N"),
+                        Name = mediaItem.Name,
+                        Year = mediaItem.ProductionYear,
+                        ImageUrl = hasImage ? $"/Items/{r.ItemId}/Images/Primary" : null
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting items by rating");
+                return Ok(new List<object>());
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>

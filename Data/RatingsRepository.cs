@@ -3558,5 +3558,81 @@ namespace Jellyfin.Plugin.Ratings.Data
                 return _chatModerators.TryGetValue(moderatorId, out var moderator) ? moderator : null;
             }
         }
+
+        /// <summary>
+        /// Gets recent ratings sorted by timestamp.
+        /// </summary>
+        /// <param name="limit">Maximum number of ratings to return.</param>
+        /// <returns>List of recent ratings.</returns>
+        public List<UserRating> GetRecentRatings(int limit = 10)
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .OrderByDescending(r => r.UpdatedAt)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets all unique user IDs who have rated items.
+        /// </summary>
+        /// <returns>Set of user IDs.</returns>
+        public HashSet<Guid> GetAllUserIds()
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .Select(r => r.UserId)
+                    .Distinct()
+                    .ToHashSet();
+            }
+        }
+
+        /// <summary>
+        /// Gets the count of ratings that have review text.
+        /// </summary>
+        /// <returns>Number of reviews.</returns>
+        public int GetReviewCount()
+        {
+            lock (_lock)
+            {
+                return _ratings.Values
+                    .Count(r => !string.IsNullOrWhiteSpace(r.ReviewText));
+            }
+        }
+
+        /// <summary>
+        /// Gets recent media requests ordered by creation date.
+        /// </summary>
+        /// <param name="limit">Maximum number of requests to return.</param>
+        /// <returns>List of recent media requests.</returns>
+        public List<MediaRequest> GetRecentMediaRequests(int limit = 10)
+        {
+            lock (_lock)
+            {
+                return _mediaRequests.Values
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets recent review comments ordered by creation date.
+        /// </summary>
+        /// <param name="limit">Maximum number of comments to return.</param>
+        /// <returns>List of recent review comments.</returns>
+        public List<ReviewComment> GetRecentReviewComments(int limit = 10)
+        {
+            lock (_lock)
+            {
+                return _reviewComments.Values
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
     }
 }

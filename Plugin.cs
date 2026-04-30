@@ -40,6 +40,19 @@ namespace Jellyfin.Plugin.Ratings
         {
             return new[]
             {
+                // Dashboard page - appears in sidebar
+                new PluginPageInfo
+                {
+                    Name = "ratings_dashboard",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.ratings_dashboard.html", GetType().Namespace),
+                    EnableInMainMenu = true
+                },
+                new PluginPageInfo
+                {
+                    Name = "ratings_dashboard.js",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.ratings_dashboard.js", GetType().Namespace)
+                },
+                // Settings page
                 new PluginPageInfo
                 {
                     Name = this.Name,

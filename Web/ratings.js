@@ -15902,6 +15902,19 @@
                             return;
                         }
 
+                        // Hide Jellyfin's native search button (only when Ratings search is enabled)
+                        const hideJellyfinSearch = () => {
+                            const searchBtn = document.querySelector('.headerSearchButton');
+                            if (searchBtn) {
+                                searchBtn.style.display = 'none';
+                            }
+                        };
+                        hideJellyfinSearch();
+
+                        // Keep it hidden during SPA navigation
+                        const searchObserver = new MutationObserver(hideJellyfinSearch);
+                        searchObserver.observe(document.body, { childList: true, subtree: true });
+
                         // Create search container
                         const searchContainer = document.createElement('div');
                         searchContainer.id = 'headerSearchField';
@@ -15984,12 +15997,14 @@
                             }, 300); // Debounce for performance
                         });
 
-                        // Handle enter key - select first result
+                        // Handle enter key - trigger native Jellyfin search
                         searchInput.addEventListener('keypress', function(e) {
                             if (e.key === 'Enter') {
-                                const firstItem = searchDropdown.querySelector('.dropdown-item');
-                                if (firstItem) {
-                                    firstItem.click();
+                                const query = searchInput.value.trim();
+                                if (query) {
+                                    self.hideSearchDropdown();
+                                    // Navigate to Jellyfin's native search results page
+                                    window.location.href = '#!/search.html?query=' + encodeURIComponent(query);
                                 }
                             }
                         });
@@ -17782,12 +17797,6 @@
                         // Create modal/dialog elements first
                         self.initMediaManagementButton();
 
-                        // Find and hide the original search button
-                        const searchBtn = document.querySelector('.headerSearchButton');
-                        if (searchBtn) {
-                            searchBtn.style.display = 'none';
-                        }
-
                         // Create the media management button
                         const btn = document.createElement('button');
                         btn.id = 'mediaManagementBtn';
@@ -17821,15 +17830,6 @@
 
                         // Add tooltip
                         self.addTooltipToButton(btn, 'mediaManagement');
-
-                        // Observe for search button appearing later (SPA navigation)
-                        const observer = new MutationObserver(() => {
-                            const searchButton = document.querySelector('.headerSearchButton');
-                            if (searchButton && searchButton.style.display !== 'none') {
-                                searchButton.style.display = 'none';
-                            }
-                        });
-                        observer.observe(document.body, { childList: true, subtree: true });
 
                         // Hide during video playback and on login page
                         setInterval(() => {
@@ -24573,6 +24573,11 @@
                     totalCount: data.totalCount
                 };
 
+                // Hide Jellyfin's native pagination when custom sorting is active
+                document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                    el.style.display = 'none';
+                });
+
                 // Rebuild cards with sorted items
                 self.rebuildLibraryCards(itemsContainer, data.items.map(item => ({
                     Id: item.Id,
@@ -24891,6 +24896,11 @@
             // Remove custom pagination
             const existingPagination = document.getElementById('ratingsSortPagination');
             if (existingPagination) existingPagination.remove();
+
+            // Restore Jellyfin's native pagination
+            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                el.style.display = '';
+            });
 
             // Reset sort state
             self.librarySortState.active = false;
