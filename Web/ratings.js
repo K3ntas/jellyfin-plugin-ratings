@@ -24573,6 +24573,11 @@
                     totalCount: data.totalCount
                 };
 
+                // Hide Jellyfin's native pagination when custom sorting is active
+                document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                    el.style.display = 'none';
+                });
+
                 // Rebuild cards with sorted items
                 self.rebuildLibraryCards(itemsContainer, data.items.map(item => ({
                     Id: item.Id,
@@ -24891,6 +24896,11 @@
             // Remove custom pagination
             const existingPagination = document.getElementById('ratingsSortPagination');
             if (existingPagination) existingPagination.remove();
+
+            // Restore Jellyfin's native pagination
+            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                el.style.display = '';
+            });
 
             // Reset sort state
             self.librarySortState.active = false;
