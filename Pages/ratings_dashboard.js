@@ -195,16 +195,16 @@ export default function (view, params) {
             let html = '';
             data.forEach(user => {
                 const initial = user.UserName.charAt(0).toUpperCase();
-                // Link to user profile page
+                // Link to user profile page using RatingsPlugin
                 html += `
-                    <a href="#!/useredit.html?userId=${user.UserId}" class="user-item">
+                    <div class="user-item" onclick="RatingsPlugin.navigateToProfile('${user.UserId}')" style="cursor:pointer;">
                         <div class="user-avatar">${initial}</div>
                         <div class="user-info">
                             <div class="user-name">${escapeHtml(user.UserName)}</div>
                             <div class="user-stats">${user.ReviewCount} review${user.ReviewCount !== 1 ? 's' : ''} &bull; avg ${user.AverageRating}</div>
                         </div>
                         <div class="user-count">${user.RatingCount}</div>
-                    </a>
+                    </div>
                 `;
             });
             container.innerHTML = html;
