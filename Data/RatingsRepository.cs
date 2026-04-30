@@ -3602,5 +3602,37 @@ namespace Jellyfin.Plugin.Ratings.Data
                     .Count(r => !string.IsNullOrWhiteSpace(r.ReviewText));
             }
         }
+
+        /// <summary>
+        /// Gets recent media requests ordered by creation date.
+        /// </summary>
+        /// <param name="limit">Maximum number of requests to return.</param>
+        /// <returns>List of recent media requests.</returns>
+        public List<MediaRequest> GetRecentMediaRequests(int limit = 10)
+        {
+            lock (_lock)
+            {
+                return _mediaRequests.Values
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets recent review comments ordered by creation date.
+        /// </summary>
+        /// <param name="limit">Maximum number of comments to return.</param>
+        /// <returns>List of recent review comments.</returns>
+        public List<ReviewComment> GetRecentReviewComments(int limit = 10)
+        {
+            lock (_lock)
+            {
+                return _reviewComments.Values
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Take(limit)
+                    .ToList();
+            }
+        }
     }
 }

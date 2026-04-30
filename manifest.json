@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.298.0",
+        "changelog": "Dashboard: Unified activity feed showing ratings, reviews, requests, and comments with modern UI styling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.298.0/Jellyfin.Plugin.Ratings_2.0.298.0.zip",
+        "checksum": "c124ddcd891676efd400a18bec5e8af3",
+        "timestamp": "2026-04-30T16:00:00Z"
+      },
+      {
         "version": "2.0.297.0",
         "changelog": "New: Dashboard page in Jellyfin sidebar with rating statistics, recent activity, and top rated items",
         "targetAbi": "10.11.0.0",

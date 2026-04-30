@@ -4307,35 +4307,84 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Get recent rating activity.
+        /// Get unified recent activity feed (ratings, reviews, requests, comments).
         /// </summary>
         /// <param name="limit">Maximum number of items to return.</param>
         /// <returns>Recent activity list.</returns>
         [HttpGet("RecentActivity")]
         [Authorize]
-        public ActionResult GetRecentActivity([FromQuery] int limit = 10)
+        public ActionResult GetRecentActivity([FromQuery] int limit = 20)
         {
             try
             {
-                limit = Math.Clamp(limit, 1, 50);
-                var recentRatings = _repository.GetRecentRatings(limit);
+                limit = Math.Clamp(limit, 1, 100);
+                var activities = new List<ActivityItem>();
 
-                var result = new List<object>();
+                // Get recent ratings (includes reviews)
+                var recentRatings = _repository.GetRecentRatings(limit);
                 foreach (var rating in recentRatings)
                 {
                     var item = _libraryManager.GetItemById(rating.ItemId);
                     var user = _userManager.GetUserById(rating.UserId);
+                    var hasReview = !string.IsNullOrWhiteSpace(rating.ReviewText);
 
-                    result.Add(new
+                    activities.Add(new ActivityItem
                     {
-                        ItemId = rating.ItemId.ToString("N"),
-                        ItemName = item?.Name ?? "Unknown",
+                        Type = hasReview ? "review" : "rating",
                         UserId = rating.UserId.ToString("N"),
                         UserName = user?.Username ?? "Unknown",
+                        ItemId = rating.ItemId.ToString("N"),
+                        ItemName = item?.Name ?? "Unknown",
                         Rating = rating.Rating,
+                        ReviewPreview = hasReview ? (rating.ReviewText!.Length > 80 ? rating.ReviewText.Substring(0, 80) + "..." : rating.ReviewText) : null,
                         Timestamp = rating.UpdatedAt
                     });
                 }
+
+                // Get recent media requests
+                var recentRequests = _repository.GetRecentMediaRequests(limit);
+                foreach (var request in recentRequests)
+                {
+                    var user = _userManager.GetUserById(request.UserId);
+
+                    activities.Add(new ActivityItem
+                    {
+                        Type = "request",
+                        UserId = request.UserId.ToString("N"),
+                        UserName = user?.Username ?? "Unknown",
+                        ItemName = request.Title,
+                        RequestType = request.Type,
+                        RequestStatus = request.Status,
+                        Timestamp = request.CreatedAt
+                    });
+                }
+
+                // Get recent review comments
+                var recentComments = _repository.GetRecentReviewComments(limit);
+                foreach (var comment in recentComments)
+                {
+                    var commenter = _userManager.GetUserById(comment.CommenterId);
+                    var reviewer = _userManager.GetUserById(comment.ReviewerUserId);
+                    var item = _libraryManager.GetItemById(comment.ItemId);
+
+                    activities.Add(new ActivityItem
+                    {
+                        Type = "comment",
+                        UserId = comment.CommenterId.ToString("N"),
+                        UserName = commenter?.Username ?? "Unknown",
+                        ItemId = comment.ItemId.ToString("N"),
+                        ItemName = item?.Name ?? "Unknown",
+                        TargetUserName = reviewer?.Username ?? "Unknown",
+                        CommentPreview = comment.Text.Length > 80 ? comment.Text.Substring(0, 80) + "..." : comment.Text,
+                        Timestamp = comment.CreatedAt
+                    });
+                }
+
+                // Sort all activities by timestamp and take limit
+                var result = activities
+                    .OrderByDescending(a => a.Timestamp)
+                    .Take(limit)
+                    .ToList();
 
                 return Ok(result);
             }
@@ -4344,6 +4393,22 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error getting recent activity");
                 return Ok(new List<object>());
             }
+        }
+
+        private class ActivityItem
+        {
+            public string Type { get; set; } = string.Empty;
+            public string UserId { get; set; } = string.Empty;
+            public string UserName { get; set; } = string.Empty;
+            public string? ItemId { get; set; }
+            public string ItemName { get; set; } = string.Empty;
+            public int? Rating { get; set; }
+            public string? ReviewPreview { get; set; }
+            public string? RequestType { get; set; }
+            public string? RequestStatus { get; set; }
+            public string? TargetUserName { get; set; }
+            public string? CommentPreview { get; set; }
+            public DateTime Timestamp { get; set; }
         }
 
         /// <summary>

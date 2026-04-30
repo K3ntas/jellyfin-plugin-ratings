@@ -20,7 +20,7 @@ export default function (view, params) {
         // Set up tabs
         LibraryMenu.setTabs('ratings_dashboard', 0, getTabs);
 
-        // Load statistics
+        // Load all data
         loadStats();
         loadRecentActivity();
         loadTopRated();
@@ -47,7 +47,7 @@ export default function (view, params) {
     }
 
     function loadRecentActivity() {
-        const url = window.ApiClient.getUrl('Ratings/RecentActivity?limit=10');
+        const url = window.ApiClient.getUrl('Ratings/RecentActivity?limit=15');
         fetch(url, {
             method: 'GET',
             headers: {
@@ -58,31 +58,96 @@ export default function (view, params) {
         .then(data => {
             const container = document.getElementById('recent-activity');
             if (!data || data.length === 0) {
-                container.innerHTML = '<div style="color: #999; text-align: center;">No recent activity</div>';
+                container.innerHTML = '<div class="activity-empty">No recent activity</div>';
                 return;
             }
 
             let html = '';
             data.forEach(item => {
-                html += `
-                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 500;">${escapeHtml(item.UserName)} rated ${escapeHtml(item.ItemName)}</div>
-                            <div style="color: #999; font-size: 12px;">${formatDate(item.Timestamp)}</div>
-                        </div>
-                        <div style="color: #ffd700; font-size: 18px; font-weight: bold;">${item.Rating}/10</div>
-                    </div>
-                `;
+                html += renderActivityItem(item);
             });
             container.innerHTML = html;
         })
         .catch(err => {
-            document.getElementById('recent-activity').innerHTML = '<div style="color: #999; text-align: center;">Failed to load</div>';
+            document.getElementById('recent-activity').innerHTML = '<div class="activity-empty">Failed to load</div>';
         });
     }
 
+    function renderActivityItem(item) {
+        const icon = getActivityIcon(item.Type);
+        const color = getActivityColor(item.Type);
+        const description = getActivityDescription(item);
+        const detail = getActivityDetail(item);
+
+        return `
+            <div class="activity-item">
+                <div class="activity-icon" style="background: ${color}20; color: ${color};">${icon}</div>
+                <div class="activity-content">
+                    <div class="activity-main">
+                        <span class="activity-user">${escapeHtml(item.UserName)}</span>
+                        <span class="activity-action">${description}</span>
+                    </div>
+                    ${detail ? `<div class="activity-detail">${detail}</div>` : ''}
+                    <div class="activity-time">${formatDate(item.Timestamp)}</div>
+                </div>
+                ${item.Rating ? `<div class="activity-rating">${item.Rating}<span>/10</span></div>` : ''}
+            </div>
+        `;
+    }
+
+    function getActivityIcon(type) {
+        switch (type) {
+            case 'rating': return '&#9733;'; // star
+            case 'review': return '&#9997;'; // pencil
+            case 'request': return '&#10010;'; // plus
+            case 'comment': return '&#128172;'; // speech bubble
+            default: return '&#8226;'; // bullet
+        }
+    }
+
+    function getActivityColor(type) {
+        switch (type) {
+            case 'rating': return '#ffd700';
+            case 'review': return '#00a4dc';
+            case 'request': return '#4caf50';
+            case 'comment': return '#9c27b0';
+            default: return '#888';
+        }
+    }
+
+    function getActivityDescription(item) {
+        switch (item.Type) {
+            case 'rating':
+                return `rated <strong>${escapeHtml(item.ItemName)}</strong>`;
+            case 'review':
+                return `reviewed <strong>${escapeHtml(item.ItemName)}</strong>`;
+            case 'request':
+                const typeLabel = item.RequestType === 'movie' ? 'movie' : item.RequestType === 'tv' ? 'TV show' : 'media';
+                return `requested ${typeLabel} <strong>${escapeHtml(item.ItemName)}</strong>`;
+            case 'comment':
+                return `commented on <strong>${escapeHtml(item.TargetUserName)}</strong>'s review of <strong>${escapeHtml(item.ItemName)}</strong>`;
+            default:
+                return item.ItemName;
+        }
+    }
+
+    function getActivityDetail(item) {
+        if (item.Type === 'review' && item.ReviewPreview) {
+            return `<span class="preview-text">"${escapeHtml(item.ReviewPreview)}"</span>`;
+        }
+        if (item.Type === 'comment' && item.CommentPreview) {
+            return `<span class="preview-text">"${escapeHtml(item.CommentPreview)}"</span>`;
+        }
+        if (item.Type === 'request' && item.RequestStatus) {
+            const statusClass = item.RequestStatus === 'completed' ? 'status-completed' :
+                               item.RequestStatus === 'pending' ? 'status-pending' : 'status-default';
+            return `<span class="request-status ${statusClass}">${item.RequestStatus}</span>`;
+        }
+        return null;
+    }
+
     function loadTopRated() {
-        const url = window.ApiClient.getUrl('Ratings/TopRated?limit=5');
+        const url = window.ApiClient.getUrl('Ratings/TopRated?limit=6');
         fetch(url, {
             method: 'GET',
             headers: {
@@ -93,24 +158,30 @@ export default function (view, params) {
         .then(data => {
             const container = document.getElementById('top-rated-items');
             if (!data || data.length === 0) {
-                container.innerHTML = '<div style="color: #999;">No rated items yet</div>';
+                container.innerHTML = '<div class="activity-empty">No rated items yet</div>';
                 return;
             }
 
             let html = '';
-            data.forEach(item => {
+            data.forEach((item, index) => {
                 const imageUrl = item.ImageUrl
-                    ? window.ApiClient.getUrl(item.ImageUrl + '?fillHeight=150&fillWidth=100&quality=96')
+                    ? window.ApiClient.getUrl(item.ImageUrl + '?fillHeight=180&fillWidth=120&quality=96')
                     : '';
                 html += `
-                    <a href="#!/details?id=${item.Id}" style="text-decoration: none; color: inherit;">
-                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; width: 120px; text-align: center;">
-                            ${imageUrl
-                                ? `<img src="${imageUrl}" style="width: 100px; height: 150px; object-fit: cover; border-radius: 4px;">`
-                                : '<div style="width: 100px; height: 150px; background: #333; border-radius: 4px;"></div>'
-                            }
-                            <div style="margin-top: 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.Name)}</div>
-                            <div style="color: #ffd700; font-weight: bold;">${item.AverageRating.toFixed(1)}/10</div>
+                    <a href="#!/details?id=${item.Id}" class="top-rated-card">
+                        <div class="top-rated-rank">#${index + 1}</div>
+                        ${imageUrl
+                            ? `<img src="${imageUrl}" class="top-rated-poster" alt="${escapeHtml(item.Name)}">`
+                            : '<div class="top-rated-poster top-rated-placeholder"></div>'
+                        }
+                        <div class="top-rated-info">
+                            <div class="top-rated-title">${escapeHtml(item.Name)}</div>
+                            ${item.Year ? `<div class="top-rated-year">${item.Year}</div>` : ''}
+                            <div class="top-rated-rating">
+                                <span class="star">&#9733;</span>
+                                <span class="score">${item.AverageRating.toFixed(1)}</span>
+                                <span class="count">(${item.TotalRatings})</span>
+                            </div>
                         </div>
                     </a>
                 `;
@@ -118,7 +189,7 @@ export default function (view, params) {
             container.innerHTML = html;
         })
         .catch(err => {
-            document.getElementById('top-rated-items').innerHTML = '<div style="color: #999;">Failed to load</div>';
+            document.getElementById('top-rated-items').innerHTML = '<div class="activity-empty">Failed to load</div>';
         });
     }
 
