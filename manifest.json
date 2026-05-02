@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.304.0",
+        "changelog": "Fix: Moderator panel user colors now load correctly (userId format normalization)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.304.0/Jellyfin.Plugin.Ratings_2.0.304.0.zip",
+        "checksum": "9fdaf39363e299268acab4021800f675",
+        "timestamp": "2026-05-02T14:00:00Z"
+      },
+      {
         "version": "2.0.303.0",
         "changelog": "Fix: Moderator panel now correctly displays saved user style colors",
         "targetAbi": "10.11.0.0",
