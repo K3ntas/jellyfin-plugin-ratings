@@ -361,12 +361,16 @@ export default function (view, params) {
 
     // Global function to open requests page
     window.openRequestsPage = function(requestId) {
-        // Navigate to settings page where requests are managed
-        // Store the request ID to highlight it
+        // Open the request media modal
         if (requestId) {
             sessionStorage.setItem('highlightRequestId', requestId);
         }
-        location.href = '#!/configurationpage?name=Ratings';
+        if (window.RatingsPlugin && typeof window.RatingsPlugin.showRequestModal === 'function') {
+            window.RatingsPlugin.showRequestModal();
+        } else {
+            // Fallback to settings page if RatingsPlugin not available
+            location.href = '#!/configurationpage?name=Ratings';
+        }
     };
 
     function getAuthHeader() {

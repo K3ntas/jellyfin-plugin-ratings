@@ -15917,6 +15917,29 @@
         },
 
         /**
+         * Show the request media modal (can be called from dashboard)
+         */
+        showRequestModal: function () {
+            const modal = document.getElementById('requestMediaModal');
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                this.loadRequestInterface();
+            } else {
+                // Modal not created yet, initialize button first then show
+                this.initRequestButton();
+                setTimeout(() => {
+                    const m = document.getElementById('requestMediaModal');
+                    if (m) {
+                        m.classList.add('show');
+                        document.body.style.overflow = 'hidden';
+                        this.loadRequestInterface();
+                    }
+                }, 500);
+            }
+        },
+
+        /**
          * Check if currently on login page
          */
         isOnLoginPage: function () {
@@ -27597,10 +27620,33 @@
         },
 
         /**
-         * Load existing user style for editing
+         * Load existing user style for editing - fetch fresh from API
          */
         loadUserStyleForEdit: function (userId) {
             const self = this;
+            const baseUrl = ApiClient.serverAddress();
+
+            // Fetch fresh styles from API to ensure we have latest data
+            fetch(baseUrl + '/Ratings/Chat/Users/Styles', {
+                method: 'GET',
+                credentials: 'include',
+                headers: self.getChatAuthHeaders()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (styles) {
+                self.chatUserStyles = styles || {};
+                self.applyUserStyleToForm(userId);
+            })
+            .catch(function () {
+                // Fallback to cached data
+                self.applyUserStyleToForm(userId);
+            });
+        },
+
+        /**
+         * Apply user style to the edit form
+         */
+        applyUserStyleToForm: function (userId) {
             const style = this.chatUserStyles && this.chatUserStyles[userId];
 
             // Reset color inputs
