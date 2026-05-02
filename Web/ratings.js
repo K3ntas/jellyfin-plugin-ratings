@@ -4238,12 +4238,20 @@
                         el.removeAttribute(attr.name);
                     }
                 });
-                // Remove javascript: and data: URLs from href/src/action
+                // Only allow safe URL schemes (whitelist approach)
                 ['href', 'src', 'action'].forEach(function(attr) {
                     var value = el.getAttribute(attr);
                     if (value) {
                         var lower = value.toLowerCase().trim();
-                        if (lower.startsWith('javascript:') || lower.startsWith('data:')) {
+                        // Allow only safe schemes - whitelist approach
+                        var isSafe = lower.startsWith('http://') ||
+                                     lower.startsWith('https://') ||
+                                     lower.startsWith('mailto:') ||
+                                     lower.startsWith('tel:') ||
+                                     lower.startsWith('/') ||
+                                     lower.startsWith('#') ||
+                                     lower.startsWith('./');
+                        if (!isSafe) {
                             el.removeAttribute(attr);
                         }
                     }
@@ -29170,23 +29178,26 @@
                 existing.remove();
             }
 
-            // Build changes list
+            // Build changes list (escape all user-controlled values)
             let changesHtml = '';
             if (nicknameColor) {
+                const safeNickColor = self.escapeHtml(nicknameColor);
                 changesHtml += '<div class="chat-modal-change-item">' +
                     '<span class="chat-modal-change-label">Nickname color:</span>' +
-                    '<span class="chat-modal-change-value" style="color:' + nicknameColor + ';">' + nicknameColor + '</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + safeNickColor + ';">' + safeNickColor + '</span>' +
                 '</div>';
             }
             if (messageColor) {
+                const safeMsgColor = self.escapeHtml(messageColor);
                 changesHtml += '<div class="chat-modal-change-item">' +
                     '<span class="chat-modal-change-label">Message color:</span>' +
-                    '<span class="chat-modal-change-value" style="color:' + messageColor + ';">' + messageColor + '</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + safeMsgColor + ';">' + safeMsgColor + '</span>' +
                 '</div>';
             }
             if (textStyle) {
-                const styleDisplay = textStyle === 'bold' ? 'Bold' : textStyle === 'italic' ? 'Italic' : textStyle;
-                const styleCSS = textStyle === 'bold' ? 'font-weight:bold;' : textStyle === 'italic' ? 'font-style:italic;' : '';
+                const safeStyle = self.escapeHtml(textStyle);
+                const styleDisplay = safeStyle === 'bold' ? 'Bold' : safeStyle === 'italic' ? 'Italic' : safeStyle;
+                const styleCSS = safeStyle === 'bold' ? 'font-weight:bold;' : safeStyle === 'italic' ? 'font-style:italic;' : '';
                 changesHtml += '<div class="chat-modal-change-item">' +
                     '<span class="chat-modal-change-label">Text style:</span>' +
                     '<span class="chat-modal-change-value" style="' + styleCSS + '">' + styleDisplay + '</span>' +

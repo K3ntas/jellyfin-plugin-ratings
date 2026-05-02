@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.351.0",
+        "changelog": "Security: Fix remaining CodeQL vulnerabilities (URL whitelist, XSS)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.351.0/jellyfin-plugin-ratings_1.0.351.0.zip",
+        "checksum": "c4043a895d735131d27c4ee3d9604fe4",
+        "timestamp": "2026-05-02T16:00:00Z"
+      },
+      {
         "version": "1.0.350.0",
         "changelog": "Fix: Moderator panel user colors now load correctly after refresh",
         "targetAbi": "10.11.0.0",
