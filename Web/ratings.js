@@ -4238,14 +4238,20 @@
                         el.removeAttribute(attr.name);
                     }
                 });
-                // Remove dangerous URL schemes from href/src/action
-                ['href', 'src', 'action', 'xlink:href', 'formaction'].forEach(function(attr) {
+                // Only allow safe URL schemes (whitelist approach)
+                ['href', 'src', 'action'].forEach(function(attr) {
                     var value = el.getAttribute(attr);
                     if (value) {
-                        // Normalize: remove whitespace/control chars, lowercase
-                        var normalized = value.replace(/[\s\x00-\x1f]/g, '').toLowerCase();
-                        // Check for dangerous schemes (javascript, data, vbscript, etc.)
-                        if (/^(javascript|data|vbscript|file|blob):/i.test(normalized)) {
+                        var lower = value.toLowerCase().trim();
+                        // Allow only safe schemes - whitelist approach
+                        var isSafe = lower.startsWith('http://') ||
+                                     lower.startsWith('https://') ||
+                                     lower.startsWith('mailto:') ||
+                                     lower.startsWith('tel:') ||
+                                     lower.startsWith('/') ||
+                                     lower.startsWith('#') ||
+                                     lower.startsWith('./');
+                        if (!isSafe) {
                             el.removeAttribute(attr);
                         }
                     }
@@ -27666,38 +27672,34 @@
             }
 
             // Reset color inputs
-            const nicknameColorInput = document.getElementById('chatModNicknameColor');
+            const nicknameColor = document.getElementById('chatModNicknameColor');
             const nicknameHex = document.getElementById('chatModNicknameHex');
-            const messageColorInput = document.getElementById('chatModMessageColor');
+            const messageColor = document.getElementById('chatModMessageColor');
             const messageHex = document.getElementById('chatModMessageHex');
 
-            // API returns PascalCase (NicknameColor), handle both cases
-            const nickColor = style ? (style.NicknameColor || style.nicknameColor) : null;
-            const msgColor = style ? (style.MessageColor || style.messageColor) : null;
-            const txtStyle = style ? (style.TextStyle || style.textStyle || '') : '';
-
-            if (nickColor) {
-                if (nicknameColorInput) nicknameColorInput.value = nickColor;
-                if (nicknameHex) nicknameHex.value = nickColor;
+            if (style && style.nicknameColor) {
+                if (nicknameColor) nicknameColor.value = style.nicknameColor;
+                if (nicknameHex) nicknameHex.value = style.nicknameColor;
             } else {
-                if (nicknameColorInput) nicknameColorInput.value = '#ffffff';
+                if (nicknameColor) nicknameColor.value = '#ffffff';
                 if (nicknameHex) nicknameHex.value = '';
             }
 
-            if (msgColor) {
-                if (messageColorInput) messageColorInput.value = msgColor;
-                if (messageHex) messageHex.value = msgColor;
+            if (style && style.messageColor) {
+                if (messageColor) messageColor.value = style.messageColor;
+                if (messageHex) messageHex.value = style.messageColor;
             } else {
-                if (messageColorInput) messageColorInput.value = '#cccccc';
+                if (messageColor) messageColor.value = '#cccccc';
                 if (messageHex) messageHex.value = '';
             }
 
             // Reset text style buttons
+            const textStyle = style ? (style.textStyle || '') : '';
             document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
-                btn.classList.toggle('selected', btn.getAttribute('data-style') === txtStyle);
+                btn.classList.toggle('selected', btn.getAttribute('data-style') === textStyle);
             });
 
-            this.modSelectedTextStyle = txtStyle;
+            this.modSelectedTextStyle = textStyle;
             this.updateColorPreview();
         },
 
@@ -29170,122 +29172,64 @@
         showStyleSuccessModal: function (userName, nicknameColor, messageColor, textStyle) {
             const self = this;
 
-            // Sanitize color values (should be hex like #ffffff)
-            const safeNicknameColor = nicknameColor ? String(nicknameColor).replace(/[^#a-fA-F0-9]/g, '') : '';
-            const safeMessageColor = messageColor ? String(messageColor).replace(/[^#a-fA-F0-9]/g, '') : '';
-            const safeTextStyle = ['bold', 'italic', 'both', ''].indexOf(textStyle) !== -1 ? textStyle : '';
-
             // Remove existing modal if any
             const existing = document.querySelector('.chat-penalty-modal-overlay');
             if (existing) {
                 existing.remove();
             }
 
-            // Build changes list using DOM methods
-            const changesDiv = document.createElement('div');
-            changesDiv.className = 'chat-modal-changes';
-
-            if (safeNicknameColor) {
-                const item = document.createElement('div');
-                item.className = 'chat-modal-change-item';
-                const label = document.createElement('span');
-                label.className = 'chat-modal-change-label';
-                label.textContent = 'Nickname color:';
-                const value = document.createElement('span');
-                value.className = 'chat-modal-change-value';
-                value.style.color = safeNicknameColor;
-                value.textContent = safeNicknameColor;
-                item.appendChild(label);
-                item.appendChild(value);
-                changesDiv.appendChild(item);
+            // Build changes list (escape all user-controlled values)
+            let changesHtml = '';
+            if (nicknameColor) {
+                const safeNickColor = self.escapeHtml(nicknameColor);
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Nickname color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + safeNickColor + ';">' + safeNickColor + '</span>' +
+                '</div>';
             }
-            if (safeMessageColor) {
-                const item = document.createElement('div');
-                item.className = 'chat-modal-change-item';
-                const label = document.createElement('span');
-                label.className = 'chat-modal-change-label';
-                label.textContent = 'Message color:';
-                const value = document.createElement('span');
-                value.className = 'chat-modal-change-value';
-                value.style.color = safeMessageColor;
-                value.textContent = safeMessageColor;
-                item.appendChild(label);
-                item.appendChild(value);
-                changesDiv.appendChild(item);
+            if (messageColor) {
+                const safeMsgColor = self.escapeHtml(messageColor);
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Message color:</span>' +
+                    '<span class="chat-modal-change-value" style="color:' + safeMsgColor + ';">' + safeMsgColor + '</span>' +
+                '</div>';
             }
-            if (safeTextStyle) {
-                const styleDisplay = safeTextStyle === 'bold' ? 'Bold' : safeTextStyle === 'italic' ? 'Italic' : safeTextStyle;
-                const item = document.createElement('div');
-                item.className = 'chat-modal-change-item';
-                const label = document.createElement('span');
-                label.className = 'chat-modal-change-label';
-                label.textContent = 'Text style:';
-                const value = document.createElement('span');
-                value.className = 'chat-modal-change-value';
-                if (safeTextStyle === 'bold') value.style.fontWeight = 'bold';
-                if (safeTextStyle === 'italic') value.style.fontStyle = 'italic';
-                value.textContent = styleDisplay;
-                item.appendChild(label);
-                item.appendChild(value);
-                changesDiv.appendChild(item);
+            if (textStyle) {
+                const safeStyle = self.escapeHtml(textStyle);
+                const styleDisplay = safeStyle === 'bold' ? 'Bold' : safeStyle === 'italic' ? 'Italic' : safeStyle;
+                const styleCSS = safeStyle === 'bold' ? 'font-weight:bold;' : safeStyle === 'italic' ? 'font-style:italic;' : '';
+                changesHtml += '<div class="chat-modal-change-item">' +
+                    '<span class="chat-modal-change-label">Text style:</span>' +
+                    '<span class="chat-modal-change-value" style="' + styleCSS + '">' + styleDisplay + '</span>' +
+                '</div>';
             }
-            if (changesDiv.children.length === 0) {
-                const item = document.createElement('div');
-                item.className = 'chat-modal-change-item';
-                const label = document.createElement('span');
-                label.className = 'chat-modal-change-label';
-                label.textContent = 'Default style applied';
-                item.appendChild(label);
-                changesDiv.appendChild(item);
+            if (!changesHtml) {
+                changesHtml = '<div class="chat-modal-change-item"><span class="chat-modal-change-label">Default style applied</span></div>';
             }
 
-            // Create modal using DOM methods
+            // Create modal HTML
             const overlay = document.createElement('div');
             overlay.className = 'chat-penalty-modal-overlay';
-
-            const modal = document.createElement('div');
-            modal.className = 'chat-penalty-modal';
-
-            const header = document.createElement('div');
-            header.className = 'chat-penalty-modal-header';
-            const title = document.createElement('div');
-            title.className = 'chat-penalty-modal-title';
-            title.style.color = '#4caf50';
-            title.innerHTML = '<span class="chat-penalty-modal-title-icon">✓</span><span>Style Applied</span>';
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'chat-penalty-modal-close';
-            closeBtn.title = 'Close';
-            closeBtn.textContent = '×';
-            header.appendChild(title);
-            header.appendChild(closeBtn);
-
-            const body = document.createElement('div');
-            body.className = 'chat-penalty-modal-body';
-            const icon = document.createElement('div');
-            icon.className = 'chat-penalty-modal-icon';
-            icon.textContent = '🎨';
-            const message = document.createElement('div');
-            message.className = 'chat-penalty-modal-message';
-            message.textContent = 'Style updated for ';
-            const userSpan = document.createElement('span');
-            userSpan.className = 'chat-penalty-modal-user';
-            userSpan.textContent = userName || 'Unknown';
-            message.appendChild(userSpan);
-            body.appendChild(icon);
-            body.appendChild(message);
-            body.appendChild(changesDiv);
-
-            const footer = document.createElement('div');
-            footer.className = 'chat-penalty-modal-footer';
-            const okBtn = document.createElement('button');
-            okBtn.className = 'chat-penalty-modal-ok';
-            okBtn.textContent = 'OK';
-            footer.appendChild(okBtn);
-
-            modal.appendChild(header);
-            modal.appendChild(body);
-            modal.appendChild(footer);
-            overlay.appendChild(modal);
+            overlay.innerHTML =
+                '<div class="chat-penalty-modal">' +
+                    '<div class="chat-penalty-modal-header">' +
+                        '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
+                            '<span class="chat-penalty-modal-title-icon">✓</span>' +
+                            '<span>Style Applied</span>' +
+                        '</div>' +
+                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-body">' +
+                        '<div class="chat-penalty-modal-icon">🎨</div>' +
+                        '<div class="chat-penalty-modal-message">' +
+                            'Style updated for <span class="chat-penalty-modal-user">' + self.escapeHtml(userName) + '</span>' +
+                        '</div>' +
+                        '<div class="chat-modal-changes">' + changesHtml + '</div>' +
+                    '</div>' +
+                    '<div class="chat-penalty-modal-footer">' +
+                        '<button class="chat-penalty-modal-ok">OK</button>' +
+                    '</div>' +
+                '</div>';
 
             document.body.appendChild(overlay);
 
@@ -29302,8 +29246,8 @@
                 }, 200);
             };
 
-            closeBtn.addEventListener('click', closeModal);
-            okBtn.addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-close').addEventListener('click', closeModal);
+            overlay.querySelector('.chat-penalty-modal-ok').addEventListener('click', closeModal);
             overlay.addEventListener('click', function (e) {
                 if (e.target === overlay) closeModal();
             });
