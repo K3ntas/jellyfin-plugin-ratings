@@ -2585,17 +2585,29 @@
                     var friendsData = results[0].friends || [];
                     var statusData = results[1].friends || [];
 
-                    // Merge status info into friends data
-                    var statusMap = {};
-                    statusData.forEach(function (s) { statusMap[s.userId] = s; });
+                    // Merge status info into friends data (use null prototype to prevent pollution)
+                    var statusMap = Object.create(null);
+                    statusData.forEach(function (s) {
+                        if (s && s.userId) {
+                            var sId = String(s.userId);
+                            if (sId !== '__proto__' && sId !== 'constructor' && sId !== 'prototype') {
+                                statusMap[sId] = s;
+                            }
+                        }
+                    });
 
-                    // Initialize cache if needed
+                    // Initialize cache if needed (use null prototype)
                     if (!self._friendsStatusCache) {
-                        self._friendsStatusCache = {};
+                        self._friendsStatusCache = Object.create(null);
                     }
 
                     friendsData.forEach(function (friend) {
-                        var status = statusMap[friend.userId];
+                        if (!friend || !friend.userId) return;
+                        var fId = String(friend.userId);
+                        // Prevent prototype pollution
+                        if (fId === '__proto__' || fId === 'constructor' || fId === 'prototype') return;
+
+                        var status = statusMap[fId];
                         if (status) {
                             friend.status = status.status;
                             friend.watching = status.watching;
@@ -2603,7 +2615,7 @@
                             friend.status = 'Offline';
                         }
                         // Store in cache for WebSocket updates
-                        self._friendsStatusCache[friend.userId] = friend;
+                        self._friendsStatusCache[fId] = friend;
                     });
 
                     self.renderFriendsList(friendsData);
@@ -3275,10 +3287,16 @@
                     // Full status of all friends
                     if (data.SocialData && data.SocialData.friends) {
                         if (!self._friendsStatusCache) {
-                            self._friendsStatusCache = {};
+                            self._friendsStatusCache = Object.create(null);
                         }
                         data.SocialData.friends.forEach(function (friend) {
-                            self._friendsStatusCache[friend.userId] = friend;
+                            if (friend && friend.userId) {
+                                var friendId = String(friend.userId);
+                                // Prevent prototype pollution
+                                if (friendId !== '__proto__' && friendId !== 'constructor' && friendId !== 'prototype') {
+                                    self._friendsStatusCache[friendId] = friend;
+                                }
+                            }
                         });
                         self.updateFriendsUIFromCache();
                     }
@@ -3286,29 +3304,43 @@
 
                 case 'SocialStatusUpdate':
                     // Single friend STATUS update (online/offline only)
-                    if (data.SocialData) {
-                        if (!self._friendsStatusCache) {
-                            self._friendsStatusCache = {};
+                    if (data.SocialData && data.SocialData.userId) {
+                        // Prevent prototype pollution
+                        var statusUserId = String(data.SocialData.userId);
+                        if (statusUserId === '__proto__' || statusUserId === 'constructor' || statusUserId === 'prototype') {
+                            break;
                         }
-                        var existing = self._friendsStatusCache[data.SocialData.userId] || {};
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = Object.create(null);
+                        }
+                        var existing = Object.prototype.hasOwnProperty.call(self._friendsStatusCache, statusUserId)
+                            ? self._friendsStatusCache[statusUserId]
+                            : {};
                         // Merge but preserve watching if not provided
-                        self._friendsStatusCache[data.SocialData.userId] = Object.assign({}, existing, data.SocialData);
+                        self._friendsStatusCache[statusUserId] = Object.assign({}, existing, data.SocialData);
                         self.updateFriendStatusOnly(data.SocialData);
                     }
                     break;
 
                 case 'SocialWatchingUpdate':
                     // Single friend WATCHING update (movie title only, no status change)
-                    if (data.SocialData) {
-                        if (!self._friendsStatusCache) {
-                            self._friendsStatusCache = {};
+                    if (data.SocialData && data.SocialData.userId) {
+                        // Prevent prototype pollution - validate userId is safe key
+                        var odataUserId = String(data.SocialData.userId);
+                        if (odataUserId === '__proto__' || odataUserId === 'constructor' || odataUserId === 'prototype') {
+                            break;
                         }
-                        var existingFriend = self._friendsStatusCache[data.SocialData.userId] || {};
+                        if (!self._friendsStatusCache) {
+                            self._friendsStatusCache = Object.create(null);
+                        }
+                        var existingFriend = Object.prototype.hasOwnProperty.call(self._friendsStatusCache, odataUserId)
+                            ? self._friendsStatusCache[odataUserId]
+                            : {};
                         // ONLY update watching, keep existing status
                         existingFriend.watching = data.SocialData.watching;
                         existingFriend.username = data.SocialData.username;
-                        existingFriend.userId = data.SocialData.userId;
-                        self._friendsStatusCache[data.SocialData.userId] = existingFriend;
+                        existingFriend.userId = odataUserId;
+                        self._friendsStatusCache[odataUserId] = existingFriend;
                         self.updateFriendWatchingOnly(data.SocialData);
                     }
                     break;
@@ -3406,6 +3438,7 @@
          * Update profile online status from WebSocket
          */
         updateProfileStatusFromWebSocket: function (statusData) {
+            var self = this;
             var page = document.getElementById('socialProfilePage');
             if (!page) return;
 
@@ -3417,26 +3450,33 @@
                 statusDot.className = 'social-status-dot ' + statusClass;
             }
 
-            // Update the status text in meta
+            // Update the status text in meta - status is from predefined enum values
             var metaSpans = page.querySelectorAll('.social-profile-meta span');
+            var validStatuses = ['Online', 'Offline', 'Away', 'DoNotDisturb'];
             metaSpans.forEach(function (span) {
                 var svg = span.querySelector('svg');
-                if (svg && span.textContent.includes('Online') || span.textContent.includes('Offline') ||
-                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb')) {
+                if (svg && (span.textContent.includes('Online') || span.textContent.includes('Offline') ||
+                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb'))) {
                     var status = statusData.status || 'Offline';
+                    // Validate status is from known enum values
+                    if (validStatuses.indexOf(status) === -1) status = 'Offline';
                     var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
-                    span.innerHTML = svg.outerHTML + statusText;
+                    span.textContent = '';
+                    span.appendChild(svg.cloneNode(true));
+                    span.appendChild(document.createTextNode(statusText));
                 }
             });
 
             // Update last seen
             if (statusData.lastSeen) {
-                var lastSeenText = statusData.status === 'Online' ? 'now' : this.formatTimeAgo(new Date(statusData.lastSeen));
+                var lastSeenText = statusData.status === 'Online' ? 'now' : self.formatTimeAgo(new Date(statusData.lastSeen));
                 metaSpans.forEach(function (span) {
                     if (span.textContent.includes('Last seen')) {
                         var svg = span.querySelector('svg');
                         if (svg) {
-                            span.innerHTML = svg.outerHTML + 'Last seen ' + lastSeenText;
+                            span.textContent = '';
+                            span.appendChild(svg.cloneNode(true));
+                            span.appendChild(document.createTextNode('Last seen ' + lastSeenText));
                         }
                     }
                 });
@@ -3461,7 +3501,12 @@
                 if (labelText.includes('ratings') && stats.ratingsCount !== undefined) {
                     value.textContent = stats.ratingsCount;
                 } else if (labelText.includes('avg') && stats.averageRating !== undefined) {
-                    value.innerHTML = stats.averageRating + '<span class="social-stat-star">★</span>';
+                    value.textContent = '';
+                    value.appendChild(document.createTextNode(String(stats.averageRating)));
+                    var starSpan = document.createElement('span');
+                    starSpan.className = 'social-stat-star';
+                    starSpan.textContent = '★';
+                    value.appendChild(starSpan);
                 } else if (labelText.includes('friends') && stats.friendsCount !== undefined) {
                     value.textContent = stats.friendsCount;
                 }
@@ -3518,11 +3563,18 @@
                 var statusData = data.friends || [];
                 // Update cache and UI
                 statusData.forEach(function (friend) {
+                    if (!friend || !friend.userId) return;
+                    var fUserId = String(friend.userId);
+                    // Prevent prototype pollution
+                    if (fUserId === '__proto__' || fUserId === 'constructor' || fUserId === 'prototype') return;
+
                     if (!self._friendsStatusCache) {
-                        self._friendsStatusCache = {};
+                        self._friendsStatusCache = Object.create(null);
                     }
-                    var existing = self._friendsStatusCache[friend.userId] || {};
-                    self._friendsStatusCache[friend.userId] = Object.assign({}, existing, friend);
+                    var existing = Object.prototype.hasOwnProperty.call(self._friendsStatusCache, fUserId)
+                        ? self._friendsStatusCache[fUserId]
+                        : {};
+                    self._friendsStatusCache[fUserId] = Object.assign({}, existing, friend);
                 });
                 // Update UI elements
                 statusData.forEach(function (friend) {
@@ -3832,17 +3884,31 @@
                 var watchTitle = data.watching.seriesName
                     ? data.watching.seriesName + ' ' + data.watching.episodeInfo
                     : data.watching.title;
-                var itemId = self.escapeJs(data.watching.itemId);
-                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
-                    '<span class="watching-icon">&#9654;</span> ' +
-                    self.escapeHtml(watchTitle) +
-                    ' <span class="watching-progress">(' + data.watching.position + '/' + data.watching.duration + ')</span>' +
-                    '</div>';
+                var itemId = data.watching.itemId;
+                // Validate position/duration are safe strings
+                var position = String(data.watching.position || '').replace(/[<>&"']/g, '');
+                var duration = String(data.watching.duration || '').replace(/[<>&"']/g, '');
+
+                var watchingDiv = document.createElement('div');
+                watchingDiv.className = 'social-friend-watching clickable';
+                watchingDiv.title = 'Click to view';
+                watchingDiv.onclick = function() { RatingsPlugin.goToMedia(itemId); };
+
+                var iconSpan = document.createElement('span');
+                iconSpan.className = 'watching-icon';
+                iconSpan.textContent = '▶';
+                watchingDiv.appendChild(iconSpan);
+                watchingDiv.appendChild(document.createTextNode(' ' + watchTitle + ' '));
+
+                var progressSpan = document.createElement('span');
+                progressSpan.className = 'watching-progress';
+                progressSpan.textContent = '(' + position + '/' + duration + ')';
+                watchingDiv.appendChild(progressSpan);
 
                 if (existingWatching) {
-                    existingWatching.outerHTML = watchingHtml;
+                    existingWatching.replaceWith(watchingDiv);
                 } else if (infoDiv) {
-                    infoDiv.insertAdjacentHTML('beforeend', watchingHtml);
+                    infoDiv.appendChild(watchingDiv);
                 }
             } else if (existingWatching) {
                 existingWatching.remove();
@@ -4146,21 +4212,45 @@
 
         /**
          * Sanitize HTML string by removing dangerous elements and attributes
-         * Use this before innerHTML when HTML structure is needed
+         * Uses DOMParser for proper HTML parsing instead of regex
          */
         sanitizeHtml: function (html) {
             if (html == null) return '';
             var str = String(html);
-            // Remove script tags and contents
-            str = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-            // Remove event handlers
-            str = str.replace(/\s*on\w+\s*=\s*(['"])[^'"]*\1/gi, '');
-            str = str.replace(/\s*on\w+\s*=\s*[^\s>]+/gi, '');
-            // Remove javascript: URLs
-            str = str.replace(/javascript\s*:/gi, '');
-            // Remove data: URLs in sensitive attributes
-            str = str.replace(/(href|src|action)\s*=\s*(['"])?\s*data:/gi, '$1=$2#');
-            return str;
+
+            // Parse HTML using DOMParser
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(str, 'text/html');
+
+            // Remove dangerous elements
+            var dangerousTags = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'];
+            dangerousTags.forEach(function(tag) {
+                var elements = doc.querySelectorAll(tag);
+                elements.forEach(function(el) { el.remove(); });
+            });
+
+            // Remove event handlers and dangerous attributes from all elements
+            var allElements = doc.querySelectorAll('*');
+            allElements.forEach(function(el) {
+                // Remove all on* event handlers
+                Array.from(el.attributes).forEach(function(attr) {
+                    if (attr.name.toLowerCase().startsWith('on')) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+                // Remove javascript: and data: URLs from href/src/action
+                ['href', 'src', 'action'].forEach(function(attr) {
+                    var value = el.getAttribute(attr);
+                    if (value) {
+                        var lower = value.toLowerCase().trim();
+                        if (lower.startsWith('javascript:') || lower.startsWith('data:')) {
+                            el.removeAttribute(attr);
+                        }
+                    }
+                });
+            });
+
+            return doc.body.innerHTML;
         },
 
         /**
@@ -13929,36 +14019,52 @@
                     var displayRating = userRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
                     self.updateStarDisplay(displayRating);
 
-                    let statsHtml = '';
                     const cfg = self.starWidgetConfig || {};
                     const showStats = cfg.showRatingStats !== false;
                     const showYourRating = cfg.showYourRating !== false;
                     const statsFormat = cfg.ratingStatsFormat || '{avg}/10 - {count} rating{s}';
                     const yourRatingFormat = cfg.yourRatingFormat || 'Your rating: {rating}/10 (click stars to edit)';
 
-                    if (stats.TotalRatings > 0 && showStats) {
-                        // Build stats text from format
-                        let statsText = statsFormat
-                            .replace('{avg}', stats.AverageRating.toFixed(1))
-                            .replace('{count}', stats.TotalRatings)
-                            .replace('{s}', stats.TotalRatings !== 1 ? 's' : '');
-                        statsHtml = `<span class="ratings-plugin-average">${statsText}</span> <span class="ratings-plugin-count-link" data-item-id="${itemId}" style="cursor:pointer; text-decoration: underline;">(view all)</span>`;
-                    }
-
-                    if (stats.UserRating && showYourRating) {
-                        let yourText = yourRatingFormat.replace('{rating}', stats.UserRating);
-                        statsHtml += `<div class="ratings-plugin-your-rating">${yourText}</div>`;
-                    } else if (stats.TotalRatings === 0 && showStats) {
-                        statsHtml = 'No ratings yet. Be the first to rate!';
-                    }
-
                     if (statsElement) {
-                        statsElement.innerHTML = statsHtml;
+                        statsElement.textContent = '';
+
+                        if (stats.TotalRatings > 0 && showStats) {
+                            // Build stats text from format - values are numeric from API
+                            let statsText = statsFormat
+                                .replace('{avg}', Number(stats.AverageRating).toFixed(1))
+                                .replace('{count}', Number(stats.TotalRatings))
+                                .replace('{s}', stats.TotalRatings !== 1 ? 's' : '');
+
+                            var avgSpan = document.createElement('span');
+                            avgSpan.className = 'ratings-plugin-average';
+                            avgSpan.textContent = statsText;
+                            statsElement.appendChild(avgSpan);
+
+                            statsElement.appendChild(document.createTextNode(' '));
+
+                            var linkSpan = document.createElement('span');
+                            linkSpan.className = 'ratings-plugin-count-link';
+                            linkSpan.setAttribute('data-item-id', self.escapeHtml(itemId));
+                            linkSpan.style.cursor = 'pointer';
+                            linkSpan.style.textDecoration = 'underline';
+                            linkSpan.textContent = '(view all)';
+                            statsElement.appendChild(linkSpan);
+                        }
+
+                        if (stats.UserRating && showYourRating) {
+                            let yourText = yourRatingFormat.replace('{rating}', Number(stats.UserRating));
+                            var yourDiv = document.createElement('div');
+                            yourDiv.className = 'ratings-plugin-your-rating';
+                            yourDiv.textContent = yourText;
+                            statsElement.appendChild(yourDiv);
+                        } else if (stats.TotalRatings === 0 && showStats) {
+                            statsElement.textContent = 'No ratings yet. Be the first to rate!';
+                        }
                     }
                 })
                 .catch(err => {
                     if (statsElement) {
-                        statsElement.innerHTML = 'Error loading ratings';
+                        statsElement.textContent = 'Error loading ratings';
                     }
                 });
         },
@@ -14405,35 +14511,71 @@
                 const contentDiv = overlay.querySelector('.ratings-list-content');
 
                 if (!ratings || ratings.length === 0) {
-                    contentDiv.innerHTML = '<div class="ratings-list-empty">No ratings yet</div>';
+                    contentDiv.textContent = '';
+                    var emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'ratings-list-empty';
+                    emptyDiv.textContent = 'No ratings yet';
+                    contentDiv.appendChild(emptyDiv);
                     return;
                 }
 
-                let html = '';
+                contentDiv.textContent = '';
                 ratings.forEach(rating => {
                     const isMe = rating.UserId === currentUserId;
                     const hasReview = rating.HasReview;
-                    const reviewIconClass = hasReview ? 'ratings-list-review-icon' : 'ratings-list-review-icon no-review';
-                    const reviewIcon = hasReview ? '💬' : '—';
-                    const likeCount = rating.LikeCount || 0;
-                    const dislikeCount = rating.DislikeCount || 0;
+                    const likeCount = Number(rating.LikeCount) || 0;
+                    const dislikeCount = Number(rating.DislikeCount) || 0;
                     const hasVotes = likeCount > 0 || dislikeCount > 0;
+                    // Validate userId is GUID-like (alphanumeric and hyphens only)
+                    const safeUserId = String(rating.UserId || '').replace(/[^a-zA-Z0-9-]/g, '');
+                    const safeItemId = String(itemId || '').replace(/[^a-zA-Z0-9-]/g, '');
 
-                    html += `
-                        <div class="ratings-list-item" data-user-id="${rating.UserId}">
-                            <span class="ratings-list-username">
-                                ${self.escapeHtml(rating.Username)}
-                                ${isMe ? '<span class="ratings-list-you">(you)</span>' : ''}
-                            </span>
-                            <span class="ratings-list-rating">${rating.Rating}/10</span>
-                            <span class="${reviewIconClass}" data-has-review="${hasReview}" data-user-id="${rating.UserId}" data-item-id="${itemId}" title="${hasReview ? 'View review' : 'No review'}">${reviewIcon}</span>
-                            ${hasReview ? '<span class="ratings-list-votes">' + (hasVotes ? '👍' + likeCount + ' 👎' + dislikeCount : '') + '</span>' : ''}
-                            ${isMe ? '<button class="ratings-list-edit-btn" data-item-id="' + itemId + '">Edit</button>' : ''}
-                        </div>
-                    `;
+                    var itemDiv = document.createElement('div');
+                    itemDiv.className = 'ratings-list-item';
+                    itemDiv.setAttribute('data-user-id', safeUserId);
+
+                    var usernameSpan = document.createElement('span');
+                    usernameSpan.className = 'ratings-list-username';
+                    usernameSpan.textContent = rating.Username || 'Unknown';
+                    if (isMe) {
+                        var youSpan = document.createElement('span');
+                        youSpan.className = 'ratings-list-you';
+                        youSpan.textContent = '(you)';
+                        usernameSpan.appendChild(youSpan);
+                    }
+                    itemDiv.appendChild(usernameSpan);
+
+                    var ratingSpan = document.createElement('span');
+                    ratingSpan.className = 'ratings-list-rating';
+                    ratingSpan.textContent = Number(rating.Rating) + '/10';
+                    itemDiv.appendChild(ratingSpan);
+
+                    var reviewSpan = document.createElement('span');
+                    reviewSpan.className = hasReview ? 'ratings-list-review-icon' : 'ratings-list-review-icon no-review';
+                    reviewSpan.setAttribute('data-has-review', String(hasReview));
+                    reviewSpan.setAttribute('data-user-id', safeUserId);
+                    reviewSpan.setAttribute('data-item-id', safeItemId);
+                    reviewSpan.title = hasReview ? 'View review' : 'No review';
+                    reviewSpan.textContent = hasReview ? '💬' : '—';
+                    itemDiv.appendChild(reviewSpan);
+
+                    if (hasReview && hasVotes) {
+                        var votesSpan = document.createElement('span');
+                        votesSpan.className = 'ratings-list-votes';
+                        votesSpan.textContent = '👍' + likeCount + ' 👎' + dislikeCount;
+                        itemDiv.appendChild(votesSpan);
+                    }
+
+                    if (isMe) {
+                        var editBtn = document.createElement('button');
+                        editBtn.className = 'ratings-list-edit-btn';
+                        editBtn.setAttribute('data-item-id', safeItemId);
+                        editBtn.textContent = 'Edit';
+                        itemDiv.appendChild(editBtn);
+                    }
+
+                    contentDiv.appendChild(itemDiv);
                 });
-
-                contentDiv.innerHTML = html;
 
                 // Add click handlers for review icons
                 contentDiv.querySelectorAll('.ratings-list-review-icon[data-has-review="true"]').forEach(icon => {
@@ -14668,56 +14810,123 @@
             }
 
             if (!reviews || reviews.length === 0) {
-                grid.innerHTML = `<div class="user-reviews-empty">${this.t('noReviews') || 'No reviews yet. Be the first to write one!'}</div>`;
+                grid.textContent = '';
+                var emptyDiv = document.createElement('div');
+                emptyDiv.className = 'user-reviews-empty';
+                emptyDiv.textContent = this.t('noReviews') || 'No reviews yet. Be the first to write one!';
+                grid.appendChild(emptyDiv);
                 return;
             }
 
-            let html = '';
+            grid.textContent = '';
             reviews.forEach(review => {
                 const isOwnReview = review.UserId === currentUserId;
-                const avatarUrl = `${baseUrl}/Users/${review.UserId}/Images/Primary?height=80&quality=90`;
+                // Sanitize userId for URL and attributes (GUID format)
+                const safeUserId = String(review.UserId || '').replace(/[^a-zA-Z0-9-]/g, '');
+                const safeItemId = String(itemId || '').replace(/[^a-zA-Z0-9-]/g, '');
+                const avatarUrl = baseUrl + '/Users/' + safeUserId + '/Images/Primary?height=80&quality=90';
                 const timestamp = this.formatReviewTimestamp(review.CreatedAt);
-                const likedClass = review.UserLiked === true ? ' liked' : '';
-                const dislikedClass = review.UserLiked === false ? ' disliked' : '';
-                const ownClass = isOwnReview ? ' own-review' : '';
-                const commentCount = review.CommentCount || 0;
-
                 const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
-                html += `
-                    <div class="user-review-card" data-user-id="${review.UserId}" data-item-id="${itemId}">
-                        <div class="user-review-card-header">
-                            <div class="user-review-avatar clickable" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
-                                <img src="${avatarUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="">
-                                <span class="user-review-avatar-placeholder" style="display:none;">👤</span>
-                            </div>
-                            <a class="user-review-user-link" data-user-id="${review.UserId}"${profileTooltip ? ` title="${profileTooltip}"` : ''}>
-                                <div class="user-review-user-info">
-                                    <div class="user-review-username">${this.escapeHtml(review.Username)}</div>
-                                    <div class="user-review-timestamp">${timestamp}</div>
-                                </div>
-                            </a>
-                            <div class="user-review-rating">
-                                <span class="user-review-rating-star">★</span>
-                                <span>${review.Rating}/10</span>
-                            </div>
-                        </div>
-                        <div class="user-review-text" data-full-text="${this.escapeHtml(review.ReviewText)}">${this.escapeHtml(review.ReviewText)}</div>
-                        <div class="user-review-actions">
-                            <button class="user-review-action-btn${likedClass}${ownClass}" data-action="like">
-                                👍 <span class="like-count">${review.LikeCount || 0}</span>
-                            </button>
-                            <button class="user-review-action-btn${dislikedClass}${ownClass}" data-action="dislike">
-                                👎 <span class="dislike-count">${review.DislikeCount || 0}</span>
-                            </button>
-                            <button class="user-review-action-btn" data-action="comment">
-                                💬 <span class="comment-count">${commentCount}</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
 
-            grid.innerHTML = html;
+                var card = document.createElement('div');
+                card.className = 'user-review-card';
+                card.setAttribute('data-user-id', safeUserId);
+                card.setAttribute('data-item-id', safeItemId);
+
+                // Header
+                var header = document.createElement('div');
+                header.className = 'user-review-card-header';
+
+                // Avatar
+                var avatarDiv = document.createElement('div');
+                avatarDiv.className = 'user-review-avatar clickable';
+                avatarDiv.setAttribute('data-user-id', safeUserId);
+                if (profileTooltip) avatarDiv.title = profileTooltip;
+
+                var avatarImg = document.createElement('img');
+                avatarImg.src = avatarUrl;
+                avatarImg.alt = '';
+                avatarImg.onerror = function() {
+                    this.style.display = 'none';
+                    this.nextElementSibling.style.display = 'flex';
+                };
+                avatarDiv.appendChild(avatarImg);
+
+                var avatarPlaceholder = document.createElement('span');
+                avatarPlaceholder.className = 'user-review-avatar-placeholder';
+                avatarPlaceholder.style.display = 'none';
+                avatarPlaceholder.textContent = '👤';
+                avatarDiv.appendChild(avatarPlaceholder);
+                header.appendChild(avatarDiv);
+
+                // User link
+                var userLink = document.createElement('a');
+                userLink.className = 'user-review-user-link';
+                userLink.setAttribute('data-user-id', safeUserId);
+                if (profileTooltip) userLink.title = profileTooltip;
+
+                var userInfo = document.createElement('div');
+                userInfo.className = 'user-review-user-info';
+
+                var usernameDiv = document.createElement('div');
+                usernameDiv.className = 'user-review-username';
+                usernameDiv.textContent = review.Username || 'Unknown';
+                userInfo.appendChild(usernameDiv);
+
+                var timestampDiv = document.createElement('div');
+                timestampDiv.className = 'user-review-timestamp';
+                timestampDiv.textContent = timestamp;
+                userInfo.appendChild(timestampDiv);
+
+                userLink.appendChild(userInfo);
+                header.appendChild(userLink);
+
+                // Rating
+                var ratingDiv = document.createElement('div');
+                ratingDiv.className = 'user-review-rating';
+                var starSpan = document.createElement('span');
+                starSpan.className = 'user-review-rating-star';
+                starSpan.textContent = '★';
+                ratingDiv.appendChild(starSpan);
+                var ratingVal = document.createElement('span');
+                ratingVal.textContent = Number(review.Rating) + '/10';
+                ratingDiv.appendChild(ratingVal);
+                header.appendChild(ratingDiv);
+
+                card.appendChild(header);
+
+                // Review text
+                var textDiv = document.createElement('div');
+                textDiv.className = 'user-review-text';
+                textDiv.setAttribute('data-full-text', review.ReviewText || '');
+                textDiv.textContent = review.ReviewText || '';
+                card.appendChild(textDiv);
+
+                // Actions
+                var actionsDiv = document.createElement('div');
+                actionsDiv.className = 'user-review-actions';
+
+                var likeBtn = document.createElement('button');
+                likeBtn.className = 'user-review-action-btn' + (review.UserLiked === true ? ' liked' : '') + (isOwnReview ? ' own-review' : '');
+                likeBtn.setAttribute('data-action', 'like');
+                likeBtn.innerHTML = '👍 <span class="like-count">' + (Number(review.LikeCount) || 0) + '</span>';
+                actionsDiv.appendChild(likeBtn);
+
+                var dislikeBtn = document.createElement('button');
+                dislikeBtn.className = 'user-review-action-btn' + (review.UserLiked === false ? ' disliked' : '') + (isOwnReview ? ' own-review' : '');
+                dislikeBtn.setAttribute('data-action', 'dislike');
+                dislikeBtn.innerHTML = '👎 <span class="dislike-count">' + (Number(review.DislikeCount) || 0) + '</span>';
+                actionsDiv.appendChild(dislikeBtn);
+
+                var commentBtn = document.createElement('button');
+                commentBtn.className = 'user-review-action-btn';
+                commentBtn.setAttribute('data-action', 'comment');
+                commentBtn.innerHTML = '💬 <span class="comment-count">' + (Number(review.CommentCount) || 0) + '</span>';
+                actionsDiv.appendChild(commentBtn);
+
+                card.appendChild(actionsDiv);
+                grid.appendChild(card);
+            });
 
             // Check for truncated text and add expand buttons
             grid.querySelectorAll('.user-review-text').forEach(textEl => {
@@ -16594,26 +16803,50 @@
                         btn.setAttribute('type', 'button');
                         btn.style.position = 'relative';
 
-                        // Globe icon with current language code badge
-                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                        </svg><span class="lang-code">${self.currentLanguage.toUpperCase()}</span>`;
+                        // Globe icon SVG (static, safe content)
+                        var svgNS = 'http://www.w3.org/2000/svg';
+                        var svg = document.createElementNS(svgNS, 'svg');
+                        svg.setAttribute('viewBox', '0 0 24 24');
+                        svg.setAttribute('fill', 'currentColor');
+                        var path = document.createElementNS(svgNS, 'path');
+                        path.setAttribute('d', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z');
+                        svg.appendChild(path);
+                        btn.appendChild(svg);
+
+                        // Language code badge - validate it's in validLanguages
+                        var langCode = self.validLanguages.indexOf(self.currentLanguage) !== -1 ? self.currentLanguage : 'en';
+                        var langSpan = document.createElement('span');
+                        langSpan.className = 'lang-code';
+                        langSpan.textContent = langCode.toUpperCase();
+                        btn.appendChild(langSpan);
 
                         // Create dropdown container
                         const dropdown = document.createElement('div');
                         dropdown.id = 'languageDropdown';
 
-                        // Build dropdown items
-                        let dropdownHtml = '';
+                        // Build dropdown items using DOM methods
                         self.validLanguages.forEach(code => {
-                            const isActive = code === self.currentLanguage ? ' active' : '';
-                            dropdownHtml += `<div class="lang-item${isActive}" data-lang="${code}">
-                                <span class="lang-code-badge">${code}</span>
-                                <span class="lang-name">${langNames[code]}</span>
-                                <span class="lang-check">✓</span>
-                            </div>`;
+                            var item = document.createElement('div');
+                            item.className = 'lang-item' + (code === self.currentLanguage ? ' active' : '');
+                            item.setAttribute('data-lang', code);
+
+                            var codeBadge = document.createElement('span');
+                            codeBadge.className = 'lang-code-badge';
+                            codeBadge.textContent = code;
+                            item.appendChild(codeBadge);
+
+                            var nameSpan = document.createElement('span');
+                            nameSpan.className = 'lang-name';
+                            nameSpan.textContent = langNames[code] || code;
+                            item.appendChild(nameSpan);
+
+                            var checkSpan = document.createElement('span');
+                            checkSpan.className = 'lang-check';
+                            checkSpan.textContent = '✓';
+                            item.appendChild(checkSpan);
+
+                            dropdown.appendChild(item);
                         });
-                        dropdown.innerHTML = dropdownHtml;
                         document.body.appendChild(dropdown);
 
                         // Position dropdown below button
@@ -23831,21 +24064,42 @@
          * Build a single Netflix card HTML
          */
         buildNetflixCard: function (item, baseUrl) {
+            // Sanitize item ID (should be GUID format)
+            const safeId = String(item.Id || '').replace(/[^a-zA-Z0-9-]/g, '');
             const imageUrl = item.ImageTags && item.ImageTags.Primary
-                ? `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300&quality=96`
-                : `${baseUrl}/Items/${item.Id}/Images/Primary?fillHeight=450&fillWidth=300`;
+                ? baseUrl + '/Items/' + safeId + '/Images/Primary?fillHeight=450&fillWidth=300&quality=96'
+                : baseUrl + '/Items/' + safeId + '/Images/Primary?fillHeight=450&fillWidth=300';
+            const itemUrl = '#!/details?id=' + safeId;
 
-            const itemUrl = `#!/details?id=${item.Id}`;
+            var link = document.createElement('a');
+            link.href = itemUrl;
+            link.className = 'netflix-card';
+            link.setAttribute('data-item-id', safeId);
 
-            return `
-                <a href="${itemUrl}" class="netflix-card" data-item-id="${item.Id}">
-                    <img src="${imageUrl}" alt="${this.escapeHtml(item.Name)}" loading="lazy" class="netflix-card-img plugin-img-fallback">
-                    <div class="netflix-card-overlay">
-                        <div class="netflix-card-title">${this.escapeHtml(item.Name)}</div>
-                        <div class="netflix-card-rating">${item.CommunityRating ? '★ ' + item.CommunityRating.toFixed(1) : ''}</div>
-                    </div>
-                </a>
-            `;
+            var img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = item.Name || '';
+            img.loading = 'lazy';
+            img.className = 'netflix-card-img plugin-img-fallback';
+            link.appendChild(img);
+
+            var overlay = document.createElement('div');
+            overlay.className = 'netflix-card-overlay';
+
+            var titleDiv = document.createElement('div');
+            titleDiv.className = 'netflix-card-title';
+            titleDiv.textContent = item.Name || '';
+            overlay.appendChild(titleDiv);
+
+            var ratingDiv = document.createElement('div');
+            ratingDiv.className = 'netflix-card-rating';
+            ratingDiv.textContent = item.CommunityRating ? '★ ' + Number(item.CommunityRating).toFixed(1) : '';
+            overlay.appendChild(ratingDiv);
+
+            link.appendChild(overlay);
+
+            // Return outerHTML since this function is used to build HTML strings
+            return link.outerHTML;
         },
 
         /**
