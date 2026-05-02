@@ -27647,7 +27647,21 @@
          * Apply user style to the edit form
          */
         applyUserStyleToForm: function (userId) {
-            const style = this.chatUserStyles && this.chatUserStyles[userId];
+            // Normalize userId - try both with and without dashes (same as getUserMessageStyle)
+            let style = null;
+            if (this.chatUserStyles) {
+                style = this.chatUserStyles[userId];
+                if (!style) {
+                    // Try with dashes if userId has none
+                    const withDashes = userId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+                    style = this.chatUserStyles[withDashes];
+                }
+                if (!style) {
+                    // Try without dashes if userId has them
+                    const noDashes = userId.replace(/-/g, '');
+                    style = this.chatUserStyles[noDashes];
+                }
+            }
 
             // Reset color inputs
             const nicknameColor = document.getElementById('chatModNicknameColor');
