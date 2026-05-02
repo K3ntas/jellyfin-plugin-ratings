@@ -1,7 +1,7 @@
 [
   {
     "guid": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
-    "name": "Ratings",
+    "name": "Ratings (Dev)",
     "description": "Professional rating system for Jellyfin. Rate media with 1-10 stars, view detailed user ratings on hover, and see rating badges on media cards. Optimized for large libraries with lazy loading.",
     "overview": "Comprehensive rating plugin with star-based UI, average ratings display, detailed user rating popups, and performance-optimized card overlays for large media libraries.",
     "owner": "K3ntas",
@@ -9,364 +9,1764 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "1.0.349.0",
-        "changelog": "Dashboard page in sidebar with stats, activity feed, top rated, rating distribution. Settings masonry layout. All elements clickable.",
+        "version": "2.0.302.0",
+        "changelog": "Security fixes, moderator panel colors persist, dashboard requests open modal",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.349.0/jellyfin-plugin-ratings_1.0.349.0.zip",
-        "checksum": "408173a642de7b94ab20f9fb15d1c9bb",
-        "timestamp": "2026-04-30T20:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.302.0/Jellyfin.Plugin.Ratings_2.0.302.0.zip",
+        "checksum": "2b672cc77df38ceb5a26e73fd10cdc49",
+        "timestamp": "2026-05-02T12:00:00Z"
       },
       {
-        "version": "1.0.348.0",
-        "changelog": "Review Card Styling, profile tooltip, funny self-rating messages",
+        "version": "2.0.301.0",
+        "changelog": "Settings: Masonry column layout - groups flow to fill gaps properly (3 cols wide, 2 cols medium, 1 col small)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.348.0/jellyfin-plugin-ratings_1.0.348.0.zip",
-        "checksum": "0608b425c7c90a6354b1963428542496",
-        "timestamp": "2026-04-28T21:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.301.0/Jellyfin.Plugin.Ratings_2.0.301.0.zip",
+        "checksum": "40c8c01363c15bd8fbe5ec0a52d95632",
+        "timestamp": "2026-04-30T19:00:00Z"
       },
       {
-        "version": "1.0.347.0",
-        "changelog": "User Reviews: Comments on reviews, clickable user avatars open profile",
+        "version": "2.0.300.0",
+        "changelog": "Dashboard: All elements clickable (rating distribution modal, user profiles, requests). Settings: Improved full-width 2-3 column layout",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.347.0/jellyfin-plugin-ratings_1.0.347.0.zip",
-        "checksum": "5547b10196bee837e0285481b5c370bc",
-        "timestamp": "2026-04-26T16:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.300.0/Jellyfin.Plugin.Ratings_2.0.300.0.zip",
+        "checksum": "3dbf6b6ed0738eb0507e30f9a5a410b7",
+        "timestamp": "2026-04-30T18:00:00Z"
       },
       {
-        "version": "1.0.346.0",
-        "changelog": "Performance: Cache ScheduledDeletions API - eliminates duplicate calls causing 4s delay",
+        "version": "2.0.299.0",
+        "changelog": "Dashboard: 5 sections (activity, top rated, active users, rating distribution, requests). Settings: full-width layout for wide screens",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.346.0/jellyfin-plugin-ratings_1.0.346.0.zip",
-        "checksum": "6a68f3da1825e34b8736462fb07419ce",
-        "timestamp": "2026-04-26T13:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.299.0/Jellyfin.Plugin.Ratings_2.0.299.0.zip",
+        "checksum": "6405090386cec9ce1b3eedc7fae6fdc3",
+        "timestamp": "2026-04-30T17:00:00Z"
       },
       {
-        "version": "1.0.345.0",
+        "version": "2.0.298.0",
+        "changelog": "Dashboard: Unified activity feed showing ratings, reviews, requests, and comments with modern UI styling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.298.0/Jellyfin.Plugin.Ratings_2.0.298.0.zip",
+        "checksum": "c124ddcd891676efd400a18bec5e8af3",
+        "timestamp": "2026-04-30T16:00:00Z"
+      },
+      {
+        "version": "2.0.297.0",
+        "changelog": "New: Dashboard page in Jellyfin sidebar with rating statistics, recent activity, and top rated items",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.297.0/Jellyfin.Plugin.Ratings_2.0.297.0.zip",
+        "checksum": "53ae3f7ba38113885eb30ee07fed9113",
+        "timestamp": "2026-04-30T15:00:00Z"
+      },
+      {
+        "version": "2.0.296.0",
+        "changelog": "Fix: My Rating sort pagination - hide Jellyfin pagination when custom sorting active",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.296.0/Jellyfin.Plugin.Ratings_2.0.296.0.zip",
+        "checksum": "0612af5e968e9b553cd98576318a1a52",
+        "timestamp": "2026-04-30T14:00:00Z"
+      },
+      {
+        "version": "2.0.295.0",
+        "changelog": "Fix: Native Jellyfin search visible when Ratings search disabled, Enter triggers native search",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.295.0/Jellyfin.Plugin.Ratings_2.0.295.0.zip",
+        "checksum": "73657f3dfd12503acc55959898742f93",
+        "timestamp": "2026-04-30T12:00:00Z"
+      },
+      {
+        "version": "2.0.294.0",
+        "changelog": "UX: Own review buttons now look normal (removed disabled styling)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.294.0/Jellyfin.Plugin.Ratings_2.0.294.0.zip",
+        "checksum": "da20e939d0a1e73a5b48128fae7a8dc3",
+        "timestamp": "2026-04-28T21:00:00Z"
+      },
+      {
+        "version": "2.0.293.0",
+        "changelog": "Fix: Self-rating funny messages now trigger on click (removed disabled attribute)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.293.0/Jellyfin.Plugin.Ratings_2.0.293.0.zip",
+        "checksum": "6c91975cb03f149d52de483486ba4765",
+        "timestamp": "2026-04-28T20:30:00Z"
+      },
+      {
+        "version": "2.0.292.0",
+        "changelog": "Fun: 65+ funny/sarcastic messages when trying to rate your own review",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.292.0/Jellyfin.Plugin.Ratings_2.0.292.0.zip",
+        "checksum": "39e50e824496c3e5faff24b11b409334",
+        "timestamp": "2026-04-28T20:00:00Z"
+      },
+      {
+        "version": "2.0.291.0",
+        "changelog": "Fix: Profile tooltip text, add setting to toggle tooltip in Review Card Styling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.291.0/Jellyfin.Plugin.Ratings_2.0.291.0.zip",
+        "checksum": "05f630c1baf78077d8b8d550cbbe4c33",
+        "timestamp": "2026-04-26T23:00:00Z"
+      },
+      {
+        "version": "2.0.290.0",
+        "changelog": "UX: Profile tooltip on review cards, click-outside-to-close backdrop for profile page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.290.0/Jellyfin.Plugin.Ratings_2.0.290.0.zip",
+        "checksum": "b16e99d0ffd3d00013878d2dafe0e789",
+        "timestamp": "2026-04-26T22:30:00Z"
+      },
+      {
+        "version": "2.0.289.0",
+        "changelog": "Fix: Review Card Styling - add missing properties to Config API endpoint",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.289.0/Jellyfin.Plugin.Ratings_2.0.289.0.zip",
+        "checksum": "d51849cd8ddf543294fd5e2f941d3356",
+        "timestamp": "2026-04-26T22:00:00Z"
+      },
+      {
+        "version": "2.0.288.0",
+        "changelog": "Fix: Review Card Styling now applies correctly on detail pages",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.288.0/Jellyfin.Plugin.Ratings_2.0.288.0.zip",
+        "checksum": "aadac3d160912d1126e44048e4c9b9cb",
+        "timestamp": "2026-04-26T21:30:00Z"
+      },
+      {
+        "version": "2.0.287.0",
+        "changelog": "User Reviews Card Styling: Full customization (background, border, colors, opacity) with live preview in config page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.287.0/Jellyfin.Plugin.Ratings_2.0.287.0.zip",
+        "checksum": "a97d682eb1f950994d453f97d246e072",
+        "timestamp": "2026-04-26T21:00:00Z"
+      },
+      {
+        "version": "2.0.286.0",
+        "changelog": "Fix: Close comments modal when clicking user profile",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.286.0/Jellyfin.Plugin.Ratings_2.0.286.0.zip",
+        "checksum": "069663e958f6c21b786a0eeadbe50339",
+        "timestamp": "2026-04-26T15:40:00Z"
+      },
+      {
+        "version": "2.0.285.0",
+        "changelog": "Fix: User profile opens Social page, fix comment username showing Unknown",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.285.0/Jellyfin.Plugin.Ratings_2.0.285.0.zip",
+        "checksum": "ef5da7e59bbfa276c1c45b8123379652",
+        "timestamp": "2026-04-26T15:30:00Z"
+      },
+      {
+        "version": "2.0.284.0",
+        "changelog": "User Reviews: Add comments on reviews, clickable user avatars/names show profile popup",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.284.0/Jellyfin.Plugin.Ratings_2.0.284.0.zip",
+        "checksum": "961626eec9b0a86f5f4d20b011dbefdd",
+        "timestamp": "2026-04-26T15:00:00Z"
+      },
+      {
+        "version": "2.0.283.0",
+        "changelog": "Fix: Reviews count now appears next to title",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.283.0/Jellyfin.Plugin.Ratings_2.0.283.0.zip",
+        "checksum": "4b869573adb53297491adff96cd9306e",
+        "timestamp": "2026-04-26T14:30:00Z"
+      },
+      {
+        "version": "2.0.282.0",
+        "changelog": "Fix: User Reviews placement - now appears after Studios row",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.282.0/Jellyfin.Plugin.Ratings_2.0.282.0.zip",
+        "checksum": "a627dbe0f95effe0a3f9db18bff8f2fa",
+        "timestamp": "2026-04-26T14:20:00Z"
+      },
+      {
+        "version": "2.0.281.0",
+        "changelog": "Fix: User Reviews API endpoint URL",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.281.0/Jellyfin.Plugin.Ratings_2.0.281.0.zip",
+        "checksum": "fa7ebc330b81bf1b8bdd9af1bd5f27a4",
+        "timestamp": "2026-04-26T14:10:00Z"
+      },
+      {
+        "version": "2.0.280.0",
+        "changelog": "User Reviews section on detail page - display review cards with avatars, ratings, likes/dislikes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.280.0/Jellyfin.Plugin.Ratings_2.0.280.0.zip",
+        "checksum": "5bb07fca95c76b69da8f46584fffbe79",
+        "timestamp": "2026-04-26T14:00:00Z"
+      },
+      {
+        "version": "2.0.279.0",
         "changelog": "Performance: Cache config on frontend - eliminates 10+ redundant API calls on page load",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.345.0/jellyfin-plugin-ratings_1.0.345.0.zip",
-        "checksum": "8c3415f4cd7781eecb3ad94b89edc080",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.279.0/Jellyfin.Plugin.Ratings_2.0.279.0.zip",
+        "checksum": "80a968e81e835ac846722bd86fa424da",
         "timestamp": "2026-04-26T12:00:00Z"
       },
       {
-        "version": "1.0.344.0",
-        "changelog": "Add API key authentication support for admin endpoints",
+        "version": "2.0.278.0",
+        "changelog": "Fix sorting: IMDB/Release/Newly Added now show ALL items, not just rated ones",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.344.0/jellyfin-plugin-ratings_1.0.344.0.zip",
-        "checksum": "c885ee41649b38ca33fc78042f025bf8",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.278.0/Jellyfin.Plugin.Ratings_2.0.278.0.zip",
+        "checksum": "82a9bb09b25d71e4a9ee265a78c2b525",
+        "timestamp": "2026-04-22T23:00:00Z"
+      },
+      {
+        "version": "2.0.277.0",
+        "changelog": "Fix batch stats response key format (badges now display correctly)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.277.0/Jellyfin.Plugin.Ratings_2.0.277.0.zip",
+        "checksum": "245cae38ccc4d85765cca2a71163d5af",
+        "timestamp": "2026-04-22T22:50:00Z"
+      },
+      {
+        "version": "2.0.276.0",
+        "changelog": "Secondary indexes for O(1) rating lookups, batch stats optimization (10x faster)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.276.0/Jellyfin.Plugin.Ratings_2.0.276.0.zip",
+        "checksum": "4b83efe3a5bb83f5682314353d369539",
+        "timestamp": "2026-04-22T22:30:00Z"
+      },
+      {
+        "version": "2.0.275.0",
+        "changelog": "Batch Stats API for performance, fix pagination returning to page 1",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.275.0/Jellyfin.Plugin.Ratings_2.0.275.0.zip",
+        "checksum": "e020525b5870663a4b394e68d733e7d4",
+        "timestamp": "2026-04-22T21:00:00Z"
+      },
+      {
+        "version": "2.0.274.0",
+        "changelog": "Fix API key auth for Media and Notifications endpoints",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.274.0/Jellyfin.Plugin.Ratings_2.0.274.0.zip",
+        "checksum": "9b4a6efa62369ccf162c84acf0fc1ff6",
+        "timestamp": "2026-04-21T15:00:00Z"
+      },
+      {
+        "version": "2.0.273.0",
+        "changelog": "API key support for all admin endpoints",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.273.0/Jellyfin.Plugin.Ratings_2.0.273.0.zip",
+        "checksum": "b94b3f65cc9bd6940a8dd2b21ca0e6de",
+        "timestamp": "2026-04-21T14:00:00Z"
+      },
+      {
+        "version": "2.0.272.0",
+        "changelog": "Fix API key authentication: API keys now work for admin endpoints",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.272.0/Jellyfin.Plugin.Ratings_2.0.272.0.zip",
+        "checksum": "c197d97c837be5681446254820aab1d0",
+        "timestamp": "2026-04-21T13:00:00Z"
+      },
+      {
+        "version": "2.0.271.0",
+        "changelog": "Fix API authentication: add [Authorize] to all endpoints for API key support",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.271.0/Jellyfin.Plugin.Ratings_2.0.271.0.zip",
+        "checksum": "f6ee38295c33421b6669b50b3a9bcb98",
         "timestamp": "2026-04-21T12:00:00Z"
       },
       {
-        "version": "1.0.343.0",
-        "changelog": "Star widget styling, 5-star modes, quick rating, sorting fix, Editor's Choice compatibility, search exclude episodes",
+        "version": "2.0.270.0",
+        "changelog": "Star Widget Styling: customizable colors, background, border, glow, text formats, custom CSS, half-star hover fix",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.343.0/jellyfin-plugin-ratings_1.0.343.0.zip",
-        "checksum": "6d7a5c1ff6f473c7e65505a74593d4b7",
-        "timestamp": "2026-04-21T00:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.270.0/Jellyfin.Plugin.Ratings_2.0.270.0.zip",
+        "checksum": "fbd8d3dc90297f5c1f6b1ca76c94f39c",
+        "timestamp": "2026-04-20T23:30:00Z"
       },
       {
-        "version": "1.0.342.0",
-        "changelog": "Header button group customization, sorting fixes, badge profile vertical axis",
+        "version": "2.0.269.0",
+        "changelog": "Fix sorting mixing libraries, add 5-star display mode, add quick rating mode",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.342.0/jellyfin-plugin-ratings_1.0.342.0.zip",
-        "checksum": "6d753c1de4b257fca7024bb05b56cf98",
-        "timestamp": "2026-04-14T19:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.269.0/Jellyfin.Plugin.Ratings_2.0.269.0.zip",
+        "checksum": "71f40b050f0c25a7bedf169e5cb4f574",
+        "timestamp": "2026-04-20T23:00:00Z"
       },
       {
-        "version": "1.0.341.0",
+        "version": "2.0.268.0",
+        "changelog": "Fix: Editor's Choice Hero Mode compatibility - Home/Favorites tabs now visible on mobile",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.268.0/Jellyfin.Plugin.Ratings_2.0.268.0.zip",
+        "checksum": "b296208c2a94f241c4625d01038df47e",
+        "timestamp": "2026-04-20T22:30:00Z"
+      },
+      {
+        "version": "2.0.267.0",
+        "changelog": "Fix: Editor's Choice plugin compatibility - buttons no longer overlap on mobile",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.267.0/Jellyfin.Plugin.Ratings_2.0.267.0.zip",
+        "checksum": "284c95af8055f4834ec71ba5219bc645",
+        "timestamp": "2026-04-20T22:00:00Z"
+      },
+      {
+        "version": "2.0.266.0",
+        "changelog": "Add option to exclude episodes from search results (enabled by default)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.266.0/Jellyfin.Plugin.Ratings_2.0.266.0.zip",
+        "checksum": "fe2f1cf4ff281622534ec1f80abbdb72",
+        "timestamp": "2026-04-14T19:30:00Z"
+      },
+      {
+        "version": "2.0.265.0",
+        "changelog": "Add language text color option for globe button letters (EN, ES, etc.)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.265.0/Jellyfin.Plugin.Ratings_2.0.265.0.zip",
+        "checksum": "baa90a20f66f160876287188a767ce64",
+        "timestamp": "2026-04-14T18:00:00Z"
+      },
+      {
+        "version": "2.0.264.0",
+        "changelog": "Add search field background color with option to match group background",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.264.0/Jellyfin.Plugin.Ratings_2.0.264.0.zip",
+        "checksum": "5baff8ce4eccbd8e8a32ff21f378fe54",
+        "timestamp": "2026-04-14T17:30:00Z"
+      },
+      {
+        "version": "2.0.263.0",
+        "changelog": "Add Overall Group Opacity slider - master transparency control for entire button group",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.263.0/Jellyfin.Plugin.Ratings_2.0.263.0.zip",
+        "checksum": "9f02e8bba4a98a3914ceb4f447390942",
+        "timestamp": "2026-04-14T17:00:00Z"
+      },
+      {
+        "version": "2.0.262.0",
+        "changelog": "Fix: icon color and opacity now applies to ALL buttons (Search, EN, bell, clock, etc.)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.262.0/Jellyfin.Plugin.Ratings_2.0.262.0.zip",
+        "checksum": "6727abd5b97874e947e1c0c3560f4ed7",
+        "timestamp": "2026-04-14T16:30:00Z"
+      },
+      {
+        "version": "2.0.261.0",
+        "changelog": "Add transparent background toggle, no border toggle, button icon opacity slider",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.261.0/Jellyfin.Plugin.Ratings_2.0.261.0.zip",
+        "checksum": "0cd9d4332b7619f67b641d0b95180a7a",
+        "timestamp": "2026-04-14T16:00:00Z"
+      },
+      {
+        "version": "2.0.260.0",
+        "changelog": "Fix header button styling controls not working",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.260.0/Jellyfin.Plugin.Ratings_2.0.260.0.zip",
+        "checksum": "5769167f255dcf5c21a8540d9bfd73ea",
+        "timestamp": "2026-04-14T15:30:00Z"
+      },
+      {
+        "version": "2.0.259.0",
+        "changelog": "Modern header button styling UI with color pickers, sliders, opacity controls, and live preview",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.259.0/Jellyfin.Plugin.Ratings_2.0.259.0.zip",
+        "checksum": "70f376277b188aa9be37a0934cea2711",
+        "timestamp": "2026-04-14T15:00:00Z"
+      },
+      {
+        "version": "2.0.258.0",
+        "changelog": "Fix sorting button race condition, add header button group styling customization",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.258.0/Jellyfin.Plugin.Ratings_2.0.258.0.zip",
+        "checksum": "19f7d936754d3581e2a676af57d82af3",
+        "timestamp": "2026-04-14T14:00:00Z"
+      },
+      {
+        "version": "2.0.257.0",
+        "changelog": "Fix sorting dropdown duplication, server-side sort pagination, MusicVideo support, stars visual bug, IMDB toggle, duplicates exclude episodes, default Disk Usage tab",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.257.0/Jellyfin.Plugin.Ratings_2.0.257.0.zip",
+        "checksum": "322eceac2f880593b4739fca9d60fda1",
+        "timestamp": "2026-04-14T12:00:00Z"
+      },
+      {
+        "version": "2.0.256.0",
         "changelog": "Hide friends button during video playback (fullscreen)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.341.0/jellyfin-plugin-ratings_1.0.341.0.zip",
-        "checksum": "00dcf7ba0e11c587d98857a81985da2b",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.256.0/Jellyfin.Plugin.Ratings_2.0.256.0.zip",
+        "checksum": "57c126a0f8196f8fdb9f9f3bde4f64f7",
         "timestamp": "2026-04-12T02:00:00Z"
       },
       {
-        "version": "1.0.340.0",
+        "version": "2.0.255.0",
         "changelog": "Skip Continue Watching from duplicate hiding, default OFF",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.340.0/jellyfin-plugin-ratings_1.0.340.0.zip",
-        "checksum": "6d3d5f45b909caa02d9d83f4bf6a4425",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.255.0/Jellyfin.Plugin.Ratings_2.0.255.0.zip",
+        "checksum": "ec7753f9ad40a07bdca992f91d6ef69e",
         "timestamp": "2026-04-12T01:30:00Z"
       },
       {
-        "version": "1.0.339.0",
+        "version": "2.0.254.0",
         "changelog": "Fix home duplicates: use API to resolve series name for episodes",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.339.0/jellyfin-plugin-ratings_1.0.339.0.zip",
-        "checksum": "864e5770beadfdbfefb8143d947a6e38",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.254.0/Jellyfin.Plugin.Ratings_2.0.254.0.zip",
+        "checksum": "f2ac3ff59f7a7f44f07e29fb8548f143",
         "timestamp": "2026-04-12T01:00:00Z"
       },
       {
-        "version": "1.0.338.0",
+        "version": "2.0.253.0",
         "changelog": "Fix home duplicate detection using aria-label",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.338.0/jellyfin-plugin-ratings_1.0.338.0.zip",
-        "checksum": "641d1155d6d3c888fbe62420ce548374",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.253.0/Jellyfin.Plugin.Ratings_2.0.253.0.zip",
+        "checksum": "10ac3ab22ef9806da4bb49eb45480da2",
         "timestamp": "2026-04-12T00:30:00Z"
       },
       {
-        "version": "1.0.337.0",
+        "version": "2.0.252.0",
         "changelog": "Fix home duplicate detection, clean up debug logs",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.337.0/jellyfin-plugin-ratings_1.0.337.0.zip",
-        "checksum": "2ea8ca974a5bdeb28aacbe77b02a8e5c",
-        "timestamp": "2026-04-12T00:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.252.0/Jellyfin.Plugin.Ratings_2.0.252.0.zip",
+        "checksum": "9b22fe899f8731dccae6f247239be3b5",
+        "timestamp": "2026-04-11T23:30:00Z"
       },
       {
-        "version": "1.0.336.0",
-        "changelog": "Sort dropdown, hide home duplicates, language settings fix",
+        "version": "2.0.251.0",
+        "changelog": "Hide duplicate cards on home page (Recently Added, Continue Watching, etc.)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.336.0/jellyfin-plugin-ratings_1.0.336.0.zip",
-        "checksum": "d17c714bb5e6833f6631c646b5fb5351",
-        "timestamp": "2026-04-11T23:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.251.0/Jellyfin.Plugin.Ratings_2.0.251.0.zip",
+        "checksum": "1f405be64f9718b6d0a0ed7fd68cf32a",
+        "timestamp": "2026-04-11T22:30:00Z"
       },
       {
-        "version": "1.0.335.0",
-        "changelog": "Clear All per-tab, admin DM conversation deletion",
+        "version": "2.0.250.0",
+        "changelog": "Sort dropdown for Netflix and library view - Local, Personal, IMDB, Release Date, Newly Added",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.335.0/jellyfin-plugin-ratings_1.0.335.0.zip",
-        "checksum": "7ef7c7905bf2e7ff80574170b841e8a4",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.250.0/Jellyfin.Plugin.Ratings_2.0.250.0.zip",
+        "checksum": "495465d0c85b52da2ec6f07f8c09a6ba",
+        "timestamp": "2026-04-11T22:00:00Z"
+      },
+      {
+        "version": "2.0.249.0",
+        "changelog": "Netflix view: sort by Local Rating, IMDB, Release Date, or Newly Added",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.249.0/Jellyfin.Plugin.Ratings_2.0.249.0.zip",
+        "checksum": "9820e05ae48982f3289a8bd5f915a922",
+        "timestamp": "2026-04-11T21:30:00Z"
+      },
+      {
+        "version": "2.0.248.0",
+        "changelog": "Language settings: fix label, add header button toggle",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.248.0/Jellyfin.Plugin.Ratings_2.0.248.0.zip",
+        "checksum": "b278fa05a3440ff11cb7583658373040",
+        "timestamp": "2026-04-11T21:00:00Z"
+      },
+      {
+        "version": "2.0.247.0",
+        "changelog": "Admins can delete entire DM conversations (for deleted accounts cleanup)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.247.0/Jellyfin.Plugin.Ratings_2.0.247.0.zip",
+        "checksum": "dc427f05e6bf0acb53bf2c9c032968f1",
+        "timestamp": "2026-04-11T20:30:00Z"
+      },
+      {
+        "version": "2.0.246.0",
+        "changelog": "Clear All button now works per-tab (public chat or DM conversation)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.246.0/Jellyfin.Plugin.Ratings_2.0.246.0.zip",
+        "checksum": "43be43fc1e407035da54905db987d848",
         "timestamp": "2026-04-11T20:00:00Z"
       },
       {
-        "version": "1.0.334.0",
+        "version": "2.0.245.0",
         "changelog": "Fix DM delete button visibility - now matches public chat style",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.334.0/jellyfin-plugin-ratings_1.0.334.0.zip",
-        "checksum": "532811e4a41556ee9cf33e003815d29a",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.245.0/Jellyfin.Plugin.Ratings_2.0.245.0.zip",
+        "checksum": "0385ae9b2863b31c320b2245288fac2f",
         "timestamp": "2026-04-11T19:30:00Z"
       },
       {
-        "version": "1.0.333.0",
-        "changelog": "Custom tooltips, button ordering fix, language button position fix",
+        "version": "2.0.244.0",
+        "changelog": "Fix button ordering - use CSS order to ensure consistent layout",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.333.0/jellyfin-plugin-ratings_1.0.333.0.zip",
-        "checksum": "d4df97b9307c12be932f75af73b357d6",
-        "timestamp": "2026-04-11T19:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.244.0/Jellyfin.Plugin.Ratings_2.0.244.0.zip",
+        "checksum": "6ae6ce7453196e466e64b71aa31dc3a4",
+        "timestamp": "2026-04-11T18:30:00Z"
       },
       {
-        "version": "1.0.332.0",
-        "changelog": "Language selector button, ElegantFin mobile fix, complete translations, duplicates fix",
+        "version": "2.0.243.0",
+        "changelog": "Fix language button position - now properly after search field with other buttons",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.332.0/jellyfin-plugin-ratings_1.0.332.0.zip",
-        "checksum": "80712c9c61cba079e99cbed0c44511f4",
-        "timestamp": "2026-04-11T16:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.243.0/Jellyfin.Plugin.Ratings_2.0.243.0.zip",
+        "checksum": "a9ac41e5897893f0b32182229e7777d3",
+        "timestamp": "2026-04-11T18:00:00Z"
       },
       {
-        "version": "1.0.331.0",
-        "changelog": "Add EnableFriendsButton setting (off by default), fix chat init crash",
+        "version": "2.0.242.0",
+        "changelog": "Remove all browser tooltips from header buttons, language button now right after search",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.331.0/jellyfin-plugin-ratings_1.0.331.0.zip",
-        "checksum": "a5cde58e9a09ecece0e2478a8d55f7b8",
-        "timestamp": "2026-04-11T14:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.242.0/Jellyfin.Plugin.Ratings_2.0.242.0.zip",
+        "checksum": "a9db6a183ff79594f5607a2f447d1d79",
+        "timestamp": "2026-04-11T17:15:00Z"
       },
       {
-        "version": "1.0.330.0",
-        "changelog": "Security: ReDoS protection, IDOR fix, memory leak prevention",
+        "version": "2.0.241.0",
+        "changelog": "Remove duplicate tooltips, move language button to right, add notification state translations",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.330.0/jellyfin-plugin-ratings_1.0.330.0.zip",
-        "checksum": "09fc4311466cbf21949e1d2406aa118c",
-        "timestamp": "2026-04-07T22:30:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.241.0/Jellyfin.Plugin.Ratings_2.0.241.0.zip",
+        "checksum": "ec2e03dc210f74dfd98c5896d7f8baa3",
+        "timestamp": "2026-04-11T17:00:00Z"
       },
       {
-        "version": "1.0.329.0",
-        "changelog": "Media Management v2: Disk Usage, Duplicates Finder, Server Restart with countdown",
+        "version": "2.0.240.0",
+        "changelog": "Fix missing translations (search, tooltips), improve language button style",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.329.0/jellyfin-plugin-ratings_1.0.329.0.zip",
-        "checksum": "a2c9d80b4a85364fd972a7eeaec53f0e",
-        "timestamp": "2026-04-07T23:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.240.0/Jellyfin.Plugin.Ratings_2.0.240.0.zip",
+        "checksum": "7fc766195f8f28a90203d330d3203cd7",
+        "timestamp": "2026-04-11T16:30:00Z"
       },
       {
-        "version": "1.0.328.0",
-        "changelog": "Add user reviews with like/dislike system",
+        "version": "2.0.239.0",
+        "changelog": "Add language selector button to header for users to change plugin language",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.328.0/jellyfin-plugin-ratings_1.0.328.0.zip",
-        "checksum": "ee84a19719fad1bff6ac110064301b00",
-        "timestamp": "2026-04-06T22:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.239.0/Jellyfin.Plugin.Ratings_2.0.239.0.zip",
+        "checksum": "a579b451d70c4ac5864b548b44bf82c1",
+        "timestamp": "2026-04-11T15:30:00Z"
       },
       {
-        "version": "1.0.327.0",
+        "version": "2.0.238.0",
+        "changelog": "ElegantFin theme mobile compatibility fix (refs #41), complete translations for moderator panel",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.238.0/Jellyfin.Plugin.Ratings_2.0.238.0.zip",
+        "checksum": "4a0299a2a0315e59097073300b0d3453",
+        "timestamp": "2026-04-11T15:00:00Z"
+      },
+      {
+        "version": "2.0.237.0",
+        "changelog": "Fix duplicates detection (movies only), add missing translations for all 16 languages",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.237.0/Jellyfin.Plugin.Ratings_2.0.237.0.zip",
+        "checksum": "3ad9fea0c410f9a43b640b7ef9ad818c",
+        "timestamp": "2026-04-11T14:30:00Z"
+      },
+      {
+        "version": "2.0.236.0",
+        "changelog": "Add EnableFriendsButton setting (off by default)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.236.0/Jellyfin.Plugin.Ratings_2.0.236.0.zip",
+        "checksum": "b9c70b03c15830c9c5d1db2db0b0b617",
+        "timestamp": "2026-04-11T13:30:00Z"
+      },
+      {
+        "version": "2.0.235.0",
+        "changelog": "Fix missing chatClearAllBtn causing chat init crash",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.235.0/Jellyfin.Plugin.Ratings_2.0.235.0.zip",
+        "checksum": "66af6485602e0182da62bf9a6cb1a0f8",
+        "timestamp": "2026-04-11T13:15:00Z"
+      },
+      {
+        "version": "2.0.234.0",
+        "changelog": "Add debug logging to diagnose chat heartbeat issue",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.234.0/Jellyfin.Plugin.Ratings_2.0.234.0.zip",
+        "checksum": "301a9ff759ed89feb8e0220ac5df5775",
+        "timestamp": "2026-04-11T13:00:00Z"
+      },
+      {
+        "version": "2.0.233.0",
+        "changelog": "Show loading on sort button instead of inline div",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.233.0/Jellyfin.Plugin.Ratings_2.0.233.0.zip",
+        "checksum": "dcf27f3e26c20a368e72bc1ddfcad0d6",
+        "timestamp": "2026-04-11T12:30:00Z"
+      },
+      {
+        "version": "2.0.232.0",
+        "changelog": "Fix duplicate rating badges on sorted library view",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.232.0/Jellyfin.Plugin.Ratings_2.0.232.0.zip",
+        "checksum": "b0e283e8b8e7bc979c8ac63613b8fa18",
+        "timestamp": "2026-04-11T12:15:00Z"
+      },
+      {
+        "version": "2.0.231.0",
+        "changelog": "Fix rating sort to work across all pages - fetches all library items before sorting",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.231.0/Jellyfin.Plugin.Ratings_2.0.231.0.zip",
+        "checksum": "171898a9c2eb8b55ff0e986930571162",
+        "timestamp": "2026-04-11T12:00:00Z"
+      },
+      {
+        "version": "2.0.230.0",
+        "changelog": "Fix disk detection for Docker/Synology - properly map DriveInfo to /proc/mounts devices",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.230.0/Jellyfin.Plugin.Ratings_2.0.230.0.zip",
+        "checksum": "dd1e1606a4e39168b60b58135f1a6082",
+        "timestamp": "2026-04-08T00:15:00Z"
+      },
+      {
+        "version": "2.0.229.0",
+        "changelog": "Fix disk detection - use device names from /proc/mounts instead of size-based grouping",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.229.0/Jellyfin.Plugin.Ratings_2.0.229.0.zip",
+        "checksum": "7f902259e9d155d42f33103e9d367a45",
+        "timestamp": "2026-04-07T22:45:00Z"
+      },
+      {
+        "version": "2.0.228.0",
+        "changelog": "ReDoS protection in ChatController with compiled regex and timeout",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.228.0/Jellyfin.Plugin.Ratings_2.0.228.0.zip",
+        "checksum": "67cf72e37673ecd8985586495a4151f1",
+        "timestamp": "2026-04-07T22:20:00Z"
+      },
+      {
+        "version": "2.0.227.0",
+        "changelog": "XSS protection: escapeJs for all onclick handlers with user data",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.227.0/Jellyfin.Plugin.Ratings_2.0.227.0.zip",
+        "checksum": "56561897edf447b433b620e90f392901",
+        "timestamp": "2026-04-07T22:10:00Z"
+      },
+      {
+        "version": "2.0.226.0",
+        "changelog": "Security hardening: ReDoS protection, rate limit memory leak fix, IDOR protection, JSON validation",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.226.0/Jellyfin.Plugin.Ratings_2.0.226.0.zip",
+        "checksum": "96fedcae09d763fb5e7e44e87d459292",
+        "timestamp": "2026-04-07T22:00:00Z"
+      },
+      {
+        "version": "2.0.225.0",
+        "changelog": "Fix disk detection for Docker/LVM - group by actual filesystem, not device name",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.225.0/Jellyfin.Plugin.Ratings_2.0.225.0.zip",
+        "checksum": "788fd4fd6e74bdc04843cd653ccdca24",
+        "timestamp": "2026-04-07T18:45:00Z"
+      },
+      {
+        "version": "2.0.224.0",
+        "changelog": "Fix Linux disk detection to show actual physical disks; Fix modal tab reset on reopen",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.224.0/Jellyfin.Plugin.Ratings_2.0.224.0.zip",
+        "checksum": "7c7fbe01262dfca21c5c9fda447e3a15",
+        "timestamp": "2026-04-07T18:30:00Z"
+      },
+      {
+        "version": "2.0.223.0",
+        "changelog": "Disk Usage shows physical disks only; Restart notification as bottom-left toast",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.223.0/Jellyfin.Plugin.Ratings_2.0.223.0.zip",
+        "checksum": "43c966873f4cc729a44d7dca50a23e13",
+        "timestamp": "2026-04-07T18:15:00Z"
+      },
+      {
+        "version": "2.0.222.0",
+        "changelog": "Fix Disk Usage and Duplicates API response parsing",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.222.0/Jellyfin.Plugin.Ratings_2.0.222.0.zip",
+        "checksum": "f1acd7c4095e914208d35c247aeb18ed",
+        "timestamp": "2026-04-07T18:00:00Z"
+      },
+      {
+        "version": "2.0.221.0",
+        "changelog": "Media Management v2: Disk Usage, Duplicate Finder, Server Restart with live countdown",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.221.0/Jellyfin.Plugin.Ratings_2.0.221.0.zip",
+        "checksum": "dcf07762f2809fcc00b24cec00164907",
+        "timestamp": "2026-04-07T17:45:00Z"
+      },
+      {
+        "version": "2.0.220.0",
+        "changelog": "Show like/dislike counts in all ratings list",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.220.0/Jellyfin.Plugin.Ratings_2.0.220.0.zip",
+        "checksum": "447b15eb7195133cc138e25901b799c1",
+        "timestamp": "2026-04-06T21:30:00Z"
+      },
+      {
+        "version": "2.0.219.0",
+        "changelog": "Add user reviews with like/dislike, rating modal with review textarea",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.219.0/Jellyfin.Plugin.Ratings_2.0.219.0.zip",
+        "checksum": "8cebc3789d3cbaa767ae82bc64b36beb",
+        "timestamp": "2026-04-06T21:00:00Z"
+      },
+      {
+        "version": "2.0.218.0",
+        "changelog": "Fix friends button going off-screen, auto-reposition on resize",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.218.0/Jellyfin.Plugin.Ratings_2.0.218.0.zip",
+        "checksum": "5ec6f5b21fd1c529e1223645870dc9ad",
+        "timestamp": "2026-04-06T20:00:00Z"
+      },
+      {
+        "version": "2.0.217.0",
         "changelog": "Add music library support to search (Audio, MusicAlbum, MusicArtist)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.327.0/jellyfin-plugin-ratings_1.0.327.0.zip",
-        "checksum": "dbd604b637f18e676e0daceb0c8b84b6",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.217.0/Jellyfin.Plugin.Ratings_2.0.217.0.zip",
+        "checksum": "08a3903699c5128c8fbc7330fd71952a",
         "timestamp": "2026-04-06T19:00:00Z"
       },
       {
-        "version": "1.0.326.0",
-        "changelog": "Unified header button group (monolith UI) + chat keyboard fix",
+        "version": "2.0.216.0",
+        "changelog": "Fix chat input stealing keyboard from video player (spacebar pausing)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.326.0/jellyfin-plugin-ratings_1.0.326.0.zip",
-        "checksum": "73733f44f381c512834932d98a8bd301",
-        "timestamp": "2026-04-03T18:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.216.0/Jellyfin.Plugin.Ratings_2.0.216.0.zip",
+        "checksum": "71d172701756bde614e85acd23548562",
+        "timestamp": "2026-04-02T18:00:00Z"
       },
       {
-        "version": "1.0.325.0",
-        "changelog": "Initialize plugin only after login + fix long titles in Leaving Soon",
+        "version": "2.0.215.0",
+        "changelog": "Increase spacing above Home/Favorites tabs",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.325.0/jellyfin-plugin-ratings_1.0.325.0.zip",
-        "checksum": "41d77246b921a3de0707287bc049c90a",
-        "timestamp": "2026-04-01T03:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.215.0/Jellyfin.Plugin.Ratings_2.0.215.0.zip",
+        "checksum": "9e9c6b9efac42c2cba4e392f46c140ee",
+        "timestamp": "2026-04-02T17:30:00Z"
       },
       {
-        "version": "1.0.324.0",
-        "changelog": "Fix duplicate sort buttons appearing after navigation",
+        "version": "2.0.214.0",
+        "changelog": "Fix tabs container padding instead of margin gap",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.324.0/jellyfin-plugin-ratings_1.0.324.0.zip",
-        "checksum": "ea7772c33a55833173c702efa3f6a891",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.214.0/Jellyfin.Plugin.Ratings_2.0.214.0.zip",
+        "checksum": "b9b85790d4c1f90aeb55bb2a1885b3e8",
+        "timestamp": "2026-04-02T17:15:00Z"
+      },
+      {
+        "version": "2.0.213.0",
+        "changelog": "Push Home/Favorites tabs down below mobile bar",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.213.0/Jellyfin.Plugin.Ratings_2.0.213.0.zip",
+        "checksum": "ea49d223a5f3ef36d515fc153f488da3",
+        "timestamp": "2026-04-02T17:00:00Z"
+      },
+      {
+        "version": "2.0.212.0",
+        "changelog": "Fix + button escaping from group at 925px width",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.212.0/Jellyfin.Plugin.Ratings_2.0.212.0.zip",
+        "checksum": "75985190410bb41d44fc0814b2456821",
+        "timestamp": "2026-04-02T16:30:00Z"
+      },
+      {
+        "version": "2.0.211.0",
+        "changelog": "Mobile: full-width bar, push content down properly",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.211.0/Jellyfin.Plugin.Ratings_2.0.211.0.zip",
+        "checksum": "332137669c8564f862ee987e964bf125",
+        "timestamp": "2026-04-02T16:00:00Z"
+      },
+      {
+        "version": "2.0.210.0",
+        "changelog": "Fix mobile button group to stay as unified monolith",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.210.0/Jellyfin.Plugin.Ratings_2.0.210.0.zip",
+        "checksum": "73a10a39e7130faa12add2946dd39a7d",
+        "timestamp": "2026-04-02T15:30:00Z"
+      },
+      {
+        "version": "2.0.209.0",
+        "changelog": "Restore native SyncPlay button visibility",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.209.0/Jellyfin.Plugin.Ratings_2.0.209.0.zip",
+        "checksum": "317cc8369ba9b8fdc4b6ecdf3a0715d0",
+        "timestamp": "2026-04-02T15:00:00Z"
+      },
+      {
+        "version": "2.0.208.0",
+        "changelog": "Fix mediaManagementBtn to go into button group",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.208.0/Jellyfin.Plugin.Ratings_2.0.208.0.zip",
+        "checksum": "da5300b3ff84c9316e0980104897e25b",
+        "timestamp": "2026-04-02T14:30:00Z"
+      },
+      {
+        "version": "2.0.207.0",
+        "changelog": "Add Media button to unified group",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.207.0/Jellyfin.Plugin.Ratings_2.0.207.0.zip",
+        "checksum": "bda3647bef35b8533799d0f47f692c61",
+        "timestamp": "2026-04-02T14:15:00Z"
+      },
+      {
+        "version": "2.0.206.0",
+        "changelog": "Remove native button capture - only custom buttons in group",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.206.0/Jellyfin.Plugin.Ratings_2.0.206.0.zip",
+        "checksum": "5f4be4c3f6210803d61b2103b4444e14",
+        "timestamp": "2026-04-02T14:00:00Z"
+      },
+      {
+        "version": "2.0.205.0",
+        "changelog": "Search first, capture native buttons into group",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.205.0/Jellyfin.Plugin.Ratings_2.0.205.0.zip",
+        "checksum": "cb90a7500e03ac01dd1dd02bb655c748",
+        "timestamp": "2026-04-02T13:15:00Z"
+      },
+      {
+        "version": "2.0.204.0",
+        "changelog": "ALL buttons in unified group (bell, +, search, latest, chat)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.204.0/Jellyfin.Plugin.Ratings_2.0.204.0.zip",
+        "checksum": "0f7fbe548570edc3985ab00ec1cf3a23",
+        "timestamp": "2026-04-02T13:00:00Z"
+      },
+      {
+        "version": "2.0.203.0",
+        "changelog": "Unified button group, mobile second header row",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.203.0/Jellyfin.Plugin.Ratings_2.0.203.0.zip",
+        "checksum": "7b82801d711b8c9f1a77d0535233f57e",
+        "timestamp": "2026-04-02T12:30:00Z"
+      },
+      {
+        "version": "2.0.202.0",
+        "changelog": "Fix button order: bell > + > search",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.202.0/Jellyfin.Plugin.Ratings_2.0.202.0.zip",
+        "checksum": "9455eda82a59597ed97e1342378731f7",
+        "timestamp": "2026-04-02T12:15:00Z"
+      },
+      {
+        "version": "2.0.201.0",
+        "changelog": "Move + button to left of search field",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.201.0/Jellyfin.Plugin.Ratings_2.0.201.0.zip",
+        "checksum": "21f37193a0db4e07c081fe7e35ec08ed",
+        "timestamp": "2026-04-02T12:00:00Z"
+      },
+      {
+        "version": "2.0.200.0",
+        "changelog": "Fix mobile responsive for header icons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.200.0/Jellyfin.Plugin.Ratings_2.0.200.0.zip",
+        "checksum": "b22d98450a21b7de2cb7bd10b7cea287",
+        "timestamp": "2026-04-02T11:45:00Z"
+      },
+      {
+        "version": "2.0.199.0",
+        "changelog": "Bell and search moved to header with other icons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.199.0/Jellyfin.Plugin.Ratings_2.0.199.0.zip",
+        "checksum": "4ad8681344721c82f9d7187ebd641443",
+        "timestamp": "2026-04-02T11:30:00Z"
+      },
+      {
+        "version": "2.0.198.0",
+        "changelog": "Request Media button moved to header, icon style like other buttons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.198.0/Jellyfin.Plugin.Ratings_2.0.198.0.zip",
+        "checksum": "2cfbe9c91ef9086e897fc3dfde7a296a",
+        "timestamp": "2026-04-02T11:00:00Z"
+      },
+      {
+        "version": "2.0.197.0",
+        "changelog": "Fix resize grip direction for bottom-left",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.197.0/Jellyfin.Plugin.Ratings_2.0.197.0.zip",
+        "checksum": "1edd43483bf4d31dd3cee1738f9f00ce",
+        "timestamp": "2026-04-02T10:20:00Z"
+      },
+      {
+        "version": "2.0.196.0",
+        "changelog": "Proper 6-dot triangular resize grip",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.196.0/Jellyfin.Plugin.Ratings_2.0.196.0.zip",
+        "checksum": "d197b4e7ac0662dfb77276b20e69d84f",
+        "timestamp": "2026-04-02T10:15:00Z"
+      },
+      {
+        "version": "2.0.195.0",
+        "changelog": "Simple Unicode resize grip (⋰)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.195.0/Jellyfin.Plugin.Ratings_2.0.195.0.zip",
+        "checksum": "96625aa383fda473997c253c7aaad6f3",
+        "timestamp": "2026-04-02T10:00:00Z"
+      },
+      {
+        "version": "2.0.194.0",
+        "changelog": "Proper resize grip icon (3 diagonal lines)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.194.0/Jellyfin.Plugin.Ratings_2.0.194.0.zip",
+        "checksum": "3ff17564057d213ddd1315a175c055f0",
+        "timestamp": "2026-04-01T16:00:00Z"
+      },
+      {
+        "version": "2.0.193.0",
+        "changelog": "Better resize handle icon, insights.md updated",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.193.0/jellyfin-plugin-ratings_2.0.193.0.zip",
+        "checksum": "26facb2b7b7d48defbfaa0e5bb380580",
+        "timestamp": "2026-04-01T15:30:00Z"
+      },
+      {
+        "version": "2.0.192.0",
+        "changelog": "Friends panel draggable by header, position saved, resize from bottom-left",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.192.0/jellyfin-plugin-ratings_2.0.192.0.zip",
+        "checksum": "e4940a4bf58431192ff5ea1b9ff3bc57",
+        "timestamp": "2026-04-01T15:00:00Z"
+      },
+      {
+        "version": "2.0.191.0",
+        "changelog": "Friends panel: fixed height with scroll, resizable, badge fix",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.191.0/jellyfin-plugin-ratings_2.0.191.0.zip",
+        "checksum": "99798651745dae35090ce6f3c7852297",
+        "timestamp": "2026-04-01T14:30:00Z"
+      },
+      {
+        "version": "2.0.190.0",
+        "changelog": "Default privacy to public, fix presets null check",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.190.0/jellyfin-plugin-ratings_2.0.190.0.zip",
+        "checksum": "200b301ad1df25179ac5d86667af6155",
+        "timestamp": "2026-04-01T14:00:00Z"
+      },
+      {
+        "version": "2.0.189.0",
+        "changelog": "Debug logging for Online tab issue",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.189.0/jellyfin-plugin-ratings_2.0.189.0.zip",
+        "checksum": "be6730d82625d701ea88e46fa2fc4abe",
+        "timestamp": "2026-04-01T13:30:00Z"
+      },
+      {
+        "version": "2.0.188.0",
+        "changelog": "Online tab shows only online users, Add Friend search clickable",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.188.0/jellyfin-plugin-ratings_2.0.188.0.zip",
+        "checksum": "6456ce95f9b369c97d976148963c4cc4",
+        "timestamp": "2026-04-01T13:00:00Z"
+      },
+      {
+        "version": "2.0.187.0",
+        "changelog": "Online tab: compact layout, click to open profile",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.187.0/jellyfin-plugin-ratings_2.0.187.0.zip",
+        "checksum": "42a455b684d96cc46fc945f2c33fd862",
+        "timestamp": "2026-04-01T12:30:00Z"
+      },
+      {
+        "version": "2.0.186.0",
+        "changelog": "Add Online tab in friends panel to see all online users",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.186.0/jellyfin-plugin-ratings_2.0.186.0.zip",
+        "checksum": "ce31d727d97f5e4dce07d3ddccfa89ee",
+        "timestamp": "2026-04-01T12:00:00Z"
+      },
+      {
+        "version": "2.0.185.0",
+        "changelog": "Privacy enforcement: ShowWatchedHistory, ShowFriendsList, AllowMessages",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.185.0/jellyfin-plugin-ratings_2.0.185.0.zip",
+        "checksum": "e646a7a2e6f421160aa947589e4328ab",
+        "timestamp": "2026-04-01T11:00:00Z"
+      },
+      {
+        "version": "2.0.184.0",
+        "changelog": "Fix long titles in Leaving Soon pushing button off screen",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.184.0/jellyfin-plugin-ratings_2.0.184.0.zip",
+        "checksum": "3453eaeadf79c6c058fccb0aa2d4a373",
+        "timestamp": "2026-04-01T02:00:00Z"
+      },
+      {
+        "version": "2.0.183.0",
+        "changelog": "Initialize plugin only after user login - no flash on login page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.183.0/jellyfin-plugin-ratings_2.0.183.0.zip",
+        "checksum": "c54ac1ba97b47179e3e4060b32138a7d",
+        "timestamp": "2026-04-01T01:00:00Z"
+      },
+      {
+        "version": "2.0.182.0",
+        "changelog": "Fix duplicate sort buttons on navigation",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.182.0/jellyfin-plugin-ratings_2.0.182.0.zip",
+        "checksum": "2d5293b94478a6e37b012e691e587039",
+        "timestamp": "2026-04-01T00:15:00Z"
+      },
+      {
+        "version": "2.0.181.0",
+        "changelog": "Clean release: Remove all debug logging, sort buttons fully working",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.181.0/jellyfin-plugin-ratings_2.0.181.0.zip",
+        "checksum": "32625c6af7e62535f057924dc3d82bb5",
+        "timestamp": "2026-03-31T19:50:00Z"
+      },
+      {
+        "version": "2.0.180.0",
+        "changelog": "Fix sort buttons: Minimal inline styles, CSS handles hover/active",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.180.0/jellyfin-plugin-ratings_2.0.180.0.zip",
+        "checksum": "b57df4f69b77e19c5d6b68798e9dc62b",
+        "timestamp": "2026-03-31T19:40:00Z"
+      },
+      {
+        "version": "2.0.179.0",
+        "changelog": "Fix sort buttons: Add pointer-events and z-index for clickability",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.179.0/jellyfin-plugin-ratings_2.0.179.0.zip",
+        "checksum": "7bc035ebe26533521b956b79b34c436f",
+        "timestamp": "2026-03-31T19:30:00Z"
+      },
+      {
+        "version": "2.0.178.0",
+        "changelog": "Fix sort buttons: Find VISIBLE .btnSort (4 exist, only 1 visible)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.178.0/jellyfin-plugin-ratings_2.0.178.0.zip",
+        "checksum": "98a9c860cba9af58eb4de243db1fea14",
+        "timestamp": "2026-03-31T19:20:00Z"
+      },
+      {
+        "version": "2.0.177.0",
+        "changelog": "Fix sort buttons: Inject buttons directly without span wrapper",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.177.0/jellyfin-plugin-ratings_2.0.177.0.zip",
+        "checksum": "02fb3e20e141b1dcfecd7de49e43cde9",
+        "timestamp": "2026-03-31T19:10:00Z"
+      },
+      {
+        "version": "2.0.176.0",
+        "changelog": "Fix sort buttons: Add inline styles as CSS fallback",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.176.0/jellyfin-plugin-ratings_2.0.176.0.zip",
+        "checksum": "90a2ed73b25baa7e091a5373b13716cd",
+        "timestamp": "2026-03-31T19:00:00Z"
+      },
+      {
+        "version": "2.0.175.0",
+        "changelog": "Debug: Check for multiple .btnSort elements",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.175.0/jellyfin-plugin-ratings_2.0.175.0.zip",
+        "checksum": "626ff385505380d2a7634d4c1d825a4c",
+        "timestamp": "2026-03-31T18:50:00Z"
+      },
+      {
+        "version": "2.0.174.0",
+        "changelog": "Fix sort buttons: Verify toolbar is visible before injection",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.174.0/jellyfin-plugin-ratings_2.0.174.0.zip",
+        "checksum": "ecb1b5e75f623ff611d8afca2a941555",
+        "timestamp": "2026-03-31T18:40:00Z"
+      },
+      {
+        "version": "2.0.173.0",
+        "changelog": "Fix sort buttons: Check container in CURRENT toolbar, not orphaned DOM",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.173.0/jellyfin-plugin-ratings_2.0.173.0.zip",
+        "checksum": "850a2f6e1c426061cfc44fd7704f38bb",
+        "timestamp": "2026-03-31T18:30:00Z"
+      },
+      {
+        "version": "2.0.172.0",
+        "changelog": "Diagnostic: Add logging to debug sort buttons navigation issue",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.172.0/jellyfin-plugin-ratings_2.0.172.0.zip",
+        "checksum": "13434e9ad23dbe08ecca1c4e84a6a430",
+        "timestamp": "2026-03-31T18:20:00Z"
+      },
+      {
+        "version": "2.0.171.0",
+        "changelog": "Fix sort buttons: Simplified MutationObserver - inject when .btnSort appears",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.171.0/jellyfin-plugin-ratings_2.0.171.0.zip",
+        "checksum": "78e0d3777b47d5eb190871c3312b7715",
+        "timestamp": "2026-03-31T18:10:00Z"
+      },
+      {
+        "version": "2.0.170.0",
+        "changelog": "Fix sort buttons: Add MutationObserver for reliable DOM detection",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.170.0/jellyfin-plugin-ratings_2.0.170.0.zip",
+        "checksum": "73bb18dfe3a32b7215ac659cc5cc97cf",
+        "timestamp": "2026-03-31T18:00:00Z"
+      },
+      {
+        "version": "2.0.169.0",
+        "changelog": "Fix sort buttons: Use .listPaging/.btnSort selectors, add retry logic",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.169.0/jellyfin-plugin-ratings_2.0.169.0.zip",
+        "checksum": "27e07b65b6109fe8900869c44b0494d5",
+        "timestamp": "2026-03-31T17:45:00Z"
+      },
+      {
+        "version": "2.0.168.0",
+        "changelog": "Fix sort buttons: Only skip if Netflix view is actually rendered",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.168.0/jellyfin-plugin-ratings_2.0.168.0.zip",
+        "checksum": "4262897e02a1f5ca9fd20df1b15aa451",
+        "timestamp": "2026-03-31T17:30:00Z"
+      },
+      {
+        "version": "2.0.167.0",
+        "changelog": "Debug: Add comprehensive logging for sort buttons injection",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.167.0/jellyfin-plugin-ratings_2.0.167.0.zip",
+        "checksum": "c47afba4e725337444a935d3f6cce8c8",
+        "timestamp": "2026-03-31T17:20:00Z"
+      },
+      {
+        "version": "2.0.166.0",
+        "changelog": "Fix sort buttons: Require toolbar before injection, only inject in toolbar area",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.166.0/jellyfin-plugin-ratings_2.0.166.0.zip",
+        "checksum": "9ff5b5e70ee5ce8ee40510975a2c5e57",
+        "timestamp": "2026-04-01T02:30:00Z"
+      },
+      {
+        "version": "2.0.165.0",
+        "changelog": "Fix sort buttons: Remove strict listTopPaging check",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.165.0/jellyfin-plugin-ratings_2.0.165.0.zip",
+        "checksum": "1a9eedacc5541c7c35815e47d708123c",
+        "timestamp": "2026-04-01T02:00:00Z"
+      },
+      {
+        "version": "2.0.164.0",
+        "changelog": "Debug: More logging for sort buttons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.164.0/jellyfin-plugin-ratings_2.0.164.0.zip",
+        "checksum": "d583c3770ed1c18d035085d41d5b4c77",
+        "timestamp": "2026-04-01T01:30:00Z"
+      },
+      {
+        "version": "2.0.163.0",
+        "changelog": "Fix sort buttons: Check element is actually connected to DOM",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.163.0/jellyfin-plugin-ratings_2.0.163.0.zip",
+        "checksum": "e801fb39a85af4da01722eeda1ee8b03",
+        "timestamp": "2026-04-01T01:00:00Z"
+      },
+      {
+        "version": "2.0.162.0",
+        "changelog": "Fix sort buttons: Wait for Jellyfin to finish loading before injection",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.162.0/jellyfin-plugin-ratings_2.0.162.0.zip",
+        "checksum": "2b812d9d765ed676209318e8f36d13f4",
+        "timestamp": "2026-04-01T00:30:00Z"
+      },
+      {
+        "version": "2.0.161.0",
+        "changelog": "Debug: Sort buttons detection logging",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.161.0/jellyfin-plugin-ratings_2.0.161.0.zip",
+        "checksum": "b8b0d9af71ddc359985d83e7d80fe6e1",
         "timestamp": "2026-04-01T00:00:00Z"
       },
       {
-        "version": "1.0.323.0",
-        "changelog": "AniDB fallback for anime libraries + reliable sort buttons fix",
+        "version": "2.0.160.0",
+        "changelog": "Fix library sort buttons - more aggressive retry and frequent checks",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.323.0/jellyfin-plugin-ratings_1.0.323.0.zip",
-        "checksum": "f984d419b918a76dd54ff805146956e5",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.160.0/jellyfin-plugin-ratings_2.0.160.0.zip",
+        "checksum": "7470e40e8f31fb222cebd3a598e23655",
+        "timestamp": "2026-03-31T23:30:00Z"
+      },
+      {
+        "version": "2.0.159.0",
+        "changelog": "Add AniDB fallback for anime libraries, fix library sort buttons loading",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.159.0/jellyfin-plugin-ratings_2.0.159.0.zip",
+        "checksum": "5a9e5aac7244defcd083aff24b3fdca7",
         "timestamp": "2026-03-31T23:00:00Z"
       },
       {
-        "version": "1.0.322.0",
-        "changelog": "Fix: Library sort buttons load reliably on all page types",
+        "version": "2.0.158.0",
+        "changelog": "Add Privacy Settings UI with presets and individual controls",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.322.0/jellyfin-plugin-ratings_1.0.322.0.zip",
-        "checksum": "7305c827b3d53cec7b982cf38eb72c41",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.158.0/jellyfin-plugin-ratings_2.0.158.0.zip",
+        "checksum": "7cff256ef1bb5bc7153e4b64a31d798f",
+        "timestamp": "2026-03-31T22:30:00Z"
+      },
+      {
+        "version": "2.0.157.0",
+        "changelog": "Add Privacy Settings API endpoints for social features",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.157.0/jellyfin-plugin-ratings_2.0.157.0.zip",
+        "checksum": "b011f906b8bc0b422e85ca163e232957",
         "timestamp": "2026-03-31T22:00:00Z"
       },
       {
-        "version": "1.0.321.0",
-        "changelog": "Collections: Show average rating from child items, stars display average visually",
+        "version": "2.0.156.0",
+        "changelog": "Cleanup: Remove debug logs, stable library sort buttons",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.321.0/jellyfin-plugin-ratings_1.0.321.0.zip",
-        "checksum": "b91054cfbe28461ea5f911febdace8a8",
-        "timestamp": "2026-03-31T20:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.156.0/jellyfin-plugin-ratings_2.0.156.0.zip",
+        "checksum": "cdd7ecda03a366760334639f16a0e5ae",
+        "timestamp": "2026-03-31T21:30:00Z"
       },
       {
-        "version": "1.0.320.0",
-        "changelog": "Fix: Rating badges on collection pages, ratings persist when media files are replaced",
+        "version": "2.0.155.0",
+        "changelog": "Fix: Improved library sort buttons detection for all page types",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.320.0/jellyfin-plugin-ratings_1.0.320.0.zip",
-        "checksum": "c5f180fb41d4e09b497345495093bc16",
-        "timestamp": "2026-03-31T15:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.155.0/jellyfin-plugin-ratings_2.0.155.0.zip",
+        "checksum": "1ec134dd40a941aed0b8819132fd3a29",
+        "timestamp": "2026-03-31T21:00:00Z"
       },
       {
-        "version": "1.0.319.0",
-        "changelog": "Ask to keep feature in Leaving Soon - users can request to keep media from deletion with X/Y counter and tooltips",
+        "version": "2.0.154.0",
+        "changelog": "Fix: Library sort buttons load more reliably on navigation",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.319.0/jellyfin-plugin-ratings_1.0.319.0.zip",
-        "checksum": "2ecc7d0ba58c9577d39ec1f8424c8553",
-        "timestamp": "2026-03-28T19:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.154.0/jellyfin-plugin-ratings_2.0.154.0.zip",
+        "checksum": "3d07c2b98eab702d38f1fe642e82a02f",
+        "timestamp": "2026-03-31T20:30:00Z"
       },
       {
-        "version": "1.0.318.0",
-        "changelog": "Rating sort buttons in library view - sort media by custom ratings",
+        "version": "2.0.153.0",
+        "changelog": "Fix: Collection stars now show average rating visually",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.318.0/jellyfin-plugin-ratings_1.0.318.0.zip",
-        "checksum": "d42e45e3682e414f9196dcfb62e48361",
-        "timestamp": "2026-03-28T17:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.153.0/jellyfin-plugin-ratings_2.0.153.0.zip",
+        "checksum": "f9c7d2e30a1ca1c6c6f2670c298bf881",
+        "timestamp": "2026-03-31T19:00:00Z"
       },
       {
-        "version": "1.0.317.0",
-        "changelog": "Fix Show Notification Toggle setting, add Enable Notifications by Default option",
+        "version": "2.0.152.0",
+        "changelog": "Debug logging for collection ratings",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.317.0/jellyfin-plugin-ratings_1.0.317.0.zip",
-        "checksum": "121ada73aae40f1bad26fe3041315234",
-        "timestamp": "2026-03-28T12:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.152.0/jellyfin-plugin-ratings_2.0.152.0.zip",
+        "checksum": "2f5f2a3a178519c438473a779fcb245d",
+        "timestamp": "2026-03-31T18:30:00Z"
       },
       {
-        "version": "1.0.316.0",
+        "version": "2.0.151.0",
+        "changelog": "Fix JS error: ApiClient not defined on init, collection ratings",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.151.0/jellyfin-plugin-ratings_2.0.151.0.zip",
+        "checksum": "3fd48cb6c8aa1e2e0f3065dffc906950",
+        "timestamp": "2026-03-31T18:00:00Z"
+      },
+      {
+        "version": "2.0.150.0",
+        "changelog": "Fix collections: Use GetLinkedChildren for proper child item resolution",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.150.0/jellyfin-plugin-ratings_2.0.150.0.zip",
+        "checksum": "a3590afa0e67a57ac10fddef15ed7e3a",
+        "timestamp": "2026-03-31T17:30:00Z"
+      },
+      {
+        "version": "2.0.149.0",
+        "changelog": "Fix collections: Use GetLinkedChildren for proper child item resolution",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.149.0/jellyfin-plugin-ratings_2.0.149.0.zip",
+        "checksum": "964136085f0710207b20f1285134e9cd",
+        "timestamp": "2026-03-31T17:00:00Z"
+      },
+      {
+        "version": "2.0.148.0",
+        "changelog": "Collections: Show average rating from child items, fix collection card badges in library",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.148.0/jellyfin-plugin-ratings_2.0.148.0.zip",
+        "checksum": "67624c8fa7e52513571976927ea19185",
+        "timestamp": "2026-03-31T16:00:00Z"
+      },
+      {
+        "version": "2.0.147.0",
+        "changelog": "Fix: Ratings persist when media files are replaced (uses TMDB/IMDB ID fallback)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.147.0/jellyfin-plugin-ratings_2.0.147.0.zip",
+        "checksum": "6e9b87c8203b0b0ce19d716c9112934a",
+        "timestamp": "2026-03-31T14:00:00Z"
+      },
+      {
+        "version": "2.0.146.0",
+        "changelog": "Fix: Rating badges now show on collection page movie cards",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.146.0/jellyfin-plugin-ratings_2.0.146.0.zip",
+        "checksum": "49c4aa38c101da5f8b48cc6fa1f9ed46",
+        "timestamp": "2026-03-31T13:00:00Z"
+      },
+      {
+        "version": "2.0.145.0",
+        "changelog": "Enhanced profile stats: movies watched, series watched, total watch hours from Jellyfin data",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.145.0/jellyfin-plugin-ratings_2.0.145.0.zip",
+        "checksum": "7a2047c1a445f9a7ee804623d4314012",
+        "timestamp": "2026-03-31T12:00:00Z"
+      },
+      {
+        "version": "2.0.144.0",
+        "changelog": "WebSocket-only updates, debug endpoint for connection tracking",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.144.0/jellyfin-plugin-ratings_2.0.144.0.zip",
+        "checksum": "0beac39bcd617e90e8644993e0e9a05f",
+        "timestamp": "2026-03-29T21:00:00Z"
+      },
+      {
+        "version": "2.0.143.0",
+        "changelog": "Reduce refresh interval to 30s for better scalability",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.143.0/jellyfin-plugin-ratings_2.0.143.0.zip",
+        "checksum": "3a025fe30e723d6704849b4044f60939",
+        "timestamp": "2026-03-29T20:30:00Z"
+      },
+      {
+        "version": "2.0.142.0",
+        "changelog": "Add periodic refresh to friends list for reliable status updates",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.142.0/jellyfin-plugin-ratings_2.0.142.0.zip",
+        "checksum": "dae6bef09bc61bae2dde0cac04e67a11",
+        "timestamp": "2026-03-29T20:00:00Z"
+      },
+      {
+        "version": "2.0.141.0",
+        "changelog": "WebSocket-based offline detection - no more false offline during internal navigation",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.141.0/jellyfin-plugin-ratings_2.0.141.0.zip",
+        "checksum": "77c20116f7db8cbc062781ca97fcac1d",
+        "timestamp": "2026-03-29T19:30:00Z"
+      },
+      {
+        "version": "2.0.140.0",
+        "changelog": "Fix offline status - use beforeunload for browser close, clear ForceOffline on playback start",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.140.0/jellyfin-plugin-ratings_2.0.140.0.zip",
+        "checksum": "e2d211831104d9695370457896aaf537d088e87aff39cc7ce1a7a00d009ca44a",
+        "timestamp": "2026-03-29T19:00:00Z"
+      },
+      {
+        "version": "2.0.139.0",
+        "changelog": "Clean visibilitychange approach - no beforeunload, fetch with keepalive",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.139.0/jellyfin-plugin-ratings_2.0.139.0.zip",
+        "checksum": "74174b436addd78fd8a20a77adb24fa3",
+        "timestamp": "2026-03-29T18:00:00Z"
+      },
+      {
+        "version": "2.0.138.0",
+        "changelog": "Fix browser close offline - use beforeunload with heartbeat recovery on playback",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.138.0/jellyfin-plugin-ratings_2.0.138.0.zip",
+        "checksum": "ceb8911d8d7a40cd0bcc286f53eb5206",
+        "timestamp": "2026-03-29T17:30:00Z"
+      },
+      {
+        "version": "2.0.137.0",
+        "changelog": "Send heartbeat when tab becomes visible again to restore online status",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.137.0/jellyfin-plugin-ratings_2.0.137.0.zip",
+        "checksum": "1ebee176de88902e357e343f122cf477",
+        "timestamp": "2026-03-29T17:00:00Z"
+      },
+      {
+        "version": "2.0.136.0",
+        "changelog": "Use visibilitychange only - no beforeunload/pagehide, check _currentWatching",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.136.0/jellyfin-plugin-ratings_2.0.136.0.zip",
+        "checksum": "29eb22f097391c6fe48dbd32c14c56f1",
+        "timestamp": "2026-03-29T16:30:00Z"
+      },
+      {
+        "version": "2.0.135.0",
+        "changelog": "Restore working offline detection with playbackActive flag to prevent offline during play",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.135.0/jellyfin-plugin-ratings_2.0.135.0.zip",
+        "checksum": "dc74cf51575ac36df3d14cfd5f266a22",
+        "timestamp": "2026-03-29T16:00:00Z"
+      },
+      {
+        "version": "2.0.134.0",
+        "changelog": "Fix instant offline when closing browser - use sendBeacon with tabHidden check",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.134.0/jellyfin-plugin-ratings_2.0.134.0.zip",
+        "checksum": "fce8949b53f12c6965a578fd938f6188",
+        "timestamp": "2026-03-29T15:30:00Z"
+      },
+      {
+        "version": "2.0.133.0",
+        "changelog": "Fix status going offline when pressing play - use visibilitychange instead of beforeunload",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.133.0/jellyfin-plugin-ratings_2.0.133.0.zip",
+        "checksum": "a00272c968827e12bd01428c7d6e4068",
+        "timestamp": "2026-03-29T15:00:00Z"
+      },
+      {
+        "version": "2.0.132.0",
+        "changelog": "Truly separate status and watching - different WebSocket messages, different handlers",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.132.0/jellyfin-plugin-ratings_2.0.132.0.zip",
+        "checksum": "3bd2b88822e4930eef7b5199ea120e93",
+        "timestamp": "2026-03-29T13:00:00Z"
+      },
+      {
+        "version": "2.0.131.0",
+        "changelog": "Fix status not being updated in SetWatching/ClearWatching",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.131.0/jellyfin-plugin-ratings_2.0.131.0.zip",
+        "checksum": "b85c8957714c19c679dc84456ff7b24a",
+        "timestamp": "2026-03-29T12:30:00Z"
+      },
+      {
+        "version": "2.0.130.0",
+        "changelog": "Separate online/offline from watching - completely independent systems",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.130.0/jellyfin-plugin-ratings_2.0.130.0.zip",
+        "checksum": "10d14ac838599eacb1ee6ab0a5b1c624",
+        "timestamp": "2026-03-29T12:00:00Z"
+      },
+      {
+        "version": "2.0.129.0",
+        "changelog": "Simplified offline handling - ForceOffline sticky for 10 seconds",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.129.0/jellyfin-plugin-ratings_2.0.129.0.zip",
+        "checksum": "d9e5c74b538f1b56fb943ed6143df9fd",
+        "timestamp": "2026-03-29T11:30:00Z"
+      },
+      {
+        "version": "2.0.128.0",
+        "changelog": "Fix playback status race conditions, better offline handling",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.128.0/jellyfin-plugin-ratings_2.0.128.0.zip",
+        "checksum": "a21b4a447b4c991e513765cb28f465be",
+        "timestamp": "2026-03-29T11:00:00Z"
+      },
+      {
+        "version": "2.0.127.0",
+        "changelog": "Fix offline status when closing browser during playback",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.127.0/jellyfin-plugin-ratings_2.0.127.0.zip",
+        "checksum": "b86f0ea9bf0960a73b4c013241975150",
+        "timestamp": "2026-03-29T10:30:00Z"
+      },
+      {
+        "version": "2.0.126.0",
+        "changelog": "Fix profile click, real-time status updates, debug logging",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.126.0/jellyfin-plugin-ratings_2.0.126.0.zip",
+        "checksum": "8196583e71884096fff631b7e6f71a3a",
+        "timestamp": "2026-03-29T10:00:00Z"
+      },
+      {
+        "version": "2.0.125.0",
+        "changelog": "Fix real-time offline status - ForceOffline flag persists correctly",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.125.0/jellyfin-plugin-ratings_2.0.125.0.zip",
+        "checksum": "dd2b93489edfd9aa91961aa99e8d0b28",
+        "timestamp": "2026-03-29T09:30:00Z"
+      },
+      {
+        "version": "2.0.124.0",
+        "changelog": "Real-time online status - user goes offline immediately when closing browser",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.124.0/jellyfin-plugin-ratings_2.0.124.0.zip",
+        "checksum": "853e0bed14c8cadda499a24d2775f683",
+        "timestamp": "2026-03-29T09:00:00Z"
+      },
+      {
+        "version": "2.0.123.0",
+        "changelog": "Real-time profile stats via WebSocket - stats update instantly when user rates media",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.123.0/jellyfin-plugin-ratings_2.0.123.0.zip",
+        "checksum": "72f419e899d039a95191544479764f35",
+        "timestamp": "2026-03-29T08:30:00Z"
+      },
+      {
+        "version": "2.0.122.0",
+        "changelog": "Step 7.3: Profile Stats - friends count, ratings given, average rating, member days",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.122.0/jellyfin-plugin-ratings_2.0.122.0.zip",
+        "checksum": "cd225c2a03451c0e954e9ac1aba0e808",
+        "timestamp": "2026-03-29T08:00:00Z"
+      },
+      {
+        "version": "2.0.121.0",
+        "changelog": "Fix profile API - return explicit object with correct username from Jellyfin",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.121.0/jellyfin-plugin-ratings_2.0.121.0.zip",
+        "checksum": "b7f8f59a0d7423abc4b829ebb8d79fbf",
+        "timestamp": "2026-03-29T07:30:00Z"
+      },
+      {
+        "version": "2.0.120.0",
+        "changelog": "Fix profile - show correct username, joined date, last seen from Jellyfin data",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.120.0/jellyfin-plugin-ratings_2.0.120.0.zip",
+        "checksum": "f9f15d37779660fb19f64d2e3c5c0ca8",
+        "timestamp": "2026-03-29T07:00:00Z"
+      },
+      {
+        "version": "2.0.119.0",
+        "changelog": "Fix profile page - use modal overlay instead of URL routing to avoid Jellyfin 'Page not found'",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.119.0/jellyfin-plugin-ratings_2.0.119.0.zip",
+        "checksum": "22efbc7ce13427f7bc9a5a2e980e53ed",
+        "timestamp": "2026-03-29T06:30:00Z"
+      },
+      {
+        "version": "2.0.118.0",
+        "changelog": "Phase 7 Step 7.1: User Profile Page route - view profiles via #!/social/user/{id}, clickable usernames",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.118.0/jellyfin-plugin-ratings_2.0.118.0.zip",
+        "checksum": "e036a95452bc80c2283ea180a5edcc77",
+        "timestamp": "2026-03-29T06:00:00Z"
+      },
+      {
+        "version": "2.0.117.0",
+        "changelog": "Block UI - Blocked tab, unfriend/block dropdown menu, unblock button",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.117.0/jellyfin-plugin-ratings_2.0.117.0.zip",
+        "checksum": "7caa9f0cfe0feb4816410398a4711b7e",
+        "timestamp": "2026-03-29T05:30:00Z"
+      },
+      {
+        "version": "2.0.116.0",
+        "changelog": "Phase 6: Block system - block/unblock users, blocked users cannot send friend requests",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.116.0/jellyfin-plugin-ratings_2.0.116.0.zip",
+        "checksum": "3539b480add843dadbe7a29b943e8931",
+        "timestamp": "2026-03-29T05:00:00Z"
+      },
+      {
+        "version": "2.0.115.0",
+        "changelog": "Proper WebSocket using Jellyfin IWebSocketListener - real-time friend status updates",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.115.0/jellyfin-plugin-ratings_2.0.115.0.zip",
+        "checksum": "48214f594bfa44bb68b1cdf61d8a1c46",
+        "timestamp": "2026-03-29T04:30:00Z"
+      },
+      {
+        "version": "2.0.114.0",
+        "changelog": "Fast polling for real-time status updates (3s interval when panel open)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.114.0/jellyfin-plugin-ratings_2.0.114.0.zip",
+        "checksum": "0db64a010df014b94ae4b0160f0d0b4c",
+        "timestamp": "2026-03-29T04:00:00Z"
+      },
+      {
+        "version": "2.0.113.0",
+        "changelog": "Real-time UI updates - friends list updates instantly via WebSocket without refresh",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.113.0/jellyfin-plugin-ratings_2.0.113.0.zip",
+        "checksum": "c6bf88829d74fdc49363fe2b1978ab0d",
+        "timestamp": "2026-03-29T03:30:00Z"
+      },
+      {
+        "version": "2.0.112.0",
+        "changelog": "Instant watching status - client sends playback events directly for zero delay",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.112.0/jellyfin-plugin-ratings_2.0.112.0.zip",
+        "checksum": "81bb519ac95a871ce1878cf0bd35e1c4",
+        "timestamp": "2026-03-29T03:00:00Z"
+      },
+      {
+        "version": "2.0.111.0",
+        "changelog": "WebSocket support for real-time status updates - instant friend status changes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.111.0/jellyfin-plugin-ratings_2.0.111.0.zip",
+        "checksum": "42381054bc244791c1bd721e578c0912",
+        "timestamp": "2026-03-29T02:30:00Z"
+      },
+      {
+        "version": "2.0.110.0",
+        "changelog": "Faster polling (5s) for near-real-time status updates when panel is open",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.110.0/jellyfin-plugin-ratings_2.0.110.0.zip",
+        "checksum": "920306248de9a7db231cad4013dc1751",
+        "timestamp": "2026-03-29T02:00:00Z"
+      },
+      {
+        "version": "2.0.109.0",
+        "changelog": "Auto-refresh friends list every 10s, clickable watching items to navigate to media",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.109.0/jellyfin-plugin-ratings_2.0.109.0.zip",
+        "checksum": "f6800feaec817ce14175688bd4c21eef",
+        "timestamp": "2026-03-29T01:30:00Z"
+      },
+      {
+        "version": "2.0.108.0",
+        "changelog": "Phase 4: Online Status - heartbeat, status indicators (Online/Away/DND/Offline), currently watching display",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.108.0/jellyfin-plugin-ratings_2.0.108.0.zip",
+        "checksum": "40169e83c818baa425ee2aea1171fbcb",
+        "timestamp": "2026-03-29T01:00:00Z"
+      },
+      {
+        "version": "2.0.107.0",
+        "changelog": "Remove notifications tab, simplify friends panel UI",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.107.0/jellyfin-plugin-ratings_2.0.107.0.zip",
+        "checksum": "37a77405e6f56f41223f6e9320153b83",
+        "timestamp": "2026-03-29T00:30:00Z"
+      },
+      {
+        "version": "2.0.106.0",
+        "changelog": "Fix friend requests: show username correctly, show sent requests with cancel option",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.106.0/jellyfin-plugin-ratings_2.0.106.0.zip",
+        "checksum": "d1439a42cd422a176d89a1458274296c",
+        "timestamp": "2026-03-29T00:00:00Z"
+      },
+      {
+        "version": "2.0.105.0",
+        "changelog": "Fix username not displaying in friend requests (case-insensitive JSON deserialization)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.105.0/jellyfin-plugin-ratings_2.0.105.0.zip",
+        "checksum": "b6c11a2d041f5ca13aebd70294cb6db0",
+        "timestamp": "2026-03-28T23:00:00Z"
+      },
+      {
+        "version": "2.0.104.0",
+        "changelog": "Add Friend search tab - search users by username and send friend requests. Better login page detection.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.104.0/jellyfin-plugin-ratings_2.0.104.0.zip",
+        "checksum": "931d8c3de1cda1af4f6375a2906e2e74",
+        "timestamp": "2026-03-28T22:30:00Z"
+      },
+      {
+        "version": "2.0.103.0",
+        "changelog": "Phase 3: Notifications - bell icon, unread badges, mark read, auto-notify on friend events. Fix: hide button on login page",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.103.0/jellyfin-plugin-ratings_2.0.103.0.zip",
+        "checksum": "2d390ebd77356873b8037a6e264abc77",
+        "timestamp": "2026-03-28T22:00:00Z"
+      },
+      {
+        "version": "2.0.102.0",
+        "changelog": "Step 2.7-2.10: Friends UI - draggable floating button, friends panel with tabs, accept/reject requests",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.102.0/jellyfin-plugin-ratings_2.0.102.0.zip",
+        "checksum": "f12f77f52c0ef90ac0804e93d4476081",
+        "timestamp": "2026-03-28T21:30:00Z"
+      },
+      {
+        "version": "2.0.101.0",
+        "changelog": "Step 2.1-2.6: Friend request system - send, accept, reject, cancel requests; friends list; unfriend",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.101.0/jellyfin-plugin-ratings_2.0.101.0.zip",
+        "checksum": "490d840120c59672f9c245d3ace3a0fb",
+        "timestamp": "2026-03-28T21:00:00Z"
+      },
+      {
+        "version": "2.0.100.0",
+        "changelog": "Step 1.2-1.3: Add SocialRepository and SocialController with debug console output",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.100.0/jellyfin-plugin-ratings_2.0.100.0.zip",
+        "checksum": "1311825810e10ea1f78138d7be632cd2",
+        "timestamp": "2026-03-28T20:30:00Z"
+      },
+      {
+        "version": "2.0.99.0",
+        "changelog": "Step 1.1: Add social data models (UserProfile, FriendRequest, Friendship, UserPrivacySettings)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.99.0/jellyfin-plugin-ratings_2.0.99.0.zip",
+        "checksum": "d754e60089778d206e4ddd2e6c7f3139",
+        "timestamp": "2026-03-28T20:00:00Z"
+      },
+      {
+        "version": "2.0.98.0",
+        "changelog": "Add descriptive tooltips on hover for keep button and counter",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.98.0/jellyfin-plugin-ratings_2.0.98.0.zip",
+        "checksum": "e2fc0f04658f281b3a965d0415189255",
+        "timestamp": "2026-03-28T18:30:00Z"
+      },
+      {
+        "version": "2.0.97.0",
+        "changelog": "Ask to keep feature in Leaving Soon tab - users can request to keep media from deletion",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.97.0/jellyfin-plugin-ratings_2.0.97.0.zip",
+        "checksum": "9f5ac0c28ae0702713dc9d07b6dbacb8",
+        "timestamp": "2026-03-28T18:00:00Z"
+      },
+      {
+        "version": "2.0.96.0",
+        "changelog": "Final icon sizing (42px button, 28px icon), cleaned up debug logs",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.96.0/jellyfin-plugin-ratings_2.0.96.0.zip",
+        "checksum": "1e9a1cb8d33bc135dcc68b8322ccb0c6",
+        "timestamp": "2026-03-28T16:30:00Z"
+      },
+      {
+        "version": "2.0.95.0",
+        "changelog": "Bigger star icons with up/down arrow inside",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.95.0/jellyfin-plugin-ratings_2.0.95.0.zip",
+        "checksum": "ad7971cbb3e1f1e08d27b26564de1657",
+        "timestamp": "2026-03-28T16:00:00Z"
+      },
+      {
+        "version": "2.0.94.0",
+        "changelog": "Smaller, cleaner rating sort button icons",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.94.0/jellyfin-plugin-ratings_2.0.94.0.zip",
+        "checksum": "7bbaeb2810e2c28867a48ef45b126809",
+        "timestamp": "2026-03-28T15:30:00Z"
+      },
+      {
+        "version": "2.0.93.0",
+        "changelog": "Debug: improved container and card detection logging",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.93.0/jellyfin-plugin-ratings_2.0.93.0.zip",
+        "checksum": "8de3068cfb4a0c3cd7ce510ac61ce33c",
+        "timestamp": "2026-03-28T15:00:00Z"
+      },
+      {
+        "version": "2.0.92.0",
+        "changelog": "Fix rating sort - search all containers for media cards",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.92.0/jellyfin-plugin-ratings_2.0.92.0.zip",
+        "checksum": "8ab2bc6b2961b72fbf36970c6f016280",
+        "timestamp": "2026-03-28T14:30:00Z"
+      },
+      {
+        "version": "2.0.91.0",
+        "changelog": "Fix rating sort - filter non-media cards, force visual reflow",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.91.0/jellyfin-plugin-ratings_2.0.91.0.zip",
+        "checksum": "aaee794e5203252ccdd10863b91e4cf6",
+        "timestamp": "2026-03-28T14:00:00Z"
+      },
+      {
+        "version": "2.0.90.0",
+        "changelog": "Improved rating sort buttons styling to match Jellyfin native toolbar",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.90.0/jellyfin-plugin-ratings_2.0.90.0.zip",
+        "checksum": "d5e8e92046ff687bc59a3bafe7a438ad",
+        "timestamp": "2026-03-28T13:00:00Z"
+      },
+      {
+        "version": "2.0.89.0",
+        "changelog": "Fix all non-admin request errors (badge, viewed marking, admin tabs)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.89.0/jellyfin-plugin-ratings_2.0.89.0.zip",
+        "checksum": "5e6827f5b5bb5fdb2157c6ddf233f0e4",
+        "timestamp": "2026-03-22T12:30:00Z"
+      },
+      {
+        "version": "2.0.88.0",
         "changelog": "Fix non-admin users getting error when loading their requests",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.316.0/jellyfin-plugin-ratings_1.0.316.0.zip",
-        "checksum": "83783c9c5af9dd5c2621c5a5a3a3919a",
-        "timestamp": "2026-03-22T13:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.88.0/jellyfin-plugin-ratings_2.0.88.0.zip",
+        "checksum": "2eeeb70c1259ebf934a6de19b26c3ac7",
+        "timestamp": "2026-03-22T12:00:00Z"
       },
       {
-        "version": "1.0.315.0",
-        "changelog": "Fix mobile keyboard in Jellyfin Android app",
+        "version": "2.0.87.0",
+        "changelog": "Better card detection and ID extraction",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.315.0/jellyfin-plugin-ratings_1.0.315.0.zip",
-        "checksum": "934f9f8826741b9eb08527b87b34b9e8",
-        "timestamp": "2026-03-11T22:17:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.87.0/jellyfin-plugin-ratings_2.0.87.0.zip",
+        "checksum": "4c1bac1b3d1a205ddf613a050d7d599b",
+        "timestamp": "2026-03-12T00:25:00Z"
       },
       {
-        "version": "1.0.314.0",
-        "changelog": "Chat button position, mobile keyboard fixes, notification bell alignment",
+        "version": "2.0.86.0",
+        "changelog": "Debug logging for library sort",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.314.0/jellyfin-plugin-ratings_1.0.314.0.zip",
-        "checksum": "71cb9c34ded408e37aa9e0d288563e18",
-        "timestamp": "2026-03-11T18:25:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.86.0/jellyfin-plugin-ratings_2.0.86.0.zip",
+        "checksum": "baee7c274b98d86cdc08ac6dd07f3061",
+        "timestamp": "2026-03-12T00:21:00Z"
       },
       {
-        "version": "1.0.313.0",
-        "changelog": "Fix SPA caching issue causing ratings UI to not appear on some pages",
+        "version": "2.0.85.0",
+        "changelog": "Fix library sort - fetch ratings before sorting",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.313.0/jellyfin-plugin-ratings_1.0.313.0.zip",
-        "checksum": "747e06d2b0f0a20e30762bb37cd1f709",
-        "timestamp": "2026-03-11T16:17:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.85.0/jellyfin-plugin-ratings_2.0.85.0.zip",
+        "checksum": "3dc7ab12c1b8bf413a3e4c5fb1960d96",
+        "timestamp": "2026-03-11T22:44:00Z"
       },
       {
-        "version": "1.0.312.0",
-        "changelog": "Genre sorting, lazy loading, Leaving Soon tab, notification badges, mobile spacing fixes",
+        "version": "2.0.84.0",
+        "changelog": "Add sorting arrows for non-Netflix library view",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.312.0/jellyfin-plugin-ratings_1.0.312.0.zip",
-        "checksum": "3f80d584629fe693eb69dd28f0bba6a9",
-        "timestamp": "2026-03-08T14:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.84.0/jellyfin-plugin-ratings_2.0.84.0.zip",
+        "checksum": "d240ef6ada9d96b426fa067b53901a10",
+        "timestamp": "2026-03-11T22:40:00Z"
       },
       {
-        "version": "1.0.311.0",
-        "changelog": "Security hardening: auth checks, backup import sanitization, inline JS removal, regex optimization, rate limiting improvements",
+        "version": "2.0.83.0",
+        "changelog": "Fix chat visibility, shrink 50% + re-focus to keep keyboard",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.311.0/jellyfin-plugin-ratings_1.0.311.0.zip",
-        "checksum": "f9a997f7a79abe8423d1c261f6340835",
-        "timestamp": "2026-02-28T23:50:00Z"
-      },
-      {
-        "version": "1.0.310.0",
-        "changelog": "Chat avatars, notification settings, server-side unread tracking, mobile view fixes",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.310.0/jellyfin-plugin-ratings_1.0.310.0.zip",
-        "checksum": "5dd6d20910db708e2020cdff591b2cbf",
-        "timestamp": "2026-02-23T16:00:00Z"
-      },
-      {
-        "version": "1.0.309.0",
-        "changelog": "Backup & Restore feature, chat avatars, combined notification badges",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.309.0/jellyfin-plugin-ratings_1.0.309.0.zip",
-        "checksum": "c6305643572cb83b2a14fc238fca05f8",
-        "timestamp": "2026-02-22T22:00:00Z"
-      },
-      {
-        "version": "1.0.308.0",
-        "changelog": "Security update: Race condition fixes, XSS sanitization, input validation, HttpClient timeout, thread-safe rate limiting, expired data cleanup, file locking, deadlock fix",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.308.0/jellyfin-plugin-ratings_1.0.308.0.zip",
-        "checksum": "e065ed4a1a139986d6273c61599dfa56",
-        "timestamp": "2026-02-20T19:00:00Z"
-      },
-      {
-        "version": "1.0.307.0",
-        "changelog": "Fix GIF search (Klipy API), chat auto-scroll improvements, security fixes for API key exposure",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.307.0/jellyfin-plugin-ratings_1.0.307.0.zip",
-        "checksum": "b84885d7d0eb8f1577ec85041aab7b0f",
-        "timestamp": "2026-02-19T20:45:00Z"
-      },
-      {
-        "version": "1.0.306.0",
-        "changelog": "Messenger-style chat bubbles.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.306.0/jellyfin-plugin-ratings_1.0.306.0.zip",
-        "checksum": "fe16263849212998d42b4d31260aacad",
-        "timestamp": "2026-02-18T20:00:00Z"
-      },
-      {
-        "version": "1.0.292.0",
-        "changelog": "Stability and reliability improvements, enhanced permission checks, improved input handling across the plugin.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.292.0/jellyfin-plugin-ratings_1.0.292.0.zip",
-        "checksum": "e4bcb958412a638d0b5bd40b32ae4f00",
-        "timestamp": "2026-02-16T06:00:00Z"
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.83.0/jellyfin-plugin-ratings_2.0.83.0.zip",
+        "checksum": "91d22740482e4010d1c624c7275ca053",
+        "timestamp": "2026-03-11T20:00:00Z"
       }
     ]
   }
