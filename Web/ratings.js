@@ -27652,34 +27652,38 @@
             const style = this.chatUserStyles && this.chatUserStyles[userId];
 
             // Reset color inputs
-            const nicknameColor = document.getElementById('chatModNicknameColor');
+            const nicknameColorInput = document.getElementById('chatModNicknameColor');
             const nicknameHex = document.getElementById('chatModNicknameHex');
-            const messageColor = document.getElementById('chatModMessageColor');
+            const messageColorInput = document.getElementById('chatModMessageColor');
             const messageHex = document.getElementById('chatModMessageHex');
 
-            if (style && style.nicknameColor) {
-                if (nicknameColor) nicknameColor.value = style.nicknameColor;
-                if (nicknameHex) nicknameHex.value = style.nicknameColor;
+            // API returns PascalCase (NicknameColor), handle both cases
+            const nickColor = style ? (style.NicknameColor || style.nicknameColor) : null;
+            const msgColor = style ? (style.MessageColor || style.messageColor) : null;
+            const txtStyle = style ? (style.TextStyle || style.textStyle || '') : '';
+
+            if (nickColor) {
+                if (nicknameColorInput) nicknameColorInput.value = nickColor;
+                if (nicknameHex) nicknameHex.value = nickColor;
             } else {
-                if (nicknameColor) nicknameColor.value = '#ffffff';
+                if (nicknameColorInput) nicknameColorInput.value = '#ffffff';
                 if (nicknameHex) nicknameHex.value = '';
             }
 
-            if (style && style.messageColor) {
-                if (messageColor) messageColor.value = style.messageColor;
-                if (messageHex) messageHex.value = style.messageColor;
+            if (msgColor) {
+                if (messageColorInput) messageColorInput.value = msgColor;
+                if (messageHex) messageHex.value = msgColor;
             } else {
-                if (messageColor) messageColor.value = '#cccccc';
+                if (messageColorInput) messageColorInput.value = '#cccccc';
                 if (messageHex) messageHex.value = '';
             }
 
             // Reset text style buttons
-            const textStyle = style ? (style.textStyle || '') : '';
             document.querySelectorAll('.chat-mod-style-btn').forEach(function (btn) {
-                btn.classList.toggle('selected', btn.getAttribute('data-style') === textStyle);
+                btn.classList.toggle('selected', btn.getAttribute('data-style') === txtStyle);
             });
 
-            this.modSelectedTextStyle = textStyle;
+            this.modSelectedTextStyle = txtStyle;
             this.updateColorPreview();
         },
 

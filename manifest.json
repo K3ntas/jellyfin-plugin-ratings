@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.303.0",
+        "changelog": "Fix: Moderator panel now correctly displays saved user style colors",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.303.0/Jellyfin.Plugin.Ratings_2.0.303.0.zip",
+        "checksum": "f3145544d21d91b7f2887b0ddca46804",
+        "timestamp": "2026-05-02T13:00:00Z"
+      },
+      {
         "version": "2.0.302.0",
         "changelog": "Security fixes, moderator panel colors persist, dashboard requests open modal",
         "targetAbi": "10.11.0.0",
