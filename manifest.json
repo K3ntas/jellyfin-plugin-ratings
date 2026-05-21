@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.314.0",
+        "changelog": "Fix: Ratings/reviews/activity tabs now load correctly on profile",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.314.0/Jellyfin.Plugin.Ratings_2.0.314.0.zip",
+        "checksum": "3712d2cc6e3c05c761a7192c6443e0c2",
+        "timestamp": "2026-05-22T12:00:00Z"
+      },
+      {
         "version": "2.0.313.0",
         "changelog": "Profile: Add row with title picker, 30 items per row, lazy loading, fixed following count stats",
         "targetAbi": "10.11.0.0",

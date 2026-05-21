@@ -14871,7 +14871,7 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
             // Get user's ratings and calculate distribution
-            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=500', {
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -14927,7 +14927,7 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
             // Get user's recent ratings as activity
-            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=' + (limit || 10), {
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=' + (limit || 10), {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -14998,7 +14998,7 @@
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=50', {
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=50', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -15062,7 +15062,7 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
             // Get ratings and filter for those with reviews
-            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=100', {
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=100', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -15411,7 +15411,7 @@
             var userId = ApiClient.getCurrentUserId();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            return fetch(baseUrl + '/Ratings/User/' + userId + '?limit=1000', {
+            return fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=1000', {
                 method: 'GET', credentials: 'include', headers: headers
             })
             .then(function (r) { return r.json(); })

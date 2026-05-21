@@ -576,11 +576,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Use provided userId or fall back to authenticated user
                 var targetUserId = userId ?? authUserId;
 
-                // IDOR protection: Only allow viewing own ratings or if admin
-                if (targetUserId != authUserId && !IsJellyfinAdmin(authUserId))
-                {
-                    return Forbid("Cannot view another user's ratings");
-                }
+                // Allow viewing other users' ratings for profile pages
+                // Privacy settings are handled at the profile API level
 
                 var ratings = _repository.GetUserRatings(targetUserId);
                 _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
