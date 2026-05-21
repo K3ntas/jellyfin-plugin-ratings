@@ -13074,6 +13074,651 @@
                         justify-content: center;
                     }
                 }
+
+                /* Letterboxd-Style Profile */
+                .social-profile-page.letterboxd-style {
+                    background: rgba(0, 0, 0, 0.85);
+                    backdrop-filter: blur(10px);
+                }
+                .social-profile-container.letterboxd {
+                    max-width: 1000px;
+                    margin: 20px auto;
+                    padding: 0;
+                    background: #14181c;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                }
+                .profile-loading-spinner {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 80px;
+                    color: #99aabb;
+                    gap: 16px;
+                }
+                .profile-loading-spinner .spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid #456;
+                    border-top-color: #00e054;
+                    border-radius: 50%;
+                    animation: lbSpin 1s linear infinite;
+                }
+                @keyframes lbSpin {
+                    to { transform: rotate(360deg); }
+                }
+                .lb-back {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #99aabb;
+                    font-size: 14px;
+                    cursor: pointer;
+                    padding: 16px 20px;
+                    transition: color 0.2s;
+                }
+                .lb-back:hover { color: #fff; }
+                .lb-error {
+                    text-align: center;
+                    padding: 60px;
+                    color: #ee7752;
+                    font-size: 16px;
+                }
+
+                /* Profile Header */
+                .lb-profile-header {
+                    position: relative;
+                    padding: 0;
+                }
+                .lb-header-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 150px;
+                    background: linear-gradient(135deg, #2c3440 0%, #14181c 100%);
+                }
+                .lb-header-content {
+                    position: relative;
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 24px;
+                    padding: 80px 30px 30px;
+                }
+                .lb-avatar {
+                    width: 110px;
+                    height: 110px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00e054, #40bcf4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 44px;
+                    font-weight: 700;
+                    color: #fff;
+                    flex-shrink: 0;
+                    position: relative;
+                    border: 4px solid #14181c;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                }
+                .lb-status-dot {
+                    position: absolute;
+                    bottom: 4px;
+                    right: 4px;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    border: 3px solid #14181c;
+                    background: #678;
+                }
+                .lb-status-dot.online { background: #00e054; }
+                .lb-status-dot.away { background: #f5c518; }
+                .lb-status-dot.dnd { background: #ee7752; }
+                .lb-status-dot.offline { background: #456; }
+
+                .lb-user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .lb-username {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin: 0 0 6px 0;
+                    letter-spacing: 0.5px;
+                }
+                .lb-bio {
+                    color: #99aabb;
+                    font-size: 15px;
+                    margin: 0 0 10px 0;
+                    line-height: 1.5;
+                }
+                .lb-meta {
+                    display: flex;
+                    gap: 16px;
+                    font-size: 13px;
+                    color: #678;
+                }
+                .lb-status-text {
+                    padding: 2px 8px;
+                    border-radius: 3px;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    background: #456;
+                }
+                .lb-status-text.online { background: #00e054; color: #14181c; }
+                .lb-status-text.away { background: #f5c518; color: #14181c; }
+                .lb-status-text.dnd { background: #ee7752; color: #fff; }
+
+                /* Header Actions */
+                .lb-header-actions {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+                .lb-btn {
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .lb-btn.primary {
+                    background: #00e054;
+                    color: #14181c;
+                }
+                .lb-btn.primary:hover { background: #00c848; }
+                .lb-btn.secondary {
+                    background: #456;
+                    color: #fff;
+                }
+                .lb-btn.secondary:hover { background: #567; }
+                .lb-btn.danger {
+                    background: #ee7752;
+                    color: #fff;
+                }
+                .lb-btn.danger:hover { background: #dd6641; }
+                .lb-btn.following {
+                    background: #456;
+                    color: #00e054;
+                }
+                .lb-btn.following:hover { background: #ee7752; color: #fff; }
+                .lb-btn.following:hover .follow-icon { display: none; }
+                .lb-btn.following:hover::after { content: 'Unfollow'; }
+                .lb-btn.heart {
+                    background: transparent;
+                    border: 2px solid #456;
+                    color: #99aabb;
+                    padding: 8px 12px;
+                    font-size: 18px;
+                }
+                .lb-btn.heart:hover { border-color: #ee7752; color: #ee7752; }
+                .lb-btn.liked {
+                    background: #ee7752;
+                    color: #fff;
+                    padding: 8px 12px;
+                    font-size: 18px;
+                    border: none;
+                }
+                .lb-btn.icon {
+                    padding: 8px;
+                    background: #2c3440;
+                    position: relative;
+                }
+                .lb-btn.disabled {
+                    background: #2c3440;
+                    color: #678;
+                    cursor: not-allowed;
+                }
+                .lb-more-menu {
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    background: #2c3440;
+                    border-radius: 4px;
+                    padding: 8px 0;
+                    min-width: 150px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                    z-index: 100;
+                }
+                .lb-more-menu.visible { display: block; }
+                .lb-more-menu button {
+                    display: block;
+                    width: 100%;
+                    padding: 10px 16px;
+                    border: none;
+                    background: none;
+                    color: #99aabb;
+                    text-align: left;
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+                .lb-more-menu button:hover {
+                    background: #456;
+                    color: #fff;
+                }
+
+                /* Stats Bar */
+                .lb-stats-bar {
+                    display: flex;
+                    justify-content: center;
+                    background: #1c2228;
+                    border-top: 1px solid #2c3440;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-stat {
+                    padding: 16px 24px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .lb-stat:hover { background: #2c3440; }
+                .lb-stat-value {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #fff;
+                }
+                .lb-stat-label {
+                    font-size: 11px;
+                    color: #678;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-top: 4px;
+                }
+                .lb-heart { color: #ee7752; }
+
+                /* Tabs */
+                .lb-tabs {
+                    display: flex;
+                    background: #14181c;
+                    border-bottom: 1px solid #2c3440;
+                    overflow-x: auto;
+                }
+                .lb-tab {
+                    padding: 14px 20px;
+                    border: none;
+                    background: none;
+                    color: #99aabb;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    cursor: pointer;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+                .lb-tab:hover { color: #fff; }
+                .lb-tab.active {
+                    color: #00e054;
+                    border-bottom-color: #00e054;
+                }
+
+                /* Content Area */
+                .lb-content {
+                    padding: 24px;
+                    min-height: 300px;
+                }
+                .lb-loading {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 60px;
+                    color: #678;
+                }
+                .lb-loading-small {
+                    color: #678;
+                    font-size: 13px;
+                    padding: 20px;
+                }
+                .lb-empty {
+                    color: #678;
+                    font-size: 14px;
+                    text-align: center;
+                    padding: 20px;
+                }
+                .lb-empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #678;
+                }
+                .lb-empty-icon {
+                    font-size: 48px;
+                    display: block;
+                    margin-bottom: 16px;
+                    opacity: 0.5;
+                }
+                .lb-empty-state p {
+                    margin: 0;
+                    font-size: 15px;
+                }
+
+                /* Overview Section */
+                .lb-overview { }
+                .lb-section {
+                    margin-bottom: 32px;
+                }
+                .lb-section h3 {
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #678;
+                    margin: 0 0 16px 0;
+                }
+
+                /* Favorites Grid */
+                .lb-favorites-grid {
+                    display: flex;
+                    gap: 12px;
+                }
+                .lb-favorite-slot {
+                    width: 100px;
+                    height: 150px;
+                    background: #2c3440;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-favorite-slot.empty {
+                    border: 2px dashed #456;
+                    background: transparent;
+                }
+                .lb-favorite-slot.empty span {
+                    font-size: 28px;
+                    color: #456;
+                }
+
+                /* Stats Grid */
+                .lb-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 12px;
+                }
+                .lb-stat-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    padding: 20px 16px;
+                    text-align: center;
+                    transition: transform 0.2s, background 0.2s;
+                }
+                .lb-stat-card:hover {
+                    background: #2c3440;
+                    transform: translateY(-2px);
+                }
+                .lb-stat-icon {
+                    font-size: 24px;
+                    margin-bottom: 8px;
+                }
+                .lb-stat-number {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #fff;
+                }
+                .lb-stat-text {
+                    font-size: 11px;
+                    color: #678;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-top: 4px;
+                }
+
+                /* Rating Distribution */
+                .lb-dist-chart {
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 4px;
+                    height: 100px;
+                    padding: 10px 0;
+                }
+                .lb-dist-bar-wrap {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    height: 100%;
+                }
+                .lb-dist-bar {
+                    width: 100%;
+                    background: linear-gradient(to top, #00e054, #40bcf4);
+                    border-radius: 2px 2px 0 0;
+                    min-height: 2px;
+                    transition: height 0.3s ease;
+                }
+                .lb-dist-label {
+                    font-size: 10px;
+                    color: #678;
+                    margin-top: 6px;
+                }
+
+                /* Activity List */
+                .lb-activity-list { }
+                .lb-activity-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-activity-item:last-child { border-bottom: none; }
+                .lb-activity-type {
+                    font-size: 18px;
+                    width: 32px;
+                    text-align: center;
+                }
+                .lb-activity-text {
+                    flex: 1;
+                    color: #99aabb;
+                    font-size: 14px;
+                }
+                .lb-activity-time {
+                    color: #456;
+                    font-size: 12px;
+                }
+
+                /* Ratings Grid */
+                .lb-ratings-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                    gap: 12px;
+                }
+                .lb-rating-card {
+                    background: #1c2228;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .lb-rating-card:hover { transform: scale(1.05); }
+                .lb-rating-poster {
+                    aspect-ratio: 2/3;
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-rating-info {
+                    padding: 10px;
+                }
+                .lb-rating-title {
+                    font-size: 12px;
+                    color: #fff;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 4px;
+                }
+                .lb-rating-value { font-size: 12px; }
+                .lb-star { color: #456; }
+                .lb-star.full { color: #00e054; }
+                .lb-star.half { color: #00e054; opacity: 0.6; }
+
+                /* Reviews List */
+                .lb-reviews-list { }
+                .lb-review-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    padding: 20px;
+                    margin-bottom: 16px;
+                }
+                .lb-review-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+                .lb-review-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-review-rating { font-size: 14px; }
+                .lb-review-text {
+                    color: #99aabb;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    margin: 0 0 12px 0;
+                }
+                .lb-review-footer {
+                    display: flex;
+                    gap: 16px;
+                    font-size: 12px;
+                    color: #678;
+                }
+                .lb-review-likes { color: #00e054; }
+
+                /* Lists Grid */
+                .lb-lists-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 16px;
+                }
+                .lb-list-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .lb-list-card:hover { transform: translateY(-4px); }
+                .lb-list-preview {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 2px;
+                    aspect-ratio: 2/1;
+                }
+                .lb-list-preview-item {
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-list-preview-item.empty {
+                    background: #2c3440;
+                }
+                .lb-list-info {
+                    padding: 12px;
+                }
+                .lb-list-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin: 0 0 4px 0;
+                }
+                .lb-list-count {
+                    font-size: 12px;
+                    color: #678;
+                }
+
+                /* User List */
+                .lb-user-list {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                    gap: 16px;
+                }
+                .lb-user-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px;
+                    background: #1c2228;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .lb-user-card:hover { background: #2c3440; }
+                .lb-user-avatar {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #40bcf4, #00e054);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-user-name {
+                    font-size: 14px;
+                    color: #fff;
+                    font-weight: 500;
+                }
+
+                /* Mobile Responsive */
+                @media (max-width: 768px) {
+                    .social-profile-container.letterboxd {
+                        margin: 0;
+                        border-radius: 0;
+                        min-height: 100vh;
+                    }
+                    .lb-header-content {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        padding: 60px 20px 20px;
+                    }
+                    .lb-avatar {
+                        width: 90px;
+                        height: 90px;
+                        font-size: 36px;
+                    }
+                    .lb-stats-bar {
+                        flex-wrap: wrap;
+                    }
+                    .lb-stat {
+                        padding: 12px 16px;
+                    }
+                    .lb-tabs {
+                        justify-content: flex-start;
+                    }
+                    .lb-tab {
+                        padding: 12px 14px;
+                        font-size: 11px;
+                    }
+                    .lb-header-actions {
+                        justify-content: center;
+                    }
+                    .lb-favorites-grid {
+                        justify-content: center;
+                    }
+                    .lb-favorite-slot {
+                        width: 70px;
+                        height: 105px;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -13211,11 +13856,104 @@
         },
 
         /**
-         * Show the profile page for a user - redirects to full profile page
+         * Show the profile page for a user (Letterboxd-style modal)
          */
         showProfilePage: function (userId) {
-            // Navigate to the full Letterboxd-style profile page
-            window.location.href = '/web/configurationpage?name=user_profile&userId=' + encodeURIComponent(userId);
+            var self = this;
+            var existing = document.getElementById('socialProfilePage');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Track which profile we're viewing
+            self._viewingProfileUserId = userId;
+            self._profileActiveTab = 'overview';
+
+            // Register as viewer for real-time updates
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Social/Profile/' + userId + '/View', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers
+            }).catch(function () { /* ignore errors */ });
+
+            // Create profile page container
+            var page = document.createElement('div');
+            page.id = 'socialProfilePage';
+            page.className = 'social-profile-page letterboxd-style';
+            page.innerHTML = '<div class="social-profile-container letterboxd"><div class="profile-loading-spinner"><div class="spinner"></div><span>Loading profile...</span></div></div>';
+            document.body.appendChild(page);
+
+            // Close when clicking backdrop (outside container)
+            page.addEventListener('click', function(e) {
+                if (e.target === page) {
+                    self.closeProfilePage();
+                }
+            });
+
+            // Fetch all profile data
+            Promise.all([
+                fetch(baseUrl + '/Social/Profile/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
+                fetch(baseUrl + '/Social/Block/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasBlocked: false, isBlockedBy: false }; }),
+                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                fetch(baseUrl + '/Social/Follow/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { isFollowing: false, followersCount: 0, followingCount: 0 }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Like/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
+                fetch(baseUrl + '/Social/Lists/User/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
+            ]).then(function (results) {
+                var profile = results[0];
+                var friendsData = results[1];
+                var outgoingRequests = results[2];
+                var incomingRequests = results[3];
+                var blockStatus = results[4];
+                var onlineData = results[5];
+                var stats = results[6];
+                var followStatus = results[7];
+                var likeStatus = results[8];
+                var listsData = results[9];
+
+                if (!profile) {
+                    self.renderProfileError(page, 'User not found');
+                    return;
+                }
+
+                // Determine relationship status
+                var isSelf = profile.userId === ApiClient.getCurrentUserId();
+                var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
+                var hasPendingOutgoing = (outgoingRequests.requests || []).some(function (r) { return (r.ToUserId || r.toUserId) === userId; });
+                var hasPendingIncoming = (incomingRequests.requests || []).find(function (r) { return (r.FromUserId || r.fromUserId) === userId; });
+                var hasBlocked = blockStatus.hasBlocked || false;
+                var isBlockedBy = blockStatus.isBlockedBy || false;
+
+                // Get online status
+                var onlineStatus = 'Offline';
+                var friendStatus = (onlineData.friends || []).find(function (f) { return f.userId === userId; });
+                if (friendStatus) {
+                    onlineStatus = friendStatus.status || 'Offline';
+                }
+
+                self.renderLetterboxdProfile(page, profile, {
+                    isSelf: isSelf,
+                    isFriend: isFriend,
+                    hasPendingOutgoing: hasPendingOutgoing,
+                    hasPendingIncoming: hasPendingIncoming,
+                    incomingRequestId: hasPendingIncoming ? (hasPendingIncoming.Id || hasPendingIncoming.id) : null,
+                    hasBlocked: hasBlocked,
+                    isBlockedBy: isBlockedBy,
+                    onlineStatus: onlineStatus,
+                    stats: stats,
+                    followStatus: followStatus,
+                    likeStatus: likeStatus,
+                    lists: listsData.lists || []
+                });
+            }).catch(function (err) {
+                console.error('[Social] Profile load failed:', err);
+                self.renderProfileError(page, 'Failed to load profile');
+            });
         },
 
         /**
@@ -13224,135 +13962,708 @@
         renderProfileError: function (page, message) {
             var container = page.querySelector('.social-profile-container');
             if (container) {
-                container.innerHTML = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
+                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
         /**
-         * Render the full profile page
+         * Render Letterboxd-style profile
          */
-        renderProfilePage: function (page, profile, status) {
+        renderLetterboxdProfile: function (page, profile, status) {
             var self = this;
             var container = page.querySelector('.social-profile-container');
             if (!container) return;
 
             var username = profile.username || 'Unknown';
             var initial = username[0].toUpperCase();
-            var bio = profile.bio || 'No bio yet.';
-            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown';
-            var lastSeenDate = profile.updatedAt || profile.lastSeen;
-            var lastSeen = lastSeenDate ? this.formatTimeAgo(new Date(lastSeenDate)) : (status.onlineStatus === 'Online' ? 'now' : 'Unknown');
+            var bio = profile.bio || '';
+            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            var stats = status.stats || {};
+            var followStatus = status.followStatus || {};
+            var likeStatus = status.likeStatus || {};
+
+            // Status indicator
             var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
             var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
 
-            // Build action buttons based on relationship
-            var actionsHtml = '';
-            if (status.isSelf) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
-            } else if (status.hasBlocked) {
-                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(profile.userId) + '\')">Unblock</button>';
-            } else if (status.isBlockedBy) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
-            } else if (status.isFriend) {
-                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(profile.userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
-            } else if (status.hasPendingOutgoing) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
-            } else if (status.hasPendingIncoming) {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept Request</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
-            } else {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(profile.userId) + '\')">Add Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
-            }
+            // Build the Letterboxd-style layout
+            var html = '';
 
-            var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
-                '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
-                '<div class="social-profile-header">' +
-                '<div class="social-profile-avatar-large">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
-                '<div class="social-profile-info">' +
-                '<div class="social-profile-username">' + self.escapeHtml(username) + '</div>' +
-                '<div class="social-profile-bio">' + self.escapeHtml(bio) + '</div>' +
-                '<div class="social-profile-meta">' +
-                '<span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' + statusText + '</span>' +
-                '<span><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>Joined ' + memberSince + '</span>' +
-                '<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>Last seen ' + lastSeen + '</span>' +
+            // Back button
+            html += '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>';
+
+            // Profile header with gradient background
+            html += '<div class="lb-profile-header">' +
+                '<div class="lb-header-bg"></div>' +
+                '<div class="lb-header-content">' +
+                '<div class="lb-avatar">' + initial + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
+                '<div class="lb-user-info">' +
+                '<h1 class="lb-username">' + self.escapeHtml(username) + '</h1>' +
+                (bio ? '<p class="lb-bio">' + self.escapeHtml(bio) + '</p>' : '') +
+                '<div class="lb-meta">' +
+                '<span class="lb-status-text ' + statusClass + '">' + statusText + '</span>' +
+                (memberSince ? '<span class="lb-joined">Member since ' + memberSince + '</span>' : '') +
                 '</div></div>' +
-                '<div class="social-profile-actions">' + actionsHtml + '</div></div>' +
-                '<div class="social-profile-tabs">' +
-                '<div class="social-profile-tab active" data-tab="overview">Overview</div>' +
-                '</div>' +
-                '<div class="social-profile-content" id="socialProfileContent">' +
-                '<div class="social-profile-loading">Loading stats...</div>' +
+                '<div class="lb-header-actions">' + self.buildProfileActions(profile, status) + '</div>' +
+                '</div></div>';
+
+            // Stats bar (Letterboxd style)
+            html += '<div class="lb-stats-bar">' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'ratings\')">' +
+                '<span class="lb-stat-value">' + (stats.ratingsCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Ratings</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
+                '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Reviews</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'lists\')">' +
+                '<span class="lb-stat-value">' + (status.lists.length || 0) + '</span>' +
+                '<span class="lb-stat-label">Lists</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
+                '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Following</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'followers\')">' +
+                '<span class="lb-stat-value">' + (followStatus.followersCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Followers</span></div>' +
+                '<div class="lb-stat">' +
+                '<span class="lb-stat-value"><span class="lb-heart">♥</span> ' + (likeStatus.likesCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Likes</span></div>' +
                 '</div>';
+
+            // Tab navigation
+            html += '<div class="lb-tabs">' +
+                '<button class="lb-tab active" data-tab="overview">Overview</button>' +
+                '<button class="lb-tab" data-tab="ratings">Ratings</button>' +
+                '<button class="lb-tab" data-tab="reviews">Reviews</button>' +
+                '<button class="lb-tab" data-tab="lists">Lists</button>' +
+                '<button class="lb-tab" data-tab="activity">Activity</button>' +
+                '<button class="lb-tab" data-tab="following">Following</button>' +
+                '<button class="lb-tab" data-tab="followers">Followers</button>' +
+                '</div>';
+
+            // Tab content area
+            html += '<div class="lb-content" id="lbProfileContent"></div>';
 
             container.innerHTML = html;
 
-            // Fetch and render stats
-            self.loadProfileStats(profile.userId);
+            // Store profile data for tab switching
+            self._currentProfile = profile;
+            self._currentProfileStatus = status;
+
+            // Add tab click handlers
+            container.querySelectorAll('.lb-tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    container.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    self.switchProfileTab(tab.dataset.tab);
+                });
+            });
+
+            // Render initial tab (overview)
+            self.renderProfileOverviewTab(stats, status);
         },
 
         /**
-         * Load and render profile stats
+         * Build profile action buttons
          */
-        loadProfileStats: function (userId) {
+        buildProfileActions: function (profile, status) {
             var self = this;
+            var html = '';
+            var userId = profile.userId;
+            var username = profile.username || 'Unknown';
+
+            if (status.isSelf) {
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.openProfileSettings()">Edit Profile</button>';
+            } else if (status.hasBlocked) {
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">Unblock</button>';
+            } else if (status.isBlockedBy) {
+                html += '<button class="lb-btn disabled" disabled>Blocked</button>';
+            } else {
+                // Follow button
+                if (status.followStatus && status.followStatus.isFollowing) {
+                    html += '<button class="lb-btn following" onclick="RatingsPlugin.profileUnfollow(\'' + self.escapeJs(userId) + '\')"><span class="follow-icon">✓</span> Following</button>';
+                } else {
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileFollow(\'' + self.escapeJs(userId) + '\')">Follow</button>';
+                }
+
+                // Like profile button
+                if (status.likeStatus && status.likeStatus.hasLiked) {
+                    html += '<button class="lb-btn liked" onclick="RatingsPlugin.profileUnlike(\'' + self.escapeJs(userId) + '\')">♥</button>';
+                } else {
+                    html += '<button class="lb-btn heart" onclick="RatingsPlugin.profileLike(\'' + self.escapeJs(userId) + '\')">♡</button>';
+                }
+
+                // Friend button
+                if (status.isFriend) {
+                    html += '<button class="lb-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>';
+                } else if (status.hasPendingOutgoing) {
+                    html += '<button class="lb-btn disabled" disabled>Request Sent</button>';
+                } else if (status.hasPendingIncoming) {
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept</button>';
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
+                } else {
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">Add Friend</button>';
+                }
+
+                // More actions dropdown
+                html += '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
+                    '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>' +
+                    '<div class="lb-more-menu" id="profileMoreMenu">' +
+                    '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">Block User</button>' +
+                    '</div></button>';
+            }
+
+            return html;
+        },
+
+        /**
+         * Toggle more menu
+         */
+        toggleProfileMoreMenu: function (e) {
+            e.stopPropagation();
+            var menu = document.getElementById('profileMoreMenu');
+            if (menu) {
+                menu.classList.toggle('visible');
+                // Close on outside click
+                setTimeout(function() {
+                    document.addEventListener('click', function closeMenu() {
+                        menu.classList.remove('visible');
+                        document.removeEventListener('click', closeMenu);
+                    });
+                }, 0);
+            }
+        },
+
+        /**
+         * Switch profile tab
+         */
+        switchProfileTab: function (tabName) {
+            var self = this;
+            self._profileActiveTab = tabName;
+
+            // Update tab UI
+            document.querySelectorAll('.lb-tab').forEach(function(t) {
+                t.classList.toggle('active', t.dataset.tab === tabName);
+            });
+
+            var stats = self._currentProfileStatus.stats || {};
+            var status = self._currentProfileStatus;
+
+            switch (tabName) {
+                case 'overview':
+                    self.renderProfileOverviewTab(stats, status);
+                    break;
+                case 'ratings':
+                    self.renderProfileRatingsTab();
+                    break;
+                case 'reviews':
+                    self.renderProfileReviewsTab();
+                    break;
+                case 'lists':
+                    self.renderProfileListsTab(status.lists);
+                    break;
+                case 'activity':
+                    self.renderProfileActivityTab();
+                    break;
+                case 'following':
+                    self.renderProfileFollowingTab();
+                    break;
+                case 'followers':
+                    self.renderProfileFollowersTab();
+                    break;
+            }
+        },
+
+        /**
+         * Render Overview tab (Letterboxd style)
+         */
+        renderProfileOverviewTab: function (stats, status) {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            var html = '<div class="lb-overview">';
+
+            // Favorite Films row (placeholder for now)
+            html += '<section class="lb-section">' +
+                '<h3>Favorite Films</h3>' +
+                '<div class="lb-favorites-grid">' +
+                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
+                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
+                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
+                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
+                '</div></section>';
+
+            // Stats cards (detailed)
+            html += '<section class="lb-section">' +
+                '<h3>Statistics</h3>' +
+                '<div class="lb-stats-grid">' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">🎬</div>' +
+                '<div class="lb-stat-number">' + (stats.moviesWatched || 0) + '</div>' +
+                '<div class="lb-stat-text">Films</div></div>' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">📺</div>' +
+                '<div class="lb-stat-number">' + (stats.seriesWatched || 0) + '</div>' +
+                '<div class="lb-stat-text">Shows</div></div>' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">⏱️</div>' +
+                '<div class="lb-stat-number">' + (stats.totalWatchHours || 0) + '</div>' +
+                '<div class="lb-stat-text">Hours</div></div>' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">⭐</div>' +
+                '<div class="lb-stat-number">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</div>' +
+                '<div class="lb-stat-text">Avg Rating</div></div>' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">👥</div>' +
+                '<div class="lb-stat-number">' + (stats.friendsCount || 0) + '</div>' +
+                '<div class="lb-stat-text">Friends</div></div>' +
+                '<div class="lb-stat-card">' +
+                '<div class="lb-stat-icon">👍</div>' +
+                '<div class="lb-stat-number">' + (stats.likesGiven || 0) + '</div>' +
+                '<div class="lb-stat-text">Likes Given</div></div>' +
+                '</div></section>';
+
+            // Rating distribution
+            html += '<section class="lb-section">' +
+                '<h3>Rating Distribution</h3>' +
+                '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading...</div></div>' +
+                '</section>';
+
+            // Recent activity preview
+            html += '<section class="lb-section">' +
+                '<h3>Recent Activity</h3>' +
+                '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading...</div></div>' +
+                '</section>';
+
+            html += '</div>';
+
+            content.innerHTML = html;
+
+            // Load rating distribution
+            this.loadProfileRatingDistribution();
+            // Load recent activity
+            this.loadProfileRecentActivity(5);
+        },
+
+        /**
+         * Load rating distribution for profile
+         */
+        loadProfileRatingDistribution: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', {
+            fetch(baseUrl + '/Social/Profile/' + userId + '/RatingDistribution', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
             })
             .then(function (r) { return r.json(); })
-            .then(function (stats) {
-                self.renderProfileStats(stats);
-            })
-            .catch(function (err) {
-                console.error('[Social] Failed to load stats:', err);
-                var content = document.getElementById('socialProfileContent');
-                if (content) {
-                    content.innerHTML = '<div class="social-profile-error">Failed to load stats</div>';
+            .then(function (data) {
+                var container = document.getElementById('lbRatingDist');
+                if (!container) return;
+
+                var distribution = data.distribution || {};
+                var maxCount = Math.max(...Object.values(distribution), 1);
+
+                var html = '<div class="lb-dist-chart">';
+                for (var i = 1; i <= 10; i++) {
+                    var count = distribution[i] || 0;
+                    var height = (count / maxCount * 100) || 0;
+                    html += '<div class="lb-dist-bar-wrap">' +
+                        '<div class="lb-dist-bar" style="height: ' + height + '%"></div>' +
+                        '<span class="lb-dist-label">' + i + '</span>' +
+                        '</div>';
                 }
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            .catch(function () {
+                var container = document.getElementById('lbRatingDist');
+                if (container) container.innerHTML = '<div class="lb-empty">No rating data</div>';
             });
         },
 
         /**
-         * Render profile stats in the Overview tab
+         * Load recent activity for profile
          */
-        renderProfileStats: function (stats) {
-            var content = document.getElementById('socialProfileContent');
+        loadProfileRecentActivity: function (limit) {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Activity?limit=' + (limit || 10), {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var container = document.getElementById('lbRecentActivity');
+                if (!container) return;
+
+                var activities = data.activities || [];
+                if (activities.length === 0) {
+                    container.innerHTML = '<div class="lb-empty">No recent activity</div>';
+                    return;
+                }
+
+                var html = '<div class="lb-activity-list">';
+                activities.forEach(function (a) {
+                    html += '<div class="lb-activity-item">' +
+                        '<span class="lb-activity-type">' + self.getActivityIcon(a.type) + '</span>' +
+                        '<span class="lb-activity-text">' + self.escapeHtml(a.description || a.text || '') + '</span>' +
+                        '<span class="lb-activity-time">' + self.formatTimeAgo(new Date(a.timestamp || a.createdAt)) + '</span>' +
+                        '</div>';
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            .catch(function () {
+                var container = document.getElementById('lbRecentActivity');
+                if (container) container.innerHTML = '<div class="lb-empty">Failed to load activity</div>';
+            });
+        },
+
+        /**
+         * Get activity icon
+         */
+        getActivityIcon: function (type) {
+            var icons = {
+                'rating': '⭐',
+                'review': '📝',
+                'like': '❤️',
+                'follow': '👤',
+                'list': '📋',
+                'watch': '👁️'
+            };
+            return icons[type] || '📌';
+        },
+
+        /**
+         * Render Ratings tab
+         */
+        renderProfileRatingsTab: function () {
+            var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            var html = '<div class="social-profile-stats-grid">' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.moviesWatched || 0) + '</div>' +
-                '<div class="social-stat-label">Movies Watched</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.seriesWatched || 0) + '</div>' +
-                '<div class="social-stat-label">Series Watched</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.totalWatchHours || 0) + '</div>' +
-                '<div class="social-stat-label">Hours Watched</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.friendsCount || 0) + '</div>' +
-                '<div class="social-stat-label">Friends</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.ratingsCount || 0) + '</div>' +
-                '<div class="social-stat-label">Ratings Given</div>' +
-                '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.averageRating || 0) + '<span class="social-stat-star">★</span></div>' +
-                '<div class="social-stat-label">Avg Rating</div>' +
-                '</div>' +
-                '</div>';
+            content.innerHTML = '<div class="lb-loading">Loading ratings...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=50', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var ratings = data.ratings || data || [];
+                if (ratings.length === 0) {
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">⭐</span><p>No ratings yet</p></div>';
+                    return;
+                }
+
+                var html = '<div class="lb-ratings-grid">';
+                ratings.forEach(function (r) {
+                    html += '<div class="lb-rating-card">' +
+                        '<div class="lb-rating-poster" style="background-image: url(\'' + (r.imageUrl || '') + '\')"></div>' +
+                        '<div class="lb-rating-info">' +
+                        '<div class="lb-rating-title">' + self.escapeHtml(r.itemName || r.title || 'Unknown') + '</div>' +
+                        '<div class="lb-rating-value">' + self.renderStars(r.rating) + '</div>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load ratings</div>';
+            });
+        },
+
+        /**
+         * Render stars for rating
+         */
+        renderStars: function (rating) {
+            var fullStars = Math.floor(rating / 2);
+            var halfStar = rating % 2 >= 1;
+            var html = '';
+            for (var i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    html += '<span class="lb-star full">★</span>';
+                } else if (i === fullStars && halfStar) {
+                    html += '<span class="lb-star half">★</span>';
+                } else {
+                    html += '<span class="lb-star empty">☆</span>';
+                }
+            }
+            return html;
+        },
+
+        /**
+         * Render Reviews tab
+         */
+        renderProfileReviewsTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading reviews...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Ratings/Reviews/User/' + userId + '?limit=20', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var reviews = data.reviews || data || [];
+                if (reviews.length === 0) {
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📝</span><p>No reviews yet</p></div>';
+                    return;
+                }
+
+                var html = '<div class="lb-reviews-list">';
+                reviews.forEach(function (r) {
+                    html += '<div class="lb-review-card">' +
+                        '<div class="lb-review-header">' +
+                        '<span class="lb-review-title">' + self.escapeHtml(r.itemName || r.title || 'Unknown') + '</span>' +
+                        '<span class="lb-review-rating">' + self.renderStars(r.rating || 0) + '</span>' +
+                        '</div>' +
+                        '<p class="lb-review-text">' + self.escapeHtml(r.reviewText || r.text || '') + '</p>' +
+                        '<div class="lb-review-footer">' +
+                        '<span class="lb-review-date">' + self.formatTimeAgo(new Date(r.createdAt || r.timestamp)) + '</span>' +
+                        '<span class="lb-review-likes">👍 ' + (r.likes || 0) + '</span>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load reviews</div>';
+            });
+        },
+
+        /**
+         * Render Lists tab
+         */
+        renderProfileListsTab: function (lists) {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            var self = this;
+            lists = lists || [];
+
+            if (lists.length === 0) {
+                content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📋</span><p>No lists created yet</p></div>';
+                return;
+            }
+
+            var html = '<div class="lb-lists-grid">';
+            lists.forEach(function (list) {
+                var previewItems = (list.items || []).slice(0, 4);
+                html += '<div class="lb-list-card" onclick="RatingsPlugin.viewList(\'' + self.escapeJs(list.id) + '\')">' +
+                    '<div class="lb-list-preview">';
+
+                for (var i = 0; i < 4; i++) {
+                    if (previewItems[i]) {
+                        html += '<div class="lb-list-preview-item" style="background-image: url(\'' + (previewItems[i].cachedImageUrl || '') + '\')"></div>';
+                    } else {
+                        html += '<div class="lb-list-preview-item empty"></div>';
+                    }
+                }
+
+                html += '</div>' +
+                    '<div class="lb-list-info">' +
+                    '<h4 class="lb-list-title">' + self.escapeHtml(list.title || 'Untitled') + '</h4>' +
+                    '<span class="lb-list-count">' + (list.itemCount || list.items?.length || 0) + ' items</span>' +
+                    '</div></div>';
+            });
+            html += '</div>';
 
             content.innerHTML = html;
+        },
+
+        /**
+         * Render Activity tab
+         */
+        renderProfileActivityTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+            content.innerHTML = '<div id="lbRecentActivity"><div class="lb-loading">Loading activity...</div></div>';
+            this.loadProfileRecentActivity(30);
+        },
+
+        /**
+         * Render Following tab
+         */
+        renderProfileFollowingTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Following', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var users = data.following || data.users || [];
+                self.renderUserList(content, users, 'Not following anyone');
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load</div>';
+            });
+        },
+
+        /**
+         * Render Followers tab
+         */
+        renderProfileFollowersTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Followers', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var users = data.followers || data.users || [];
+                self.renderUserList(content, users, 'No followers yet');
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load</div>';
+            });
+        },
+
+        /**
+         * Render a list of users
+         */
+        renderUserList: function (container, users, emptyMessage) {
+            var self = this;
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">👥</span><p>' + emptyMessage + '</p></div>';
+                return;
+            }
+
+            var html = '<div class="lb-user-list">';
+            users.forEach(function (user) {
+                var username = user.username || user.userName || 'Unknown';
+                var initial = username[0].toUpperCase();
+                html += '<div class="lb-user-card" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(user.userId || user.id) + '\')">' +
+                    '<div class="lb-user-avatar">' + initial + '</div>' +
+                    '<div class="lb-user-name">' + self.escapeHtml(username) + '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        },
+
+        /**
+         * View a list
+         */
+        viewList: function (listId) {
+            // TODO: Implement list viewer modal
+            console.log('View list:', listId);
+        },
+
+        /**
+         * Open profile settings
+         */
+        openProfileSettings: function () {
+            // TODO: Open settings modal
+            console.log('Open profile settings');
+        },
+
+        /**
+         * Profile follow action
+         */
+        profileFollow: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Follow/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile unfollow action
+         */
+        profileUnfollow: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Follow/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile like action
+         */
+        profileLike: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile unlike action
+         */
+        profileUnlike: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Load and render profile stats (legacy support)
+         */
+        loadProfileStats: function (userId) {
+            // Legacy - now handled in showProfilePage
+        },
+
+        /**
+         * Render profile stats (legacy support)
+         */
+        renderProfileStats: function (stats) {
+            // Legacy - now handled in renderProfileOverviewTab
         },
 
         /**

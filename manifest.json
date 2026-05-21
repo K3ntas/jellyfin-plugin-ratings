@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.308.0",
+        "changelog": "New: Letterboxd-style profile modal with tabs, stats, follows, likes, lists",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.308.0/Jellyfin.Plugin.Ratings_2.0.308.0.zip",
+        "checksum": "b568b33902c4540d46aa12f427890387",
+        "timestamp": "2026-05-21T14:00:00Z"
+      },
+      {
         "version": "2.0.307.0",
         "changelog": "Fix: Profile links now navigate to full Letterboxd-style profile page",
         "targetAbi": "10.11.0.0",
