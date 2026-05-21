@@ -13820,16 +13820,54 @@
                     color: #99aabb;
                     font-size: 14px;
                 }
-                .lb-picker-rating {
+                .lb-picker-badges {
                     position: absolute;
                     top: 6px;
                     right: 6px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    align-items: flex-end;
+                }
+                .lb-picker-rating {
                     background: rgba(0,0,0,0.85);
                     color: #00e054;
                     font-size: 11px;
                     font-weight: 700;
                     padding: 3px 6px;
                     border-radius: 3px;
+                }
+                .lb-picker-rating.my-rating {
+                    color: #00e054;
+                }
+                .lb-picker-rating.community-rating {
+                    color: #f5c518;
+                    font-size: 10px;
+                }
+                .lb-picker-sort {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 10px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-sort label {
+                    color: #99aabb;
+                    font-size: 13px;
+                }
+                .lb-picker-sort select {
+                    flex: 1;
+                    padding: 8px 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 13px;
+                    cursor: pointer;
+                }
+                .lb-picker-sort select:focus {
+                    outline: none;
+                    border-color: #00e054;
                 }
                 /* Favorite Rows */
                 .lb-favorites-section {
@@ -15331,6 +15369,7 @@
             self._pickerGenre = genreFilter || null;
             self._pickerPage = 0;
             self._pickerSearchQuery = null;
+            self._pickerSortBy = self._pickerSortBy || 'myRating'; // Default sort
 
             // Highlight active category
             var buttons = document.querySelectorAll('.lb-picker-cat-btn');
@@ -15338,7 +15377,42 @@
                 btn.classList.toggle('active', btn.dataset.category === categoryId && btn.dataset.genre === (genreFilter || ''));
             });
 
+            // Show sort options
+            self.showPickerSortOptions();
+
             self.loadPickerItems();
+        },
+
+        /**
+         * Show sort dropdown in picker
+         */
+        showPickerSortOptions: function () {
+            var searchDiv = document.querySelector('.lb-picker-search');
+            if (!searchDiv) return;
+
+            // Check if sort already exists
+            if (document.getElementById('pickerSortSelect')) return;
+
+            var sortHtml = '<div class="lb-picker-sort">' +
+                '<label>Sort by:</label>' +
+                '<select id="pickerSortSelect" onchange="RatingsPlugin.changePickerSort(this.value)">' +
+                '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>My Ratings (Highest)</option>' +
+                '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>My Ratings (Lowest)</option>' +
+                '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>Community Rating</option>' +
+                '<option value="newest"' + (this._pickerSortBy === 'newest' ? ' selected' : '') + '>Newest First</option>' +
+                '<option value="name"' + (this._pickerSortBy === 'name' ? ' selected' : '') + '>Name A-Z</option>' +
+                '</select></div>';
+
+            searchDiv.insertAdjacentHTML('afterend', sortHtml);
+        },
+
+        /**
+         * Change picker sort order
+         */
+        changePickerSort: function (sortBy) {
+            this._pickerSortBy = sortBy;
+            this._pickerPage = 0;
+            this.loadPickerItems();
         },
 
         /**
@@ -15360,16 +15434,30 @@
                 ? 'Movie,Series' : self._pickerCategory;
             var startIndex = self._pickerPage * self._pickerItemsPerPage;
 
+            // Determine API sort based on sort option
+            var sortBy = 'DateCreated';
+            var sortOrder = 'Descending';
+            if (self._pickerSortBy === 'communityRating') {
+                sortBy = 'CommunityRating';
+                sortOrder = 'Descending';
+            } else if (self._pickerSortBy === 'name') {
+                sortBy = 'SortName';
+                sortOrder = 'Ascending';
+            } else if (self._pickerSortBy === 'newest') {
+                sortBy = 'DateCreated';
+                sortOrder = 'Descending';
+            }
+
             var url = baseUrl + '/Users/' + userId + '/Items?IncludeItemTypes=' + includeTypes +
                 '&Recursive=true&Limit=' + self._pickerItemsPerPage + '&StartIndex=' + startIndex +
-                '&SortBy=DateCreated&SortOrder=Descending&Fields=PrimaryImageAspectRatio';
+                '&SortBy=' + sortBy + '&SortOrder=' + sortOrder + '&Fields=PrimaryImageAspectRatio,CommunityRating';
 
             // Add genre filter if applicable
             if (self._pickerGenre) {
                 url += '&Genres=' + encodeURIComponent(self._pickerGenre);
             }
 
-            // First get items, then sort by user ratings
+            // First get items, then get user ratings
             fetch(url, { method: 'GET', credentials: 'include', headers: headers })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -15382,15 +15470,17 @@
                     return;
                 }
 
-                // Get user ratings for these items to sort by
+                // Get user ratings for these items
                 self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
                 .then(function (ratings) {
-                    // Sort by user rating (highest first)
-                    items.sort(function (a, b) {
-                        var ratingA = ratings[a.Id] || 0;
-                        var ratingB = ratings[b.Id] || 0;
-                        return ratingB - ratingA;
-                    });
+                    // Sort client-side if sorting by my ratings
+                    if (self._pickerSortBy === 'myRating' || self._pickerSortBy === 'myRatingAsc') {
+                        items.sort(function (a, b) {
+                            var ratingA = ratings[a.Id] || 0;
+                            var ratingB = ratings[b.Id] || 0;
+                            return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
+                        });
+                    }
 
                     self.renderPickerItems(items, totalCount, ratings);
                 })
@@ -15444,13 +15534,24 @@
                     ? baseUrl + '/Items/' + item.Id + '/Images/Primary?maxHeight=300&tag=' + item.ImageTags.Primary
                     : '';
                 var userRating = ratings[item.Id];
-                var ratingBadge = userRating ? '<span class="lb-picker-rating">' + userRating + '★</span>' : '';
+                var communityRating = item.CommunityRating ? item.CommunityRating.toFixed(1) : null;
+
+                // Build rating badges
+                var badges = '';
+                if (userRating) {
+                    badges += '<span class="lb-picker-rating my-rating">' + userRating + '★</span>';
+                }
+                if (communityRating) {
+                    badges += '<span class="lb-picker-rating community-rating">⭐' + communityRating + '</span>';
+                }
 
                 html += '<div class="lb-picker-item" onclick="RatingsPlugin.selectMediaForFavorite(\'' +
                     self.escapeJs(item.Id) + '\', \'' +
                     self.escapeJs(item.Name) + '\', \'' +
                     self.escapeJs(imageUrl) + '\')">' +
-                    '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')">' + ratingBadge + '</div>' +
+                    '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')">' +
+                    '<div class="lb-picker-badges">' + badges + '</div>' +
+                    '</div>' +
                     '<div class="lb-picker-title">' + self.escapeHtml(item.Name) + '</div>' +
                     '</div>';
             });
