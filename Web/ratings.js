@@ -14914,12 +14914,16 @@
                 credentials: 'include',
                 headers: headers
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
                 var container = document.getElementById('lbRatingDist');
                 if (!container) return;
 
-                var ratings = data.ratings || data || [];
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
                     return;
@@ -14970,12 +14974,16 @@
                 credentials: 'include',
                 headers: headers
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
                 var container = document.getElementById('lbRecentActivity');
                 if (!container) return;
 
-                var ratings = data.ratings || data || [];
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No recent activity</div>';
                     return;
@@ -15041,27 +15049,41 @@
                 credentials: 'include',
                 headers: headers
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
-                var ratings = data.ratings || data || [];
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">⭐</span><p>No ratings yet</p></div>';
                     return;
                 }
 
+                var baseUrl = ApiClient.serverAddress();
                 var html = '<div class="lb-ratings-grid">';
                 ratings.forEach(function (r) {
+                    // Build image URL from itemId if imageUrl not present
+                    var imageUrl = r.imageUrl || r.ImageUrl || '';
+                    if (!imageUrl && (r.itemId || r.ItemId)) {
+                        imageUrl = baseUrl + '/Items/' + (r.itemId || r.ItemId) + '/Images/Primary?maxHeight=200';
+                    }
+                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+
                     html += '<div class="lb-rating-card">' +
-                        '<div class="lb-rating-poster" style="background-image: url(\'' + (r.imageUrl || '') + '\')"></div>' +
+                        '<div class="lb-rating-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
                         '<div class="lb-rating-info">' +
-                        '<div class="lb-rating-title">' + self.escapeHtml(r.itemName || r.title || 'Unknown') + '</div>' +
-                        '<div class="lb-rating-value">' + self.renderStars(r.rating) + '</div>' +
+                        '<div class="lb-rating-title">' + self.escapeHtml(title) + '</div>' +
+                        '<div class="lb-rating-value">' + self.renderStars(rating) + '</div>' +
                         '</div></div>';
                 });
                 html += '</div>';
                 content.innerHTML = html;
             })
-            .catch(function () {
+            .catch(function (err) {
+                console.error('[Profile] Failed to load ratings:', err);
                 content.innerHTML = '<div class="lb-error">Failed to load ratings</div>';
             });
         },
@@ -15105,9 +15127,13 @@
                 credentials: 'include',
                 headers: headers
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
             .then(function (data) {
-                var ratings = data.ratings || data || [];
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 // Filter to only those with review text
                 var reviews = ratings.filter(function (r) {
                     return r.review || r.Review || r.reviewText || r.ReviewText;
@@ -15425,6 +15451,12 @@
 
             results.innerHTML = '<div class="lb-picker-loading">Loading...</div>';
 
+            // If sorting by my ratings, use different approach
+            if (self._pickerSortBy === 'myRating' || self._pickerSortBy === 'myRatingAsc') {
+                self.loadPickerItemsByMyRatings();
+                return;
+            }
+
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
             var userId = ApiClient.getCurrentUserId();
@@ -15435,8 +15467,8 @@
             var startIndex = self._pickerPage * self._pickerItemsPerPage;
 
             // Determine API sort based on sort option
-            var sortBy = 'DateCreated';
-            var sortOrder = 'Descending';
+            var sortBy = 'Random';
+            var sortOrder = 'Ascending';
             if (self._pickerSortBy === 'communityRating') {
                 sortBy = 'CommunityRating';
                 sortOrder = 'Descending';
@@ -15457,7 +15489,7 @@
                 url += '&Genres=' + encodeURIComponent(self._pickerGenre);
             }
 
-            // First get items, then get user ratings
+            // Fetch items
             fetch(url, { method: 'GET', credentials: 'include', headers: headers })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -15470,18 +15502,9 @@
                     return;
                 }
 
-                // Get user ratings for these items
+                // Get user ratings for badge display
                 self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
                 .then(function (ratings) {
-                    // Sort client-side if sorting by my ratings
-                    if (self._pickerSortBy === 'myRating' || self._pickerSortBy === 'myRatingAsc') {
-                        items.sort(function (a, b) {
-                            var ratingA = ratings[a.Id] || 0;
-                            var ratingB = ratings[b.Id] || 0;
-                            return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
-                        });
-                    }
-
                     self.renderPickerItems(items, totalCount, ratings);
                 })
                 .catch(function () {
@@ -15490,6 +15513,88 @@
             })
             .catch(function () {
                 results.innerHTML = '<div class="lb-picker-empty">Failed to load items</div>';
+            });
+        },
+
+        /**
+         * Load items sorted by user's ratings
+         */
+        loadPickerItemsByMyRatings: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = ApiClient.getCurrentUserId();
+
+            // First get all user ratings
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=1000', {
+                method: 'GET', credentials: 'include', headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var allRatings = Array.isArray(data) ? data : (data.ratings || data || []);
+
+                if (allRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">You haven\'t rated any items yet</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Sort by rating
+                allRatings.sort(function (a, b) {
+                    var ratingA = a.rating || a.Rating || 0;
+                    var ratingB = b.rating || b.Rating || 0;
+                    return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
+                });
+
+                // Paginate
+                var startIndex = self._pickerPage * self._pickerItemsPerPage;
+                var pageRatings = allRatings.slice(startIndex, startIndex + self._pickerItemsPerPage);
+                var totalCount = allRatings.length;
+
+                if (pageRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No more items</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Get item IDs
+                var itemIds = pageRatings.map(function (r) { return r.itemId || r.ItemId; }).filter(Boolean);
+
+                // Fetch media details for these items
+                fetch(baseUrl + '/Users/' + userId + '/Items?Ids=' + itemIds.join(',') + '&Fields=PrimaryImageAspectRatio,CommunityRating', {
+                    method: 'GET', credentials: 'include', headers: headers
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (itemData) {
+                    var items = itemData.Items || [];
+
+                    // Build ratings map
+                    var ratingsMap = {};
+                    pageRatings.forEach(function (r) {
+                        var id = r.itemId || r.ItemId;
+                        if (id) {
+                            ratingsMap[id.toLowerCase()] = r.rating || r.Rating;
+                            ratingsMap[id.toUpperCase()] = r.rating || r.Rating;
+                            ratingsMap[id] = r.rating || r.Rating;
+                        }
+                    });
+
+                    // Sort items to match ratings order
+                    items.sort(function (a, b) {
+                        var ratingA = ratingsMap[a.Id] || ratingsMap[a.Id.toLowerCase()] || 0;
+                        var ratingB = ratingsMap[b.Id] || ratingsMap[b.Id.toLowerCase()] || 0;
+                        return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
+                    });
+
+                    self.renderPickerItems(items, totalCount, ratingsMap);
+                })
+                .catch(function () {
+                    results.innerHTML = '<div class="lb-picker-empty">Failed to load item details</div>';
+                });
+            })
+            .catch(function () {
+                results.innerHTML = '<div class="lb-picker-empty">Failed to load ratings</div>';
             });
         },
 
@@ -15511,7 +15616,12 @@
                 list.forEach(function (r) {
                     var id = r.itemId || r.ItemId;
                     var rating = r.rating || r.Rating;
-                    if (id) ratings[id] = rating;
+                    if (id) {
+                        // Store both lowercase and uppercase versions for matching
+                        ratings[id.toLowerCase()] = rating;
+                        ratings[id.toUpperCase()] = rating;
+                        ratings[id] = rating;
+                    }
                 });
                 return ratings;
             });
