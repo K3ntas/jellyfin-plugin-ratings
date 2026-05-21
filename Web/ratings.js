@@ -13088,6 +13088,20 @@
                     border-radius: 8px;
                     overflow: hidden;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    max-height: calc(100vh - 40px);
+                    overflow-y: auto;
+                    transition: all 0.3s ease;
+                }
+                /* Fullscreen mode */
+                .social-profile-page.letterboxd-style.fullscreen {
+                    background: #14181c;
+                }
+                .social-profile-page.letterboxd-style.fullscreen .social-profile-container.letterboxd {
+                    max-width: 100%;
+                    margin: 0;
+                    border-radius: 0;
+                    max-height: 100vh;
+                    height: 100vh;
                 }
                 .profile-loading-spinner {
                     display: flex;
@@ -13109,6 +13123,14 @@
                 @keyframes lbSpin {
                     to { transform: rotate(360deg); }
                 }
+                .lb-toolbar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 20px;
+                    background: #14181c;
+                    border-bottom: 1px solid #2c3440;
+                }
                 .lb-back {
                     display: inline-flex;
                     align-items: center;
@@ -13116,15 +13138,144 @@
                     color: #99aabb;
                     font-size: 14px;
                     cursor: pointer;
-                    padding: 16px 20px;
-                    transition: color 0.2s;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
                 }
-                .lb-back:hover { color: #fff; }
+                .lb-back:hover { color: #fff; background: #2c3440; }
+                .lb-toolbar-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .lb-toolbar-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 4px;
+                    background: #2c3440;
+                    border: none;
+                    color: #99aabb;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 16px;
+                }
+                .lb-toolbar-btn:hover { background: #456; color: #fff; }
+                .lb-toolbar-btn.active { background: #00e054; color: #14181c; }
                 .lb-error {
                     text-align: center;
                     padding: 60px;
                     color: #ee7752;
                     font-size: 16px;
+                }
+
+                /* Settings Modal */
+                .lb-settings-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.9);
+                    z-index: 100001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-settings-content {
+                    background: #14181c;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .lb-settings-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-settings-header h2 {
+                    margin: 0;
+                    font-size: 20px;
+                    color: #fff;
+                }
+                .lb-settings-close {
+                    background: none;
+                    border: none;
+                    color: #99aabb;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                }
+                .lb-settings-close:hover { color: #fff; }
+                .lb-settings-body {
+                    padding: 20px;
+                }
+                .lb-settings-section {
+                    margin-bottom: 24px;
+                }
+                .lb-settings-section h3 {
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #678;
+                    margin: 0 0 16px 0;
+                }
+                .lb-settings-field {
+                    margin-bottom: 16px;
+                }
+                .lb-settings-field label {
+                    display: block;
+                    color: #99aabb;
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                }
+                .lb-settings-field input[type="text"],
+                .lb-settings-field textarea {
+                    width: 100%;
+                    padding: 10px 14px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+                .lb-settings-field textarea {
+                    min-height: 80px;
+                    resize: vertical;
+                }
+                .lb-settings-field input:focus,
+                .lb-settings-field textarea:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-settings-footer {
+                    padding: 20px;
+                    border-top: 1px solid #2c3440;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                .lb-settings-footer button {
+                    padding: 10px 24px;
+                    border-radius: 4px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .lb-settings-footer .lb-btn-cancel {
+                    background: #456;
+                    color: #fff;
+                }
+                .lb-settings-footer .lb-btn-save {
+                    background: #00e054;
+                    color: #14181c;
                 }
 
                 /* Profile Header */
@@ -13313,23 +13464,31 @@
                 .lb-stats-bar {
                     display: flex;
                     justify-content: center;
+                    flex-wrap: wrap;
                     background: #1c2228;
                     border-top: 1px solid #2c3440;
                     border-bottom: 1px solid #2c3440;
                 }
                 .lb-stat {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     padding: 16px 24px;
                     text-align: center;
                     cursor: pointer;
                     transition: background 0.2s;
+                    min-width: 80px;
                 }
                 .lb-stat:hover { background: #2c3440; }
                 .lb-stat-value {
+                    display: block;
                     font-size: 18px;
                     font-weight: 700;
                     color: #fff;
+                    line-height: 1.2;
                 }
                 .lb-stat-label {
+                    display: block;
                     font-size: 11px;
                     color: #678;
                     text-transform: uppercase;
@@ -13989,9 +14148,14 @@
             // Build the Letterboxd-style layout
             var html = '';
 
-            // Back button
-            html += '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
-                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>';
+            // Toolbar with back, fullscreen, and settings
+            html += '<div class="lb-toolbar">' +
+                '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="lb-toolbar-actions">' +
+                (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
+                '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
+                '</div></div>';
 
             // Profile header with gradient background
             html += '<div class="lb-profile-header">' +
@@ -14254,7 +14418,8 @@
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Social/Profile/' + userId + '/RatingDistribution', {
+            // Get user's ratings and calculate distribution
+            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=500', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -14264,14 +14429,29 @@
                 var container = document.getElementById('lbRatingDist');
                 if (!container) return;
 
-                var distribution = data.distribution || {};
+                var ratings = data.ratings || data || [];
+                if (ratings.length === 0) {
+                    container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
+                    return;
+                }
+
+                // Calculate distribution
+                var distribution = {};
+                for (var i = 1; i <= 10; i++) distribution[i] = 0;
+                ratings.forEach(function (r) {
+                    var rating = r.rating || r.Rating;
+                    if (rating >= 1 && rating <= 10) {
+                        distribution[rating]++;
+                    }
+                });
+
                 var maxCount = Math.max(...Object.values(distribution), 1);
 
                 var html = '<div class="lb-dist-chart">';
                 for (var i = 1; i <= 10; i++) {
                     var count = distribution[i] || 0;
                     var height = (count / maxCount * 100) || 0;
-                    html += '<div class="lb-dist-bar-wrap">' +
+                    html += '<div class="lb-dist-bar-wrap" title="' + i + ' stars: ' + count + ' ratings">' +
                         '<div class="lb-dist-bar" style="height: ' + height + '%"></div>' +
                         '<span class="lb-dist-label">' + i + '</span>' +
                         '</div>';
@@ -14286,7 +14466,7 @@
         },
 
         /**
-         * Load recent activity for profile
+         * Load recent activity for profile (using ratings as activity)
          */
         loadProfileRecentActivity: function (limit) {
             var self = this;
@@ -14294,7 +14474,8 @@
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Social/Profile/' + userId + '/Activity?limit=' + (limit || 10), {
+            // Get user's recent ratings as activity
+            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=' + (limit || 10), {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
@@ -14304,26 +14485,35 @@
                 var container = document.getElementById('lbRecentActivity');
                 if (!container) return;
 
-                var activities = data.activities || [];
-                if (activities.length === 0) {
+                var ratings = data.ratings || data || [];
+                if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No recent activity</div>';
                     return;
                 }
 
                 var html = '<div class="lb-activity-list">';
-                activities.forEach(function (a) {
+                ratings.slice(0, limit || 10).forEach(function (r) {
+                    var title = r.itemName || r.title || r.ItemName || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
+                    var hasReview = r.review || r.Review || r.reviewText || r.ReviewText;
+
                     html += '<div class="lb-activity-item">' +
-                        '<span class="lb-activity-type">' + self.getActivityIcon(a.type) + '</span>' +
-                        '<span class="lb-activity-text">' + self.escapeHtml(a.description || a.text || '') + '</span>' +
-                        '<span class="lb-activity-time">' + self.formatTimeAgo(new Date(a.timestamp || a.createdAt)) + '</span>' +
+                        '<span class="lb-activity-type">' + (hasReview ? '📝' : '⭐') + '</span>' +
+                        '<span class="lb-activity-text">' +
+                        (hasReview ? 'Reviewed' : 'Rated') + ' <strong>' + self.escapeHtml(title) + '</strong> ' +
+                        self.renderStars(rating) +
+                        '</span>' +
+                        '<span class="lb-activity-time">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
                         '</div>';
                 });
                 html += '</div>';
                 container.innerHTML = html;
             })
-            .catch(function () {
+            .catch(function (err) {
+                console.error('[Social] Activity load error:', err);
                 var container = document.getElementById('lbRecentActivity');
-                if (container) container.innerHTML = '<div class="lb-empty">Failed to load activity</div>';
+                if (container) container.innerHTML = '<div class="lb-empty">No recent activity</div>';
             });
         },
 
@@ -14406,7 +14596,7 @@
         },
 
         /**
-         * Render Reviews tab
+         * Render Reviews tab (ratings that have review text)
          */
         renderProfileReviewsTab: function () {
             var content = document.getElementById('lbProfileContent');
@@ -14419,14 +14609,20 @@
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Ratings/Reviews/User/' + userId + '?limit=20', {
+            // Get ratings and filter for those with reviews
+            fetch(baseUrl + '/Ratings/User/' + userId + '?limit=100', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                var reviews = data.reviews || data || [];
+                var ratings = data.ratings || data || [];
+                // Filter to only those with review text
+                var reviews = ratings.filter(function (r) {
+                    return r.review || r.Review || r.reviewText || r.ReviewText;
+                });
+
                 if (reviews.length === 0) {
                     content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📝</span><p>No reviews yet</p></div>';
                     return;
@@ -14434,15 +14630,21 @@
 
                 var html = '<div class="lb-reviews-list">';
                 reviews.forEach(function (r) {
+                    var reviewText = r.review || r.Review || r.reviewText || r.ReviewText || '';
+                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
+                    var likes = r.likes || r.Likes || 0;
+
                     html += '<div class="lb-review-card">' +
                         '<div class="lb-review-header">' +
-                        '<span class="lb-review-title">' + self.escapeHtml(r.itemName || r.title || 'Unknown') + '</span>' +
-                        '<span class="lb-review-rating">' + self.renderStars(r.rating || 0) + '</span>' +
+                        '<span class="lb-review-title">' + self.escapeHtml(title) + '</span>' +
+                        '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
                         '</div>' +
-                        '<p class="lb-review-text">' + self.escapeHtml(r.reviewText || r.text || '') + '</p>' +
+                        '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
                         '<div class="lb-review-footer">' +
-                        '<span class="lb-review-date">' + self.formatTimeAgo(new Date(r.createdAt || r.timestamp)) + '</span>' +
-                        '<span class="lb-review-likes">👍 ' + (r.likes || 0) + '</span>' +
+                        '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
+                        '<span class="lb-review-likes">👍 ' + likes + '</span>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -14593,11 +14795,121 @@
         },
 
         /**
-         * Open profile settings
+         * Toggle fullscreen mode for profile
+         */
+        toggleProfileFullscreen: function () {
+            var page = document.getElementById('socialProfilePage');
+            if (page) {
+                page.classList.toggle('fullscreen');
+                var btn = document.getElementById('lbFullscreenBtn');
+                if (btn) {
+                    btn.classList.toggle('active', page.classList.contains('fullscreen'));
+                    btn.textContent = page.classList.contains('fullscreen') ? '⛶' : '⛶';
+                }
+            }
+        },
+
+        /**
+         * Open profile settings modal
          */
         openProfileSettings: function () {
-            // TODO: Open settings modal
-            console.log('Open profile settings');
+            var self = this;
+            var profile = self._currentProfile || {};
+
+            // Create settings modal
+            var modal = document.createElement('div');
+            modal.className = 'lb-settings-modal';
+            modal.id = 'lbSettingsModal';
+            modal.innerHTML = '<div class="lb-settings-content">' +
+                '<div class="lb-settings-header">' +
+                '<h2>Profile Settings</h2>' +
+                '<button class="lb-settings-close" onclick="RatingsPlugin.closeProfileSettings()">&times;</button>' +
+                '</div>' +
+                '<div class="lb-settings-body">' +
+                '<div class="lb-settings-section">' +
+                '<h3>Profile Information</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label>Bio</label>' +
+                '<textarea id="settingsBio" placeholder="Tell others about yourself...">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-section">' +
+                '<h3>Privacy</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsShowRatings" ' + (profile.showRatings !== false ? 'checked' : '') + '> Show my ratings to others</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsShowActivity" ' + (profile.showActivity !== false ? 'checked' : '') + '> Show my activity feed</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsAllowFollows" ' + (profile.allowFollows !== false ? 'checked' : '') + '> Allow others to follow me</label>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-footer">' +
+                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeProfileSettings()">Cancel</button>' +
+                '<button class="lb-btn-save" onclick="RatingsPlugin.saveProfileSettings()">Save Changes</button>' +
+                '</div>' +
+                '</div>';
+
+            // Close on backdrop click
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    self.closeProfileSettings();
+                }
+            });
+
+            document.body.appendChild(modal);
+        },
+
+        /**
+         * Close profile settings modal
+         */
+        closeProfileSettings: function () {
+            var modal = document.getElementById('lbSettingsModal');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
+        /**
+         * Save profile settings
+         */
+        saveProfileSettings: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var bio = document.getElementById('settingsBio')?.value || '';
+            var showRatings = document.getElementById('settingsShowRatings')?.checked;
+            var showActivity = document.getElementById('settingsShowActivity')?.checked;
+            var allowFollows = document.getElementById('settingsAllowFollows')?.checked;
+
+            fetch(baseUrl + '/Social/MyProfile', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify({
+                    bio: bio,
+                    showRatings: showRatings,
+                    showActivity: showActivity,
+                    allowFollows: allowFollows
+                })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.closeProfileSettings();
+                    // Refresh profile
+                    self.showProfilePage(ApiClient.getCurrentUserId());
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Failed to save settings:', err);
+            });
         },
 
         /**
