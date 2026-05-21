@@ -18117,7 +18117,8 @@
                 #ratingsButtonGroup #latestMediaBtn,
                 #ratingsButtonGroup #mediaManagementBtn,
                 #ratingsButtonGroup #chatBtn,
-                #ratingsButtonGroup #friendsBtn {
+                #ratingsButtonGroup #friendsBtn,
+                #ratingsButtonGroup #profileBtn {
                     color: ${style.buttonColor} !important;
                     opacity: ${iconOpacity} !important;
                 }
@@ -18162,7 +18163,8 @@
                 #ratingsButtonGroup #latestMediaBtn:hover,
                 #ratingsButtonGroup #mediaManagementBtn:hover,
                 #ratingsButtonGroup #chatBtn:hover,
-                #ratingsButtonGroup #friendsBtn:hover {
+                #ratingsButtonGroup #friendsBtn:hover,
+                #ratingsButtonGroup #profileBtn:hover {
                     background: ${style.buttonHoverBg} !important;
                     opacity: 1 !important;
                 }
@@ -26925,6 +26927,9 @@
             // Find and replace cast button
             this.injectChatButton();
 
+            // Add profile button to header
+            this.injectProfileButton();
+
             // Create chat window (hidden by default)
             this.createChatWindow();
 
@@ -26973,6 +26978,50 @@
 
                     // Add tooltip
                     self.addTooltipToButton(chatBtn, 'liveChat');
+
+                    return;
+                }
+
+                if (attempts < 30) {
+                    setTimeout(tryInject, 1000);
+                }
+            };
+
+            setTimeout(tryInject, 2000);
+        },
+
+        /**
+         * Inject profile button in header
+         */
+        injectProfileButton: function () {
+            const self = this;
+            let attempts = 0;
+
+            const tryInject = function () {
+                attempts++;
+
+                const buttonGroup = document.getElementById('ratingsButtonGroup');
+                if (buttonGroup && !document.getElementById('profileBtn')) {
+                    // Create profile button
+                    const profileBtn = document.createElement('button');
+                    profileBtn.id = 'profileBtn';
+                    profileBtn.className = 'ratingsGroupBtn';
+                    profileBtn.setAttribute('type', 'button');
+                    profileBtn.title = 'My Profile';
+                    // Person icon SVG
+                    profileBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>`;
+                    profileBtn.onclick = function () {
+                        // Open current user's profile
+                        var currentUserId = ApiClient.getCurrentUserId();
+                        if (currentUserId) {
+                            self.showProfilePage(currentUserId);
+                        }
+                    };
+
+                    // Insert into button group (at the beginning for visibility)
+                    buttonGroup.insertBefore(profileBtn, buttonGroup.firstChild);
 
                     return;
                 }
