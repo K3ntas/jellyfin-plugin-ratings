@@ -13580,11 +13580,13 @@
                 /* Favorites Grid */
                 .lb-favorites-grid {
                     display: flex;
-                    gap: 12px;
+                    gap: 10px;
+                    flex-wrap: wrap;
                 }
                 .lb-favorite-slot {
-                    width: 100px;
-                    height: 150px;
+                    flex: 0 0 calc(20% - 8px);
+                    max-width: 120px;
+                    aspect-ratio: 2/3;
                     background: #2c3440;
                     border-radius: 4px;
                     display: flex;
@@ -13714,6 +13716,7 @@
                     transform: scale(1.05);
                 }
                 .lb-picker-poster {
+                    position: relative;
                     aspect-ratio: 2/3;
                     background: #2c3440;
                     background-size: cover;
@@ -13738,6 +13741,150 @@
                     text-align: center;
                     padding: 40px;
                     color: #678;
+                }
+                .lb-picker-nav {
+                    padding: 12px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-categories {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .lb-picker-cat-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 8px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 20px;
+                    color: #99aabb;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-picker-cat-btn:hover {
+                    background: #3c4450;
+                    border-color: #567;
+                }
+                .lb-picker-cat-btn.active {
+                    background: #00e054;
+                    border-color: #00e054;
+                    color: #000;
+                }
+                .lb-picker-cat-btn .cat-icon {
+                    font-size: 16px;
+                }
+                .lb-picker-cat-btn .cat-name {
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+                .lb-picker-pagination {
+                    padding: 12px 20px;
+                    border-top: 1px solid #2c3440;
+                }
+                .lb-pagination {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 16px;
+                }
+                .lb-pagination button {
+                    padding: 8px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-pagination button:hover {
+                    background: #3c4450;
+                    border-color: #00e054;
+                }
+                .lb-pagination span {
+                    color: #99aabb;
+                    font-size: 14px;
+                }
+                .lb-picker-rating {
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    background: rgba(0,0,0,0.85);
+                    color: #00e054;
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 3px 6px;
+                    border-radius: 3px;
+                }
+                /* Favorite Rows */
+                .lb-favorites-section {
+                    margin-bottom: 20px;
+                }
+                .lb-favorite-row {
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-favorite-row:last-of-type {
+                    border-bottom: none;
+                }
+                .lb-row-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
+                .lb-row-title-input {
+                    flex: 1;
+                    background: transparent;
+                    border: none;
+                    border-bottom: 1px solid #456;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 600;
+                    padding: 4px 0;
+                    outline: none;
+                }
+                .lb-row-title-input:focus {
+                    border-color: #00e054;
+                }
+                .lb-row-title {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-row-delete {
+                    background: none;
+                    border: none;
+                    color: #f44;
+                    font-size: 20px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    opacity: 0.6;
+                    transition: opacity 0.2s;
+                }
+                .lb-row-delete:hover {
+                    opacity: 1;
+                }
+                .lb-add-row-btn {
+                    display: block;
+                    width: 100%;
+                    padding: 16px;
+                    background: #1c2228;
+                    border: 2px dashed #456;
+                    border-radius: 8px;
+                    color: #99aabb;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    margin-top: 12px;
+                }
+                .lb-add-row-btn:hover {
+                    background: #2c3440;
+                    border-color: #00e054;
+                    color: #00e054;
                 }
 
                 /* Stats Grid */
@@ -14012,8 +14159,17 @@
                         justify-content: center;
                     }
                     .lb-favorite-slot {
-                        width: 70px;
-                        height: 105px;
+                        flex: 0 0 calc(33.33% - 8px);
+                        max-width: 80px;
+                    }
+                    .lb-picker-cat-btn {
+                        padding: 6px 12px;
+                    }
+                    .lb-picker-cat-btn .cat-name {
+                        display: none;
+                    }
+                    .lb-row-title-input {
+                        font-size: 14px;
                     }
                 }
             `;
@@ -14485,33 +14641,53 @@
 
             var self = this;
             var isSelf = status.isSelf;
-            var favorites = status.favorites || self._currentProfile?.favorites || [];
+            var favoriteRows = status.favoriteRows || self._currentProfile?.favoriteRows || [];
             var html = '<div class="lb-overview">';
 
-            // Favorite Films row
-            html += '<section class="lb-section">' +
-                '<h3>Favorite Films</h3>' +
-                '<div class="lb-favorites-grid" id="lbFavoritesGrid">';
+            // Favorite Rows section (up to 5 rows, 5 items each)
+            html += '<section class="lb-section lb-favorites-section">';
 
-            // Render 4 slots
-            for (var i = 0; i < 4; i++) {
-                var fav = favorites[i];
-                if (fav && fav.itemId) {
-                    // Filled slot
-                    html += '<div class="lb-favorite-slot filled" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                        ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
-                        (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + i + ')">×</button>' : '') +
-                        '</div>';
+            // Render existing rows
+            for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
+                var row = favoriteRows[rowIndex];
+                html += '<div class="lb-favorite-row" data-row="' + rowIndex + '">';
+                html += '<div class="lb-row-header">';
+                if (isSelf) {
+                    html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
+                        'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
+                    html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
                 } else {
-                    // Empty slot
-                    html += '<div class="lb-favorite-slot empty" data-index="' + i + '"' +
-                        (isSelf ? ' onclick="RatingsPlugin.openMediaPicker(' + i + ')"' : '') +
-                        ' style="' + (isSelf ? 'cursor:pointer' : '') + '">' +
-                        (isSelf ? '<span>+</span>' : '') +
-                        '</div>';
+                    html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
                 }
+                html += '</div>';
+                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
+
+                // Render 5 slots per row
+                var items = row.items || [];
+                for (var i = 0; i < 5; i++) {
+                    var fav = items[i];
+                    if (fav && fav.itemId) {
+                        html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                            ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
+                            (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
+                            '</div>';
+                    } else {
+                        html += '<div class="lb-favorite-slot empty" data-row="' + rowIndex + '" data-index="' + i + '"' +
+                            (isSelf ? ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + i + ')"' : '') +
+                            ' style="' + (isSelf ? 'cursor:pointer' : '') + '">' +
+                            (isSelf ? '<span>+</span>' : '') +
+                            '</div>';
+                    }
+                }
+                html += '</div></div>';
             }
-            html += '</div></section>';
+
+            // Add row button (if less than 5 rows and is own profile)
+            if (isSelf && favoriteRows.length < 5) {
+                html += '<button class="lb-add-row-btn" onclick="RatingsPlugin.addFavoriteRow()">+ Add Row</button>';
+            }
+
+            html += '</section>';
 
             // Stats cards (detailed)
             html += '<section class="lb-section">' +
@@ -14953,9 +15129,13 @@
         /**
          * Open media picker for favorite slot
          */
-        openMediaPicker: function (slotIndex) {
+        openMediaPicker: function (rowIndex, slotIndex) {
             var self = this;
+            self._pickerRowIndex = rowIndex;
             self._pickerSlotIndex = slotIndex;
+            self._pickerPage = 0;
+            self._pickerCategory = null;
+            self._pickerItemsPerPage = 30;
 
             // Create picker modal
             var modal = document.createElement('div');
@@ -14963,15 +15143,17 @@
             modal.id = 'lbMediaPicker';
             modal.innerHTML = '<div class="lb-picker-content">' +
                 '<div class="lb-picker-header">' +
-                '<h2>Select a Film</h2>' +
+                '<h2>Select Media</h2>' +
                 '<button class="lb-picker-close" onclick="RatingsPlugin.closeMediaPicker()">&times;</button>' +
                 '</div>' +
+                '<div class="lb-picker-nav" id="pickerNav"></div>' +
                 '<div class="lb-picker-search">' +
-                '<input type="text" id="pickerSearchInput" placeholder="Search for a movie or series..." oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
+                '<input type="text" id="pickerSearchInput" placeholder="Search..." oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
                 '</div>' +
                 '<div class="lb-picker-results" id="pickerResults">' +
-                '<div class="lb-picker-empty">Type to search for media...</div>' +
+                '<div class="lb-picker-loading">Loading categories...</div>' +
                 '</div>' +
+                '<div class="lb-picker-pagination" id="pickerPagination"></div>' +
                 '</div>';
 
             modal.addEventListener('click', function (e) {
@@ -14982,11 +15164,221 @@
 
             document.body.appendChild(modal);
 
-            // Focus search input
-            setTimeout(function () {
-                var input = document.getElementById('pickerSearchInput');
-                if (input) input.focus();
-            }, 100);
+            // Load library categories
+            self.loadPickerCategories();
+        },
+
+        /**
+         * Load library categories for media picker
+         */
+        loadPickerCategories: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var nav = document.getElementById('pickerNav');
+            if (!results || !nav) return;
+
+            // Show category buttons
+            var categories = [
+                { id: 'Movie', name: 'Movies', icon: '🎬' },
+                { id: 'Series', name: 'Series', icon: '📺' },
+                { id: 'Anime', name: 'Anime', icon: '🎌', genre: 'Anime' },
+                { id: 'Documentary', name: 'Documentaries', icon: '🎥', genre: 'Documentary' },
+                { id: 'Animation', name: 'Animation', icon: '🎨', genre: 'Animation' }
+            ];
+
+            var navHtml = '<div class="lb-picker-categories">';
+            categories.forEach(function (cat) {
+                navHtml += '<button class="lb-picker-cat-btn" data-category="' + cat.id + '"' +
+                    (cat.genre ? ' data-genre="' + cat.genre + '"' : '') +
+                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + cat.id + '\'' + (cat.genre ? ',\'' + cat.genre + '\'' : '') + ')">' +
+                    '<span class="cat-icon">' + cat.icon + '</span>' +
+                    '<span class="cat-name">' + cat.name + '</span>' +
+                    '</button>';
+            });
+            navHtml += '</div>';
+            nav.innerHTML = navHtml;
+
+            results.innerHTML = '<div class="lb-picker-empty">Select a category above or search for media</div>';
+            document.getElementById('pickerPagination').innerHTML = '';
+        },
+
+        /**
+         * Select a category in the media picker
+         */
+        selectPickerCategory: function (categoryId, genreFilter) {
+            var self = this;
+            self._pickerCategory = categoryId;
+            self._pickerGenre = genreFilter || null;
+            self._pickerPage = 0;
+            self._pickerSearchQuery = null;
+
+            // Highlight active category
+            var buttons = document.querySelectorAll('.lb-picker-cat-btn');
+            buttons.forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.category === categoryId && btn.dataset.genre === (genreFilter || ''));
+            });
+
+            self.loadPickerItems();
+        },
+
+        /**
+         * Load items for current category with pagination
+         */
+        loadPickerItems: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            if (!results) return;
+
+            results.innerHTML = '<div class="lb-picker-loading">Loading...</div>';
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = ApiClient.getCurrentUserId();
+
+            // Build query
+            var includeTypes = self._pickerCategory === 'Anime' || self._pickerCategory === 'Documentary' || self._pickerCategory === 'Animation'
+                ? 'Movie,Series' : self._pickerCategory;
+            var startIndex = self._pickerPage * self._pickerItemsPerPage;
+
+            var url = baseUrl + '/Users/' + userId + '/Items?IncludeItemTypes=' + includeTypes +
+                '&Recursive=true&Limit=' + self._pickerItemsPerPage + '&StartIndex=' + startIndex +
+                '&SortBy=DateCreated&SortOrder=Descending&Fields=PrimaryImageAspectRatio';
+
+            // Add genre filter if applicable
+            if (self._pickerGenre) {
+                url += '&Genres=' + encodeURIComponent(self._pickerGenre);
+            }
+
+            // First get items, then sort by user ratings
+            fetch(url, { method: 'GET', credentials: 'include', headers: headers })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var items = data.Items || [];
+                var totalCount = data.TotalRecordCount || 0;
+
+                if (items.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No items found</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Get user ratings for these items to sort by
+                self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
+                .then(function (ratings) {
+                    // Sort by user rating (highest first)
+                    items.sort(function (a, b) {
+                        var ratingA = ratings[a.Id] || 0;
+                        var ratingB = ratings[b.Id] || 0;
+                        return ratingB - ratingA;
+                    });
+
+                    self.renderPickerItems(items, totalCount, ratings);
+                })
+                .catch(function () {
+                    self.renderPickerItems(items, totalCount, {});
+                });
+            })
+            .catch(function () {
+                results.innerHTML = '<div class="lb-picker-empty">Failed to load items</div>';
+            });
+        },
+
+        /**
+         * Get user ratings for a list of item IDs
+         */
+        getUserRatingsForItems: function (itemIds) {
+            var baseUrl = ApiClient.serverAddress();
+            var userId = ApiClient.getCurrentUserId();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            return fetch(baseUrl + '/Ratings/User/' + userId + '?limit=1000', {
+                method: 'GET', credentials: 'include', headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var ratings = {};
+                var list = data.ratings || data || [];
+                list.forEach(function (r) {
+                    var id = r.itemId || r.ItemId;
+                    var rating = r.rating || r.Rating;
+                    if (id) ratings[id] = rating;
+                });
+                return ratings;
+            });
+        },
+
+        /**
+         * Render picker items grid
+         */
+        renderPickerItems: function (items, totalCount, ratings) {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var pagination = document.getElementById('pickerPagination');
+            if (!results) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var html = '<div class="lb-picker-grid">';
+
+            items.forEach(function (item) {
+                var imageUrl = item.ImageTags && item.ImageTags.Primary
+                    ? baseUrl + '/Items/' + item.Id + '/Images/Primary?maxHeight=300&tag=' + item.ImageTags.Primary
+                    : '';
+                var userRating = ratings[item.Id];
+                var ratingBadge = userRating ? '<span class="lb-picker-rating">' + userRating + '★</span>' : '';
+
+                html += '<div class="lb-picker-item" onclick="RatingsPlugin.selectMediaForFavorite(\'' +
+                    self.escapeJs(item.Id) + '\', \'' +
+                    self.escapeJs(item.Name) + '\', \'' +
+                    self.escapeJs(imageUrl) + '\')">' +
+                    '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')">' + ratingBadge + '</div>' +
+                    '<div class="lb-picker-title">' + self.escapeHtml(item.Name) + '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            results.innerHTML = html;
+
+            // Render pagination
+            var totalPages = Math.ceil(totalCount / self._pickerItemsPerPage);
+            if (totalPages > 1) {
+                var pagHtml = '<div class="lb-pagination">';
+                if (self._pickerPage > 0) {
+                    pagHtml += '<button onclick="RatingsPlugin.pickerPrevPage()">← Prev</button>';
+                }
+                pagHtml += '<span>Page ' + (self._pickerPage + 1) + ' of ' + totalPages + '</span>';
+                if (self._pickerPage < totalPages - 1) {
+                    pagHtml += '<button onclick="RatingsPlugin.pickerNextPage()">Next →</button>';
+                }
+                pagHtml += '</div>';
+                pagination.innerHTML = pagHtml;
+            } else {
+                pagination.innerHTML = '';
+            }
+        },
+
+        /**
+         * Go to previous page in picker
+         */
+        pickerPrevPage: function () {
+            if (this._pickerPage > 0) {
+                this._pickerPage--;
+                if (this._pickerSearchQuery) {
+                    this.searchMediaForPicker(this._pickerSearchQuery);
+                } else {
+                    this.loadPickerItems();
+                }
+            }
+        },
+
+        /**
+         * Go to next page in picker
+         */
+        pickerNextPage: function () {
+            this._pickerPage++;
+            if (this._pickerSearchQuery) {
+                this.searchMediaForPicker(this._pickerSearchQuery);
+            } else {
+                this.loadPickerItems();
+            }
         },
 
         /**
@@ -14997,7 +15389,11 @@
             if (modal) {
                 modal.remove();
             }
+            this._pickerRowIndex = null;
             this._pickerSlotIndex = null;
+            this._pickerPage = 0;
+            this._pickerCategory = null;
+            this._pickerSearchQuery = null;
         },
 
         /**
@@ -15006,13 +15402,21 @@
         searchMediaForPicker: function (query) {
             var self = this;
             var results = document.getElementById('pickerResults');
+            var pagination = document.getElementById('pickerPagination');
             if (!results) return;
 
             if (!query || query.length < 2) {
-                results.innerHTML = '<div class="lb-picker-empty">Type at least 2 characters to search...</div>';
+                if (self._pickerCategory) {
+                    self.loadPickerItems();
+                } else {
+                    results.innerHTML = '<div class="lb-picker-empty">Select a category or type to search...</div>';
+                    if (pagination) pagination.innerHTML = '';
+                }
+                self._pickerSearchQuery = null;
                 return;
             }
 
+            self._pickerSearchQuery = query;
             results.innerHTML = '<div class="lb-picker-loading">Searching...</div>';
 
             // Debounce
@@ -15020,9 +15424,10 @@
             self._pickerSearchTimeout = setTimeout(function () {
                 var baseUrl = ApiClient.serverAddress();
                 var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                var startIndex = self._pickerPage * self._pickerItemsPerPage;
 
                 // Search for movies and series
-                fetch(baseUrl + '/Items?searchTerm=' + encodeURIComponent(query) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=20&Fields=PrimaryImageAspectRatio', {
+                fetch(baseUrl + '/Items?searchTerm=' + encodeURIComponent(query) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=' + self._pickerItemsPerPage + '&StartIndex=' + startIndex + '&Fields=PrimaryImageAspectRatio', {
                     method: 'GET',
                     credentials: 'include',
                     headers: headers
@@ -15030,26 +15435,21 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     var items = data.Items || [];
+                    var totalCount = data.TotalRecordCount || 0;
+
                     if (items.length === 0) {
                         results.innerHTML = '<div class="lb-picker-empty">No results found</div>';
+                        if (pagination) pagination.innerHTML = '';
                         return;
                     }
 
-                    var html = '<div class="lb-picker-grid">';
-                    items.forEach(function (item) {
-                        var imageUrl = item.ImageTags && item.ImageTags.Primary
-                            ? baseUrl + '/Items/' + item.Id + '/Images/Primary?maxHeight=300&tag=' + item.ImageTags.Primary
-                            : '';
-                        html += '<div class="lb-picker-item" onclick="RatingsPlugin.selectMediaForFavorite(\'' +
-                            self.escapeJs(item.Id) + '\', \'' +
-                            self.escapeJs(item.Name) + '\', \'' +
-                            self.escapeJs(imageUrl) + '\')">' +
-                            '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
-                            '<div class="lb-picker-title">' + self.escapeHtml(item.Name) + '</div>' +
-                            '</div>';
+                    self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
+                    .then(function (ratings) {
+                        self.renderPickerItems(items, totalCount, ratings);
+                    })
+                    .catch(function () {
+                        self.renderPickerItems(items, totalCount, {});
                     });
-                    html += '</div>';
-                    results.innerHTML = html;
                 })
                 .catch(function () {
                     results.innerHTML = '<div class="lb-picker-empty">Search failed</div>';
@@ -15062,14 +15462,26 @@
          */
         selectMediaForFavorite: function (itemId, title, imageUrl) {
             var self = this;
+            var rowIndex = self._pickerRowIndex;
             var slotIndex = self._pickerSlotIndex;
-            if (slotIndex === null || slotIndex === undefined) return;
+            if (rowIndex === null || rowIndex === undefined || slotIndex === null || slotIndex === undefined) return;
 
-            // Update favorites array
+            // Update favoriteRows array
             if (!self._currentProfile) self._currentProfile = {};
-            if (!self._currentProfile.favorites) self._currentProfile.favorites = [];
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
 
-            self._currentProfile.favorites[slotIndex] = {
+            // Ensure row exists
+            while (self._currentProfile.favoriteRows.length <= rowIndex) {
+                self._currentProfile.favoriteRows.push({ title: 'Favorites', items: [] });
+            }
+
+            // Ensure items array exists
+            if (!self._currentProfile.favoriteRows[rowIndex].items) {
+                self._currentProfile.favoriteRows[rowIndex].items = [];
+            }
+
+            // Set item at slot
+            self._currentProfile.favoriteRows[rowIndex].items[slotIndex] = {
                 itemId: itemId,
                 title: title,
                 imageUrl: imageUrl
@@ -15083,7 +15495,7 @@
 
             // Refresh the overview
             if (self._currentProfileStatus) {
-                self._currentProfileStatus.favorites = self._currentProfile.favorites;
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
                 self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
             }
         },
@@ -15091,21 +15503,82 @@
         /**
          * Remove favorite from slot
          */
-        removeFavorite: function (slotIndex) {
+        removeFavorite: function (rowIndex, slotIndex) {
             var self = this;
             if (!self._currentProfile) return;
-            if (!self._currentProfile.favorites) return;
+            if (!self._currentProfile.favoriteRows) return;
+            if (!self._currentProfile.favoriteRows[rowIndex]) return;
 
-            self._currentProfile.favorites[slotIndex] = null;
+            self._currentProfile.favoriteRows[rowIndex].items[slotIndex] = null;
 
             // Save to server
             self.saveFavorites();
 
             // Refresh the overview
             if (self._currentProfileStatus) {
-                self._currentProfileStatus.favorites = self._currentProfile.favorites;
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
                 self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
             }
+        },
+
+        /**
+         * Add a new favorite row
+         */
+        addFavoriteRow: function () {
+            var self = this;
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+
+            if (self._currentProfile.favoriteRows.length >= 5) return;
+
+            self._currentProfile.favoriteRows.push({ title: 'Favorites', items: [] });
+
+            // Save to server
+            self.saveFavorites();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Delete a favorite row
+         */
+        deleteRow: function (rowIndex) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favoriteRows) return;
+
+            self._currentProfile.favoriteRows.splice(rowIndex, 1);
+
+            // Save to server
+            self.saveFavorites();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Update row title
+         */
+        updateRowTitle: function (rowIndex, title) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favoriteRows) return;
+            if (!self._currentProfile.favoriteRows[rowIndex]) return;
+
+            self._currentProfile.favoriteRows[rowIndex].title = title;
+
+            // Debounced save
+            clearTimeout(self._rowTitleSaveTimeout);
+            self._rowTitleSaveTimeout = setTimeout(function () {
+                self.saveFavorites();
+            }, 500);
         },
 
         /**
@@ -15119,13 +15592,19 @@
                 'Content-Type': 'application/json'
             };
 
-            var favorites = (self._currentProfile?.favorites || []).filter(function (f) { return f && f.itemId; });
+            // Clean up rows and items
+            var favoriteRows = (self._currentProfile?.favoriteRows || []).map(function (row) {
+                return {
+                    title: row.title || 'Favorites',
+                    items: (row.items || []).filter(function (f) { return f && f.itemId; })
+                };
+            });
 
             fetch(baseUrl + '/Social/MyProfile/Favorites', {
                 method: 'PUT',
                 credentials: 'include',
                 headers: headers,
-                body: JSON.stringify({ favorites: favorites })
+                body: JSON.stringify({ favoriteRows: favoriteRows })
             })
             .then(function (r) { return r.json(); })
             .catch(function (err) {

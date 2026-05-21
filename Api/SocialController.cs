@@ -238,7 +238,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 createdAt = profile.CreatedAt,
                 updatedAt = lastSeen,
                 privacy = profile.Privacy,
-                favorites = profile.Favorites ?? new List<FavoriteItem>()
+                favorites = profile.Favorites ?? new List<FavoriteItem>(),
+                favoriteRows = profile.FavoriteRows ?? new List<FavoriteRow>()
             });
         }
 
@@ -2536,7 +2537,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Update profile favorite items.
+        /// Update profile favorite rows.
         /// </summary>
         /// <param name="request">Favorites request.</param>
         /// <returns>Success status.</returns>
@@ -2559,8 +2560,25 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             var profile = await _socialRepository.GetOrCreateProfileAsync(currentUserId.Value, user.Username).ConfigureAwait(false);
 
-            // Update favorites (max 4)
-            profile.Favorites = (request.Favorites ?? new List<FavoriteItem>()).Take(4).ToList();
+            // Update favorite rows (max 5 rows, each with max 5 items)
+            if (request.FavoriteRows != null)
+            {
+                profile.FavoriteRows = request.FavoriteRows
+                    .Take(5)
+                    .Select(row => new FavoriteRow
+                    {
+                        Title = row.Title ?? string.Empty,
+                        Items = (row.Items ?? new List<FavoriteItem>()).Take(5).ToList()
+                    })
+                    .ToList();
+            }
+
+            // Legacy support
+            if (request.Favorites != null)
+            {
+                profile.Favorites = request.Favorites.Take(4).ToList();
+            }
+
             profile.UpdatedAt = DateTime.UtcNow;
 
             await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
@@ -2892,9 +2910,14 @@ namespace Jellyfin.Plugin.Ratings.Api
     public class FavoritesRequest
     {
         /// <summary>
-        /// Gets or sets the favorite items (max 4).
+        /// Gets or sets the favorite items (legacy, max 4).
         /// </summary>
         public List<FavoriteItem>? Favorites { get; set; }
+
+        /// <summary>
+        /// Gets or sets the favorite rows (max 5 rows, each with max 5 items).
+        /// </summary>
+        public List<FavoriteRow>? FavoriteRows { get; set; }
     }
 
     /// <summary>

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.312.0",
+        "changelog": "Profile: Multiple favorite rows (up to 5), library browser with categories, pagination, sorting by ratings",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.312.0/Jellyfin.Plugin.Ratings_2.0.312.0.zip",
+        "checksum": "8060d44b681e62b7da4dcec6b0b8e7c3",
+        "timestamp": "2026-05-22T10:00:00Z"
+      },
+      {
         "version": "2.0.311.0",
         "changelog": "New: Favorite films with media picker, profile button toggle in settings",
         "targetAbi": "10.11.0.0",
