@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mime;
@@ -236,7 +237,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 avatarUrl = profile.AvatarUrl,
                 createdAt = profile.CreatedAt,
                 updatedAt = lastSeen,
-                privacy = profile.Privacy
+                privacy = profile.Privacy,
+                favorites = profile.Favorites ?? new List<FavoriteItem>()
             });
         }
 
@@ -2533,6 +2535,39 @@ namespace Jellyfin.Plugin.Ratings.Api
             return Ok(updated);
         }
 
+        /// <summary>
+        /// Update profile favorite items.
+        /// </summary>
+        /// <param name="request">Favorites request.</param>
+        /// <returns>Success status.</returns>
+        [HttpPut("MyProfile/Favorites")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> UpdateMyProfileFavorites([FromBody] FavoritesRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var user = _userManager.GetUserById(currentUserId.Value);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var profile = await _socialRepository.GetOrCreateProfileAsync(currentUserId.Value, user.Username).ConfigureAwait(false);
+
+            // Update favorites (max 4)
+            profile.Favorites = (request.Favorites ?? new List<FavoriteItem>()).Take(4).ToList();
+            profile.UpdatedAt = DateTime.UtcNow;
+
+            await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
+
+            return Ok(new { success = true });
+        }
+
         #endregion
 
         #region Enhanced Stats
@@ -2849,6 +2884,17 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets or sets the status. Valid values: Online, Away, DoNotDisturb, Invisible, or null to clear.
         /// </summary>
         public string? Status { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for updating profile favorites.
+    /// </summary>
+    public class FavoritesRequest
+    {
+        /// <summary>
+        /// Gets or sets the favorite items (max 4).
+        /// </summary>
+        public List<FavoriteItem>? Favorites { get; set; }
     }
 
     /// <summary>

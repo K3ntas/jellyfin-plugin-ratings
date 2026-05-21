@@ -13597,9 +13597,147 @@
                     border: 2px dashed #456;
                     background: transparent;
                 }
+                .lb-favorite-slot.empty:hover {
+                    border-color: #00e054;
+                }
                 .lb-favorite-slot.empty span {
                     font-size: 28px;
                     color: #456;
+                }
+                .lb-favorite-slot.empty:hover span {
+                    color: #00e054;
+                }
+                .lb-favorite-slot.filled {
+                    position: relative;
+                }
+                .lb-favorite-slot.filled:hover .lb-fav-remove {
+                    opacity: 1;
+                }
+                .lb-fav-remove {
+                    position: absolute;
+                    top: 4px;
+                    right: 4px;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: rgba(0,0,0,0.8);
+                    border: none;
+                    color: #fff;
+                    font-size: 16px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-fav-remove:hover {
+                    background: #ee7752;
+                }
+
+                /* Media Picker Modal */
+                .lb-media-picker {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.9);
+                    z-index: 100002;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-picker-content {
+                    background: #14181c;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 800px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .lb-picker-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-header h2 {
+                    margin: 0;
+                    font-size: 18px;
+                    color: #fff;
+                }
+                .lb-picker-close {
+                    background: none;
+                    border: none;
+                    color: #99aabb;
+                    font-size: 24px;
+                    cursor: pointer;
+                }
+                .lb-picker-search {
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-search input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+                .lb-picker-search input:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-picker-results {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px;
+                }
+                .lb-picker-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                    gap: 12px;
+                }
+                .lb-picker-item {
+                    cursor: pointer;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    transition: transform 0.2s;
+                }
+                .lb-picker-item:hover {
+                    transform: scale(1.05);
+                }
+                .lb-picker-poster {
+                    aspect-ratio: 2/3;
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-picker-title {
+                    padding: 8px;
+                    font-size: 12px;
+                    color: #fff;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    background: #1c2228;
+                }
+                .lb-picker-loading {
+                    text-align: center;
+                    padding: 40px;
+                    color: #678;
+                }
+                .lb-picker-empty {
+                    text-align: center;
+                    padding: 40px;
+                    color: #678;
                 }
 
                 /* Stats Grid */
@@ -14345,17 +14483,35 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
+            var self = this;
+            var isSelf = status.isSelf;
+            var favorites = status.favorites || self._currentProfile?.favorites || [];
             var html = '<div class="lb-overview">';
 
-            // Favorite Films row (placeholder for now)
+            // Favorite Films row
             html += '<section class="lb-section">' +
                 '<h3>Favorite Films</h3>' +
-                '<div class="lb-favorites-grid">' +
-                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
-                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
-                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
-                '<div class="lb-favorite-slot empty"><span>+</span></div>' +
-                '</div></section>';
+                '<div class="lb-favorites-grid" id="lbFavoritesGrid">';
+
+            // Render 4 slots
+            for (var i = 0; i < 4; i++) {
+                var fav = favorites[i];
+                if (fav && fav.itemId) {
+                    // Filled slot
+                    html += '<div class="lb-favorite-slot filled" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                        ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
+                        (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + i + ')">×</button>' : '') +
+                        '</div>';
+                } else {
+                    // Empty slot
+                    html += '<div class="lb-favorite-slot empty" data-index="' + i + '"' +
+                        (isSelf ? ' onclick="RatingsPlugin.openMediaPicker(' + i + ')"' : '') +
+                        ' style="' + (isSelf ? 'cursor:pointer' : '') + '">' +
+                        (isSelf ? '<span>+</span>' : '') +
+                        '</div>';
+                }
+            }
+            html += '</div></section>';
 
             // Stats cards (detailed)
             html += '<section class="lb-section">' +
@@ -14792,6 +14948,189 @@
         viewList: function (listId) {
             // TODO: Implement list viewer modal
             console.log('View list:', listId);
+        },
+
+        /**
+         * Open media picker for favorite slot
+         */
+        openMediaPicker: function (slotIndex) {
+            var self = this;
+            self._pickerSlotIndex = slotIndex;
+
+            // Create picker modal
+            var modal = document.createElement('div');
+            modal.className = 'lb-media-picker';
+            modal.id = 'lbMediaPicker';
+            modal.innerHTML = '<div class="lb-picker-content">' +
+                '<div class="lb-picker-header">' +
+                '<h2>Select a Film</h2>' +
+                '<button class="lb-picker-close" onclick="RatingsPlugin.closeMediaPicker()">&times;</button>' +
+                '</div>' +
+                '<div class="lb-picker-search">' +
+                '<input type="text" id="pickerSearchInput" placeholder="Search for a movie or series..." oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
+                '</div>' +
+                '<div class="lb-picker-results" id="pickerResults">' +
+                '<div class="lb-picker-empty">Type to search for media...</div>' +
+                '</div>' +
+                '</div>';
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    self.closeMediaPicker();
+                }
+            });
+
+            document.body.appendChild(modal);
+
+            // Focus search input
+            setTimeout(function () {
+                var input = document.getElementById('pickerSearchInput');
+                if (input) input.focus();
+            }, 100);
+        },
+
+        /**
+         * Close media picker
+         */
+        closeMediaPicker: function () {
+            var modal = document.getElementById('lbMediaPicker');
+            if (modal) {
+                modal.remove();
+            }
+            this._pickerSlotIndex = null;
+        },
+
+        /**
+         * Search media for picker
+         */
+        searchMediaForPicker: function (query) {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            if (!results) return;
+
+            if (!query || query.length < 2) {
+                results.innerHTML = '<div class="lb-picker-empty">Type at least 2 characters to search...</div>';
+                return;
+            }
+
+            results.innerHTML = '<div class="lb-picker-loading">Searching...</div>';
+
+            // Debounce
+            clearTimeout(self._pickerSearchTimeout);
+            self._pickerSearchTimeout = setTimeout(function () {
+                var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+                // Search for movies and series
+                fetch(baseUrl + '/Items?searchTerm=' + encodeURIComponent(query) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=20&Fields=PrimaryImageAspectRatio', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: headers
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var items = data.Items || [];
+                    if (items.length === 0) {
+                        results.innerHTML = '<div class="lb-picker-empty">No results found</div>';
+                        return;
+                    }
+
+                    var html = '<div class="lb-picker-grid">';
+                    items.forEach(function (item) {
+                        var imageUrl = item.ImageTags && item.ImageTags.Primary
+                            ? baseUrl + '/Items/' + item.Id + '/Images/Primary?maxHeight=300&tag=' + item.ImageTags.Primary
+                            : '';
+                        html += '<div class="lb-picker-item" onclick="RatingsPlugin.selectMediaForFavorite(\'' +
+                            self.escapeJs(item.Id) + '\', \'' +
+                            self.escapeJs(item.Name) + '\', \'' +
+                            self.escapeJs(imageUrl) + '\')">' +
+                            '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
+                            '<div class="lb-picker-title">' + self.escapeHtml(item.Name) + '</div>' +
+                            '</div>';
+                    });
+                    html += '</div>';
+                    results.innerHTML = html;
+                })
+                .catch(function () {
+                    results.innerHTML = '<div class="lb-picker-empty">Search failed</div>';
+                });
+            }, 300);
+        },
+
+        /**
+         * Select media for favorite slot
+         */
+        selectMediaForFavorite: function (itemId, title, imageUrl) {
+            var self = this;
+            var slotIndex = self._pickerSlotIndex;
+            if (slotIndex === null || slotIndex === undefined) return;
+
+            // Update favorites array
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favorites) self._currentProfile.favorites = [];
+
+            self._currentProfile.favorites[slotIndex] = {
+                itemId: itemId,
+                title: title,
+                imageUrl: imageUrl
+            };
+
+            // Save to server
+            self.saveFavorites();
+
+            // Close picker
+            self.closeMediaPicker();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favorites = self._currentProfile.favorites;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Remove favorite from slot
+         */
+        removeFavorite: function (slotIndex) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favorites) return;
+
+            self._currentProfile.favorites[slotIndex] = null;
+
+            // Save to server
+            self.saveFavorites();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favorites = self._currentProfile.favorites;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Save favorites to server
+         */
+        saveFavorites: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var favorites = (self._currentProfile?.favorites || []).filter(function (f) { return f && f.itemId; });
+
+            fetch(baseUrl + '/Social/MyProfile/Favorites', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify({ favorites: favorites })
+            })
+            .then(function (r) { return r.json(); })
+            .catch(function (err) {
+                console.error('[Social] Failed to save favorites:', err);
+            });
         },
 
         /**
@@ -26995,43 +27334,51 @@
          */
         injectProfileButton: function () {
             const self = this;
-            let attempts = 0;
 
-            const tryInject = function () {
-                attempts++;
-
-                const buttonGroup = document.getElementById('ratingsButtonGroup');
-                if (buttonGroup && !document.getElementById('profileBtn')) {
-                    // Create profile button
-                    const profileBtn = document.createElement('button');
-                    profileBtn.id = 'profileBtn';
-                    profileBtn.className = 'ratingsGroupBtn';
-                    profileBtn.setAttribute('type', 'button');
-                    profileBtn.title = 'My Profile';
-                    // Person icon SVG
-                    profileBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>`;
-                    profileBtn.onclick = function () {
-                        // Open current user's profile
-                        var currentUserId = ApiClient.getCurrentUserId();
-                        if (currentUserId) {
-                            self.showProfilePage(currentUserId);
-                        }
-                    };
-
-                    // Insert into button group (at the beginning for visibility)
-                    buttonGroup.insertBefore(profileBtn, buttonGroup.firstChild);
-
-                    return;
+            // Check config first
+            self.getConfig().then(function (config) {
+                if (config.ShowHeaderProfileButton === false) {
+                    return; // Don't create profile button
                 }
 
-                if (attempts < 30) {
-                    setTimeout(tryInject, 1000);
-                }
-            };
+                let attempts = 0;
 
-            setTimeout(tryInject, 2000);
+                const tryInject = function () {
+                    attempts++;
+
+                    const buttonGroup = document.getElementById('ratingsButtonGroup');
+                    if (buttonGroup && !document.getElementById('profileBtn')) {
+                        // Create profile button
+                        const profileBtn = document.createElement('button');
+                        profileBtn.id = 'profileBtn';
+                        profileBtn.className = 'ratingsGroupBtn';
+                        profileBtn.setAttribute('type', 'button');
+                        profileBtn.title = 'My Profile';
+                        // Person icon SVG
+                        profileBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>`;
+                        profileBtn.onclick = function () {
+                            // Open current user's profile
+                            var currentUserId = ApiClient.getCurrentUserId();
+                            if (currentUserId) {
+                                self.showProfilePage(currentUserId);
+                            }
+                        };
+
+                        // Insert into button group (at the beginning for visibility)
+                        buttonGroup.insertBefore(profileBtn, buttonGroup.firstChild);
+
+                        return;
+                    }
+
+                    if (attempts < 30) {
+                        setTimeout(tryInject, 1000);
+                    }
+                };
+
+                setTimeout(tryInject, 2000);
+            });
         },
 
         /**

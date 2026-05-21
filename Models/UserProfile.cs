@@ -1,7 +1,29 @@
 using System;
+using System.Collections.Generic;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
+    /// <summary>
+    /// Represents a favorite item on user profile.
+    /// </summary>
+    public class FavoriteItem
+    {
+        /// <summary>
+        /// Gets or sets the Jellyfin item ID.
+        /// </summary>
+        public string ItemId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        public string Title { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the image URL.
+        /// </summary>
+        public string ImageUrl { get; set; } = string.Empty;
+    }
+
     /// <summary>
     /// Represents a user's social profile.
     /// </summary>
@@ -48,6 +70,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         public UserPrivacySettings Privacy { get; set; }
 
         /// <summary>
+        /// Gets or sets the user's favorite items (up to 4).
+        /// </summary>
+        public List<FavoriteItem> Favorites { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="UserProfile"/> class.
         /// </summary>
         public UserProfile()
@@ -56,6 +83,7 @@ namespace Jellyfin.Plugin.Ratings.Models
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;
             Privacy = new UserPrivacySettings();
+            Favorites = new List<FavoriteItem>();
         }
     }
 }

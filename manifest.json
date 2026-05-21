@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.311.0",
+        "changelog": "New: Favorite films with media picker, profile button toggle in settings",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.311.0/Jellyfin.Plugin.Ratings_2.0.311.0.zip",
+        "checksum": "57b8b37a4404b0c36c5db6a4751fc174",
+        "timestamp": "2026-05-21T17:00:00Z"
+      },
+      {
         "version": "2.0.310.0",
         "changelog": "New: Profile button in header bar to access your profile",
         "targetAbi": "10.11.0.0",
