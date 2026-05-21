@@ -1752,6 +1752,1076 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         #endregion
+
+        #region Following System
+
+        /// <summary>
+        /// Follow a user.
+        /// </summary>
+        /// <param name="userId">The user to follow.</param>
+        /// <returns>The follow relationship.</returns>
+        [HttpPost("Follow/{userId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> FollowUser(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (currentUserId.Value == userId)
+            {
+                return BadRequest(new { error = "Cannot follow yourself" });
+            }
+
+            // Check if blocked
+            if (_socialRepository.IsBlockedEitherWay(currentUserId.Value, userId))
+            {
+                return BadRequest(new { error = "Cannot follow blocked user" });
+            }
+
+            var follow = await _socialRepository.FollowUserAsync(currentUserId.Value, userId).ConfigureAwait(false);
+
+            // Create notification for the followed user
+            var currentUser = _userManager.GetUserById(currentUserId.Value);
+            if (currentUser != null)
+            {
+                var notification = new SocialNotification
+                {
+                    UserId = userId,
+                    Type = "NewFollower",
+                    Title = "New Follower",
+                    Message = $"{currentUser.Username} started following you"
+                };
+                notification.Data["fromUserId"] = currentUserId.Value.ToString();
+                notification.Data["fromUsername"] = currentUser.Username;
+                await _socialRepository.CreateNotificationAsync(notification).ConfigureAwait(false);
+            }
+
+            return Ok(new
+            {
+                success = true,
+                isFollowing = true,
+                isMutual = _socialRepository.AreMutualFollowers(currentUserId.Value, userId)
+            });
+        }
+
+        /// <summary>
+        /// Unfollow a user.
+        /// </summary>
+        /// <param name="userId">The user to unfollow.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Follow/{userId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> UnfollowUser(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            await _socialRepository.UnfollowUserAsync(currentUserId.Value, userId).ConfigureAwait(false);
+
+            return Ok(new { success = true, isFollowing = false });
+        }
+
+        /// <summary>
+        /// Get followers of a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of followers.</returns>
+        [HttpGet("Profile/{userId}/Followers")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetFollowers(Guid userId)
+        {
+            var followers = _socialRepository.GetFollowers(userId);
+            var result = followers.Select(f =>
+            {
+                var user = _userManager.GetUserById(f.FollowerId);
+                var profile = _socialRepository.GetProfile(f.FollowerId);
+                return new
+                {
+                    userId = f.FollowerId,
+                    username = user?.Username ?? "Unknown",
+                    avatarUrl = profile?.AvatarUrl,
+                    followedAt = f.CreatedAt
+                };
+            }).ToList();
+
+            return Ok(new { followers = result, count = result.Count });
+        }
+
+        /// <summary>
+        /// Get users that a user is following.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of following.</returns>
+        [HttpGet("Profile/{userId}/Following")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetFollowing(Guid userId)
+        {
+            var following = _socialRepository.GetFollowing(userId);
+            var result = following.Select(f =>
+            {
+                var user = _userManager.GetUserById(f.FollowingId);
+                var profile = _socialRepository.GetProfile(f.FollowingId);
+                return new
+                {
+                    userId = f.FollowingId,
+                    username = user?.Username ?? "Unknown",
+                    avatarUrl = profile?.AvatarUrl,
+                    followedAt = f.CreatedAt
+                };
+            }).ToList();
+
+            return Ok(new { following = result, count = result.Count });
+        }
+
+        /// <summary>
+        /// Get follow status for a user.
+        /// </summary>
+        /// <param name="userId">The user to check.</param>
+        /// <returns>Follow status.</returns>
+        [HttpGet("Follow/{userId}/Status")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetFollowStatus(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(new
+            {
+                isFollowing = _socialRepository.IsFollowing(currentUserId.Value, userId),
+                isFollowedBy = _socialRepository.IsFollowing(userId, currentUserId.Value),
+                isMutual = _socialRepository.AreMutualFollowers(currentUserId.Value, userId)
+            });
+        }
+
+        #endregion
+
+        #region Profile Likes
+
+        /// <summary>
+        /// Like a user's profile.
+        /// </summary>
+        /// <param name="userId">The profile to like.</param>
+        /// <returns>Like status.</returns>
+        [HttpPost("Profile/{userId}/Like")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> LikeProfile(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (currentUserId.Value == userId)
+            {
+                return BadRequest(new { error = "Cannot like your own profile" });
+            }
+
+            await _socialRepository.LikeProfileAsync(userId, currentUserId.Value).ConfigureAwait(false);
+
+            // Create notification
+            var currentUser = _userManager.GetUserById(currentUserId.Value);
+            if (currentUser != null)
+            {
+                var notification = new SocialNotification
+                {
+                    UserId = userId,
+                    Type = "ProfileLike",
+                    Title = "Profile Liked",
+                    Message = $"{currentUser.Username} liked your profile"
+                };
+                notification.Data["fromUserId"] = currentUserId.Value.ToString();
+                notification.Data["fromUsername"] = currentUser.Username;
+                await _socialRepository.CreateNotificationAsync(notification).ConfigureAwait(false);
+            }
+
+            return Ok(new
+            {
+                success = true,
+                liked = true,
+                likeCount = _socialRepository.GetProfileLikeCount(userId)
+            });
+        }
+
+        /// <summary>
+        /// Unlike a user's profile.
+        /// </summary>
+        /// <param name="userId">The profile to unlike.</param>
+        /// <returns>Like status.</returns>
+        [HttpDelete("Profile/{userId}/Like")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> UnlikeProfile(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            await _socialRepository.UnlikeProfileAsync(userId, currentUserId.Value).ConfigureAwait(false);
+
+            return Ok(new
+            {
+                success = true,
+                liked = false,
+                likeCount = _socialRepository.GetProfileLikeCount(userId)
+            });
+        }
+
+        /// <summary>
+        /// Get profile likes.
+        /// </summary>
+        /// <param name="userId">The profile user ID.</param>
+        /// <returns>Like count and likers.</returns>
+        [HttpGet("Profile/{userId}/Likes")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetProfileLikes(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var likers = _socialRepository.GetProfileLikers(userId);
+            var profile = _socialRepository.GetProfile(userId);
+
+            // Check privacy settings for showing likers
+            var showLikers = profile?.Privacy?.ProfileLikersVisibleRegular == true ||
+                             (profile?.Privacy?.ProfileLikersVisibleFriends == true &&
+                              _socialRepository.AreFriends(currentUserId ?? Guid.Empty, userId));
+
+            var likersResult = showLikers ? likers.Select(l =>
+            {
+                var user = _userManager.GetUserById(l.LikerUserId);
+                var likerProfile = _socialRepository.GetProfile(l.LikerUserId);
+                return new
+                {
+                    userId = l.LikerUserId,
+                    username = user?.Username ?? "Unknown",
+                    avatarUrl = likerProfile?.AvatarUrl,
+                    likedAt = l.CreatedAt
+                };
+            }).ToList() : null;
+
+            return Ok(new
+            {
+                likeCount = likers.Count,
+                hasLiked = currentUserId.HasValue && _socialRepository.HasLikedProfile(userId, currentUserId.Value),
+                likers = likersResult
+            });
+        }
+
+        #endregion
+
+        #region Media Lists
+
+        /// <summary>
+        /// Create a new media list.
+        /// </summary>
+        /// <param name="request">List creation request.</param>
+        /// <returns>The created list.</returns>
+        [HttpPost("Lists")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserMediaList>> CreateList([FromBody] CreateListRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var list = new UserMediaList
+                {
+                    UserId = currentUserId.Value,
+                    Title = request.Title,
+                    Description = request.Description ?? string.Empty,
+                    ListType = request.ListType ?? "Mixed",
+                    MaxItems = Math.Min(request.MaxItems ?? 10, 50),
+                    VisibleToRegularUsers = request.VisibleToRegularUsers ?? true,
+                    VisibleToFriends = request.VisibleToFriends ?? true,
+                    IsFavorites = request.IsFavorites ?? false,
+                    IsWatchlist = request.IsWatchlist ?? false
+                };
+
+                var created = await _socialRepository.CreateListAsync(list).ConfigureAwait(false);
+                return Ok(created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get user's own lists.
+        /// </summary>
+        /// <returns>List of user's media lists.</returns>
+        [HttpGet("MyLists")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetMyLists()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var lists = _socialRepository.GetUserLists(currentUserId.Value);
+            var result = lists.Select(l => new
+            {
+                id = l.Id,
+                title = l.Title,
+                description = l.Description,
+                listType = l.ListType,
+                maxItems = l.MaxItems,
+                itemCount = _socialRepository.GetListItems(l.Id).Count,
+                visibleToRegularUsers = l.VisibleToRegularUsers,
+                visibleToFriends = l.VisibleToFriends,
+                isFavorites = l.IsFavorites,
+                isWatchlist = l.IsWatchlist,
+                clonedFrom = l.ClonedFromUsername,
+                createdAt = l.CreatedAt,
+                updatedAt = l.UpdatedAt
+            }).ToList();
+
+            return Ok(new { lists = result, count = result.Count });
+        }
+
+        /// <summary>
+        /// Get a user's visible lists.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of visible media lists.</returns>
+        [HttpGet("Profile/{userId}/Lists")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetUserLists(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var isFriend = currentUserId.HasValue && _socialRepository.AreFriends(currentUserId.Value, userId);
+            var isOwner = currentUserId.HasValue && currentUserId.Value == userId;
+
+            var lists = isOwner
+                ? _socialRepository.GetUserLists(userId)
+                : _socialRepository.GetVisibleLists(userId, currentUserId ?? Guid.Empty, isFriend);
+
+            var result = lists.Select(l => new
+            {
+                id = l.Id,
+                title = l.Title,
+                description = l.Description,
+                listType = l.ListType,
+                itemCount = _socialRepository.GetListItems(l.Id).Count,
+                clonedFrom = l.ClonedFromUsername,
+                createdAt = l.CreatedAt
+            }).ToList();
+
+            return Ok(new { lists = result, count = result.Count });
+        }
+
+        /// <summary>
+        /// Get a single list with items.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <returns>The list with items.</returns>
+        [HttpGet("Lists/{listId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<object> GetList(Guid listId)
+        {
+            var list = _socialRepository.GetList(listId);
+            if (list == null)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            var currentUserId = GetCurrentUserId();
+            var isFriend = currentUserId.HasValue && _socialRepository.AreFriends(currentUserId.Value, list.UserId);
+            var isOwner = currentUserId.HasValue && currentUserId.Value == list.UserId;
+
+            // Check visibility
+            if (!isOwner && !((isFriend && list.VisibleToFriends) || (!isFriend && list.VisibleToRegularUsers)))
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            var items = _socialRepository.GetListItems(listId);
+            var ownerProfile = _socialRepository.GetProfile(list.UserId);
+            var owner = _userManager.GetUserById(list.UserId);
+
+            return Ok(new
+            {
+                id = list.Id,
+                title = list.Title,
+                description = list.Description,
+                listType = list.ListType,
+                maxItems = list.MaxItems,
+                visibleToRegularUsers = list.VisibleToRegularUsers,
+                visibleToFriends = list.VisibleToFriends,
+                isFavorites = list.IsFavorites,
+                isWatchlist = list.IsWatchlist,
+                clonedFromUserId = list.ClonedFromUserId,
+                clonedFromUsername = list.ClonedFromUsername,
+                owner = new
+                {
+                    userId = list.UserId,
+                    username = owner?.Username ?? "Unknown",
+                    avatarUrl = ownerProfile?.AvatarUrl
+                },
+                items = items.Select(i => new
+                {
+                    id = i.Id,
+                    itemId = i.ItemId,
+                    imdbId = i.ImdbId,
+                    title = i.CachedTitle,
+                    imageUrl = i.CachedImageUrl,
+                    overview = i.CachedOverview,
+                    year = i.CachedYear,
+                    mediaType = i.CachedMediaType,
+                    note = i.Note,
+                    position = i.Position,
+                    addedAt = i.AddedAt
+                }).ToList(),
+                isOwner = isOwner,
+                createdAt = list.CreatedAt,
+                updatedAt = list.UpdatedAt
+            });
+        }
+
+        /// <summary>
+        /// Update a list.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <param name="request">Update request.</param>
+        /// <returns>Updated list.</returns>
+        [HttpPut("Lists/{listId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<UserMediaList>> UpdateList(Guid listId, [FromBody] UpdateListRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            if (list.UserId != currentUserId.Value)
+            {
+                return Forbid();
+            }
+
+            if (request.Title != null) list.Title = request.Title;
+            if (request.Description != null) list.Description = request.Description;
+            if (request.ListType != null) list.ListType = request.ListType;
+            if (request.MaxItems.HasValue) list.MaxItems = Math.Min(request.MaxItems.Value, 50);
+            if (request.VisibleToRegularUsers.HasValue) list.VisibleToRegularUsers = request.VisibleToRegularUsers.Value;
+            if (request.VisibleToFriends.HasValue) list.VisibleToFriends = request.VisibleToFriends.Value;
+
+            var updated = await _socialRepository.UpdateListAsync(list).ConfigureAwait(false);
+            return Ok(updated);
+        }
+
+        /// <summary>
+        /// Delete a list.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Lists/{listId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<object>> DeleteList(Guid listId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            if (list.UserId != currentUserId.Value)
+            {
+                return Forbid();
+            }
+
+            await _socialRepository.DeleteListAsync(listId).ConfigureAwait(false);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Clone a list.
+        /// </summary>
+        /// <param name="listId">The list ID to clone.</param>
+        /// <returns>The cloned list.</returns>
+        [HttpPost("Lists/{listId}/Clone")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserMediaList>> CloneList(Guid listId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var currentUser = _userManager.GetUserById(currentUserId.Value);
+            try
+            {
+                var cloned = await _socialRepository.CloneListAsync(listId, currentUserId.Value, currentUser?.Username ?? "Unknown").ConfigureAwait(false);
+                return Ok(cloned);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Add item to list.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <param name="request">Add item request.</param>
+        /// <returns>The added item.</returns>
+        [HttpPost("Lists/{listId}/Items")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserMediaListItem>> AddListItem(Guid listId, [FromBody] AddListItemRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null || list.UserId != currentUserId.Value)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            try
+            {
+                var item = new UserMediaListItem
+                {
+                    ListId = listId,
+                    ItemId = request.ItemId,
+                    ImdbId = request.ImdbId,
+                    CachedTitle = request.Title ?? string.Empty,
+                    CachedImageUrl = request.ImageUrl,
+                    CachedOverview = request.Overview,
+                    CachedYear = request.Year,
+                    CachedMediaType = request.MediaType,
+                    CachedGenres = request.Genres,
+                    CachedAt = DateTime.UtcNow,
+                    Note = request.Note
+                };
+
+                // If itemId provided, get metadata from Jellyfin
+                if (request.ItemId.HasValue)
+                {
+                    var jellyfinItem = _libraryManager.GetItemById(request.ItemId.Value);
+                    if (jellyfinItem != null)
+                    {
+                        item.CachedTitle = jellyfinItem.Name;
+                        item.CachedYear = jellyfinItem.ProductionYear;
+                        item.CachedOverview = jellyfinItem.Overview;
+                        item.CachedMediaType = jellyfinItem.GetType().Name;
+                        item.CachedImageUrl = jellyfinItem.PrimaryImagePath;
+                    }
+                }
+
+                var added = await _socialRepository.AddListItemAsync(item).ConfigureAwait(false);
+                return Ok(added);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update list item.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <param name="itemId">The item ID.</param>
+        /// <param name="request">Update request.</param>
+        /// <returns>Updated item.</returns>
+        [HttpPut("Lists/{listId}/Items/{itemId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserMediaListItem>> UpdateListItem(Guid listId, Guid itemId, [FromBody] UpdateListItemRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null || list.UserId != currentUserId.Value)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            var items = _socialRepository.GetListItems(listId);
+            var item = items.FirstOrDefault(i => i.Id == itemId);
+            if (item == null)
+            {
+                return NotFound(new { error = "Item not found" });
+            }
+
+            if (request.Note != null) item.Note = request.Note;
+            if (request.Position.HasValue) item.Position = request.Position.Value;
+
+            var updated = await _socialRepository.UpdateListItemAsync(item).ConfigureAwait(false);
+            return Ok(updated);
+        }
+
+        /// <summary>
+        /// Remove item from list.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("Lists/{listId}/Items/{itemId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<object>> RemoveListItem(Guid listId, Guid itemId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null || list.UserId != currentUserId.Value)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            await _socialRepository.RemoveListItemAsync(itemId).ConfigureAwait(false);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Reorder list items.
+        /// </summary>
+        /// <param name="listId">The list ID.</param>
+        /// <param name="request">Reorder request.</param>
+        /// <returns>Success status.</returns>
+        [HttpPut("Lists/{listId}/Reorder")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> ReorderListItems(Guid listId, [FromBody] ReorderItemsRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var list = _socialRepository.GetList(listId);
+            if (list == null || list.UserId != currentUserId.Value)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            await _socialRepository.ReorderListItemsAsync(listId, request.ItemIds).ConfigureAwait(false);
+            return Ok(new { success = true });
+        }
+
+        #endregion
+
+        #region Profile Styles
+
+        /// <summary>
+        /// Get profile style settings.
+        /// </summary>
+        /// <returns>Style settings.</returns>
+        [HttpGet("MyProfile/Style")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<UserProfileStyle> GetMyProfileStyle()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var style = _socialRepository.GetOrCreateProfileStyle(currentUserId.Value);
+            return Ok(style);
+        }
+
+        /// <summary>
+        /// Get a user's profile style.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Style settings.</returns>
+        [HttpGet("Profile/{userId}/Style")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<UserProfileStyle> GetProfileStyle(Guid userId)
+        {
+            var style = _socialRepository.GetProfileStyle(userId);
+            if (style == null)
+            {
+                // Return default style
+                return Ok(new UserProfileStyle { UserId = userId });
+            }
+            return Ok(style);
+        }
+
+        /// <summary>
+        /// Update profile style settings.
+        /// </summary>
+        /// <param name="style">Style settings.</param>
+        /// <returns>Updated style.</returns>
+        [HttpPut("MyProfile/Style")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserProfileStyle>> UpdateMyProfileStyle([FromBody] UserProfileStyle style)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            style.UserId = currentUserId.Value;
+            var updated = await _socialRepository.SaveProfileStyleAsync(style).ConfigureAwait(false);
+            return Ok(updated);
+        }
+
+        #endregion
+
+        #region Enhanced Stats
+
+        /// <summary>
+        /// Get full profile stats for header display.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Full stats object.</returns>
+        [HttpGet("Profile/{userId}/Stats/Full")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetFullProfileStats(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var profile = _socialRepository.GetProfile(userId);
+            var user = _userManager.GetUserById(userId);
+
+            if (user == null)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            // Get all ratings for the user
+            var userRatings = _ratingsRepository.GetUserRatings(userId);
+            var currentYear = DateTime.UtcNow.Year;
+            var ratingsThisYear = userRatings.Where(r => r.CreatedAt.Year == currentYear).ToList();
+
+            // Count movies and series
+            var movieCount = 0;
+            var seriesCount = 0;
+            foreach (var rating in userRatings)
+            {
+                var item = _libraryManager.GetItemById(rating.ItemId);
+                if (item != null)
+                {
+                    if (item.GetType().Name == "Movie") movieCount++;
+                    else if (item.GetType().Name == "Series") seriesCount++;
+                }
+            }
+
+            // Get review likes/dislikes
+            var totalLikes = 0;
+            var totalDislikes = 0;
+            foreach (var rating in userRatings.Where(r => !string.IsNullOrEmpty(r.ReviewText)))
+            {
+                var (likes, dislikes) = _ratingsRepository.GetReviewLikeCounts(userId, rating.ItemId);
+                totalLikes += likes;
+                totalDislikes += dislikes;
+            }
+
+            return Ok(new
+            {
+                userId = userId,
+                username = user.Username,
+                bio = profile?.Bio ?? string.Empty,
+                avatarUrl = profile?.AvatarUrl,
+                films = movieCount,
+                series = seriesCount,
+                thisYear = ratingsThisYear.Count,
+                lists = _socialRepository.GetListCount(userId),
+                following = _socialRepository.GetFollowingCount(userId),
+                followers = _socialRepository.GetFollowerCount(userId),
+                profileLikes = _socialRepository.GetProfileLikeCount(userId),
+                reviewLikesReceived = totalLikes,
+                reviewDislikesReceived = totalDislikes,
+                totalRatings = userRatings.Count,
+                averageRating = userRatings.Any() ? Math.Round(userRatings.Average(r => r.Rating), 1) : 0,
+                memberSince = profile?.CreatedAt ?? DateTime.UtcNow,
+                isOnline = _socialRepository.GetOnlineStatus(userId)?.GetEffectiveStatus() == "Online",
+                isFollowing = currentUserId.HasValue && _socialRepository.IsFollowing(currentUserId.Value, userId),
+                isFollowedBy = currentUserId.HasValue && _socialRepository.IsFollowing(userId, currentUserId.Value),
+                isFriend = currentUserId.HasValue && _socialRepository.AreFriends(currentUserId.Value, userId),
+                hasLikedProfile = currentUserId.HasValue && _socialRepository.HasLikedProfile(userId, currentUserId.Value)
+            });
+        }
+
+        /// <summary>
+        /// Get stats for a specific year.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="year">The year.</param>
+        /// <returns>Yearly stats.</returns>
+        [HttpGet("Profile/{userId}/Stats/Year/{year}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetYearlyStats(Guid userId, int year)
+        {
+            var userRatings = _ratingsRepository.GetUserRatings(userId);
+            var yearRatings = userRatings.Where(r => r.CreatedAt.Year == year).ToList();
+
+            var movieCount = 0;
+            var seriesCount = 0;
+            var totalMinutes = 0L;
+
+            foreach (var rating in yearRatings)
+            {
+                var item = _libraryManager.GetItemById(rating.ItemId);
+                if (item != null)
+                {
+                    if (item.GetType().Name == "Movie")
+                    {
+                        movieCount++;
+                        totalMinutes += item.RunTimeTicks.HasValue ? item.RunTimeTicks.Value / 600000000 : 0;
+                    }
+                    else if (item.GetType().Name == "Series")
+                    {
+                        seriesCount++;
+                    }
+                }
+            }
+
+            // Get rating distribution for the year
+            var distribution = new int[10];
+            foreach (var rating in yearRatings)
+            {
+                if (rating.Rating >= 1 && rating.Rating <= 10)
+                {
+                    distribution[rating.Rating - 1]++;
+                }
+            }
+
+            return Ok(new
+            {
+                year = year,
+                films = movieCount,
+                series = seriesCount,
+                totalRatings = yearRatings.Count,
+                averageRating = yearRatings.Any() ? Math.Round(yearRatings.Average(r => r.Rating), 1) : 0,
+                hoursWatched = Math.Round(totalMinutes / 60.0, 1),
+                reviewsWritten = yearRatings.Count(r => !string.IsNullOrEmpty(r.ReviewText)),
+                distribution = distribution
+            });
+        }
+
+        #endregion
+
+        #region Featured Reviews
+
+        /// <summary>
+        /// Feature a review.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpPut("MyReviews/{itemId}/Feature")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> FeatureReview(Guid itemId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Check if user has a review for this item
+            var rating = _ratingsRepository.GetUserRating(currentUserId.Value, itemId);
+            if (rating == null || string.IsNullOrEmpty(rating.ReviewText))
+            {
+                return BadRequest(new { error = "You don't have a review for this item" });
+            }
+
+            try
+            {
+                await _socialRepository.FeatureReviewAsync(currentUserId.Value, itemId).ConfigureAwait(false);
+                return Ok(new { success = true, featured = true });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Unfeature a review.
+        /// </summary>
+        /// <param name="itemId">The item ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("MyReviews/{itemId}/Feature")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> UnfeatureReview(Guid itemId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            await _socialRepository.UnfeatureReviewAsync(currentUserId.Value, itemId).ConfigureAwait(false);
+            return Ok(new { success = true, featured = false });
+        }
+
+        /// <summary>
+        /// Get featured reviews for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>Featured reviews.</returns>
+        [HttpGet("Profile/{userId}/FeaturedReviews")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetFeaturedReviews(Guid userId)
+        {
+            var featured = _socialRepository.GetFeaturedReviews(userId);
+            var result = featured.Select(f =>
+            {
+                var rating = _ratingsRepository.GetUserRating(userId, f.ItemId);
+                var item = _libraryManager.GetItemById(f.ItemId);
+                var (likes, dislikes) = _ratingsRepository.GetReviewLikeCounts(userId, f.ItemId);
+
+                return new
+                {
+                    itemId = f.ItemId,
+                    title = item?.Name ?? "Unknown",
+                    year = item?.ProductionYear,
+                    imageUrl = item?.PrimaryImagePath,
+                    rating = rating?.Rating,
+                    reviewText = rating?.ReviewText,
+                    reviewDate = rating?.CreatedAt,
+                    likes = likes,
+                    dislikes = dislikes,
+                    position = f.Position
+                };
+            }).ToList();
+
+            return Ok(new { featuredReviews = result });
+        }
+
+        #endregion
+
+        #region IMDB Lookup
+
+        /// <summary>
+        /// Get cached IMDB item or lookup.
+        /// </summary>
+        /// <param name="imdbId">The IMDB ID.</param>
+        /// <returns>Cached IMDB data.</returns>
+        [HttpGet("IMDB/{imdbId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<ImdbCacheItem> GetImdbItem(string imdbId)
+        {
+            var cached = _socialRepository.GetImdbCache(imdbId);
+            if (cached != null)
+            {
+                return Ok(cached);
+            }
+
+            // Return empty item indicating not found
+            return NotFound(new { error = "IMDB item not found in cache", imdbId = imdbId });
+        }
+
+        /// <summary>
+        /// Save IMDB cache item (for manual entry).
+        /// </summary>
+        /// <param name="item">The IMDB cache item.</param>
+        /// <returns>Saved item.</returns>
+        [HttpPost("IMDB")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<ImdbCacheItem>> SaveImdbItem([FromBody] ImdbCacheItem item)
+        {
+            if (string.IsNullOrEmpty(item.ImdbId))
+            {
+                return BadRequest(new { error = "IMDB ID is required" });
+            }
+
+            item.FetchSuccess = true;
+            var saved = await _socialRepository.SaveImdbCacheAsync(item).ConfigureAwait(false);
+            return Ok(saved);
+        }
+
+        /// <summary>
+        /// Refresh IMDB cache (remove cached item).
+        /// </summary>
+        /// <param name="imdbId">The IMDB ID.</param>
+        /// <returns>Success status.</returns>
+        [HttpDelete("IMDB/{imdbId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> RefreshImdbItem(string imdbId)
+        {
+            await _socialRepository.RemoveImdbCacheAsync(imdbId).ConfigureAwait(false);
+            return Ok(new { success = true, message = "Cache cleared. Re-lookup to refresh." });
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -1820,5 +2890,167 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets or sets who can send messages. Values: Everyone, Friends, Nobody.
         /// </summary>
         public string? AllowMessages { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for creating a list.
+    /// </summary>
+    public class CreateListRequest
+    {
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        [Required]
+        public string Title { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the description.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list type (Movies, Series, Mixed).
+        /// </summary>
+        public string? ListType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the max items (up to 50).
+        /// </summary>
+        public int? MaxItems { get; set; }
+
+        /// <summary>
+        /// Gets or sets visibility to regular users.
+        /// </summary>
+        public bool? VisibleToRegularUsers { get; set; }
+
+        /// <summary>
+        /// Gets or sets visibility to friends.
+        /// </summary>
+        public bool? VisibleToFriends { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this is a favorites list.
+        /// </summary>
+        public bool? IsFavorites { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this is a watchlist.
+        /// </summary>
+        public bool? IsWatchlist { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for updating a list.
+    /// </summary>
+    public class UpdateListRequest
+    {
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        public string? Title { get; set; }
+
+        /// <summary>
+        /// Gets or sets the description.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list type.
+        /// </summary>
+        public string? ListType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the max items.
+        /// </summary>
+        public int? MaxItems { get; set; }
+
+        /// <summary>
+        /// Gets or sets visibility to regular users.
+        /// </summary>
+        public bool? VisibleToRegularUsers { get; set; }
+
+        /// <summary>
+        /// Gets or sets visibility to friends.
+        /// </summary>
+        public bool? VisibleToFriends { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for adding a list item.
+    /// </summary>
+    public class AddListItemRequest
+    {
+        /// <summary>
+        /// Gets or sets the Jellyfin item ID.
+        /// </summary>
+        public Guid? ItemId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the IMDB ID (for external items).
+        /// </summary>
+        public string? ImdbId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        public string? Title { get; set; }
+
+        /// <summary>
+        /// Gets or sets the image URL.
+        /// </summary>
+        public string? ImageUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the overview.
+        /// </summary>
+        public string? Overview { get; set; }
+
+        /// <summary>
+        /// Gets or sets the year.
+        /// </summary>
+        public int? Year { get; set; }
+
+        /// <summary>
+        /// Gets or sets the media type.
+        /// </summary>
+        public string? MediaType { get; set; }
+
+        /// <summary>
+        /// Gets or sets genres as JSON.
+        /// </summary>
+        public string? Genres { get; set; }
+
+        /// <summary>
+        /// Gets or sets the note.
+        /// </summary>
+        public string? Note { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for updating a list item.
+    /// </summary>
+    public class UpdateListItemRequest
+    {
+        /// <summary>
+        /// Gets or sets the note.
+        /// </summary>
+        public string? Note { get; set; }
+
+        /// <summary>
+        /// Gets or sets the position.
+        /// </summary>
+        public int? Position { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for reordering items.
+    /// </summary>
+    public class ReorderItemsRequest
+    {
+        /// <summary>
+        /// Gets or sets the item IDs in new order.
+        /// </summary>
+        [Required]
+        public System.Collections.Generic.List<Guid> ItemIds { get; set; } = new System.Collections.Generic.List<Guid>();
     }
 }

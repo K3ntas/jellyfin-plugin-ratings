@@ -62,6 +62,28 @@ namespace Jellyfin.Plugin.Ratings
                 {
                     Name = "ratings.js",
                     EmbeddedResourcePath = string.Format("{0}.Web.ratings.js", GetType().Namespace)
+                },
+                // User Profile page
+                new PluginPageInfo
+                {
+                    Name = "user_profile",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.user_profile.html", GetType().Namespace)
+                },
+                new PluginPageInfo
+                {
+                    Name = "user_profile.js",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.user_profile.js", GetType().Namespace)
+                },
+                // Profile Settings page
+                new PluginPageInfo
+                {
+                    Name = "profile_settings",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.profile_settings.html", GetType().Namespace)
+                },
+                new PluginPageInfo
+                {
+                    Name = "profile_settings.js",
+                    EmbeddedResourcePath = string.Format("{0}.Pages.profile_settings.js", GetType().Namespace)
                 }
             };
         }

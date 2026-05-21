@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.306.0",
+        "changelog": "New: Letterboxd-style user profiles with custom lists, follows, profile likes, stats, and full customization",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.306.0/Jellyfin.Plugin.Ratings_2.0.306.0.zip",
+        "checksum": "81f13d6ba6f233b88fc6d3a15f101a31",
+        "timestamp": "2026-05-21T12:00:00Z"
+      },
+      {
         "version": "2.0.305.0",
         "changelog": "Security: Fix remaining CodeQL vulnerabilities (URL whitelist, XSS)",
         "targetAbi": "10.11.0.0",
