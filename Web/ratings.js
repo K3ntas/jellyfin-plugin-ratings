@@ -13211,94 +13211,11 @@
         },
 
         /**
-         * Show the profile page for a user
+         * Show the profile page for a user - redirects to full profile page
          */
         showProfilePage: function (userId) {
-            var self = this;
-            var existing = document.getElementById('socialProfilePage');
-            if (existing) {
-                existing.remove();
-            }
-
-            // Track which profile we're viewing
-            self._viewingProfileUserId = userId;
-
-            // Register as viewer for real-time updates
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-            fetch(baseUrl + '/Social/Profile/' + userId + '/View', {
-                method: 'POST',
-                credentials: 'include',
-                headers: headers
-            }).catch(function () { /* ignore errors */ });
-
-            // Create profile page container
-            var page = document.createElement('div');
-            page.id = 'socialProfilePage';
-            page.className = 'social-profile-page';
-            page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
-            document.body.appendChild(page);
-
-            // Close when clicking backdrop (outside container)
-            page.addEventListener('click', function(e) {
-                if (e.target === page) {
-                    self.closeProfilePage();
-                }
-            });
-
-            // Fetch profile data
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
-            Promise.all([
-                fetch(baseUrl + '/Social/Profile/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-                fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
-                fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
-                fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
-                fetch(baseUrl + '/Social/Block/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasBlocked: false, isBlockedBy: false }; }),
-                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
-            ]).then(function (results) {
-                var profile = results[0];
-                var friendsData = results[1];
-                var outgoingRequests = results[2];
-                var incomingRequests = results[3];
-                var blockStatus = results[4];
-                var onlineData = results[5];
-
-                if (!profile) {
-                    self.renderProfileError(page, 'User not found');
-                    return;
-                }
-
-                // Determine relationship status
-                var isSelf = profile.userId === ApiClient.getCurrentUserId();
-                var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
-                var hasPendingOutgoing = (outgoingRequests.requests || []).some(function (r) { return (r.ToUserId || r.toUserId) === userId; });
-                var hasPendingIncoming = (incomingRequests.requests || []).find(function (r) { return (r.FromUserId || r.fromUserId) === userId; });
-                var hasBlocked = blockStatus.hasBlocked || false;
-                var isBlockedBy = blockStatus.isBlockedBy || false;
-
-                // Get online status
-                var onlineStatus = 'Offline';
-                var friendStatus = (onlineData.friends || []).find(function (f) { return f.userId === userId; });
-                if (friendStatus) {
-                    onlineStatus = friendStatus.status || 'Offline';
-                }
-
-                self.renderProfilePage(page, profile, {
-                    isSelf: isSelf,
-                    isFriend: isFriend,
-                    hasPendingOutgoing: hasPendingOutgoing,
-                    hasPendingIncoming: hasPendingIncoming,
-                    incomingRequestId: hasPendingIncoming ? (hasPendingIncoming.Id || hasPendingIncoming.id) : null,
-                    hasBlocked: hasBlocked,
-                    isBlockedBy: isBlockedBy,
-                    onlineStatus: onlineStatus
-                });
-            }).catch(function (err) {
-                console.error('[Social] Profile load failed:', err);
-                self.renderProfileError(page, 'Failed to load profile');
-            });
+            // Navigate to the full Letterboxd-style profile page
+            window.location.href = '/web/configurationpage?name=user_profile&userId=' + encodeURIComponent(userId);
         },
 
         /**
