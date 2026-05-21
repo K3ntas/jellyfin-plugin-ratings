@@ -550,20 +550,31 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // If standard auth didn't work, try to get from session token
                 if (authUserId == Guid.Empty)
                 {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+                    // Try X-Emby-Token header first (simple token)
+                    var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
 
-                    if (!string.IsNullOrEmpty(authHeader))
+                    // If not found, try X-Emby-Authorization or Authorization with Token="..." format
+                    if (string.IsNullOrEmpty(token))
                     {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
+                        var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                      ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                        if (!string.IsNullOrEmpty(authHeader))
                         {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
+                            var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                            if (tokenMatch.Success)
                             {
-                                authUserId = session.UserId;
+                                token = tokenMatch.Groups[1].Value;
                             }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                        if (session != null)
+                        {
+                            authUserId = session.UserId;
                         }
                     }
                 }
