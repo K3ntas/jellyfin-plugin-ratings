@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.313.0",
+        "changelog": "Profile: Add row with title picker, 30 items per row, lazy loading, fixed following count stats",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.313.0/Jellyfin.Plugin.Ratings_2.0.313.0.zip",
+        "checksum": "f594436775badfbaa73e9d4233741440",
+        "timestamp": "2026-05-22T11:00:00Z"
+      },
+      {
         "version": "2.0.312.0",
         "changelog": "Profile: Multiple favorite rows (up to 5), library browser with categories, pagination, sorting by ratings",
         "targetAbi": "10.11.0.0",

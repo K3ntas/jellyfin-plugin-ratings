@@ -1903,11 +1903,17 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
+            // Get follower and following counts for the target user
+            var followers = _socialRepository.GetFollowers(userId);
+            var following = _socialRepository.GetFollowing(userId);
+
             return Ok(new
             {
                 isFollowing = _socialRepository.IsFollowing(currentUserId.Value, userId),
                 isFollowedBy = _socialRepository.IsFollowing(userId, currentUserId.Value),
-                isMutual = _socialRepository.AreMutualFollowers(currentUserId.Value, userId)
+                isMutual = _socialRepository.AreMutualFollowers(currentUserId.Value, userId),
+                followersCount = followers.Count,
+                followingCount = following.Count
             });
         }
 
@@ -2560,7 +2566,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             var profile = await _socialRepository.GetOrCreateProfileAsync(currentUserId.Value, user.Username).ConfigureAwait(false);
 
-            // Update favorite rows (max 5 rows, each with max 5 items)
+            // Update favorite rows (max 5 rows, each with max 30 items)
             if (request.FavoriteRows != null)
             {
                 profile.FavoriteRows = request.FavoriteRows
@@ -2568,7 +2574,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     .Select(row => new FavoriteRow
                     {
                         Title = row.Title ?? string.Empty,
-                        Items = (row.Items ?? new List<FavoriteItem>()).Take(5).ToList()
+                        Items = (row.Items ?? new List<FavoriteItem>()).Take(30).ToList()
                     })
                     .ToList();
             }
@@ -2915,7 +2921,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         public List<FavoriteItem>? Favorites { get; set; }
 
         /// <summary>
-        /// Gets or sets the favorite rows (max 5 rows, each with max 5 items).
+        /// Gets or sets the favorite rows (max 5 rows, each with max 30 items).
         /// </summary>
         public List<FavoriteRow>? FavoriteRows { get; set; }
     }

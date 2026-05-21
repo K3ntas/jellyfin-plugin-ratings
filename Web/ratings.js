@@ -13581,12 +13581,26 @@
                 .lb-favorites-grid {
                     display: flex;
                     gap: 10px;
-                    flex-wrap: wrap;
+                    overflow-x: auto;
+                    padding-bottom: 8px;
+                    scrollbar-width: thin;
+                    scrollbar-color: #456 #1c2228;
+                }
+                .lb-favorites-grid::-webkit-scrollbar {
+                    height: 6px;
+                }
+                .lb-favorites-grid::-webkit-scrollbar-track {
+                    background: #1c2228;
+                    border-radius: 3px;
+                }
+                .lb-favorites-grid::-webkit-scrollbar-thumb {
+                    background: #456;
+                    border-radius: 3px;
                 }
                 .lb-favorite-slot {
-                    flex: 0 0 calc(20% - 8px);
-                    max-width: 120px;
-                    aspect-ratio: 2/3;
+                    flex: 0 0 100px;
+                    width: 100px;
+                    height: 150px;
                     background: #2c3440;
                     border-radius: 4px;
                     display: flex;
@@ -13867,6 +13881,87 @@
                 }
                 .lb-row-delete:hover {
                     opacity: 1;
+                }
+                .lb-row-count {
+                    font-size: 12px;
+                    color: #678;
+                    padding: 2px 8px;
+                    background: #2c3440;
+                    border-radius: 10px;
+                }
+                .lb-load-more-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 80px;
+                    height: 120px;
+                    background: #1c2228;
+                    border: 1px dashed #456;
+                    border-radius: 4px;
+                    color: #99aabb;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-load-more-btn:hover {
+                    background: #2c3440;
+                    border-color: #00e054;
+                    color: #00e054;
+                }
+                .lb-add-row-modal {
+                    max-width: 450px;
+                }
+                .lb-add-row-body {
+                    padding: 20px;
+                }
+                .lb-add-row-body label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #99aabb;
+                    font-size: 13px;
+                }
+                .lb-row-name-input {
+                    width: 100%;
+                    padding: 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    margin-bottom: 16px;
+                    box-sizing: border-box;
+                }
+                .lb-row-name-input:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-preset-titles {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-bottom: 20px;
+                }
+                .lb-preset-btn {
+                    padding: 6px 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 16px;
+                    color: #99aabb;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-preset-btn:hover {
+                    background: #3c4450;
+                    border-color: #00e054;
+                    color: #00e054;
+                }
+                .lb-add-row-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                    padding-top: 16px;
+                    border-top: 1px solid #2c3440;
                 }
                 .lb-add-row-btn {
                     display: block;
@@ -14156,11 +14251,17 @@
                         justify-content: center;
                     }
                     .lb-favorites-grid {
-                        justify-content: center;
+                        justify-content: flex-start;
                     }
                     .lb-favorite-slot {
-                        flex: 0 0 calc(33.33% - 8px);
-                        max-width: 80px;
+                        flex: 0 0 80px;
+                        width: 80px;
+                        height: 120px;
+                    }
+                    .lb-load-more-btn {
+                        min-width: 60px;
+                        height: 120px;
+                        font-size: 11px;
                     }
                     .lb-picker-cat-btn {
                         padding: 6px 12px;
@@ -14170,6 +14271,13 @@
                     }
                     .lb-row-title-input {
                         font-size: 14px;
+                    }
+                    .lb-row-count {
+                        font-size: 10px;
+                    }
+                    .lb-preset-btn {
+                        padding: 4px 10px;
+                        font-size: 11px;
                     }
                 }
             `;
@@ -14650,35 +14758,47 @@
             // Render existing rows
             for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
                 var row = favoriteRows[rowIndex];
+                var items = row.items || [];
+                var itemCount = items.filter(function(i) { return i && i.itemId; }).length;
+
                 html += '<div class="lb-favorite-row" data-row="' + rowIndex + '">';
                 html += '<div class="lb-row-header">';
                 if (isSelf) {
                     html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
                         'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
+                    html += '<span class="lb-row-count">' + itemCount + '/30</span>';
                     html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
                 } else {
                     html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
+                    if (itemCount > 0) html += '<span class="lb-row-count">' + itemCount + ' items</span>';
                 }
                 html += '</div>';
                 html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
 
-                // Render 5 slots per row
-                var items = row.items || [];
-                for (var i = 0; i < 5; i++) {
+                // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
+                var visibleCount = Math.min(itemCount, 10);
+                for (var i = 0; i < visibleCount; i++) {
                     var fav = items[i];
                     if (fav && fav.itemId) {
                         html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
                             ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
                             (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
                             '</div>';
-                    } else {
-                        html += '<div class="lb-favorite-slot empty" data-row="' + rowIndex + '" data-index="' + i + '"' +
-                            (isSelf ? ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + i + ')"' : '') +
-                            ' style="' + (isSelf ? 'cursor:pointer' : '') + '">' +
-                            (isSelf ? '<span>+</span>' : '') +
-                            '</div>';
                     }
                 }
+
+                // Show "load more" if there are more items
+                if (itemCount > 10) {
+                    html += '<button class="lb-load-more-btn" onclick="RatingsPlugin.loadMoreRowItems(' + rowIndex + ')">' + (itemCount - 10) + ' more...</button>';
+                }
+
+                // Add one empty slot to add new item (if owner and less than 30 items)
+                if (isSelf && itemCount < 30) {
+                    html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + itemCount + '"' +
+                        ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + itemCount + ')" style="cursor:pointer">' +
+                        '<span>+</span></div>';
+                }
+
                 html += '</div></div>';
             }
 
@@ -15531,15 +15651,145 @@
 
             if (self._currentProfile.favoriteRows.length >= 5) return;
 
-            self._currentProfile.favoriteRows.push({ title: 'Favorites', items: [] });
+            // Show modal to pick row title
+            self.showAddRowModal();
+        },
+
+        /**
+         * Show modal to add a new row with title selection
+         */
+        showAddRowModal: function () {
+            var self = this;
+            var modal = document.createElement('div');
+            modal.className = 'lb-media-picker';
+            modal.id = 'lbAddRowModal';
+
+            var presets = ['Favorite Films', 'Favorite Series', 'Top Anime', 'Best Documentaries', 'Must Watch', 'Hidden Gems', 'Guilty Pleasures', 'All Time Favorites'];
+
+            var html = '<div class="lb-picker-content lb-add-row-modal">' +
+                '<div class="lb-picker-header">' +
+                '<h2>Add New Row</h2>' +
+                '<button class="lb-picker-close" onclick="RatingsPlugin.closeAddRowModal()">&times;</button>' +
+                '</div>' +
+                '<div class="lb-add-row-body">' +
+                '<label>Row Title</label>' +
+                '<input type="text" id="newRowTitleInput" placeholder="Enter custom title..." class="lb-row-name-input">' +
+                '<div class="lb-preset-titles">';
+
+            presets.forEach(function (preset) {
+                html += '<button class="lb-preset-btn" onclick="RatingsPlugin.selectRowPreset(\'' + self.escapeJs(preset) + '\')">' + preset + '</button>';
+            });
+
+            html += '</div>' +
+                '<div class="lb-add-row-actions">' +
+                '<button class="lb-btn secondary" onclick="RatingsPlugin.closeAddRowModal()">Cancel</button>' +
+                '<button class="lb-btn primary" onclick="RatingsPlugin.confirmAddRow()">Create Row</button>' +
+                '</div></div></div>';
+
+            modal.innerHTML = html;
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) self.closeAddRowModal();
+            });
+            document.body.appendChild(modal);
+
+            setTimeout(function () {
+                var input = document.getElementById('newRowTitleInput');
+                if (input) input.focus();
+            }, 100);
+        },
+
+        /**
+         * Close add row modal
+         */
+        closeAddRowModal: function () {
+            var modal = document.getElementById('lbAddRowModal');
+            if (modal) modal.remove();
+        },
+
+        /**
+         * Select a preset title for new row
+         */
+        selectRowPreset: function (preset) {
+            var input = document.getElementById('newRowTitleInput');
+            if (input) input.value = preset;
+        },
+
+        /**
+         * Confirm adding the new row
+         */
+        confirmAddRow: function () {
+            var self = this;
+            var input = document.getElementById('newRowTitleInput');
+            var title = input ? input.value.trim() : '';
+
+            if (!title) {
+                title = 'Favorites';
+            }
+
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+
+            self._currentProfile.favoriteRows.push({ title: title, items: [] });
 
             // Save to server
             self.saveFavorites();
+
+            // Close modal
+            self.closeAddRowModal();
 
             // Refresh the overview
             if (self._currentProfileStatus) {
                 self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
                 self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Load more items in a row (expand beyond initial 10)
+         */
+        loadMoreRowItems: function (rowIndex) {
+            var self = this;
+            var favoriteRows = self._currentProfile?.favoriteRows || [];
+            if (!favoriteRows[rowIndex]) return;
+
+            var row = favoriteRows[rowIndex];
+            var items = row.items || [];
+            var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
+            if (!grid) return;
+
+            var isSelf = self._currentProfileStatus?.isSelf;
+
+            // Remove the load more button
+            var loadMoreBtn = grid.querySelector('.lb-load-more-btn');
+            if (loadMoreBtn) loadMoreBtn.remove();
+
+            // Add remaining items
+            for (var i = 10; i < items.length; i++) {
+                var fav = items[i];
+                if (fav && fav.itemId) {
+                    var slot = document.createElement('div');
+                    slot.className = 'lb-favorite-slot filled';
+                    slot.dataset.row = rowIndex;
+                    slot.dataset.index = i;
+                    slot.dataset.itemId = fav.itemId;
+                    slot.style.backgroundImage = 'url(\'' + (fav.imageUrl || '') + '\')';
+                    if (isSelf) {
+                        var removeBtn = document.createElement('button');
+                        removeBtn.className = 'lb-fav-remove';
+                        removeBtn.textContent = '×';
+                        removeBtn.onclick = (function(ri, idx) {
+                            return function() { self.removeFavorite(ri, idx); };
+                        })(rowIndex, i);
+                        slot.appendChild(removeBtn);
+                    }
+                    // Insert before the add slot
+                    var addSlot = grid.querySelector('.add-slot');
+                    if (addSlot) {
+                        grid.insertBefore(slot, addSlot);
+                    } else {
+                        grid.appendChild(slot);
+                    }
+                }
             }
         },
 
