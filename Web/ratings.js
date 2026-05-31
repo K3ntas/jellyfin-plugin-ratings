@@ -14444,6 +14444,10 @@
             // Track which profile we're viewing
             self._viewingProfileUserId = userId;
             self._profileActiveTab = 'overview';
+            // Reset the per-open shared ratings cache (used to avoid 4 duplicate fetches)
+            self._profileRatings = null;
+            self._profileRatingsUser = null;
+            self._profileRatingsPending = null;
 
             // Register as viewer for real-time updates
             var baseUrl = ApiClient.serverAddress();
@@ -14634,12 +14638,12 @@
 @keyframes lbAurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 /* glass side cards */
 .social-profile-page.letterboxd-style .lb-side-card{background:rgba(32,40,49,.5)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.08)!important;}
-/* poster mirror reflections + hover glow */
-.social-profile-page.letterboxd-style .lb-poster-img{-webkit-box-reflect:below 3px linear-gradient(transparent 62%,rgba(0,0,0,.30));}
-.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.28);}
-.social-profile-page.letterboxd-style .lb-favorite-slot.filled{-webkit-box-reflect:below 3px linear-gradient(transparent 64%,rgba(0,0,0,.24));}
-.social-profile-page.letterboxd-style .lb-rev2-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 70%,rgba(0,0,0,.22));}
-.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 68%,rgba(0,0,0,.22));}
+/* poster drop shadows + hover glow (regular shadows, no mirror reflection) */
+.social-profile-page.letterboxd-style .lb-poster-img{box-shadow:0 6px 18px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.3);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{box-shadow:0 6px 18px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-rev2-poster{box-shadow:0 5px 14px rgba(0,0,0,.45);}
+.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{box-shadow:0 5px 14px rgba(0,0,0,.45);}
 /* gradient avatar + title */
 .social-profile-page.letterboxd-style .lb-avatar{background:linear-gradient(135deg,#00e054,#1aa3ff)!important;box-shadow:0 8px 30px rgba(0,224,84,.35);}
 .social-profile-page.letterboxd-style .lb-username{background:linear-gradient(90deg,#fff,#9fe7c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
@@ -14688,6 +14692,16 @@
 /* drag-to-reorder affordance */
 .social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]{cursor:grab;}
 .social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]:active{cursor:grabbing;}
+/* favorites row horizontal scroll with hover arrows (no visible scrollbar) */
+.social-profile-page.letterboxd-style .lb-row-scroll{position:relative;}
+.social-profile-page.letterboxd-style .lb-favorites-grid{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.social-profile-page.letterboxd-style .lb-favorites-grid::-webkit-scrollbar{display:none;height:0;}
+.social-profile-page.letterboxd-style .lb-row-arrow{position:absolute;top:calc(50% - 12px);transform:translateY(-50%);z-index:6;width:40px;height:64px;border:0;border-radius:10px;background:rgba(8,12,16,.5);color:#fff;font-size:30px;line-height:1;cursor:pointer;opacity:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);transition:opacity .2s,background .2s,transform .15s;}
+.social-profile-page.letterboxd-style .lb-row-scroll:hover .lb-row-arrow{opacity:1;}
+.social-profile-page.letterboxd-style .lb-row-arrow:hover{background:rgba(0,224,84,.9);color:#14181c;}
+.social-profile-page.letterboxd-style .lb-row-arrow:active{transform:translateY(-50%) scale(.9);}
+.social-profile-page.letterboxd-style .lb-row-arrow.left{left:-6px;}
+.social-profile-page.letterboxd-style .lb-row-arrow.right{right:-6px;}
 `;
             var style = document.createElement('style');
             style.id = 'lbProfileRedesign';
@@ -14700,15 +14714,10 @@
          */
         loadProfileRecentPosters: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=12', { method: 'GET', credentials: 'include', headers: headers })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentPosters');
                     if (!c) return;
-                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
                     if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
                     var html = '';
                     ratings.slice(0, 12).forEach(function (r) {
@@ -14723,8 +14732,7 @@
                             '</div>';
                     });
                     c.innerHTML = html;
-                })
-                .catch(function () { var c = document.getElementById('lbRecentPosters'); if (c) c.innerHTML = '<div class="lb-empty-mini">No activity</div>'; });
+            });
         },
 
         /**
@@ -14732,15 +14740,10 @@
          */
         loadProfileRecentReviews: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=60', { method: 'GET', credentials: 'include', headers: headers })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentReviews');
                     if (!c) return;
-                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
                     var reviews = ratings.filter(function (r) { return r.reviewText || r.ReviewText || r.review || r.Review; }).slice(0, 3);
                     if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
                     var html = '';
@@ -14757,8 +14760,7 @@
                             '<p class="lb-rev2-text">' + self.escapeHtml(txt) + '</p></div></div>';
                     });
                     c.innerHTML = html;
-                })
-                .catch(function () { var c = document.getElementById('lbRecentReviews'); if (c) c.innerHTML = '<div class="lb-empty-mini">No reviews</div>'; });
+            });
         },
 
         /**
@@ -14991,6 +14993,46 @@
                 self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
                 self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
             }
+        },
+
+        /**
+         * Horizontally scroll a favorites row via the hover arrows.
+         */
+        scrollFavRow: function (btn, dir) {
+            var wrap = btn.closest('.lb-row-scroll');
+            if (!wrap) return;
+            var grid = wrap.querySelector('.lb-favorites-grid');
+            if (grid) grid.scrollBy({ left: dir * Math.max(280, Math.round(grid.clientWidth * 0.8)), behavior: 'smooth' });
+        },
+
+        /**
+         * Fetch the viewed profile's ratings ONCE and reuse across the overview
+         * (distribution, posters, reviews, activity) instead of 4 separate requests.
+         */
+        getProfileRatings: function (cb) {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            if (self._profileRatingsUser === userId && self._profileRatings) { cb(self._profileRatings); return; }
+            if (self._profileRatingsPending && self._profileRatingsPendingUser === userId) { self._profileRatingsPending.push(cb); return; }
+            self._profileRatingsPending = [cb];
+            self._profileRatingsPendingUser = userId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                    self._profileRatings = ratings;
+                    self._profileRatingsUser = userId;
+                    var cbs = self._profileRatingsPending || [];
+                    self._profileRatingsPending = null;
+                    cbs.forEach(function (f) { try { f(ratings); } catch (e) { /* ignore */ } });
+                })
+                .catch(function () {
+                    var cbs = self._profileRatingsPending || [];
+                    self._profileRatingsPending = null;
+                    cbs.forEach(function (f) { try { f([]); } catch (e) { /* ignore */ } });
+                });
         },
 
         lbToast: function (msg) {
@@ -15288,6 +15330,8 @@
                     if (itemCount > 0) html += '<span class="lb-row-count">' + itemCount + ' items</span>';
                 }
                 html += '</div>';
+                html += '<div class="lb-row-scroll">';
+                html += '<button class="lb-row-arrow left" onclick="RatingsPlugin.scrollFavRow(this,-1)" aria-label="Scroll left">‹</button>';
                 html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
 
                 // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
@@ -15315,7 +15359,10 @@
                         '<span>+</span></div>';
                 }
 
-                html += '</div></div>';
+                html += '</div>'; // .lb-favorites-grid
+                html += '<button class="lb-row-arrow right" onclick="RatingsPlugin.scrollFavRow(this,1)" aria-label="Scroll right">›</button>';
+                html += '</div>'; // .lb-row-scroll
+                html += '</div>'; // .lb-favorite-row
             }
 
             // Add row button (if less than 5 rows and is own profile)
@@ -15399,26 +15446,9 @@
          */
         loadProfileRatingDistribution: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
-            // Get user's ratings and calculate distribution
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', {
-                method: 'GET',
-                credentials: 'include',
-                headers: headers
-            })
-            .then(function (r) {
-                if (!r.ok) throw new Error('API error: ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                 var container = document.getElementById('lbRatingDist');
                 if (!container) return;
-
-                // API returns array directly
-                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
                     return;
@@ -15447,10 +15477,6 @@
                 }
                 html += '</div>';
                 container.innerHTML = html;
-            })
-            .catch(function () {
-                var container = document.getElementById('lbRatingDist');
-                if (container) container.innerHTML = '<div class="lb-empty">No rating data</div>';
             });
         },
 
@@ -15459,26 +15485,9 @@
          */
         loadProfileRecentActivity: function (limit) {
             var self = this;
-            var userId = self._viewingProfileUserId;
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
-            // Get user's recent ratings as activity
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=' + (limit || 10), {
-                method: 'GET',
-                credentials: 'include',
-                headers: headers
-            })
-            .then(function (r) {
-                if (!r.ok) throw new Error('API error: ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                 var container = document.getElementById('lbRecentActivity');
                 if (!container) return;
-
-                // API returns array directly
-                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No recent activity</div>';
                     return;
@@ -15507,11 +15516,6 @@
                 });
                 html += '</div>';
                 container.innerHTML = html;
-            })
-            .catch(function (err) {
-                console.error('[Social] Activity load error:', err);
-                var container = document.getElementById('lbRecentActivity');
-                if (container) container.innerHTML = '<div class="lb-empty">No recent activity</div>';
             });
         },
 
@@ -16068,6 +16072,23 @@
 
                 if (allRatings.length === 0) {
                     results.innerHTML = '<div class="lb-picker-empty">You haven\'t rated any items yet</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Apply the selected category tab (Movies/Series/...). The My Ratings path
+                // previously ignored it, so every tab showed mostly movies.
+                var cat = self._pickerCategory;
+                if (cat === 'Movie' || cat === 'Series') {
+                    allRatings = allRatings.filter(function (r) { return (r.type || r.Type) === cat; });
+                } else if (cat === 'Anime' || cat === 'Documentary' || cat === 'Animation') {
+                    allRatings = allRatings.filter(function (r) {
+                        var t = (r.type || r.Type);
+                        return t === 'Movie' || t === 'Series';
+                    });
+                }
+                if (allRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No rated ' + (cat ? cat.toLowerCase() + 's' : 'items') + ' yet</div>';
                     document.getElementById('pickerPagination').innerHTML = '';
                     return;
                 }
