@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.320.0",
+        "changelog": "Fix duplicate plugin installs: on startup the plugin now removes older versioned folders that share its GUID (keeps only the running version), ending the 'two versions installed / restart required' loop. GUID-scoped and strictly-older-only, so it never affects other plugins or the current version.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.320.0/Jellyfin.Plugin.Ratings_2.0.320.0.zip",
+        "checksum": "90e35efe6241a3cf9a2b81d49ae721a8",
+        "timestamp": "2026-05-31T20:30:00Z"
+      },
+      {
         "version": "2.0.319.0",
         "changelog": "Performance: cache the 1.6MB ratings.js in-memory with ETag revalidation (browsers get a tiny 304 instead of re-downloading on every load/restart), load the 17 persisted data files in parallel at startup to cut boot/first-use latency, and remove a duplicate WebSocket service registration. No feature/data changes.",
         "targetAbi": "10.11.0.0",

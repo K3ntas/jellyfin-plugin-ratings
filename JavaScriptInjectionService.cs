@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,6 +42,10 @@ namespace Jellyfin.Plugin.Ratings
             {
                 try
                 {
+                    // Remove stale duplicate plugin folders first (prevents the "2 versions
+                    // installed / restart required" loop on every update).
+                    CleanupOldPluginVersions();
+
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
@@ -62,6 +67,110 @@ namespace Jellyfin.Plugin.Ratings
         public Task StopAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
+        }
+
+        // Our plugin's stable identity (must match Plugin.Id).
+        private const string PluginGuid = "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d";
+
+        /// <summary>
+        /// Removes older duplicate installs of THIS plugin from the plugins directory.
+        /// Jellyfin can leave the previous versioned folder behind on update (especially when the
+        /// repository/manifest name differs from the plugin name), producing the recurring
+        /// "two versions installed / restart required" problem. This deletes only folders that
+        /// carry our exact GUID and a strictly-older version than the running one. It never touches
+        /// other plugins (different GUID) nor the folder we are currently running from.
+        /// </summary>
+        private void CleanupOldPluginVersions()
+        {
+            try
+            {
+                var pluginsDir = _appPaths.PluginsPath;
+                if (string.IsNullOrEmpty(pluginsDir) || !Directory.Exists(pluginsDir))
+                {
+                    return;
+                }
+
+                var myVersion = typeof(Plugin).Assembly.GetName().Version;
+                if (myVersion == null)
+                {
+                    return;
+                }
+
+                // Folder the running assembly lives in - must never be deleted.
+                string? currentDir = null;
+                try
+                {
+                    var loc = typeof(Plugin).Assembly.Location;
+                    if (!string.IsNullOrEmpty(loc))
+                    {
+                        currentDir = Path.GetFullPath(Path.GetDirectoryName(loc) !);
+                    }
+                }
+                catch
+                {
+                    currentDir = null;
+                }
+
+                foreach (var dir in Directory.GetDirectories(pluginsDir))
+                {
+                    try
+                    {
+                        // Extra guard: only consider folders that look like ours.
+                        var folderName = Path.GetFileName(dir);
+                        if (folderName == null || folderName.IndexOf("Ratings", StringComparison.OrdinalIgnoreCase) < 0)
+                        {
+                            continue;
+                        }
+
+                        var metaPath = Path.Combine(dir, "meta.json");
+                        if (!File.Exists(metaPath))
+                        {
+                            continue;
+                        }
+
+                        using var doc = JsonDocument.Parse(File.ReadAllText(metaPath));
+                        if (!doc.RootElement.TryGetProperty("guid", out var guidEl))
+                        {
+                            continue;
+                        }
+
+                        var guid = guidEl.GetString();
+                        if (!string.Equals(guid, PluginGuid, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue; // not our plugin - leave it alone
+                        }
+
+                        // Never delete the folder we are running from.
+                        if (currentDir != null &&
+                            string.Equals(Path.GetFullPath(dir), currentDir, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        // Only delete STRICTLY older versions, so we can never remove the current/newest.
+                        if (!doc.RootElement.TryGetProperty("version", out var verEl)
+                            || !Version.TryParse(verEl.GetString(), out var otherVersion)
+                            || otherVersion >= myVersion)
+                        {
+                            continue;
+                        }
+
+                        Directory.Delete(dir, true);
+                        _logger.LogInformation(
+                            "Ratings: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
+                            dir, otherVersion, myVersion);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Ratings: could not evaluate/remove plugin folder {Dir}", dir);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Cleanup is best-effort and must never break startup.
+                _logger.LogDebug(ex, "Ratings: plugin version cleanup failed");
+            }
         }
 
         private void CleanupOldInjection()
