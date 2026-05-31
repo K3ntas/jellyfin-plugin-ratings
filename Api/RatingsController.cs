@@ -550,20 +550,31 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // If standard auth didn't work, try to get from session token
                 if (authUserId == Guid.Empty)
                 {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
+                    // Try X-Emby-Token header first (simple token)
+                    var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
 
-                    if (!string.IsNullOrEmpty(authHeader))
+                    // If not found, try X-Emby-Authorization or Authorization with Token="..." format
+                    if (string.IsNullOrEmpty(token))
                     {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
+                        var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                                      ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                        if (!string.IsNullOrEmpty(authHeader))
                         {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
+                            var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                            if (tokenMatch.Success)
                             {
-                                authUserId = session.UserId;
+                                token = tokenMatch.Groups[1].Value;
                             }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                        if (session != null)
+                        {
+                            authUserId = session.UserId;
                         }
                     }
                 }
@@ -576,16 +587,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Use provided userId or fall back to authenticated user
                 var targetUserId = userId ?? authUserId;
 
-                // IDOR protection: Only allow viewing own ratings or if admin
-                if (targetUserId != authUserId && !IsJellyfinAdmin(authUserId))
-                {
-                    return Forbid("Cannot view another user's ratings");
-                }
+                // Allow viewing other users' ratings for profile pages
+                // Privacy settings are handled at the profile API level
 
                 var ratings = _repository.GetUserRatings(targetUserId);
                 _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
 
-                return Ok(ratings);
+                return Ok(EnrichRatings(ratings));
             }
             catch (Exception ex)
             {
@@ -636,13 +644,57 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var ratings = _repository.GetUserRatings(userId);
                 _logger.LogInformation("Retrieved {Count} ratings for current user {UserId}", ratings.Count, userId);
 
-                return Ok(ratings);
+                return Ok(EnrichRatings(ratings));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting ratings for current user");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        /// <summary>
+        /// Enriches raw ratings with the resolved Jellyfin item name, year, type and library presence
+        /// so profile pages can show real media names (instead of "Unknown") and link to the item.
+        /// All original UserRating fields are preserved for backward compatibility.
+        /// </summary>
+        /// <param name="ratings">The raw ratings.</param>
+        /// <returns>Enriched rating objects.</returns>
+        private List<object> EnrichRatings(IEnumerable<UserRating> ratings)
+        {
+            var result = new List<object>();
+            foreach (var r in ratings)
+            {
+                MediaBrowser.Controller.Entities.BaseItem? item = null;
+                try
+                {
+                    item = _libraryManager.GetItemById(r.ItemId);
+                }
+                catch
+                {
+                    item = null;
+                }
+
+                result.Add(new
+                {
+                    r.Id,
+                    r.UserId,
+                    r.ItemId,
+                    r.TmdbId,
+                    r.ImdbId,
+                    r.AniDbId,
+                    r.Rating,
+                    r.ReviewText,
+                    r.CreatedAt,
+                    r.UpdatedAt,
+                    ItemName = item?.Name,
+                    Year = item?.ProductionYear,
+                    Type = item?.GetType().Name,
+                    InLibrary = item != null
+                });
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -667,29 +719,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Resolve the authenticated user (handles X-Emby-Token, X-Emby-Authorization, Authorization)
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -850,6 +881,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                         .Cast<object>()
                         .ToList();
                 }
+
+                _logger.LogInformation(
+                    "SortedLibrary sortBy={SortBy} dir={Direction} user={UserId} page={Page} totalCount={TotalCount} returnedOnPage={Returned}",
+                    sortBy, direction, userId, page, totalCount, sortedItems.Count);
 
                 return Ok(new
                 {
@@ -1603,27 +1638,57 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Serves the ratings.js file.
         /// </summary>
         /// <returns>The JavaScript file content.</returns>
+        // The ratings.js bundle is ~1.6MB. Cache it once per process so we never re-read the
+        // embedded resource or re-allocate the string on subsequent requests. The ETag is tied
+        // to the plugin version so it changes on every update (no stale script after upgrades),
+        // while unchanged versions revalidate cheaply with a tiny 304 instead of re-downloading.
+        private static string? _cachedScript;
+        private static string? _cachedScriptETag;
+        private static readonly object _scriptCacheLock = new object();
+
         [HttpGet("ratings.js")]
         [AllowAnonymous]
         public ActionResult GetRatingsScript()
         {
             try
             {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
-
-                using var stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream == null)
+                if (_cachedScript == null || _cachedScriptETag == null)
                 {
-                    var allResources = assembly.GetManifestResourceNames();
-                    _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
-                    return Content("// ERROR: Resource not available", "application/javascript");
+                    lock (_scriptCacheLock)
+                    {
+                        if (_cachedScript == null || _cachedScriptETag == null)
+                        {
+                            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                            var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
+
+                            using var stream = assembly.GetManifestResourceStream(resourceName);
+                            if (stream == null)
+                            {
+                                var allResources = assembly.GetManifestResourceNames();
+                                _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
+                                return Content("// ERROR: Resource not available", "application/javascript");
+                            }
+
+                            using var reader = new System.IO.StreamReader(stream);
+                            _cachedScript = reader.ReadToEnd();
+                            var version = assembly.GetName().Version?.ToString() ?? "1";
+                            _cachedScriptETag = "\"ratings-" + version + "\"";
+                        }
+                    }
                 }
 
-                using var reader = new System.IO.StreamReader(stream);
-                var content = reader.ReadToEnd();
+                // Always allow revalidation (no stale script), but skip the 1.6MB transfer when
+                // the browser already has the current version cached.
+                Response.Headers["Cache-Control"] = "no-cache";
+                Response.Headers["ETag"] = _cachedScriptETag!;
 
-                return Content(content, "application/javascript");
+                var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
+                if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == _cachedScriptETag)
+                {
+                    return StatusCode(304);
+                }
+
+                return Content(_cachedScript!, "application/javascript");
             }
             catch (Exception ex)
             {
@@ -3666,20 +3731,30 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return userId;
             }
 
-            var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                          ?? Request.Headers["Authorization"].FirstOrDefault();
+            // Try X-Emby-Token header first (simple token), then X-Emby-Authorization/Authorization with Token="..." format
+            var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(authHeader))
+            if (string.IsNullOrEmpty(token))
             {
-                var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                if (tokenMatch.Success)
+                var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                              ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(authHeader))
                 {
-                    var token = tokenMatch.Groups[1].Value;
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session != null)
+                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (tokenMatch.Success)
                     {
-                        return session.UserId;
+                        token = tokenMatch.Groups[1].Value;
                     }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                if (session != null)
+                {
+                    return session.UserId;
                 }
             }
 

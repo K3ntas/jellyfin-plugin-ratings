@@ -27,6 +27,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowSearchButton = true;
             SearchExcludeEpisodes = true;
             ShowNotificationToggle = true;
+            ShowHeaderProfileButton = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
             HideHomeDuplicates = false;
@@ -226,6 +227,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the notification toggle is shown in the header.
         /// </summary>
         public bool ShowNotificationToggle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the profile button is shown in the header.
+        /// </summary>
+        public bool ShowHeaderProfileButton { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether notifications are enabled by default for users.

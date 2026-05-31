@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,6 +42,10 @@ namespace Jellyfin.Plugin.Ratings
             {
                 try
                 {
+                    // Remove stale duplicate plugin folders first (prevents the "2 versions
+                    // installed / restart required" loop on every update).
+                    CleanupOldPluginVersions();
+
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
@@ -62,6 +67,133 @@ namespace Jellyfin.Plugin.Ratings
         public Task StopAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
+        }
+
+        // Our plugin's stable identity (must match Plugin.Id).
+        private const string PluginGuid = "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d";
+
+        /// <summary>
+        /// Removes older duplicate installs of THIS plugin from the plugins directory.
+        /// Jellyfin can leave the previous versioned folder behind on update (especially when the
+        /// repository/manifest name differs from the plugin name), producing the recurring
+        /// "two versions installed / restart required" problem. This deletes only folders that
+        /// carry our exact GUID and a strictly-older version than the running one. It never touches
+        /// other plugins (different GUID) nor the folder we are currently running from.
+        /// </summary>
+        private void CleanupOldPluginVersions()
+        {
+            try
+            {
+                var pluginsDir = _appPaths.PluginsPath;
+                var myVersion = typeof(Plugin).Assembly.GetName().Version;
+
+                // Folder the running assembly lives in - must never be deleted.
+                string? currentDir = null;
+                try
+                {
+                    var loc = typeof(Plugin).Assembly.Location;
+                    if (!string.IsNullOrEmpty(loc))
+                    {
+                        currentDir = Path.GetFullPath(Path.GetDirectoryName(loc) !);
+                    }
+                }
+                catch
+                {
+                    currentDir = null;
+                }
+
+                _logger.LogInformation(
+                    "Ratings cleanup: scanning '{Dir}' (running version {Ver}, current folder '{Cur}')",
+                    pluginsDir, myVersion, currentDir ?? "(unknown)");
+
+                if (string.IsNullOrEmpty(pluginsDir) || !Directory.Exists(pluginsDir) || myVersion == null)
+                {
+                    _logger.LogInformation("Ratings cleanup: nothing to do (plugins dir missing or version unknown)");
+                    return;
+                }
+
+                int ours = 0, removed = 0, failed = 0;
+
+                foreach (var dir in Directory.GetDirectories(pluginsDir))
+                {
+                    // Extra guard: only consider folders that look like ours.
+                    var folderName = Path.GetFileName(dir);
+                    if (folderName == null || folderName.IndexOf("Ratings", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    Version? otherVersion = null;
+                    try
+                    {
+                        var metaPath = Path.Combine(dir, "meta.json");
+                        if (!File.Exists(metaPath))
+                        {
+                            continue;
+                        }
+
+                        using var doc = JsonDocument.Parse(File.ReadAllText(metaPath));
+                        if (!doc.RootElement.TryGetProperty("guid", out var guidEl)
+                            || !string.Equals(guidEl.GetString(), PluginGuid, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue; // not our plugin - leave it alone
+                        }
+
+                        ours++;
+
+                        // Never delete the folder we are running from.
+                        if (currentDir != null &&
+                            string.Equals(Path.GetFullPath(dir), currentDir, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogInformation("Ratings cleanup: keeping current folder '{Dir}'", dir);
+                            continue;
+                        }
+
+                        // Only delete STRICTLY older versions, so we can never remove the current/newest.
+                        if (!doc.RootElement.TryGetProperty("version", out var verEl)
+                            || !Version.TryParse(verEl.GetString(), out otherVersion)
+                            || otherVersion >= myVersion)
+                        {
+                            _logger.LogInformation(
+                                "Ratings cleanup: keeping folder '{Dir}' (version {Other} not older than {Current})",
+                                dir, otherVersion, myVersion);
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Ratings cleanup: could not evaluate plugin folder '{Dir}'", dir);
+                        continue;
+                    }
+
+                    // Separate try so a Windows file-lock on the old DLL is reported clearly.
+                    try
+                    {
+                        Directory.Delete(dir, true);
+                        removed++;
+                        _logger.LogInformation(
+                            "Ratings cleanup: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
+                            dir, otherVersion, myVersion);
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        // On Windows-hosted Jellyfin this usually means the old DLL is still loaded/locked.
+                        _logger.LogWarning(ex,
+                            "Ratings cleanup: FAILED to remove old folder '{Dir}' (likely a locked DLL on Windows); will retry next restart",
+                            dir);
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Ratings cleanup: done. ourFolders={Ours}, removed={Removed}, failed={Failed}",
+                    ours, removed, failed);
+            }
+            catch (Exception ex)
+            {
+                // Cleanup is best-effort and must never break startup.
+                _logger.LogWarning(ex, "Ratings cleanup: plugin version cleanup failed");
+            }
         }
 
         private void CleanupOldInjection()

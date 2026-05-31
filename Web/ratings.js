@@ -5321,11 +5321,12 @@
                 /* Force button order using CSS order (async loading causes random DOM order) */
                 #headerSearchField { order: 1 !important; }
                 #languageBtn { order: 2 !important; }
-                #requestMediaBtn { order: 3 !important; }
-                #notificationToggle { order: 4 !important; }
-                #latestMediaBtn { order: 5 !important; }
-                #mediaManagementBtn { order: 6 !important; }
-                #chatBtn { order: 7 !important; }
+                #profileBtn { order: 3 !important; }
+                #requestMediaBtn { order: 4 !important; }
+                #notificationToggle { order: 5 !important; }
+                #latestMediaBtn { order: 6 !important; }
+                #mediaManagementBtn { order: 7 !important; }
+                #chatBtn { order: 8 !important; }
 
                 /* Button style inside group */
                 .ratingsGroupBtn {
@@ -13074,6 +13075,1250 @@
                         justify-content: center;
                     }
                 }
+
+                /* Letterboxd-Style Profile */
+                .social-profile-page.letterboxd-style {
+                    background: rgba(0, 0, 0, 0.85);
+                    backdrop-filter: blur(10px);
+                }
+                .social-profile-container.letterboxd {
+                    max-width: 1000px;
+                    margin: 20px auto;
+                    padding: 0;
+                    background: #14181c;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    max-height: calc(100vh - 40px);
+                    overflow-y: auto;
+                    transition: all 0.3s ease;
+                }
+                /* Fullscreen mode */
+                .social-profile-page.letterboxd-style.fullscreen {
+                    background: #14181c;
+                }
+                .social-profile-page.letterboxd-style.fullscreen .social-profile-container.letterboxd {
+                    max-width: 100%;
+                    margin: 0;
+                    border-radius: 0;
+                    max-height: 100vh;
+                    height: 100vh;
+                }
+                .profile-loading-spinner {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 80px;
+                    color: #99aabb;
+                    gap: 16px;
+                }
+                .profile-loading-spinner .spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid #456;
+                    border-top-color: #00e054;
+                    border-radius: 50%;
+                    animation: lbSpin 1s linear infinite;
+                }
+                @keyframes lbSpin {
+                    to { transform: rotate(360deg); }
+                }
+                .lb-toolbar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 20px;
+                    background: #14181c;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-back {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #99aabb;
+                    font-size: 14px;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                }
+                .lb-back:hover { color: #fff; background: #2c3440; }
+                .lb-toolbar-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .lb-toolbar-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 4px;
+                    background: #2c3440;
+                    border: none;
+                    color: #99aabb;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 16px;
+                }
+                .lb-toolbar-btn:hover { background: #456; color: #fff; }
+                .lb-toolbar-btn.active { background: #00e054; color: #14181c; }
+                .lb-error {
+                    text-align: center;
+                    padding: 60px;
+                    color: #ee7752;
+                    font-size: 16px;
+                }
+
+                /* Settings Modal */
+                .lb-settings-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.9);
+                    z-index: 100001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-settings-content {
+                    background: #14181c;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .lb-settings-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-settings-header h2 {
+                    margin: 0;
+                    font-size: 20px;
+                    color: #fff;
+                }
+                .lb-settings-close {
+                    background: none;
+                    border: none;
+                    color: #99aabb;
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                }
+                .lb-settings-close:hover { color: #fff; }
+                .lb-settings-body {
+                    padding: 20px;
+                }
+                .lb-settings-section {
+                    margin-bottom: 24px;
+                }
+                .lb-settings-section h3 {
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #678;
+                    margin: 0 0 16px 0;
+                }
+                .lb-settings-field {
+                    margin-bottom: 16px;
+                }
+                .lb-settings-field label {
+                    display: block;
+                    color: #99aabb;
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                }
+                .lb-settings-field input[type="text"],
+                .lb-settings-field textarea {
+                    width: 100%;
+                    padding: 10px 14px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+                .lb-settings-field textarea {
+                    min-height: 80px;
+                    resize: vertical;
+                }
+                .lb-settings-field input:focus,
+                .lb-settings-field textarea:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-settings-footer {
+                    padding: 20px;
+                    border-top: 1px solid #2c3440;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                .lb-settings-footer button {
+                    padding: 10px 24px;
+                    border-radius: 4px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .lb-settings-footer .lb-btn-cancel {
+                    background: #456;
+                    color: #fff;
+                }
+                .lb-settings-footer .lb-btn-save {
+                    background: #00e054;
+                    color: #14181c;
+                }
+
+                /* Profile Header */
+                .lb-profile-header {
+                    position: relative;
+                    padding: 0;
+                }
+                .lb-header-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 150px;
+                    background: linear-gradient(135deg, #2c3440 0%, #14181c 100%);
+                }
+                .lb-header-content {
+                    position: relative;
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 24px;
+                    padding: 80px 30px 30px;
+                }
+                .lb-avatar {
+                    width: 110px;
+                    height: 110px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #00e054, #40bcf4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 44px;
+                    font-weight: 700;
+                    color: #fff;
+                    flex-shrink: 0;
+                    position: relative;
+                    border: 4px solid #14181c;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                }
+                .lb-status-dot {
+                    position: absolute;
+                    bottom: 4px;
+                    right: 4px;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    border: 3px solid #14181c;
+                    background: #678;
+                }
+                .lb-status-dot.online { background: #00e054; }
+                .lb-status-dot.away { background: #f5c518; }
+                .lb-status-dot.dnd { background: #ee7752; }
+                .lb-status-dot.offline { background: #456; }
+
+                .lb-user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .lb-username {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin: 0 0 6px 0;
+                    letter-spacing: 0.5px;
+                }
+                .lb-bio {
+                    color: #99aabb;
+                    font-size: 15px;
+                    margin: 0 0 10px 0;
+                    line-height: 1.5;
+                }
+                .lb-meta {
+                    display: flex;
+                    gap: 16px;
+                    font-size: 13px;
+                    color: #678;
+                }
+                .lb-status-text {
+                    padding: 2px 8px;
+                    border-radius: 3px;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    background: #456;
+                }
+                .lb-status-text.online { background: #00e054; color: #14181c; }
+                .lb-status-text.away { background: #f5c518; color: #14181c; }
+                .lb-status-text.dnd { background: #ee7752; color: #fff; }
+
+                /* Header Actions */
+                .lb-header-actions {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+                .lb-btn {
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .lb-btn.primary {
+                    background: #00e054;
+                    color: #14181c;
+                }
+                .lb-btn.primary:hover { background: #00c848; }
+                .lb-btn.secondary {
+                    background: #456;
+                    color: #fff;
+                }
+                .lb-btn.secondary:hover { background: #567; }
+                .lb-btn.danger {
+                    background: #ee7752;
+                    color: #fff;
+                }
+                .lb-btn.danger:hover { background: #dd6641; }
+                .lb-btn.following {
+                    background: #456;
+                    color: #00e054;
+                }
+                .lb-btn.following:hover { background: #ee7752; color: #fff; }
+                .lb-btn.following:hover .follow-icon { display: none; }
+                .lb-btn.following:hover::after { content: 'Unfollow'; }
+                .lb-btn.heart {
+                    background: transparent;
+                    border: 2px solid #456;
+                    color: #99aabb;
+                    padding: 8px 12px;
+                    font-size: 18px;
+                }
+                .lb-btn.heart:hover { border-color: #ee7752; color: #ee7752; }
+                .lb-btn.liked {
+                    background: #ee7752;
+                    color: #fff;
+                    padding: 8px 12px;
+                    font-size: 18px;
+                    border: none;
+                }
+                .lb-btn.icon {
+                    padding: 8px;
+                    background: #2c3440;
+                    position: relative;
+                }
+                .lb-btn.disabled {
+                    background: #2c3440;
+                    color: #678;
+                    cursor: not-allowed;
+                }
+                .lb-more-menu {
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    background: #2c3440;
+                    border-radius: 4px;
+                    padding: 8px 0;
+                    min-width: 150px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                    z-index: 100;
+                }
+                .lb-more-menu.visible { display: block; }
+                .lb-more-menu button {
+                    display: block;
+                    width: 100%;
+                    padding: 10px 16px;
+                    border: none;
+                    background: none;
+                    color: #99aabb;
+                    text-align: left;
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+                .lb-more-menu button:hover {
+                    background: #456;
+                    color: #fff;
+                }
+
+                /* Stats Bar */
+                .lb-stats-bar {
+                    display: flex;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    background: #1c2228;
+                    border-top: 1px solid #2c3440;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-stat {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 16px 24px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    min-width: 80px;
+                }
+                .lb-stat:hover { background: #2c3440; }
+                .lb-stat-value {
+                    display: block;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #fff;
+                    line-height: 1.2;
+                }
+                .lb-stat-label {
+                    display: block;
+                    font-size: 11px;
+                    color: #678;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-top: 4px;
+                }
+                .lb-heart { color: #ee7752; }
+
+                /* Tabs */
+                .lb-tabs {
+                    display: flex;
+                    background: #14181c;
+                    border-bottom: 1px solid #2c3440;
+                    overflow-x: auto;
+                }
+                .lb-tab {
+                    padding: 14px 20px;
+                    border: none;
+                    background: none;
+                    color: #99aabb;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    cursor: pointer;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+                .lb-tab:hover { color: #fff; }
+                .lb-tab.active {
+                    color: #00e054;
+                    border-bottom-color: #00e054;
+                }
+
+                /* Content Area */
+                .lb-content {
+                    padding: 24px;
+                    min-height: 300px;
+                }
+                .lb-loading {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 60px;
+                    color: #678;
+                }
+                .lb-loading-small {
+                    color: #678;
+                    font-size: 13px;
+                    padding: 20px;
+                }
+                .lb-empty {
+                    color: #678;
+                    font-size: 14px;
+                    text-align: center;
+                    padding: 20px;
+                }
+                .lb-empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #678;
+                }
+                .lb-empty-icon {
+                    font-size: 48px;
+                    display: block;
+                    margin-bottom: 16px;
+                    opacity: 0.5;
+                }
+                .lb-empty-state p {
+                    margin: 0;
+                    font-size: 15px;
+                }
+
+                /* Overview Section */
+                .lb-overview { }
+                .lb-section {
+                    margin-bottom: 32px;
+                }
+                .lb-section h3 {
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #678;
+                    margin: 0 0 16px 0;
+                }
+
+                /* Favorites Grid */
+                .lb-favorites-grid {
+                    display: flex;
+                    gap: 10px;
+                    overflow-x: auto;
+                    padding-bottom: 8px;
+                    scrollbar-width: thin;
+                    scrollbar-color: #456 #1c2228;
+                }
+                .lb-favorites-grid::-webkit-scrollbar {
+                    height: 6px;
+                }
+                .lb-favorites-grid::-webkit-scrollbar-track {
+                    background: #1c2228;
+                    border-radius: 3px;
+                }
+                .lb-favorites-grid::-webkit-scrollbar-thumb {
+                    background: #456;
+                    border-radius: 3px;
+                }
+                .lb-favorite-slot {
+                    flex: 0 0 100px;
+                    width: 100px;
+                    height: 150px;
+                    background: #2c3440;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-favorite-slot.empty {
+                    border: 2px dashed #456;
+                    background: transparent;
+                }
+                .lb-favorite-slot.empty:hover {
+                    border-color: #00e054;
+                }
+                .lb-favorite-slot.empty span {
+                    font-size: 28px;
+                    color: #456;
+                }
+                .lb-favorite-slot.empty:hover span {
+                    color: #00e054;
+                }
+                .lb-favorite-slot.filled {
+                    position: relative;
+                }
+                .lb-favorite-slot.filled:hover .lb-fav-remove {
+                    opacity: 1;
+                }
+                .lb-fav-remove {
+                    position: absolute;
+                    top: 4px;
+                    right: 4px;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: rgba(0,0,0,0.8);
+                    border: none;
+                    color: #fff;
+                    font-size: 16px;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-fav-remove:hover {
+                    background: #ee7752;
+                }
+
+                /* Media Picker Modal */
+                .lb-media-picker {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.9);
+                    z-index: 100002;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .lb-picker-content {
+                    background: #14181c;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 800px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .lb-picker-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-header h2 {
+                    margin: 0;
+                    font-size: 18px;
+                    color: #fff;
+                }
+                .lb-picker-close {
+                    background: none;
+                    border: none;
+                    color: #99aabb;
+                    font-size: 24px;
+                    cursor: pointer;
+                }
+                .lb-picker-search {
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-search input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+                .lb-picker-search input:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-picker-results {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px;
+                }
+                .lb-picker-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                    gap: 12px;
+                }
+                .lb-picker-item {
+                    cursor: pointer;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    transition: transform 0.2s;
+                }
+                .lb-picker-item:hover {
+                    transform: scale(1.05);
+                }
+                .lb-picker-poster {
+                    position: relative;
+                    aspect-ratio: 2/3;
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-picker-title {
+                    padding: 8px;
+                    font-size: 12px;
+                    color: #fff;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    background: #1c2228;
+                }
+                .lb-picker-loading {
+                    text-align: center;
+                    padding: 40px;
+                    color: #678;
+                }
+                .lb-picker-empty {
+                    text-align: center;
+                    padding: 40px;
+                    color: #678;
+                }
+                .lb-picker-nav {
+                    padding: 12px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-categories {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .lb-picker-cat-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 8px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 20px;
+                    color: #99aabb;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-picker-cat-btn:hover {
+                    background: #3c4450;
+                    border-color: #567;
+                }
+                .lb-picker-cat-btn.active {
+                    background: #00e054;
+                    border-color: #00e054;
+                    color: #000;
+                }
+                .lb-picker-cat-btn .cat-icon {
+                    font-size: 16px;
+                }
+                .lb-picker-cat-btn .cat-name {
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+                .lb-picker-pagination {
+                    padding: 12px 20px;
+                    border-top: 1px solid #2c3440;
+                }
+                .lb-pagination {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 16px;
+                }
+                .lb-pagination button {
+                    padding: 8px 16px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-pagination button:hover {
+                    background: #3c4450;
+                    border-color: #00e054;
+                }
+                .lb-pagination span {
+                    color: #99aabb;
+                    font-size: 14px;
+                }
+                .lb-picker-badges {
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    align-items: flex-end;
+                }
+                .lb-picker-rating {
+                    background: rgba(0,0,0,0.85);
+                    color: #00e054;
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 3px 6px;
+                    border-radius: 3px;
+                }
+                .lb-picker-rating.my-rating {
+                    color: #00e054;
+                }
+                .lb-picker-rating.community-rating {
+                    color: #f5c518;
+                    font-size: 10px;
+                }
+                .lb-picker-sort {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 10px 20px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-picker-sort label {
+                    color: #99aabb;
+                    font-size: 13px;
+                }
+                .lb-picker-sort select {
+                    flex: 1;
+                    padding: 8px 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 13px;
+                    cursor: pointer;
+                }
+                .lb-picker-sort select:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                /* Favorite Rows */
+                .lb-favorites-section {
+                    margin-bottom: 20px;
+                }
+                .lb-favorite-row {
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-favorite-row:last-of-type {
+                    border-bottom: none;
+                }
+                .lb-row-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
+                .lb-row-title-input {
+                    flex: 1;
+                    background: transparent;
+                    border: none;
+                    border-bottom: 1px solid #456;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 600;
+                    padding: 4px 0;
+                    outline: none;
+                }
+                .lb-row-title-input:focus {
+                    border-color: #00e054;
+                }
+                .lb-row-title {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-row-delete {
+                    background: none;
+                    border: none;
+                    color: #f44;
+                    font-size: 20px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    opacity: 0.6;
+                    transition: opacity 0.2s;
+                }
+                .lb-row-delete:hover {
+                    opacity: 1;
+                }
+                .lb-row-count {
+                    font-size: 12px;
+                    color: #678;
+                    padding: 2px 8px;
+                    background: #2c3440;
+                    border-radius: 10px;
+                }
+                .lb-load-more-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 80px;
+                    height: 120px;
+                    background: #1c2228;
+                    border: 1px dashed #456;
+                    border-radius: 4px;
+                    color: #99aabb;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-load-more-btn:hover {
+                    background: #2c3440;
+                    border-color: #00e054;
+                    color: #00e054;
+                }
+                .lb-add-row-modal {
+                    max-width: 450px;
+                }
+                .lb-add-row-body {
+                    padding: 20px;
+                }
+                .lb-add-row-body label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #99aabb;
+                    font-size: 13px;
+                }
+                .lb-row-name-input {
+                    width: 100%;
+                    padding: 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 14px;
+                    margin-bottom: 16px;
+                    box-sizing: border-box;
+                }
+                .lb-row-name-input:focus {
+                    outline: none;
+                    border-color: #00e054;
+                }
+                .lb-preset-titles {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-bottom: 20px;
+                }
+                .lb-preset-btn {
+                    padding: 6px 12px;
+                    background: #2c3440;
+                    border: 1px solid #456;
+                    border-radius: 16px;
+                    color: #99aabb;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .lb-preset-btn:hover {
+                    background: #3c4450;
+                    border-color: #00e054;
+                    color: #00e054;
+                }
+                .lb-add-row-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                    padding-top: 16px;
+                    border-top: 1px solid #2c3440;
+                }
+                .lb-add-row-btn {
+                    display: block;
+                    width: 100%;
+                    padding: 16px;
+                    background: #1c2228;
+                    border: 2px dashed #456;
+                    border-radius: 8px;
+                    color: #99aabb;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    margin-top: 12px;
+                }
+                .lb-add-row-btn:hover {
+                    background: #2c3440;
+                    border-color: #00e054;
+                    color: #00e054;
+                }
+
+                /* Stats Grid */
+                .lb-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 12px;
+                }
+                .lb-stat-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    padding: 20px 16px;
+                    text-align: center;
+                    transition: transform 0.2s, background 0.2s;
+                }
+                .lb-stat-card:hover {
+                    background: #2c3440;
+                    transform: translateY(-2px);
+                }
+                .lb-stat-icon {
+                    font-size: 24px;
+                    margin-bottom: 8px;
+                }
+                .lb-stat-number {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #fff;
+                }
+                .lb-stat-text {
+                    font-size: 11px;
+                    color: #678;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-top: 4px;
+                }
+
+                /* Rating Distribution */
+                .lb-dist-chart {
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 4px;
+                    height: 100px;
+                    padding: 10px 0;
+                }
+                .lb-dist-bar-wrap {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    height: 100%;
+                }
+                .lb-dist-bar {
+                    width: 100%;
+                    background: linear-gradient(to top, #00e054, #40bcf4);
+                    border-radius: 2px 2px 0 0;
+                    min-height: 2px;
+                    transition: height 0.3s ease;
+                }
+                .lb-dist-label {
+                    font-size: 10px;
+                    color: #678;
+                    margin-top: 6px;
+                }
+
+                /* Activity List */
+                .lb-activity-list { }
+                .lb-activity-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #2c3440;
+                }
+                .lb-activity-item:last-child { border-bottom: none; }
+                .lb-activity-type {
+                    font-size: 18px;
+                    width: 32px;
+                    text-align: center;
+                }
+                .lb-activity-text {
+                    flex: 1;
+                    color: #99aabb;
+                    font-size: 14px;
+                }
+                .lb-activity-time {
+                    color: #456;
+                    font-size: 12px;
+                }
+
+                /* Ratings Grid */
+                .lb-ratings-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                    gap: 12px;
+                }
+                .lb-rating-card {
+                    background: #1c2228;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .lb-rating-card:hover { transform: scale(1.05); }
+                .lb-rating-poster {
+                    aspect-ratio: 2/3;
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-rating-info {
+                    padding: 10px;
+                }
+                .lb-rating-title {
+                    font-size: 12px;
+                    color: #fff;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 4px;
+                }
+                .lb-rating-value { font-size: 12px; }
+                .lb-star { color: #456; }
+                .lb-star.full { color: #00e054; }
+                .lb-star.half { color: #00e054; opacity: 0.6; }
+
+                /* Reviews List */
+                .lb-reviews-list { }
+                .lb-review-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    padding: 20px;
+                    margin-bottom: 16px;
+                }
+                .lb-review-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+                .lb-review-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-review-rating { font-size: 14px; }
+                .lb-review-text {
+                    color: #99aabb;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    margin: 0 0 12px 0;
+                }
+                .lb-review-footer {
+                    display: flex;
+                    gap: 16px;
+                    font-size: 12px;
+                    color: #678;
+                }
+                .lb-review-likes { color: #00e054; }
+
+                /* Lists Grid */
+                .lb-lists-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 16px;
+                }
+                .lb-list-card {
+                    background: #1c2228;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .lb-list-card:hover { transform: translateY(-4px); }
+                .lb-list-preview {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 2px;
+                    aspect-ratio: 2/1;
+                }
+                .lb-list-preview-item {
+                    background: #2c3440;
+                    background-size: cover;
+                    background-position: center;
+                }
+                .lb-list-preview-item.empty {
+                    background: #2c3440;
+                }
+                .lb-list-info {
+                    padding: 12px;
+                }
+                .lb-list-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #fff;
+                    margin: 0 0 4px 0;
+                }
+                .lb-list-count {
+                    font-size: 12px;
+                    color: #678;
+                }
+
+                /* User List */
+                .lb-user-list {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                    gap: 16px;
+                }
+                .lb-user-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px;
+                    background: #1c2228;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .lb-user-card:hover { background: #2c3440; }
+                .lb-user-avatar {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #40bcf4, #00e054);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .lb-user-name {
+                    font-size: 14px;
+                    color: #fff;
+                    font-weight: 500;
+                }
+
+                /* Mobile Responsive */
+                @media (max-width: 768px) {
+                    .social-profile-container.letterboxd {
+                        margin: 0;
+                        border-radius: 0;
+                        min-height: 100vh;
+                    }
+                    .lb-header-content {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        padding: 60px 20px 20px;
+                    }
+                    .lb-avatar {
+                        width: 90px;
+                        height: 90px;
+                        font-size: 36px;
+                    }
+                    .lb-stats-bar {
+                        flex-wrap: wrap;
+                    }
+                    .lb-stat {
+                        padding: 12px 16px;
+                    }
+                    .lb-tabs {
+                        justify-content: flex-start;
+                    }
+                    .lb-tab {
+                        padding: 12px 14px;
+                        font-size: 11px;
+                    }
+                    .lb-header-actions {
+                        justify-content: center;
+                    }
+                    .lb-favorites-grid {
+                        justify-content: flex-start;
+                    }
+                    .lb-favorite-slot {
+                        flex: 0 0 80px;
+                        width: 80px;
+                        height: 120px;
+                    }
+                    .lb-load-more-btn {
+                        min-width: 60px;
+                        height: 120px;
+                        font-size: 11px;
+                    }
+                    .lb-picker-cat-btn {
+                        padding: 6px 12px;
+                    }
+                    .lb-picker-cat-btn .cat-name {
+                        display: none;
+                    }
+                    .lb-row-title-input {
+                        font-size: 14px;
+                    }
+                    .lb-row-count {
+                        font-size: 10px;
+                    }
+                    .lb-preset-btn {
+                        padding: 4px 10px;
+                        font-size: 11px;
+                    }
+                }
             `;
 
             const styleSheet = document.createElement('style');
@@ -13211,10 +14456,11 @@
         },
 
         /**
-         * Show the profile page for a user
+         * Show the profile page for a user (Letterboxd-style modal)
          */
         showProfilePage: function (userId) {
             var self = this;
+            self.injectProfileRedesignStyles();
             var existing = document.getElementById('socialProfilePage');
             if (existing) {
                 existing.remove();
@@ -13222,6 +14468,7 @@
 
             // Track which profile we're viewing
             self._viewingProfileUserId = userId;
+            self._profileActiveTab = 'overview';
 
             // Register as viewer for real-time updates
             var baseUrl = ApiClient.serverAddress();
@@ -13235,9 +14482,16 @@
             // Create profile page container
             var page = document.createElement('div');
             page.id = 'socialProfilePage';
-            page.className = 'social-profile-page';
-            page.innerHTML = '<div class="social-profile-container"><div class="social-profile-loading">Loading profile...</div></div>';
+            page.className = 'social-profile-page letterboxd-style';
+            page.innerHTML = '<div class="social-profile-container letterboxd"><div class="profile-loading-spinner"><div class="spinner"></div><span>Loading profile...</span></div></div>';
+            try { page.setAttribute('data-bg', localStorage.getItem('lbProfileBg') || 'aurora'); } catch (e) { page.setAttribute('data-bg', 'aurora'); }
             document.body.appendChild(page);
+
+            // Lock the background page from scrolling while the profile is open.
+            self._prevBodyOverflow = document.body.style.overflow;
+            self._prevHtmlOverflow = document.documentElement.style.overflow;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
 
             // Close when clicking backdrop (outside container)
             page.addEventListener('click', function(e) {
@@ -13246,17 +14500,18 @@
                 }
             });
 
-            // Fetch profile data
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
+            // Fetch all profile data
             Promise.all([
                 fetch(baseUrl + '/Social/Profile/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return null; }),
                 fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
                 fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
                 fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { requests: [] }; }),
                 fetch(baseUrl + '/Social/Block/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasBlocked: false, isBlockedBy: false }; }),
-                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+                fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                fetch(baseUrl + '/Social/Follow/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { isFollowing: false, followersCount: 0, followingCount: 0 }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Like/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
+                fetch(baseUrl + '/Social/Lists/User/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
             ]).then(function (results) {
                 var profile = results[0];
                 var friendsData = results[1];
@@ -13264,6 +14519,10 @@
                 var incomingRequests = results[3];
                 var blockStatus = results[4];
                 var onlineData = results[5];
+                var stats = results[6];
+                var followStatus = results[7];
+                var likeStatus = results[8];
+                var listsData = results[9];
 
                 if (!profile) {
                     self.renderProfileError(page, 'User not found');
@@ -13285,7 +14544,7 @@
                     onlineStatus = friendStatus.status || 'Offline';
                 }
 
-                self.renderProfilePage(page, profile, {
+                self.renderLetterboxdProfile(page, profile, {
                     isSelf: isSelf,
                     isFriend: isFriend,
                     hasPendingOutgoing: hasPendingOutgoing,
@@ -13293,7 +14552,11 @@
                     incomingRequestId: hasPendingIncoming ? (hasPendingIncoming.Id || hasPendingIncoming.id) : null,
                     hasBlocked: hasBlocked,
                     isBlockedBy: isBlockedBy,
-                    onlineStatus: onlineStatus
+                    onlineStatus: onlineStatus,
+                    stats: stats,
+                    followStatus: followStatus,
+                    likeStatus: likeStatus,
+                    lists: listsData.lists || []
                 });
             }).catch(function (err) {
                 console.error('[Social] Profile load failed:', err);
@@ -13307,135 +14570,2017 @@
         renderProfileError: function (page, message) {
             var container = page.querySelector('.social-profile-container');
             if (container) {
-                container.innerHTML = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="social-profile-error">' + this.escapeHtml(message) + '</div>';
+                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
         /**
-         * Render the full profile page
+         * Inject the redesigned profile styles (two-column layout, sidebar, animations).
          */
-        renderProfilePage: function (page, profile, status) {
+        injectProfileRedesignStyles: function () {
+            if (document.getElementById('lbProfileRedesign')) return;
+            var css = `
+.social-profile-page.letterboxd-style .lb-overview.lb-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:26px;align-items:start;padding:6px 2px 48px;}
+@media(max-width:900px){.social-profile-page.letterboxd-style .lb-overview.lb-grid{grid-template-columns:1fr;}}
+.social-profile-page.letterboxd-style .lb-main{min-width:0;display:flex;flex-direction:column;gap:28px;}
+.social-profile-page.letterboxd-style .lb-sidebar{display:flex;flex-direction:column;gap:16px;position:sticky;top:8px;}
+.social-profile-page.letterboxd-style .lb-sec-title{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#9ab0c3;margin:0 0 14px;font-weight:700;border-bottom:1px solid #2c3440;padding-bottom:9px;}
+.social-profile-page.letterboxd-style .lb-side-card{background:linear-gradient(180deg,#202831,#1a212a);border:1px solid #2c3440;border-radius:14px;padding:14px 15px;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.social-profile-page.letterboxd-style .lb-side-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8fa3b5;margin:0 0 11px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.social-profile-page.letterboxd-style .lb-side-count{background:#2c3440;color:#9ab;border-radius:10px;padding:1px 8px;font-size:11px;}
+.social-profile-page.letterboxd-style .lb-poster-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px;}
+.social-profile-page.letterboxd-style .lb-poster-card{cursor:pointer;transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-poster-card:hover{transform:translateY(-6px) scale(1.05);box-shadow:0 14px 30px rgba(0,0,0,.55);}
+.social-profile-page.letterboxd-style .lb-poster-card:active{transform:scale(.94);}
+.social-profile-page.letterboxd-style .lb-poster-img{width:100%;aspect-ratio:2/3;border-radius:9px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
+.social-profile-page.letterboxd-style .lb-poster-stars{font-size:11px;margin-top:5px;text-align:center;}
+.social-profile-page.letterboxd-style .lb-rev2{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #232b34;transition:transform .15s;}
+.social-profile-page.letterboxd-style .lb-rev2:hover{transform:translateX(3px);}
+.social-profile-page.letterboxd-style .lb-rev2-poster{flex:0 0 56px;height:84px;border-radius:7px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
+.social-profile-page.letterboxd-style .lb-rev2-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:5px;}
+.social-profile-page.letterboxd-style .lb-rev2-title{font-weight:700;color:#fff;font-size:15px;}
+.social-profile-page.letterboxd-style .lb-rev2-text{margin:0;color:#b9c6d2;font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.social-profile-page.letterboxd-style .lb-addmedia-input{width:100%;box-sizing:border-box;background:#14181c;border:1px solid #2c3440;border-radius:9px;color:#fff;padding:9px 11px;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-addmedia-input:focus{border-color:#00e054;box-shadow:0 0 0 3px rgba(0,224,84,.15);}
+.social-profile-page.letterboxd-style .lb-addmedia-results{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.social-profile-page.letterboxd-style .lb-am-row{display:flex;align-items:center;gap:9px;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s,transform .15s;}
+.social-profile-page.letterboxd-style .lb-am-row:hover{background:#2c3440;transform:translateX(2px);}
+.social-profile-page.letterboxd-style .lb-am-poster{flex:0 0 30px;height:45px;border-radius:4px;background:#2c3440 center/cover no-repeat;}
+.social-profile-page.letterboxd-style .lb-am-info{flex:1;min-width:0;display:flex;flex-direction:column;}
+.social-profile-page.letterboxd-style .lb-am-name{color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.social-profile-page.letterboxd-style .lb-am-year{color:#8fa3b5;font-size:11px;}
+.social-profile-page.letterboxd-style .lb-am-watch{color:#00e054;}
+.social-profile-page.letterboxd-style .lb-am-request{margin-top:6px;width:100%;background:#2c3440;color:#fff;border:1px dashed #4a5765;border-radius:9px;padding:9px;cursor:pointer;font-size:13px;transition:background .2s,transform .12s,border-color .2s;}
+.social-profile-page.letterboxd-style .lb-am-request:hover{background:#00e054;color:#14181c;border-color:#00e054;}
+.social-profile-page.letterboxd-style .lb-am-request:active{transform:scale(.96);}
+.social-profile-page.letterboxd-style .lb-am-ok{color:#00e054;font-size:13px;padding:6px 2px;}
+.social-profile-page.letterboxd-style .lb-side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.social-profile-page.letterboxd-style .lb-side-stat{background:#14181c;border-radius:9px;padding:9px;text-align:center;border:1px solid #232b34;transition:transform .15s,border-color .2s;}
+.social-profile-page.letterboxd-style .lb-side-stat:hover{transform:translateY(-2px);border-color:#00e054;}
+.social-profile-page.letterboxd-style .lb-ss-num{display:block;font-size:19px;font-weight:800;color:#fff;}
+.social-profile-page.letterboxd-style .lb-ss-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8fa3b5;}
+.social-profile-page.letterboxd-style .lb-side-list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #232b34;cursor:pointer;transition:padding-left .15s,color .15s;}
+.social-profile-page.letterboxd-style .lb-side-list-row:hover{padding-left:9px;color:#00e054;}
+.social-profile-page.letterboxd-style .lb-sl-name{color:#dfe7ee;font-size:13px;}
+.social-profile-page.letterboxd-style .lb-sl-count{color:#8fa3b5;font-size:12px;}
+.social-profile-page.letterboxd-style .lb-empty-mini{color:#6b7b8a;font-size:12px;padding:6px 0;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-chart{display:flex;align-items:flex-end;gap:4px;height:70px;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-bar{width:100%;background:linear-gradient(180deg,#00e054,#00a840);border-radius:3px 3px 0 0;min-height:2px;transition:height .7s cubic-bezier(.2,.7,.2,1);}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-label{font-size:9px;color:#8fa3b5;margin-top:3px;}
+@keyframes lbFadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.social-profile-page.letterboxd-style .lb-anim{animation:lbFadeUp .55s cubic-bezier(.2,.7,.2,1) both;}
+.social-profile-page.letterboxd-style .lb-main .lb-anim:nth-child(2){animation-delay:.07s;}
+.social-profile-page.letterboxd-style .lb-main .lb-anim:nth-child(3){animation-delay:.14s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(2){animation-delay:.08s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(3){animation-delay:.15s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(4){animation-delay:.22s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(5){animation-delay:.29s;}
+.social-profile-page.letterboxd-style .lb-content>*{animation:lbFadeUp .45s cubic-bezier(.2,.7,.2,1) both;}
+.social-profile-page.letterboxd-style .lb-rating-card{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s !important;}
+.social-profile-page.letterboxd-style .lb-rating-card:hover{transform:translateY(-6px) scale(1.04) !important;box-shadow:0 14px 30px rgba(0,0,0,.55);}
+.social-profile-page.letterboxd-style .lb-rating-card:active{transform:scale(.95) !important;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{transition:transform .2s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 12px 26px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled:active{transform:scale(.95);}
+.lb-toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:#00e054;color:#14181c;font-weight:700;padding:12px 22px;border-radius:30px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,transform .3s;z-index:2147483647;font-size:14px;}
+.lb-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.social-profile-page.letterboxd-style .lb-stars-wrap{cursor:help;}
+/* ===== visual overhaul ===== */
+.social-profile-page.letterboxd-style,.social-profile-page.letterboxd-style .social-profile-container.letterboxd{overscroll-behavior:contain;}
+.social-profile-page.letterboxd-style[data-bg="aurora"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#0b1622,#15212e,#241a35,#0b1622)!important;background-size:400% 400%!important;animation:lbAurora 24s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="sunset"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#1a1320,#3a1c2a,#1a2340,#10131a)!important;background-size:400% 400%!important;animation:lbAurora 26s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="emerald"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#08130f,#0f241c,#10262e,#08130f)!important;background-size:400% 400%!important;animation:lbAurora 28s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="mono"] .social-profile-container.letterboxd{background:#101418!important;}
+@keyframes lbAurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* glass side cards */
+.social-profile-page.letterboxd-style .lb-side-card{background:rgba(32,40,49,.5)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.08)!important;}
+/* poster mirror reflections + hover glow */
+.social-profile-page.letterboxd-style .lb-poster-img{-webkit-box-reflect:below 3px linear-gradient(transparent 62%,rgba(0,0,0,.30));}
+.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.28);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{-webkit-box-reflect:below 3px linear-gradient(transparent 64%,rgba(0,0,0,.24));}
+.social-profile-page.letterboxd-style .lb-rev2-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 70%,rgba(0,0,0,.22));}
+.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 68%,rgba(0,0,0,.22));}
+/* gradient avatar + title */
+.social-profile-page.letterboxd-style .lb-avatar{background:linear-gradient(135deg,#00e054,#1aa3ff)!important;box-shadow:0 8px 30px rgba(0,224,84,.35);}
+.social-profile-page.letterboxd-style .lb-username{background:linear-gradient(90deg,#fff,#9fe7c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+/* section title accent diamond */
+.social-profile-page.letterboxd-style .lb-sec-title{display:flex;align-items:center;}
+.social-profile-page.letterboxd-style .lb-sec-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;background:#00e054;margin-right:10px;transform:rotate(45deg);box-shadow:0 0 9px #00e054;}
+/* star glow */
+.social-profile-page.letterboxd-style .lb-star.full,.social-profile-page.letterboxd-style .lb-star.half{color:#00e054;text-shadow:0 0 6px rgba(0,224,84,.45);}
+/* background picker */
+.social-profile-page.letterboxd-style .lb-bg-menu{position:absolute;right:0;top:46px;background:#1a212a;border:1px solid #2c3440;border-radius:12px;padding:10px;display:flex;gap:8px;box-shadow:0 12px 32px rgba(0,0,0,.55);z-index:20;}
+.social-profile-page.letterboxd-style .lb-bg-swatch{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-bg-swatch:hover{transform:scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-bg-aurora{background:linear-gradient(125deg,#15212e,#241a35);}
+.social-profile-page.letterboxd-style .lb-bg-sunset{background:linear-gradient(125deg,#3a1c2a,#1a2340);}
+.social-profile-page.letterboxd-style .lb-bg-emerald{background:linear-gradient(125deg,#0f241c,#10262e);}
+.social-profile-page.letterboxd-style .lb-bg-mono{background:#101418;border:1px solid #2c3440;}
+.social-profile-page.letterboxd-style .lb-toolbar-btn{transition:transform .15s,background .2s,color .2s;}
+.social-profile-page.letterboxd-style .lb-toolbar-btn:hover{transform:translateY(-2px);}
+`;
+            var style = document.createElement('style');
+            style.id = 'lbProfileRedesign';
+            style.textContent = css;
+            document.head.appendChild(style);
+        },
+
+        /**
+         * Sidebar/overview: recent rated posters (clickable to open).
+         */
+        loadProfileRecentPosters: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=12', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var c = document.getElementById('lbRecentPosters');
+                    if (!c) return;
+                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
+                    if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
+                    var html = '';
+                    ratings.slice(0, 12).forEach(function (r) {
+                        var id = r.itemId || r.ItemId || '';
+                        var name = r.itemName || r.ItemName || 'Unknown';
+                        var rating = r.rating || r.Rating || 0;
+                        var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
+                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
+                        html += '<div class="lb-poster-card"' + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + '">' +
+                            '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-poster-stars">' + self.renderStars(rating) + '</div>' +
+                            '</div>';
+                    });
+                    c.innerHTML = html;
+                })
+                .catch(function () { var c = document.getElementById('lbRecentPosters'); if (c) c.innerHTML = '<div class="lb-empty-mini">No activity</div>'; });
+        },
+
+        /**
+         * Overview: latest 3 reviews with poster + text.
+         */
+        loadProfileRecentReviews: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=60', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var c = document.getElementById('lbRecentReviews');
+                    if (!c) return;
+                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
+                    var reviews = ratings.filter(function (r) { return r.reviewText || r.ReviewText || r.review || r.Review; }).slice(0, 3);
+                    if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
+                    var html = '';
+                    reviews.forEach(function (r) {
+                        var id = r.itemId || r.ItemId || '';
+                        var name = r.itemName || r.ItemName || 'Unknown';
+                        var txt = r.reviewText || r.ReviewText || r.review || r.Review || '';
+                        var rating = r.rating || r.Rating || 0;
+                        var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
+                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=120' : '';
+                        html += '<div class="lb-rev2"' + (inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + '>' +
+                            '<div class="lb-rev2-poster" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-rev2-body"><div class="lb-rev2-head"><span class="lb-rev2-title">' + self.escapeHtml(name) + '</span>' + self.renderStars(rating) + '</div>' +
+                            '<p class="lb-rev2-text">' + self.escapeHtml(txt) + '</p></div></div>';
+                    });
+                    c.innerHTML = html;
+                })
+                .catch(function () { var c = document.getElementById('lbRecentReviews'); if (c) c.innerHTML = '<div class="lb-empty-mini">No reviews</div>'; });
+        },
+
+        /**
+         * Wire the "Add a film" search box (find on server, or request if missing).
+         */
+        initAddMediaSearch: function () {
+            var self = this;
+            var input = document.getElementById('lbAddMediaInput');
+            var results = document.getElementById('lbAddMediaResults');
+            if (!input || !results) return;
+            var t = null;
+            input.addEventListener('input', function () {
+                var q = input.value.trim();
+                if (t) clearTimeout(t);
+                if (q.length < 2) { results.innerHTML = ''; return; }
+                t = setTimeout(function () { self.searchAddMedia(q, results); }, 280);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { var q = input.value.trim(); if (q) self.requestMediaFromProfile(q); }
+            });
+        },
+
+        searchAddMedia: function (q, results) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var isImdb = /^tt\d+$/i.test(q);
+            results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
+            var url = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            fetch(url, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var items = (data && data.Items) || [];
+                    var html = '';
+                    items.forEach(function (it) {
+                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=80';
+                        html += '<div class="lb-am-row" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
+                            '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
+                            '<span class="lb-am-watch">▶</span></div>';
+                    });
+                    html += '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">' +
+                        (items.length ? 'Not here? ' : '') + 'Request “' + self.escapeHtml(q) + '”' + (isImdb ? ' (IMDb)' : '') + '</button>';
+                    results.innerHTML = html;
+                })
+                .catch(function () {
+                    results.innerHTML = '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">Request “' + self.escapeHtml(q) + '”</button>';
+                });
+        },
+
+        requestMediaFromProfile: function (q) {
+            var self = this;
+            if (!q) return;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var isImdb = /^tt\d+$/i.test(q);
+            var body = { Title: q, Type: 'Movie' };
+            if (isImdb) { body.ImdbCode = q; body.ImdbLink = 'https://www.imdb.com/title/' + q + '/'; }
+            fetch(baseUrl + '/Ratings/Requests', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    self.lbToast('Requested “' + q + '” ✓');
+                    var res = document.getElementById('lbAddMediaResults');
+                    if (res) res.innerHTML = '<div class="lb-am-ok">Request sent ✓</div>';
+                    var inp = document.getElementById('lbAddMediaInput');
+                    if (inp) inp.value = '';
+                })
+                .catch(function () { self.lbToast('Request failed'); });
+        },
+
+        lbToast: function (msg) {
+            var t = document.createElement('div');
+            t.className = 'lb-toast';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(function () { t.classList.add('show'); }, 10);
+            setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
+        },
+
+        /**
+         * Render Letterboxd-style profile
+         */
+        renderLetterboxdProfile: function (page, profile, status) {
             var self = this;
             var container = page.querySelector('.social-profile-container');
             if (!container) return;
 
             var username = profile.username || 'Unknown';
             var initial = username[0].toUpperCase();
-            var bio = profile.bio || 'No bio yet.';
-            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown';
-            var lastSeenDate = profile.updatedAt || profile.lastSeen;
-            var lastSeen = lastSeenDate ? this.formatTimeAgo(new Date(lastSeenDate)) : (status.onlineStatus === 'Online' ? 'now' : 'Unknown');
+            var bio = profile.bio || '';
+            var memberSince = profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            var stats = status.stats || {};
+            var followStatus = status.followStatus || {};
+            var likeStatus = status.likeStatus || {};
+
+            // Status indicator
             var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
             var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
 
-            // Build action buttons based on relationship
-            var actionsHtml = '';
-            if (status.isSelf) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Your Profile</button>';
-            } else if (status.hasBlocked) {
-                actionsHtml = '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(profile.userId) + '\')">Unblock</button>';
-            } else if (status.isBlockedBy) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Blocked</button>';
-            } else if (status.isFriend) {
-                actionsHtml = '<button class="social-profile-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(profile.userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
-            } else if (status.hasPendingOutgoing) {
-                actionsHtml = '<button class="social-profile-btn secondary" disabled>Request Pending</button>';
-            } else if (status.hasPendingIncoming) {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept Request</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
-            } else {
-                actionsHtml = '<button class="social-profile-btn primary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(profile.userId) + '\')">Add Friend</button>' +
-                    '<button class="social-profile-btn secondary" onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(profile.userId) + '\')">Block</button>';
-            }
+            // Build the Letterboxd-style layout
+            var html = '';
 
-            var html = '<div class="social-profile-back" onclick="RatingsPlugin.closeProfilePage()">' +
-                '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
-                '<div class="social-profile-header">' +
-                '<div class="social-profile-avatar-large">' + initial + '<span class="social-status-dot ' + statusClass + '"></span></div>' +
-                '<div class="social-profile-info">' +
-                '<div class="social-profile-username">' + self.escapeHtml(username) + '</div>' +
-                '<div class="social-profile-bio">' + self.escapeHtml(bio) + '</div>' +
-                '<div class="social-profile-meta">' +
-                '<span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>' + statusText + '</span>' +
-                '<span><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>Joined ' + memberSince + '</span>' +
-                '<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>Last seen ' + lastSeen + '</span>' +
+            // Toolbar with back, fullscreen, and settings
+            html += '<div class="lb-toolbar">' +
+                '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="lb-toolbar-actions">' +
+                (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
+                '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
+                '<button class="lb-toolbar-btn" onclick="RatingsPlugin.toggleBgMenu(event)" title="Background">🎨</button>' +
+                '<div class="lb-bg-menu" id="lbBgMenu" style="display:none;">' +
+                '<div class="lb-bg-swatch lb-bg-aurora" onclick="RatingsPlugin.setProfileBackground(\'aurora\')" title="Aurora"></div>' +
+                '<div class="lb-bg-swatch lb-bg-sunset" onclick="RatingsPlugin.setProfileBackground(\'sunset\')" title="Sunset"></div>' +
+                '<div class="lb-bg-swatch lb-bg-emerald" onclick="RatingsPlugin.setProfileBackground(\'emerald\')" title="Emerald"></div>' +
+                '<div class="lb-bg-swatch lb-bg-mono" onclick="RatingsPlugin.setProfileBackground(\'mono\')" title="Minimal"></div>' +
                 '</div></div>' +
-                '<div class="social-profile-actions">' + actionsHtml + '</div></div>' +
-                '<div class="social-profile-tabs">' +
-                '<div class="social-profile-tab active" data-tab="overview">Overview</div>' +
-                '</div>' +
-                '<div class="social-profile-content" id="socialProfileContent">' +
-                '<div class="social-profile-loading">Loading stats...</div>' +
+                '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
+                '</div></div>';
+
+            // Profile header with gradient background
+            html += '<div class="lb-profile-header">' +
+                '<div class="lb-header-bg"></div>' +
+                '<div class="lb-header-content">' +
+                '<div class="lb-avatar">' + initial + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
+                '<div class="lb-user-info">' +
+                '<h1 class="lb-username">' + self.escapeHtml(username) + '</h1>' +
+                (bio ? '<p class="lb-bio">' + self.escapeHtml(bio) + '</p>' : '') +
+                '<div class="lb-meta">' +
+                '<span class="lb-status-text ' + statusClass + '">' + statusText + '</span>' +
+                (memberSince ? '<span class="lb-joined">Member since ' + memberSince + '</span>' : '') +
+                '</div></div>' +
+                '<div class="lb-header-actions">' + self.buildProfileActions(profile, status) + '</div>' +
+                '</div></div>';
+
+            // Stats bar (Letterboxd style)
+            html += '<div class="lb-stats-bar">' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'ratings\')">' +
+                '<span class="lb-stat-value">' + (stats.ratingsCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Ratings</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
+                '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Reviews</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'lists\')">' +
+                '<span class="lb-stat-value">' + (status.lists.length || 0) + '</span>' +
+                '<span class="lb-stat-label">Lists</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
+                '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Following</span></div>' +
+                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'followers\')">' +
+                '<span class="lb-stat-value">' + (followStatus.followersCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Followers</span></div>' +
+                '<div class="lb-stat">' +
+                '<span class="lb-stat-value"><span class="lb-heart">♥</span> ' + (likeStatus.likesCount || 0) + '</span>' +
+                '<span class="lb-stat-label">Likes</span></div>' +
                 '</div>';
+
+            // Tab navigation
+            html += '<div class="lb-tabs">' +
+                '<button class="lb-tab active" data-tab="overview">Overview</button>' +
+                '<button class="lb-tab" data-tab="ratings">Ratings</button>' +
+                '<button class="lb-tab" data-tab="reviews">Reviews</button>' +
+                '<button class="lb-tab" data-tab="lists">Lists</button>' +
+                '<button class="lb-tab" data-tab="activity">Activity</button>' +
+                '<button class="lb-tab" data-tab="following">Following</button>' +
+                '<button class="lb-tab" data-tab="followers">Followers</button>' +
+                '</div>';
+
+            // Tab content area
+            html += '<div class="lb-content" id="lbProfileContent"></div>';
 
             container.innerHTML = html;
 
-            // Fetch and render stats
-            self.loadProfileStats(profile.userId);
+            // Store profile data for tab switching
+            self._currentProfile = profile;
+            self._currentProfileStatus = status;
+
+            // Add tab click handlers
+            container.querySelectorAll('.lb-tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    container.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    self.switchProfileTab(tab.dataset.tab);
+                });
+            });
+
+            // Render initial tab (overview)
+            self.renderProfileOverviewTab(stats, status);
         },
 
         /**
-         * Load and render profile stats
+         * Build profile action buttons
          */
-        loadProfileStats: function (userId) {
+        buildProfileActions: function (profile, status) {
             var self = this;
+            var html = '';
+            var userId = profile.userId;
+            var username = profile.username || 'Unknown';
+
+            if (status.isSelf) {
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.openProfileSettings()">Edit Profile</button>';
+            } else if (status.hasBlocked) {
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">Unblock</button>';
+            } else if (status.isBlockedBy) {
+                html += '<button class="lb-btn disabled" disabled>Blocked</button>';
+            } else {
+                // Follow button
+                if (status.followStatus && status.followStatus.isFollowing) {
+                    html += '<button class="lb-btn following" onclick="RatingsPlugin.profileUnfollow(\'' + self.escapeJs(userId) + '\')"><span class="follow-icon">✓</span> Following</button>';
+                } else {
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileFollow(\'' + self.escapeJs(userId) + '\')">Follow</button>';
+                }
+
+                // Like profile button
+                if (status.likeStatus && status.likeStatus.hasLiked) {
+                    html += '<button class="lb-btn liked" onclick="RatingsPlugin.profileUnlike(\'' + self.escapeJs(userId) + '\')">♥</button>';
+                } else {
+                    html += '<button class="lb-btn heart" onclick="RatingsPlugin.profileLike(\'' + self.escapeJs(userId) + '\')">♡</button>';
+                }
+
+                // Friend button
+                if (status.isFriend) {
+                    html += '<button class="lb-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>';
+                } else if (status.hasPendingOutgoing) {
+                    html += '<button class="lb-btn disabled" disabled>Request Sent</button>';
+                } else if (status.hasPendingIncoming) {
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept</button>';
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
+                } else {
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">Add Friend</button>';
+                }
+
+                // More actions dropdown
+                html += '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
+                    '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>' +
+                    '<div class="lb-more-menu" id="profileMoreMenu">' +
+                    '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">Block User</button>' +
+                    '</div></button>';
+            }
+
+            return html;
+        },
+
+        /**
+         * Toggle more menu
+         */
+        toggleProfileMoreMenu: function (e) {
+            e.stopPropagation();
+            var menu = document.getElementById('profileMoreMenu');
+            if (menu) {
+                menu.classList.toggle('visible');
+                // Close on outside click
+                setTimeout(function() {
+                    document.addEventListener('click', function closeMenu() {
+                        menu.classList.remove('visible');
+                        document.removeEventListener('click', closeMenu);
+                    });
+                }, 0);
+            }
+        },
+
+        /**
+         * Switch profile tab
+         */
+        switchProfileTab: function (tabName) {
+            var self = this;
+            self._profileActiveTab = tabName;
+
+            // Update tab UI
+            document.querySelectorAll('.lb-tab').forEach(function(t) {
+                t.classList.toggle('active', t.dataset.tab === tabName);
+            });
+
+            var stats = self._currentProfileStatus.stats || {};
+            var status = self._currentProfileStatus;
+
+            switch (tabName) {
+                case 'overview':
+                    self.renderProfileOverviewTab(stats, status);
+                    break;
+                case 'ratings':
+                    self.renderProfileRatingsTab();
+                    break;
+                case 'reviews':
+                    self.renderProfileReviewsTab();
+                    break;
+                case 'lists':
+                    self.renderProfileListsTab(status.lists);
+                    break;
+                case 'activity':
+                    self.renderProfileActivityTab();
+                    break;
+                case 'following':
+                    self.renderProfileFollowingTab();
+                    break;
+                case 'followers':
+                    self.renderProfileFollowersTab();
+                    break;
+            }
+        },
+
+        /**
+         * Render Overview tab (Letterboxd style)
+         */
+        renderProfileOverviewTab: function (stats, status) {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            var self = this;
+            var isSelf = status.isSelf;
+            var favoriteRows = status.favoriteRows || self._currentProfile?.favoriteRows || [];
+            var lists = status.lists || [];
+            var html = '<div class="lb-overview lb-grid"><div class="lb-main">';
+
+            // Favorite Rows section (up to 5 rows, 5 items each)
+            html += '<section class="lb-section lb-favorites-section lb-anim">';
+            html += '<h3 class="lb-sec-title">Favorite Films</h3>';
+
+            // Render existing rows
+            for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
+                var row = favoriteRows[rowIndex];
+                var items = row.items || [];
+                var itemCount = items.filter(function(i) { return i && i.itemId; }).length;
+
+                html += '<div class="lb-favorite-row" data-row="' + rowIndex + '">';
+                html += '<div class="lb-row-header">';
+                if (isSelf) {
+                    html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
+                        'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
+                    html += '<span class="lb-row-count">' + itemCount + '/30</span>';
+                    html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
+                } else {
+                    html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
+                    if (itemCount > 0) html += '<span class="lb-row-count">' + itemCount + ' items</span>';
+                }
+                html += '</div>';
+                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
+
+                // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
+                var visibleCount = Math.min(itemCount, 10);
+                for (var i = 0; i < visibleCount; i++) {
+                    var fav = items[i];
+                    if (fav && fav.itemId) {
+                        html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                            ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
+                            (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
+                            '</div>';
+                    }
+                }
+
+                // Show "load more" if there are more items
+                if (itemCount > 10) {
+                    html += '<button class="lb-load-more-btn" onclick="RatingsPlugin.loadMoreRowItems(' + rowIndex + ')">' + (itemCount - 10) + ' more...</button>';
+                }
+
+                // Add one empty slot to add new item (if owner and less than 30 items)
+                if (isSelf && itemCount < 30) {
+                    html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + itemCount + '"' +
+                        ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + itemCount + ')" style="cursor:pointer">' +
+                        '<span>+</span></div>';
+                }
+
+                html += '</div></div>';
+            }
+
+            // Add row button (if less than 5 rows and is own profile)
+            if (isSelf && favoriteRows.length < 5) {
+                html += '<button class="lb-add-row-btn" onclick="RatingsPlugin.addFavoriteRow()">+ Add Row</button>';
+            }
+
+            html += '</section>';
+
+            // Recent Activity (poster strip)
+            html += '<section class="lb-section lb-anim">' +
+                '<h3 class="lb-sec-title">Recent Activity</h3>' +
+                '<div class="lb-poster-strip" id="lbRecentPosters"><div class="lb-loading-small">Loading…</div></div>' +
+                '</section>';
+
+            // Recent Reviews
+            html += '<section class="lb-section lb-anim">' +
+                '<h3 class="lb-sec-title">Recent Reviews</h3>' +
+                '<div class="lb-recent-reviews" id="lbRecentReviews"><div class="lb-loading-small">Loading…</div></div>' +
+                '</section>';
+
+            html += '</div>'; // end main column
+
+            // ===== Right sidebar =====
+            html += '<aside class="lb-sidebar">';
+
+            // Add a film (search server / request if missing)
+            html += '<section class="lb-side-card lb-anim">' +
+                '<h4 class="lb-side-title">Add a film</h4>' +
+                '<div class="lb-addmedia">' +
+                '<input type="text" id="lbAddMediaInput" class="lb-addmedia-input" placeholder="Search title or IMDb id…" autocomplete="off">' +
+                '<div class="lb-addmedia-results" id="lbAddMediaResults"></div>' +
+                '</div></section>';
+
+            // Stats
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Stats</h4>' +
+                '<div class="lb-side-stats">' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.moviesWatched || 0) + '</span><span class="lb-ss-lbl">Films</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.seriesWatched || 0) + '</span><span class="lb-ss-lbl">Shows</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.totalWatchHours || 0) + '</span><span class="lb-ss-lbl">Hours</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</span><span class="lb-ss-lbl">Avg</span></div>' +
+                '</div></section>';
+
+            // Ratings histogram
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
+                '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
+
+            // Lists preview
+            var listsHtml = '';
+            if (lists.length) {
+                listsHtml = lists.slice(0, 6).map(function (l) {
+                    var lt = self.escapeHtml(l.title || l.Title || 'Untitled');
+                    var lc = (l.itemCount || l.ItemCount || (l.items ? l.items.length : 0));
+                    return '<div class="lb-side-list-row" onclick="RatingsPlugin.switchProfileTab(\'lists\')"><span class="lb-sl-name">' + lt + '</span><span class="lb-sl-count">' + lc + '</span></div>';
+                }).join('');
+            } else {
+                listsHtml = '<div class="lb-empty-mini">No lists yet</div>';
+            }
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Lists <span class="lb-side-count">' + lists.length + '</span></h4>' +
+                '<div class="lb-side-lists">' + listsHtml + '</div></section>';
+
+            // Activity feed (compact)
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
+                '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading…</div></div></section>';
+
+            html += '</aside>';
+            html += '</div>'; // end grid
+
+            content.innerHTML = html;
+
+            // Wire interactions + load data
+            self.initAddMediaSearch();
+            this.loadProfileRatingDistribution();
+            this.loadProfileRecentActivity(6);
+            this.loadProfileRecentPosters();
+            this.loadProfileRecentReviews();
+        },
+
+        /**
+         * Load rating distribution for profile
+         */
+        loadProfileRatingDistribution: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
 
-            fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', {
+            // Get user's ratings and calculate distribution
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                var container = document.getElementById('lbRatingDist');
+                if (!container) return;
+
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                if (ratings.length === 0) {
+                    container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
+                    return;
+                }
+
+                // Calculate distribution
+                var distribution = {};
+                for (var i = 1; i <= 10; i++) distribution[i] = 0;
+                ratings.forEach(function (r) {
+                    var rating = r.rating || r.Rating;
+                    if (rating >= 1 && rating <= 10) {
+                        distribution[rating]++;
+                    }
+                });
+
+                var maxCount = Math.max(...Object.values(distribution), 1);
+
+                var html = '<div class="lb-dist-chart">';
+                for (var i = 1; i <= 10; i++) {
+                    var count = distribution[i] || 0;
+                    var height = (count / maxCount * 100) || 0;
+                    html += '<div class="lb-dist-bar-wrap" title="' + i + ' stars: ' + count + ' ratings">' +
+                        '<div class="lb-dist-bar" style="height: ' + height + '%"></div>' +
+                        '<span class="lb-dist-label">' + i + '</span>' +
+                        '</div>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            .catch(function () {
+                var container = document.getElementById('lbRatingDist');
+                if (container) container.innerHTML = '<div class="lb-empty">No rating data</div>';
+            });
+        },
+
+        /**
+         * Load recent activity for profile (using ratings as activity)
+         */
+        loadProfileRecentActivity: function (limit) {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            // Get user's recent ratings as activity
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=' + (limit || 10), {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                var container = document.getElementById('lbRecentActivity');
+                if (!container) return;
+
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                if (ratings.length === 0) {
+                    container.innerHTML = '<div class="lb-empty">No recent activity</div>';
+                    return;
+                }
+
+                var html = '<div class="lb-activity-list">';
+                ratings.slice(0, limit || 10).forEach(function (r) {
+                    var title = r.itemName || r.title || r.ItemName || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
+                    var hasReview = r.review || r.Review || r.reviewText || r.ReviewText;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var titleHtml = inLib
+                        ? '<strong style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')">' + self.escapeHtml(title) + '</strong>'
+                        : '<strong>' + self.escapeHtml(title) + '</strong>';
+
+                    html += '<div class="lb-activity-item">' +
+                        '<span class="lb-activity-type">' + (hasReview ? '📝' : '⭐') + '</span>' +
+                        '<span class="lb-activity-text">' +
+                        (hasReview ? 'Reviewed' : 'Rated') + ' ' + titleHtml + ' ' +
+                        self.renderStars(rating) +
+                        '</span>' +
+                        '<span class="lb-activity-time">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
+                        '</div>';
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            })
+            .catch(function (err) {
+                console.error('[Social] Activity load error:', err);
+                var container = document.getElementById('lbRecentActivity');
+                if (container) container.innerHTML = '<div class="lb-empty">No recent activity</div>';
+            });
+        },
+
+        /**
+         * Get activity icon
+         */
+        getActivityIcon: function (type) {
+            var icons = {
+                'rating': '⭐',
+                'review': '📝',
+                'like': '❤️',
+                'follow': '👤',
+                'list': '📋',
+                'watch': '👁️'
+            };
+            return icons[type] || '📌';
+        },
+
+        /**
+         * Render Ratings tab
+         */
+        renderProfileRatingsTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading ratings...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=50', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                if (ratings.length === 0) {
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">⭐</span><p>No ratings yet</p></div>';
+                    return;
+                }
+
+                var baseUrl = ApiClient.serverAddress();
+                var html = '<div class="lb-ratings-grid">';
+                ratings.forEach(function (r) {
+                    // Build image URL from itemId if imageUrl not present
+                    var imageUrl = r.imageUrl || r.ImageUrl || '';
+                    if (!imageUrl && (r.itemId || r.ItemId)) {
+                        imageUrl = baseUrl + '/Items/' + (r.itemId || r.ItemId) + '/Images/Primary?maxHeight=200';
+                    }
+                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+
+                    html += '<div class="lb-rating-card"' + clickAttr + '>' +
+                        '<div class="lb-rating-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
+                        '<div class="lb-rating-info">' +
+                        '<div class="lb-rating-title">' + self.escapeHtml(title) + '</div>' +
+                        '<div class="lb-rating-value">' + self.renderStars(rating) + '</div>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            })
+            .catch(function (err) {
+                console.error('[Profile] Failed to load ratings:', err);
+                content.innerHTML = '<div class="lb-error">Failed to load ratings</div>';
+            });
+        },
+
+        /**
+         * Render stars for rating
+         */
+        renderStars: function (rating) {
+            var fullStars = Math.floor(rating / 2);
+            var halfStar = rating % 2 >= 1;
+            var html = '';
+            for (var i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    html += '<span class="lb-star full">★</span>';
+                } else if (i === fullStars && halfStar) {
+                    html += '<span class="lb-star half">★</span>';
+                } else {
+                    html += '<span class="lb-star empty">☆</span>';
+                }
+            }
+            // Wrap with a tooltip showing the exact value (e.g. "8/10  ·  4/5").
+            var outOfTen = (rating || 0);
+            var outOfFive = (Math.round((outOfTen / 2) * 10) / 10);
+            return '<span class="lb-stars-wrap" title="' + outOfTen + '/10  ·  ' + outOfFive + '/5">' + html + '</span>';
+        },
+
+        /**
+         * Open a media item in Jellyfin (closes the profile modal, then navigates to the
+         * item detail page where the user can play it).
+         */
+        openMedia: function (itemId) {
+            if (!itemId) return;
+            var modal = document.querySelector('.social-profile-page');
+            if (modal) modal.remove();
+            window.location.hash = '#!/details?id=' + itemId;
+        },
+
+        /**
+         * Render Reviews tab (ratings that have review text)
+         */
+        renderProfileReviewsTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading reviews...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            // Get ratings and filter for those with reviews
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=100', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('API error: ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                // API returns array directly
+                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                // Filter to only those with review text
+                var reviews = ratings.filter(function (r) {
+                    return r.review || r.Review || r.reviewText || r.ReviewText;
+                });
+
+                if (reviews.length === 0) {
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📝</span><p>No reviews yet</p></div>';
+                    return;
+                }
+
+                var html = '<div class="lb-reviews-list">';
+                reviews.forEach(function (r) {
+                    var reviewText = r.review || r.Review || r.reviewText || r.ReviewText || '';
+                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var rating = r.rating || r.Rating || 0;
+                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
+                    var likes = r.likes || r.Likes || 0;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var titleAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+
+                    html += '<div class="lb-review-card">' +
+                        '<div class="lb-review-header">' +
+                        '<span class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) + '</span>' +
+                        '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
+                        '</div>' +
+                        '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
+                        '<div class="lb-review-footer">' +
+                        '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
+                        '<span class="lb-review-likes">👍 ' + likes + '</span>' +
+                        '</div></div>';
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load reviews</div>';
+            });
+        },
+
+        /**
+         * Render Lists tab
+         */
+        renderProfileListsTab: function (lists) {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            var self = this;
+            lists = lists || [];
+
+            if (lists.length === 0) {
+                content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📋</span><p>No lists created yet</p></div>';
+                return;
+            }
+
+            var html = '<div class="lb-lists-grid">';
+            lists.forEach(function (list) {
+                var previewItems = (list.items || []).slice(0, 4);
+                html += '<div class="lb-list-card" onclick="RatingsPlugin.viewList(\'' + self.escapeJs(list.id) + '\')">' +
+                    '<div class="lb-list-preview">';
+
+                for (var i = 0; i < 4; i++) {
+                    if (previewItems[i]) {
+                        html += '<div class="lb-list-preview-item" style="background-image: url(\'' + (previewItems[i].cachedImageUrl || '') + '\')"></div>';
+                    } else {
+                        html += '<div class="lb-list-preview-item empty"></div>';
+                    }
+                }
+
+                html += '</div>' +
+                    '<div class="lb-list-info">' +
+                    '<h4 class="lb-list-title">' + self.escapeHtml(list.title || 'Untitled') + '</h4>' +
+                    '<span class="lb-list-count">' + (list.itemCount || list.items?.length || 0) + ' items</span>' +
+                    '</div></div>';
+            });
+            html += '</div>';
+
+            content.innerHTML = html;
+        },
+
+        /**
+         * Render Activity tab
+         */
+        renderProfileActivityTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+            content.innerHTML = '<div id="lbRecentActivity"><div class="lb-loading">Loading activity...</div></div>';
+            this.loadProfileRecentActivity(30);
+        },
+
+        /**
+         * Render Following tab
+         */
+        renderProfileFollowingTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Following', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
             })
             .then(function (r) { return r.json(); })
-            .then(function (stats) {
-                self.renderProfileStats(stats);
+            .then(function (data) {
+                var users = data.following || data.users || [];
+                self.renderUserList(content, users, 'Not following anyone');
             })
-            .catch(function (err) {
-                console.error('[Social] Failed to load stats:', err);
-                var content = document.getElementById('socialProfileContent');
-                if (content) {
-                    content.innerHTML = '<div class="social-profile-error">Failed to load stats</div>';
-                }
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load</div>';
             });
         },
 
         /**
-         * Render profile stats in the Overview tab
+         * Render Followers tab
          */
-        renderProfileStats: function (stats) {
-            var content = document.getElementById('socialProfileContent');
+        renderProfileFollowersTab: function () {
+            var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            var html = '<div class="social-profile-stats-grid">' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.moviesWatched || 0) + '</div>' +
-                '<div class="social-stat-label">Movies Watched</div>' +
+            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Followers', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var users = data.followers || data.users || [];
+                self.renderUserList(content, users, 'No followers yet');
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load</div>';
+            });
+        },
+
+        /**
+         * Render a list of users
+         */
+        renderUserList: function (container, users, emptyMessage) {
+            var self = this;
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">👥</span><p>' + emptyMessage + '</p></div>';
+                return;
+            }
+
+            var html = '<div class="lb-user-list">';
+            users.forEach(function (user) {
+                var username = user.username || user.userName || 'Unknown';
+                var initial = username[0].toUpperCase();
+                html += '<div class="lb-user-card" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(user.userId || user.id) + '\')">' +
+                    '<div class="lb-user-avatar">' + initial + '</div>' +
+                    '<div class="lb-user-name">' + self.escapeHtml(username) + '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        },
+
+        /**
+         * View a list
+         */
+        viewList: function (listId) {
+            // TODO: Implement list viewer modal
+            console.log('View list:', listId);
+        },
+
+        /**
+         * Open media picker for favorite slot
+         */
+        openMediaPicker: function (rowIndex, slotIndex) {
+            var self = this;
+            self._pickerRowIndex = rowIndex;
+            self._pickerSlotIndex = slotIndex;
+            self._pickerPage = 0;
+            self._pickerCategory = null;
+            self._pickerItemsPerPage = 30;
+
+            // Create picker modal
+            var modal = document.createElement('div');
+            modal.className = 'lb-media-picker';
+            modal.id = 'lbMediaPicker';
+            modal.innerHTML = '<div class="lb-picker-content">' +
+                '<div class="lb-picker-header">' +
+                '<h2>Select Media</h2>' +
+                '<button class="lb-picker-close" onclick="RatingsPlugin.closeMediaPicker()">&times;</button>' +
                 '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.seriesWatched || 0) + '</div>' +
-                '<div class="social-stat-label">Series Watched</div>' +
+                '<div class="lb-picker-nav" id="pickerNav"></div>' +
+                '<div class="lb-picker-search">' +
+                '<input type="text" id="pickerSearchInput" placeholder="Search..." oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
                 '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.totalWatchHours || 0) + '</div>' +
-                '<div class="social-stat-label">Hours Watched</div>' +
+                '<div class="lb-picker-results" id="pickerResults">' +
+                '<div class="lb-picker-loading">Loading categories...</div>' +
                 '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.friendsCount || 0) + '</div>' +
-                '<div class="social-stat-label">Friends</div>' +
+                '<div class="lb-picker-pagination" id="pickerPagination"></div>' +
+                '</div>';
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    self.closeMediaPicker();
+                }
+            });
+
+            document.body.appendChild(modal);
+
+            // Load library categories
+            self.loadPickerCategories();
+        },
+
+        /**
+         * Load library categories for media picker
+         */
+        loadPickerCategories: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var nav = document.getElementById('pickerNav');
+            if (!results || !nav) return;
+
+            // Show category buttons
+            var categories = [
+                { id: 'Movie', name: 'Movies', icon: '🎬' },
+                { id: 'Series', name: 'Series', icon: '📺' },
+                { id: 'Anime', name: 'Anime', icon: '🎌', genre: 'Anime' },
+                { id: 'Documentary', name: 'Documentaries', icon: '🎥', genre: 'Documentary' },
+                { id: 'Animation', name: 'Animation', icon: '🎨', genre: 'Animation' }
+            ];
+
+            var navHtml = '<div class="lb-picker-categories">';
+            categories.forEach(function (cat) {
+                navHtml += '<button class="lb-picker-cat-btn" data-category="' + cat.id + '"' +
+                    (cat.genre ? ' data-genre="' + cat.genre + '"' : '') +
+                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + cat.id + '\'' + (cat.genre ? ',\'' + cat.genre + '\'' : '') + ')">' +
+                    '<span class="cat-icon">' + cat.icon + '</span>' +
+                    '<span class="cat-name">' + cat.name + '</span>' +
+                    '</button>';
+            });
+            navHtml += '</div>';
+            nav.innerHTML = navHtml;
+
+            results.innerHTML = '<div class="lb-picker-empty">Select a category above or search for media</div>';
+            document.getElementById('pickerPagination').innerHTML = '';
+        },
+
+        /**
+         * Select a category in the media picker
+         */
+        selectPickerCategory: function (categoryId, genreFilter) {
+            var self = this;
+            self._pickerCategory = categoryId;
+            self._pickerGenre = genreFilter || null;
+            self._pickerPage = 0;
+            self._pickerSearchQuery = null;
+            self._pickerSortBy = self._pickerSortBy || 'myRating'; // Default sort
+
+            // Highlight active category
+            var buttons = document.querySelectorAll('.lb-picker-cat-btn');
+            buttons.forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.category === categoryId && btn.dataset.genre === (genreFilter || ''));
+            });
+
+            // Show sort options
+            self.showPickerSortOptions();
+
+            self.loadPickerItems();
+        },
+
+        /**
+         * Show sort dropdown in picker
+         */
+        showPickerSortOptions: function () {
+            var searchDiv = document.querySelector('.lb-picker-search');
+            if (!searchDiv) return;
+
+            // Check if sort already exists
+            if (document.getElementById('pickerSortSelect')) return;
+
+            var sortHtml = '<div class="lb-picker-sort">' +
+                '<label>Sort by:</label>' +
+                '<select id="pickerSortSelect" onchange="RatingsPlugin.changePickerSort(this.value)">' +
+                '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>My Ratings (Highest)</option>' +
+                '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>My Ratings (Lowest)</option>' +
+                '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>Community Rating</option>' +
+                '<option value="newest"' + (this._pickerSortBy === 'newest' ? ' selected' : '') + '>Newest First</option>' +
+                '<option value="name"' + (this._pickerSortBy === 'name' ? ' selected' : '') + '>Name A-Z</option>' +
+                '</select></div>';
+
+            searchDiv.insertAdjacentHTML('afterend', sortHtml);
+        },
+
+        /**
+         * Change picker sort order
+         */
+        changePickerSort: function (sortBy) {
+            this._pickerSortBy = sortBy;
+            this._pickerPage = 0;
+            this.loadPickerItems();
+        },
+
+        /**
+         * Load items for current category with pagination
+         */
+        loadPickerItems: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            if (!results) return;
+
+            results.innerHTML = '<div class="lb-picker-loading">Loading...</div>';
+
+            // If sorting by my ratings, use different approach
+            if (self._pickerSortBy === 'myRating' || self._pickerSortBy === 'myRatingAsc') {
+                self.loadPickerItemsByMyRatings();
+                return;
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = ApiClient.getCurrentUserId();
+
+            // Build query
+            var includeTypes = self._pickerCategory === 'Anime' || self._pickerCategory === 'Documentary' || self._pickerCategory === 'Animation'
+                ? 'Movie,Series' : self._pickerCategory;
+            var startIndex = self._pickerPage * self._pickerItemsPerPage;
+
+            // Determine API sort based on sort option
+            var sortBy = 'Random';
+            var sortOrder = 'Ascending';
+            if (self._pickerSortBy === 'communityRating') {
+                sortBy = 'CommunityRating';
+                sortOrder = 'Descending';
+            } else if (self._pickerSortBy === 'name') {
+                sortBy = 'SortName';
+                sortOrder = 'Ascending';
+            } else if (self._pickerSortBy === 'newest') {
+                sortBy = 'DateCreated';
+                sortOrder = 'Descending';
+            }
+
+            var url = baseUrl + '/Users/' + userId + '/Items?IncludeItemTypes=' + includeTypes +
+                '&Recursive=true&Limit=' + self._pickerItemsPerPage + '&StartIndex=' + startIndex +
+                '&SortBy=' + sortBy + '&SortOrder=' + sortOrder + '&Fields=PrimaryImageAspectRatio,CommunityRating';
+
+            // Add genre filter if applicable
+            if (self._pickerGenre) {
+                url += '&Genres=' + encodeURIComponent(self._pickerGenre);
+            }
+
+            // Fetch items
+            fetch(url, { method: 'GET', credentials: 'include', headers: headers })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var items = data.Items || [];
+                var totalCount = data.TotalRecordCount || 0;
+
+                if (items.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No items found</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Get user ratings for badge display
+                self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
+                .then(function (ratings) {
+                    self.renderPickerItems(items, totalCount, ratings);
+                })
+                .catch(function () {
+                    self.renderPickerItems(items, totalCount, {});
+                });
+            })
+            .catch(function () {
+                results.innerHTML = '<div class="lb-picker-empty">Failed to load items</div>';
+            });
+        },
+
+        /**
+         * Load items sorted by user's ratings
+         */
+        loadPickerItemsByMyRatings: function () {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var userId = ApiClient.getCurrentUserId();
+
+            // First get all user ratings
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=1000', {
+                method: 'GET', credentials: 'include', headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var allRatings = Array.isArray(data) ? data : (data.ratings || data || []);
+
+                if (allRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">You haven\'t rated any items yet</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Sort by rating
+                allRatings.sort(function (a, b) {
+                    var ratingA = a.rating || a.Rating || 0;
+                    var ratingB = b.rating || b.Rating || 0;
+                    return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
+                });
+
+                // Paginate
+                var startIndex = self._pickerPage * self._pickerItemsPerPage;
+                var pageRatings = allRatings.slice(startIndex, startIndex + self._pickerItemsPerPage);
+                var totalCount = allRatings.length;
+
+                if (pageRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No more items</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Get item IDs
+                var itemIds = pageRatings.map(function (r) { return r.itemId || r.ItemId; }).filter(Boolean);
+
+                // Fetch media details for these items
+                fetch(baseUrl + '/Users/' + userId + '/Items?Ids=' + itemIds.join(',') + '&Fields=PrimaryImageAspectRatio,CommunityRating', {
+                    method: 'GET', credentials: 'include', headers: headers
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (itemData) {
+                    var items = itemData.Items || [];
+
+                    // Build ratings map
+                    var ratingsMap = {};
+                    pageRatings.forEach(function (r) {
+                        var id = r.itemId || r.ItemId;
+                        if (id) {
+                            ratingsMap[id.toLowerCase()] = r.rating || r.Rating;
+                            ratingsMap[id.toUpperCase()] = r.rating || r.Rating;
+                            ratingsMap[id] = r.rating || r.Rating;
+                        }
+                    });
+
+                    // Sort items to match ratings order
+                    items.sort(function (a, b) {
+                        var ratingA = ratingsMap[a.Id] || ratingsMap[a.Id.toLowerCase()] || 0;
+                        var ratingB = ratingsMap[b.Id] || ratingsMap[b.Id.toLowerCase()] || 0;
+                        return self._pickerSortBy === 'myRating' ? ratingB - ratingA : ratingA - ratingB;
+                    });
+
+                    self.renderPickerItems(items, totalCount, ratingsMap);
+                })
+                .catch(function () {
+                    results.innerHTML = '<div class="lb-picker-empty">Failed to load item details</div>';
+                });
+            })
+            .catch(function () {
+                results.innerHTML = '<div class="lb-picker-empty">Failed to load ratings</div>';
+            });
+        },
+
+        /**
+         * Get user ratings for a list of item IDs
+         */
+        getUserRatingsForItems: function (itemIds) {
+            var baseUrl = ApiClient.serverAddress();
+            var userId = ApiClient.getCurrentUserId();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            return fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=1000', {
+                method: 'GET', credentials: 'include', headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var ratings = {};
+                var list = data.ratings || data || [];
+                list.forEach(function (r) {
+                    var id = r.itemId || r.ItemId;
+                    var rating = r.rating || r.Rating;
+                    if (id) {
+                        // Store both lowercase and uppercase versions for matching
+                        ratings[id.toLowerCase()] = rating;
+                        ratings[id.toUpperCase()] = rating;
+                        ratings[id] = rating;
+                    }
+                });
+                return ratings;
+            });
+        },
+
+        /**
+         * Render picker items grid
+         */
+        renderPickerItems: function (items, totalCount, ratings) {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var pagination = document.getElementById('pickerPagination');
+            if (!results) return;
+
+            var baseUrl = ApiClient.serverAddress();
+            var html = '<div class="lb-picker-grid">';
+
+            items.forEach(function (item) {
+                var imageUrl = item.ImageTags && item.ImageTags.Primary
+                    ? baseUrl + '/Items/' + item.Id + '/Images/Primary?maxHeight=300&tag=' + item.ImageTags.Primary
+                    : '';
+                var userRating = ratings[item.Id];
+                var communityRating = item.CommunityRating ? item.CommunityRating.toFixed(1) : null;
+
+                // Build rating badges
+                var badges = '';
+                if (userRating) {
+                    badges += '<span class="lb-picker-rating my-rating">' + userRating + '★</span>';
+                }
+                if (communityRating) {
+                    badges += '<span class="lb-picker-rating community-rating">⭐' + communityRating + '</span>';
+                }
+
+                html += '<div class="lb-picker-item" onclick="RatingsPlugin.selectMediaForFavorite(\'' +
+                    self.escapeJs(item.Id) + '\', \'' +
+                    self.escapeJs(item.Name) + '\', \'' +
+                    self.escapeJs(imageUrl) + '\')">' +
+                    '<div class="lb-picker-poster" style="background-image: url(\'' + imageUrl + '\')">' +
+                    '<div class="lb-picker-badges">' + badges + '</div>' +
+                    '</div>' +
+                    '<div class="lb-picker-title">' + self.escapeHtml(item.Name) + '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            results.innerHTML = html;
+
+            // Render pagination
+            var totalPages = Math.ceil(totalCount / self._pickerItemsPerPage);
+            if (totalPages > 1) {
+                var pagHtml = '<div class="lb-pagination">';
+                if (self._pickerPage > 0) {
+                    pagHtml += '<button onclick="RatingsPlugin.pickerPrevPage()">← Prev</button>';
+                }
+                pagHtml += '<span>Page ' + (self._pickerPage + 1) + ' of ' + totalPages + '</span>';
+                if (self._pickerPage < totalPages - 1) {
+                    pagHtml += '<button onclick="RatingsPlugin.pickerNextPage()">Next →</button>';
+                }
+                pagHtml += '</div>';
+                pagination.innerHTML = pagHtml;
+            } else {
+                pagination.innerHTML = '';
+            }
+        },
+
+        /**
+         * Go to previous page in picker
+         */
+        pickerPrevPage: function () {
+            if (this._pickerPage > 0) {
+                this._pickerPage--;
+                if (this._pickerSearchQuery) {
+                    this.searchMediaForPicker(this._pickerSearchQuery);
+                } else {
+                    this.loadPickerItems();
+                }
+            }
+        },
+
+        /**
+         * Go to next page in picker
+         */
+        pickerNextPage: function () {
+            this._pickerPage++;
+            if (this._pickerSearchQuery) {
+                this.searchMediaForPicker(this._pickerSearchQuery);
+            } else {
+                this.loadPickerItems();
+            }
+        },
+
+        /**
+         * Close media picker
+         */
+        closeMediaPicker: function () {
+            var modal = document.getElementById('lbMediaPicker');
+            if (modal) {
+                modal.remove();
+            }
+            this._pickerRowIndex = null;
+            this._pickerSlotIndex = null;
+            this._pickerPage = 0;
+            this._pickerCategory = null;
+            this._pickerSearchQuery = null;
+        },
+
+        /**
+         * Search media for picker
+         */
+        searchMediaForPicker: function (query) {
+            var self = this;
+            var results = document.getElementById('pickerResults');
+            var pagination = document.getElementById('pickerPagination');
+            if (!results) return;
+
+            if (!query || query.length < 2) {
+                if (self._pickerCategory) {
+                    self.loadPickerItems();
+                } else {
+                    results.innerHTML = '<div class="lb-picker-empty">Select a category or type to search...</div>';
+                    if (pagination) pagination.innerHTML = '';
+                }
+                self._pickerSearchQuery = null;
+                return;
+            }
+
+            self._pickerSearchQuery = query;
+            results.innerHTML = '<div class="lb-picker-loading">Searching...</div>';
+
+            // Debounce
+            clearTimeout(self._pickerSearchTimeout);
+            self._pickerSearchTimeout = setTimeout(function () {
+                var baseUrl = ApiClient.serverAddress();
+                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                var startIndex = self._pickerPage * self._pickerItemsPerPage;
+
+                // Search for movies and series
+                fetch(baseUrl + '/Items?searchTerm=' + encodeURIComponent(query) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=' + self._pickerItemsPerPage + '&StartIndex=' + startIndex + '&Fields=PrimaryImageAspectRatio', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: headers
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var items = data.Items || [];
+                    var totalCount = data.TotalRecordCount || 0;
+
+                    if (items.length === 0) {
+                        results.innerHTML = '<div class="lb-picker-empty">No results found</div>';
+                        if (pagination) pagination.innerHTML = '';
+                        return;
+                    }
+
+                    self.getUserRatingsForItems(items.map(function (i) { return i.Id; }))
+                    .then(function (ratings) {
+                        self.renderPickerItems(items, totalCount, ratings);
+                    })
+                    .catch(function () {
+                        self.renderPickerItems(items, totalCount, {});
+                    });
+                })
+                .catch(function () {
+                    results.innerHTML = '<div class="lb-picker-empty">Search failed</div>';
+                });
+            }, 300);
+        },
+
+        /**
+         * Select media for favorite slot
+         */
+        selectMediaForFavorite: function (itemId, title, imageUrl) {
+            var self = this;
+            var rowIndex = self._pickerRowIndex;
+            var slotIndex = self._pickerSlotIndex;
+            if (rowIndex === null || rowIndex === undefined || slotIndex === null || slotIndex === undefined) return;
+
+            // Update favoriteRows array
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+
+            // Ensure row exists
+            while (self._currentProfile.favoriteRows.length <= rowIndex) {
+                self._currentProfile.favoriteRows.push({ title: 'Favorites', items: [] });
+            }
+
+            // Ensure items array exists
+            if (!self._currentProfile.favoriteRows[rowIndex].items) {
+                self._currentProfile.favoriteRows[rowIndex].items = [];
+            }
+
+            // Set item at slot
+            self._currentProfile.favoriteRows[rowIndex].items[slotIndex] = {
+                itemId: itemId,
+                title: title,
+                imageUrl: imageUrl
+            };
+
+            // Save to server
+            self.saveFavorites();
+
+            // Close picker
+            self.closeMediaPicker();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Remove favorite from slot
+         */
+        removeFavorite: function (rowIndex, slotIndex) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favoriteRows) return;
+            if (!self._currentProfile.favoriteRows[rowIndex]) return;
+
+            self._currentProfile.favoriteRows[rowIndex].items[slotIndex] = null;
+
+            // Save to server
+            self.saveFavorites();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Add a new favorite row
+         */
+        addFavoriteRow: function () {
+            var self = this;
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+
+            if (self._currentProfile.favoriteRows.length >= 5) return;
+
+            // Show modal to pick row title
+            self.showAddRowModal();
+        },
+
+        /**
+         * Show modal to add a new row with title selection
+         */
+        showAddRowModal: function () {
+            var self = this;
+            var modal = document.createElement('div');
+            modal.className = 'lb-media-picker';
+            modal.id = 'lbAddRowModal';
+
+            var presets = ['Favorite Films', 'Favorite Series', 'Top Anime', 'Best Documentaries', 'Must Watch', 'Hidden Gems', 'Guilty Pleasures', 'All Time Favorites'];
+
+            var html = '<div class="lb-picker-content lb-add-row-modal">' +
+                '<div class="lb-picker-header">' +
+                '<h2>Add New Row</h2>' +
+                '<button class="lb-picker-close" onclick="RatingsPlugin.closeAddRowModal()">&times;</button>' +
                 '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.ratingsCount || 0) + '</div>' +
-                '<div class="social-stat-label">Ratings Given</div>' +
+                '<div class="lb-add-row-body">' +
+                '<label>Row Title</label>' +
+                '<input type="text" id="newRowTitleInput" placeholder="Enter custom title..." class="lb-row-name-input">' +
+                '<div class="lb-preset-titles">';
+
+            presets.forEach(function (preset) {
+                html += '<button class="lb-preset-btn" onclick="RatingsPlugin.selectRowPreset(\'' + self.escapeJs(preset) + '\')">' + preset + '</button>';
+            });
+
+            html += '</div>' +
+                '<div class="lb-add-row-actions">' +
+                '<button class="lb-btn secondary" onclick="RatingsPlugin.closeAddRowModal()">Cancel</button>' +
+                '<button class="lb-btn primary" onclick="RatingsPlugin.confirmAddRow()">Create Row</button>' +
+                '</div></div></div>';
+
+            modal.innerHTML = html;
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) self.closeAddRowModal();
+            });
+            document.body.appendChild(modal);
+
+            setTimeout(function () {
+                var input = document.getElementById('newRowTitleInput');
+                if (input) input.focus();
+            }, 100);
+        },
+
+        /**
+         * Close add row modal
+         */
+        closeAddRowModal: function () {
+            var modal = document.getElementById('lbAddRowModal');
+            if (modal) modal.remove();
+        },
+
+        /**
+         * Select a preset title for new row
+         */
+        selectRowPreset: function (preset) {
+            var input = document.getElementById('newRowTitleInput');
+            if (input) input.value = preset;
+        },
+
+        /**
+         * Confirm adding the new row
+         */
+        confirmAddRow: function () {
+            var self = this;
+            var input = document.getElementById('newRowTitleInput');
+            var title = input ? input.value.trim() : '';
+
+            if (!title) {
+                title = 'Favorites';
+            }
+
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+
+            self._currentProfile.favoriteRows.push({ title: title, items: [] });
+
+            // Save to server
+            self.saveFavorites();
+
+            // Close modal
+            self.closeAddRowModal();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Load more items in a row (expand beyond initial 10)
+         */
+        loadMoreRowItems: function (rowIndex) {
+            var self = this;
+            var favoriteRows = self._currentProfile?.favoriteRows || [];
+            if (!favoriteRows[rowIndex]) return;
+
+            var row = favoriteRows[rowIndex];
+            var items = row.items || [];
+            var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
+            if (!grid) return;
+
+            var isSelf = self._currentProfileStatus?.isSelf;
+
+            // Remove the load more button
+            var loadMoreBtn = grid.querySelector('.lb-load-more-btn');
+            if (loadMoreBtn) loadMoreBtn.remove();
+
+            // Add remaining items
+            for (var i = 10; i < items.length; i++) {
+                var fav = items[i];
+                if (fav && fav.itemId) {
+                    var slot = document.createElement('div');
+                    slot.className = 'lb-favorite-slot filled';
+                    slot.dataset.row = rowIndex;
+                    slot.dataset.index = i;
+                    slot.dataset.itemId = fav.itemId;
+                    slot.style.backgroundImage = 'url(\'' + (fav.imageUrl || '') + '\')';
+                    if (isSelf) {
+                        var removeBtn = document.createElement('button');
+                        removeBtn.className = 'lb-fav-remove';
+                        removeBtn.textContent = '×';
+                        removeBtn.onclick = (function(ri, idx) {
+                            return function() { self.removeFavorite(ri, idx); };
+                        })(rowIndex, i);
+                        slot.appendChild(removeBtn);
+                    }
+                    // Insert before the add slot
+                    var addSlot = grid.querySelector('.add-slot');
+                    if (addSlot) {
+                        grid.insertBefore(slot, addSlot);
+                    } else {
+                        grid.appendChild(slot);
+                    }
+                }
+            }
+        },
+
+        /**
+         * Delete a favorite row
+         */
+        deleteRow: function (rowIndex) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favoriteRows) return;
+
+            self._currentProfile.favoriteRows.splice(rowIndex, 1);
+
+            // Save to server
+            self.saveFavorites();
+
+            // Refresh the overview
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /**
+         * Update row title
+         */
+        updateRowTitle: function (rowIndex, title) {
+            var self = this;
+            if (!self._currentProfile) return;
+            if (!self._currentProfile.favoriteRows) return;
+            if (!self._currentProfile.favoriteRows[rowIndex]) return;
+
+            self._currentProfile.favoriteRows[rowIndex].title = title;
+
+            // Debounced save
+            clearTimeout(self._rowTitleSaveTimeout);
+            self._rowTitleSaveTimeout = setTimeout(function () {
+                self.saveFavorites();
+            }, 500);
+        },
+
+        /**
+         * Save favorites to server
+         */
+        saveFavorites: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            // Clean up rows and items
+            var favoriteRows = (self._currentProfile?.favoriteRows || []).map(function (row) {
+                return {
+                    title: row.title || 'Favorites',
+                    items: (row.items || []).filter(function (f) { return f && f.itemId; })
+                };
+            });
+
+            fetch(baseUrl + '/Social/MyProfile/Favorites', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify({ favoriteRows: favoriteRows })
+            })
+            .then(function (r) { return r.json(); })
+            .catch(function (err) {
+                console.error('[Social] Failed to save favorites:', err);
+            });
+        },
+
+        /**
+         * Toggle fullscreen mode for profile
+         */
+        toggleProfileFullscreen: function () {
+            var page = document.getElementById('socialProfilePage');
+            if (page) {
+                page.classList.toggle('fullscreen');
+                var btn = document.getElementById('lbFullscreenBtn');
+                if (btn) {
+                    btn.classList.toggle('active', page.classList.contains('fullscreen'));
+                    btn.textContent = page.classList.contains('fullscreen') ? '⛶' : '⛶';
+                }
+            }
+        },
+
+        /**
+         * Open profile settings modal
+         */
+        openProfileSettings: function () {
+            var self = this;
+            var profile = self._currentProfile || {};
+
+            // Create settings modal
+            var modal = document.createElement('div');
+            modal.className = 'lb-settings-modal';
+            modal.id = 'lbSettingsModal';
+            modal.innerHTML = '<div class="lb-settings-content">' +
+                '<div class="lb-settings-header">' +
+                '<h2>Profile Settings</h2>' +
+                '<button class="lb-settings-close" onclick="RatingsPlugin.closeProfileSettings()">&times;</button>' +
                 '</div>' +
-                '<div class="social-stat-card">' +
-                '<div class="social-stat-value">' + (stats.averageRating || 0) + '<span class="social-stat-star">★</span></div>' +
-                '<div class="social-stat-label">Avg Rating</div>' +
+                '<div class="lb-settings-body">' +
+                '<div class="lb-settings-section">' +
+                '<h3>Profile Information</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label>Bio</label>' +
+                '<textarea id="settingsBio" placeholder="Tell others about yourself...">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-section">' +
+                '<h3>Privacy</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsShowRatings" ' + (profile.showRatings !== false ? 'checked' : '') + '> Show my ratings to others</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsShowActivity" ' + (profile.showActivity !== false ? 'checked' : '') + '> Show my activity feed</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsAllowFollows" ' + (profile.allowFollows !== false ? 'checked' : '') + '> Allow others to follow me</label>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-footer">' +
+                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeProfileSettings()">Cancel</button>' +
+                '<button class="lb-btn-save" onclick="RatingsPlugin.saveProfileSettings()">Save Changes</button>' +
                 '</div>' +
                 '</div>';
 
-            content.innerHTML = html;
+            // Close on backdrop click
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    self.closeProfileSettings();
+                }
+            });
+
+            document.body.appendChild(modal);
+        },
+
+        /**
+         * Close profile settings modal
+         */
+        closeProfileSettings: function () {
+            var modal = document.getElementById('lbSettingsModal');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
+        /**
+         * Save profile settings
+         */
+        saveProfileSettings: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = {
+                'X-Emby-Token': ApiClient.accessToken(),
+                'Content-Type': 'application/json'
+            };
+
+            var bio = document.getElementById('settingsBio')?.value || '';
+            var showRatings = document.getElementById('settingsShowRatings')?.checked;
+            var showActivity = document.getElementById('settingsShowActivity')?.checked;
+            var allowFollows = document.getElementById('settingsAllowFollows')?.checked;
+
+            fetch(baseUrl + '/Social/MyProfile', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify({
+                    bio: bio,
+                    showRatings: showRatings,
+                    showActivity: showActivity,
+                    allowFollows: allowFollows
+                })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    self.closeProfileSettings();
+                    // Refresh profile
+                    self.showProfilePage(ApiClient.getCurrentUserId());
+                }
+            })
+            .catch(function (err) {
+                console.error('[Social] Failed to save settings:', err);
+            });
+        },
+
+        /**
+         * Profile follow action
+         */
+        profileFollow: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Follow/' + userId, { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile unfollow action
+         */
+        profileUnfollow: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Follow/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile like action
+         */
+        profileLike: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'POST', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Profile unlike action
+         */
+        profileUnlike: function (userId) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'DELETE', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function () { self.showProfilePage(userId); });
+        },
+
+        /**
+         * Load and render profile stats (legacy support)
+         */
+        loadProfileStats: function (userId) {
+            // Legacy - now handled in showProfilePage
+        },
+
+        /**
+         * Render profile stats (legacy support)
+         */
+        renderProfileStats: function (stats) {
+            // Legacy - now handled in renderProfileOverviewTab
         },
 
         /**
@@ -13461,6 +16606,10 @@
                 page.remove();
             }
 
+            // Restore background page scrolling.
+            document.body.style.overflow = self._prevBodyOverflow || '';
+            document.documentElement.style.overflow = self._prevHtmlOverflow || '';
+
             // Unregister as viewer
             if (self._viewingProfileUserId) {
                 self._viewingProfileUserId = null;
@@ -13472,6 +16621,27 @@
                     headers: headers
                 }).catch(function () { /* ignore errors */ });
             }
+        },
+
+        /**
+         * Toggle the profile background swatch menu.
+         */
+        toggleBgMenu: function (e) {
+            if (e) { e.stopPropagation(); }
+            var menu = document.getElementById('lbBgMenu');
+            if (!menu) return;
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+        },
+
+        /**
+         * Set (and remember) the profile background theme.
+         */
+        setProfileBackground: function (name) {
+            var page = document.getElementById('socialProfilePage');
+            if (page) page.setAttribute('data-bg', name);
+            try { localStorage.setItem('lbProfileBg', name); } catch (e) { /* ignore */ }
+            var menu = document.getElementById('lbBgMenu');
+            if (menu) menu.style.display = 'none';
         },
 
         /**
@@ -16577,7 +19747,8 @@
                 #ratingsButtonGroup #latestMediaBtn,
                 #ratingsButtonGroup #mediaManagementBtn,
                 #ratingsButtonGroup #chatBtn,
-                #ratingsButtonGroup #friendsBtn {
+                #ratingsButtonGroup #friendsBtn,
+                #ratingsButtonGroup #profileBtn {
                     color: ${style.buttonColor} !important;
                     opacity: ${iconOpacity} !important;
                 }
@@ -16622,7 +19793,8 @@
                 #ratingsButtonGroup #latestMediaBtn:hover,
                 #ratingsButtonGroup #mediaManagementBtn:hover,
                 #ratingsButtonGroup #chatBtn:hover,
-                #ratingsButtonGroup #friendsBtn:hover {
+                #ratingsButtonGroup #friendsBtn:hover,
+                #ratingsButtonGroup #profileBtn:hover {
                     background: ${style.buttonHoverBg} !important;
                     opacity: 1 !important;
                 }
@@ -24483,6 +27655,8 @@
                 if (netflixContainer && netflixContainer.isConnected) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    self.clearSortedGrid();
+                    self.librarySortState.active = false;
                     retryCount = 0;
                     return;
                 }
@@ -24499,6 +27673,8 @@
                 if (!isLibraryPage) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    self.clearSortedGrid();
+                    self.librarySortState.active = false;
                     retryCount = 0;
                     return;
                 }
@@ -24769,10 +27945,9 @@
                 return;
             }
 
-            // Store original HTML if not already stored (for restore)
-            if (!itemsContainer.dataset.originalHtml) {
-                itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
-            }
+            // NOTE: We no longer overwrite Jellyfin's own items container. Sorted results
+            // are rendered into a dedicated plugin-owned grid (#ratingsSortedGrid) so that
+            // Jellyfin's view controller can never repaint over our paginated results.
 
             // Get both buttons and store their original HTML
             const btnDesc = document.getElementById('librarySortDesc');
@@ -24836,14 +28011,34 @@
                     'X-Emby-Authorization': authHeader
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Surface auth/other errors instead of silently swallowing them
+                    throw new Error('SortedLibrary request failed: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 restoreBtn();
 
+                // Re-locate Jellyfin's native container (our owned grid is excluded by id)
+                const nativeContainer = self.findLibraryItemsContainer();
+                if (!nativeContainer) {
+                    return;
+                }
+
                 if (!data.items || data.items.length === 0) {
-                    // No items with ratings - show message
-                    itemsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No rated items found</div>';
-                    self.librarySortState.active = false;
+                    // totalCount > 0 means the user HAS ratings but they didn't resolve to
+                    // items in this library (provider-id only, removed items, wrong library).
+                    const msg = (data.totalCount && data.totalCount > 0)
+                        ? 'No matching rated items found in this library'
+                        : 'No rated items found';
+                    const grid = self.showSortedGrid(nativeContainer);
+                    grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #999; width: 100%;">' + msg + '</div>';
+                    self.librarySortState.active = true;
+                    self.librarySortState.totalPages = 0;
+                    const existingPagination = document.getElementById('ratingsSortPagination');
+                    if (existingPagination) existingPagination.remove();
                     return;
                 }
 
@@ -24863,8 +28058,9 @@
                     el.style.display = 'none';
                 });
 
-                // Rebuild cards with sorted items
-                self.rebuildLibraryCards(itemsContainer, data.items.map(item => ({
+                // Render sorted items into our OWNED grid (never touch Jellyfin's container)
+                const grid = self.showSortedGrid(nativeContainer);
+                self.rebuildLibraryCards(grid, data.items.map(item => ({
                     Id: item.Id,
                     Name: item.Name,
                     ProductionYear: item.Year,
@@ -24875,11 +28071,12 @@
                     Rating: item.Rating
                 })));
 
-                // Update or create pagination controls
-                self.updateSortPagination(itemsContainer);
+                // Update or create pagination controls (placed after our grid)
+                self.updateSortPagination(grid);
             })
             .catch(err => {
                 restoreBtn();
+                console.error('[Ratings] library sort failed:', err);
             });
         },
 
@@ -24947,6 +28144,8 @@
             for (const selector of containerSelectors) {
                 const containers = document.querySelectorAll(selector);
                 for (const container of containers) {
+                    // Never select our own sorted grid - we only ever want Jellyfin's native container
+                    if (container.id === 'ratingsSortedGrid') continue;
                     let cards = Array.from(container.querySelectorAll('.card[data-id]'));
                     if (cards.length === 0) {
                         cards = Array.from(container.querySelectorAll('.card'));
@@ -24959,6 +28158,57 @@
                 }
             }
             return itemsContainer;
+        },
+
+        /**
+         * Create (or reuse) a plugin-owned grid that displays sorted results, and hide
+         * Jellyfin's native items container so the two can never fight over the DOM.
+         * @param {HTMLElement} nativeContainer Jellyfin's native items container
+         * @returns {HTMLElement} the owned grid container
+         */
+        showSortedGrid: function (nativeContainer) {
+            let grid = document.getElementById('ratingsSortedGrid');
+            if (!grid) {
+                grid = document.createElement('div');
+                grid.id = 'ratingsSortedGrid';
+            }
+            // Mirror Jellyfin's grid layout classes so cards lay out identically
+            grid.className = nativeContainer.className;
+            grid.style.display = '';
+
+            // Place our grid immediately after the native container
+            if (!grid.isConnected || grid.previousElementSibling !== nativeContainer) {
+                nativeContainer.parentNode.insertBefore(grid, nativeContainer.nextSibling);
+            }
+
+            // Hide the native container (remember that we hid it, for restore)
+            if (nativeContainer.style.display !== 'none') {
+                nativeContainer.dataset.ratingsHidden = 'true';
+                nativeContainer.style.display = 'none';
+            }
+            return grid;
+        },
+
+        /**
+         * Tear down the owned sorted grid and restore Jellyfin's native view.
+         */
+        clearSortedGrid: function () {
+            const existingPagination = document.getElementById('ratingsSortPagination');
+            if (existingPagination) existingPagination.remove();
+
+            const grid = document.getElementById('ratingsSortedGrid');
+            if (grid) grid.remove();
+
+            // Unhide any native container(s) we hid
+            document.querySelectorAll('[data-ratings-hidden="true"]').forEach(el => {
+                el.style.display = '';
+                delete el.dataset.ratingsHidden;
+            });
+
+            // Restore Jellyfin's native pagination
+            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                el.style.display = '';
+            });
         },
 
         /**
@@ -25175,50 +28425,9 @@
          */
         restoreLibraryCardsOrder: function () {
             const self = this;
-            const itemsContainer = self.findLibraryItemsContainer();
-            if (!itemsContainer) return;
-
-            // Remove custom pagination
-            const existingPagination = document.getElementById('ratingsSortPagination');
-            if (existingPagination) existingPagination.remove();
-
-            // Restore Jellyfin's native pagination
-            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
-                el.style.display = '';
-            });
-
-            // Reset sort state
+            self.clearSortedGrid();
             self.librarySortState.active = false;
             self.librarySortState.isSorting = false;
-
-            // Restore from original HTML if available
-            if (itemsContainer.dataset.originalHtml) {
-                itemsContainer.innerHTML = itemsContainer.dataset.originalHtml;
-                delete itemsContainer.dataset.originalHtml;
-                // Rating badges will be re-applied by MutationObserver
-                return;
-            }
-
-            // Fallback: restore from original order IDs
-            if (itemsContainer.dataset.originalOrder) {
-                const originalIds = itemsContainer.dataset.originalOrder.split(',');
-                const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
-
-                const cardMap = new Map();
-                cards.forEach(card => {
-                    const id = card.getAttribute('data-id') || '';
-                    cardMap.set(id, card);
-                });
-
-                originalIds.forEach(id => {
-                    const card = cardMap.get(id);
-                    if (card) {
-                        itemsContainer.appendChild(card);
-                    }
-                });
-
-                delete itemsContainer.dataset.originalOrder;
-            }
         },
 
         /**
@@ -25385,6 +28594,9 @@
             // Find and replace cast button
             this.injectChatButton();
 
+            // Add profile button to header
+            this.injectProfileButton();
+
             // Create chat window (hidden by default)
             this.createChatWindow();
 
@@ -25443,6 +28655,58 @@
             };
 
             setTimeout(tryInject, 2000);
+        },
+
+        /**
+         * Inject profile button in header
+         */
+        injectProfileButton: function () {
+            const self = this;
+
+            // Check config first
+            self.getConfig().then(function (config) {
+                if (config.ShowHeaderProfileButton === false) {
+                    return; // Don't create profile button
+                }
+
+                let attempts = 0;
+
+                const tryInject = function () {
+                    attempts++;
+
+                    const buttonGroup = document.getElementById('ratingsButtonGroup');
+                    if (buttonGroup && !document.getElementById('profileBtn')) {
+                        // Create profile button
+                        const profileBtn = document.createElement('button');
+                        profileBtn.id = 'profileBtn';
+                        profileBtn.className = 'ratingsGroupBtn';
+                        profileBtn.setAttribute('type', 'button');
+                        profileBtn.title = 'My Profile';
+                        // Person icon SVG
+                        profileBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>`;
+                        profileBtn.onclick = function () {
+                            // Open current user's profile
+                            var currentUserId = ApiClient.getCurrentUserId();
+                            if (currentUserId) {
+                                self.showProfilePage(currentUserId);
+                            }
+                        };
+
+                        // Add to the button group; CSS `order` places it right after the language/globe button.
+                        buttonGroup.appendChild(profileBtn);
+
+                        return;
+                    }
+
+                    if (attempts < 30) {
+                        setTimeout(tryInject, 1000);
+                    }
+                };
+
+                setTimeout(tryInject, 2000);
+            });
         },
 
         /**

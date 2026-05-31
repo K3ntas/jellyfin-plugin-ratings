@@ -27,6 +27,13 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _friendshipsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _notificationsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _onlineStatusWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _followsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _profileLikesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _mediaListsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _listItemsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _profileStylesWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _imdbCacheWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _featuredReviewsWriteLock = new(1, 1);
 
         // In-memory storage
         private Dictionary<Guid, UserProfile> _profiles;
@@ -34,6 +41,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         private List<Friendship> _friendships;
         private List<SocialNotification> _notifications;
         private Dictionary<Guid, UserOnlineStatus> _onlineStatuses;
+
+        // New social features storage
+        private List<UserFollow> _follows;
+        private List<ProfileLike> _profileLikes;
+        private List<UserMediaList> _mediaLists;
+        private List<UserMediaListItem> _listItems;
+        private Dictionary<Guid, UserProfileStyle> _profileStyles;
+        private Dictionary<string, ImdbCacheItem> _imdbCache;
+        private List<FeaturedReview> _featuredReviews;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialRepository"/> class.
@@ -51,6 +67,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             _notifications = new List<SocialNotification>();
             _onlineStatuses = new Dictionary<Guid, UserOnlineStatus>();
 
+            // Initialize new collections
+            _follows = new List<UserFollow>();
+            _profileLikes = new List<ProfileLike>();
+            _mediaLists = new List<UserMediaList>();
+            _listItems = new List<UserMediaListItem>();
+            _profileStyles = new Dictionary<Guid, UserProfileStyle>();
+            _imdbCache = new Dictionary<string, ImdbCacheItem>();
+            _featuredReviews = new List<FeaturedReview>();
+
             if (!Directory.Exists(_dataPath))
             {
                 Directory.CreateDirectory(_dataPath);
@@ -63,9 +88,16 @@ namespace Jellyfin.Plugin.Ratings.Data
             LoadNotifications();
             LoadOnlineStatuses();
             LoadBlockedUsers();
+            LoadFollows();
+            LoadProfileLikes();
+            LoadMediaLists();
+            LoadListItems();
+            LoadProfileStyles();
+            LoadImdbCache();
+            LoadFeaturedReviews();
 
-            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, OnlineStatuses: {OnlineStatuses}, BlockedUsers: {BlockedUsers}",
-                _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count, _blockedUsers.Count);
+            _logger.LogInformation("[Social] Repository initialized - Profiles: {Profiles}, Requests: {Requests}, Friendships: {Friendships}, OnlineStatuses: {OnlineStatuses}, BlockedUsers: {BlockedUsers}, Follows: {Follows}, ProfileLikes: {ProfileLikes}, MediaLists: {MediaLists}",
+                _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count, _blockedUsers.Count, _follows.Count, _profileLikes.Count, _mediaLists.Count);
         }
 
         /// <summary>
@@ -1177,6 +1209,1016 @@ namespace Jellyfin.Plugin.Ratings.Data
             return _blockedUsers.Any(b =>
                 (b.UserId == userId1 && b.BlockedUserId == userId2) ||
                 (b.UserId == userId2 && b.BlockedUserId == userId1));
+        }
+
+        #endregion
+
+        #region User Follows
+
+        /// <summary>
+        /// Creates a follow relationship.
+        /// </summary>
+        /// <param name="followerId">The user who is following.</param>
+        /// <param name="followingId">The user being followed.</param>
+        /// <returns>The created follow.</returns>
+        public async Task<UserFollow> FollowUserAsync(Guid followerId, Guid followingId)
+        {
+            var follow = new UserFollow
+            {
+                FollowerId = followerId,
+                FollowingId = followingId
+            };
+
+            lock (_lock)
+            {
+                // Check if already following
+                if (!_follows.Any(f => f.FollowerId == followerId && f.FollowingId == followingId))
+                {
+                    _follows.Add(follow);
+                }
+                else
+                {
+                    return _follows.First(f => f.FollowerId == followerId && f.FollowingId == followingId);
+                }
+            }
+
+            await SaveFollowsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] User {Follower} followed {Following}", followerId, followingId);
+            return follow;
+        }
+
+        /// <summary>
+        /// Removes a follow relationship.
+        /// </summary>
+        /// <param name="followerId">The user who is following.</param>
+        /// <param name="followingId">The user being followed.</param>
+        /// <returns>True if unfollowed successfully.</returns>
+        public async Task<bool> UnfollowUserAsync(Guid followerId, Guid followingId)
+        {
+            bool removed;
+            lock (_lock)
+            {
+                removed = _follows.RemoveAll(f => f.FollowerId == followerId && f.FollowingId == followingId) > 0;
+            }
+
+            if (removed)
+            {
+                await SaveFollowsAsync().ConfigureAwait(false);
+                _logger.LogInformation("[Social] User {Follower} unfollowed {Following}", followerId, followingId);
+            }
+            return removed;
+        }
+
+        /// <summary>
+        /// Checks if a user is following another user.
+        /// </summary>
+        public bool IsFollowing(Guid followerId, Guid followingId)
+        {
+            lock (_lock)
+            {
+                return _follows.Any(f => f.FollowerId == followerId && f.FollowingId == followingId);
+            }
+        }
+
+        /// <summary>
+        /// Gets followers of a user.
+        /// </summary>
+        public List<UserFollow> GetFollowers(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _follows.Where(f => f.FollowingId == userId).OrderByDescending(f => f.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets users that a user is following.
+        /// </summary>
+        public List<UserFollow> GetFollowing(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _follows.Where(f => f.FollowerId == userId).OrderByDescending(f => f.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets follower count for a user.
+        /// </summary>
+        public int GetFollowerCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _follows.Count(f => f.FollowingId == userId);
+            }
+        }
+
+        /// <summary>
+        /// Gets following count for a user.
+        /// </summary>
+        public int GetFollowingCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _follows.Count(f => f.FollowerId == userId);
+            }
+        }
+
+        /// <summary>
+        /// Checks if two users are mutual followers (friends).
+        /// </summary>
+        public bool AreMutualFollowers(Guid userId1, Guid userId2)
+        {
+            lock (_lock)
+            {
+                return _follows.Any(f => f.FollowerId == userId1 && f.FollowingId == userId2) &&
+                       _follows.Any(f => f.FollowerId == userId2 && f.FollowingId == userId1);
+            }
+        }
+
+        private void LoadFollows()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "follows.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var follows = JsonSerializer.Deserialize<List<UserFollow>>(json, options);
+                    if (follows != null)
+                    {
+                        _follows = follows;
+                        _logger.LogInformation("[Social] Loaded {Count} follows from disk", _follows.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading follows from disk");
+            }
+        }
+
+        private async Task SaveFollowsAsync()
+        {
+            await _followsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "follows.json");
+                List<UserFollow> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _follows.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving follows to disk");
+            }
+            finally
+            {
+                _followsWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Profile Likes
+
+        /// <summary>
+        /// Likes a user's profile.
+        /// </summary>
+        public async Task<ProfileLike> LikeProfileAsync(Guid profileUserId, Guid likerUserId)
+        {
+            var like = new ProfileLike
+            {
+                ProfileUserId = profileUserId,
+                LikerUserId = likerUserId
+            };
+
+            lock (_lock)
+            {
+                // Check if already liked
+                if (!_profileLikes.Any(l => l.ProfileUserId == profileUserId && l.LikerUserId == likerUserId))
+                {
+                    _profileLikes.Add(like);
+                }
+                else
+                {
+                    return _profileLikes.First(l => l.ProfileUserId == profileUserId && l.LikerUserId == likerUserId);
+                }
+            }
+
+            await SaveProfileLikesAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] User {Liker} liked profile of {Profile}", likerUserId, profileUserId);
+            return like;
+        }
+
+        /// <summary>
+        /// Unlikes a user's profile.
+        /// </summary>
+        public async Task<bool> UnlikeProfileAsync(Guid profileUserId, Guid likerUserId)
+        {
+            bool removed;
+            lock (_lock)
+            {
+                removed = _profileLikes.RemoveAll(l => l.ProfileUserId == profileUserId && l.LikerUserId == likerUserId) > 0;
+            }
+
+            if (removed)
+            {
+                await SaveProfileLikesAsync().ConfigureAwait(false);
+                _logger.LogInformation("[Social] User {Liker} unliked profile of {Profile}", likerUserId, profileUserId);
+            }
+            return removed;
+        }
+
+        /// <summary>
+        /// Checks if a user has liked a profile.
+        /// </summary>
+        public bool HasLikedProfile(Guid profileUserId, Guid likerUserId)
+        {
+            lock (_lock)
+            {
+                return _profileLikes.Any(l => l.ProfileUserId == profileUserId && l.LikerUserId == likerUserId);
+            }
+        }
+
+        /// <summary>
+        /// Gets profile like count.
+        /// </summary>
+        public int GetProfileLikeCount(Guid profileUserId)
+        {
+            lock (_lock)
+            {
+                return _profileLikes.Count(l => l.ProfileUserId == profileUserId);
+            }
+        }
+
+        /// <summary>
+        /// Gets list of users who liked a profile.
+        /// </summary>
+        public List<ProfileLike> GetProfileLikers(Guid profileUserId)
+        {
+            lock (_lock)
+            {
+                return _profileLikes.Where(l => l.ProfileUserId == profileUserId).OrderByDescending(l => l.CreatedAt).ToList();
+            }
+        }
+
+        private void LoadProfileLikes()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "profile_likes.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var likes = JsonSerializer.Deserialize<List<ProfileLike>>(json, options);
+                    if (likes != null)
+                    {
+                        _profileLikes = likes;
+                        _logger.LogInformation("[Social] Loaded {Count} profile likes from disk", _profileLikes.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading profile likes from disk");
+            }
+        }
+
+        private async Task SaveProfileLikesAsync()
+        {
+            await _profileLikesWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "profile_likes.json");
+                List<ProfileLike> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _profileLikes.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving profile likes to disk");
+            }
+            finally
+            {
+                _profileLikesWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Media Lists
+
+        /// <summary>
+        /// Creates a new media list.
+        /// </summary>
+        public async Task<UserMediaList> CreateListAsync(UserMediaList list)
+        {
+            lock (_lock)
+            {
+                // Check max 5 lists per user
+                var userListCount = _mediaLists.Count(l => l.UserId == list.UserId && !l.IsDeleted);
+                if (userListCount >= 5)
+                {
+                    throw new InvalidOperationException("Maximum of 5 lists per user allowed.");
+                }
+
+                list.SortOrder = userListCount;
+                _mediaLists.Add(list);
+            }
+
+            await SaveMediaListsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Created list '{Title}' for user {UserId}", list.Title, list.UserId);
+            return list;
+        }
+
+        /// <summary>
+        /// Updates a media list.
+        /// </summary>
+        public async Task<UserMediaList> UpdateListAsync(UserMediaList list)
+        {
+            lock (_lock)
+            {
+                var existing = _mediaLists.FirstOrDefault(l => l.Id == list.Id);
+                if (existing != null)
+                {
+                    var index = _mediaLists.IndexOf(existing);
+                    list.UpdatedAt = DateTime.UtcNow;
+                    _mediaLists[index] = list;
+                }
+            }
+
+            await SaveMediaListsAsync().ConfigureAwait(false);
+            return list;
+        }
+
+        /// <summary>
+        /// Deletes a media list (soft delete).
+        /// </summary>
+        public async Task<bool> DeleteListAsync(Guid listId)
+        {
+            lock (_lock)
+            {
+                var list = _mediaLists.FirstOrDefault(l => l.Id == listId);
+                if (list != null)
+                {
+                    list.IsDeleted = true;
+                    list.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
+            await SaveMediaListsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Deleted list {ListId}", listId);
+            return true;
+        }
+
+        /// <summary>
+        /// Gets a list by ID.
+        /// </summary>
+        public UserMediaList? GetList(Guid listId)
+        {
+            lock (_lock)
+            {
+                return _mediaLists.FirstOrDefault(l => l.Id == listId && !l.IsDeleted);
+            }
+        }
+
+        /// <summary>
+        /// Gets all lists for a user.
+        /// </summary>
+        public List<UserMediaList> GetUserLists(Guid userId, bool includeDeleted = false)
+        {
+            lock (_lock)
+            {
+                return _mediaLists
+                    .Where(l => l.UserId == userId && (includeDeleted || !l.IsDeleted))
+                    .OrderBy(l => l.SortOrder)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets visible lists for a user (respecting privacy).
+        /// </summary>
+        public List<UserMediaList> GetVisibleLists(Guid profileUserId, Guid viewerUserId, bool isFriend)
+        {
+            lock (_lock)
+            {
+                return _mediaLists
+                    .Where(l => l.UserId == profileUserId && !l.IsDeleted &&
+                        (l.UserId == viewerUserId || // Owner sees all
+                         (isFriend && l.VisibleToFriends) ||
+                         (!isFriend && l.VisibleToRegularUsers)))
+                    .OrderBy(l => l.SortOrder)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets list count for a user.
+        /// </summary>
+        public int GetListCount(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _mediaLists.Count(l => l.UserId == userId && !l.IsDeleted);
+            }
+        }
+
+        /// <summary>
+        /// Clones a list for another user.
+        /// </summary>
+        public async Task<UserMediaList> CloneListAsync(Guid sourceListId, Guid newOwnerId, string newOwnerUsername)
+        {
+            UserMediaList? sourceList;
+            List<UserMediaListItem> sourceItems;
+
+            lock (_lock)
+            {
+                sourceList = _mediaLists.FirstOrDefault(l => l.Id == sourceListId && !l.IsDeleted);
+                if (sourceList == null)
+                {
+                    throw new InvalidOperationException("Source list not found.");
+                }
+
+                sourceItems = _listItems.Where(i => i.ListId == sourceListId).ToList();
+            }
+
+            // Get source owner's username
+            var sourceProfile = GetProfile(sourceList.UserId);
+            var sourceUsername = sourceProfile?.Username ?? "Unknown";
+
+            var newList = new UserMediaList
+            {
+                UserId = newOwnerId,
+                Title = sourceList.Title,
+                Description = sourceList.Description,
+                ListType = sourceList.ListType,
+                MaxItems = sourceList.MaxItems,
+                ClonedFromUserId = sourceList.UserId,
+                ClonedFromUsername = sourceUsername
+            };
+
+            await CreateListAsync(newList).ConfigureAwait(false);
+
+            // Clone items
+            foreach (var item in sourceItems)
+            {
+                var newItem = new UserMediaListItem
+                {
+                    ListId = newList.Id,
+                    ItemId = item.ItemId,
+                    ImdbId = item.ImdbId,
+                    CachedTitle = item.CachedTitle,
+                    CachedImageUrl = item.CachedImageUrl,
+                    CachedOverview = item.CachedOverview,
+                    CachedYear = item.CachedYear,
+                    CachedGenres = item.CachedGenres,
+                    CachedMediaType = item.CachedMediaType,
+                    CachedAt = item.CachedAt,
+                    Position = item.Position
+                };
+                await AddListItemAsync(newItem).ConfigureAwait(false);
+            }
+
+            _logger.LogInformation("[Social] List {SourceId} cloned to {NewId} by user {UserId}", sourceListId, newList.Id, newOwnerId);
+            return newList;
+        }
+
+        private void LoadMediaLists()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "media_lists.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var lists = JsonSerializer.Deserialize<List<UserMediaList>>(json, options);
+                    if (lists != null)
+                    {
+                        _mediaLists = lists;
+                        _logger.LogInformation("[Social] Loaded {Count} media lists from disk", _mediaLists.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading media lists from disk");
+            }
+        }
+
+        private async Task SaveMediaListsAsync()
+        {
+            await _mediaListsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "media_lists.json");
+                List<UserMediaList> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _mediaLists.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving media lists to disk");
+            }
+            finally
+            {
+                _mediaListsWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region List Items
+
+        /// <summary>
+        /// Adds an item to a list.
+        /// </summary>
+        public async Task<UserMediaListItem> AddListItemAsync(UserMediaListItem item)
+        {
+            lock (_lock)
+            {
+                var list = _mediaLists.FirstOrDefault(l => l.Id == item.ListId);
+                if (list == null)
+                {
+                    throw new InvalidOperationException("List not found.");
+                }
+
+                var itemCount = _listItems.Count(i => i.ListId == item.ListId);
+                if (itemCount >= list.MaxItems)
+                {
+                    throw new InvalidOperationException($"List is full. Maximum {list.MaxItems} items allowed.");
+                }
+
+                if (item.Position == 0)
+                {
+                    item.Position = itemCount + 1;
+                }
+
+                _listItems.Add(item);
+            }
+
+            await SaveListItemsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Added item to list {ListId}", item.ListId);
+            return item;
+        }
+
+        /// <summary>
+        /// Updates a list item.
+        /// </summary>
+        public async Task<UserMediaListItem> UpdateListItemAsync(UserMediaListItem item)
+        {
+            lock (_lock)
+            {
+                var existing = _listItems.FirstOrDefault(i => i.Id == item.Id);
+                if (existing != null)
+                {
+                    var index = _listItems.IndexOf(existing);
+                    _listItems[index] = item;
+                }
+            }
+
+            await SaveListItemsAsync().ConfigureAwait(false);
+            return item;
+        }
+
+        /// <summary>
+        /// Removes an item from a list.
+        /// </summary>
+        public async Task<bool> RemoveListItemAsync(Guid itemId)
+        {
+            bool removed;
+            lock (_lock)
+            {
+                removed = _listItems.RemoveAll(i => i.Id == itemId) > 0;
+            }
+
+            if (removed)
+            {
+                await SaveListItemsAsync().ConfigureAwait(false);
+                _logger.LogInformation("[Social] Removed item {ItemId} from list", itemId);
+            }
+            return removed;
+        }
+
+        /// <summary>
+        /// Gets items in a list.
+        /// </summary>
+        public List<UserMediaListItem> GetListItems(Guid listId)
+        {
+            lock (_lock)
+            {
+                return _listItems.Where(i => i.ListId == listId).OrderBy(i => i.Position).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Reorders items in a list.
+        /// </summary>
+        public async Task ReorderListItemsAsync(Guid listId, List<Guid> itemIds)
+        {
+            lock (_lock)
+            {
+                for (int i = 0; i < itemIds.Count; i++)
+                {
+                    var item = _listItems.FirstOrDefault(it => it.Id == itemIds[i] && it.ListId == listId);
+                    if (item != null)
+                    {
+                        item.Position = i + 1;
+                    }
+                }
+            }
+
+            await SaveListItemsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Reordered items in list {ListId}", listId);
+        }
+
+        private void LoadListItems()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "list_items.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var items = JsonSerializer.Deserialize<List<UserMediaListItem>>(json, options);
+                    if (items != null)
+                    {
+                        _listItems = items;
+                        _logger.LogInformation("[Social] Loaded {Count} list items from disk", _listItems.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading list items from disk");
+            }
+        }
+
+        private async Task SaveListItemsAsync()
+        {
+            await _listItemsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "list_items.json");
+                List<UserMediaListItem> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _listItems.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving list items to disk");
+            }
+            finally
+            {
+                _listItemsWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Profile Styles
+
+        /// <summary>
+        /// Gets profile style for a user.
+        /// </summary>
+        public UserProfileStyle? GetProfileStyle(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _profileStyles.TryGetValue(userId, out var style) ? style : null;
+            }
+        }
+
+        /// <summary>
+        /// Gets or creates default profile style for a user.
+        /// </summary>
+        public UserProfileStyle GetOrCreateProfileStyle(Guid userId)
+        {
+            lock (_lock)
+            {
+                if (_profileStyles.TryGetValue(userId, out var style))
+                {
+                    return style;
+                }
+
+                var newStyle = new UserProfileStyle { UserId = userId };
+                _profileStyles[userId] = newStyle;
+                return newStyle;
+            }
+        }
+
+        /// <summary>
+        /// Saves profile style.
+        /// </summary>
+        public async Task<UserProfileStyle> SaveProfileStyleAsync(UserProfileStyle style)
+        {
+            lock (_lock)
+            {
+                style.UpdatedAt = DateTime.UtcNow;
+                _profileStyles[style.UserId] = style;
+            }
+
+            await SaveProfileStylesAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Saved profile style for user {UserId}", style.UserId);
+            return style;
+        }
+
+        private void LoadProfileStyles()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "profile_styles.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var styles = JsonSerializer.Deserialize<List<UserProfileStyle>>(json, options);
+                    if (styles != null)
+                    {
+                        _profileStyles = styles.ToDictionary(s => s.UserId);
+                        _logger.LogInformation("[Social] Loaded {Count} profile styles from disk", _profileStyles.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading profile styles from disk");
+            }
+        }
+
+        private async Task SaveProfileStylesAsync()
+        {
+            await _profileStylesWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "profile_styles.json");
+                List<UserProfileStyle> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _profileStyles.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving profile styles to disk");
+            }
+            finally
+            {
+                _profileStylesWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region IMDB Cache
+
+        /// <summary>
+        /// Gets cached IMDB item.
+        /// </summary>
+        public ImdbCacheItem? GetImdbCache(string imdbId)
+        {
+            lock (_lock)
+            {
+                return _imdbCache.TryGetValue(imdbId, out var item) ? item : null;
+            }
+        }
+
+        /// <summary>
+        /// Saves IMDB cache item.
+        /// </summary>
+        public async Task<ImdbCacheItem> SaveImdbCacheAsync(ImdbCacheItem item)
+        {
+            lock (_lock)
+            {
+                item.CachedAt = DateTime.UtcNow;
+                _imdbCache[item.ImdbId] = item;
+            }
+
+            await SaveImdbCacheDataAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Cached IMDB item {ImdbId}", item.ImdbId);
+            return item;
+        }
+
+        /// <summary>
+        /// Removes IMDB cache item (for refresh).
+        /// </summary>
+        public async Task<bool> RemoveImdbCacheAsync(string imdbId)
+        {
+            bool removed;
+            lock (_lock)
+            {
+                removed = _imdbCache.Remove(imdbId);
+            }
+
+            if (removed)
+            {
+                await SaveImdbCacheDataAsync().ConfigureAwait(false);
+            }
+            return removed;
+        }
+
+        private void LoadImdbCache()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "imdb_cache.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var items = JsonSerializer.Deserialize<List<ImdbCacheItem>>(json, options);
+                    if (items != null)
+                    {
+                        _imdbCache = items.ToDictionary(i => i.ImdbId);
+                        _logger.LogInformation("[Social] Loaded {Count} IMDB cache items from disk", _imdbCache.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading IMDB cache from disk");
+            }
+        }
+
+        private async Task SaveImdbCacheDataAsync()
+        {
+            await _imdbCacheWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "imdb_cache.json");
+                List<ImdbCacheItem> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _imdbCache.Values.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving IMDB cache to disk");
+            }
+            finally
+            {
+                _imdbCacheWriteLock.Release();
+            }
+        }
+
+        #endregion
+
+        #region Featured Reviews
+
+        /// <summary>
+        /// Features a review.
+        /// </summary>
+        public async Task<FeaturedReview> FeatureReviewAsync(Guid userId, Guid itemId)
+        {
+            var featured = new FeaturedReview
+            {
+                UserId = userId,
+                ItemId = itemId
+            };
+
+            lock (_lock)
+            {
+                // Check max 3 featured reviews
+                var userFeatured = _featuredReviews.Where(f => f.UserId == userId).ToList();
+                if (userFeatured.Count >= 3)
+                {
+                    throw new InvalidOperationException("Maximum of 3 featured reviews allowed.");
+                }
+
+                // Check if already featured
+                if (userFeatured.Any(f => f.ItemId == itemId))
+                {
+                    return userFeatured.First(f => f.ItemId == itemId);
+                }
+
+                featured.Position = userFeatured.Count + 1;
+                _featuredReviews.Add(featured);
+            }
+
+            await SaveFeaturedReviewsAsync().ConfigureAwait(false);
+            _logger.LogInformation("[Social] Featured review for item {ItemId} by user {UserId}", itemId, userId);
+            return featured;
+        }
+
+        /// <summary>
+        /// Unfeatures a review.
+        /// </summary>
+        public async Task<bool> UnfeatureReviewAsync(Guid userId, Guid itemId)
+        {
+            bool removed;
+            lock (_lock)
+            {
+                removed = _featuredReviews.RemoveAll(f => f.UserId == userId && f.ItemId == itemId) > 0;
+            }
+
+            if (removed)
+            {
+                await SaveFeaturedReviewsAsync().ConfigureAwait(false);
+                _logger.LogInformation("[Social] Unfeatured review for item {ItemId} by user {UserId}", itemId, userId);
+            }
+            return removed;
+        }
+
+        /// <summary>
+        /// Gets featured reviews for a user.
+        /// </summary>
+        public List<FeaturedReview> GetFeaturedReviews(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _featuredReviews.Where(f => f.UserId == userId).OrderBy(f => f.Position).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Checks if a review is featured.
+        /// </summary>
+        public bool IsReviewFeatured(Guid userId, Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _featuredReviews.Any(f => f.UserId == userId && f.ItemId == itemId);
+            }
+        }
+
+        private void LoadFeaturedReviews()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "featured_reviews.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var reviews = JsonSerializer.Deserialize<List<FeaturedReview>>(json, options);
+                    if (reviews != null)
+                    {
+                        _featuredReviews = reviews;
+                        _logger.LogInformation("[Social] Loaded {Count} featured reviews from disk", _featuredReviews.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error loading featured reviews from disk");
+            }
+        }
+
+        private async Task SaveFeaturedReviewsAsync()
+        {
+            await _featuredReviewsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "featured_reviews.json");
+                List<FeaturedReview> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _featuredReviews.ToList();
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving featured reviews to disk");
+            }
+            finally
+            {
+                _featuredReviewsWriteLock.Release();
+            }
         }
 
         #endregion

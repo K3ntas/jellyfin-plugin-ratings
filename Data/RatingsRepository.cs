@@ -102,23 +102,26 @@ namespace Jellyfin.Plugin.Ratings.Data
                 Directory.CreateDirectory(_dataPath);
             }
 
-            LoadRatings();
-            LoadMediaRequests();
-            LoadScheduledDeletions();
-            LoadDeletionRequests();
-            LoadUserBans();
-            LoadChatMessages();
-            LoadChatUsers();
-            LoadChatModerators();
-            LoadChatBans();
-            LoadPrivateMessages();
-            LoadPublicChatLastSeen();
-            LoadModeratorActions();
-            LoadUserStyleOverrides();
-            LoadMediaQuotas();
-            LoadKeepRequests();
-            LoadReviewLikes();
-            LoadReviewComments();
+            // Load all persisted data in parallel to cut startup/first-use latency.
+            // Each loader reads its own file into its own collection, so they are independent.
+            System.Threading.Tasks.Parallel.Invoke(
+                LoadRatings,
+                LoadMediaRequests,
+                LoadScheduledDeletions,
+                LoadDeletionRequests,
+                LoadUserBans,
+                LoadChatMessages,
+                LoadChatUsers,
+                LoadChatModerators,
+                LoadChatBans,
+                LoadPrivateMessages,
+                LoadPublicChatLastSeen,
+                LoadModeratorActions,
+                LoadUserStyleOverrides,
+                LoadMediaQuotas,
+                LoadKeepRequests,
+                LoadReviewLikes,
+                LoadReviewComments);
         }
 
         /// <summary>

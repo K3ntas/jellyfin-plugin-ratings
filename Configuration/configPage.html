@@ -732,6 +732,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkShowHeaderProfileButton" type="checkbox" is="emby-checkbox" />
+                                    <span>Show Profile Button</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show profile button in header to access your Letterboxd-style profile page.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkNotificationsEnabledByDefault" type="checkbox" is="emby-checkbox" />
                                     <span>Enable Notifications by Default</span>
                                 </label>
@@ -2662,6 +2672,7 @@
                     document.querySelector('#chkShowLanguageSwitch').checked = config.ShowLanguageSwitch;
                     document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
+                    document.querySelector('#chkShowHeaderProfileButton').checked = config.ShowHeaderProfileButton !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
                     document.querySelector('#chkHideHomeDuplicates').checked = config.HideHomeDuplicates !== false;
@@ -2978,6 +2989,7 @@
                     config.ShowLanguageSwitch = document.querySelector('#chkShowLanguageSwitch').checked;
                     config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
+                    config.ShowHeaderProfileButton = document.querySelector('#chkShowHeaderProfileButton').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
                     config.HideHomeDuplicates = document.querySelector('#chkHideHomeDuplicates').checked;

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings</title>
+    <style>
+        :root {
+            --bg-primary: #14141f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #2a2a3e;
+            --border-color: #3a3a4e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #808080;
+            --accent: #00d4ff;
+            --accent-hover: #00b8e6;
+            --success: #4caf50;
+            --error: #f44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .settings-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+        }
+
+        .settings-nav {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .nav-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .settings-section {
+            display: none;
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker::-webkit-color-swatch {
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+
+        .color-hex {
+            flex: 1;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .checkbox-header {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+        }
+
+        .checkbox-cell {
+            text-align: center;
+        }
+
+        .form-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .preview-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .preview-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .preview-profile {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .preview-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .preview-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .preview-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .range-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .form-range {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            min-width: 40px;
+            text-align: right;
+            color: var(--text-muted);
+        }
+
+        .image-upload {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .image-upload:hover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .image-upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .image-upload-text {
+            color: var(--text-muted);
+        }
+
+        .image-preview {
+            margin-top: 15px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <a href="user_profile.html" class="back-link">← Back to Profile</a>
+
+        <div class="settings-header">
+            <h1 class="settings-title">Profile Settings</h1>
+            <div>
+                <button class="btn btn-secondary" onclick="resetToDefaults()">Reset</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+            </div>
+        </div>
+
+        <div class="settings-nav">
+            <button class="nav-btn active" data-section="profile">Profile</button>
+            <button class="nav-btn" data-section="appearance">Appearance</button>
+            <button class="nav-btn" data-section="colors">Colors</button>
+            <button class="nav-btn" data-section="privacy">Privacy</button>
+            <button class="nav-btn" data-section="notifications">Notifications</button>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="settings-section active" id="section-profile">
+            <h2 class="section-title">Profile Information</h2>
+
+            <div class="form-group">
+                <label class="form-label">Bio</label>
+                <textarea class="form-input form-textarea" id="bio" placeholder="Tell others about yourself..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Avatar</label>
+                <div class="image-upload" onclick="document.getElementById('avatarInput').click()">
+                    <div class="image-upload-icon">📷</div>
+                    <div class="image-upload-text">Click to upload avatar image</div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none" onchange="previewAvatar(this)">
+                </div>
+                <div class="image-preview" id="avatarPreview"></div>
+            </div>
+        </div>
+
+        <!-- Appearance Section -->
+        <div class="settings-section" id="section-appearance">
+            <h2 class="section-title">Appearance</h2>
+
+            <div class="form-group">
+                <label class="form-label">Theme</label>
+                <select class="form-select" id="theme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Font Family</label>
+                <select class="form-select" id="fontFamily">
+                    <option value="system-ui, -apple-system, sans-serif">System Default</option>
+                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Background Type</label>
+                <select class="form-select" id="backgroundType" onchange="updateBackgroundOptions()">
+                    <option value="solid">Solid Color</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="image">Image</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="bgColorGroup">
+                <label class="form-label">Background Color</label>
+                <div class="color-picker-group">
+                    <input type="color" class="color-picker" id="backgroundColor" value="#1a1a2e">
+                    <input type="text" class="form-input color-hex" id="backgroundColorHex" value="#1a1a2e">
+                </div>
+            </div>
+
+            <div class="form-group" id="bgGradientGroup" style="display: none;">
+                <label class="form-label">Gradient</label>
+                <div class="form-row">
+                    <div class="color-picker-group">
+                        <label style="min-width: 50px;">Start:</label>
+                        <input type="color" class="color-picker" id="gradientStart" value="#1a1a2e">
+                    </div>
+                    <div class="color-picker-group">
+                        <label style="min-width: 50px;">End:</label>
+                        <input type="color" class="color-picker" id="gradientEnd" value="#2a2a3e">
+                    </div>
+                </div>
+                <select class="form-select" id="gradientDirection" style="margin-top: 10px;">
+                    <option value="to bottom">Top to Bottom</option>
+                    <option value="to right">Left to Right</option>
+                    <option value="to bottom right">Diagonal</option>
+                    <option value="circle">Radial</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="bgImageGroup" style="display: none;">
+                <label class="form-label">Background Image</label>
+                <div class="image-upload" onclick="document.getElementById('bgImageInput').click()">
+                    <div class="image-upload-icon">🖼️</div>
+                    <div class="image-upload-text">Click to upload background image</div>
+                    <input type="file" id="bgImageInput" accept="image/*" style="display: none" onchange="previewBgImage(this)">
+                </div>
+                <div class="image-preview" id="bgImagePreview"></div>
+
+                <div style="margin-top: 15px;">
+                    <label class="form-label">Blur Amount</label>
+                    <div class="range-group">
+                        <input type="range" class="form-range" id="backgroundBlur" min="0" max="20" value="0">
+                        <span class="range-value" id="blurValue">0px</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label class="form-label">Overlay Opacity</label>
+                    <div class="range-group">
+                        <input type="range" class="form-range" id="backgroundOverlay" min="0" max="100" value="50">
+                        <span class="range-value" id="overlayValue">50%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Card Border Radius</label>
+                <div class="range-group">
+                    <input type="range" class="form-range" id="cardBorderRadius" min="0" max="20" value="8">
+                    <span class="range-value" id="radiusValue">8px</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Poster Hover Effect</label>
+                <select class="form-select" id="posterHoverEffect">
+                    <option value="scale">Scale Up</option>
+                    <option value="glow">Glow</option>
+                    <option value="border">Border Highlight</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Colors Section -->
+        <div class="settings-section" id="section-colors">
+            <h2 class="section-title">Colors</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Accent Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="accentColor" value="#00d4ff">
+                        <input type="text" class="form-input color-hex" id="accentColorHex" value="#00d4ff">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="usernameColor" value="#ffffff">
+                        <input type="text" class="form-input color-hex" id="usernameColorHex" value="#ffffff">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Bio Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="bioColor" value="#a0a0a0">
+                        <input type="text" class="form-input color-hex" id="bioColorHex" value="#a0a0a0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Stats Number Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="statsNumberColor" value="#ffffff">
+                        <input type="text" class="form-input color-hex" id="statsNumberColorHex" value="#ffffff">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Stats Label Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="statsLabelColor" value="#808080">
+                        <input type="text" class="form-input color-hex" id="statsLabelColorHex" value="#808080">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tab Active Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="tabActiveColor" value="#00d4ff">
+                        <input type="text" class="form-input color-hex" id="tabActiveColorHex" value="#00d4ff">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tab Inactive Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="tabInactiveColor" value="#808080">
+                        <input type="text" class="form-input color-hex" id="tabInactiveColorHex" value="#808080">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Section Header Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="sectionHeaderColor" value="#a0a0a0">
+                        <input type="text" class="form-input color-hex" id="sectionHeaderColorHex" value="#a0a0a0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Card Background</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="cardBackgroundColor" value="#2a2a3e">
+                        <input type="text" class="form-input color-hex" id="cardBackgroundColorHex" value="#2a2a3e">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Card Border Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="cardBorderColor" value="#3a3a4e">
+                        <input type="text" class="form-input color-hex" id="cardBorderColorHex" value="#3a3a4e">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Rating Stars Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="ratingStarsColor" value="#ffd700">
+                        <input type="text" class="form-input color-hex" id="ratingStarsColorHex" value="#ffd700">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Like Color</label>
+                    <div class="color-picker-group">
+                        <input type="color" class="color-picker" id="likeColor" value="#ff6b6b">
+                        <input type="text" class="form-input color-hex" id="likeColorHex" value="#ff6b6b">
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-box">
+                <div class="preview-title">Preview</div>
+                <div class="preview-profile" id="colorPreview">
+                    <div class="preview-avatar" id="previewAvatar">U</div>
+                    <div class="preview-info">
+                        <h3 id="previewUsername">Username</h3>
+                        <p id="previewBio">This is a sample bio text</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Section -->
+        <div class="settings-section" id="section-privacy">
+            <h2 class="section-title">Privacy Settings</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Control what others can see on your profile</p>
+
+            <div class="checkbox-grid">
+                <div></div>
+                <div class="checkbox-header">Regular Users</div>
+                <div class="checkbox-header">Friends</div>
+
+                <div class="checkbox-label">Ratings</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="ratingsVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="ratingsVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Reviews</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="reviewsVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="reviewsVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Lists</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="listsVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="listsVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Diary</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="diaryVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="diaryVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Stats</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="statsVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="statsVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Followers List</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="followersVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="followersVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Following List</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="followingVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="followingVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Profile Likers</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="profileLikersVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="profileLikersVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Online Status</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="onlineStatusVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="onlineStatusVisibleFriends" checked></div>
+
+                <div class="checkbox-label">Watch History</div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="watchHistoryVisibleRegular" checked></div>
+                <div class="checkbox-cell"><input type="checkbox" class="form-checkbox" id="watchHistoryVisibleFriends" checked></div>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="settings-section" id="section-notifications">
+            <h2 class="section-title">Notification Preferences</h2>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" class="form-checkbox" id="notifyOnProfileLike" checked>
+                    <span>Notify when someone likes my profile</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" class="form-checkbox" id="notifyOnNewFollower" checked>
+                    <span>Notify when someone follows me</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" class="form-checkbox" id="notifyOnReviewLike" checked>
+                    <span>Notify when someone likes my review</span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" class="form-checkbox" id="notifyOnReviewComment" checked>
+                    <span>Notify when someone comments on my review</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="profile_settings.js"></script>
+</body>
+</html>
