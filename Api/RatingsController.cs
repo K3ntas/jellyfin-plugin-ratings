@@ -662,17 +662,47 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>Enriched rating objects.</returns>
         private List<object> EnrichRatings(IEnumerable<UserRating> ratings)
         {
-            var result = new List<object>();
-            foreach (var r in ratings)
+            var list = ratings as IList<UserRating> ?? ratings.ToList();
+
+            // Resolve ALL items in a single library query instead of one lookup per rating
+            // (the per-item loop made profile loads very slow for users with many ratings).
+            var itemMap = new Dictionary<Guid, MediaBrowser.Controller.Entities.BaseItem>();
+            try
             {
-                MediaBrowser.Controller.Entities.BaseItem? item = null;
-                try
+                var ids = list.Select(r => r.ItemId).Where(id => id != Guid.Empty).Distinct().ToArray();
+                if (ids.Length > 0)
                 {
-                    item = _libraryManager.GetItemById(r.ItemId);
+                    var query = new MediaBrowser.Controller.Entities.InternalItemsQuery { ItemIds = ids };
+                    foreach (var it in _libraryManager.GetItemList(query))
+                    {
+                        itemMap[it.Id] = it;
+                    }
                 }
-                catch
+            }
+            catch
+            {
+                // fall through with whatever resolved
+            }
+
+            var result = new List<object>(list.Count);
+            foreach (var r in list)
+            {
+                itemMap.TryGetValue(r.ItemId, out var item);
+
+                // Only reviews (ratings with text) carry like/dislike counts.
+                int likeCount = 0, dislikeCount = 0;
+                if (!string.IsNullOrWhiteSpace(r.ReviewText))
                 {
-                    item = null;
+                    try
+                    {
+                        var lc = _repository.GetReviewLikeCounts(r.UserId, r.ItemId);
+                        likeCount = lc.LikeCount;
+                        dislikeCount = lc.DislikeCount;
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
                 }
 
                 result.Add(new
@@ -690,7 +720,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     ItemName = item?.Name,
                     Year = item?.ProductionYear,
                     Type = item?.GetType().Name,
-                    InLibrary = item != null
+                    InLibrary = item != null,
+                    LikeCount = likeCount,
+                    DislikeCount = dislikeCount
                 });
             }
 

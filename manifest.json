@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.324.0",
+        "changelog": "Profile bug fixes: much faster load (single batched library query instead of hundreds of per-item lookups), Reviews count now calculated, you show as Online on your own profile, live WebSocket online-status updates (no reopen needed), the three-dot menu popup positioned correctly, and review like/dislike buttons now work.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.324.0/Jellyfin.Plugin.Ratings_2.0.324.0.zip",
+        "checksum": "fea01c94f9a2741a038c2f536cd9a318",
+        "timestamp": "2026-06-01T01:30:00Z"
+      },
+      {
         "version": "2.0.323.0",
         "changelog": "Profile polish: lock background-page scrolling while the profile is open (no more scroll bleed), plus a big visual upgrade - poster mirror reflections, glassmorphism side panels, glowing stars/accents, gradient avatar/title, smoother hover/press animations, and a background picker (Aurora/Sunset/Emerald/Minimal, remembered per browser). Note: full IMDb-style external catalog search is coming next and will need a free TMDB API key.",
         "targetAbi": "10.11.0.0",

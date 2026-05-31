@@ -3438,48 +3438,23 @@
          * Update profile online status from WebSocket
          */
         updateProfileStatusFromWebSocket: function (statusData) {
-            var self = this;
             var page = document.getElementById('socialProfilePage');
             if (!page) return;
 
-            // Update the status dot
-            var statusDot = page.querySelector('.social-profile-avatar-large .social-status-dot');
-            if (statusDot) {
-                var status = statusData.status || 'Offline';
-                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-                statusDot.className = 'social-status-dot ' + statusClass;
-            }
-
-            // Update the status text in meta - status is from predefined enum values
-            var metaSpans = page.querySelectorAll('.social-profile-meta span');
             var validStatuses = ['Online', 'Offline', 'Away', 'DoNotDisturb'];
-            metaSpans.forEach(function (span) {
-                var svg = span.querySelector('svg');
-                if (svg && (span.textContent.includes('Online') || span.textContent.includes('Offline') ||
-                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb'))) {
-                    var status = statusData.status || 'Offline';
-                    // Validate status is from known enum values
-                    if (validStatuses.indexOf(status) === -1) status = 'Offline';
-                    var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
-                    span.textContent = '';
-                    span.appendChild(svg.cloneNode(true));
-                    span.appendChild(document.createTextNode(statusText));
-                }
-            });
+            var status = statusData.status || 'Offline';
+            if (validStatuses.indexOf(status) === -1) status = 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
 
-            // Update last seen
-            if (statusData.lastSeen) {
-                var lastSeenText = statusData.status === 'Online' ? 'now' : self.formatTimeAgo(new Date(statusData.lastSeen));
-                metaSpans.forEach(function (span) {
-                    if (span.textContent.includes('Last seen')) {
-                        var svg = span.querySelector('svg');
-                        if (svg) {
-                            span.textContent = '';
-                            span.appendChild(svg.cloneNode(true));
-                            span.appendChild(document.createTextNode('Last seen ' + lastSeenText));
-                        }
-                    }
-                });
+            // Redesigned profile DOM: avatar dot + status text live-update.
+            var dot = page.querySelector('.lb-status-dot');
+            if (dot) dot.className = 'lb-status-dot ' + statusClass;
+
+            var txt = page.querySelector('.lb-status-text');
+            if (txt) {
+                txt.className = 'lb-status-text ' + statusClass;
+                txt.textContent = statusText;
             }
         },
 
@@ -14543,6 +14518,10 @@
                 if (friendStatus) {
                     onlineStatus = friendStatus.status || 'Offline';
                 }
+                // You are obviously online when viewing your own profile.
+                if (isSelf) {
+                    onlineStatus = 'Online';
+                }
 
                 self.renderLetterboxdProfile(page, profile, {
                     isSelf: isSelf,
@@ -14679,6 +14658,19 @@
 .social-profile-page.letterboxd-style .lb-bg-mono{background:#101418;border:1px solid #2c3440;}
 .social-profile-page.letterboxd-style .lb-toolbar-btn{transition:transform .15s,background .2s,color .2s;}
 .social-profile-page.letterboxd-style .lb-toolbar-btn:hover{transform:translateY(-2px);}
+/* three-dot more menu - anchored under its button */
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu{position:absolute;right:0;top:calc(100% + 6px);left:auto;min-width:140px;background:#1a212a;border:1px solid #2c3440;border-radius:10px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.55);display:none;z-index:30;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu.visible{display:block;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#dfe7ee;padding:9px 11px;border-radius:7px;cursor:pointer;font-size:13px;transition:background .15s;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu button:hover{background:#e0354b;color:#fff;}
+/* review like/dislike buttons */
+.social-profile-page.letterboxd-style .lb-rev-likes{display:inline-flex;align-items:center;gap:10px;}
+.social-profile-page.letterboxd-style .lb-rev-vote{background:transparent;border:0;color:#8fa3b5;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:7px;transition:background .15s,color .15s,transform .12s;}
+.social-profile-page.letterboxd-style .lb-rev-vote:hover{background:#2c3440;color:#fff;}
+.social-profile-page.letterboxd-style .lb-rev-vote:active{transform:scale(.9);}
+.social-profile-page.letterboxd-style .lb-rev-vote.active.up{color:#00e054;}
+.social-profile-page.letterboxd-style .lb-rev-vote.active.down{color:#e0354b;}
+.social-profile-page.letterboxd-style .lb-rev-vote[disabled]{opacity:.4;cursor:default;}
 `;
             var style = document.createElement('style');
             style.id = 'lbProfileRedesign';
@@ -14840,6 +14832,33 @@
         },
 
         /**
+         * Like/dislike a review on the profile being viewed.
+         */
+        voteReview: function (itemId, isLike, key) {
+            var self = this;
+            var reviewerUserId = self._viewingProfileUserId;
+            if (!reviewerUserId || !itemId) return;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            fetch(baseUrl + '/Ratings/Reviews/' + reviewerUserId + '/' + itemId + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token }
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (res) {
+                    var up = document.getElementById('revup_' + key);
+                    var dn = document.getElementById('revdn_' + key);
+                    var lc = (res.LikeCount != null ? res.LikeCount : res.likeCount) || 0;
+                    var dc = (res.DislikeCount != null ? res.DislikeCount : res.dislikeCount) || 0;
+                    var userLiked = (res.UserLiked != null ? res.UserLiked : res.userLiked);
+                    if (up) { var us = up.querySelector('span'); if (us) us.textContent = lc; up.classList.toggle('active', userLiked === true); }
+                    if (dn) { var ds = dn.querySelector('span'); if (ds) ds.textContent = dc; dn.classList.toggle('active', userLiked === false); }
+                })
+                .catch(function () { self.lbToast('Could not vote on this review'); });
+        },
+
+        /**
          * Render Letterboxd-style profile
          */
         renderLetterboxdProfile: function (page, profile, status) {
@@ -14991,12 +15010,15 @@
                     html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">Add Friend</button>';
                 }
 
-                // More actions dropdown
-                html += '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
+                // More actions dropdown (menu is a SIBLING of the button, not nested inside it -
+                // nesting a div/button inside a <button> is invalid and caused the misplaced/empty popup)
+                html += '<span class="lb-more-wrap" style="position:relative;display:inline-block;">' +
+                    '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
                     '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>' +
+                    '</button>' +
                     '<div class="lb-more-menu" id="profileMoreMenu">' +
                     '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">Block User</button>' +
-                    '</div></button>';
+                    '</div></span>';
             }
 
             return html;
@@ -15473,10 +15495,22 @@
                     var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
                     var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
-                    var likes = r.likes || r.Likes || 0;
+                    var likeCount = r.likeCount || r.LikeCount || 0;
+                    var dislikeCount = r.dislikeCount || r.DislikeCount || 0;
                     var itemId = r.itemId || r.ItemId || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
                     var titleAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+                    var canVote = (!self._currentProfileStatus || !self._currentProfileStatus.isSelf) && itemId;
+                    var safeKey = String(itemId).replace(/[^a-zA-Z0-9]/g, '');
+                    var voteHtml;
+                    if (canVote) {
+                        voteHtml = '<span class="lb-rev-likes">' +
+                            '<button class="lb-rev-vote up" id="revup_' + safeKey + '" onclick="RatingsPlugin.voteReview(\'' + self.escapeJs(itemId) + '\',true,\'' + safeKey + '\')">👍 <span>' + likeCount + '</span></button>' +
+                            '<button class="lb-rev-vote down" id="revdn_' + safeKey + '" onclick="RatingsPlugin.voteReview(\'' + self.escapeJs(itemId) + '\',false,\'' + safeKey + '\')">👎 <span>' + dislikeCount + '</span></button>' +
+                            '</span>';
+                    } else {
+                        voteHtml = '<span class="lb-rev-likes"><span class="lb-rev-vote" disabled>👍 ' + likeCount + '</span><span class="lb-rev-vote" disabled>👎 ' + dislikeCount + '</span></span>';
+                    }
 
                     html += '<div class="lb-review-card">' +
                         '<div class="lb-review-header">' +
@@ -15486,7 +15520,7 @@
                         '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
                         '<div class="lb-review-footer">' +
                         '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
-                        '<span class="lb-review-likes">👍 ' + likes + '</span>' +
+                        voteHtml +
                         '</div></div>';
                 });
                 html += '</div>';

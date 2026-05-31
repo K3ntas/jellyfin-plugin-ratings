@@ -293,6 +293,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get ratings data
             var userRatings = _ratingsRepository.GetUserRatings(userId);
             var ratingsCount = userRatings.Count;
+            var reviewsCount = userRatings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText));
             var averageRating = ratingsCount > 0
                 ? Math.Round(userRatings.Average(r => r.Rating), 1)
                 : 0;
@@ -395,6 +396,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 friendsCount,
                 ratingsCount,
+                reviewsCount,
                 averageRating,
                 memberDays,
                 moviesWatched,
