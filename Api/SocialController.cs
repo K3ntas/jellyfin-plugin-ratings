@@ -336,51 +336,34 @@ namespace Jellyfin.Plugin.Ratings.Api
                         }
                     }
 
-                    // Get series watched (series with at least one played episode)
-                    var seriesQuery = new InternalItemsQuery(user)
+                    // Get all played episodes in ONE query, then derive watch time and the number
+                    // of distinct series watched. (Previously this ran a separate query per series,
+                    // which made the profile load several seconds slow on big libraries.)
+                    var allPlayedEpisodesQuery = new InternalItemsQuery(user)
                     {
-                        IncludeItemTypes = new[] { BaseItemKind.Series },
+                        IncludeItemTypes = new[] { BaseItemKind.Episode },
+                        IsPlayed = true,
                         Recursive = true
                     };
-                    var allSeries = _libraryManager.GetItemList(seriesQuery);
-
-                    if (allSeries != null)
+                    var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
+                    if (allPlayedEpisodes != null)
                     {
-                        foreach (var series in allSeries)
+                        var watchedSeriesIds = new HashSet<Guid>();
+                        foreach (var episode in allPlayedEpisodes)
                         {
-                            var episodeQuery = new InternalItemsQuery(user)
+                            if (episode.RunTimeTicks.HasValue)
                             {
-                                IncludeItemTypes = new[] { BaseItemKind.Episode },
-                                AncestorIds = new[] { series.Id },
-                                IsPlayed = true,
-                                Recursive = true,
-                                Limit = 1
-                            };
-                            var playedEpisodes = _libraryManager.GetItemList(episodeQuery);
-                            if (playedEpisodes != null && playedEpisodes.Count > 0)
-                            {
-                                seriesWatched++;
+                                totalWatchTicks += episode.RunTimeTicks.Value;
                             }
-                        }
 
-                        // Get all played episodes for watch time calculation
-                        var allPlayedEpisodesQuery = new InternalItemsQuery(user)
-                        {
-                            IncludeItemTypes = new[] { BaseItemKind.Episode },
-                            IsPlayed = true,
-                            Recursive = true
-                        };
-                        var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
-                        if (allPlayedEpisodes != null)
-                        {
-                            foreach (var episode in allPlayedEpisodes)
+                            var ep = episode as MediaBrowser.Controller.Entities.TV.Episode;
+                            var seriesId = ep?.SeriesId ?? Guid.Empty;
+                            if (seriesId != Guid.Empty)
                             {
-                                if (episode.RunTimeTicks.HasValue)
-                                {
-                                    totalWatchTicks += episode.RunTimeTicks.Value;
-                                }
+                                watchedSeriesIds.Add(seriesId);
                             }
                         }
+                        seriesWatched = watchedSeriesIds.Count;
                     }
                 }
                 catch (Exception ex)

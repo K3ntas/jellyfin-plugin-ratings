@@ -14918,7 +14918,9 @@
             menu.className = 'lb-addrow-menu';
             var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(title || 'film') + '” to…</div>';
             rows.forEach(function (row, i) {
-                h += '<button onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',' + i + ',\'' + self.escapeJs(title || '') + '\')">' + self.escapeHtml(row.title || ('Row ' + (i + 1))) + '</button>';
+                var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
+                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                h += '<button onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',' + i + ',\'' + self.escapeJs(title || '') + '\')">' + self.escapeHtml(rowName) + '</button>';
             });
             if (rows.length < 5) {
                 h += '<button class="newrow" onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',-1,\'' + self.escapeJs(title || '') + '\')">+ New row</button>';
@@ -15134,9 +15136,6 @@
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
                 '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
                 '<span class="lb-stat-label">Reviews</span></div>' +
-                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'lists\')">' +
-                '<span class="lb-stat-value">' + (status.lists.length || 0) + '</span>' +
-                '<span class="lb-stat-label">Lists</span></div>' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
                 '<span class="lb-stat-label">Following</span></div>' +
@@ -15153,7 +15152,6 @@
                 '<button class="lb-tab active" data-tab="overview">Overview</button>' +
                 '<button class="lb-tab" data-tab="ratings">Ratings</button>' +
                 '<button class="lb-tab" data-tab="reviews">Reviews</button>' +
-                '<button class="lb-tab" data-tab="lists">Lists</button>' +
                 '<button class="lb-tab" data-tab="activity">Activity</button>' +
                 '<button class="lb-tab" data-tab="following">Following</button>' +
                 '<button class="lb-tab" data-tab="followers">Followers</button>' +
@@ -15409,20 +15407,6 @@
             // Ratings histogram
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
                 '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
-
-            // Lists preview
-            var listsHtml = '';
-            if (lists.length) {
-                listsHtml = lists.slice(0, 6).map(function (l) {
-                    var lt = self.escapeHtml(l.title || l.Title || 'Untitled');
-                    var lc = (l.itemCount || l.ItemCount || (l.items ? l.items.length : 0));
-                    return '<div class="lb-side-list-row" onclick="RatingsPlugin.switchProfileTab(\'lists\')"><span class="lb-sl-name">' + lt + '</span><span class="lb-sl-count">' + lc + '</span></div>';
-                }).join('');
-            } else {
-                listsHtml = '<div class="lb-empty-mini">No lists yet</div>';
-            }
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Lists <span class="lb-side-count">' + lists.length + '</span></h4>' +
-                '<div class="lb-side-lists">' + listsHtml + '</div></section>';
 
             // Activity feed (compact)
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
@@ -16620,9 +16604,15 @@
                 headers: headers,
                 body: JSON.stringify({ favoriteRows: favoriteRows })
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('save failed: ' + r.status);
+                // Keep the in-memory copy authoritative so re-renders reflect what was saved.
+                if (self._currentProfile) { self._currentProfile.favoriteRows = favoriteRows; }
+                return r.json();
+            })
             .catch(function (err) {
                 console.error('[Social] Failed to save favorites:', err);
+                self.lbToast('Could not save favorites');
             });
         },
 

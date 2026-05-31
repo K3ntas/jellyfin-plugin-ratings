@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.327.0",
+        "changelog": "Faster profile load (Stats no longer runs a query per series - was the main ~5s cause). Add-to-row chooser now shows real row names. Removed the confusing Lists tab/stat/sidebar. Favorites save now surfaces errors instead of failing silently.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.327.0/Jellyfin.Plugin.Ratings_2.0.327.0.zip",
+        "checksum": "a8ac1ae7070068d55901f934851d6e02",
+        "timestamp": "2026-06-01T04:30:00Z"
+      },
+      {
         "version": "2.0.326.0",
         "changelog": "Media picker now respects the category tab (Movies/Series/etc.) when sorting by My Ratings - no longer always shows movies. Favorite rows scroll with transparent hover arrows instead of a scrollbar. Replaced mirror reflections with clean drop shadows. Faster profile load: the overview now fetches ratings once and reuses them across distribution/posters/reviews/activity.",
         "targetAbi": "10.11.0.0",
