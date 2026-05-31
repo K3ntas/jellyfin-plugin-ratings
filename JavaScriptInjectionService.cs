@@ -85,16 +85,7 @@ namespace Jellyfin.Plugin.Ratings
             try
             {
                 var pluginsDir = _appPaths.PluginsPath;
-                if (string.IsNullOrEmpty(pluginsDir) || !Directory.Exists(pluginsDir))
-                {
-                    return;
-                }
-
                 var myVersion = typeof(Plugin).Assembly.GetName().Version;
-                if (myVersion == null)
-                {
-                    return;
-                }
 
                 // Folder the running assembly lives in - must never be deleted.
                 string? currentDir = null;
@@ -111,17 +102,30 @@ namespace Jellyfin.Plugin.Ratings
                     currentDir = null;
                 }
 
+                _logger.LogInformation(
+                    "Ratings cleanup: scanning '{Dir}' (running version {Ver}, current folder '{Cur}')",
+                    pluginsDir, myVersion, currentDir ?? "(unknown)");
+
+                if (string.IsNullOrEmpty(pluginsDir) || !Directory.Exists(pluginsDir) || myVersion == null)
+                {
+                    _logger.LogInformation("Ratings cleanup: nothing to do (plugins dir missing or version unknown)");
+                    return;
+                }
+
+                int ours = 0, removed = 0, failed = 0;
+
                 foreach (var dir in Directory.GetDirectories(pluginsDir))
                 {
+                    // Extra guard: only consider folders that look like ours.
+                    var folderName = Path.GetFileName(dir);
+                    if (folderName == null || folderName.IndexOf("Ratings", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    Version? otherVersion = null;
                     try
                     {
-                        // Extra guard: only consider folders that look like ours.
-                        var folderName = Path.GetFileName(dir);
-                        if (folderName == null || folderName.IndexOf("Ratings", StringComparison.OrdinalIgnoreCase) < 0)
-                        {
-                            continue;
-                        }
-
                         var metaPath = Path.Combine(dir, "meta.json");
                         if (!File.Exists(metaPath))
                         {
@@ -129,47 +133,66 @@ namespace Jellyfin.Plugin.Ratings
                         }
 
                         using var doc = JsonDocument.Parse(File.ReadAllText(metaPath));
-                        if (!doc.RootElement.TryGetProperty("guid", out var guidEl))
-                        {
-                            continue;
-                        }
-
-                        var guid = guidEl.GetString();
-                        if (!string.Equals(guid, PluginGuid, StringComparison.OrdinalIgnoreCase))
+                        if (!doc.RootElement.TryGetProperty("guid", out var guidEl)
+                            || !string.Equals(guidEl.GetString(), PluginGuid, StringComparison.OrdinalIgnoreCase))
                         {
                             continue; // not our plugin - leave it alone
                         }
+
+                        ours++;
 
                         // Never delete the folder we are running from.
                         if (currentDir != null &&
                             string.Equals(Path.GetFullPath(dir), currentDir, StringComparison.OrdinalIgnoreCase))
                         {
+                            _logger.LogInformation("Ratings cleanup: keeping current folder '{Dir}'", dir);
                             continue;
                         }
 
                         // Only delete STRICTLY older versions, so we can never remove the current/newest.
                         if (!doc.RootElement.TryGetProperty("version", out var verEl)
-                            || !Version.TryParse(verEl.GetString(), out var otherVersion)
+                            || !Version.TryParse(verEl.GetString(), out otherVersion)
                             || otherVersion >= myVersion)
                         {
+                            _logger.LogInformation(
+                                "Ratings cleanup: keeping folder '{Dir}' (version {Other} not older than {Current})",
+                                dir, otherVersion, myVersion);
                             continue;
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Ratings cleanup: could not evaluate plugin folder '{Dir}'", dir);
+                        continue;
+                    }
 
+                    // Separate try so a Windows file-lock on the old DLL is reported clearly.
+                    try
+                    {
                         Directory.Delete(dir, true);
+                        removed++;
                         _logger.LogInformation(
-                            "Ratings: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
+                            "Ratings cleanup: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
                             dir, otherVersion, myVersion);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogDebug(ex, "Ratings: could not evaluate/remove plugin folder {Dir}", dir);
+                        failed++;
+                        // On Windows-hosted Jellyfin this usually means the old DLL is still loaded/locked.
+                        _logger.LogWarning(ex,
+                            "Ratings cleanup: FAILED to remove old folder '{Dir}' (likely a locked DLL on Windows); will retry next restart",
+                            dir);
                     }
                 }
+
+                _logger.LogInformation(
+                    "Ratings cleanup: done. ourFolders={Ours}, removed={Removed}, failed={Failed}",
+                    ours, removed, failed);
             }
             catch (Exception ex)
             {
                 // Cleanup is best-effort and must never break startup.
-                _logger.LogDebug(ex, "Ratings: plugin version cleanup failed");
+                _logger.LogWarning(ex, "Ratings cleanup: plugin version cleanup failed");
             }
         }
 

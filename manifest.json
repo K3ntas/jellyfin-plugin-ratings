@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.321.0",
+        "changelog": "Profile page: fix media names showing 'Unknown' in Ratings/Reviews/Activity (server now resolves item name/year/library status), star ratings now show an exact-value tooltip (e.g. 8/10 · 4/5), media cards/titles are clickable to open the item, and the header profile button moved next to the language button. Also adds clear startup logging for the duplicate-folder cleanup.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.321.0/Jellyfin.Plugin.Ratings_2.0.321.0.zip",
+        "checksum": "5354ad4205f839ccbcb661e44fee89e1",
+        "timestamp": "2026-05-31T21:30:00Z"
+      },
+      {
         "version": "2.0.320.0",
         "changelog": "Fix duplicate plugin installs: on startup the plugin now removes older versioned folders that share its GUID (keeps only the running version), ending the 'two versions installed / restart required' loop. GUID-scoped and strictly-older-only, so it never affects other plugins or the current version.",
         "targetAbi": "10.11.0.0",

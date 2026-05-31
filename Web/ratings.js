@@ -5321,11 +5321,12 @@
                 /* Force button order using CSS order (async loading causes random DOM order) */
                 #headerSearchField { order: 1 !important; }
                 #languageBtn { order: 2 !important; }
-                #requestMediaBtn { order: 3 !important; }
-                #notificationToggle { order: 4 !important; }
-                #latestMediaBtn { order: 5 !important; }
-                #mediaManagementBtn { order: 6 !important; }
-                #chatBtn { order: 7 !important; }
+                #profileBtn { order: 3 !important; }
+                #requestMediaBtn { order: 4 !important; }
+                #notificationToggle { order: 5 !important; }
+                #latestMediaBtn { order: 6 !important; }
+                #mediaManagementBtn { order: 7 !important; }
+                #chatBtn { order: 8 !important; }
 
                 /* Button style inside group */
                 .ratingsGroupBtn {
@@ -14995,11 +14996,16 @@
                     var rating = r.rating || r.Rating || 0;
                     var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
                     var hasReview = r.review || r.Review || r.reviewText || r.ReviewText;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var titleHtml = inLib
+                        ? '<strong style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')">' + self.escapeHtml(title) + '</strong>'
+                        : '<strong>' + self.escapeHtml(title) + '</strong>';
 
                     html += '<div class="lb-activity-item">' +
                         '<span class="lb-activity-type">' + (hasReview ? '📝' : '⭐') + '</span>' +
                         '<span class="lb-activity-text">' +
-                        (hasReview ? 'Reviewed' : 'Rated') + ' <strong>' + self.escapeHtml(title) + '</strong> ' +
+                        (hasReview ? 'Reviewed' : 'Rated') + ' ' + titleHtml + ' ' +
                         self.renderStars(rating) +
                         '</span>' +
                         '<span class="lb-activity-time">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
@@ -15071,8 +15077,11 @@
                     }
                     var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
 
-                    html += '<div class="lb-rating-card">' +
+                    html += '<div class="lb-rating-card"' + clickAttr + '>' +
                         '<div class="lb-rating-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
                         '<div class="lb-rating-info">' +
                         '<div class="lb-rating-title">' + self.escapeHtml(title) + '</div>' +
@@ -15104,7 +15113,21 @@
                     html += '<span class="lb-star empty">☆</span>';
                 }
             }
-            return html;
+            // Wrap with a tooltip showing the exact value (e.g. "8/10  ·  4/5").
+            var outOfTen = (rating || 0);
+            var outOfFive = (Math.round((outOfTen / 2) * 10) / 10);
+            return '<span class="lb-stars-wrap" title="' + outOfTen + '/10  ·  ' + outOfFive + '/5">' + html + '</span>';
+        },
+
+        /**
+         * Open a media item in Jellyfin (closes the profile modal, then navigates to the
+         * item detail page where the user can play it).
+         */
+        openMedia: function (itemId) {
+            if (!itemId) return;
+            var modal = document.querySelector('.social-profile-page');
+            if (modal) modal.remove();
+            window.location.hash = '#!/details?id=' + itemId;
         },
 
         /**
@@ -15151,10 +15174,13 @@
                     var rating = r.rating || r.Rating || 0;
                     var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
                     var likes = r.likes || r.Likes || 0;
+                    var itemId = r.itemId || r.ItemId || '';
+                    var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
+                    var titleAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
 
                     html += '<div class="lb-review-card">' +
                         '<div class="lb-review-header">' +
-                        '<span class="lb-review-title">' + self.escapeHtml(title) + '</span>' +
+                        '<span class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) + '</span>' +
                         '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
                         '</div>' +
                         '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
@@ -28343,8 +28369,8 @@
                             }
                         };
 
-                        // Insert into button group (at the beginning for visibility)
-                        buttonGroup.insertBefore(profileBtn, buttonGroup.firstChild);
+                        // Add to the button group; CSS `order` places it right after the language/globe button.
+                        buttonGroup.appendChild(profileBtn);
 
                         return;
                     }

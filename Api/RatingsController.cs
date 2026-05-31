@@ -593,7 +593,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var ratings = _repository.GetUserRatings(targetUserId);
                 _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
 
-                return Ok(ratings);
+                return Ok(EnrichRatings(ratings));
             }
             catch (Exception ex)
             {
@@ -644,13 +644,57 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var ratings = _repository.GetUserRatings(userId);
                 _logger.LogInformation("Retrieved {Count} ratings for current user {UserId}", ratings.Count, userId);
 
-                return Ok(ratings);
+                return Ok(EnrichRatings(ratings));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting ratings for current user");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        /// <summary>
+        /// Enriches raw ratings with the resolved Jellyfin item name, year, type and library presence
+        /// so profile pages can show real media names (instead of "Unknown") and link to the item.
+        /// All original UserRating fields are preserved for backward compatibility.
+        /// </summary>
+        /// <param name="ratings">The raw ratings.</param>
+        /// <returns>Enriched rating objects.</returns>
+        private List<object> EnrichRatings(IEnumerable<UserRating> ratings)
+        {
+            var result = new List<object>();
+            foreach (var r in ratings)
+            {
+                MediaBrowser.Controller.Entities.BaseItem? item = null;
+                try
+                {
+                    item = _libraryManager.GetItemById(r.ItemId);
+                }
+                catch
+                {
+                    item = null;
+                }
+
+                result.Add(new
+                {
+                    r.Id,
+                    r.UserId,
+                    r.ItemId,
+                    r.TmdbId,
+                    r.ImdbId,
+                    r.AniDbId,
+                    r.Rating,
+                    r.ReviewText,
+                    r.CreatedAt,
+                    r.UpdatedAt,
+                    ItemName = item?.Name,
+                    Year = item?.ProductionYear,
+                    Type = item?.GetType().Name,
+                    InLibrary = item != null
+                });
+            }
+
+            return result;
         }
 
         /// <summary>
