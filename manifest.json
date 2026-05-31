@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.330.0",
+        "changelog": "Favorites finally save reliably (removed a save-success snapshot overwrite that dropped items added while a save was in flight). Drag-to-reorder and add/remove now update only the affected row instead of reloading the whole profile, and you can drag a poster from Recent Activity straight into a favorites row.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.330.0/Jellyfin.Plugin.Ratings_2.0.330.0.zip",
+        "checksum": "5b784e4fe23e54f4a2af59dbca70fe80",
+        "timestamp": "2026-06-01T07:30:00Z"
+      },
+      {
         "version": "2.0.329.0",
         "changelog": "Fixed favorites not saving (debounced saves prevent a clobber race that wiped items); favorite-row posters now load from the current server address (fixes blank posters via reverse proxy/domain); fixed the profile Like 404 (wrong route); added the plugin version to the dashboard header.",
         "targetAbi": "10.11.0.0",

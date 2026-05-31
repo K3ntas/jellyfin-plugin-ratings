@@ -14719,6 +14719,7 @@
                     var c = document.getElementById('lbRecentPosters');
                     if (!c) return;
                     if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
+                    var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
                     var html = '';
                     ratings.slice(0, 12).forEach(function (r) {
                         var id = r.itemId || r.ItemId || '';
@@ -14726,7 +14727,8 @@
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
                         var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
-                        html += '<div class="lb-poster-card"' + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + '">' +
+                        var dragAttr = (isSelf && id) ? ' draggable="true" ondragstart="RatingsPlugin.activityDragStart(event,\'' + self.escapeJs(id) + '\',\'' + self.escapeJs(name) + '\')"' : '';
+                        html += '<div class="lb-poster-card"' + dragAttr + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + (isSelf ? ' — drag to a row' : '') + '">' +
                             '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
                             '<div class="lb-poster-stars">' + self.renderStars(rating) + '</div>' +
                             '</div>';
@@ -14945,10 +14947,12 @@
             if (!self._currentProfile) self._currentProfile = {};
             if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
             var rows = self._currentProfile.favoriteRows;
+            var createdNewRow = false;
             if (rowIndex === -1) {
                 if (rows.length >= 5) return;
                 rows.push({ title: 'Favorites', items: [] });
                 rowIndex = rows.length - 1;
+                createdNewRow = true;
             }
             if (!rows[rowIndex]) return;
             if (!rows[rowIndex].items) rows[rowIndex].items = [];
@@ -14964,9 +14968,14 @@
             } else {
                 self.lbToast('Already in that row');
             }
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = rows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            // Only a brand-new row needs the full layout; otherwise update just that row.
+            if (createdNewRow) {
+                if (self._currentProfileStatus) {
+                    self._currentProfileStatus.favoriteRows = rows;
+                    self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+                }
+            } else {
+                self.rerenderFavoriteRow(rowIndex);
             }
         },
 
@@ -14984,17 +14993,73 @@
             var self = this;
             var d = self._favDrag;
             self._favDrag = null;
-            if (!d || d.row !== rowIndex) return;
             if (!self._currentProfile || !self._currentProfile.favoriteRows[rowIndex]) return;
-            var items = self._currentProfile.favoriteRows[rowIndex].items || [];
-            if (d.idx === idx || d.idx < 0 || d.idx >= items.length || idx > items.length) return;
-            var moved = items.splice(d.idx, 1)[0];
-            items.splice(idx, 0, moved);
-            self.saveFavorites();
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            if (!self._currentProfile.favoriteRows[rowIndex].items) self._currentProfile.favoriteRows[rowIndex].items = [];
+            var items = self._currentProfile.favoriteRows[rowIndex].items;
+
+            // Drag from Recent Activity (or elsewhere) -> add the film to this row.
+            if (d && d.external && d.itemId) {
+                if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+                var pos = (typeof idx === 'number' && idx >= 0 && idx <= items.length) ? idx : items.length;
+                items.splice(pos, 0, {
+                    itemId: d.itemId,
+                    title: d.name || '',
+                    imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
+                });
+                self.saveFavorites();
+                self.rerenderFavoriteRow(rowIndex);
+                return;
             }
+
+            // Reorder within the same row (in place; no full reload).
+            if (!d || d.row !== rowIndex) return;
+            if (d.idx < 0 || d.idx >= items.length) return;
+            var moved = items.splice(d.idx, 1)[0];
+            var dropPos = (typeof idx === 'number' && idx >= 0) ? idx : items.length;
+            if (dropPos > d.idx) dropPos--; // account for the removal shift
+            if (dropPos > items.length) dropPos = items.length;
+            items.splice(dropPos, 0, moved);
+            self.saveFavorites();
+            self.rerenderFavoriteRow(rowIndex);
+        },
+
+        /**
+         * Start dragging a poster out of Recent Activity (to drop into a favorites row).
+         */
+        activityDragStart: function (e, itemId, name) {
+            this._favDrag = { external: true, itemId: itemId, name: name || '' };
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copy';
+                try { e.dataTransfer.setData('text/plain', itemId); } catch (_) { /* ignore */ }
+            }
+        },
+
+        /**
+         * Re-render ONLY one favorites row's grid (no full profile reload).
+         */
+        rerenderFavoriteRow: function (rowIndex) {
+            var self = this;
+            var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
+            if (!row) return;
+            var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
+            if (!grid) return;
+            var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
+            // Compact (drop nulls) so array indices match rendered indices.
+            var items = (row.items || []).filter(function (f) { return f && f.itemId; });
+            row.items = items;
+            var base = ApiClient.serverAddress();
+            var html = '';
+            items.forEach(function (fav, i) {
+                html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                    (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
+                    ' style="background-image: url(\'' + base + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300\')">' +
+                    (isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
+                    '</div>';
+            });
+            if (isSelf && items.length < 30) {
+                html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
+            }
+            grid.innerHTML = html;
         },
 
         /**
@@ -15330,7 +15395,8 @@
                 html += '</div>';
                 html += '<div class="lb-row-scroll">';
                 html += '<button class="lb-row-arrow left" onclick="RatingsPlugin.scrollFavRow(this,-1)" aria-label="Scroll left">‹</button>';
-                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
+                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '"' +
+                    (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') + '>';
 
                 // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
                 var visibleCount = Math.min(itemCount, 10);
@@ -16362,11 +16428,9 @@
             // Close picker
             self.closeMediaPicker();
 
-            // Refresh the overview
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
-            }
+            // Update just this row (no full reload).
+            if (self._currentProfileStatus) { self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows; }
+            self.rerenderFavoriteRow(rowIndex);
         },
 
         /**
@@ -16383,11 +16447,9 @@
             // Save to server
             self.saveFavorites();
 
-            // Refresh the overview
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
-            }
+            // Update just this row (no full reload).
+            if (self._currentProfileStatus) { self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows; }
+            self.rerenderFavoriteRow(rowIndex);
         },
 
         /**
@@ -16616,8 +16678,9 @@
             })
             .then(function (r) {
                 if (!r.ok) throw new Error('save failed: ' + r.status);
-                // Keep the in-memory copy authoritative so re-renders reflect what was saved.
-                if (self._currentProfile) { self._currentProfile.favoriteRows = favoriteRows; }
+                // NOTE: do NOT overwrite self._currentProfile.favoriteRows here. The live array is
+                // the source of truth and may have gained items while this PUT was in flight;
+                // replacing it with this (older) snapshot would drop those items.
                 return r.json();
             })
             .catch(function (err) {
