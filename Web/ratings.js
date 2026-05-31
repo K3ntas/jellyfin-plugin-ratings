@@ -15942,6 +15942,7 @@
             var sortHtml = '<div class="lb-picker-sort">' +
                 '<label>Sort by:</label>' +
                 '<select id="pickerSortSelect" onchange="RatingsPlugin.changePickerSort(this.value)">' +
+                '<option value="random"' + (this._pickerSortBy === 'random' ? ' selected' : '') + '>Show all (random)</option>' +
                 '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>My Ratings (Highest)</option>' +
                 '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>My Ratings (Lowest)</option>' +
                 '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>Community Rating</option>' +

@@ -70,6 +70,33 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Revision History -->
+            <div class="dashboard-section revision-section">
+                <h3 class="section-title">Revision History</h3>
+                <div class="revision-list">
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.328.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Profile stats now count rated films/shows; dashboard alignment + this Revision History; media picker "Show all (random)"; favorites save diagnostics.</div></div>
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.327.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Faster profile load (stats query), real row names in the add menu, removed the Lists tab.</div></div>
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.326.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Media-picker category filter, favorite-row scroll arrows, drop shadows.</div></div>
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.325.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">TMDB catalog search in "Add a film", add-to-row chooser, drag &amp; drop.</div></div>
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.324.0</span><span class="revision-date">May 31, 2026</span></div><div class="revision-note">Fixed review count, online status, three-dot menu, review likes.</div></div>
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.322–323</span><span class="revision-date">May 31, 2026</span></div><div class="revision-note">Letterboxd-style profile redesign, right sidebar, background picker, scroll lock.</div></div>
+                </div>
+            </div>
+
+            <style>
+                .revision-section { margin-top: 16px; }
+                .revision-list { display: flex; flex-direction: column; gap: 8px; }
+                .revision-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; }
+                .revision-head { display: flex; align-items: baseline; gap: 10px; }
+                .revision-ver { font-weight: 700; color: #00a4dc; font-size: 14px; }
+                .revision-date { color: #8a98a8; font-size: 12px; }
+                .revision-note { color: #c5d0db; font-size: 13px; margin-top: 4px; line-height: 1.4; }
+                /* Alignment fix: keep ratings/counts off the scrollbar edge */
+                .activity-list, .top-rated-list, .users-list { padding-right: 12px !important; }
+                .activity-list::-webkit-scrollbar, .top-rated-list::-webkit-scrollbar, .users-list::-webkit-scrollbar { width: 8px; }
+                .activity-list::-webkit-scrollbar-thumb, .top-rated-list::-webkit-scrollbar-thumb, .users-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+            </style>
         </div>
     </div>
 

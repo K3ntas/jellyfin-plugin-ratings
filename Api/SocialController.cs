@@ -305,71 +305,40 @@ namespace Jellyfin.Plugin.Ratings.Api
             var memberSince = profile?.CreatedAt ?? DateTime.UtcNow;
             var memberDays = (int)(DateTime.UtcNow - memberSince).TotalDays;
 
-            // Get Jellyfin watch statistics (respect ShowWatchedHistory privacy)
+            // Films / shows / hours derived from the user's RATINGS (this plugin's own data),
+            // resolved in a single library query. Playback-based counts were 0 for users who
+            // rate items without marking them played, and the per-series query loop was slow.
+            _ = canSeeWatchHistory; // (kept for future watch-history use)
             int moviesWatched = 0;
             int seriesWatched = 0;
             long totalWatchTicks = 0;
-
-            if (canSeeWatchHistory)
+            try
             {
-                try
+                var ratedIds = userRatings.Select(r => r.ItemId).Where(id => id != Guid.Empty).Distinct().ToArray();
+                if (ratedIds.Length > 0)
                 {
-                    // Get movies watched
-                    var movieQuery = new InternalItemsQuery(user)
+                    var ratedItems = _libraryManager.GetItemList(new InternalItemsQuery { ItemIds = ratedIds });
+                    foreach (var item in ratedItems)
                     {
-                        IncludeItemTypes = new[] { BaseItemKind.Movie },
-                        IsPlayed = true,
-                        Recursive = true
-                    };
-                    var playedMovies = _libraryManager.GetItemList(movieQuery);
-                    moviesWatched = playedMovies?.Count ?? 0;
-
-                    // Sum up movie watch time (use runtime as approximation)
-                    if (playedMovies != null)
-                    {
-                        foreach (var movie in playedMovies)
+                        if (item is MediaBrowser.Controller.Entities.Movies.Movie)
                         {
-                            if (movie.RunTimeTicks.HasValue)
-                            {
-                                totalWatchTicks += movie.RunTimeTicks.Value;
-                            }
+                            moviesWatched++;
+                        }
+                        else if (item is MediaBrowser.Controller.Entities.TV.Series)
+                        {
+                            seriesWatched++;
+                        }
+
+                        if (item.RunTimeTicks.HasValue)
+                        {
+                            totalWatchTicks += item.RunTimeTicks.Value;
                         }
                     }
-
-                    // Get all played episodes in ONE query, then derive watch time and the number
-                    // of distinct series watched. (Previously this ran a separate query per series,
-                    // which made the profile load several seconds slow on big libraries.)
-                    var allPlayedEpisodesQuery = new InternalItemsQuery(user)
-                    {
-                        IncludeItemTypes = new[] { BaseItemKind.Episode },
-                        IsPlayed = true,
-                        Recursive = true
-                    };
-                    var allPlayedEpisodes = _libraryManager.GetItemList(allPlayedEpisodesQuery);
-                    if (allPlayedEpisodes != null)
-                    {
-                        var watchedSeriesIds = new HashSet<Guid>();
-                        foreach (var episode in allPlayedEpisodes)
-                        {
-                            if (episode.RunTimeTicks.HasValue)
-                            {
-                                totalWatchTicks += episode.RunTimeTicks.Value;
-                            }
-
-                            var ep = episode as MediaBrowser.Controller.Entities.TV.Episode;
-                            var seriesId = ep?.SeriesId ?? Guid.Empty;
-                            if (seriesId != Guid.Empty)
-                            {
-                                watchedSeriesIds.Add(seriesId);
-                            }
-                        }
-                        seriesWatched = watchedSeriesIds.Count;
-                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to get Jellyfin watch stats for user {UserId}", userId);
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to compute rated stats for user {UserId}", userId);
             }
 
             // Convert ticks to hours (1 tick = 100 nanoseconds, 10,000,000 ticks = 1 second)
@@ -2571,6 +2540,13 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             profile.UpdatedAt = DateTime.UtcNow;
+
+            _logger.LogInformation(
+                "[Social] UpdateFavorites user={User} rowsReceived={Rows} itemsReceived={Items} rowsSaved={Saved}",
+                currentUserId,
+                request?.FavoriteRows?.Count ?? 0,
+                request?.FavoriteRows?.Sum(r => r.Items?.Count ?? 0) ?? 0,
+                profile.FavoriteRows?.Count ?? 0);
 
             await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
 
