@@ -1167,6 +1167,16 @@
                                 </div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtTmdbApiToken">TMDB API Read Access Token</label>
+                                <input id="txtTmdbApiToken" type="text" is="emby-input" />
+                                <div class="fieldDescription">
+                                    Enables the full film-catalog search in the "Add a film" box on profiles. Get a free token at
+                                    <a href="https://www.themoviedb.org/settings/api" target="_blank" style="color: #00a4dc;">TMDB</a>
+                                    (use the API Read Access Token). Stored on the server only.
+                                </div>
+                            </div>
+
                             <!-- Chat Notification Settings -->
                             <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Chat Notification Badge</h3>
                             <div class="fieldDescription" style="margin-bottom: 10px;">
@@ -2742,6 +2752,7 @@
                     document.querySelector('#chkChatAllowGifs').checked = config.ChatAllowGifs !== false;
                     document.querySelector('#chkChatAllowEmojis').checked = config.ChatAllowEmojis !== false;
                     document.querySelector('#txtKlipyApiKey').value = config.KlipyApiKey || config.TenorApiKey || '';
+                    if (document.querySelector('#txtTmdbApiToken')) { document.querySelector('#txtTmdbApiToken').value = config.TmdbApiToken || ''; }
                     document.querySelector('#chkChatNotifyPublic').checked = config.ChatNotifyPublic !== false;
                     document.querySelector('#chkChatNotifyPrivate').checked = config.ChatNotifyPrivate !== false;
 
@@ -3054,6 +3065,7 @@
                     config.ChatAllowEmojis = document.querySelector('#chkChatAllowEmojis').checked;
                     config.KlipyApiKey = document.querySelector('#txtKlipyApiKey').value;
                     config.TenorApiKey = '';
+                    if (document.querySelector('#txtTmdbApiToken')) { config.TmdbApiToken = document.querySelector('#txtTmdbApiToken').value; }
                     config.ChatNotifyPublic = document.querySelector('#chkChatNotifyPublic').checked;
                     config.ChatNotifyPrivate = document.querySelector('#chkChatNotifyPrivate').checked;
 

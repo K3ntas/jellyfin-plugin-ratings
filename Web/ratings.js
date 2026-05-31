@@ -14486,7 +14486,7 @@
                 fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
                 fetch(baseUrl + '/Social/Follow/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { isFollowing: false, followersCount: 0, followingCount: 0 }; }),
                 fetch(baseUrl + '/Social/Profile/' + userId + '/Like/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
-                fetch(baseUrl + '/Social/Lists/User/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Lists', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
             ]).then(function (results) {
                 var profile = results[0];
                 var friendsData = results[1];
@@ -14671,6 +14671,23 @@
 .social-profile-page.letterboxd-style .lb-rev-vote.active.up{color:#00e054;}
 .social-profile-page.letterboxd-style .lb-rev-vote.active.down{color:#e0354b;}
 .social-profile-page.letterboxd-style .lb-rev-vote[disabled]{opacity:.4;cursor:default;}
+/* add-a-film search results: sections + add button */
+.social-profile-page.letterboxd-style .lb-am-section{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8fa3b5;margin:10px 0 4px;font-weight:700;}
+.social-profile-page.letterboxd-style .lb-am-hint{color:#8fa3b5;font-size:12px;padding:8px 2px;line-height:1.5;}
+.social-profile-page.letterboxd-style .lb-am-add{margin-left:auto;background:#2c3440;color:#cfe;border:0;border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s,transform .12s,color .15s;}
+.social-profile-page.letterboxd-style .lb-am-add:hover{background:#00e054;color:#14181c;}
+.social-profile-page.letterboxd-style .lb-am-add:active{transform:scale(.92);}
+.social-profile-page.letterboxd-style .lb-am-add.req:hover{background:#1aa3ff;color:#fff;}
+/* row chooser popup (fixed to viewport) */
+.lb-addrow-menu{position:fixed;z-index:2147483647;background:#1a212a;border:1px solid #2c3440;border-radius:12px;padding:8px;min-width:180px;box-shadow:0 16px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:3px;}
+.lb-addrow-menu .lb-addrow-title{font-size:11px;color:#8fa3b5;padding:4px 8px 6px;border-bottom:1px solid #2c3440;margin-bottom:4px;}
+.lb-addrow-menu button{background:transparent;border:0;color:#dfe7ee;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .15s,color .15s;}
+.lb-addrow-menu button:hover{background:#00e054;color:#14181c;}
+.lb-addrow-menu button.newrow{color:#00e054;}
+.lb-addrow-menu button.newrow:hover{color:#14181c;}
+/* drag-to-reorder affordance */
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]{cursor:grab;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]:active{cursor:grabbing;}
 `;
             var style = document.createElement('style');
             style.id = 'lbProfileRedesign';
@@ -14772,27 +14789,62 @@
             var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
             var isImdb = /^tt\d+$/i.test(q);
             results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
-            var url = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
-            fetch(url, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
+            // 1) Local server library
+            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    var items = (data && data.Items) || [];
-                    var html = '';
-                    items.forEach(function (it) {
-                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=80';
-                        html += '<div class="lb-am-row" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">' +
-                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')"></div>' +
-                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
+                .then(function (d) { return (d && d.Items) || []; })
+                .catch(function () { return []; });
+
+            // 2) External TMDB catalog (server-side proxy; the token never reaches the browser)
+            var pExt = fetch(baseUrl + '/Ratings/ExternalSearch?q=' + encodeURIComponent(q), { method: 'GET', credentials: 'include', headers: { 'X-Emby-Token': token } })
+                .then(function (r) { return r.json(); })
+                .catch(function () { return { configured: true, results: [] }; });
+
+            Promise.all([pLocal, pExt]).then(function (arr) {
+                var local = arr[0] || [];
+                var ext = arr[1] || {};
+                var extResults = ext.results || [];
+                var html = '';
+
+                if (local.length) {
+                    html += '<div class="lb-am-section">On your server</div>';
+                    local.forEach(function (it) {
+                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
+                        html += '<div class="lb-am-row">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
+                            '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
                             '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
-                            '<span class="lb-am-watch">▶</span></div>';
+                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addToFavoritesFromSearch(\'' + self.escapeJs(it.Id) + '\',\'' + self.escapeJs(it.Name || '') + '\', this)">+ Add</button>' +
+                            '<span class="lb-am-watch" title="Watch" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">▶</span>' +
+                            '</div>';
                     });
-                    html += '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">' +
-                        (items.length ? 'Not here? ' : '') + 'Request “' + self.escapeHtml(q) + '”' + (isImdb ? ' (IMDb)' : '') + '</button>';
-                    results.innerHTML = html;
-                })
-                .catch(function () {
-                    results.innerHTML = '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">Request “' + self.escapeHtml(q) + '”</button>';
-                });
+                }
+
+                var localTitles = {};
+                local.forEach(function (it) { localTitles[(it.Name || '').toLowerCase()] = true; });
+                var extFiltered = extResults.filter(function (e) { return !localTitles[(e.title || '').toLowerCase()]; });
+
+                if (ext.configured === false) {
+                    html += '<div class="lb-am-hint">Add a free TMDB token in plugin settings to search the full film catalog.</div>';
+                } else if (extFiltered.length) {
+                    html += '<div class="lb-am-section">Request from catalog</div>';
+                    extFiltered.forEach(function (e) {
+                        var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
+                        var ratingStr = e.rating ? '★ ' + e.rating : '';
+                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId }));
+                        html += '<div class="lb-am-row ext">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
+                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
+                            '<span class="lb-am-year">' + ratingStr + '</span></div>' +
+                            '<button class="lb-am-add req" onclick="RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
+                            '</div>';
+                    });
+                }
+
+                if (!html) { html = '<div class="lb-am-hint">No matches found.</div>'; }
+                results.innerHTML = html;
+            });
         },
 
         requestMediaFromProfile: function (q) {
@@ -14820,6 +14872,125 @@
                     if (inp) inp.value = '';
                 })
                 .catch(function () { self.lbToast('Request failed'); });
+        },
+
+        /**
+         * Request a specific film found in the external (TMDB) catalog.
+         */
+        requestExternalMedia: function (payloadEnc, btn) {
+            var self = this;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var title = (data.title || '') + (data.year ? ' (' + data.year + ')' : '');
+            var body = { Title: title, Type: data.type || 'Movie', Notes: data.tmdbId ? ('TMDB:' + data.tmdbId) : '' };
+            fetch(baseUrl + '/Ratings/Requests', {
+                method: 'POST', credentials: 'include',
+                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    self.lbToast('Requested “' + (data.title || '') + '” ✓');
+                    if (btn) { btn.textContent = '✓ Requested'; btn.disabled = true; btn.style.opacity = '0.7'; }
+                })
+                .catch(function () { self.lbToast('Request failed'); });
+        },
+
+        /**
+         * From a server search result: choose which favorite row to add the film to.
+         */
+        addToFavoritesFromSearch: function (itemId, title, btn) {
+            var self = this;
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+
+            var existing = document.getElementById('lbAddRowMenu');
+            if (existing) existing.remove();
+            var menu = document.createElement('div');
+            menu.id = 'lbAddRowMenu';
+            menu.className = 'lb-addrow-menu';
+            var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(title || 'film') + '” to…</div>';
+            rows.forEach(function (row, i) {
+                h += '<button onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',' + i + ',\'' + self.escapeJs(title || '') + '\')">' + self.escapeHtml(row.title || ('Row ' + (i + 1))) + '</button>';
+            });
+            if (rows.length < 5) {
+                h += '<button class="newrow" onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',-1,\'' + self.escapeJs(title || '') + '\')">+ New row</button>';
+            }
+            menu.innerHTML = h;
+            document.body.appendChild(menu);
+            if (btn) {
+                var rect = btn.getBoundingClientRect();
+                menu.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 220)) + 'px';
+                menu.style.top = (rect.bottom + 6) + 'px';
+            }
+            setTimeout(function () {
+                document.addEventListener('click', function close(ev) {
+                    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close); }
+                });
+            }, 0);
+        },
+
+        confirmAddToFavorites: function (itemId, rowIndex, title) {
+            var self = this;
+            var menu = document.getElementById('lbAddRowMenu'); if (menu) menu.remove();
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            if (rowIndex === -1) {
+                if (rows.length >= 5) return;
+                rows.push({ title: 'Favorites', items: [] });
+                rowIndex = rows.length - 1;
+            }
+            if (!rows[rowIndex]) return;
+            if (!rows[rowIndex].items) rows[rowIndex].items = [];
+            var dup = rows[rowIndex].items.some(function (it) { return it && it.itemId === itemId; });
+            if (!dup) {
+                rows[rowIndex].items.push({
+                    itemId: itemId,
+                    title: title,
+                    imageUrl: ApiClient.serverAddress() + '/Items/' + itemId + '/Images/Primary?maxHeight=300'
+                });
+                self.saveFavorites();
+                self.lbToast('Added to ' + (rows[rowIndex].title || 'favorites'));
+            } else {
+                self.lbToast('Already in that row');
+            }
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = rows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
+        },
+
+        /* ---- Drag & drop reordering within a favorite row ---- */
+        favDragStart: function (e, rowIndex, idx) {
+            this._favDrag = { row: rowIndex, idx: idx };
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', rowIndex + ':' + idx); } catch (_) { /* ignore */ }
+            }
+        },
+        favDragOver: function (e) { if (e) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; } },
+        favDrop: function (e, rowIndex, idx) {
+            if (e) e.preventDefault();
+            var self = this;
+            var d = self._favDrag;
+            self._favDrag = null;
+            if (!d || d.row !== rowIndex) return;
+            if (!self._currentProfile || !self._currentProfile.favoriteRows[rowIndex]) return;
+            var items = self._currentProfile.favoriteRows[rowIndex].items || [];
+            if (d.idx === idx || d.idx < 0 || d.idx >= items.length || idx > items.length) return;
+            var moved = items.splice(d.idx, 1)[0];
+            items.splice(idx, 0, moved);
+            self.saveFavorites();
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
         },
 
         lbToast: function (msg) {
@@ -15125,6 +15296,7 @@
                     var fav = items[i];
                     if (fav && fav.itemId) {
                         html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                            (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
                             ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
                             (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
                             '</div>';

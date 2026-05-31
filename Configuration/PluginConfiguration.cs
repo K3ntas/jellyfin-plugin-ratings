@@ -120,6 +120,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ChatAllowEmojis = true;
             TenorApiKey = string.Empty;
             KlipyApiKey = string.Empty;
+            TmdbApiToken = string.Empty;
 
             // Chat notification settings
             ChatNotifyPublic = true;
@@ -550,6 +551,13 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Get a free key at https://klipy.com
         /// </summary>
         public string KlipyApiKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the TMDB API Read Access Token (v4) used for the external
+        /// "Add a film" catalog search. Stored server-side; never sent to the browser.
+        /// Get a free token at https://www.themoviedb.org/settings/api
+        /// </summary>
+        public string TmdbApiToken { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the last backup date (ISO 8601 format).

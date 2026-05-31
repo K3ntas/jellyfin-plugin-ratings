@@ -729,6 +729,115 @@ namespace Jellyfin.Plugin.Ratings.Api
             return result;
         }
 
+        private static readonly System.Net.Http.HttpClient _tmdbHttp = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+
+        /// <summary>
+        /// Searches the external TMDB catalog for the profile "Add a film" box. Uses the
+        /// server-side configured TMDB token (never exposed to the browser). Returns an empty
+        /// "configured: false" payload when no token is set.
+        /// </summary>
+        /// <param name="q">Search query (title).</param>
+        /// <returns>Normalized external results.</returns>
+        [HttpGet("ExternalSearch")]
+        [Authorize]
+        public async Task<ActionResult> ExternalSearch([FromQuery] string q)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(q))
+                {
+                    return Ok(new { configured = true, results = new List<object>() });
+                }
+
+                var token = Plugin.Instance?.Configuration?.TmdbApiToken;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    return Ok(new { configured = false, results = new List<object>() });
+                }
+
+                var url = "https://api.themoviedb.org/3/search/multi?include_adult=false&language=en-US&page=1&query=" + Uri.EscapeDataString(q);
+                using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
+                request.Headers.TryAddWithoutValidation("accept", "application/json");
+
+                using var resp = await _tmdbHttp.SendAsync(request).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    return Ok(new { configured = true, results = new List<object>(), error = (int)resp.StatusCode });
+                }
+
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var results = new List<object>();
+                if (doc.RootElement.TryGetProperty("results", out var arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var el in arr.EnumerateArray())
+                    {
+                        var mediaType = el.TryGetProperty("media_type", out var mt) ? mt.GetString() : null;
+                        if (mediaType != "movie" && mediaType != "tv")
+                        {
+                            continue;
+                        }
+
+                        var title = el.TryGetProperty("title", out var t1) ? t1.GetString()
+                                  : (el.TryGetProperty("name", out var t2) ? t2.GetString() : null);
+                        if (string.IsNullOrWhiteSpace(title))
+                        {
+                            continue;
+                        }
+
+                        var date = el.TryGetProperty("release_date", out var d1) ? d1.GetString()
+                                 : (el.TryGetProperty("first_air_date", out var d2) ? d2.GetString() : null);
+                        int? year = null;
+                        if (!string.IsNullOrEmpty(date) && date.Length >= 4 && int.TryParse(date.Substring(0, 4), out var y))
+                        {
+                            year = y;
+                        }
+
+                        string? poster = null;
+                        if (el.TryGetProperty("poster_path", out var pp) && pp.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            var pv = pp.GetString();
+                            if (!string.IsNullOrEmpty(pv))
+                            {
+                                poster = "https://image.tmdb.org/t/p/w185" + pv;
+                            }
+                        }
+
+                        double rating = 0;
+                        if (el.TryGetProperty("vote_average", out var va) && va.ValueKind == System.Text.Json.JsonValueKind.Number)
+                        {
+                            rating = Math.Round(va.GetDouble(), 1);
+                        }
+
+                        int tmdbId = el.TryGetProperty("id", out var idv) && idv.ValueKind == System.Text.Json.JsonValueKind.Number ? idv.GetInt32() : 0;
+
+                        results.Add(new
+                        {
+                            tmdbId,
+                            mediaType = mediaType == "tv" ? "Series" : "Movie",
+                            title,
+                            year,
+                            poster,
+                            rating
+                        });
+
+                        if (results.Count >= 8)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                return Ok(new { configured = true, results });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "External (TMDB) search failed");
+                return StatusCode(500, "External search failed");
+            }
+        }
+
         /// <summary>
         /// Gets library items sorted by rating with pagination.
         /// Only returns items that have ratings (for local/personal sort).

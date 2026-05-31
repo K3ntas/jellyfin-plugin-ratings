@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.325.0",
+        "changelog": "Add-a-film now searches the full external catalog via TMDB (paste a free TMDB Read Access Token in plugin settings) - results not on your server can be requested in one click; server results get a '+ Add' button to add to a chosen favorites row (or a new row). Drag-and-drop to reorder films within a favorites row. Fixed the Lists 404 (wrong route) so the Lists count works. Fixed a broken favorites remove button.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.325.0/Jellyfin.Plugin.Ratings_2.0.325.0.zip",
+        "checksum": "c48b2fa06916745cc02691b1e19d5c31",
+        "timestamp": "2026-06-01T02:30:00Z"
+      },
+      {
         "version": "2.0.324.0",
         "changelog": "Profile bug fixes: much faster load (single batched library query instead of hundreds of per-item lookups), Reviews count now calculated, you show as Online on your own profile, live WebSocket online-status updates (no reopen needed), the three-dot menu popup positioned correctly, and review like/dislike buttons now work.",
         "targetAbi": "10.11.0.0",
