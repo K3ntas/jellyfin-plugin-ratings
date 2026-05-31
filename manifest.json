@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.331.0",
+        "changelog": "Real fix for favorites not saving: the profile loads favorites from the server's PascalCase JSON, but the UI read camelCase, so rows loaded EMPTY and the next save overwrote the saved items. Favorites are now normalized on load. Also added a reliable drop zone so you can drag a poster from Recent Activity onto a row (including the + slot).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.331.0/Jellyfin.Plugin.Ratings_2.0.331.0.zip",
+        "checksum": "32d5ff5c726c86aec0435b5fb1d03827",
+        "timestamp": "2026-06-01T08:30:00Z"
+      },
+      {
         "version": "2.0.330.0",
         "changelog": "Favorites finally save reliably (removed a save-success snapshot overwrite that dropped items added while a save was in flight). Drag-to-reorder and add/remove now update only the affected row instead of reloading the whole profile, and you can drag a poster from Recent Activity straight into a favorites row.",
         "targetAbi": "10.11.0.0",

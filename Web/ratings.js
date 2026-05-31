@@ -15057,7 +15057,7 @@
                     '</div>';
             });
             if (isSelf && items.length < 30) {
-                html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
+                html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
             }
             grid.innerHTML = html;
         },
@@ -15226,6 +15226,26 @@
             html += '<div class="lb-content" id="lbProfileContent"></div>';
 
             container.innerHTML = html;
+
+            // Normalize favorites to camelCase. The server (Jellyfin) serializes the profile GET
+            // with PascalCase nested keys (Items/ItemId/ImageUrl); the favorites UI reads camelCase,
+            // so without this the rows load EMPTY and the next save overwrites the saved items.
+            if (profile) {
+                var rawRows = profile.favoriteRows || profile.FavoriteRows || [];
+                profile.favoriteRows = rawRows.map(function (row) {
+                    var rawItems = (row && (row.items || row.Items)) || [];
+                    return {
+                        title: (row && (row.title || row.Title)) || 'Favorites',
+                        items: rawItems.map(function (it) {
+                            return {
+                                itemId: (it && (it.itemId || it.ItemId)) || '',
+                                title: (it && (it.title || it.Title)) || '',
+                                imageUrl: (it && (it.imageUrl || it.ImageUrl)) || ''
+                            };
+                        }).filter(function (it) { return it.itemId; })
+                    };
+                });
+            }
 
             // Store profile data for tab switching
             self._currentProfile = profile;
@@ -15419,6 +15439,7 @@
                 // Add one empty slot to add new item (if owner and less than 30 items)
                 if (isSelf && itemCount < 30) {
                     html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + itemCount + '"' +
+                        (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') +
                         ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + itemCount + ')" style="cursor:pointer">' +
                         '<span>+</span></div>';
                 }
