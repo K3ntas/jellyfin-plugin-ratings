@@ -3438,48 +3438,23 @@
          * Update profile online status from WebSocket
          */
         updateProfileStatusFromWebSocket: function (statusData) {
-            var self = this;
             var page = document.getElementById('socialProfilePage');
             if (!page) return;
 
-            // Update the status dot
-            var statusDot = page.querySelector('.social-profile-avatar-large .social-status-dot');
-            if (statusDot) {
-                var status = statusData.status || 'Offline';
-                var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-                statusDot.className = 'social-status-dot ' + statusClass;
-            }
-
-            // Update the status text in meta - status is from predefined enum values
-            var metaSpans = page.querySelectorAll('.social-profile-meta span');
             var validStatuses = ['Online', 'Offline', 'Away', 'DoNotDisturb'];
-            metaSpans.forEach(function (span) {
-                var svg = span.querySelector('svg');
-                if (svg && (span.textContent.includes('Online') || span.textContent.includes('Offline') ||
-                    span.textContent.includes('Away') || span.textContent.includes('Do Not Disturb'))) {
-                    var status = statusData.status || 'Offline';
-                    // Validate status is from known enum values
-                    if (validStatuses.indexOf(status) === -1) status = 'Offline';
-                    var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
-                    span.textContent = '';
-                    span.appendChild(svg.cloneNode(true));
-                    span.appendChild(document.createTextNode(statusText));
-                }
-            });
+            var status = statusData.status || 'Offline';
+            if (validStatuses.indexOf(status) === -1) status = 'Offline';
+            var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
+            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
 
-            // Update last seen
-            if (statusData.lastSeen) {
-                var lastSeenText = statusData.status === 'Online' ? 'now' : self.formatTimeAgo(new Date(statusData.lastSeen));
-                metaSpans.forEach(function (span) {
-                    if (span.textContent.includes('Last seen')) {
-                        var svg = span.querySelector('svg');
-                        if (svg) {
-                            span.textContent = '';
-                            span.appendChild(svg.cloneNode(true));
-                            span.appendChild(document.createTextNode('Last seen ' + lastSeenText));
-                        }
-                    }
-                });
+            // Redesigned profile DOM: avatar dot + status text live-update.
+            var dot = page.querySelector('.lb-status-dot');
+            if (dot) dot.className = 'lb-status-dot ' + statusClass;
+
+            var txt = page.querySelector('.lb-status-text');
+            if (txt) {
+                txt.className = 'lb-status-text ' + statusClass;
+                txt.textContent = statusText;
             }
         },
 
@@ -14469,6 +14444,10 @@
             // Track which profile we're viewing
             self._viewingProfileUserId = userId;
             self._profileActiveTab = 'overview';
+            // Reset the per-open shared ratings cache (used to avoid 4 duplicate fetches)
+            self._profileRatings = null;
+            self._profileRatingsUser = null;
+            self._profileRatingsPending = null;
 
             // Register as viewer for real-time updates
             var baseUrl = ApiClient.serverAddress();
@@ -14510,8 +14489,8 @@
                 fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
                 fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
                 fetch(baseUrl + '/Social/Follow/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { isFollowing: false, followersCount: 0, followingCount: 0 }; }),
-                fetch(baseUrl + '/Social/Profile/' + userId + '/Like/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
-                fetch(baseUrl + '/Social/Lists/User/' + userId, { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Likes', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).then(function (d) { return { hasLiked: !!(d && d.hasLiked), likesCount: (d && (d.likeCount != null ? d.likeCount : d.likesCount)) || 0 }; }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Lists', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
             ]).then(function (results) {
                 var profile = results[0];
                 var friendsData = results[1];
@@ -14542,6 +14521,10 @@
                 var friendStatus = (onlineData.friends || []).find(function (f) { return f.userId === userId; });
                 if (friendStatus) {
                     onlineStatus = friendStatus.status || 'Offline';
+                }
+                // You are obviously online when viewing your own profile.
+                if (isSelf) {
+                    onlineStatus = 'Online';
                 }
 
                 self.renderLetterboxdProfile(page, profile, {
@@ -14655,12 +14638,12 @@
 @keyframes lbAurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 /* glass side cards */
 .social-profile-page.letterboxd-style .lb-side-card{background:rgba(32,40,49,.5)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.08)!important;}
-/* poster mirror reflections + hover glow */
-.social-profile-page.letterboxd-style .lb-poster-img{-webkit-box-reflect:below 3px linear-gradient(transparent 62%,rgba(0,0,0,.30));}
-.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.28);}
-.social-profile-page.letterboxd-style .lb-favorite-slot.filled{-webkit-box-reflect:below 3px linear-gradient(transparent 64%,rgba(0,0,0,.24));}
-.social-profile-page.letterboxd-style .lb-rev2-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 70%,rgba(0,0,0,.22));}
-.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 68%,rgba(0,0,0,.22));}
+/* poster drop shadows + hover glow (regular shadows, no mirror reflection) */
+.social-profile-page.letterboxd-style .lb-poster-img{box-shadow:0 6px 18px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.3);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{box-shadow:0 6px 18px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-rev2-poster{box-shadow:0 5px 14px rgba(0,0,0,.45);}
+.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{box-shadow:0 5px 14px rgba(0,0,0,.45);}
 /* gradient avatar + title */
 .social-profile-page.letterboxd-style .lb-avatar{background:linear-gradient(135deg,#00e054,#1aa3ff)!important;box-shadow:0 8px 30px rgba(0,224,84,.35);}
 .social-profile-page.letterboxd-style .lb-username{background:linear-gradient(90deg,#fff,#9fe7c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
@@ -14679,6 +14662,46 @@
 .social-profile-page.letterboxd-style .lb-bg-mono{background:#101418;border:1px solid #2c3440;}
 .social-profile-page.letterboxd-style .lb-toolbar-btn{transition:transform .15s,background .2s,color .2s;}
 .social-profile-page.letterboxd-style .lb-toolbar-btn:hover{transform:translateY(-2px);}
+/* three-dot more menu - anchored under its button */
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu{position:absolute;right:0;top:calc(100% + 6px);left:auto;min-width:140px;background:#1a212a;border:1px solid #2c3440;border-radius:10px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.55);display:none;z-index:30;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu.visible{display:block;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#dfe7ee;padding:9px 11px;border-radius:7px;cursor:pointer;font-size:13px;transition:background .15s;}
+.social-profile-page.letterboxd-style .lb-more-wrap .lb-more-menu button:hover{background:#e0354b;color:#fff;}
+/* review like/dislike buttons */
+.social-profile-page.letterboxd-style .lb-rev-likes{display:inline-flex;align-items:center;gap:10px;}
+.social-profile-page.letterboxd-style .lb-rev-vote{background:transparent;border:0;color:#8fa3b5;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:7px;transition:background .15s,color .15s,transform .12s;}
+.social-profile-page.letterboxd-style .lb-rev-vote:hover{background:#2c3440;color:#fff;}
+.social-profile-page.letterboxd-style .lb-rev-vote:active{transform:scale(.9);}
+.social-profile-page.letterboxd-style .lb-rev-vote.active.up{color:#00e054;}
+.social-profile-page.letterboxd-style .lb-rev-vote.active.down{color:#e0354b;}
+.social-profile-page.letterboxd-style .lb-rev-vote[disabled]{opacity:.4;cursor:default;}
+/* add-a-film search results: sections + add button */
+.social-profile-page.letterboxd-style .lb-am-section{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8fa3b5;margin:10px 0 4px;font-weight:700;}
+.social-profile-page.letterboxd-style .lb-am-hint{color:#8fa3b5;font-size:12px;padding:8px 2px;line-height:1.5;}
+.social-profile-page.letterboxd-style .lb-am-add{margin-left:auto;background:#2c3440;color:#cfe;border:0;border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s,transform .12s,color .15s;}
+.social-profile-page.letterboxd-style .lb-am-add:hover{background:#00e054;color:#14181c;}
+.social-profile-page.letterboxd-style .lb-am-add:active{transform:scale(.92);}
+.social-profile-page.letterboxd-style .lb-am-add.req:hover{background:#1aa3ff;color:#fff;}
+/* row chooser popup (fixed to viewport) */
+.lb-addrow-menu{position:fixed;z-index:2147483647;background:#1a212a;border:1px solid #2c3440;border-radius:12px;padding:8px;min-width:180px;box-shadow:0 16px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:3px;}
+.lb-addrow-menu .lb-addrow-title{font-size:11px;color:#8fa3b5;padding:4px 8px 6px;border-bottom:1px solid #2c3440;margin-bottom:4px;}
+.lb-addrow-menu button{background:transparent;border:0;color:#dfe7ee;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .15s,color .15s;}
+.lb-addrow-menu button:hover{background:#00e054;color:#14181c;}
+.lb-addrow-menu button.newrow{color:#00e054;}
+.lb-addrow-menu button.newrow:hover{color:#14181c;}
+/* drag-to-reorder affordance */
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]{cursor:grab;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled[draggable="true"]:active{cursor:grabbing;}
+/* favorites row horizontal scroll with hover arrows (no visible scrollbar) */
+.social-profile-page.letterboxd-style .lb-row-scroll{position:relative;}
+.social-profile-page.letterboxd-style .lb-favorites-grid{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.social-profile-page.letterboxd-style .lb-favorites-grid::-webkit-scrollbar{display:none;height:0;}
+.social-profile-page.letterboxd-style .lb-row-arrow{position:absolute;top:calc(50% - 12px);transform:translateY(-50%);z-index:6;width:40px;height:64px;border:0;border-radius:10px;background:rgba(8,12,16,.5);color:#fff;font-size:30px;line-height:1;cursor:pointer;opacity:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);transition:opacity .2s,background .2s,transform .15s;}
+.social-profile-page.letterboxd-style .lb-row-scroll:hover .lb-row-arrow{opacity:1;}
+.social-profile-page.letterboxd-style .lb-row-arrow:hover{background:rgba(0,224,84,.9);color:#14181c;}
+.social-profile-page.letterboxd-style .lb-row-arrow:active{transform:translateY(-50%) scale(.9);}
+.social-profile-page.letterboxd-style .lb-row-arrow.left{left:-6px;}
+.social-profile-page.letterboxd-style .lb-row-arrow.right{right:-6px;}
 `;
             var style = document.createElement('style');
             style.id = 'lbProfileRedesign';
@@ -14691,16 +14714,12 @@
          */
         loadProfileRecentPosters: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=12', { method: 'GET', credentials: 'include', headers: headers })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentPosters');
                     if (!c) return;
-                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
                     if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
+                    var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
                     var html = '';
                     ratings.slice(0, 12).forEach(function (r) {
                         var id = r.itemId || r.ItemId || '';
@@ -14708,14 +14727,14 @@
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
                         var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
-                        html += '<div class="lb-poster-card"' + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + '">' +
+                        var dragAttr = (isSelf && id) ? ' draggable="true" ondragstart="RatingsPlugin.activityDragStart(event,\'' + self.escapeJs(id) + '\',\'' + self.escapeJs(name) + '\')"' : '';
+                        html += '<div class="lb-poster-card"' + dragAttr + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + (isSelf ? ' — drag to a row' : '') + '">' +
                             '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
                             '<div class="lb-poster-stars">' + self.renderStars(rating) + '</div>' +
                             '</div>';
                     });
                     c.innerHTML = html;
-                })
-                .catch(function () { var c = document.getElementById('lbRecentPosters'); if (c) c.innerHTML = '<div class="lb-empty-mini">No activity</div>'; });
+            });
         },
 
         /**
@@ -14723,15 +14742,10 @@
          */
         loadProfileRecentReviews: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=60', { method: 'GET', credentials: 'include', headers: headers })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentReviews');
                     if (!c) return;
-                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
                     var reviews = ratings.filter(function (r) { return r.reviewText || r.ReviewText || r.review || r.Review; }).slice(0, 3);
                     if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
                     var html = '';
@@ -14748,8 +14762,7 @@
                             '<p class="lb-rev2-text">' + self.escapeHtml(txt) + '</p></div></div>';
                     });
                     c.innerHTML = html;
-                })
-                .catch(function () { var c = document.getElementById('lbRecentReviews'); if (c) c.innerHTML = '<div class="lb-empty-mini">No reviews</div>'; });
+            });
         },
 
         /**
@@ -14780,27 +14793,62 @@
             var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
             var isImdb = /^tt\d+$/i.test(q);
             results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
-            var url = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
-            fetch(url, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
+            // 1) Local server library
+            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    var items = (data && data.Items) || [];
-                    var html = '';
-                    items.forEach(function (it) {
-                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=80';
-                        html += '<div class="lb-am-row" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">' +
-                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')"></div>' +
-                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
+                .then(function (d) { return (d && d.Items) || []; })
+                .catch(function () { return []; });
+
+            // 2) External TMDB catalog (server-side proxy; the token never reaches the browser)
+            var pExt = fetch(baseUrl + '/Ratings/ExternalSearch?q=' + encodeURIComponent(q), { method: 'GET', credentials: 'include', headers: { 'X-Emby-Token': token } })
+                .then(function (r) { return r.json(); })
+                .catch(function () { return { configured: true, results: [] }; });
+
+            Promise.all([pLocal, pExt]).then(function (arr) {
+                var local = arr[0] || [];
+                var ext = arr[1] || {};
+                var extResults = ext.results || [];
+                var html = '';
+
+                if (local.length) {
+                    html += '<div class="lb-am-section">On your server</div>';
+                    local.forEach(function (it) {
+                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
+                        html += '<div class="lb-am-row">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
+                            '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
                             '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
-                            '<span class="lb-am-watch">▶</span></div>';
+                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addToFavoritesFromSearch(\'' + self.escapeJs(it.Id) + '\',\'' + self.escapeJs(it.Name || '') + '\', this)">+ Add</button>' +
+                            '<span class="lb-am-watch" title="Watch" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">▶</span>' +
+                            '</div>';
                     });
-                    html += '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">' +
-                        (items.length ? 'Not here? ' : '') + 'Request “' + self.escapeHtml(q) + '”' + (isImdb ? ' (IMDb)' : '') + '</button>';
-                    results.innerHTML = html;
-                })
-                .catch(function () {
-                    results.innerHTML = '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">Request “' + self.escapeHtml(q) + '”</button>';
-                });
+                }
+
+                var localTitles = {};
+                local.forEach(function (it) { localTitles[(it.Name || '').toLowerCase()] = true; });
+                var extFiltered = extResults.filter(function (e) { return !localTitles[(e.title || '').toLowerCase()]; });
+
+                if (ext.configured === false) {
+                    html += '<div class="lb-am-hint">Add a free TMDB token in plugin settings to search the full film catalog.</div>';
+                } else if (extFiltered.length) {
+                    html += '<div class="lb-am-section">Request from catalog</div>';
+                    extFiltered.forEach(function (e) {
+                        var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
+                        var ratingStr = e.rating ? '★ ' + e.rating : '';
+                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId }));
+                        html += '<div class="lb-am-row ext">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
+                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
+                            '<span class="lb-am-year">' + ratingStr + '</span></div>' +
+                            '<button class="lb-am-add req" onclick="RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
+                            '</div>';
+                    });
+                }
+
+                if (!html) { html = '<div class="lb-am-hint">No matches found.</div>'; }
+                results.innerHTML = html;
+            });
         },
 
         requestMediaFromProfile: function (q) {
@@ -14830,6 +14878,230 @@
                 .catch(function () { self.lbToast('Request failed'); });
         },
 
+        /**
+         * Request a specific film found in the external (TMDB) catalog.
+         */
+        requestExternalMedia: function (payloadEnc, btn) {
+            var self = this;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var title = (data.title || '') + (data.year ? ' (' + data.year + ')' : '');
+            var body = { Title: title, Type: data.type || 'Movie', Notes: data.tmdbId ? ('TMDB:' + data.tmdbId) : '' };
+            fetch(baseUrl + '/Ratings/Requests', {
+                method: 'POST', credentials: 'include',
+                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    self.lbToast('Requested “' + (data.title || '') + '” ✓');
+                    if (btn) { btn.textContent = '✓ Requested'; btn.disabled = true; btn.style.opacity = '0.7'; }
+                })
+                .catch(function () { self.lbToast('Request failed'); });
+        },
+
+        /**
+         * From a server search result: choose which favorite row to add the film to.
+         */
+        addToFavoritesFromSearch: function (itemId, title, btn) {
+            var self = this;
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+
+            var existing = document.getElementById('lbAddRowMenu');
+            if (existing) existing.remove();
+            var menu = document.createElement('div');
+            menu.id = 'lbAddRowMenu';
+            menu.className = 'lb-addrow-menu';
+            var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(title || 'film') + '” to…</div>';
+            rows.forEach(function (row, i) {
+                var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
+                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                h += '<button onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',' + i + ',\'' + self.escapeJs(title || '') + '\')">' + self.escapeHtml(rowName) + '</button>';
+            });
+            if (rows.length < 5) {
+                h += '<button class="newrow" onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',-1,\'' + self.escapeJs(title || '') + '\')">+ New row</button>';
+            }
+            menu.innerHTML = h;
+            document.body.appendChild(menu);
+            if (btn) {
+                var rect = btn.getBoundingClientRect();
+                menu.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 220)) + 'px';
+                menu.style.top = (rect.bottom + 6) + 'px';
+            }
+            setTimeout(function () {
+                document.addEventListener('click', function close(ev) {
+                    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close); }
+                });
+            }, 0);
+        },
+
+        confirmAddToFavorites: function (itemId, rowIndex, title) {
+            var self = this;
+            var menu = document.getElementById('lbAddRowMenu'); if (menu) menu.remove();
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            var createdNewRow = false;
+            if (rowIndex === -1) {
+                if (rows.length >= 5) return;
+                rows.push({ title: 'Favorites', items: [] });
+                rowIndex = rows.length - 1;
+                createdNewRow = true;
+            }
+            if (!rows[rowIndex]) return;
+            if (!rows[rowIndex].items) rows[rowIndex].items = [];
+            var dup = rows[rowIndex].items.some(function (it) { return it && it.itemId === itemId; });
+            if (!dup) {
+                rows[rowIndex].items.push({
+                    itemId: itemId,
+                    title: title,
+                    imageUrl: ApiClient.serverAddress() + '/Items/' + itemId + '/Images/Primary?maxHeight=300'
+                });
+                self.saveFavorites();
+                self.lbToast('Added to ' + (rows[rowIndex].title || 'favorites'));
+            } else {
+                self.lbToast('Already in that row');
+            }
+            // Only a brand-new row needs the full layout; otherwise update just that row.
+            if (createdNewRow) {
+                if (self._currentProfileStatus) {
+                    self._currentProfileStatus.favoriteRows = rows;
+                    self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+                }
+            } else {
+                self.rerenderFavoriteRow(rowIndex);
+            }
+        },
+
+        /* ---- Drag & drop reordering within a favorite row ---- */
+        favDragStart: function (e, rowIndex, idx) {
+            this._favDrag = { row: rowIndex, idx: idx };
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', rowIndex + ':' + idx); } catch (_) { /* ignore */ }
+            }
+        },
+        favDragOver: function (e) { if (e) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; } },
+        favDrop: function (e, rowIndex, idx) {
+            if (e) e.preventDefault();
+            var self = this;
+            var d = self._favDrag;
+            self._favDrag = null;
+            if (!self._currentProfile || !self._currentProfile.favoriteRows[rowIndex]) return;
+            if (!self._currentProfile.favoriteRows[rowIndex].items) self._currentProfile.favoriteRows[rowIndex].items = [];
+            var items = self._currentProfile.favoriteRows[rowIndex].items;
+
+            // Drag from Recent Activity (or elsewhere) -> add the film to this row.
+            if (d && d.external && d.itemId) {
+                if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+                var pos = (typeof idx === 'number' && idx >= 0 && idx <= items.length) ? idx : items.length;
+                items.splice(pos, 0, {
+                    itemId: d.itemId,
+                    title: d.name || '',
+                    imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
+                });
+                self.saveFavorites();
+                self.rerenderFavoriteRow(rowIndex);
+                return;
+            }
+
+            // Reorder within the same row (in place; no full reload).
+            if (!d || d.row !== rowIndex) return;
+            if (d.idx < 0 || d.idx >= items.length) return;
+            var moved = items.splice(d.idx, 1)[0];
+            var dropPos = (typeof idx === 'number' && idx >= 0) ? idx : items.length;
+            if (dropPos > d.idx) dropPos--; // account for the removal shift
+            if (dropPos > items.length) dropPos = items.length;
+            items.splice(dropPos, 0, moved);
+            self.saveFavorites();
+            self.rerenderFavoriteRow(rowIndex);
+        },
+
+        /**
+         * Start dragging a poster out of Recent Activity (to drop into a favorites row).
+         */
+        activityDragStart: function (e, itemId, name) {
+            this._favDrag = { external: true, itemId: itemId, name: name || '' };
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copy';
+                try { e.dataTransfer.setData('text/plain', itemId); } catch (_) { /* ignore */ }
+            }
+        },
+
+        /**
+         * Re-render ONLY one favorites row's grid (no full profile reload).
+         */
+        rerenderFavoriteRow: function (rowIndex) {
+            var self = this;
+            var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
+            if (!row) return;
+            var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
+            if (!grid) return;
+            var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
+            // Compact (drop nulls) so array indices match rendered indices.
+            var items = (row.items || []).filter(function (f) { return f && f.itemId; });
+            row.items = items;
+            var base = ApiClient.serverAddress();
+            var html = '';
+            items.forEach(function (fav, i) {
+                html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
+                    (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
+                    ' style="background-image: url(\'' + base + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300\')">' +
+                    (isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
+                    '</div>';
+            });
+            if (isSelf && items.length < 30) {
+                html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
+            }
+            grid.innerHTML = html;
+        },
+
+        /**
+         * Horizontally scroll a favorites row via the hover arrows.
+         */
+        scrollFavRow: function (btn, dir) {
+            var wrap = btn.closest('.lb-row-scroll');
+            if (!wrap) return;
+            var grid = wrap.querySelector('.lb-favorites-grid');
+            if (grid) grid.scrollBy({ left: dir * Math.max(280, Math.round(grid.clientWidth * 0.8)), behavior: 'smooth' });
+        },
+
+        /**
+         * Fetch the viewed profile's ratings ONCE and reuse across the overview
+         * (distribution, posters, reviews, activity) instead of 4 separate requests.
+         */
+        getProfileRatings: function (cb) {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            if (self._profileRatingsUser === userId && self._profileRatings) { cb(self._profileRatings); return; }
+            if (self._profileRatingsPending && self._profileRatingsPendingUser === userId) { self._profileRatingsPending.push(cb); return; }
+            self._profileRatingsPending = [cb];
+            self._profileRatingsPendingUser = userId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
+                    self._profileRatings = ratings;
+                    self._profileRatingsUser = userId;
+                    var cbs = self._profileRatingsPending || [];
+                    self._profileRatingsPending = null;
+                    cbs.forEach(function (f) { try { f(ratings); } catch (e) { /* ignore */ } });
+                })
+                .catch(function () {
+                    var cbs = self._profileRatingsPending || [];
+                    self._profileRatingsPending = null;
+                    cbs.forEach(function (f) { try { f([]); } catch (e) { /* ignore */ } });
+                });
+        },
+
         lbToast: function (msg) {
             var t = document.createElement('div');
             t.className = 'lb-toast';
@@ -14837,6 +15109,33 @@
             document.body.appendChild(t);
             setTimeout(function () { t.classList.add('show'); }, 10);
             setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
+        },
+
+        /**
+         * Like/dislike a review on the profile being viewed.
+         */
+        voteReview: function (itemId, isLike, key) {
+            var self = this;
+            var reviewerUserId = self._viewingProfileUserId;
+            if (!reviewerUserId || !itemId) return;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            fetch(baseUrl + '/Ratings/Reviews/' + reviewerUserId + '/' + itemId + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token }
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (res) {
+                    var up = document.getElementById('revup_' + key);
+                    var dn = document.getElementById('revdn_' + key);
+                    var lc = (res.LikeCount != null ? res.LikeCount : res.likeCount) || 0;
+                    var dc = (res.DislikeCount != null ? res.DislikeCount : res.dislikeCount) || 0;
+                    var userLiked = (res.UserLiked != null ? res.UserLiked : res.userLiked);
+                    if (up) { var us = up.querySelector('span'); if (us) us.textContent = lc; up.classList.toggle('active', userLiked === true); }
+                    if (dn) { var ds = dn.querySelector('span'); if (ds) ds.textContent = dc; dn.classList.toggle('active', userLiked === false); }
+                })
+                .catch(function () { self.lbToast('Could not vote on this review'); });
         },
 
         /**
@@ -14902,9 +15201,6 @@
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
                 '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
                 '<span class="lb-stat-label">Reviews</span></div>' +
-                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'lists\')">' +
-                '<span class="lb-stat-value">' + (status.lists.length || 0) + '</span>' +
-                '<span class="lb-stat-label">Lists</span></div>' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
                 '<span class="lb-stat-label">Following</span></div>' +
@@ -14921,7 +15217,6 @@
                 '<button class="lb-tab active" data-tab="overview">Overview</button>' +
                 '<button class="lb-tab" data-tab="ratings">Ratings</button>' +
                 '<button class="lb-tab" data-tab="reviews">Reviews</button>' +
-                '<button class="lb-tab" data-tab="lists">Lists</button>' +
                 '<button class="lb-tab" data-tab="activity">Activity</button>' +
                 '<button class="lb-tab" data-tab="following">Following</button>' +
                 '<button class="lb-tab" data-tab="followers">Followers</button>' +
@@ -14931,6 +15226,26 @@
             html += '<div class="lb-content" id="lbProfileContent"></div>';
 
             container.innerHTML = html;
+
+            // Normalize favorites to camelCase. The server (Jellyfin) serializes the profile GET
+            // with PascalCase nested keys (Items/ItemId/ImageUrl); the favorites UI reads camelCase,
+            // so without this the rows load EMPTY and the next save overwrites the saved items.
+            if (profile) {
+                var rawRows = profile.favoriteRows || profile.FavoriteRows || [];
+                profile.favoriteRows = rawRows.map(function (row) {
+                    var rawItems = (row && (row.items || row.Items)) || [];
+                    return {
+                        title: (row && (row.title || row.Title)) || 'Favorites',
+                        items: rawItems.map(function (it) {
+                            return {
+                                itemId: (it && (it.itemId || it.ItemId)) || '',
+                                title: (it && (it.title || it.Title)) || '',
+                                imageUrl: (it && (it.imageUrl || it.ImageUrl)) || ''
+                            };
+                        }).filter(function (it) { return it.itemId; })
+                    };
+                });
+            }
 
             // Store profile data for tab switching
             self._currentProfile = profile;
@@ -14991,12 +15306,15 @@
                     html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">Add Friend</button>';
                 }
 
-                // More actions dropdown
-                html += '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
+                // More actions dropdown (menu is a SIBLING of the button, not nested inside it -
+                // nesting a div/button inside a <button> is invalid and caused the misplaced/empty popup)
+                html += '<span class="lb-more-wrap" style="position:relative;display:inline-block;">' +
+                    '<button class="lb-btn icon more-btn" onclick="RatingsPlugin.toggleProfileMoreMenu(event)">' +
                     '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>' +
+                    '</button>' +
                     '<div class="lb-more-menu" id="profileMoreMenu">' +
                     '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">Block User</button>' +
-                    '</div></button>';
+                    '</div></span>';
             }
 
             return html;
@@ -15095,7 +15413,10 @@
                     if (itemCount > 0) html += '<span class="lb-row-count">' + itemCount + ' items</span>';
                 }
                 html += '</div>';
-                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '">';
+                html += '<div class="lb-row-scroll">';
+                html += '<button class="lb-row-arrow left" onclick="RatingsPlugin.scrollFavRow(this,-1)" aria-label="Scroll left">‹</button>';
+                html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '"' +
+                    (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') + '>';
 
                 // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
                 var visibleCount = Math.min(itemCount, 10);
@@ -15103,7 +15424,8 @@
                     var fav = items[i];
                     if (fav && fav.itemId) {
                         html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                            ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
+                            (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
+                            ' style="background-image: url(\'' + (ApiClient.serverAddress() + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300') + '\')">' +
                             (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
                             '</div>';
                     }
@@ -15117,11 +15439,15 @@
                 // Add one empty slot to add new item (if owner and less than 30 items)
                 if (isSelf && itemCount < 30) {
                     html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + itemCount + '"' +
+                        (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') +
                         ' onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + itemCount + ')" style="cursor:pointer">' +
                         '<span>+</span></div>';
                 }
 
-                html += '</div></div>';
+                html += '</div>'; // .lb-favorites-grid
+                html += '<button class="lb-row-arrow right" onclick="RatingsPlugin.scrollFavRow(this,1)" aria-label="Scroll right">›</button>';
+                html += '</div>'; // .lb-row-scroll
+                html += '</div>'; // .lb-favorite-row
             }
 
             // Add row button (if less than 5 rows and is own profile)
@@ -15169,20 +15495,6 @@
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
                 '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
 
-            // Lists preview
-            var listsHtml = '';
-            if (lists.length) {
-                listsHtml = lists.slice(0, 6).map(function (l) {
-                    var lt = self.escapeHtml(l.title || l.Title || 'Untitled');
-                    var lc = (l.itemCount || l.ItemCount || (l.items ? l.items.length : 0));
-                    return '<div class="lb-side-list-row" onclick="RatingsPlugin.switchProfileTab(\'lists\')"><span class="lb-sl-name">' + lt + '</span><span class="lb-sl-count">' + lc + '</span></div>';
-                }).join('');
-            } else {
-                listsHtml = '<div class="lb-empty-mini">No lists yet</div>';
-            }
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Lists <span class="lb-side-count">' + lists.length + '</span></h4>' +
-                '<div class="lb-side-lists">' + listsHtml + '</div></section>';
-
             // Activity feed (compact)
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
                 '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading…</div></div></section>';
@@ -15205,26 +15517,9 @@
          */
         loadProfileRatingDistribution: function () {
             var self = this;
-            var userId = self._viewingProfileUserId;
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
-            // Get user's ratings and calculate distribution
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', {
-                method: 'GET',
-                credentials: 'include',
-                headers: headers
-            })
-            .then(function (r) {
-                if (!r.ok) throw new Error('API error: ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                 var container = document.getElementById('lbRatingDist');
                 if (!container) return;
-
-                // API returns array directly
-                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
                     return;
@@ -15253,10 +15548,6 @@
                 }
                 html += '</div>';
                 container.innerHTML = html;
-            })
-            .catch(function () {
-                var container = document.getElementById('lbRatingDist');
-                if (container) container.innerHTML = '<div class="lb-empty">No rating data</div>';
             });
         },
 
@@ -15265,26 +15556,9 @@
          */
         loadProfileRecentActivity: function (limit) {
             var self = this;
-            var userId = self._viewingProfileUserId;
-            var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
-
-            // Get user's recent ratings as activity
-            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=' + (limit || 10), {
-                method: 'GET',
-                credentials: 'include',
-                headers: headers
-            })
-            .then(function (r) {
-                if (!r.ok) throw new Error('API error: ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
+            self.getProfileRatings(function (ratings) {
                 var container = document.getElementById('lbRecentActivity');
                 if (!container) return;
-
-                // API returns array directly
-                var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
                     container.innerHTML = '<div class="lb-empty">No recent activity</div>';
                     return;
@@ -15313,11 +15587,6 @@
                 });
                 html += '</div>';
                 container.innerHTML = html;
-            })
-            .catch(function (err) {
-                console.error('[Social] Activity load error:', err);
-                var container = document.getElementById('lbRecentActivity');
-                if (container) container.innerHTML = '<div class="lb-empty">No recent activity</div>';
             });
         },
 
@@ -15473,10 +15742,22 @@
                     var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
                     var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
-                    var likes = r.likes || r.Likes || 0;
+                    var likeCount = r.likeCount || r.LikeCount || 0;
+                    var dislikeCount = r.dislikeCount || r.DislikeCount || 0;
                     var itemId = r.itemId || r.ItemId || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
                     var titleAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+                    var canVote = (!self._currentProfileStatus || !self._currentProfileStatus.isSelf) && itemId;
+                    var safeKey = String(itemId).replace(/[^a-zA-Z0-9]/g, '');
+                    var voteHtml;
+                    if (canVote) {
+                        voteHtml = '<span class="lb-rev-likes">' +
+                            '<button class="lb-rev-vote up" id="revup_' + safeKey + '" onclick="RatingsPlugin.voteReview(\'' + self.escapeJs(itemId) + '\',true,\'' + safeKey + '\')">👍 <span>' + likeCount + '</span></button>' +
+                            '<button class="lb-rev-vote down" id="revdn_' + safeKey + '" onclick="RatingsPlugin.voteReview(\'' + self.escapeJs(itemId) + '\',false,\'' + safeKey + '\')">👎 <span>' + dislikeCount + '</span></button>' +
+                            '</span>';
+                    } else {
+                        voteHtml = '<span class="lb-rev-likes"><span class="lb-rev-vote" disabled>👍 ' + likeCount + '</span><span class="lb-rev-vote" disabled>👎 ' + dislikeCount + '</span></span>';
+                    }
 
                     html += '<div class="lb-review-card">' +
                         '<div class="lb-review-header">' +
@@ -15486,7 +15767,7 @@
                         '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
                         '<div class="lb-review-footer">' +
                         '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
-                        '<span class="lb-review-likes">👍 ' + likes + '</span>' +
+                        voteHtml +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -15748,6 +16029,7 @@
             var sortHtml = '<div class="lb-picker-sort">' +
                 '<label>Sort by:</label>' +
                 '<select id="pickerSortSelect" onchange="RatingsPlugin.changePickerSort(this.value)">' +
+                '<option value="random"' + (this._pickerSortBy === 'random' ? ' selected' : '') + '>Show all (random)</option>' +
                 '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>My Ratings (Highest)</option>' +
                 '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>My Ratings (Lowest)</option>' +
                 '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>Community Rating</option>' +
@@ -15862,6 +16144,23 @@
 
                 if (allRatings.length === 0) {
                     results.innerHTML = '<div class="lb-picker-empty">You haven\'t rated any items yet</div>';
+                    document.getElementById('pickerPagination').innerHTML = '';
+                    return;
+                }
+
+                // Apply the selected category tab (Movies/Series/...). The My Ratings path
+                // previously ignored it, so every tab showed mostly movies.
+                var cat = self._pickerCategory;
+                if (cat === 'Movie' || cat === 'Series') {
+                    allRatings = allRatings.filter(function (r) { return (r.type || r.Type) === cat; });
+                } else if (cat === 'Anime' || cat === 'Documentary' || cat === 'Animation') {
+                    allRatings = allRatings.filter(function (r) {
+                        var t = (r.type || r.Type);
+                        return t === 'Movie' || t === 'Series';
+                    });
+                }
+                if (allRatings.length === 0) {
+                    results.innerHTML = '<div class="lb-picker-empty">No rated ' + (cat ? cat.toLowerCase() + 's' : 'items') + ' yet</div>';
                     document.getElementById('pickerPagination').innerHTML = '';
                     return;
                 }
@@ -16150,11 +16449,9 @@
             // Close picker
             self.closeMediaPicker();
 
-            // Refresh the overview
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
-            }
+            // Update just this row (no full reload).
+            if (self._currentProfileStatus) { self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows; }
+            self.rerenderFavoriteRow(rowIndex);
         },
 
         /**
@@ -16171,11 +16468,9 @@
             // Save to server
             self.saveFavorites();
 
-            // Refresh the overview
-            if (self._currentProfileStatus) {
-                self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows;
-                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
-            }
+            // Update just this row (no full reload).
+            if (self._currentProfileStatus) { self._currentProfileStatus.favoriteRows = self._currentProfile.favoriteRows; }
+            self.rerenderFavoriteRow(rowIndex);
         },
 
         /**
@@ -16372,6 +16667,15 @@
          * Save favorites to server
          */
         saveFavorites: function () {
+            // Debounce so rapid add/remove/reorder actions coalesce into ONE save with the final
+            // full state. Previously each action fired its own PUT and racing/out-of-order writes
+            // could clobber favorites down to a stale (smaller) payload.
+            var self = this;
+            if (self._saveFavoritesTimer) { clearTimeout(self._saveFavoritesTimer); }
+            self._saveFavoritesTimer = setTimeout(function () { self._doSaveFavorites(); }, 450);
+        },
+
+        _doSaveFavorites: function () {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
             var headers = {
@@ -16393,9 +16697,16 @@
                 headers: headers,
                 body: JSON.stringify({ favoriteRows: favoriteRows })
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('save failed: ' + r.status);
+                // NOTE: do NOT overwrite self._currentProfile.favoriteRows here. The live array is
+                // the source of truth and may have gained items while this PUT was in flight;
+                // replacing it with this (older) snapshot would drop those items.
+                return r.json();
+            })
             .catch(function (err) {
                 console.error('[Social] Failed to save favorites:', err);
+                self.lbToast('Could not save favorites');
             });
         },
 

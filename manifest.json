@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.353.0",
+        "changelog": "Big profile update. Build your profile your way with favorite rows you can name, drag to reorder, and drag posters straight from your recent activity. Search any film or show — watch it if it's on the server, or request it in one click if it isn't. Your ratings, reviews and activity now show the real titles, and you can like or dislike reviews. Faster loading, a cleaner look with a background picker, and lots of fixes including favorites that now save reliably.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.353.0/jellyfin-plugin-ratings_1.0.353.0.zip",
+        "checksum": "90bd542925b1831a94e91fdc4ab7c96e",
+        "timestamp": "2026-06-01T09:00:00Z"
+      },
+      {
         "version": "1.0.352.0",
         "changelog": "My Rating library sort fixed (owned grid - no more page 2/3 reset or empty results), unified API auth, performance (cached ratings.js + parallel data load), auto-removal of duplicate plugin folders, and a redesigned Letterboxd-style profile: real media names everywhere, exact-rating tooltips, clickable media to watch, 'Add a film' search/request, two-column layout with right sidebar, poster reflections, animations and a background picker.",
         "targetAbi": "10.11.0.0",
