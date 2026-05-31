@@ -14460,6 +14460,7 @@
          */
         showProfilePage: function (userId) {
             var self = this;
+            self.injectProfileRedesignStyles();
             var existing = document.getElementById('socialProfilePage');
             if (existing) {
                 existing.remove();
@@ -14564,6 +14565,238 @@
             if (container) {
                 container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
+        },
+
+        /**
+         * Inject the redesigned profile styles (two-column layout, sidebar, animations).
+         */
+        injectProfileRedesignStyles: function () {
+            if (document.getElementById('lbProfileRedesign')) return;
+            var css = `
+.social-profile-page.letterboxd-style .lb-overview.lb-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:26px;align-items:start;padding:6px 2px 48px;}
+@media(max-width:900px){.social-profile-page.letterboxd-style .lb-overview.lb-grid{grid-template-columns:1fr;}}
+.social-profile-page.letterboxd-style .lb-main{min-width:0;display:flex;flex-direction:column;gap:28px;}
+.social-profile-page.letterboxd-style .lb-sidebar{display:flex;flex-direction:column;gap:16px;position:sticky;top:8px;}
+.social-profile-page.letterboxd-style .lb-sec-title{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#9ab0c3;margin:0 0 14px;font-weight:700;border-bottom:1px solid #2c3440;padding-bottom:9px;}
+.social-profile-page.letterboxd-style .lb-side-card{background:linear-gradient(180deg,#202831,#1a212a);border:1px solid #2c3440;border-radius:14px;padding:14px 15px;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.social-profile-page.letterboxd-style .lb-side-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8fa3b5;margin:0 0 11px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.social-profile-page.letterboxd-style .lb-side-count{background:#2c3440;color:#9ab;border-radius:10px;padding:1px 8px;font-size:11px;}
+.social-profile-page.letterboxd-style .lb-poster-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px;}
+.social-profile-page.letterboxd-style .lb-poster-card{cursor:pointer;transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-poster-card:hover{transform:translateY(-6px) scale(1.05);box-shadow:0 14px 30px rgba(0,0,0,.55);}
+.social-profile-page.letterboxd-style .lb-poster-card:active{transform:scale(.94);}
+.social-profile-page.letterboxd-style .lb-poster-img{width:100%;aspect-ratio:2/3;border-radius:9px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
+.social-profile-page.letterboxd-style .lb-poster-stars{font-size:11px;margin-top:5px;text-align:center;}
+.social-profile-page.letterboxd-style .lb-rev2{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #232b34;transition:transform .15s;}
+.social-profile-page.letterboxd-style .lb-rev2:hover{transform:translateX(3px);}
+.social-profile-page.letterboxd-style .lb-rev2-poster{flex:0 0 56px;height:84px;border-radius:7px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
+.social-profile-page.letterboxd-style .lb-rev2-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:5px;}
+.social-profile-page.letterboxd-style .lb-rev2-title{font-weight:700;color:#fff;font-size:15px;}
+.social-profile-page.letterboxd-style .lb-rev2-text{margin:0;color:#b9c6d2;font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.social-profile-page.letterboxd-style .lb-addmedia-input{width:100%;box-sizing:border-box;background:#14181c;border:1px solid #2c3440;border-radius:9px;color:#fff;padding:9px 11px;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-addmedia-input:focus{border-color:#00e054;box-shadow:0 0 0 3px rgba(0,224,84,.15);}
+.social-profile-page.letterboxd-style .lb-addmedia-results{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.social-profile-page.letterboxd-style .lb-am-row{display:flex;align-items:center;gap:9px;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s,transform .15s;}
+.social-profile-page.letterboxd-style .lb-am-row:hover{background:#2c3440;transform:translateX(2px);}
+.social-profile-page.letterboxd-style .lb-am-poster{flex:0 0 30px;height:45px;border-radius:4px;background:#2c3440 center/cover no-repeat;}
+.social-profile-page.letterboxd-style .lb-am-info{flex:1;min-width:0;display:flex;flex-direction:column;}
+.social-profile-page.letterboxd-style .lb-am-name{color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.social-profile-page.letterboxd-style .lb-am-year{color:#8fa3b5;font-size:11px;}
+.social-profile-page.letterboxd-style .lb-am-watch{color:#00e054;}
+.social-profile-page.letterboxd-style .lb-am-request{margin-top:6px;width:100%;background:#2c3440;color:#fff;border:1px dashed #4a5765;border-radius:9px;padding:9px;cursor:pointer;font-size:13px;transition:background .2s,transform .12s,border-color .2s;}
+.social-profile-page.letterboxd-style .lb-am-request:hover{background:#00e054;color:#14181c;border-color:#00e054;}
+.social-profile-page.letterboxd-style .lb-am-request:active{transform:scale(.96);}
+.social-profile-page.letterboxd-style .lb-am-ok{color:#00e054;font-size:13px;padding:6px 2px;}
+.social-profile-page.letterboxd-style .lb-side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.social-profile-page.letterboxd-style .lb-side-stat{background:#14181c;border-radius:9px;padding:9px;text-align:center;border:1px solid #232b34;transition:transform .15s,border-color .2s;}
+.social-profile-page.letterboxd-style .lb-side-stat:hover{transform:translateY(-2px);border-color:#00e054;}
+.social-profile-page.letterboxd-style .lb-ss-num{display:block;font-size:19px;font-weight:800;color:#fff;}
+.social-profile-page.letterboxd-style .lb-ss-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8fa3b5;}
+.social-profile-page.letterboxd-style .lb-side-list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #232b34;cursor:pointer;transition:padding-left .15s,color .15s;}
+.social-profile-page.letterboxd-style .lb-side-list-row:hover{padding-left:9px;color:#00e054;}
+.social-profile-page.letterboxd-style .lb-sl-name{color:#dfe7ee;font-size:13px;}
+.social-profile-page.letterboxd-style .lb-sl-count{color:#8fa3b5;font-size:12px;}
+.social-profile-page.letterboxd-style .lb-empty-mini{color:#6b7b8a;font-size:12px;padding:6px 0;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-chart{display:flex;align-items:flex-end;gap:4px;height:70px;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-bar{width:100%;background:linear-gradient(180deg,#00e054,#00a840);border-radius:3px 3px 0 0;min-height:2px;transition:height .7s cubic-bezier(.2,.7,.2,1);}
+.social-profile-page.letterboxd-style .lb-side-card .lb-dist-label{font-size:9px;color:#8fa3b5;margin-top:3px;}
+@keyframes lbFadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.social-profile-page.letterboxd-style .lb-anim{animation:lbFadeUp .55s cubic-bezier(.2,.7,.2,1) both;}
+.social-profile-page.letterboxd-style .lb-main .lb-anim:nth-child(2){animation-delay:.07s;}
+.social-profile-page.letterboxd-style .lb-main .lb-anim:nth-child(3){animation-delay:.14s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(2){animation-delay:.08s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(3){animation-delay:.15s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(4){animation-delay:.22s;}
+.social-profile-page.letterboxd-style .lb-sidebar .lb-anim:nth-child(5){animation-delay:.29s;}
+.social-profile-page.letterboxd-style .lb-content>*{animation:lbFadeUp .45s cubic-bezier(.2,.7,.2,1) both;}
+.social-profile-page.letterboxd-style .lb-rating-card{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s !important;}
+.social-profile-page.letterboxd-style .lb-rating-card:hover{transform:translateY(-6px) scale(1.04) !important;box-shadow:0 14px 30px rgba(0,0,0,.55);}
+.social-profile-page.letterboxd-style .lb-rating-card:active{transform:scale(.95) !important;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{transition:transform .2s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled:hover{transform:translateY(-5px) scale(1.04);box-shadow:0 12px 26px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled:active{transform:scale(.95);}
+.lb-toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:#00e054;color:#14181c;font-weight:700;padding:12px 22px;border-radius:30px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,transform .3s;z-index:2147483647;font-size:14px;}
+.lb-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.social-profile-page.letterboxd-style .lb-stars-wrap{cursor:help;}
+`;
+            var style = document.createElement('style');
+            style.id = 'lbProfileRedesign';
+            style.textContent = css;
+            document.head.appendChild(style);
+        },
+
+        /**
+         * Sidebar/overview: recent rated posters (clickable to open).
+         */
+        loadProfileRecentPosters: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=12', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var c = document.getElementById('lbRecentPosters');
+                    if (!c) return;
+                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
+                    if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
+                    var html = '';
+                    ratings.slice(0, 12).forEach(function (r) {
+                        var id = r.itemId || r.ItemId || '';
+                        var name = r.itemName || r.ItemName || 'Unknown';
+                        var rating = r.rating || r.Rating || 0;
+                        var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
+                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
+                        html += '<div class="lb-poster-card"' + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + '">' +
+                            '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-poster-stars">' + self.renderStars(rating) + '</div>' +
+                            '</div>';
+                    });
+                    c.innerHTML = html;
+                })
+                .catch(function () { var c = document.getElementById('lbRecentPosters'); if (c) c.innerHTML = '<div class="lb-empty-mini">No activity</div>'; });
+        },
+
+        /**
+         * Overview: latest 3 reviews with poster + text.
+         */
+        loadProfileRecentReviews: function () {
+            var self = this;
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=60', { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var c = document.getElementById('lbRecentReviews');
+                    if (!c) return;
+                    var ratings = Array.isArray(data) ? data : (data.ratings || []);
+                    var reviews = ratings.filter(function (r) { return r.reviewText || r.ReviewText || r.review || r.Review; }).slice(0, 3);
+                    if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
+                    var html = '';
+                    reviews.forEach(function (r) {
+                        var id = r.itemId || r.ItemId || '';
+                        var name = r.itemName || r.ItemName || 'Unknown';
+                        var txt = r.reviewText || r.ReviewText || r.review || r.Review || '';
+                        var rating = r.rating || r.Rating || 0;
+                        var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
+                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=120' : '';
+                        html += '<div class="lb-rev2"' + (inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + '>' +
+                            '<div class="lb-rev2-poster" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-rev2-body"><div class="lb-rev2-head"><span class="lb-rev2-title">' + self.escapeHtml(name) + '</span>' + self.renderStars(rating) + '</div>' +
+                            '<p class="lb-rev2-text">' + self.escapeHtml(txt) + '</p></div></div>';
+                    });
+                    c.innerHTML = html;
+                })
+                .catch(function () { var c = document.getElementById('lbRecentReviews'); if (c) c.innerHTML = '<div class="lb-empty-mini">No reviews</div>'; });
+        },
+
+        /**
+         * Wire the "Add a film" search box (find on server, or request if missing).
+         */
+        initAddMediaSearch: function () {
+            var self = this;
+            var input = document.getElementById('lbAddMediaInput');
+            var results = document.getElementById('lbAddMediaResults');
+            if (!input || !results) return;
+            var t = null;
+            input.addEventListener('input', function () {
+                var q = input.value.trim();
+                if (t) clearTimeout(t);
+                if (q.length < 2) { results.innerHTML = ''; return; }
+                t = setTimeout(function () { self.searchAddMedia(q, results); }, 280);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { var q = input.value.trim(); if (q) self.requestMediaFromProfile(q); }
+            });
+        },
+
+        searchAddMedia: function (q, results) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var isImdb = /^tt\d+$/i.test(q);
+            results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
+            var url = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            fetch(url, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var items = (data && data.Items) || [];
+                    var html = '';
+                    items.forEach(function (it) {
+                        var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=80';
+                        html += '<div class="lb-am-row" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">' +
+                            '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')"></div>' +
+                            '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
+                            '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
+                            '<span class="lb-am-watch">▶</span></div>';
+                    });
+                    html += '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">' +
+                        (items.length ? 'Not here? ' : '') + 'Request “' + self.escapeHtml(q) + '”' + (isImdb ? ' (IMDb)' : '') + '</button>';
+                    results.innerHTML = html;
+                })
+                .catch(function () {
+                    results.innerHTML = '<button class="lb-am-request" onclick="RatingsPlugin.requestMediaFromProfile(\'' + self.escapeJs(q) + '\')">Request “' + self.escapeHtml(q) + '”</button>';
+                });
+        },
+
+        requestMediaFromProfile: function (q) {
+            var self = this;
+            if (!q) return;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var deviceId = localStorage.getItem('_deviceId2') || self.generateDeviceId();
+            var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
+            var isImdb = /^tt\d+$/i.test(q);
+            var body = { Title: q, Type: 'Movie' };
+            if (isImdb) { body.ImdbCode = q; body.ImdbLink = 'https://www.imdb.com/title/' + q + '/'; }
+            fetch(baseUrl + '/Ratings/Requests', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function () {
+                    self.lbToast('Requested “' + q + '” ✓');
+                    var res = document.getElementById('lbAddMediaResults');
+                    if (res) res.innerHTML = '<div class="lb-am-ok">Request sent ✓</div>';
+                    var inp = document.getElementById('lbAddMediaInput');
+                    if (inp) inp.value = '';
+                })
+                .catch(function () { self.lbToast('Request failed'); });
+        },
+
+        lbToast: function (msg) {
+            var t = document.createElement('div');
+            t.className = 'lb-toast';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(function () { t.classList.add('show'); }, 10);
+            setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
         },
 
         /**
@@ -14789,10 +15022,12 @@
             var self = this;
             var isSelf = status.isSelf;
             var favoriteRows = status.favoriteRows || self._currentProfile?.favoriteRows || [];
-            var html = '<div class="lb-overview">';
+            var lists = status.lists || [];
+            var html = '<div class="lb-overview lb-grid"><div class="lb-main">';
 
             // Favorite Rows section (up to 5 rows, 5 items each)
-            html += '<section class="lb-section lb-favorites-section">';
+            html += '<section class="lb-section lb-favorites-section lb-anim">';
+            html += '<h3 class="lb-sec-title">Favorite Films</h3>';
 
             // Render existing rows
             for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
@@ -14848,56 +15083,73 @@
 
             html += '</section>';
 
-            // Stats cards (detailed)
-            html += '<section class="lb-section">' +
-                '<h3>Statistics</h3>' +
-                '<div class="lb-stats-grid">' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">🎬</div>' +
-                '<div class="lb-stat-number">' + (stats.moviesWatched || 0) + '</div>' +
-                '<div class="lb-stat-text">Films</div></div>' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">📺</div>' +
-                '<div class="lb-stat-number">' + (stats.seriesWatched || 0) + '</div>' +
-                '<div class="lb-stat-text">Shows</div></div>' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">⏱️</div>' +
-                '<div class="lb-stat-number">' + (stats.totalWatchHours || 0) + '</div>' +
-                '<div class="lb-stat-text">Hours</div></div>' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">⭐</div>' +
-                '<div class="lb-stat-number">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</div>' +
-                '<div class="lb-stat-text">Avg Rating</div></div>' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">👥</div>' +
-                '<div class="lb-stat-number">' + (stats.friendsCount || 0) + '</div>' +
-                '<div class="lb-stat-text">Friends</div></div>' +
-                '<div class="lb-stat-card">' +
-                '<div class="lb-stat-icon">👍</div>' +
-                '<div class="lb-stat-number">' + (stats.likesGiven || 0) + '</div>' +
-                '<div class="lb-stat-text">Likes Given</div></div>' +
+            // Recent Activity (poster strip)
+            html += '<section class="lb-section lb-anim">' +
+                '<h3 class="lb-sec-title">Recent Activity</h3>' +
+                '<div class="lb-poster-strip" id="lbRecentPosters"><div class="lb-loading-small">Loading…</div></div>' +
+                '</section>';
+
+            // Recent Reviews
+            html += '<section class="lb-section lb-anim">' +
+                '<h3 class="lb-sec-title">Recent Reviews</h3>' +
+                '<div class="lb-recent-reviews" id="lbRecentReviews"><div class="lb-loading-small">Loading…</div></div>' +
+                '</section>';
+
+            html += '</div>'; // end main column
+
+            // ===== Right sidebar =====
+            html += '<aside class="lb-sidebar">';
+
+            // Add a film (search server / request if missing)
+            html += '<section class="lb-side-card lb-anim">' +
+                '<h4 class="lb-side-title">Add a film</h4>' +
+                '<div class="lb-addmedia">' +
+                '<input type="text" id="lbAddMediaInput" class="lb-addmedia-input" placeholder="Search title or IMDb id…" autocomplete="off">' +
+                '<div class="lb-addmedia-results" id="lbAddMediaResults"></div>' +
                 '</div></section>';
 
-            // Rating distribution
-            html += '<section class="lb-section">' +
-                '<h3>Rating Distribution</h3>' +
-                '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading...</div></div>' +
-                '</section>';
+            // Stats
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Stats</h4>' +
+                '<div class="lb-side-stats">' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.moviesWatched || 0) + '</span><span class="lb-ss-lbl">Films</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.seriesWatched || 0) + '</span><span class="lb-ss-lbl">Shows</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.totalWatchHours || 0) + '</span><span class="lb-ss-lbl">Hours</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</span><span class="lb-ss-lbl">Avg</span></div>' +
+                '</div></section>';
 
-            // Recent activity preview
-            html += '<section class="lb-section">' +
-                '<h3>Recent Activity</h3>' +
-                '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading...</div></div>' +
-                '</section>';
+            // Ratings histogram
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
+                '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
 
-            html += '</div>';
+            // Lists preview
+            var listsHtml = '';
+            if (lists.length) {
+                listsHtml = lists.slice(0, 6).map(function (l) {
+                    var lt = self.escapeHtml(l.title || l.Title || 'Untitled');
+                    var lc = (l.itemCount || l.ItemCount || (l.items ? l.items.length : 0));
+                    return '<div class="lb-side-list-row" onclick="RatingsPlugin.switchProfileTab(\'lists\')"><span class="lb-sl-name">' + lt + '</span><span class="lb-sl-count">' + lc + '</span></div>';
+                }).join('');
+            } else {
+                listsHtml = '<div class="lb-empty-mini">No lists yet</div>';
+            }
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Lists <span class="lb-side-count">' + lists.length + '</span></h4>' +
+                '<div class="lb-side-lists">' + listsHtml + '</div></section>';
+
+            // Activity feed (compact)
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
+                '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading…</div></div></section>';
+
+            html += '</aside>';
+            html += '</div>'; // end grid
 
             content.innerHTML = html;
 
-            // Load rating distribution
+            // Wire interactions + load data
+            self.initAddMediaSearch();
             this.loadProfileRatingDistribution();
-            // Load recent activity
-            this.loadProfileRecentActivity(5);
+            this.loadProfileRecentActivity(6);
+            this.loadProfileRecentPosters();
+            this.loadProfileRecentReviews();
         },
 
         /**
