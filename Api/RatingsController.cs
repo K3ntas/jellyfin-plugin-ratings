@@ -675,29 +675,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Resolve the authenticated user (handles X-Emby-Token, X-Emby-Authorization, Authorization)
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -858,6 +837,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                         .Cast<object>()
                         .ToList();
                 }
+
+                _logger.LogInformation(
+                    "SortedLibrary sortBy={SortBy} dir={Direction} user={UserId} page={Page} totalCount={TotalCount} returnedOnPage={Returned}",
+                    sortBy, direction, userId, page, totalCount, sortedItems.Count);
 
                 return Ok(new
                 {
@@ -3674,20 +3657,30 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return userId;
             }
 
-            var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                          ?? Request.Headers["Authorization"].FirstOrDefault();
+            // Try X-Emby-Token header first (simple token), then X-Emby-Authorization/Authorization with Token="..." format
+            var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(authHeader))
+            if (string.IsNullOrEmpty(token))
             {
-                var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                if (tokenMatch.Success)
+                var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                              ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(authHeader))
                 {
-                    var token = tokenMatch.Groups[1].Value;
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session != null)
+                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (tokenMatch.Success)
                     {
-                        return session.UserId;
+                        token = tokenMatch.Groups[1].Value;
                     }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
+                if (session != null)
+                {
+                    return session.UserId;
                 }
             }
 

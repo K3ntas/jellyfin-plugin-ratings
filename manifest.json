@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.318.0",
+        "changelog": "Fix: My Rating library sort - render sorted results into a plugin-owned grid (no longer fights Jellyfin's view, fixes page 2/3 jumping back to page 1), unified API auth so SortedLibrary accepts X-Emby-Token (fixes empty/no-items results), clearer empty-state messages",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.318.0/Jellyfin.Plugin.Ratings_2.0.318.0.zip",
+        "checksum": "671095b920c72fb84dad5351c19b1717",
+        "timestamp": "2026-05-31T18:00:00Z"
+      },
+      {
         "version": "2.0.317.0",
         "changelog": "Fix: 401 Unauthorized error - API now accepts X-Emby-Token header properly",
         "targetAbi": "10.11.0.0",

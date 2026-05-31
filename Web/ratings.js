@@ -27304,6 +27304,8 @@
                 if (netflixContainer && netflixContainer.isConnected) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    self.clearSortedGrid();
+                    self.librarySortState.active = false;
                     retryCount = 0;
                     return;
                 }
@@ -27320,6 +27322,8 @@
                 if (!isLibraryPage) {
                     const existing = document.getElementById('librarySortContainer');
                     if (existing) existing.remove();
+                    self.clearSortedGrid();
+                    self.librarySortState.active = false;
                     retryCount = 0;
                     return;
                 }
@@ -27590,10 +27594,9 @@
                 return;
             }
 
-            // Store original HTML if not already stored (for restore)
-            if (!itemsContainer.dataset.originalHtml) {
-                itemsContainer.dataset.originalHtml = itemsContainer.innerHTML;
-            }
+            // NOTE: We no longer overwrite Jellyfin's own items container. Sorted results
+            // are rendered into a dedicated plugin-owned grid (#ratingsSortedGrid) so that
+            // Jellyfin's view controller can never repaint over our paginated results.
 
             // Get both buttons and store their original HTML
             const btnDesc = document.getElementById('librarySortDesc');
@@ -27657,14 +27660,34 @@
                     'X-Emby-Authorization': authHeader
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Surface auth/other errors instead of silently swallowing them
+                    throw new Error('SortedLibrary request failed: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 restoreBtn();
 
+                // Re-locate Jellyfin's native container (our owned grid is excluded by id)
+                const nativeContainer = self.findLibraryItemsContainer();
+                if (!nativeContainer) {
+                    return;
+                }
+
                 if (!data.items || data.items.length === 0) {
-                    // No items with ratings - show message
-                    itemsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No rated items found</div>';
-                    self.librarySortState.active = false;
+                    // totalCount > 0 means the user HAS ratings but they didn't resolve to
+                    // items in this library (provider-id only, removed items, wrong library).
+                    const msg = (data.totalCount && data.totalCount > 0)
+                        ? 'No matching rated items found in this library'
+                        : 'No rated items found';
+                    const grid = self.showSortedGrid(nativeContainer);
+                    grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #999; width: 100%;">' + msg + '</div>';
+                    self.librarySortState.active = true;
+                    self.librarySortState.totalPages = 0;
+                    const existingPagination = document.getElementById('ratingsSortPagination');
+                    if (existingPagination) existingPagination.remove();
                     return;
                 }
 
@@ -27684,8 +27707,9 @@
                     el.style.display = 'none';
                 });
 
-                // Rebuild cards with sorted items
-                self.rebuildLibraryCards(itemsContainer, data.items.map(item => ({
+                // Render sorted items into our OWNED grid (never touch Jellyfin's container)
+                const grid = self.showSortedGrid(nativeContainer);
+                self.rebuildLibraryCards(grid, data.items.map(item => ({
                     Id: item.Id,
                     Name: item.Name,
                     ProductionYear: item.Year,
@@ -27696,11 +27720,12 @@
                     Rating: item.Rating
                 })));
 
-                // Update or create pagination controls
-                self.updateSortPagination(itemsContainer);
+                // Update or create pagination controls (placed after our grid)
+                self.updateSortPagination(grid);
             })
             .catch(err => {
                 restoreBtn();
+                console.error('[Ratings] library sort failed:', err);
             });
         },
 
@@ -27768,6 +27793,8 @@
             for (const selector of containerSelectors) {
                 const containers = document.querySelectorAll(selector);
                 for (const container of containers) {
+                    // Never select our own sorted grid - we only ever want Jellyfin's native container
+                    if (container.id === 'ratingsSortedGrid') continue;
                     let cards = Array.from(container.querySelectorAll('.card[data-id]'));
                     if (cards.length === 0) {
                         cards = Array.from(container.querySelectorAll('.card'));
@@ -27780,6 +27807,57 @@
                 }
             }
             return itemsContainer;
+        },
+
+        /**
+         * Create (or reuse) a plugin-owned grid that displays sorted results, and hide
+         * Jellyfin's native items container so the two can never fight over the DOM.
+         * @param {HTMLElement} nativeContainer Jellyfin's native items container
+         * @returns {HTMLElement} the owned grid container
+         */
+        showSortedGrid: function (nativeContainer) {
+            let grid = document.getElementById('ratingsSortedGrid');
+            if (!grid) {
+                grid = document.createElement('div');
+                grid.id = 'ratingsSortedGrid';
+            }
+            // Mirror Jellyfin's grid layout classes so cards lay out identically
+            grid.className = nativeContainer.className;
+            grid.style.display = '';
+
+            // Place our grid immediately after the native container
+            if (!grid.isConnected || grid.previousElementSibling !== nativeContainer) {
+                nativeContainer.parentNode.insertBefore(grid, nativeContainer.nextSibling);
+            }
+
+            // Hide the native container (remember that we hid it, for restore)
+            if (nativeContainer.style.display !== 'none') {
+                nativeContainer.dataset.ratingsHidden = 'true';
+                nativeContainer.style.display = 'none';
+            }
+            return grid;
+        },
+
+        /**
+         * Tear down the owned sorted grid and restore Jellyfin's native view.
+         */
+        clearSortedGrid: function () {
+            const existingPagination = document.getElementById('ratingsSortPagination');
+            if (existingPagination) existingPagination.remove();
+
+            const grid = document.getElementById('ratingsSortedGrid');
+            if (grid) grid.remove();
+
+            // Unhide any native container(s) we hid
+            document.querySelectorAll('[data-ratings-hidden="true"]').forEach(el => {
+                el.style.display = '';
+                delete el.dataset.ratingsHidden;
+            });
+
+            // Restore Jellyfin's native pagination
+            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
+                el.style.display = '';
+            });
         },
 
         /**
@@ -27996,50 +28074,9 @@
          */
         restoreLibraryCardsOrder: function () {
             const self = this;
-            const itemsContainer = self.findLibraryItemsContainer();
-            if (!itemsContainer) return;
-
-            // Remove custom pagination
-            const existingPagination = document.getElementById('ratingsSortPagination');
-            if (existingPagination) existingPagination.remove();
-
-            // Restore Jellyfin's native pagination
-            document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
-                el.style.display = '';
-            });
-
-            // Reset sort state
+            self.clearSortedGrid();
             self.librarySortState.active = false;
             self.librarySortState.isSorting = false;
-
-            // Restore from original HTML if available
-            if (itemsContainer.dataset.originalHtml) {
-                itemsContainer.innerHTML = itemsContainer.dataset.originalHtml;
-                delete itemsContainer.dataset.originalHtml;
-                // Rating badges will be re-applied by MutationObserver
-                return;
-            }
-
-            // Fallback: restore from original order IDs
-            if (itemsContainer.dataset.originalOrder) {
-                const originalIds = itemsContainer.dataset.originalOrder.split(',');
-                const cards = Array.from(itemsContainer.querySelectorAll('.card:not(.card .card)'));
-
-                const cardMap = new Map();
-                cards.forEach(card => {
-                    const id = card.getAttribute('data-id') || '';
-                    cardMap.set(id, card);
-                });
-
-                originalIds.forEach(id => {
-                    const card = cardMap.get(id);
-                    if (card) {
-                        itemsContainer.appendChild(card);
-                    }
-                });
-
-                delete itemsContainer.dataset.originalOrder;
-            }
         },
 
         /**
