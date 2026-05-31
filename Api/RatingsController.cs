@@ -1594,27 +1594,57 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Serves the ratings.js file.
         /// </summary>
         /// <returns>The JavaScript file content.</returns>
+        // The ratings.js bundle is ~1.6MB. Cache it once per process so we never re-read the
+        // embedded resource or re-allocate the string on subsequent requests. The ETag is tied
+        // to the plugin version so it changes on every update (no stale script after upgrades),
+        // while unchanged versions revalidate cheaply with a tiny 304 instead of re-downloading.
+        private static string? _cachedScript;
+        private static string? _cachedScriptETag;
+        private static readonly object _scriptCacheLock = new object();
+
         [HttpGet("ratings.js")]
         [AllowAnonymous]
         public ActionResult GetRatingsScript()
         {
             try
             {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
-
-                using var stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream == null)
+                if (_cachedScript == null || _cachedScriptETag == null)
                 {
-                    var allResources = assembly.GetManifestResourceNames();
-                    _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
-                    return Content("// ERROR: Resource not available", "application/javascript");
+                    lock (_scriptCacheLock)
+                    {
+                        if (_cachedScript == null || _cachedScriptETag == null)
+                        {
+                            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                            var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
+
+                            using var stream = assembly.GetManifestResourceStream(resourceName);
+                            if (stream == null)
+                            {
+                                var allResources = assembly.GetManifestResourceNames();
+                                _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
+                                return Content("// ERROR: Resource not available", "application/javascript");
+                            }
+
+                            using var reader = new System.IO.StreamReader(stream);
+                            _cachedScript = reader.ReadToEnd();
+                            var version = assembly.GetName().Version?.ToString() ?? "1";
+                            _cachedScriptETag = "\"ratings-" + version + "\"";
+                        }
+                    }
                 }
 
-                using var reader = new System.IO.StreamReader(stream);
-                var content = reader.ReadToEnd();
+                // Always allow revalidation (no stale script), but skip the 1.6MB transfer when
+                // the browser already has the current version cached.
+                Response.Headers["Cache-Control"] = "no-cache";
+                Response.Headers["ETag"] = _cachedScriptETag!;
 
-                return Content(content, "application/javascript");
+                var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
+                if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == _cachedScriptETag)
+                {
+                    return StatusCode(304);
+                }
+
+                return Content(_cachedScript!, "application/javascript");
             }
             catch (Exception ex)
             {

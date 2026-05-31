@@ -40,10 +40,6 @@ namespace Jellyfin.Plugin.Ratings
 
             // Register deletion service for scheduled media deletions
             serviceCollection.AddHostedService<DeletionService>();
-
-            // Register WebSocket listener for server notifications
-            serviceCollection.AddSingleton<SocialWebSocketListener>();
-            serviceCollection.AddSingleton<IWebSocketListener>(sp => sp.GetRequiredService<SocialWebSocketListener>());
         }
     }
 }
