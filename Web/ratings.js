@@ -14489,7 +14489,7 @@
                 fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; }),
                 fetch(baseUrl + '/Social/Profile/' + userId + '/Stats', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
                 fetch(baseUrl + '/Social/Follow/' + userId + '/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { isFollowing: false, followersCount: 0, followingCount: 0 }; }),
-                fetch(baseUrl + '/Social/Profile/' + userId + '/Like/Status', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
+                fetch(baseUrl + '/Social/Profile/' + userId + '/Likes', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).then(function (d) { return { hasLiked: !!(d && d.hasLiked), likesCount: (d && (d.likeCount != null ? d.likeCount : d.likesCount)) || 0 }; }).catch(function () { return { hasLiked: false, likesCount: 0 }; }),
                 fetch(baseUrl + '/Social/Profile/' + userId + '/Lists', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { lists: [] }; })
             ]).then(function (results) {
                 var profile = results[0];
@@ -15339,7 +15339,7 @@
                     if (fav && fav.itemId) {
                         html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
                             (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
-                            ' style="background-image: url(\'' + (fav.imageUrl || '') + '\')">' +
+                            ' style="background-image: url(\'' + (ApiClient.serverAddress() + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300') + '\')">' +
                             (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
                             '</div>';
                     }
@@ -16584,6 +16584,15 @@
          * Save favorites to server
          */
         saveFavorites: function () {
+            // Debounce so rapid add/remove/reorder actions coalesce into ONE save with the final
+            // full state. Previously each action fired its own PUT and racing/out-of-order writes
+            // could clobber favorites down to a stale (smaller) payload.
+            var self = this;
+            if (self._saveFavoritesTimer) { clearTimeout(self._saveFavoritesTimer); }
+            self._saveFavoritesTimer = setTimeout(function () { self._doSaveFavorites(); }, 450);
+        },
+
+        _doSaveFavorites: function () {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
             var headers = {

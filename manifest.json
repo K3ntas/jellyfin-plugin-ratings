@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.329.0",
+        "changelog": "Fixed favorites not saving (debounced saves prevent a clobber race that wiped items); favorite-row posters now load from the current server address (fixes blank posters via reverse proxy/domain); fixed the profile Like 404 (wrong route); added the plugin version to the dashboard header.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.329.0/Jellyfin.Plugin.Ratings_2.0.329.0.zip",
+        "checksum": "21e70f47b685f87400585cede1e7908e",
+        "timestamp": "2026-06-01T06:30:00Z"
+      },
+      {
         "version": "2.0.328.0",
         "changelog": "Profile stats now count rated films/shows (was 0). Dashboard: added Revision History and fixed list number alignment. Media picker: added 'Show all (random)' so you can add any media to rows, not just rated. Added favorites-save diagnostics to track down the not-saving issue.",
         "targetAbi": "10.11.0.0",

@@ -3,7 +3,7 @@
      data-controller="__plugin/ratings_dashboard.js">
     <div data-role="content">
         <div class="content-primary">
-            <h2 class="dashboard-title">Ratings Dashboard</h2>
+            <h2 class="dashboard-title">Ratings Dashboard <span class="dashboard-version">v2.0.329.0</span></h2>
 
             <!-- Stats Grid -->
             <div class="stats-grid">
@@ -75,6 +75,7 @@
             <div class="dashboard-section revision-section">
                 <h3 class="section-title">Revision History</h3>
                 <div class="revision-list">
+                    <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.329.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Fixed favorites not saving (debounced saves stop the clobber race); favorite posters now load from the current server; fixed the profile Like 404; added the plugin version here.</div></div>
                     <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.328.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Profile stats now count rated films/shows; dashboard alignment + this Revision History; media picker "Show all (random)"; favorites save diagnostics.</div></div>
                     <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.327.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Faster profile load (stats query), real row names in the add menu, removed the Lists tab.</div></div>
                     <div class="revision-item"><div class="revision-head"><span class="revision-ver">2.0.326.0</span><span class="revision-date">Jun 1, 2026</span></div><div class="revision-note">Media-picker category filter, favorite-row scroll arrows, drop shadows.</div></div>
@@ -85,6 +86,7 @@
             </div>
 
             <style>
+                .dashboard-version { font-size: 13px; font-weight: 600; color: #00a4dc; margin-left: 10px; vertical-align: middle; opacity: 0.9; }
                 .revision-section { margin-top: 16px; }
                 .revision-list { display: flex; flex-direction: column; gap: 8px; }
                 .revision-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; }
