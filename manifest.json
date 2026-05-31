@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.323.0",
+        "changelog": "Profile polish: lock background-page scrolling while the profile is open (no more scroll bleed), plus a big visual upgrade - poster mirror reflections, glassmorphism side panels, glowing stars/accents, gradient avatar/title, smoother hover/press animations, and a background picker (Aurora/Sunset/Emerald/Minimal, remembered per browser). Note: full IMDb-style external catalog search is coming next and will need a free TMDB API key.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.323.0/Jellyfin.Plugin.Ratings_2.0.323.0.zip",
+        "checksum": "7db8244a24642716fb524ec4c6b67395",
+        "timestamp": "2026-05-31T23:30:00Z"
+      },
+      {
         "version": "2.0.322.0",
         "changelog": "Profile redesign: new two-column Letterboxd-style Overview with a right sidebar (Add-a-film search/request, stats, ratings histogram, lists, activity), real poster strip and recent reviews, an 'Add a film' box that searches your server (click to watch) or requests missing titles by name/IMDb, plus hover/press animations and a success toast.",
         "targetAbi": "10.11.0.0",

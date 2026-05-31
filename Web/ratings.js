@@ -14484,7 +14484,14 @@
             page.id = 'socialProfilePage';
             page.className = 'social-profile-page letterboxd-style';
             page.innerHTML = '<div class="social-profile-container letterboxd"><div class="profile-loading-spinner"><div class="spinner"></div><span>Loading profile...</span></div></div>';
+            try { page.setAttribute('data-bg', localStorage.getItem('lbProfileBg') || 'aurora'); } catch (e) { page.setAttribute('data-bg', 'aurora'); }
             document.body.appendChild(page);
+
+            // Lock the background page from scrolling while the profile is open.
+            self._prevBodyOverflow = document.body.style.overflow;
+            self._prevHtmlOverflow = document.documentElement.style.overflow;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
 
             // Close when clicking backdrop (outside container)
             page.addEventListener('click', function(e) {
@@ -14639,6 +14646,39 @@
 .lb-toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:#00e054;color:#14181c;font-weight:700;padding:12px 22px;border-radius:30px;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,transform .3s;z-index:2147483647;font-size:14px;}
 .lb-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .social-profile-page.letterboxd-style .lb-stars-wrap{cursor:help;}
+/* ===== visual overhaul ===== */
+.social-profile-page.letterboxd-style,.social-profile-page.letterboxd-style .social-profile-container.letterboxd{overscroll-behavior:contain;}
+.social-profile-page.letterboxd-style[data-bg="aurora"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#0b1622,#15212e,#241a35,#0b1622)!important;background-size:400% 400%!important;animation:lbAurora 24s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="sunset"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#1a1320,#3a1c2a,#1a2340,#10131a)!important;background-size:400% 400%!important;animation:lbAurora 26s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="emerald"] .social-profile-container.letterboxd{background:linear-gradient(125deg,#08130f,#0f241c,#10262e,#08130f)!important;background-size:400% 400%!important;animation:lbAurora 28s ease infinite;}
+.social-profile-page.letterboxd-style[data-bg="mono"] .social-profile-container.letterboxd{background:#101418!important;}
+@keyframes lbAurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* glass side cards */
+.social-profile-page.letterboxd-style .lb-side-card{background:rgba(32,40,49,.5)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid rgba(255,255,255,.08)!important;}
+/* poster mirror reflections + hover glow */
+.social-profile-page.letterboxd-style .lb-poster-img{-webkit-box-reflect:below 3px linear-gradient(transparent 62%,rgba(0,0,0,.30));}
+.social-profile-page.letterboxd-style .lb-poster-card:hover .lb-poster-img{box-shadow:0 0 0 2px #00e054,0 18px 40px rgba(0,224,84,.28);}
+.social-profile-page.letterboxd-style .lb-favorite-slot.filled{-webkit-box-reflect:below 3px linear-gradient(transparent 64%,rgba(0,0,0,.24));}
+.social-profile-page.letterboxd-style .lb-rev2-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 70%,rgba(0,0,0,.22));}
+.social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{-webkit-box-reflect:below 2px linear-gradient(transparent 68%,rgba(0,0,0,.22));}
+/* gradient avatar + title */
+.social-profile-page.letterboxd-style .lb-avatar{background:linear-gradient(135deg,#00e054,#1aa3ff)!important;box-shadow:0 8px 30px rgba(0,224,84,.35);}
+.social-profile-page.letterboxd-style .lb-username{background:linear-gradient(90deg,#fff,#9fe7c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+/* section title accent diamond */
+.social-profile-page.letterboxd-style .lb-sec-title{display:flex;align-items:center;}
+.social-profile-page.letterboxd-style .lb-sec-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;background:#00e054;margin-right:10px;transform:rotate(45deg);box-shadow:0 0 9px #00e054;}
+/* star glow */
+.social-profile-page.letterboxd-style .lb-star.full,.social-profile-page.letterboxd-style .lb-star.half{color:#00e054;text-shadow:0 0 6px rgba(0,224,84,.45);}
+/* background picker */
+.social-profile-page.letterboxd-style .lb-bg-menu{position:absolute;right:0;top:46px;background:#1a212a;border:1px solid #2c3440;border-radius:12px;padding:10px;display:flex;gap:8px;box-shadow:0 12px 32px rgba(0,0,0,.55);z-index:20;}
+.social-profile-page.letterboxd-style .lb-bg-swatch{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s,box-shadow .2s;}
+.social-profile-page.letterboxd-style .lb-bg-swatch:hover{transform:scale(1.14);box-shadow:0 6px 16px rgba(0,0,0,.5);}
+.social-profile-page.letterboxd-style .lb-bg-aurora{background:linear-gradient(125deg,#15212e,#241a35);}
+.social-profile-page.letterboxd-style .lb-bg-sunset{background:linear-gradient(125deg,#3a1c2a,#1a2340);}
+.social-profile-page.letterboxd-style .lb-bg-emerald{background:linear-gradient(125deg,#0f241c,#10262e);}
+.social-profile-page.letterboxd-style .lb-bg-mono{background:#101418;border:1px solid #2c3440;}
+.social-profile-page.letterboxd-style .lb-toolbar-btn{transition:transform .15s,background .2s,color .2s;}
+.social-profile-page.letterboxd-style .lb-toolbar-btn:hover{transform:translateY(-2px);}
 `;
             var style = document.createElement('style');
             style.id = 'lbProfileRedesign';
@@ -14828,6 +14868,14 @@
                 '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
                 '<div class="lb-toolbar-actions">' +
                 (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
+                '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
+                '<button class="lb-toolbar-btn" onclick="RatingsPlugin.toggleBgMenu(event)" title="Background">🎨</button>' +
+                '<div class="lb-bg-menu" id="lbBgMenu" style="display:none;">' +
+                '<div class="lb-bg-swatch lb-bg-aurora" onclick="RatingsPlugin.setProfileBackground(\'aurora\')" title="Aurora"></div>' +
+                '<div class="lb-bg-swatch lb-bg-sunset" onclick="RatingsPlugin.setProfileBackground(\'sunset\')" title="Sunset"></div>' +
+                '<div class="lb-bg-swatch lb-bg-emerald" onclick="RatingsPlugin.setProfileBackground(\'emerald\')" title="Emerald"></div>' +
+                '<div class="lb-bg-swatch lb-bg-mono" onclick="RatingsPlugin.setProfileBackground(\'mono\')" title="Minimal"></div>' +
+                '</div></div>' +
                 '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
                 '</div></div>';
 
@@ -16558,6 +16606,10 @@
                 page.remove();
             }
 
+            // Restore background page scrolling.
+            document.body.style.overflow = self._prevBodyOverflow || '';
+            document.documentElement.style.overflow = self._prevHtmlOverflow || '';
+
             // Unregister as viewer
             if (self._viewingProfileUserId) {
                 self._viewingProfileUserId = null;
@@ -16569,6 +16621,27 @@
                     headers: headers
                 }).catch(function () { /* ignore errors */ });
             }
+        },
+
+        /**
+         * Toggle the profile background swatch menu.
+         */
+        toggleBgMenu: function (e) {
+            if (e) { e.stopPropagation(); }
+            var menu = document.getElementById('lbBgMenu');
+            if (!menu) return;
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+        },
+
+        /**
+         * Set (and remember) the profile background theme.
+         */
+        setProfileBackground: function (name) {
+            var page = document.getElementById('socialProfilePage');
+            if (page) page.setAttribute('data-bg', name);
+            try { localStorage.setItem('lbProfileBg', name); } catch (e) { /* ignore */ }
+            var menu = document.getElementById('lbBgMenu');
+            if (menu) menu.style.display = 'none';
         },
 
         /**
