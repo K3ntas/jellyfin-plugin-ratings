@@ -4102,7 +4102,9 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         /// <summary>
         /// Finds duplicate media items - Movies/Series by IMDB ID, Music by title.
-        /// Episodes are excluded (they share IMDB ID with parent series).
+        /// Items that share a series-level IMDB id (episodes, including shows kept in a Movies-type
+        /// library where each episode is imported as a separate Movie) are sub-grouped by their
+        /// SxxExx marker, so genuinely different episodes are not reported as duplicates of each other.
         /// </summary>
         [HttpGet("Admin/Duplicates")]
         [Authorize]
@@ -4129,7 +4131,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     .Where(i => i.ProviderIds?.ContainsKey("Imdb") == true && !string.IsNullOrEmpty(i.ProviderIds["Imdb"]))
                     .GroupBy(i => i.ProviderIds["Imdb"])
                     .Where(g => g.Count() > 1)
-                    .Select(g => BuildDuplicateGroup(g.Key, g.First().Name, g.First().ProductionYear, g.ToList(), "Video"))
+                    // A series-level IMDB id (e.g. on a "The Simpsons [tt0096697]" folder) is applied to
+                    // EVERY episode file, and when a show sits in a Movies-type library each episode is
+                    // imported as a separate Movie - so a raw IMDB grouping reports hundreds of distinct
+                    // episodes as "duplicates". Sub-group by the episode marker (SxxExx) parsed from the
+                    // file name so only genuine same-content copies are reported: different episodes get
+                    // different keys (not duplicates), while real movie copies (no SxxExx) stay grouped.
+                    .SelectMany(g => g
+                        .GroupBy(i => GetEpisodeKey(i.Path))
+                        .Where(sub => sub.Count() > 1)
+                        .Select(sub => BuildDuplicateGroup(g.Key, sub.First().Name, sub.First().ProductionYear, sub.ToList(), "Video")))
                     .ToList();
 
                 duplicateGroups.AddRange(videoDuplicates);
@@ -4182,6 +4193,36 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error finding duplicates");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        // Matches a season/episode marker like S31E08, s31.e08, S31 E08 in a file name.
+        private static readonly System.Text.RegularExpressions.Regex _episodeMarkerRegex =
+            new System.Text.RegularExpressions.Regex(
+                @"[Ss](\d{1,2})[ ._-]*[Ee](\d{1,3})",
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Returns a normalized per-episode key (e.g. "S31E8") parsed from a file path, or an empty
+        /// string for movies/series with no episode marker. Used so that different episodes sharing a
+        /// series-level IMDB id are not reported as duplicates of each other, while real same-content
+        /// copies (same episode, or movies with no marker) still group together.
+        /// </summary>
+        private static string GetEpisodeKey(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            var fileName = System.IO.Path.GetFileName(path);
+            var match = _episodeMarkerRegex.Match(fileName);
+            if (!match.Success)
+            {
+                return string.Empty;
+            }
+
+            return "S" + int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)
+                 + "E" + int.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         /// <summary>
