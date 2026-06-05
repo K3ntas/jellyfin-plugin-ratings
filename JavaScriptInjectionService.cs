@@ -244,7 +244,12 @@ namespace Jellyfin.Plugin.Ratings
 
                 var startComment = "<!-- BEGIN Ratings Plugin -->";
                 var endComment = "<!-- END Ratings Plugin -->";
-                var scriptTag = "<script defer src=\"/Ratings/ratings.js\"></script>";
+
+                // ?v=<pluginVersion> cache-busts the script so the browser can cache it immutably
+                // (RatingsController serves immutable for the matching version) yet still pick up a
+                // fresh bundle after a plugin update.
+                var version = typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1";
+                var scriptTag = $"<script defer src=\"/Ratings/ratings.js?v={version}\"></script>";
 
                 var injectionBlock = $"{startComment}\n{scriptTag}\n{endComment}\n";
 
