@@ -1780,11 +1780,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <returns>The JavaScript file content.</returns>
         // The ratings.js bundle is ~1.6MB. Cache it once per process so we never re-read the
-        // embedded resource or re-allocate the string on subsequent requests. The ETag is tied
-        // to the plugin version so it changes on every update (no stale script after upgrades),
-        // while unchanged versions revalidate cheaply with a tiny 304 instead of re-downloading.
+        // embedded resource or re-allocate the string on subsequent requests. The injected
+        // <script> tag carries ?v=<pluginVersion>, so when that matches we serve the bundle as
+        // immutable and the browser keeps it for a year (no re-download, no per-page revalidation).
+        // A plugin update bumps the version, the injected URL changes, and the browser fetches the
+        // new bundle automatically - the old cached copy is simply never requested again.
         private static string? _cachedScript;
         private static string? _cachedScriptETag;
+        private static string? _cachedVersion;
         private static readonly object _scriptCacheLock = new object();
 
         [HttpGet("ratings.js")]
@@ -1813,15 +1816,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                             using var reader = new System.IO.StreamReader(stream);
                             _cachedScript = reader.ReadToEnd();
                             var version = assembly.GetName().Version?.ToString() ?? "1";
+                            _cachedVersion = version;
                             _cachedScriptETag = "\"ratings-" + version + "\"";
                         }
                     }
                 }
 
-                // Always allow revalidation (no stale script), but skip the 1.6MB transfer when
-                // the browser already has the current version cached.
-                Response.Headers["Cache-Control"] = "no-cache";
                 Response.Headers["ETag"] = _cachedScriptETag!;
+
+                // When the request carries the current version (?v=<pluginVersion>, added by the
+                // injected <script> tag) the URL is a content-hash style cache-buster, so the bundle
+                // is safe to cache for a year - this removes the 1.6MB re-download AND the per-page
+                // revalidation round-trip. Anything without the matching version (stale tab, direct
+                // hit, old cached index.html) falls back to no-cache so it can never serve a stale script.
+                var requestedVersion = Request.Query["v"].ToString();
+                if (!string.IsNullOrEmpty(requestedVersion) && requestedVersion == _cachedVersion)
+                {
+                    Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+                }
+                else
+                {
+                    Response.Headers["Cache-Control"] = "no-cache";
+                }
 
                 var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
                 if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == _cachedScriptETag)
@@ -4086,7 +4102,9 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         /// <summary>
         /// Finds duplicate media items - Movies/Series by IMDB ID, Music by title.
-        /// Episodes are excluded (they share IMDB ID with parent series).
+        /// Items that share a series-level IMDB id (episodes, including shows kept in a Movies-type
+        /// library where each episode is imported as a separate Movie) are sub-grouped by their
+        /// SxxExx marker, so genuinely different episodes are not reported as duplicates of each other.
         /// </summary>
         [HttpGet("Admin/Duplicates")]
         [Authorize]
@@ -4113,7 +4131,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     .Where(i => i.ProviderIds?.ContainsKey("Imdb") == true && !string.IsNullOrEmpty(i.ProviderIds["Imdb"]))
                     .GroupBy(i => i.ProviderIds["Imdb"])
                     .Where(g => g.Count() > 1)
-                    .Select(g => BuildDuplicateGroup(g.Key, g.First().Name, g.First().ProductionYear, g.ToList(), "Video"))
+                    // A series-level IMDB id (e.g. on a "The Simpsons [tt0096697]" folder) is applied to
+                    // EVERY episode file, and when a show sits in a Movies-type library each episode is
+                    // imported as a separate Movie - so a raw IMDB grouping reports hundreds of distinct
+                    // episodes as "duplicates". Sub-group by the episode marker (SxxExx) parsed from the
+                    // file name so only genuine same-content copies are reported: different episodes get
+                    // different keys (not duplicates), while real movie copies (no SxxExx) stay grouped.
+                    .SelectMany(g => g
+                        .GroupBy(i => GetEpisodeKey(i.Path))
+                        .Where(sub => sub.Count() > 1)
+                        .Select(sub => BuildDuplicateGroup(g.Key, sub.First().Name, sub.First().ProductionYear, sub.ToList(), "Video")))
                     .ToList();
 
                 duplicateGroups.AddRange(videoDuplicates);
@@ -4166,6 +4193,36 @@ namespace Jellyfin.Plugin.Ratings.Api
                 _logger.LogError(ex, "Error finding duplicates");
                 return StatusCode(500, "Internal server error");
             }
+        }
+
+        // Matches a season/episode marker like S31E08, s31.e08, S31 E08 in a file name.
+        private static readonly System.Text.RegularExpressions.Regex _episodeMarkerRegex =
+            new System.Text.RegularExpressions.Regex(
+                @"[Ss](\d{1,2})[ ._-]*[Ee](\d{1,3})",
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Returns a normalized per-episode key (e.g. "S31E8") parsed from a file path, or an empty
+        /// string for movies/series with no episode marker. Used so that different episodes sharing a
+        /// series-level IMDB id are not reported as duplicates of each other, while real same-content
+        /// copies (same episode, or movies with no marker) still group together.
+        /// </summary>
+        private static string GetEpisodeKey(string? path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            var fileName = System.IO.Path.GetFileName(path);
+            var match = _episodeMarkerRegex.Match(fileName);
+            if (!match.Success)
+            {
+                return string.Empty;
+            }
+
+            return "S" + int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)
+                 + "E" + int.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         /// <summary>

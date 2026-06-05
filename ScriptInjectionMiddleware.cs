@@ -200,6 +200,12 @@ namespace Jellyfin.Plugin.Ratings
                 || path.EndsWith("/web/index.html", StringComparison.OrdinalIgnoreCase);
         }
 
+        // Plugin version used as a cache-busting query (?v=) on the injected script URL. Combined
+        // with the immutable Cache-Control served by RatingsController, this lets the browser cache
+        // the 1.6MB ratings.js for a year while still fetching a fresh bundle after a plugin update.
+        private static readonly string ScriptVersion =
+            typeof(ScriptInjectionMiddleware).Assembly.GetName().Version?.ToString() ?? "1";
+
         private static string InjectScript(string html, string basePath)
         {
             // Find </body> tag and inject before it
@@ -212,7 +218,7 @@ namespace Jellyfin.Plugin.Ratings
 
             // Build script tag with dynamic base path for reverse proxy support
             var safeBasePath = System.Net.WebUtility.HtmlEncode(basePath);
-            var scriptTag = $"<script defer src=\"{safeBasePath}/Ratings/ratings.js\"></script>";
+            var scriptTag = $"<script defer src=\"{safeBasePath}/Ratings/ratings.js?v={ScriptVersion}\"></script>";
             return html.Insert(bodyCloseIndex, scriptTag + "\n");
         }
     }

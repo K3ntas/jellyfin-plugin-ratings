@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.355.0",
+        "changelog": "Faster loading and a duplicate-finder fix. Pages now open quicker: the plugin's add-on is cached by your browser and packaged about a third smaller, so it doesn't re-download every time. Also fixed the Duplicates tool wrongly flagging whole TV shows as duplicates (it was treating every episode of a series as a copy) - it now only groups true duplicates.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.355.0/jellyfin-plugin-ratings_1.0.355.0.zip",
+        "checksum": "e918468a51a9dc4bb8c52c2d9243142e",
+        "timestamp": "2026-06-05T20:20:00Z"
+      },
+      {
         "version": "1.0.354.0",
         "changelog": "Security and cleanup: removed an old, unused profile page that triggered security warnings. The profile you actually use and all other features are unchanged.",
         "targetAbi": "10.11.0.0",
