@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.339.0",
+        "changelog": "Profile polish. Hover any favorite poster to see a popup with the full title, year and description (so you can recognise titles without opening them). Fixed the profile header: when you set a GIF/video background, your name and details no longer look greyed out - they stay bright and readable over the video.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.339.0/Jellyfin.Plugin.Ratings_2.0.339.0.zip",
+        "checksum": "6033d23a4ba61719234d8b04d3a4d70d",
+        "timestamp": "2026-06-06T03:00:00Z"
+      },
+      {
         "version": "2.0.338.0",
         "changelog": "Profile additions and two fixes. You can now add films/shows that are NOT yet on the server to your profile rows - hover one to reveal a Request button, or click it for a reminder to request it. Edit Profile now lets you upload your own looping GIF or video to show behind your name and picture. Fixes: the rating number no longer lingers on a star after you stop hovering, and deleting a duplicate now actually removes the file so it no longer comes back after a library scan.",
         "targetAbi": "10.11.0.0",

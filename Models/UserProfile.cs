@@ -43,6 +43,11 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// Gets or sets the media type ("Movie"/"Series") for a not-in-library item.
         /// </summary>
         public string MediaType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a short description/overview (shown in the hover info popup).
+        /// </summary>
+        public string Overview { get; set; } = string.Empty;
     }
 
     /// <summary>

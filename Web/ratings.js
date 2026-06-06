@@ -13347,10 +13347,19 @@
                 }
                 .lb-header-content {
                     position: relative;
+                    z-index: 2; /* keep name/status/meta above the header media + its gradient */
                     display: flex;
                     align-items: flex-end;
                     gap: 24px;
                     padding: 80px 30px 30px;
+                }
+                /* When a header video/GIF is set, keep the text crisp and readable (not greyed). */
+                .lb-profile-header.has-media .lb-username,
+                .lb-profile-header.has-media .lb-bio,
+                .lb-profile-header.has-media .lb-status-text,
+                .lb-profile-header.has-media .lb-joined {
+                    color: #fff;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 6px rgba(0,0,0,0.5);
                 }
                 .lb-avatar {
                     width: 110px;
@@ -13754,6 +13763,26 @@
                 }
                 .lb-fav-request:hover { background: #33b5e0; }
                 .lb-fav-request:disabled { background: #2a7d2a; opacity: 0.85; cursor: default; }
+
+                /* Hover info popup for favorite posters (full title, year, description) */
+                .lb-fav-info-pop {
+                    position: fixed;
+                    display: none;
+                    width: 300px;
+                    max-width: calc(100vw - 16px);
+                    background: rgba(20, 24, 28, 0.98);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    padding: 12px 14px;
+                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+                    z-index: 100000;
+                    pointer-events: none;
+                }
+                .lb-fav-info-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.3; }
+                .lb-fav-info-year { color: #9ab; font-weight: 600; margin-left: 6px; font-size: 12px; }
+                .lb-fav-info-tag { display: inline-block; margin-left: 8px; background: rgba(255, 207, 92, 0.15); color: #ffcf5c; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; vertical-align: middle; }
+                .lb-fav-info-desc { font-size: 12px; color: #c5d0db; line-height: 1.45; max-height: 7.5em; overflow: hidden; }
+                .lb-fav-info-desc.dim { color: #7a8794; font-style: italic; }
 
                 /* Media Picker Modal */
                 .lb-media-picker {
@@ -14964,7 +14993,7 @@
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
-                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster }));
+                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview }));
                         html += '<div class="lb-am-row ext">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
@@ -15171,7 +15200,8 @@
                     notInLibrary: true,
                     tmdbId: tmdbId,
                     year: data.year || null,
-                    mediaType: (data.type === 'Series' ? 'Series' : 'Movie')
+                    mediaType: (data.type === 'Series' ? 'Series' : 'Movie'),
+                    overview: data.overview || ''
                 });
                 self.saveFavorites();
                 self.lbToast('Added to ' + (rows[rowIndex].title || 'favorites'));
@@ -15286,7 +15316,89 @@
             }
             return '<div class="' + cls + '" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + self.escapeHtml(itemId) + '"' +
                 dragAttrs + clickAttr +
+                ' onmouseenter="RatingsPlugin.showFavInfo(this)" onmouseleave="RatingsPlugin.hideFavInfo()"' +
                 ' style="background-image: url(\'' + img + '\')">' + removeBtn + extra + '</div>';
+        },
+
+        /**
+         * Show a hover info popup (full title, year, description) for a favorite poster. Reads the
+         * item straight from the loaded profile (no fragile attribute escaping). For on-server items
+         * without a stored description it lazily fetches details from Jellyfin and caches them.
+         */
+        showFavInfo: function (slotEl) {
+            var self = this;
+            if (!slotEl) return;
+            var row = parseInt(slotEl.dataset.row, 10);
+            var idx = parseInt(slotEl.dataset.index, 10);
+            var rows = (self._currentProfile && self._currentProfile.favoriteRows) || [];
+            var item = rows[row] && rows[row].items && rows[row].items[idx];
+            if (!item) return;
+            var title = item.title || item.Title || 'Untitled';
+            var year = item.year || item.Year || '';
+            var overview = item.overview || item.Overview || '';
+            var itemId = item.itemId || item.ItemId || '';
+            var notInLib = self.isFavNotInLibrary(item);
+            self._renderFavInfoPopup(slotEl, title, year, overview, notInLib);
+
+            // On-server item with no stored description: fetch + cache details.
+            if (itemId && !overview) {
+                self._favInfoCache = self._favInfoCache || {};
+                if (self._favInfoCache[itemId]) {
+                    var c = self._favInfoCache[itemId];
+                    self._renderFavInfoPopup(slotEl, c.title || title, c.year || year, c.overview || '', notInLib);
+                } else {
+                    var baseUrl = ApiClient.serverAddress();
+                    var uid = ApiClient.getCurrentUserId();
+                    fetch(baseUrl + '/Users/' + uid + '/Items/' + itemId + '?Fields=Overview', {
+                        credentials: 'include',
+                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (d) {
+                        if (!d) return;
+                        var info = { title: d.Name || title, year: d.ProductionYear || year, overview: d.Overview || '' };
+                        self._favInfoCache[itemId] = info;
+                        if (self._favInfoSlot === slotEl) {
+                            self._renderFavInfoPopup(slotEl, info.title, info.year, info.overview, notInLib);
+                        }
+                    })
+                    .catch(function () {});
+                }
+            }
+        },
+
+        _renderFavInfoPopup: function (slotEl, title, year, overview, notInLib) {
+            var self = this;
+            self._favInfoSlot = slotEl;
+            var pop = document.getElementById('lbFavInfoPop');
+            if (!pop) {
+                pop = document.createElement('div');
+                pop.id = 'lbFavInfoPop';
+                pop.className = 'lb-fav-info-pop';
+                document.body.appendChild(pop);
+            }
+            var yearStr = year ? ('<span class="lb-fav-info-year">' + self.escapeHtml(String(year)) + '</span>') : '';
+            var tag = notInLib ? '<span class="lb-fav-info-tag">Not on server</span>' : '';
+            pop.innerHTML = '<div class="lb-fav-info-title">' + self.escapeHtml(title) + yearStr + tag + '</div>' +
+                (overview
+                    ? '<div class="lb-fav-info-desc">' + self.escapeHtml(overview) + '</div>'
+                    : '<div class="lb-fav-info-desc dim">No description available.</div>');
+            pop.style.display = 'block';
+            var rect = slotEl.getBoundingClientRect();
+            var popW = 300;
+            var left = rect.left + rect.width / 2 - popW / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+            pop.style.left = left + 'px';
+            var popH = pop.offsetHeight || 130;
+            var top = rect.top - popH - 10;
+            if (top < 8) { top = rect.bottom + 10; }
+            pop.style.top = top + 'px';
+        },
+
+        hideFavInfo: function () {
+            this._favInfoSlot = null;
+            var pop = document.getElementById('lbFavInfoPop');
+            if (pop) { pop.style.display = 'none'; }
         },
 
         /**

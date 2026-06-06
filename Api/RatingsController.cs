@@ -812,6 +812,10 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                         int tmdbId = el.TryGetProperty("id", out var idv) && idv.ValueKind == System.Text.Json.JsonValueKind.Number ? idv.GetInt32() : 0;
 
+                        string? overview = el.TryGetProperty("overview", out var ov) && ov.ValueKind == System.Text.Json.JsonValueKind.String
+                            ? ov.GetString()
+                            : null;
+
                         results.Add(new
                         {
                             tmdbId,
@@ -819,7 +823,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                             title,
                             year,
                             poster,
-                            rating
+                            rating,
+                            overview
                         });
 
                         if (results.Count >= 8)
