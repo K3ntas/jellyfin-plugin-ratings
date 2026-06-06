@@ -30,6 +30,18 @@
                                 </div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkShowCardRatingOverlay" type="checkbox" is="emby-checkbox" />
+                                    <span>Show rating badge on poster cards</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Show the average-rating badge overlay on library/poster cards. Turn off to hide
+                                    rating badges from cards (the detail-page rating widget is unaffected). Always hidden
+                                    when "Enable Ratings" is off.
+                                </div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
                                 <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
@@ -1265,6 +1277,35 @@
         </div>
 
         <style>
+            /* Star preview: number shown inside the star currently hovered (matches the live widget). */
+            #starWidgetPreview .preview-star { position: relative; }
+            #starWidgetPreview .preview-star.preview-current::after {
+                content: attr(data-num);
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                --rk-tx: 0%;
+                transform: translate(var(--rk-tx), 3%);
+                font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+                font-size: 0.36em;
+                font-weight: 700;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: -0.04em;
+                color: #fff;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.55);
+                pointer-events: none;
+                animation: ratingsNumPop 0.22s ease-out both;
+            }
+            #starWidgetPreview .preview-star.preview-current[data-num="1"]::after { --rk-tx: -2%; }
+            #starWidgetPreview .preview-star.preview-current[data-num="4"]::after { --rk-tx: -4%; }
+            @keyframes ratingsNumPop {
+                0%   { opacity: 0; transform: translate(var(--rk-tx), 3%) scale(0.3); }
+                55%  { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1.18); }
+                100% { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1); }
+            }
             /* Full width layout for settings - override Jellyfin defaults */
             #ratingsConfigPage .content-primary,
             #ratingsConfigPage [data-role="content"],
@@ -2411,9 +2452,21 @@
                         var hoverColor = hoverColorEl ? hoverColorEl.value : '#ffd700';
                         previewStars.forEach(function(s, i) {
                             if (i <= index) s.style.color = hoverColor;
+                            // Show the number inside the star being hovered.
+                            if (i === index) {
+                                s.classList.add('preview-current');
+                                s.setAttribute('data-num', index + 1);
+                            } else {
+                                s.classList.remove('preview-current');
+                                s.removeAttribute('data-num');
+                            }
                         });
                     });
-                    star.addEventListener('mouseleave', updateStarWidgetPreview);
+                    star.addEventListener('mouseleave', function() {
+                        star.classList.remove('preview-current');
+                        star.removeAttribute('data-num');
+                        updateStarWidgetPreview();
+                    });
                 });
             }
 
@@ -2655,6 +2708,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
+                    document.querySelector('#chkShowCardRatingOverlay').checked = config.ShowCardRatingOverlay !== false;
                     document.querySelector('#txtMinRating').value = config.MinRating;
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
@@ -2964,6 +3018,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
+                    config.ShowCardRatingOverlay = document.querySelector('#chkShowCardRatingOverlay').checked;
                     config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;

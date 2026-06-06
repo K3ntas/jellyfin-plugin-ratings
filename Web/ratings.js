@@ -12,6 +12,7 @@
         validLanguages: ['en', 'es', 'zh', 'pt', 'ru', 'ja', 'de', 'fr', 'ko', 'it', 'tr', 'pl', 'nl', 'ar', 'hi', 'lt'], // Supported languages
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
+        showCardOverlay: true, // Whether rating badges are shown on poster cards (loaded from config)
         enableImdbSorting: true, // Whether IMDB sorting option is shown (loaded from config)
         starDisplayMode: '10-stars', // '10-stars' (default), '5-stars-half', '5-stars'
         quickRatingMode: false, // false = modal (default), true = one-click rating
@@ -4287,6 +4288,13 @@
             // Use cached config
             this.getConfig().then(function (config) {
                 self.ratingsEnabled = config.EnableRatings !== false;
+                // Card rating badge overlay can be turned off independently, and is always off when
+                // ratings themselves are disabled. A body class hides any badges via CSS so stale
+                // overlays disappear immediately, regardless of which code path applied them.
+                self.showCardOverlay = self.ratingsEnabled && (config.ShowCardRatingOverlay !== false);
+                try {
+                    document.body.classList.toggle('ratings-no-card-overlay', !self.showCardOverlay);
+                } catch (e) { /* body not ready - the CSS class will be applied on next config load */ }
                 self.enableImdbSorting = config.EnableImdbSorting !== false;
                 // Star display options
                 self.starDisplayMode = config.StarDisplayMode || '10-stars';
@@ -4499,12 +4507,49 @@
                     color: #555;
                     transition: all 0.2s ease;
                     user-select: none;
+                    position: relative;
                 }
 
                 .ratings-plugin-star:hover,
                 .ratings-plugin-star.hover {
                     color: #ffd700;
                     transform: scale(1.1);
+                }
+
+                /* Number shown inside the star currently being hovered (e.g. hovering the 9th star shows "9").
+                   White with a soft shadow so it stays readable on the gold star; nudged to the star's
+                   optical centre. */
+                .ratings-plugin-star.current-rating::after {
+                    content: attr(data-hover-num);
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    --rk-tx: 0%;
+                    transform: translate(var(--rk-tx), 3%);
+                    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+                    font-size: 0.36em;
+                    font-weight: 700;
+                    line-height: 1;
+                    font-variant-numeric: tabular-nums;
+                    letter-spacing: -0.04em;
+                    color: #fff;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.55);
+                    pointer-events: none;
+                    animation: ratingsNumPop 0.22s ease-out both;
+                }
+                /* Per-digit optical-centering tweaks - the star glyph isn't symmetric for every
+                   digit, so 1/4 and the two-digit 10 get a small horizontal nudge. */
+                .ratings-plugin-star.current-rating[data-hover-num="1"]::after { --rk-tx: -2%; }
+                .ratings-plugin-star.current-rating[data-hover-num="4"]::after { --rk-tx: -4%; }
+                .ratings-plugin-star.current-rating[data-hover-num="10"]::after { --rk-tx: -4%; }
+                /* Pop-in when the number appears: fade + a little scale overshoot. The translate
+                   stays per-digit via the var so each digit keeps its centring during the pop. */
+                @keyframes ratingsNumPop {
+                    0%   { opacity: 0; transform: translate(var(--rk-tx), 3%) scale(0.3); }
+                    55%  { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1.18); }
+                    100% { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1); }
                 }
 
                 .ratings-plugin-star.filled {
@@ -5251,6 +5296,15 @@
                     .user-review-card {
                         padding: 0.8em;
                     }
+                }
+
+                /* Kill switch: hide ALL card rating badges when the overlay is disabled (or ratings
+                   are off). Covers stale badges applied before the setting changed. */
+                body.ratings-no-card-overlay .cardImageContainer.has-rating::after,
+                body.ratings-no-card-overlay .cardContent.has-rating::after,
+                body.ratings-no-card-overlay .card-imageContainer.has-rating::after,
+                body.ratings-no-card-overlay .netflix-card.has-rating::after {
+                    display: none !important;
                 }
 
                 /* Card overlay ratings */
@@ -13266,13 +13320,46 @@
                     right: 0;
                     height: 150px;
                     background: linear-gradient(135deg, #2c3440 0%, #14181c 100%);
+                    overflow: hidden;
+                }
+                /* Uploaded looping GIF/video shown BEHIND the header content. Taller so it sits
+                   behind the avatar/name area, with a fade at the bottom for text legibility. */
+                .lb-profile-header.has-media .lb-header-bg {
+                    height: 230px;
+                    background: #14181c;
+                }
+                .lb-header-media {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center;
+                    z-index: 0;
+                }
+                .lb-profile-header.has-media .lb-header-bg::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to bottom, rgba(20,24,28,0.15) 0%, rgba(20,24,28,0.55) 60%, rgba(20,24,28,0.9) 100%);
+                    z-index: 1;
+                    pointer-events: none;
                 }
                 .lb-header-content {
                     position: relative;
+                    z-index: 2; /* keep name/status/meta above the header media + its gradient */
                     display: flex;
                     align-items: flex-end;
                     gap: 24px;
                     padding: 80px 30px 30px;
+                }
+                /* When a header video/GIF is set, keep the text crisp and readable (not greyed). */
+                .lb-profile-header.has-media .lb-username,
+                .lb-profile-header.has-media .lb-bio,
+                .lb-profile-header.has-media .lb-status-text,
+                .lb-profile-header.has-media .lb-joined {
+                    color: #fff;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 6px rgba(0,0,0,0.5);
                 }
                 .lb-avatar {
                     width: 110px;
@@ -13626,6 +13713,76 @@
                 .lb-fav-remove:hover {
                     background: #ee7752;
                 }
+
+                /* Not-on-server catalog favorite: dimmed poster, "Not on server" tag, hover Request */
+                .lb-favorite-slot.not-in-library { cursor: pointer; }
+                .lb-favorite-slot.not-in-library::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.05) 55%);
+                    border-radius: inherit;
+                    pointer-events: none;
+                }
+                .lb-fav-notlib-tag {
+                    position: absolute;
+                    top: 6px;
+                    left: 6px;
+                    z-index: 2;
+                    background: rgba(0,0,0,0.78);
+                    color: #ffcf5c;
+                    font-size: 10px;
+                    font-weight: 700;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    letter-spacing: 0.02em;
+                    pointer-events: none;
+                }
+                .lb-fav-request {
+                    position: absolute;
+                    left: 50%;
+                    bottom: 8px;
+                    transform: translateX(-50%) translateY(6px);
+                    z-index: 3;
+                    opacity: 0;
+                    transition: opacity 0.18s ease, transform 0.18s ease;
+                    background: #00a4dc;
+                    color: #fff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                }
+                .lb-favorite-slot.not-in-library:hover .lb-fav-request {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                .lb-fav-request:hover { background: #33b5e0; }
+                .lb-fav-request:disabled { background: #2a7d2a; opacity: 0.85; cursor: default; }
+
+                /* Hover info popup for favorite posters (full title, year, description) */
+                .lb-fav-info-pop {
+                    position: fixed;
+                    display: none;
+                    width: 300px;
+                    max-width: calc(100vw - 16px);
+                    background: rgba(20, 24, 28, 0.98);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    padding: 12px 14px;
+                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+                    z-index: 100000;
+                    pointer-events: none;
+                }
+                .lb-fav-info-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.3; }
+                .lb-fav-info-year { color: #9ab; font-weight: 600; margin-left: 6px; font-size: 12px; }
+                .lb-fav-info-tag { display: inline-block; margin-left: 8px; background: rgba(255, 207, 92, 0.15); color: #ffcf5c; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; vertical-align: middle; }
+                .lb-fav-info-desc { font-size: 12px; color: #c5d0db; line-height: 1.45; max-height: 7.5em; overflow: hidden; }
+                .lb-fav-info-desc.dim { color: #7a8794; font-style: italic; }
 
                 /* Media Picker Modal */
                 .lb-media-picker {
@@ -14778,7 +14935,7 @@
                 var q = input.value.trim();
                 if (t) clearTimeout(t);
                 if (q.length < 2) { results.innerHTML = ''; return; }
-                t = setTimeout(function () { self.searchAddMedia(q, results); }, 280);
+                t = setTimeout(function () { self.searchAddMedia(q, results); }, 150);
             });
             input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { var q = input.value.trim(); if (q) self.requestMediaFromProfile(q); }
@@ -14794,7 +14951,7 @@
             var isImdb = /^tt\d+$/i.test(q);
             results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
             // 1) Local server library
-            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear,Overview';
             var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { return (d && d.Items) || []; })
@@ -14815,7 +14972,8 @@
                     html += '<div class="lb-am-section">On your server</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
-                        html += '<div class="lb-am-row">' +
+                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: it.Overview || '' }));
+                        html += '<div class="lb-am-row" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + sp + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + sp + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
                             '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
@@ -14836,11 +14994,12 @@
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
-                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId }));
-                        html += '<div class="lb-am-row ext">' +
+                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview }));
+                        html += '<div class="lb-am-row ext" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + payload + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + payload + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
                             '<span class="lb-am-year">' + ratingStr + '</span></div>' +
+                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addExternalToFavoritesFromSearch(\'' + payload + '\', this)">+ Add</button>' +
                             '<button class="lb-am-add req" onclick="RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                             '</div>';
                     });
@@ -14979,11 +15138,94 @@
             }
         },
 
+        /**
+         * From a catalog (not-on-server) search result: choose which row to add the title to.
+         */
+        addExternalToFavoritesFromSearch: function (payloadEnc, btn) {
+            var self = this;
+            var data; try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            var existing = document.getElementById('lbAddRowMenu');
+            if (existing) existing.remove();
+            var menu = document.createElement('div');
+            menu.id = 'lbAddRowMenu';
+            menu.className = 'lb-addrow-menu';
+            var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(data.title || 'film') + '” to…</div>';
+            rows.forEach(function (row, i) {
+                var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
+                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                h += '<button onclick="RatingsPlugin.confirmAddExternalToFavorites(\'' + payloadEnc + '\',' + i + ')">' + self.escapeHtml(rowName) + '</button>';
+            });
+            if (rows.length < 5) {
+                h += '<button class="newrow" onclick="RatingsPlugin.confirmAddExternalToFavorites(\'' + payloadEnc + '\',-1)">+ New row</button>';
+            }
+            menu.innerHTML = h;
+            document.body.appendChild(menu);
+            if (btn) {
+                var rect = btn.getBoundingClientRect();
+                menu.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 220)) + 'px';
+                menu.style.top = (rect.bottom + 6) + 'px';
+            }
+            setTimeout(function () {
+                document.addEventListener('click', function close(ev) {
+                    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close); }
+                });
+            }, 0);
+        },
+
+        confirmAddExternalToFavorites: function (payloadEnc, rowIndex) {
+            var self = this;
+            var menu = document.getElementById('lbAddRowMenu'); if (menu) menu.remove();
+            var data; try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            var createdNewRow = false;
+            if (rowIndex === -1) {
+                if (rows.length >= 5) return;
+                rows.push({ title: 'Favorites', items: [] });
+                rowIndex = rows.length - 1;
+                createdNewRow = true;
+            }
+            if (!rows[rowIndex]) return;
+            if (!rows[rowIndex].items) rows[rowIndex].items = [];
+            var tmdbId = String(data.tmdbId || '');
+            var dup = rows[rowIndex].items.some(function (it) { return it && tmdbId && String(it.tmdbId || it.TmdbId || '') === tmdbId; });
+            if (!dup) {
+                rows[rowIndex].items.push({
+                    itemId: '',
+                    title: data.title || '',
+                    imageUrl: data.poster || '',
+                    notInLibrary: true,
+                    tmdbId: tmdbId,
+                    year: data.year || null,
+                    mediaType: (data.type === 'Series' ? 'Series' : 'Movie'),
+                    overview: data.overview || ''
+                });
+                self.saveFavorites();
+                self.lbToast('Added to ' + (rows[rowIndex].title || 'favorites'));
+            } else {
+                self.lbToast('Already in that row');
+            }
+            if (createdNewRow) {
+                if (self._currentProfileStatus) {
+                    self._currentProfileStatus.favoriteRows = rows;
+                    self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+                }
+            } else {
+                self.rerenderFavoriteRow(rowIndex);
+            }
+        },
+
         /* ---- Drag & drop reordering within a favorite row ---- */
         favDragStart: function (e, rowIndex, idx) {
             this._favDrag = { row: rowIndex, idx: idx };
             if (e && e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'move';
+                // copyMove so it's compatible with the 'move' dropEffect set in favDragOver
+                // (external drops from Recent Activity/search use 'copy' semantics).
+                e.dataTransfer.effectAllowed = 'copyMove';
                 try { e.dataTransfer.setData('text/plain', rowIndex + ':' + idx); } catch (_) { /* ignore */ }
             }
         },
@@ -14997,17 +15239,39 @@
             if (!self._currentProfile.favoriteRows[rowIndex].items) self._currentProfile.favoriteRows[rowIndex].items = [];
             var items = self._currentProfile.favoriteRows[rowIndex].items;
 
-            // Drag from Recent Activity (or elsewhere) -> add the film to this row.
-            if (d && d.external && d.itemId) {
-                if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+            // Drag from Recent Activity / search results -> add the film to this row.
+            if (d && d.external) {
                 var pos = (typeof idx === 'number' && idx >= 0 && idx <= items.length) ? idx : items.length;
-                items.splice(pos, 0, {
-                    itemId: d.itemId,
-                    title: d.name || '',
-                    imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
-                });
-                self.saveFavorites();
-                self.rerenderFavoriteRow(rowIndex);
+                if (d.itemId) {
+                    // On-server item (dedup by itemId).
+                    if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+                    items.splice(pos, 0, {
+                        itemId: d.itemId,
+                        title: d.name || d.title || '',
+                        imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
+                    });
+                    self.saveFavorites();
+                    self.rerenderFavoriteRow(rowIndex);
+                    return;
+                }
+                if (d.tmdbId) {
+                    // Not-on-server catalog item (dedup by tmdbId).
+                    var tid = String(d.tmdbId);
+                    if (items.some(function (it) { return it && String(it.tmdbId || it.TmdbId || '') === tid; })) { self.lbToast('Already in that row'); return; }
+                    items.splice(pos, 0, {
+                        itemId: '',
+                        title: d.title || '',
+                        imageUrl: d.poster || '',
+                        notInLibrary: true,
+                        tmdbId: tid,
+                        year: d.year || null,
+                        mediaType: (d.type === 'Series' ? 'Series' : 'Movie'),
+                        overview: d.overview || ''
+                    });
+                    self.saveFavorites();
+                    self.rerenderFavoriteRow(rowIndex);
+                    return;
+                }
                 return;
             }
 
@@ -15029,14 +15293,169 @@
         activityDragStart: function (e, itemId, name) {
             this._favDrag = { external: true, itemId: itemId, name: name || '' };
             if (e && e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'copy';
+                // copyMove so the drop is accepted by rows (favDragOver sets dropEffect 'move').
+                e.dataTransfer.effectAllowed = 'copyMove';
                 try { e.dataTransfer.setData('text/plain', itemId); } catch (_) { /* ignore */ }
             }
         },
 
         /**
+         * Start dragging a search result (server or catalog) to drop into a favorites row.
+         */
+        searchDragStart: function (e, payloadEnc) {
+            var d; try { d = JSON.parse(decodeURIComponent(payloadEnc)); } catch (_) { return; }
+            d.external = true;
+            this._favDrag = d;
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copyMove';
+                try { e.dataTransfer.setData('text/plain', d.itemId || String(d.tmdbId || '')); } catch (_) { /* ignore */ }
+            }
+        },
+
+        /**
+         * Hover info popup for "Add a film" search results (works for catalog items too).
+         */
+        showSearchInfo: function (payloadEnc, el) {
+            var d; try { d = JSON.parse(decodeURIComponent(payloadEnc)); } catch (_) { return; }
+            var notInLib = !!(d.notInLib || (!d.itemId && d.tmdbId));
+            this._renderFavInfoPopup(el, d.title || d.name || 'Untitled', d.year || '', d.overview || '', notInLib);
+        },
+
+        /**
          * Re-render ONLY one favorites row's grid (no full profile reload).
          */
+        /**
+         * True when a favorite entry is a catalog title that is NOT on the server.
+         */
+        isFavNotInLibrary: function (fav) {
+            return !!fav && (fav.notInLibrary === true || fav.NotInLibrary === true || (!fav.itemId && !fav.ItemId && !!(fav.tmdbId || fav.TmdbId)));
+        },
+
+        /**
+         * Build the HTML for one favorite slot. Handles both on-server items (poster from Jellyfin,
+         * normal behaviour) and not-on-server catalog items (TMDB poster, hover "Request" button,
+         * click shows an info hint).
+         */
+        favSlotHtml: function (fav, rowIndex, i, isSelf) {
+            var self = this;
+            var base = ApiClient.serverAddress();
+            var notInLib = self.isFavNotInLibrary(fav);
+            var itemId = fav.itemId || fav.ItemId || '';
+            var img = notInLib
+                ? (fav.imageUrl || fav.ImageUrl || '')
+                : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
+            var dragAttrs = isSelf
+                ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"'
+                : '';
+            var removeBtn = isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '';
+            var cls = 'lb-favorite-slot filled' + (notInLib ? ' not-in-library' : '');
+            var extra = '';
+            var clickAttr = '';
+            if (notInLib) {
+                var payload = encodeURIComponent(JSON.stringify({
+                    title: fav.title || fav.Title || '',
+                    year: fav.year || fav.Year || '',
+                    type: fav.mediaType || fav.MediaType || 'Movie',
+                    tmdbId: fav.tmdbId || fav.TmdbId || ''
+                }));
+                extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
+                    '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>';
+                clickAttr = ' onclick="RatingsPlugin.notInLibraryInfo()"';
+            }
+            return '<div class="' + cls + '" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + self.escapeHtml(itemId) + '"' +
+                dragAttrs + clickAttr +
+                ' onmouseenter="RatingsPlugin.showFavInfo(this)" onmouseleave="RatingsPlugin.hideFavInfo()"' +
+                ' style="background-image: url(\'' + img + '\')">' + removeBtn + extra + '</div>';
+        },
+
+        /**
+         * Show a hover info popup (full title, year, description) for a favorite poster. Reads the
+         * item straight from the loaded profile (no fragile attribute escaping). For on-server items
+         * without a stored description it lazily fetches details from Jellyfin and caches them.
+         */
+        showFavInfo: function (slotEl) {
+            var self = this;
+            if (!slotEl) return;
+            var row = parseInt(slotEl.dataset.row, 10);
+            var idx = parseInt(slotEl.dataset.index, 10);
+            var rows = (self._currentProfile && self._currentProfile.favoriteRows) || [];
+            var item = rows[row] && rows[row].items && rows[row].items[idx];
+            if (!item) return;
+            var title = item.title || item.Title || 'Untitled';
+            var year = item.year || item.Year || '';
+            var overview = item.overview || item.Overview || '';
+            var itemId = item.itemId || item.ItemId || '';
+            var notInLib = self.isFavNotInLibrary(item);
+            self._renderFavInfoPopup(slotEl, title, year, overview, notInLib);
+
+            // On-server item with no stored description: fetch + cache details.
+            if (itemId && !overview) {
+                self._favInfoCache = self._favInfoCache || {};
+                if (self._favInfoCache[itemId]) {
+                    var c = self._favInfoCache[itemId];
+                    self._renderFavInfoPopup(slotEl, c.title || title, c.year || year, c.overview || '', notInLib);
+                } else {
+                    var baseUrl = ApiClient.serverAddress();
+                    var uid = ApiClient.getCurrentUserId();
+                    fetch(baseUrl + '/Users/' + uid + '/Items/' + itemId + '?Fields=Overview', {
+                        credentials: 'include',
+                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (d) {
+                        if (!d) return;
+                        var info = { title: d.Name || title, year: d.ProductionYear || year, overview: d.Overview || '' };
+                        self._favInfoCache[itemId] = info;
+                        if (self._favInfoSlot === slotEl) {
+                            self._renderFavInfoPopup(slotEl, info.title, info.year, info.overview, notInLib);
+                        }
+                    })
+                    .catch(function () {});
+                }
+            }
+        },
+
+        _renderFavInfoPopup: function (slotEl, title, year, overview, notInLib) {
+            var self = this;
+            self._favInfoSlot = slotEl;
+            var pop = document.getElementById('lbFavInfoPop');
+            if (!pop) {
+                pop = document.createElement('div');
+                pop.id = 'lbFavInfoPop';
+                pop.className = 'lb-fav-info-pop';
+                document.body.appendChild(pop);
+            }
+            var yearStr = year ? ('<span class="lb-fav-info-year">' + self.escapeHtml(String(year)) + '</span>') : '';
+            var tag = notInLib ? '<span class="lb-fav-info-tag">Not on server</span>' : '';
+            pop.innerHTML = '<div class="lb-fav-info-title">' + self.escapeHtml(title) + yearStr + tag + '</div>' +
+                (overview
+                    ? '<div class="lb-fav-info-desc">' + self.escapeHtml(overview) + '</div>'
+                    : '<div class="lb-fav-info-desc dim">No description available.</div>');
+            pop.style.display = 'block';
+            var rect = slotEl.getBoundingClientRect();
+            var popW = 300;
+            var left = rect.left + rect.width / 2 - popW / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+            pop.style.left = left + 'px';
+            var popH = pop.offsetHeight || 130;
+            var top = rect.top - popH - 10;
+            if (top < 8) { top = rect.bottom + 10; }
+            pop.style.top = top + 'px';
+        },
+
+        hideFavInfo: function () {
+            this._favInfoSlot = null;
+            var pop = document.getElementById('lbFavInfoPop');
+            if (pop) { pop.style.display = 'none'; }
+        },
+
+        /**
+         * Info hint shown when clicking a not-on-server favorite poster.
+         */
+        notInLibraryInfo: function () {
+            this.lbToast('Not on the server yet — click the Request button to ask for this title.');
+        },
+
         rerenderFavoriteRow: function (rowIndex) {
             var self = this;
             var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
@@ -15044,17 +15463,13 @@
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
             var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
-            // Compact (drop nulls) so array indices match rendered indices.
-            var items = (row.items || []).filter(function (f) { return f && f.itemId; });
+            // Compact (drop nulls) so array indices match rendered indices. Keep both on-server
+            // items (have itemId) and catalog items (have tmdbId but no itemId).
+            var items = (row.items || []).filter(function (f) { return f && (f.itemId || f.ItemId || f.tmdbId || f.TmdbId); });
             row.items = items;
-            var base = ApiClient.serverAddress();
             var html = '';
             items.forEach(function (fav, i) {
-                html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                    (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
-                    ' style="background-image: url(\'' + base + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300\')">' +
-                    (isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
-                    '</div>';
+                html += self.favSlotHtml(fav, rowIndex, i, isSelf);
             });
             if (isSelf && items.length < 30) {
                 html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
@@ -15178,9 +15593,20 @@
                 '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
                 '</div></div>';
 
-            // Profile header with gradient background
-            html += '<div class="lb-profile-header">' +
-                '<div class="lb-header-bg"></div>' +
+            // Profile header with gradient background (or an uploaded looping GIF/video behind it).
+            var headerMediaUrl = profile.headerMediaUrl || profile.HeaderMediaUrl || '';
+            var headerMediaType = profile.headerMediaType || profile.HeaderMediaType || '';
+            var headerBgInner = '';
+            if (headerMediaUrl) {
+                var headerSrc = headerMediaUrl.charAt(0) === '/' ? (ApiClient.serverAddress() + headerMediaUrl) : headerMediaUrl;
+                if (headerMediaType === 'video') {
+                    headerBgInner = '<video class="lb-header-media" autoplay loop muted playsinline src="' + self.escapeHtml(headerSrc) + '"></video>';
+                } else {
+                    headerBgInner = '<img class="lb-header-media" src="' + self.escapeHtml(headerSrc) + '" alt="" />';
+                }
+            }
+            html += '<div class="lb-profile-header' + (headerMediaUrl ? ' has-media' : '') + '">' +
+                '<div class="lb-header-bg">' + headerBgInner + '</div>' +
                 '<div class="lb-header-content">' +
                 '<div class="lb-avatar">' + initial + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
                 '<div class="lb-user-info">' +
@@ -15422,12 +15848,8 @@
                 var visibleCount = Math.min(itemCount, 10);
                 for (var i = 0; i < visibleCount; i++) {
                     var fav = items[i];
-                    if (fav && fav.itemId) {
-                        html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                            (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
-                            ' style="background-image: url(\'' + (ApiClient.serverAddress() + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300') + '\')">' +
-                            (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
-                            '</div>';
+                    if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                        html += self.favSlotHtml(fav, rowIndex, i, isSelf);
                     }
                 }
 
@@ -16595,31 +17017,16 @@
             var loadMoreBtn = grid.querySelector('.lb-load-more-btn');
             if (loadMoreBtn) loadMoreBtn.remove();
 
-            // Add remaining items
+            // Add remaining items (server items and not-on-server catalog items).
+            var addSlot = grid.querySelector('.add-slot');
             for (var i = 10; i < items.length; i++) {
                 var fav = items[i];
-                if (fav && fav.itemId) {
-                    var slot = document.createElement('div');
-                    slot.className = 'lb-favorite-slot filled';
-                    slot.dataset.row = rowIndex;
-                    slot.dataset.index = i;
-                    slot.dataset.itemId = fav.itemId;
-                    slot.style.backgroundImage = 'url(\'' + (fav.imageUrl || '') + '\')';
-                    if (isSelf) {
-                        var removeBtn = document.createElement('button');
-                        removeBtn.className = 'lb-fav-remove';
-                        removeBtn.textContent = '×';
-                        removeBtn.onclick = (function(ri, idx) {
-                            return function() { self.removeFavorite(ri, idx); };
-                        })(rowIndex, i);
-                        slot.appendChild(removeBtn);
-                    }
-                    // Insert before the add slot
-                    var addSlot = grid.querySelector('.add-slot');
+                if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                    var slotHtml = self.favSlotHtml(fav, rowIndex, i, isSelf);
                     if (addSlot) {
-                        grid.insertBefore(slot, addSlot);
+                        addSlot.insertAdjacentHTML('beforebegin', slotHtml);
                     } else {
-                        grid.appendChild(slot);
+                        grid.insertAdjacentHTML('beforeend', slotHtml);
                     }
                 }
             }
@@ -16687,7 +17094,8 @@
             var favoriteRows = (self._currentProfile?.favoriteRows || []).map(function (row) {
                 return {
                     title: row.title || 'Favorites',
-                    items: (row.items || []).filter(function (f) { return f && f.itemId; })
+                    // Keep on-server items (itemId) AND not-on-server catalog items (tmdbId).
+                    items: (row.items || []).filter(function (f) { return f && (f.itemId || f.tmdbId || f.notInLibrary); })
                 };
             });
 
@@ -16747,6 +17155,15 @@
                 '<div class="lb-settings-field">' +
                 '<label>Bio</label>' +
                 '<textarea id="settingsBio" placeholder="Tell others about yourself...">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-section">' +
+                '<h3>Header Background</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label>Looping GIF or video shown behind your name &amp; picture (GIF, MP4 or WEBM, max 25&nbsp;MB)</label>' +
+                '<input type="file" id="settingsHeaderMedia" accept="image/gif,video/mp4,video/webm" onchange="RatingsPlugin.uploadHeaderMedia(this)" />' +
+                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? ('Current: ' + (profile.headerMediaType === 'video' ? 'video' : 'GIF') + ' set.') : 'None set.') + '</div>' +
+                '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">Remove header background</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
@@ -16826,6 +17243,73 @@
             .catch(function (err) {
                 console.error('[Social] Failed to save settings:', err);
             });
+        },
+
+        /**
+         * Upload a looping GIF/video for the profile header background.
+         */
+        uploadHeaderMedia: function (input) {
+            var self = this;
+            var file = input && input.files && input.files[0];
+            if (!file) return;
+            if (file.size > 25 * 1024 * 1024) {
+                self.lbToast('File too large (max 25 MB)');
+                input.value = '';
+                return;
+            }
+            var status = document.getElementById('settingsHeaderMediaStatus');
+            if (status) status.textContent = 'Uploading…';
+            var baseUrl = ApiClient.serverAddress();
+            var fd = new FormData();
+            fd.append('file', file);
+            // Do NOT set Content-Type - the browser adds the multipart boundary itself.
+            fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() },
+                body: fd
+            })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (data) {
+                if (self._currentProfile) {
+                    self._currentProfile.headerMediaUrl = data.headerMediaUrl;
+                    self._currentProfile.headerMediaType = data.headerMediaType;
+                }
+                if (status) status.textContent = 'Uploaded ✓ (' + (data.headerMediaType === 'video' ? 'video' : 'GIF') + ')';
+                var rm = document.getElementById('settingsHeaderMediaRemove');
+                if (rm) rm.style.display = '';
+                self.lbToast('Header background uploaded ✓');
+            })
+            .catch(function () {
+                if (status) status.textContent = 'Upload failed.';
+                self.lbToast('Upload failed');
+            });
+        },
+
+        /**
+         * Remove the profile header background media.
+         */
+        removeHeaderMedia: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function () {
+                if (self._currentProfile) {
+                    self._currentProfile.headerMediaUrl = '';
+                    self._currentProfile.headerMediaType = '';
+                }
+                var status = document.getElementById('settingsHeaderMediaStatus');
+                if (status) status.textContent = 'None set.';
+                var rm = document.getElementById('settingsHeaderMediaRemove');
+                if (rm) rm.style.display = 'none';
+                self.lbToast('Header background removed');
+            })
+            .catch(function () { self.lbToast('Remove failed'); });
         },
 
         /**
@@ -17372,6 +17856,15 @@
             });
 
             starsContainer.addEventListener('mouseleave', () => {
+                // Clear the hovered-number overlay so it doesn't linger once the mouse leaves.
+                const visiblePage = this.getVisibleDetailPage();
+                const allStars = visiblePage
+                    ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                    : document.querySelectorAll('.ratings-plugin-star');
+                allStars.forEach(s => {
+                    s.classList.remove('current-rating');
+                    s.removeAttribute('data-hover-num');
+                });
                 this.loadRatings(itemId); // Refresh to show actual rating
             });
 
@@ -17439,6 +17932,14 @@
                     } else {
                         star.classList.remove('hover', 'half-hover');
                     }
+                    // Show the rating number inside the star currently being hovered.
+                    if (index === starCount - 1) {
+                        star.classList.add('current-rating');
+                        star.setAttribute('data-hover-num', rating);
+                    } else {
+                        star.classList.remove('current-rating');
+                        star.removeAttribute('data-hover-num');
+                    }
                 });
             } else {
                 // Default 10-star mode
@@ -17447,6 +17948,14 @@
                         star.classList.add('hover');
                     } else {
                         star.classList.remove('hover');
+                    }
+                    // Show the rating number inside the star currently being hovered.
+                    if (index === rating - 1) {
+                        star.classList.add('current-rating');
+                        star.setAttribute('data-hover-num', rating);
+                    } else {
+                        star.classList.remove('current-rating');
+                        star.removeAttribute('data-hover-num');
                     }
                 });
             }
@@ -19190,7 +19699,7 @@
          * Add rating overlay to a specific card
          */
         addCardRating: function (card, itemId) {
-            if (!this.ratingsEnabled) return;
+            if (!this.ratingsEnabled || !this.showCardOverlay) return;
             // Use the batch queue for better performance
             this.queueCardForRating(card, itemId);
         },
@@ -20639,7 +21148,7 @@
 
                         // Update badge count periodically
                         self.updateLatestMediaBadge();
-                        setInterval(() => self.updateLatestMediaBadge(), 60000); // Update every minute
+                        setInterval(() => self.updateLatestMediaBadge(), 180000); // Update every 3 minutes (was 60s - eased to cut background DB load)
 
                         // Create dropdown container
                         const dropdown = document.createElement('div');
@@ -20767,16 +21276,15 @@
             const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
             const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch both: latest items and scheduled deletions. Uses the optimized /Items/Latest
-            // endpoint (bare array) rather than a recursive DateCreated sort - this query runs every
-            // 60s in the background for every open tab, so the recursive episode sort was a constant
-            // drain on large libraries.
+            // Fetch both: latest items and scheduled deletions. A recursive DateCreated sort is
+            // measurably faster here than /Items/Latest (which does extra per-view/grouping work),
+            // so we use it directly. This runs on a timer in the background; see the interval below.
             Promise.all([
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series,Episode&GroupItems=false&Limit=50&Fields=DateCreated,SeriesId&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.json()).catch(() => []),
+                }).then(r => r.json()).catch(() => ({ Items: [] })),
                 fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                     method: 'GET',
                     credentials: 'include',
@@ -20784,8 +21292,8 @@
                 }).then(r => r.json()).catch(() => [])
             ])
             .then(([mediaData, deletions]) => {
-                // Count new media items (/Items/Latest returns a bare array)
-                const items = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
+                // Count new media items
+                const items = mediaData.Items || [];
                 const seenSeries = new Set();
                 let newMediaCount = 0;
 
@@ -20892,19 +21400,18 @@
             const authHeader = ApiClient._serverInfo?.AccessToken ?
                 `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Use Jellyfin's optimized "Latest" endpoint instead of a recursive DateCreated sort
-            // over the entire library. This is the same query the home-screen "Recently Added" row
-            // uses, so it stays fast even on very large libraries (the recursive episode sort was a
-            // major slowdown). Note: /Items/Latest returns a bare array, not a { Items } wrapper.
+            // A recursive DateCreated sort is measurably faster on large libraries than Jellyfin's
+            // /Items/Latest endpoint (which does extra per-view enumeration and grouping), so we
+            // query directly. 1) new movies/series 2) latest episodes (to detect series with new content).
             Promise.all([
                 // New movies and series
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series&GroupItems=false&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
                 }).then(r => r.json()),
                 // Latest episodes (to find existing series that just got new episodes)
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Episode&GroupItems=false&Limit=100&Fields=SeriesId,SeriesName,DateCreated&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
@@ -20939,8 +21446,7 @@
 
                 // Track series IDs from new media (these are completely new series)
                 const newSeriesIds = new Set();
-                // /Items/Latest returns a bare array; tolerate both shapes just in case.
-                const mediaItems = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
+                const mediaItems = mediaData.Items || [];
                 mediaItems.forEach(item => {
                     if (item.Type === 'Series') {
                         newSeriesIds.add(item.Id);
@@ -20949,7 +21455,7 @@
 
                 // Find series with new episodes (that aren't completely new series)
                 const seriesWithNewEpisodes = new Map(); // seriesId -> { count, latestDate, seriesName }
-                const episodes = Array.isArray(episodeData) ? episodeData : (episodeData.Items || []);
+                const episodes = episodeData.Items || [];
                 episodes.forEach(ep => {
                     if (ep.SeriesId && !newSeriesIds.has(ep.SeriesId)) {
                         if (!seriesWithNewEpisodes.has(ep.SeriesId)) {
@@ -22907,7 +23413,7 @@
                         const deleteFiles = confirm(self.t('duplicateDeleteFiles'));
 
                         try {
-                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFiles=${deleteFiles}`, {
+                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFile=${deleteFiles}`, {
                                 method: 'DELETE',
                                 headers: {
                                     'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
@@ -28757,6 +29263,7 @@
          */
         applyNetflixRatingBadges: function (container) {
             const self = this;
+            if (!this.showCardOverlay) return; // respect the card-overlay / ratings-disabled toggle
             const cards = container.querySelectorAll('.netflix-card[data-item-id]');
             const cardMap = new Map(); // itemId -> card elements
             const uncachedIds = [];
