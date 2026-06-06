@@ -14951,7 +14951,7 @@
             var isImdb = /^tt\d+$/i.test(q);
             results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
             // 1) Local server library
-            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear';
+            var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear,Overview';
             var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { return (d && d.Items) || []; })
@@ -14972,7 +14972,8 @@
                     html += '<div class="lb-am-section">On your server</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
-                        html += '<div class="lb-am-row">' +
+                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: it.Overview || '' }));
+                        html += '<div class="lb-am-row" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + sp + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + sp + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
                             '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
@@ -14994,7 +14995,7 @@
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
                         var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview }));
-                        html += '<div class="lb-am-row ext">' +
+                        html += '<div class="lb-am-row ext" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + payload + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + payload + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
                             '<span class="lb-am-year">' + ratingStr + '</span></div>' +
@@ -15222,7 +15223,9 @@
         favDragStart: function (e, rowIndex, idx) {
             this._favDrag = { row: rowIndex, idx: idx };
             if (e && e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'move';
+                // copyMove so it's compatible with the 'move' dropEffect set in favDragOver
+                // (external drops from Recent Activity/search use 'copy' semantics).
+                e.dataTransfer.effectAllowed = 'copyMove';
                 try { e.dataTransfer.setData('text/plain', rowIndex + ':' + idx); } catch (_) { /* ignore */ }
             }
         },
@@ -15236,17 +15239,39 @@
             if (!self._currentProfile.favoriteRows[rowIndex].items) self._currentProfile.favoriteRows[rowIndex].items = [];
             var items = self._currentProfile.favoriteRows[rowIndex].items;
 
-            // Drag from Recent Activity (or elsewhere) -> add the film to this row.
-            if (d && d.external && d.itemId) {
-                if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+            // Drag from Recent Activity / search results -> add the film to this row.
+            if (d && d.external) {
                 var pos = (typeof idx === 'number' && idx >= 0 && idx <= items.length) ? idx : items.length;
-                items.splice(pos, 0, {
-                    itemId: d.itemId,
-                    title: d.name || '',
-                    imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
-                });
-                self.saveFavorites();
-                self.rerenderFavoriteRow(rowIndex);
+                if (d.itemId) {
+                    // On-server item (dedup by itemId).
+                    if (items.some(function (it) { return it && it.itemId === d.itemId; })) { self.lbToast('Already in that row'); return; }
+                    items.splice(pos, 0, {
+                        itemId: d.itemId,
+                        title: d.name || d.title || '',
+                        imageUrl: ApiClient.serverAddress() + '/Items/' + d.itemId + '/Images/Primary?maxHeight=300'
+                    });
+                    self.saveFavorites();
+                    self.rerenderFavoriteRow(rowIndex);
+                    return;
+                }
+                if (d.tmdbId) {
+                    // Not-on-server catalog item (dedup by tmdbId).
+                    var tid = String(d.tmdbId);
+                    if (items.some(function (it) { return it && String(it.tmdbId || it.TmdbId || '') === tid; })) { self.lbToast('Already in that row'); return; }
+                    items.splice(pos, 0, {
+                        itemId: '',
+                        title: d.title || '',
+                        imageUrl: d.poster || '',
+                        notInLibrary: true,
+                        tmdbId: tid,
+                        year: d.year || null,
+                        mediaType: (d.type === 'Series' ? 'Series' : 'Movie'),
+                        overview: d.overview || ''
+                    });
+                    self.saveFavorites();
+                    self.rerenderFavoriteRow(rowIndex);
+                    return;
+                }
                 return;
             }
 
@@ -15268,9 +15293,32 @@
         activityDragStart: function (e, itemId, name) {
             this._favDrag = { external: true, itemId: itemId, name: name || '' };
             if (e && e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'copy';
+                // copyMove so the drop is accepted by rows (favDragOver sets dropEffect 'move').
+                e.dataTransfer.effectAllowed = 'copyMove';
                 try { e.dataTransfer.setData('text/plain', itemId); } catch (_) { /* ignore */ }
             }
+        },
+
+        /**
+         * Start dragging a search result (server or catalog) to drop into a favorites row.
+         */
+        searchDragStart: function (e, payloadEnc) {
+            var d; try { d = JSON.parse(decodeURIComponent(payloadEnc)); } catch (_) { return; }
+            d.external = true;
+            this._favDrag = d;
+            if (e && e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copyMove';
+                try { e.dataTransfer.setData('text/plain', d.itemId || String(d.tmdbId || '')); } catch (_) { /* ignore */ }
+            }
+        },
+
+        /**
+         * Hover info popup for "Add a film" search results (works for catalog items too).
+         */
+        showSearchInfo: function (payloadEnc, el) {
+            var d; try { d = JSON.parse(decodeURIComponent(payloadEnc)); } catch (_) { return; }
+            var notInLib = !!(d.notInLib || (!d.itemId && d.tmdbId));
+            this._renderFavInfoPopup(el, d.title || d.name || 'Untitled', d.year || '', d.overview || '', notInLib);
         },
 
         /**

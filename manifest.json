@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.340.0",
+        "changelog": "Profile drag-and-drop and search popups. Fixed dragging a poster from Recent Activity into a favorite row (it now sticks). You can also drag films/shows straight from the 'Add a film' search results into a row - including titles that aren't on the server yet. And every search result now shows a hover popup with the full title, year and description, so you can tell them apart at a glance.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.340.0/Jellyfin.Plugin.Ratings_2.0.340.0.zip",
+        "checksum": "4194e6409274336484e54803f3b135c5",
+        "timestamp": "2026-06-06T04:00:00Z"
+      },
+      {
         "version": "2.0.339.0",
         "changelog": "Profile polish. Hover any favorite poster to see a popup with the full title, year and description (so you can recognise titles without opening them). Fixed the profile header: when you set a GIF/video background, your name and details no longer look greyed out - they stay bright and readable over the video.",
         "targetAbi": "10.11.0.0",
