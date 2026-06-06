@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.336.0",
+        "changelog": "Speed and reliability improvements. Made the 'Latest Media' panel and general browsing noticeably faster on large libraries by removing heavy background work that ran every minute. Fixed old movies and shows sometimes appearing as 'newly added' when they were not - now only genuinely new media triggers a notification, and the same item is never announced twice (even after a server restart). Fixed custom sorting showing no cards when several folders are combined into one library view.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.336.0/Jellyfin.Plugin.Ratings_2.0.336.0.zip",
+        "checksum": "4ef38642461ae1f92446cc7056e3c9ed",
+        "timestamp": "2026-06-06T00:00:00Z"
+      },
+      {
         "version": "2.0.335.0",
         "changelog": "Fixed the Duplicates tool wrongly flagging whole TV shows as duplicates. It was treating every episode of a series as a copy of the same thing (e.g. 705 'copies' of The Simpsons). Now it only groups true duplicates - the same episode (or movie) appearing more than once - so different episodes are no longer shown as duplicates.",
         "targetAbi": "10.11.0.0",

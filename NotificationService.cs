@@ -25,7 +25,6 @@ namespace Jellyfin.Plugin.Ratings
         private readonly RatingsRepository _repository;
         private readonly ILogger<NotificationService> _logger;
         private readonly ConcurrentQueue<NewMediaNotification> _notificationQueue;
-        private readonly ConcurrentDictionary<Guid, DateTime> _recentlyNotifiedItems;
         private readonly ConcurrentDictionary<string, List<PendingEpisode>> _pendingEpisodes;
         private readonly Random _random;
         private readonly object _pendingLock = new object();
@@ -35,6 +34,12 @@ namespace Jellyfin.Plugin.Ratings
 
         // How long to wait for more episodes before batching (seconds)
         private const int BatchDelaySeconds = 60;
+
+        // Items added longer ago than this are part of the EXISTING library, not "new media".
+        // Without this gate a metadata refresh, image re-download, edit, or re-scan of OLD media
+        // fires ItemAdded/ItemUpdated and gets announced as newly added (e.g. a 3-month-old movie
+        // reappearing as new). DateCreated is Jellyfin's "date added to library" timestamp.
+        private static readonly TimeSpan MaxItemAgeForNotification = TimeSpan.FromDays(14);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NotificationService"/> class.
@@ -51,7 +56,6 @@ namespace Jellyfin.Plugin.Ratings
             _repository = repository;
             _logger = logger;
             _notificationQueue = new ConcurrentQueue<NewMediaNotification>();
-            _recentlyNotifiedItems = new ConcurrentDictionary<Guid, DateTime>();
             _pendingEpisodes = new ConcurrentDictionary<string, List<PendingEpisode>>();
             _random = new Random();
         }
@@ -162,6 +166,38 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
+        /// Determines whether an item is eligible to produce a "new media" notification.
+        /// Rejects items that were added to the library too long ago (so refreshes/re-scans of OLD
+        /// media are never announced) and items we have already announced (persistent dedup that
+        /// survives restarts).
+        /// </summary>
+        private bool ShouldNotify(BaseItem? item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            // Gate on "date added to library". Old media that merely got refreshed is not new.
+            if (DateTime.UtcNow - item.DateCreated > MaxItemAgeForNotification)
+            {
+                _logger.LogDebug(
+                    "Skipping notification for '{Title}' - added {Date:u}, older than the {Days}-day new-media window",
+                    item.Name, item.DateCreated, MaxItemAgeForNotification.TotalDays);
+                return false;
+            }
+
+            // Persistent dedup - never announce the same item twice, even across restarts.
+            if (_repository.HasNotifiedItem(item.Id))
+            {
+                _logger.LogDebug("Skipping notification for '{Title}' - already announced previously", item.Name);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Handles item added events from the library.
         /// </summary>
         private void OnItemAdded(object? sender, ItemChangeEventArgs e)
@@ -177,16 +213,10 @@ namespace Jellyfin.Plugin.Ratings
 
                 var item = e.Item;
 
-                // Skip if we've already notified about this item recently (within 24 hours)
-                if (_recentlyNotifiedItems.TryGetValue(item.Id, out var notifiedAt))
+                // Skip old media (refresh/re-scan) and anything already announced.
+                if (!ShouldNotify(item))
                 {
-                    if (DateTime.UtcNow - notifiedAt < TimeSpan.FromHours(24))
-                    {
-                        _logger.LogDebug("Skipping duplicate notification for item {ItemId} - already notified at {Time}", item.Id, notifiedAt);
-                        return;
-                    }
-                    // Remove old entry
-                    _recentlyNotifiedItems.TryRemove(item.Id, out _);
+                    return;
                 }
 
                 // Notify for movies, series, and episodes - but only if they have an image (metadata complete)
@@ -243,8 +273,9 @@ namespace Jellyfin.Plugin.Ratings
 
                 var item = e.Item;
 
-                // Skip if we've already notified about this item
-                if (_recentlyNotifiedItems.ContainsKey(item.Id))
+                // Skip old media (this is the main culprit: a metadata refresh of months-old media
+                // fires ItemUpdated) and anything already announced.
+                if (!ShouldNotify(item))
                 {
                     return;
                 }
@@ -318,8 +349,8 @@ namespace Jellyfin.Plugin.Ratings
             // Queue notification for delayed release
             _notificationQueue.Enqueue(notification);
 
-            // Track this item to prevent duplicate notifications (24 hours)
-            _recentlyNotifiedItems[itemId] = DateTime.UtcNow;
+            // Persistently mark as announced so it is never re-notified (survives restarts).
+            _repository.MarkItemNotified(itemId);
         }
 
         /// <summary>
@@ -376,7 +407,7 @@ namespace Jellyfin.Plugin.Ratings
                 };
 
                 _notificationQueue.Enqueue(notification);
-                _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
+                _repository.MarkItemNotified(episode.Id);
                 return;
             }
 
@@ -411,8 +442,8 @@ namespace Jellyfin.Plugin.Ratings
                 }
             }
 
-            // Track this item to prevent duplicate notifications
-            _recentlyNotifiedItems[episode.Id] = DateTime.UtcNow;
+            // Persistently mark this episode as announced so it is never re-notified.
+            _repository.MarkItemNotified(episode.Id);
         }
 
         /// <summary>

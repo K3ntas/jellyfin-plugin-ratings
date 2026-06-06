@@ -33,6 +33,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _chatBansWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _privateMessagesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _publicChatLastSeenWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _notifiedItemsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _moderatorActionsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _userStyleOverridesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
@@ -59,6 +60,11 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, ChatBan> _chatBans;
         private List<PrivateMessage> _privateMessages;
         private Dictionary<Guid, DateTime> _publicChatLastSeen;
+
+        // Persistent set of item IDs we have ALREADY announced as "new media", with the time we
+        // announced them. Disk-backed so a server restart (e.g. after a plugin update) does not wipe
+        // the dedup and cause a rescan/metadata-refresh to re-announce already-known media.
+        private Dictionary<Guid, DateTime> _notifiedItems;
         private List<ModeratorAction> _moderatorActions;
         private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
         private Dictionary<Guid, MediaQuota> _mediaQuotas;
@@ -96,6 +102,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _mediaQuotas = new Dictionary<Guid, MediaQuota>();
             _keepRequests = new List<KeepRequest>();
             _reviewComments = new Dictionary<Guid, ReviewComment>();
+            _notifiedItems = new Dictionary<Guid, DateTime>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -121,7 +128,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadMediaQuotas,
                 LoadKeepRequests,
                 LoadReviewLikes,
-                LoadReviewComments);
+                LoadReviewComments,
+                LoadNotifiedItems);
         }
 
         /// <summary>
@@ -1123,6 +1131,111 @@ namespace Jellyfin.Plugin.Ratings.Data
             lock (_lock)
             {
                 _notifications.Clear();
+            }
+        }
+
+        // How long an item ID stays remembered as "already announced". Only needs to outlive the
+        // notification recency window (see NotificationService); 60 days gives ample slack while
+        // keeping the on-disk set tiny.
+        private static readonly TimeSpan NotifiedItemRetention = TimeSpan.FromDays(60);
+
+        /// <summary>
+        /// Returns true if a "new media" notification has already been created for this item.
+        /// Backed by disk so it survives restarts.
+        /// </summary>
+        /// <param name="itemId">The media item ID.</param>
+        /// <returns>True if already announced.</returns>
+        public bool HasNotifiedItem(Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _notifiedItems.ContainsKey(itemId);
+            }
+        }
+
+        /// <summary>
+        /// Records that a "new media" notification has been created for this item, so it is never
+        /// announced again. Prunes entries older than the retention window and persists to disk.
+        /// </summary>
+        /// <param name="itemId">The media item ID.</param>
+        public void MarkItemNotified(Guid itemId)
+        {
+            lock (_lock)
+            {
+                _notifiedItems[itemId] = DateTime.UtcNow;
+
+                // Prune long-expired entries so the file stays small.
+                var cutoff = DateTime.UtcNow - NotifiedItemRetention;
+                var expired = _notifiedItems.Where(kvp => kvp.Value < cutoff).Select(kvp => kvp.Key).ToList();
+                foreach (var key in expired)
+                {
+                    _notifiedItems.Remove(key);
+                }
+            }
+
+            _ = SaveNotifiedItemsAsync();
+        }
+
+        /// <summary>
+        /// Loads the already-notified item set from disk.
+        /// </summary>
+        private void LoadNotifiedItems()
+        {
+            _notifiedItems = new Dictionary<Guid, DateTime>();
+            try
+            {
+                var file = Path.Combine(_dataPath, "notified_items.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    if (data != null)
+                    {
+                        var cutoff = DateTime.UtcNow - NotifiedItemRetention;
+                        foreach (var kvp in data)
+                        {
+                            // Drop expired entries on load so the set cannot grow unbounded.
+                            if (kvp.Value >= cutoff && Guid.TryParse(kvp.Key, out var itemId))
+                            {
+                                _notifiedItems[itemId] = kvp.Value;
+                            }
+                        }
+
+                        _logger.LogInformation("Loaded {Count} notified-item entries", _notifiedItems.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading notified items from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves the already-notified item set to disk.
+        /// </summary>
+        private async Task SaveNotifiedItemsAsync()
+        {
+            await _notifiedItemsWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "notified_items.json");
+                Dictionary<string, DateTime> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _notifiedItems.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving notified items to disk");
+            }
+            finally
+            {
+                _notifiedItemsWriteLock.Release();
             }
         }
 
