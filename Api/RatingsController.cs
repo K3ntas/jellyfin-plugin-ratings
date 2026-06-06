@@ -4308,7 +4308,8 @@ namespace Jellyfin.Plugin.Ratings.Api
         [Authorize]
         public async Task<ActionResult> DeleteDuplicate(
             [FromRoute] [Required] Guid itemId,
-            [FromQuery] bool deleteFile = false)
+            [FromQuery] bool deleteFile = false,
+            [FromQuery] bool deleteFiles = false)
         {
             try
             {
@@ -4317,6 +4318,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     return Forbid("Admin access required");
                 }
+
+                // Accept both "deleteFile" and "deleteFiles" so an older cached frontend cannot
+                // silently leave the file on disk (which caused deleted duplicates to reappear
+                // after the next library scan).
+                deleteFile = deleteFile || deleteFiles;
 
                 var item = _libraryManager.GetItemById(itemId);
                 if (item == null)

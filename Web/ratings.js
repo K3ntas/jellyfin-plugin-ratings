@@ -13320,6 +13320,30 @@
                     right: 0;
                     height: 150px;
                     background: linear-gradient(135deg, #2c3440 0%, #14181c 100%);
+                    overflow: hidden;
+                }
+                /* Uploaded looping GIF/video shown BEHIND the header content. Taller so it sits
+                   behind the avatar/name area, with a fade at the bottom for text legibility. */
+                .lb-profile-header.has-media .lb-header-bg {
+                    height: 230px;
+                    background: #14181c;
+                }
+                .lb-header-media {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center;
+                    z-index: 0;
+                }
+                .lb-profile-header.has-media .lb-header-bg::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to bottom, rgba(20,24,28,0.15) 0%, rgba(20,24,28,0.55) 60%, rgba(20,24,28,0.9) 100%);
+                    z-index: 1;
+                    pointer-events: none;
                 }
                 .lb-header-content {
                     position: relative;
@@ -13680,6 +13704,56 @@
                 .lb-fav-remove:hover {
                     background: #ee7752;
                 }
+
+                /* Not-on-server catalog favorite: dimmed poster, "Not on server" tag, hover Request */
+                .lb-favorite-slot.not-in-library { cursor: pointer; }
+                .lb-favorite-slot.not-in-library::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0.05) 55%);
+                    border-radius: inherit;
+                    pointer-events: none;
+                }
+                .lb-fav-notlib-tag {
+                    position: absolute;
+                    top: 6px;
+                    left: 6px;
+                    z-index: 2;
+                    background: rgba(0,0,0,0.78);
+                    color: #ffcf5c;
+                    font-size: 10px;
+                    font-weight: 700;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    letter-spacing: 0.02em;
+                    pointer-events: none;
+                }
+                .lb-fav-request {
+                    position: absolute;
+                    left: 50%;
+                    bottom: 8px;
+                    transform: translateX(-50%) translateY(6px);
+                    z-index: 3;
+                    opacity: 0;
+                    transition: opacity 0.18s ease, transform 0.18s ease;
+                    background: #00a4dc;
+                    color: #fff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                }
+                .lb-favorite-slot.not-in-library:hover .lb-fav-request {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                .lb-fav-request:hover { background: #33b5e0; }
+                .lb-fav-request:disabled { background: #2a7d2a; opacity: 0.85; cursor: default; }
 
                 /* Media Picker Modal */
                 .lb-media-picker {
@@ -14890,11 +14964,12 @@
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
-                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId }));
+                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster }));
                         html += '<div class="lb-am-row ext">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
                             '<span class="lb-am-year">' + ratingStr + '</span></div>' +
+                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addExternalToFavoritesFromSearch(\'' + payload + '\', this)">+ Add</button>' +
                             '<button class="lb-am-add req" onclick="RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                             '</div>';
                     });
@@ -15033,6 +15108,86 @@
             }
         },
 
+        /**
+         * From a catalog (not-on-server) search result: choose which row to add the title to.
+         */
+        addExternalToFavoritesFromSearch: function (payloadEnc, btn) {
+            var self = this;
+            var data; try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            var existing = document.getElementById('lbAddRowMenu');
+            if (existing) existing.remove();
+            var menu = document.createElement('div');
+            menu.id = 'lbAddRowMenu';
+            menu.className = 'lb-addrow-menu';
+            var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(data.title || 'film') + '” to…</div>';
+            rows.forEach(function (row, i) {
+                var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
+                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                h += '<button onclick="RatingsPlugin.confirmAddExternalToFavorites(\'' + payloadEnc + '\',' + i + ')">' + self.escapeHtml(rowName) + '</button>';
+            });
+            if (rows.length < 5) {
+                h += '<button class="newrow" onclick="RatingsPlugin.confirmAddExternalToFavorites(\'' + payloadEnc + '\',-1)">+ New row</button>';
+            }
+            menu.innerHTML = h;
+            document.body.appendChild(menu);
+            if (btn) {
+                var rect = btn.getBoundingClientRect();
+                menu.style.left = Math.max(8, Math.min(rect.left - 60, window.innerWidth - 220)) + 'px';
+                menu.style.top = (rect.bottom + 6) + 'px';
+            }
+            setTimeout(function () {
+                document.addEventListener('click', function close(ev) {
+                    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close); }
+                });
+            }, 0);
+        },
+
+        confirmAddExternalToFavorites: function (payloadEnc, rowIndex) {
+            var self = this;
+            var menu = document.getElementById('lbAddRowMenu'); if (menu) menu.remove();
+            var data; try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!self._currentProfile) self._currentProfile = {};
+            if (!self._currentProfile.favoriteRows) self._currentProfile.favoriteRows = [];
+            var rows = self._currentProfile.favoriteRows;
+            var createdNewRow = false;
+            if (rowIndex === -1) {
+                if (rows.length >= 5) return;
+                rows.push({ title: 'Favorites', items: [] });
+                rowIndex = rows.length - 1;
+                createdNewRow = true;
+            }
+            if (!rows[rowIndex]) return;
+            if (!rows[rowIndex].items) rows[rowIndex].items = [];
+            var tmdbId = String(data.tmdbId || '');
+            var dup = rows[rowIndex].items.some(function (it) { return it && tmdbId && String(it.tmdbId || it.TmdbId || '') === tmdbId; });
+            if (!dup) {
+                rows[rowIndex].items.push({
+                    itemId: '',
+                    title: data.title || '',
+                    imageUrl: data.poster || '',
+                    notInLibrary: true,
+                    tmdbId: tmdbId,
+                    year: data.year || null,
+                    mediaType: (data.type === 'Series' ? 'Series' : 'Movie')
+                });
+                self.saveFavorites();
+                self.lbToast('Added to ' + (rows[rowIndex].title || 'favorites'));
+            } else {
+                self.lbToast('Already in that row');
+            }
+            if (createdNewRow) {
+                if (self._currentProfileStatus) {
+                    self._currentProfileStatus.favoriteRows = rows;
+                    self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+                }
+            } else {
+                self.rerenderFavoriteRow(rowIndex);
+            }
+        },
+
         /* ---- Drag & drop reordering within a favorite row ---- */
         favDragStart: function (e, rowIndex, idx) {
             this._favDrag = { row: rowIndex, idx: idx };
@@ -15091,6 +15246,56 @@
         /**
          * Re-render ONLY one favorites row's grid (no full profile reload).
          */
+        /**
+         * True when a favorite entry is a catalog title that is NOT on the server.
+         */
+        isFavNotInLibrary: function (fav) {
+            return !!fav && (fav.notInLibrary === true || fav.NotInLibrary === true || (!fav.itemId && !fav.ItemId && !!(fav.tmdbId || fav.TmdbId)));
+        },
+
+        /**
+         * Build the HTML for one favorite slot. Handles both on-server items (poster from Jellyfin,
+         * normal behaviour) and not-on-server catalog items (TMDB poster, hover "Request" button,
+         * click shows an info hint).
+         */
+        favSlotHtml: function (fav, rowIndex, i, isSelf) {
+            var self = this;
+            var base = ApiClient.serverAddress();
+            var notInLib = self.isFavNotInLibrary(fav);
+            var itemId = fav.itemId || fav.ItemId || '';
+            var img = notInLib
+                ? (fav.imageUrl || fav.ImageUrl || '')
+                : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
+            var dragAttrs = isSelf
+                ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"'
+                : '';
+            var removeBtn = isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '';
+            var cls = 'lb-favorite-slot filled' + (notInLib ? ' not-in-library' : '');
+            var extra = '';
+            var clickAttr = '';
+            if (notInLib) {
+                var payload = encodeURIComponent(JSON.stringify({
+                    title: fav.title || fav.Title || '',
+                    year: fav.year || fav.Year || '',
+                    type: fav.mediaType || fav.MediaType || 'Movie',
+                    tmdbId: fav.tmdbId || fav.TmdbId || ''
+                }));
+                extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
+                    '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>';
+                clickAttr = ' onclick="RatingsPlugin.notInLibraryInfo()"';
+            }
+            return '<div class="' + cls + '" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + self.escapeHtml(itemId) + '"' +
+                dragAttrs + clickAttr +
+                ' style="background-image: url(\'' + img + '\')">' + removeBtn + extra + '</div>';
+        },
+
+        /**
+         * Info hint shown when clicking a not-on-server favorite poster.
+         */
+        notInLibraryInfo: function () {
+            this.lbToast('Not on the server yet — click the Request button to ask for this title.');
+        },
+
         rerenderFavoriteRow: function (rowIndex) {
             var self = this;
             var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
@@ -15098,17 +15303,13 @@
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
             var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
-            // Compact (drop nulls) so array indices match rendered indices.
-            var items = (row.items || []).filter(function (f) { return f && f.itemId; });
+            // Compact (drop nulls) so array indices match rendered indices. Keep both on-server
+            // items (have itemId) and catalog items (have tmdbId but no itemId).
+            var items = (row.items || []).filter(function (f) { return f && (f.itemId || f.ItemId || f.tmdbId || f.TmdbId); });
             row.items = items;
-            var base = ApiClient.serverAddress();
             var html = '';
             items.forEach(function (fav, i) {
-                html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                    (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
-                    ' style="background-image: url(\'' + base + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300\')">' +
-                    (isSelf ? '<button class="lb-fav-remove" onclick="event.stopPropagation();RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
-                    '</div>';
+                html += self.favSlotHtml(fav, rowIndex, i, isSelf);
             });
             if (isSelf && items.length < 30) {
                 html += '<div class="lb-favorite-slot empty add-slot" data-row="' + rowIndex + '" data-index="' + items.length + '" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)" onclick="RatingsPlugin.openMediaPicker(' + rowIndex + ',' + items.length + ')" style="cursor:pointer"><span>+</span></div>';
@@ -15232,9 +15433,20 @@
                 '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
                 '</div></div>';
 
-            // Profile header with gradient background
-            html += '<div class="lb-profile-header">' +
-                '<div class="lb-header-bg"></div>' +
+            // Profile header with gradient background (or an uploaded looping GIF/video behind it).
+            var headerMediaUrl = profile.headerMediaUrl || profile.HeaderMediaUrl || '';
+            var headerMediaType = profile.headerMediaType || profile.HeaderMediaType || '';
+            var headerBgInner = '';
+            if (headerMediaUrl) {
+                var headerSrc = headerMediaUrl.charAt(0) === '/' ? (ApiClient.serverAddress() + headerMediaUrl) : headerMediaUrl;
+                if (headerMediaType === 'video') {
+                    headerBgInner = '<video class="lb-header-media" autoplay loop muted playsinline src="' + self.escapeHtml(headerSrc) + '"></video>';
+                } else {
+                    headerBgInner = '<img class="lb-header-media" src="' + self.escapeHtml(headerSrc) + '" alt="" />';
+                }
+            }
+            html += '<div class="lb-profile-header' + (headerMediaUrl ? ' has-media' : '') + '">' +
+                '<div class="lb-header-bg">' + headerBgInner + '</div>' +
                 '<div class="lb-header-content">' +
                 '<div class="lb-avatar">' + initial + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
                 '<div class="lb-user-info">' +
@@ -15476,12 +15688,8 @@
                 var visibleCount = Math.min(itemCount, 10);
                 for (var i = 0; i < visibleCount; i++) {
                     var fav = items[i];
-                    if (fav && fav.itemId) {
-                        html += '<div class="lb-favorite-slot filled" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + fav.itemId + '"' +
-                            (isSelf ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"' : '') +
-                            ' style="background-image: url(\'' + (ApiClient.serverAddress() + '/Items/' + fav.itemId + '/Images/Primary?maxHeight=300') + '\')">' +
-                            (isSelf ? '<button class="lb-fav-remove" onclick="RatingsPlugin.removeFavorite(' + rowIndex + ',' + i + ')">×</button>' : '') +
-                            '</div>';
+                    if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                        html += self.favSlotHtml(fav, rowIndex, i, isSelf);
                     }
                 }
 
@@ -16649,31 +16857,16 @@
             var loadMoreBtn = grid.querySelector('.lb-load-more-btn');
             if (loadMoreBtn) loadMoreBtn.remove();
 
-            // Add remaining items
+            // Add remaining items (server items and not-on-server catalog items).
+            var addSlot = grid.querySelector('.add-slot');
             for (var i = 10; i < items.length; i++) {
                 var fav = items[i];
-                if (fav && fav.itemId) {
-                    var slot = document.createElement('div');
-                    slot.className = 'lb-favorite-slot filled';
-                    slot.dataset.row = rowIndex;
-                    slot.dataset.index = i;
-                    slot.dataset.itemId = fav.itemId;
-                    slot.style.backgroundImage = 'url(\'' + (fav.imageUrl || '') + '\')';
-                    if (isSelf) {
-                        var removeBtn = document.createElement('button');
-                        removeBtn.className = 'lb-fav-remove';
-                        removeBtn.textContent = '×';
-                        removeBtn.onclick = (function(ri, idx) {
-                            return function() { self.removeFavorite(ri, idx); };
-                        })(rowIndex, i);
-                        slot.appendChild(removeBtn);
-                    }
-                    // Insert before the add slot
-                    var addSlot = grid.querySelector('.add-slot');
+                if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                    var slotHtml = self.favSlotHtml(fav, rowIndex, i, isSelf);
                     if (addSlot) {
-                        grid.insertBefore(slot, addSlot);
+                        addSlot.insertAdjacentHTML('beforebegin', slotHtml);
                     } else {
-                        grid.appendChild(slot);
+                        grid.insertAdjacentHTML('beforeend', slotHtml);
                     }
                 }
             }
@@ -16741,7 +16934,8 @@
             var favoriteRows = (self._currentProfile?.favoriteRows || []).map(function (row) {
                 return {
                     title: row.title || 'Favorites',
-                    items: (row.items || []).filter(function (f) { return f && f.itemId; })
+                    // Keep on-server items (itemId) AND not-on-server catalog items (tmdbId).
+                    items: (row.items || []).filter(function (f) { return f && (f.itemId || f.tmdbId || f.notInLibrary); })
                 };
             });
 
@@ -16801,6 +16995,15 @@
                 '<div class="lb-settings-field">' +
                 '<label>Bio</label>' +
                 '<textarea id="settingsBio" placeholder="Tell others about yourself...">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
+                '</div>' +
+                '</div>' +
+                '<div class="lb-settings-section">' +
+                '<h3>Header Background</h3>' +
+                '<div class="lb-settings-field">' +
+                '<label>Looping GIF or video shown behind your name &amp; picture (GIF, MP4 or WEBM, max 25&nbsp;MB)</label>' +
+                '<input type="file" id="settingsHeaderMedia" accept="image/gif,video/mp4,video/webm" onchange="RatingsPlugin.uploadHeaderMedia(this)" />' +
+                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? ('Current: ' + (profile.headerMediaType === 'video' ? 'video' : 'GIF') + ' set.') : 'None set.') + '</div>' +
+                '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">Remove header background</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
@@ -16880,6 +17083,73 @@
             .catch(function (err) {
                 console.error('[Social] Failed to save settings:', err);
             });
+        },
+
+        /**
+         * Upload a looping GIF/video for the profile header background.
+         */
+        uploadHeaderMedia: function (input) {
+            var self = this;
+            var file = input && input.files && input.files[0];
+            if (!file) return;
+            if (file.size > 25 * 1024 * 1024) {
+                self.lbToast('File too large (max 25 MB)');
+                input.value = '';
+                return;
+            }
+            var status = document.getElementById('settingsHeaderMediaStatus');
+            if (status) status.textContent = 'Uploading…';
+            var baseUrl = ApiClient.serverAddress();
+            var fd = new FormData();
+            fd.append('file', file);
+            // Do NOT set Content-Type - the browser adds the multipart boundary itself.
+            fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() },
+                body: fd
+            })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (data) {
+                if (self._currentProfile) {
+                    self._currentProfile.headerMediaUrl = data.headerMediaUrl;
+                    self._currentProfile.headerMediaType = data.headerMediaType;
+                }
+                if (status) status.textContent = 'Uploaded ✓ (' + (data.headerMediaType === 'video' ? 'video' : 'GIF') + ')';
+                var rm = document.getElementById('settingsHeaderMediaRemove');
+                if (rm) rm.style.display = '';
+                self.lbToast('Header background uploaded ✓');
+            })
+            .catch(function () {
+                if (status) status.textContent = 'Upload failed.';
+                self.lbToast('Upload failed');
+            });
+        },
+
+        /**
+         * Remove the profile header background media.
+         */
+        removeHeaderMedia: function () {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function () {
+                if (self._currentProfile) {
+                    self._currentProfile.headerMediaUrl = '';
+                    self._currentProfile.headerMediaType = '';
+                }
+                var status = document.getElementById('settingsHeaderMediaStatus');
+                if (status) status.textContent = 'None set.';
+                var rm = document.getElementById('settingsHeaderMediaRemove');
+                if (rm) rm.style.display = 'none';
+                self.lbToast('Header background removed');
+            })
+            .catch(function () { self.lbToast('Remove failed'); });
         },
 
         /**
@@ -17426,6 +17696,15 @@
             });
 
             starsContainer.addEventListener('mouseleave', () => {
+                // Clear the hovered-number overlay so it doesn't linger once the mouse leaves.
+                const visiblePage = this.getVisibleDetailPage();
+                const allStars = visiblePage
+                    ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                    : document.querySelectorAll('.ratings-plugin-star');
+                allStars.forEach(s => {
+                    s.classList.remove('current-rating');
+                    s.removeAttribute('data-hover-num');
+                });
                 this.loadRatings(itemId); // Refresh to show actual rating
             });
 
@@ -22974,7 +23253,7 @@
                         const deleteFiles = confirm(self.t('duplicateDeleteFiles'));
 
                         try {
-                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFiles=${deleteFiles}`, {
+                            const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFile=${deleteFiles}`, {
                                 method: 'DELETE',
                                 headers: {
                                     'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`

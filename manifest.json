@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.338.0",
+        "changelog": "Profile additions and two fixes. You can now add films/shows that are NOT yet on the server to your profile rows - hover one to reveal a Request button, or click it for a reminder to request it. Edit Profile now lets you upload your own looping GIF or video to show behind your name and picture. Fixes: the rating number no longer lingers on a star after you stop hovering, and deleting a duplicate now actually removes the file so it no longer comes back after a library scan.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.338.0/Jellyfin.Plugin.Ratings_2.0.338.0.zip",
+        "checksum": "831f75f13313892d6c62895528f3a723",
+        "timestamp": "2026-06-06T02:00:00Z"
+      },
+      {
         "version": "2.0.337.0",
         "changelog": "Faster Latest Media and a couple of nice touches. Reworked the recent-media lookups so the 'Latest Media' panel and browsing load quicker on large libraries. When you hover the rating stars, the number now appears inside the star you're pointing at, with a small pop animation. Added an admin option to show or hide the rating badge on poster cards - turning it off (or turning ratings off) now removes the badges right away instead of leaving old ones behind.",
         "targetAbi": "10.11.0.0",
