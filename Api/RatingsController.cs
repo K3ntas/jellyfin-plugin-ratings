@@ -1425,6 +1425,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     // Core settings
                     EnableRatings = config?.EnableRatings ?? true,
+                    ShowCardRatingOverlay = config?.ShowCardRatingOverlay ?? true,
                     EnableNetflixView = config?.EnableNetflixView ?? false,
                     EnableRequestButton = config?.EnableRequestButton ?? true,
                     EnableNewMediaNotifications = config?.EnableNewMediaNotifications ?? true,

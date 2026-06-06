@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.337.0",
+        "changelog": "Faster Latest Media and a couple of nice touches. Reworked the recent-media lookups so the 'Latest Media' panel and browsing load quicker on large libraries. When you hover the rating stars, the number now appears inside the star you're pointing at, with a small pop animation. Added an admin option to show or hide the rating badge on poster cards - turning it off (or turning ratings off) now removes the badges right away instead of leaving old ones behind.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.337.0/Jellyfin.Plugin.Ratings_2.0.337.0.zip",
+        "checksum": "eda24621889a32ff1b9dabd0dd5af700",
+        "timestamp": "2026-06-06T01:00:00Z"
+      },
+      {
         "version": "2.0.336.0",
         "changelog": "Speed and reliability improvements. Made the 'Latest Media' panel and general browsing noticeably faster on large libraries by removing heavy background work that ran every minute. Fixed old movies and shows sometimes appearing as 'newly added' when they were not - now only genuinely new media triggers a notification, and the same item is never announced twice (even after a server restart). Fixed custom sorting showing no cards when several folders are combined into one library view.",
         "targetAbi": "10.11.0.0",

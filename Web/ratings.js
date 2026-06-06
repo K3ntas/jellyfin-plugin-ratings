@@ -12,6 +12,7 @@
         validLanguages: ['en', 'es', 'zh', 'pt', 'ru', 'ja', 'de', 'fr', 'ko', 'it', 'tr', 'pl', 'nl', 'ar', 'hi', 'lt'], // Supported languages
         badgeDisplayProfiles: [], // Resolution-based badge display profiles
         ratingsEnabled: true, // Whether ratings feature is enabled (loaded from config)
+        showCardOverlay: true, // Whether rating badges are shown on poster cards (loaded from config)
         enableImdbSorting: true, // Whether IMDB sorting option is shown (loaded from config)
         starDisplayMode: '10-stars', // '10-stars' (default), '5-stars-half', '5-stars'
         quickRatingMode: false, // false = modal (default), true = one-click rating
@@ -4287,6 +4288,13 @@
             // Use cached config
             this.getConfig().then(function (config) {
                 self.ratingsEnabled = config.EnableRatings !== false;
+                // Card rating badge overlay can be turned off independently, and is always off when
+                // ratings themselves are disabled. A body class hides any badges via CSS so stale
+                // overlays disappear immediately, regardless of which code path applied them.
+                self.showCardOverlay = self.ratingsEnabled && (config.ShowCardRatingOverlay !== false);
+                try {
+                    document.body.classList.toggle('ratings-no-card-overlay', !self.showCardOverlay);
+                } catch (e) { /* body not ready - the CSS class will be applied on next config load */ }
                 self.enableImdbSorting = config.EnableImdbSorting !== false;
                 // Star display options
                 self.starDisplayMode = config.StarDisplayMode || '10-stars';
@@ -4499,12 +4507,49 @@
                     color: #555;
                     transition: all 0.2s ease;
                     user-select: none;
+                    position: relative;
                 }
 
                 .ratings-plugin-star:hover,
                 .ratings-plugin-star.hover {
                     color: #ffd700;
                     transform: scale(1.1);
+                }
+
+                /* Number shown inside the star currently being hovered (e.g. hovering the 9th star shows "9").
+                   White with a soft shadow so it stays readable on the gold star; nudged to the star's
+                   optical centre. */
+                .ratings-plugin-star.current-rating::after {
+                    content: attr(data-hover-num);
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    --rk-tx: 0%;
+                    transform: translate(var(--rk-tx), 3%);
+                    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+                    font-size: 0.36em;
+                    font-weight: 700;
+                    line-height: 1;
+                    font-variant-numeric: tabular-nums;
+                    letter-spacing: -0.04em;
+                    color: #fff;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.55);
+                    pointer-events: none;
+                    animation: ratingsNumPop 0.22s ease-out both;
+                }
+                /* Per-digit optical-centering tweaks - the star glyph isn't symmetric for every
+                   digit, so 1/4 and the two-digit 10 get a small horizontal nudge. */
+                .ratings-plugin-star.current-rating[data-hover-num="1"]::after { --rk-tx: -2%; }
+                .ratings-plugin-star.current-rating[data-hover-num="4"]::after { --rk-tx: -4%; }
+                .ratings-plugin-star.current-rating[data-hover-num="10"]::after { --rk-tx: -4%; }
+                /* Pop-in when the number appears: fade + a little scale overshoot. The translate
+                   stays per-digit via the var so each digit keeps its centring during the pop. */
+                @keyframes ratingsNumPop {
+                    0%   { opacity: 0; transform: translate(var(--rk-tx), 3%) scale(0.3); }
+                    55%  { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1.18); }
+                    100% { opacity: 1; transform: translate(var(--rk-tx), 3%) scale(1); }
                 }
 
                 .ratings-plugin-star.filled {
@@ -5251,6 +5296,15 @@
                     .user-review-card {
                         padding: 0.8em;
                     }
+                }
+
+                /* Kill switch: hide ALL card rating badges when the overlay is disabled (or ratings
+                   are off). Covers stale badges applied before the setting changed. */
+                body.ratings-no-card-overlay .cardImageContainer.has-rating::after,
+                body.ratings-no-card-overlay .cardContent.has-rating::after,
+                body.ratings-no-card-overlay .card-imageContainer.has-rating::after,
+                body.ratings-no-card-overlay .netflix-card.has-rating::after {
+                    display: none !important;
                 }
 
                 /* Card overlay ratings */
@@ -14778,7 +14832,7 @@
                 var q = input.value.trim();
                 if (t) clearTimeout(t);
                 if (q.length < 2) { results.innerHTML = ''; return; }
-                t = setTimeout(function () { self.searchAddMedia(q, results); }, 280);
+                t = setTimeout(function () { self.searchAddMedia(q, results); }, 150);
             });
             input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { var q = input.value.trim(); if (q) self.requestMediaFromProfile(q); }
@@ -17439,6 +17493,14 @@
                     } else {
                         star.classList.remove('hover', 'half-hover');
                     }
+                    // Show the rating number inside the star currently being hovered.
+                    if (index === starCount - 1) {
+                        star.classList.add('current-rating');
+                        star.setAttribute('data-hover-num', rating);
+                    } else {
+                        star.classList.remove('current-rating');
+                        star.removeAttribute('data-hover-num');
+                    }
                 });
             } else {
                 // Default 10-star mode
@@ -17447,6 +17509,14 @@
                         star.classList.add('hover');
                     } else {
                         star.classList.remove('hover');
+                    }
+                    // Show the rating number inside the star currently being hovered.
+                    if (index === rating - 1) {
+                        star.classList.add('current-rating');
+                        star.setAttribute('data-hover-num', rating);
+                    } else {
+                        star.classList.remove('current-rating');
+                        star.removeAttribute('data-hover-num');
                     }
                 });
             }
@@ -19190,7 +19260,7 @@
          * Add rating overlay to a specific card
          */
         addCardRating: function (card, itemId) {
-            if (!this.ratingsEnabled) return;
+            if (!this.ratingsEnabled || !this.showCardOverlay) return;
             // Use the batch queue for better performance
             this.queueCardForRating(card, itemId);
         },
@@ -20639,7 +20709,7 @@
 
                         // Update badge count periodically
                         self.updateLatestMediaBadge();
-                        setInterval(() => self.updateLatestMediaBadge(), 60000); // Update every minute
+                        setInterval(() => self.updateLatestMediaBadge(), 180000); // Update every 3 minutes (was 60s - eased to cut background DB load)
 
                         // Create dropdown container
                         const dropdown = document.createElement('div');
@@ -20767,16 +20837,15 @@
             const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
             const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch both: latest items and scheduled deletions. Uses the optimized /Items/Latest
-            // endpoint (bare array) rather than a recursive DateCreated sort - this query runs every
-            // 60s in the background for every open tab, so the recursive episode sort was a constant
-            // drain on large libraries.
+            // Fetch both: latest items and scheduled deletions. A recursive DateCreated sort is
+            // measurably faster here than /Items/Latest (which does extra per-view/grouping work),
+            // so we use it directly. This runs on a timer in the background; see the interval below.
             Promise.all([
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series,Episode&GroupItems=false&Limit=50&Fields=DateCreated,SeriesId&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.json()).catch(() => []),
+                }).then(r => r.json()).catch(() => ({ Items: [] })),
                 fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                     method: 'GET',
                     credentials: 'include',
@@ -20784,8 +20853,8 @@
                 }).then(r => r.json()).catch(() => [])
             ])
             .then(([mediaData, deletions]) => {
-                // Count new media items (/Items/Latest returns a bare array)
-                const items = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
+                // Count new media items
+                const items = mediaData.Items || [];
                 const seenSeries = new Set();
                 let newMediaCount = 0;
 
@@ -20892,19 +20961,18 @@
             const authHeader = ApiClient._serverInfo?.AccessToken ?
                 `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Use Jellyfin's optimized "Latest" endpoint instead of a recursive DateCreated sort
-            // over the entire library. This is the same query the home-screen "Recently Added" row
-            // uses, so it stays fast even on very large libraries (the recursive episode sort was a
-            // major slowdown). Note: /Items/Latest returns a bare array, not a { Items } wrapper.
+            // A recursive DateCreated sort is measurably faster on large libraries than Jellyfin's
+            // /Items/Latest endpoint (which does extra per-view enumeration and grouping), so we
+            // query directly. 1) new movies/series 2) latest episodes (to detect series with new content).
             Promise.all([
                 // New movies and series
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series&GroupItems=false&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
                 }).then(r => r.json()),
                 // Latest episodes (to find existing series that just got new episodes)
-                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Episode&GroupItems=false&Limit=100&Fields=SeriesId,SeriesName,DateCreated&EnableUserData=false`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
@@ -20939,8 +21007,7 @@
 
                 // Track series IDs from new media (these are completely new series)
                 const newSeriesIds = new Set();
-                // /Items/Latest returns a bare array; tolerate both shapes just in case.
-                const mediaItems = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
+                const mediaItems = mediaData.Items || [];
                 mediaItems.forEach(item => {
                     if (item.Type === 'Series') {
                         newSeriesIds.add(item.Id);
@@ -20949,7 +21016,7 @@
 
                 // Find series with new episodes (that aren't completely new series)
                 const seriesWithNewEpisodes = new Map(); // seriesId -> { count, latestDate, seriesName }
-                const episodes = Array.isArray(episodeData) ? episodeData : (episodeData.Items || []);
+                const episodes = episodeData.Items || [];
                 episodes.forEach(ep => {
                     if (ep.SeriesId && !newSeriesIds.has(ep.SeriesId)) {
                         if (!seriesWithNewEpisodes.has(ep.SeriesId)) {
@@ -28757,6 +28824,7 @@
          */
         applyNetflixRatingBadges: function (container) {
             const self = this;
+            if (!this.showCardOverlay) return; // respect the card-overlay / ratings-disabled toggle
             const cards = container.querySelectorAll('.netflix-card[data-item-id]');
             const cardMap = new Map(); // itemId -> card elements
             const uncachedIds = [];
