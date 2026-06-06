@@ -14,7 +14,6 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         {
             // Rating settings
             EnableRatings = true;
-            ShowCardRatingOverlay = true;
             MaxRating = 10;
             MinRating = 1;
 
@@ -173,13 +172,6 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether ratings are enabled.
         /// </summary>
         public bool EnableRatings { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the average-rating badge overlay is shown on
-        /// poster/library cards. When false (or when ratings are disabled), no rating badge is
-        /// rendered on cards. Independent of the detail-page rating widget.
-        /// </summary>
-        public bool ShowCardRatingOverlay { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum rating value.

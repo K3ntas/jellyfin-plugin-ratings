@@ -812,10 +812,6 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                         int tmdbId = el.TryGetProperty("id", out var idv) && idv.ValueKind == System.Text.Json.JsonValueKind.Number ? idv.GetInt32() : 0;
 
-                        string? overview = el.TryGetProperty("overview", out var ov) && ov.ValueKind == System.Text.Json.JsonValueKind.String
-                            ? ov.GetString()
-                            : null;
-
                         results.Add(new
                         {
                             tmdbId,
@@ -823,8 +819,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                             title,
                             year,
                             poster,
-                            rating,
-                            overview
+                            rating
                         });
 
                         if (results.Count >= 8)
@@ -1430,7 +1425,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     // Core settings
                     EnableRatings = config?.EnableRatings ?? true,
-                    ShowCardRatingOverlay = config?.ShowCardRatingOverlay ?? true,
                     EnableNetflixView = config?.EnableNetflixView ?? false,
                     EnableRequestButton = config?.EnableRequestButton ?? true,
                     EnableNewMediaNotifications = config?.EnableNewMediaNotifications ?? true,
@@ -4313,8 +4307,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         [Authorize]
         public async Task<ActionResult> DeleteDuplicate(
             [FromRoute] [Required] Guid itemId,
-            [FromQuery] bool deleteFile = false,
-            [FromQuery] bool deleteFiles = false)
+            [FromQuery] bool deleteFile = false)
         {
             try
             {
@@ -4323,11 +4316,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     return Forbid("Admin access required");
                 }
-
-                // Accept both "deleteFile" and "deleteFiles" so an older cached frontend cannot
-                // silently leave the file on disk (which caused deleted duplicates to reappear
-                // after the next library scan).
-                deleteFile = deleteFile || deleteFiles;
 
                 var item = _libraryManager.GetItemById(itemId);
                 if (item == null)

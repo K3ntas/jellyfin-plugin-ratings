@@ -9,14 +9,6 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
-        "version": "1.0.357.0",
-        "changelog": "Profile upgrades, faster Latest Media, and several fixes. Latest Media and browsing are quicker on large libraries. Hover the rating stars to see the number inside the star (with a small animation). New admin option to show/hide the rating badge on poster cards. You can now add films/shows that are NOT on the server to your profile rows - hover one for a Request button, or click for a reminder. Edit Profile lets you upload your own looping GIF or video behind your name and picture. Hover any favorite poster to see its full title, year and description. Fixes: deleting a duplicate now really removes the file (no more reappearing), the rating number no longer sticks after you move off a star, and header text stays readable over a video background.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.357.0/jellyfin-plugin-ratings_1.0.357.0.zip",
-        "checksum": "eb8cb064adb3cc20166c487cd6bd6af9",
-        "timestamp": "2026-06-06T03:30:00Z"
-      },
-      {
         "version": "1.0.356.0",
         "changelog": "Speed and reliability improvements. Made the 'Latest Media' panel and general browsing noticeably faster on large libraries by removing heavy background work that ran every minute. Fixed old movies and shows sometimes appearing as 'newly added' when they were not - now only genuinely new media triggers a notification, and the same item is never announced twice (even after a server restart). Fixed custom sorting showing no cards when several folders are combined into one library view.",
         "targetAbi": "10.11.0.0",
