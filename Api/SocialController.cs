@@ -8,6 +8,7 @@ using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Ratings.Data;
 using Jellyfin.Plugin.Ratings.Models;
+using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
@@ -35,6 +36,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IUserDataManager _userDataManager;
         private readonly ILogger<SocialController> _logger;
         private readonly SocialWebSocketListener _webSocketListener;
+        private readonly IApplicationPaths _appPaths;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialController"/> class.
@@ -47,6 +49,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="userDataManager">User data manager.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="webSocketListener">WebSocket listener for real-time updates.</param>
+        /// <param name="appPaths">Application paths (for stored profile media).</param>
         public SocialController(
             SocialRepository socialRepository,
             RatingsRepository ratingsRepository,
@@ -55,7 +58,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             ILibraryManager libraryManager,
             IUserDataManager userDataManager,
             ILogger<SocialController> logger,
-            SocialWebSocketListener webSocketListener)
+            SocialWebSocketListener webSocketListener,
+            IApplicationPaths appPaths)
         {
             _socialRepository = socialRepository;
             _ratingsRepository = ratingsRepository;
@@ -65,6 +69,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _userDataManager = userDataManager;
             _logger = logger;
             _webSocketListener = webSocketListener;
+            _appPaths = appPaths;
         }
 
         /// <summary>
@@ -235,6 +240,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 username = user.Username,  // Always from Jellyfin
                 bio = profile.Bio,
                 avatarUrl = profile.AvatarUrl,
+                headerMediaUrl = profile.HeaderMediaUrl,
+                headerMediaType = profile.HeaderMediaType,
                 createdAt = profile.CreatedAt,
                 updatedAt = lastSeen,
                 privacy = profile.Privacy,
@@ -465,6 +472,145 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger.LogInformation("[Social] Profile updated for user {Username}", user.Username);
 
             return Ok(updated);
+        }
+
+        private string HeaderMediaDir => System.IO.Path.Combine(_appPaths.DataPath, "ratings", "social", "media");
+
+        /// <summary>
+        /// Uploads a looping GIF/video shown behind the current user's profile header.
+        /// </summary>
+        /// <param name="file">The uploaded media file (GIF, MP4 or WEBM).</param>
+        /// <returns>The stored media URL and type.</returns>
+        [HttpPost("MyProfile/HeaderMedia")]
+        [Authorize]
+        [RequestSizeLimit(26000000)]
+        public async Task<ActionResult> UploadHeaderMedia(IFormFile file)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var user = _userManager.GetUserById(userId.Value);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            if (file.Length > 25_000_000)
+            {
+                return BadRequest("File too large (max 25 MB)");
+            }
+
+            var ext = (System.IO.Path.GetExtension(file.FileName) ?? string.Empty).ToLowerInvariant();
+            string mediaType;
+            if (ext == ".gif")
+            {
+                mediaType = "gif";
+            }
+            else if (ext == ".mp4" || ext == ".webm")
+            {
+                mediaType = "video";
+            }
+            else
+            {
+                return BadRequest("Unsupported file type. Use GIF, MP4 or WEBM.");
+            }
+
+            var dir = HeaderMediaDir;
+            System.IO.Directory.CreateDirectory(dir);
+
+            // Remove any previous header media for this user (any extension).
+            var prefix = userId.Value.ToString("N") + "_header";
+            foreach (var old in System.IO.Directory.GetFiles(dir, prefix + ".*"))
+            {
+                try { System.IO.File.Delete(old); } catch (System.IO.IOException) { }
+            }
+
+            var fullPath = System.IO.Path.Combine(dir, prefix + ext);
+            using (var stream = System.IO.File.Create(fullPath))
+            {
+                await file.CopyToAsync(stream).ConfigureAwait(false);
+            }
+
+            var profile = await _socialRepository.GetOrCreateProfileAsync(userId.Value, user.Username);
+            // Versioned URL so the browser refetches after a new upload.
+            profile.HeaderMediaUrl = "/Social/Profile/" + userId.Value.ToString("N") + "/HeaderMedia?v=" + DateTime.UtcNow.Ticks;
+            profile.HeaderMediaType = mediaType;
+            await _socialRepository.SaveProfileAsync(profile);
+
+            _logger.LogInformation("[Social] Header media uploaded for {Username} ({Type})", user.Username, mediaType);
+            return Ok(new { headerMediaUrl = profile.HeaderMediaUrl, headerMediaType = mediaType });
+        }
+
+        /// <summary>
+        /// Serves a user's uploaded header media. Anonymous so it works in plain img/video tags.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>The media file.</returns>
+        [HttpGet("Profile/{userId}/HeaderMedia")]
+        [AllowAnonymous]
+        public ActionResult GetHeaderMedia([FromRoute] [Required] Guid userId)
+        {
+            var dir = HeaderMediaDir;
+            if (!System.IO.Directory.Exists(dir))
+            {
+                return NotFound();
+            }
+
+            var files = System.IO.Directory.GetFiles(dir, userId.ToString("N") + "_header.*");
+            if (files.Length == 0)
+            {
+                return NotFound();
+            }
+
+            var path = files[0];
+            var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+            var contentType = ext == ".gif" ? "image/gif" : (ext == ".webm" ? "video/webm" : "video/mp4");
+            Response.Headers["Cache-Control"] = "public, max-age=86400";
+            return PhysicalFile(path, contentType, enableRangeProcessing: true);
+        }
+
+        /// <summary>
+        /// Removes the current user's header media.
+        /// </summary>
+        /// <returns>Success.</returns>
+        [HttpDelete("MyProfile/HeaderMedia")]
+        [Authorize]
+        public async Task<ActionResult> DeleteHeaderMedia()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var user = _userManager.GetUserById(userId.Value);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var dir = HeaderMediaDir;
+            if (System.IO.Directory.Exists(dir))
+            {
+                foreach (var old in System.IO.Directory.GetFiles(dir, userId.Value.ToString("N") + "_header.*"))
+                {
+                    try { System.IO.File.Delete(old); } catch (System.IO.IOException) { }
+                }
+            }
+
+            var profile = await _socialRepository.GetOrCreateProfileAsync(userId.Value, user.Username);
+            profile.HeaderMediaUrl = string.Empty;
+            profile.HeaderMediaType = string.Empty;
+            await _socialRepository.SaveProfileAsync(profile);
+            return Ok(new { success = true });
         }
 
         #region Friend Requests
