@@ -868,6 +868,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Unauthorized("User not authenticated");
                 }
 
+                // Resolve the user so library queries can expand GROUPED views. When several
+                // folders are merged into one ("Group automatically"), the parentId in the URL is a
+                // virtual UserView, not a real folder - Jellyfin can only resolve it into its
+                // underlying folders when the query carries the user. Without User, a grouped view
+                // returns zero items and the sorted grid shows no cards.
+                var sortUser = _userManager.GetUserById(userId);
+
                 // Cap limit to prevent abuse
                 limit = Math.Clamp(limit, 1, 200);
                 page = Math.Max(1, page);
@@ -881,6 +888,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Get all items from this library to filter ratings
                     var libraryQuery = new MediaBrowser.Controller.Entities.InternalItemsQuery
                     {
+                        User = sortUser,
                         ParentId = parsedParentId,
                         IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo },
                         Recursive = true
@@ -975,9 +983,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Recursive = true
                     };
 
-                    // Filter by library if parentId was provided
+                    // Filter by library if parentId was provided. User is required so a GROUPED
+                    // view (merged folders) expands into its underlying folders instead of
+                    // resolving to nothing.
                     if (parentGuid.HasValue)
                     {
+                        query.User = sortUser;
                         query.ParentId = parentGuid.Value;
                     }
 

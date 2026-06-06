@@ -20767,13 +20767,16 @@
             const lastSeenLeavingStr = localStorage.getItem('ratings_leaving_soon_seen');
             const lastSeenLeaving = lastSeenLeavingStr ? new Date(lastSeenLeavingStr) : new Date(0);
 
-            // Fetch both: latest items and scheduled deletions
+            // Fetch both: latest items and scheduled deletions. Uses the optimized /Items/Latest
+            // endpoint (bare array) rather than a recursive DateCreated sort - this query runs every
+            // 60s in the background for every open tab, so the recursive episode sort was a constant
+            // drain on large libraries.
             Promise.all([
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
+                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series,Episode&GroupItems=false&Limit=50&Fields=DateCreated,SeriesId&EnableUserData=false`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.json()).catch(() => ({ Items: [] })),
+                }).then(r => r.json()).catch(() => []),
                 fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                     method: 'GET',
                     credentials: 'include',
@@ -20781,8 +20784,8 @@
                 }).then(r => r.json()).catch(() => [])
             ])
             .then(([mediaData, deletions]) => {
-                // Count new media items
-                const items = mediaData.Items || [];
+                // Count new media items (/Items/Latest returns a bare array)
+                const items = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
                 const seenSeries = new Set();
                 let newMediaCount = 0;
 
@@ -20889,16 +20892,19 @@
             const authHeader = ApiClient._serverInfo?.AccessToken ?
                 `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient._deviceId}", Version="${ApiClient._appVersion}", Token="${ApiClient._serverInfo.AccessToken}"` : '';
 
-            // Fetch both: 1) new movies/series 2) latest episodes (to detect series with new content)
+            // Use Jellyfin's optimized "Latest" endpoint instead of a recursive DateCreated sort
+            // over the entire library. This is the same query the home-screen "Recently Added" row
+            // uses, so it stays fast even on very large libraries (the recursive episode sort was a
+            // major slowdown). Note: /Items/Latest returns a bare array, not a { Items } wrapper.
             Promise.all([
                 // New movies and series
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
+                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Movie,Series&GroupItems=false&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated&EnableUserData=false`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
                 }).then(r => r.json()),
-                // Latest episodes (to find series with new episodes)
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
+                // Latest episodes (to find existing series that just got new episodes)
+                fetch(`${baseUrl}/Users/${userId}/Items/Latest?IncludeItemTypes=Episode&GroupItems=false&Limit=100&Fields=SeriesId,SeriesName,DateCreated&EnableUserData=false`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
@@ -20933,7 +20939,8 @@
 
                 // Track series IDs from new media (these are completely new series)
                 const newSeriesIds = new Set();
-                const mediaItems = mediaData.Items || [];
+                // /Items/Latest returns a bare array; tolerate both shapes just in case.
+                const mediaItems = Array.isArray(mediaData) ? mediaData : (mediaData.Items || []);
                 mediaItems.forEach(item => {
                     if (item.Type === 'Series') {
                         newSeriesIds.add(item.Id);
@@ -20942,7 +20949,7 @@
 
                 // Find series with new episodes (that aren't completely new series)
                 const seriesWithNewEpisodes = new Map(); // seriesId -> { count, latestDate, seriesName }
-                const episodes = episodeData.Items || [];
+                const episodes = Array.isArray(episodeData) ? episodeData : (episodeData.Items || []);
                 episodes.forEach(ep => {
                     if (ep.SeriesId && !newSeriesIds.has(ep.SeriesId)) {
                         if (!seriesWithNewEpisodes.has(ep.SeriesId)) {
@@ -20962,16 +20969,20 @@
                     }
                 });
 
-                // Fetch series details for those with new episodes
-                const seriesPromises = Array.from(seriesWithNewEpisodes.keys()).slice(0, 20).map(seriesId =>
-                    fetch(`${baseUrl}/Users/${userId}/Items/${seriesId}?Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
+                // Fetch details for all series-with-new-episodes in ONE batched request via the
+                // Ids filter (replaces the previous N+1 fan-out of one request per series).
+                const seriesIds = Array.from(seriesWithNewEpisodes.keys()).slice(0, 20);
+                const seriesDetailsPromise = seriesIds.length === 0
+                    ? Promise.resolve([])
+                    : fetch(`${baseUrl}/Users/${userId}/Items?Ids=${seriesIds.join(',')}&Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
                         method: 'GET',
                         credentials: 'include',
                         headers: { 'X-Emby-Authorization': authHeader }
-                    }).then(r => r.ok ? r.json() : null).catch(() => null)
-                );
+                    }).then(r => r.ok ? r.json() : { Items: [] })
+                      .then(data => data.Items || [])
+                      .catch(() => []);
 
-                return Promise.all(seriesPromises).then(seriesDetails => {
+                return seriesDetailsPromise.then(seriesDetails => {
                     // Build combined list
                     const combinedItems = [];
 
