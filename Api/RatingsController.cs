@@ -305,6 +305,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview).ConfigureAwait(false);
                 _logger.LogDebug("User rated item {ItemId} with {Rating}", itemId, rating);
 
+                // Mirror into Jellyfin's native fields so external apps can read it via the API.
+                WriteNativeRating(userId, item, rating);
+
                 // Broadcast profile stats update via WebSocket
                 _ = Task.Run(async () =>
                 {
@@ -1105,12 +1108,224 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return NotFound("No rating found to delete");
                 }
 
+                // Clear/recompute the native rating fields to match.
+                var deletedItem = _libraryManager.GetItemById(itemId);
+                if (deletedItem != null)
+                {
+                    ClearNativeRating(userId, deletedItem);
+                }
+
                 _logger.LogDebug("User deleted rating for item {ItemId}", itemId);
                 return NoContent();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting rating for item {ItemId}", itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Mirrors a just-saved rating into Jellyfin's native fields so external tools (e.g. via the
+        /// Jellyfin API) can read it. Best-effort - never throws back into the rating flow.
+        /// </summary>
+        private void WriteNativeRating(Guid userId, MediaBrowser.Controller.Entities.BaseItem item, int rating)
+        {
+            var config = Plugin.Instance?.Configuration;
+
+            // A) Native per-user rating (UserData.Rating). Non-destructive; survives metadata refreshes.
+            if (config?.WriteRatingsToJellyfin != false)
+            {
+                try
+                {
+                    var user = _userManager.GetUserById(userId);
+                    if (user != null)
+                    {
+                        var userData = _userDataManager.GetUserData(user, item);
+                        if (userData != null)
+                        {
+                            userData.Rating = rating;
+                            _userDataManager.SaveUserData(user, item, userData, MediaBrowser.Model.Entities.UserDataSaveReason.UpdateUserRating, CancellationToken.None);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to write native per-user rating for {ItemId}", item.Id);
+                }
+            }
+
+            // B) Item CommunityRating = our average (opt-in; overwrites the external score and is
+            //    reverted when Jellyfin next refreshes the item's metadata).
+            if (config?.WriteAverageToCommunityRating == true)
+            {
+                try
+                {
+                    var stats = _repository.GetRatingStats(item.Id);
+                    if (stats.TotalRatings > 0)
+                    {
+                        item.CommunityRating = (float)Math.Round(stats.AverageRating, 1);
+                        _ = _libraryManager.UpdateItemAsync(item, item.GetParent(), ItemUpdateType.MetadataEdit, CancellationToken.None);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to write CommunityRating for {ItemId}", item.Id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears/recomputes the native rating fields after a user removes their rating. Best-effort.
+        /// </summary>
+        private void ClearNativeRating(Guid userId, MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            var config = Plugin.Instance?.Configuration;
+
+            if (config?.WriteRatingsToJellyfin != false)
+            {
+                try
+                {
+                    var user = _userManager.GetUserById(userId);
+                    if (user != null)
+                    {
+                        var userData = _userDataManager.GetUserData(user, item);
+                        if (userData != null)
+                        {
+                            userData.Rating = null;
+                            _userDataManager.SaveUserData(user, item, userData, MediaBrowser.Model.Entities.UserDataSaveReason.UpdateUserRating, CancellationToken.None);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to clear native per-user rating for {ItemId}", item.Id);
+                }
+            }
+
+            if (config?.WriteAverageToCommunityRating == true)
+            {
+                try
+                {
+                    var stats = _repository.GetRatingStats(item.Id);
+                    if (stats.TotalRatings > 0)
+                    {
+                        item.CommunityRating = (float)Math.Round(stats.AverageRating, 1);
+                        _ = _libraryManager.UpdateItemAsync(item, item.GetParent(), ItemUpdateType.MetadataEdit, CancellationToken.None);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to recompute CommunityRating for {ItemId}", item.Id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// One-time backfill: writes every existing stored rating into Jellyfin's native fields
+        /// (per-user rating, plus CommunityRating averages when that option is enabled), so existing
+        /// ratings become readable through the Jellyfin API. Admin only.
+        /// </summary>
+        /// <returns>A summary of what was written.</returns>
+        [HttpPost("Admin/BackfillNativeRatings")]
+        [Authorize]
+        public async Task<ActionResult> BackfillNativeRatings()
+        {
+            try
+            {
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(adminId))
+                {
+                    return Forbid("Admin access required");
+                }
+
+                var config = Plugin.Instance?.Configuration;
+                var writeUser = config?.WriteRatingsToJellyfin != false;
+                var writeCommunity = config?.WriteAverageToCommunityRating == true;
+
+                var allRatings = _repository.GetAllRatings();
+                int userRatingsWritten = 0, errors = 0;
+                var distinctItems = new HashSet<Guid>();
+
+                foreach (var r in allRatings)
+                {
+                    try
+                    {
+                        var item = _libraryManager.GetItemById(r.ItemId);
+                        if (item == null)
+                        {
+                            continue;
+                        }
+
+                        distinctItems.Add(r.ItemId);
+
+                        if (writeUser)
+                        {
+                            var user = _userManager.GetUserById(r.UserId);
+                            if (user != null)
+                            {
+                                var userData = _userDataManager.GetUserData(user, item);
+                                if (userData != null)
+                                {
+                                    userData.Rating = r.Rating;
+                                    _userDataManager.SaveUserData(user, item, userData, MediaBrowser.Model.Entities.UserDataSaveReason.UpdateUserRating, CancellationToken.None);
+                                    userRatingsWritten++;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors++;
+                        _logger.LogDebug(ex, "Backfill: failed for item {ItemId}", r.ItemId);
+                    }
+                }
+
+                int communityWritten = 0;
+                if (writeCommunity)
+                {
+                    foreach (var itemId in distinctItems)
+                    {
+                        try
+                        {
+                            var item = _libraryManager.GetItemById(itemId);
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            var stats = _repository.GetRatingStats(itemId);
+                            if (stats.TotalRatings > 0)
+                            {
+                                item.CommunityRating = (float)Math.Round(stats.AverageRating, 1);
+                                await _libraryManager.UpdateItemAsync(item, item.GetParent(), ItemUpdateType.MetadataEdit, CancellationToken.None).ConfigureAwait(false);
+                                communityWritten++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            errors++;
+                            _logger.LogDebug(ex, "Backfill: CommunityRating failed for {ItemId}", itemId);
+                        }
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Backfill native ratings complete: userRatings={UR} community={CR} items={Items} errors={E}",
+                    userRatingsWritten, communityWritten, distinctItems.Count, errors);
+
+                return Ok(new
+                {
+                    totalRatings = allRatings.Count,
+                    items = distinctItems.Count,
+                    userRatingsWritten,
+                    communityWritten,
+                    errors
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during native ratings backfill");
                 return StatusCode(500, "Internal server error");
             }
         }

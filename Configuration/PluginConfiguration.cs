@@ -18,6 +18,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             MaxRating = 10;
             MinRating = 1;
 
+            // Native Jellyfin metadata integration
+            WriteRatingsToJellyfin = true;
+            WriteAverageToCommunityRating = false;
+
             // Feature toggles
             EnableNetflixView = false;
             EnableRequestButton = true;
@@ -180,6 +184,21 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// rendered on cards. Independent of the detail-page rating widget.
         /// </summary>
         public bool ShowCardRatingOverlay { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether each user's rating is mirrored into Jellyfin's
+        /// native per-user rating (UserData.Rating), so other apps/tools can read it via the
+        /// Jellyfin API. Non-destructive and survives metadata refreshes. Default true.
+        /// </summary>
+        public bool WriteRatingsToJellyfin { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the plugin's AVERAGE rating is also written to
+        /// each item's native CommunityRating. WARNING: this overwrites the item's existing
+        /// community score (e.g. IMDb/TMDB) and is reverted whenever Jellyfin refreshes that item's
+        /// metadata. Off by default.
+        /// </summary>
+        public bool WriteAverageToCommunityRating { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum rating value.

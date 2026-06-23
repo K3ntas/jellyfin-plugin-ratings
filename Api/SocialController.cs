@@ -131,8 +131,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Ok(new { users = new object[0] });
             }
 
-            // Get all users and filter
-            var allUsers = _userManager.Users;
+            // Get all users and filter (version-agnostic: IUserManager.Users became GetUsers() mid-10.11)
+            var allUsers = JellyfinCompat.GetAllUsers(_userManager);
             var queryLower = query.ToLowerInvariant();
 
             var results = allUsers
@@ -1369,7 +1369,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             // Get all users except current user
-            var allUsers = _userManager.Users.Where(u => u.Id != userId.Value).ToList();
+            var allUsers = JellyfinCompat.GetAllUsers(_userManager).Where(u => u.Id != userId.Value).ToList();
             var userIds = allUsers.Select(u => u.Id).ToList();
 
             // Get their online statuses

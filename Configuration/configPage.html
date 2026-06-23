@@ -42,6 +42,42 @@
                                 </div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkWriteRatingsToJellyfin" type="checkbox" is="emby-checkbox" />
+                                    <span>Save ratings to Jellyfin (so other apps can read them)</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Mirror each user's rating into Jellyfin's native per-user rating, so other apps and
+                                    tools (e.g. Maintainerr) can read it through the Jellyfin API. Non-destructive and not
+                                    affected by metadata refreshes. Recommended on.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkWriteAverageToCommunityRating" type="checkbox" is="emby-checkbox" />
+                                    <span>Also write the average to each item's Community Rating</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Additionally overwrite each item's native Community Rating with this plugin's average
+                                    score. ⚠️ This replaces the item's existing community score (e.g. IMDb/TMDB) and is
+                                    reverted whenever Jellyfin refreshes that item's metadata. Off by default.
+                                </div>
+                            </div>
+
+                            <div class="inputContainer" style="margin-top: 8px;">
+                                <button id="btnBackfillNativeRatings" type="button" is="emby-button" class="raised block">
+                                    <span>Sync existing ratings to Jellyfin now</span>
+                                </button>
+                                <div class="fieldDescription">
+                                    One-time action: writes all existing ratings into Jellyfin's native fields using the two
+                                    options above, so older ratings also become readable via the API. Newly submitted ratings
+                                    are written automatically. Large libraries may take a moment.
+                                </div>
+                                <div id="backfillNativeStatus" class="fieldDescription" style="color: #9ab;"></div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
                                 <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
@@ -2709,6 +2745,35 @@
                     // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
                     document.querySelector('#chkShowCardRatingOverlay').checked = config.ShowCardRatingOverlay !== false;
+                    document.querySelector('#chkWriteRatingsToJellyfin').checked = config.WriteRatingsToJellyfin !== false;
+                    document.querySelector('#chkWriteAverageToCommunityRating').checked = config.WriteAverageToCommunityRating === true;
+
+                    // One-time "sync existing ratings to Jellyfin" backfill button.
+                    var backfillBtn = document.getElementById('btnBackfillNativeRatings');
+                    if (backfillBtn) {
+                        backfillBtn.onclick = function () {
+                            var status = document.getElementById('backfillNativeStatus');
+                            backfillBtn.disabled = true;
+                            if (status) { status.style.color = '#9ab'; status.textContent = 'Working… this can take a moment on large libraries.'; }
+                            fetch(ApiClient.serverAddress() + '/Ratings/Admin/BackfillNativeRatings', {
+                                method: 'POST',
+                                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                            })
+                            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                            .then(function (d) {
+                                if (status) {
+                                    status.style.color = '#4CAF50';
+                                    status.textContent = 'Done — synced ' + d.userRatingsWritten + ' rating(s) across ' + d.items + ' item(s)' +
+                                        (d.communityWritten ? (', ' + d.communityWritten + ' community rating(s)') : '') +
+                                        (d.errors ? (' (' + d.errors + ' skipped)') : '') + '.';
+                                }
+                            })
+                            .catch(function () {
+                                if (status) { status.style.color = '#f44336'; status.textContent = 'Backfill failed — check the server logs.'; }
+                            })
+                            .finally(function () { backfillBtn.disabled = false; });
+                        };
+                    }
                     document.querySelector('#txtMinRating').value = config.MinRating;
                     document.querySelector('#txtMaxRating').value = config.MaxRating;
                     document.querySelector('#chkEnableNetflixView').checked = config.EnableNetflixView;
@@ -3019,6 +3084,8 @@
                     // Core settings
                     config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
                     config.ShowCardRatingOverlay = document.querySelector('#chkShowCardRatingOverlay').checked;
+                    config.WriteRatingsToJellyfin = document.querySelector('#chkWriteRatingsToJellyfin').checked;
+                    config.WriteAverageToCommunityRating = document.querySelector('#chkWriteAverageToCommunityRating').checked;
                     config.MinRating = parseInt(document.querySelector('#txtMinRating').value);
                     config.MaxRating = parseInt(document.querySelector('#txtMaxRating').value);
                     config.EnableNetflixView = document.querySelector('#chkEnableNetflixView').checked;
