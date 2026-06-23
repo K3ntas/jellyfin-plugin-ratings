@@ -582,6 +582,19 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets a snapshot of every stored rating (all users, all items). Used by the one-time
+        /// "sync to Jellyfin" backfill.
+        /// </summary>
+        /// <returns>List of all ratings.</returns>
+        public List<UserRating> GetAllRatings()
+        {
+            lock (_lock)
+            {
+                return _ratings.Values.ToList();
+            }
+        }
+
+        /// <summary>
         /// Gets all distinct item IDs that have ratings with their average rating and count.
         /// Used for efficient library sorting by rating.
         /// </summary>

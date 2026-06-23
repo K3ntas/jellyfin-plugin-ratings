@@ -1319,7 +1319,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             var userId = await RequireAuthAsync().ConfigureAwait(false);
             if (!IsJellyfinAdmin(userId)) return Forbid();
 
-            var users = _userManager.Users
+            var users = JellyfinCompat.GetAllUsers(_userManager)
                 .Select(u => new
                 {
                     Id = u.Id,
@@ -1368,7 +1368,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             var userId = await RequireAuthAsync().ConfigureAwait(false);
 
-            var users = _userManager.Users
+            var users = JellyfinCompat.GetAllUsers(_userManager)
                 .Where(u => u.Id != userId) // Exclude self
                 .Select(u => new
                 {
