@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.342.0",
+        "changelog": "Fixes the 'new media' pop-ups that kept appearing for films and shows that were already on your server. The plugin now learns your existing library the first time it runs and only alerts you about genuinely new additions. A library scan, a re-scan, or installing the plugin on a big existing collection no longer floods you with 'now available' alerts for old content - including whole seasons that were already there.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.342.0/Jellyfin.Plugin.Ratings_2.0.342.0.zip",
+        "checksum": "0d8dee88c7fb7ac7882fa9d5cd224b3a",
+        "timestamp": "2026-06-24T12:00:00Z"
+      },
+      {
         "version": "2.0.341.0",
         "changelog": "Compatibility fix and ratings now visible to other apps. Fixed the Friends panel ('Online' tab, friend search) and live chat throwing errors on newer Jellyfin (10.11.10/11) - they work again. Your ratings are now also saved into Jellyfin's own rating field, so other apps and tools (like Maintainerr) can read them through the Jellyfin API. There's a new one-time button in the plugin settings to sync all your existing ratings across, plus an optional setting to also write the average into each item's Community Rating.",
         "targetAbi": "10.11.0.0",

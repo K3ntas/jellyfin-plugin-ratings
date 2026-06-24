@@ -36,10 +36,25 @@ namespace Jellyfin.Plugin.Ratings
         private const int BatchDelaySeconds = 60;
 
         // Items added longer ago than this are part of the EXISTING library, not "new media".
-        // Without this gate a metadata refresh, image re-download, edit, or re-scan of OLD media
-        // fires ItemAdded/ItemUpdated and gets announced as newly added (e.g. a 3-month-old movie
-        // reappearing as new). DateCreated is Jellyfin's "date added to library" timestamp.
+        // Secondary sanity gate only - the authoritative check is the persistent seen-media set
+        // (stable content keys), because DateCreated is unreliable: a rescan/re-add resets it to
+        // "now" on many setups (NAS/Docker), which is exactly how old media leaked through before.
         private static readonly TimeSpan MaxItemAgeForNotification = TimeSpan.FromDays(14);
+
+        // Burst / mass-scan suppression. An initial library scan or a full re-add fires ItemAdded for
+        // hundreds-to-thousands of items at once, every one stamped DateCreated=now - that is how a
+        // whole existing collection got announced as "new". Genuine acquisitions trickle in. We count
+        // DISTINCT NEW TITLES (a 60-episode season = one title) inside a rolling window; once that
+        // exceeds the threshold we treat it as a scan and stay silent (recording everything as seen).
+        // A single new season therefore still notifies, but importing a library does not.
+        private static readonly TimeSpan BurstWindow = TimeSpan.FromMinutes(5);
+        private const int BurstDistinctTitleThreshold = 20;
+        private readonly object _burstLock = new object();
+        private readonly Dictionary<string, DateTime> _recentNewTitles = new Dictionary<string, DateTime>();
+
+        // False until the one-time baseline seeding of the existing library has finished. While false
+        // we never notify - we only record items as seen - so the initial scan can never announce.
+        private volatile bool _baselineReady;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NotificationService"/> class.
@@ -72,6 +87,11 @@ namespace Jellyfin.Plugin.Ratings
 
             // Start batch processing timer - checks every 15 seconds for episodes ready to batch
             _batchTimer = new Timer(ProcessPendingEpisodes, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+
+            // Establish the one-time baseline off the startup path: record the whole existing library
+            // as already-known so it is never announced as "new". Until this finishes, the event
+            // handlers suppress (record-only), so even an in-progress first scan stays silent.
+            _ = Task.Run(EnsureNotificationBaseline);
 
             return Task.CompletedTask;
         }
@@ -166,35 +186,229 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
-        /// Determines whether an item is eligible to produce a "new media" notification.
-        /// Rejects items that were added to the library too long ago (so refreshes/re-scans of OLD
-        /// media are never announced) and items we have already announced (persistent dedup that
-        /// survives restarts).
+        /// One-time seeding of the existing library into the persistent seen-media set so the whole
+        /// pre-existing collection is treated as already-known and is never announced as "new".
+        /// Runs once ever (guarded by a disk marker); on every later start it just flips the ready flag.
         /// </summary>
-        private bool ShouldNotify(BaseItem? item)
+        private void EnsureNotificationBaseline()
         {
-            if (item == null)
+            try
             {
-                return false;
+                if (_repository.IsNotificationBaselineEstablished())
+                {
+                    return;
+                }
+
+                _logger.LogInformation("Establishing new-media notification baseline - recording existing library as known (no notifications will be sent for it)");
+
+                var existing = _libraryManager.GetItemList(new InternalItemsQuery
+                {
+                    IncludeItemTypes = new[]
+                    {
+                        Jellyfin.Data.Enums.BaseItemKind.Movie,
+                        Jellyfin.Data.Enums.BaseItemKind.Series,
+                        Jellyfin.Data.Enums.BaseItemKind.Episode
+                    },
+                    Recursive = true
+                });
+
+                _repository.MarkSeenMediaBulk(existing.Select(GetContentKey).Where(k => !string.IsNullOrEmpty(k)));
+                _repository.SetNotificationBaselineEstablished();
+
+                _logger.LogInformation("Notification baseline established for {Count} existing library items", existing.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error establishing notification baseline");
+            }
+            finally
+            {
+                // Always flip ready, even on failure: the seen-set + burst guard still protect us, and
+                // we must not suppress genuine new media forever.
+                _baselineReady = true;
+            }
+        }
+
+        /// <summary>
+        /// Builds a STABLE identity for a media item. Path is the most reliable per-file identity and
+        /// survives Jellyfin re-creating the item with a new Guid; provider IDs are the fallback for
+        /// items without a path; the Guid is the last resort. This - not the volatile Guid/DateCreated -
+        /// is what we remember, so a re-add or refresh of an existing file is recognised as already-seen.
+        /// </summary>
+        private static string GetContentKey(BaseItem item)
+        {
+            var kind = item.GetType().Name;
+
+            if (!string.IsNullOrEmpty(item.Path))
+            {
+                return kind + "|path|" + item.Path;
             }
 
-            // Gate on "date added to library". Old media that merely got refreshed is not new.
+            if (item.ProviderIds != null && item.ProviderIds.Count > 0)
+            {
+                var pid = item.ProviderIds
+                    .Where(kv => !string.IsNullOrEmpty(kv.Value))
+                    .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(kv => kv.Key + "=" + kv.Value)
+                    .FirstOrDefault();
+                if (!string.IsNullOrEmpty(pid))
+                {
+                    return kind + "|pid|" + pid;
+                }
+            }
+
+            return kind + "|id|" + item.Id.ToString("N");
+        }
+
+        /// <summary>
+        /// Identity used to count DISTINCT titles for burst detection. Episodes collapse to their
+        /// series, so adding a whole season counts as a single title (and still notifies), while a
+        /// library import touches many distinct titles and trips the scan guard.
+        /// </summary>
+        private static string GetTitleKey(BaseItem item)
+        {
+            if (item is Episode ep)
+            {
+                if (ep.Series != null)
+                {
+                    return "series|" + ep.Series.Id.ToString("N");
+                }
+
+                if (!string.IsNullOrEmpty(ep.SeriesName))
+                {
+                    return "seriesName|" + ep.SeriesName;
+                }
+            }
+
+            return GetContentKey(item);
+        }
+
+        /// <summary>
+        /// Records a genuinely-new title in the rolling window and returns true if the number of
+        /// distinct new titles in that window now exceeds the threshold (i.e. we are inside a scan/
+        /// import burst rather than seeing individual acquisitions).
+        /// </summary>
+        private bool RegisterNewTitleAndIsBurst(BaseItem item)
+        {
+            var titleKey = GetTitleKey(item);
+            var now = DateTime.UtcNow;
+
+            lock (_burstLock)
+            {
+                _recentNewTitles[titleKey] = now;
+
+                var cutoff = now - BurstWindow;
+                var stale = _recentNewTitles.Where(kv => kv.Value < cutoff).Select(kv => kv.Key).ToList();
+                foreach (var key in stale)
+                {
+                    _recentNewTitles.Remove(key);
+                }
+
+                return _recentNewTitles.Count > BurstDistinctTitleThreshold;
+            }
+        }
+
+        /// <summary>
+        /// True if the item (or, for an episode, its series) has a primary image, meaning metadata is
+        /// complete enough to announce.
+        /// </summary>
+        private static bool HasUsableImage(BaseItem item)
+        {
+            if (item is Episode ep)
+            {
+                return ep.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ||
+                       (ep.Series?.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ?? false);
+            }
+
+            return item.HasImage(MediaBrowser.Model.Entities.ImageType.Primary);
+        }
+
+        /// <summary>
+        /// Single decision path for both ItemAdded and ItemUpdated. Decides whether a movie/series/
+        /// episode is genuinely newly-acquired media that should be announced, and records what it
+        /// has seen so the same item can never be announced twice.
+        /// </summary>
+        private void HandleItem(BaseItem? item)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config?.EnableNewMediaNotifications != true)
+            {
+                return;
+            }
+
+            if (item is not (Movie or Series or Episode))
+            {
+                return;
+            }
+
+            var key = GetContentKey(item);
+
+            // (1) Until the existing library has been baselined, never announce - just remember.
+            //     This makes the initial scan of a brand-new install silent.
+            if (!_baselineReady)
+            {
+                _repository.MarkSeenMedia(key);
+                return;
+            }
+
+            // (2) Already seen: existing library, previously announced, OR a re-add / metadata refresh
+            //     of the same underlying file that Jellyfin handed a new Guid and a reset DateCreated.
+            //     This is the core fix for "already-present media keeps pinging as new".
+            if (_repository.HasSeenMedia(key))
+            {
+                return;
+            }
+
+            // (3) Secondary sanity gate on "date added". Anything dated long ago is existing library.
             if (DateTime.UtcNow - item.DateCreated > MaxItemAgeForNotification)
             {
                 _logger.LogDebug(
-                    "Skipping notification for '{Title}' - added {Date:u}, older than the {Days}-day new-media window",
+                    "Skipping '{Title}' - added {Date:u}, older than the {Days}-day new-media window",
                     item.Name, item.DateCreated, MaxItemAgeForNotification.TotalDays);
-                return false;
+                _repository.MarkSeenMedia(key);
+                return;
             }
 
-            // Persistent dedup - never announce the same item twice, even across restarts.
-            if (_repository.HasNotifiedItem(item.Id))
+            // (4) Burst / mass-scan guard: a library import floods with distinct new titles. Treat it
+            //     as a scan and stay silent (recording everything as seen) once over the threshold.
+            if (RegisterNewTitleAndIsBurst(item))
             {
-                _logger.LogDebug("Skipping notification for '{Title}' - already announced previously", item.Name);
-                return false;
+                _logger.LogDebug("Suppressing '{Title}' - inside a mass-scan burst, treating as library scan not new media", item.Name);
+                _repository.MarkSeenMedia(key);
+                return;
             }
 
-            return true;
+            // (5) Genuinely new, but only announce once a primary image exists. If not yet, DEFER:
+            //     do not mark seen, so a later ItemUpdated (image arrived) gets another chance.
+            if (!HasUsableImage(item))
+            {
+                _logger.LogDebug("Deferring '{Title}' - no primary image yet, awaiting metadata", item.Name);
+                return;
+            }
+
+            Announce(item, key);
+        }
+
+        /// <summary>
+        /// Creates the appropriate notification for a confirmed-new item and records it as seen so it
+        /// is never announced again.
+        /// </summary>
+        private void Announce(BaseItem item, string key)
+        {
+            if (item is Movie movie)
+            {
+                CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
+            }
+            else if (item is Series series)
+            {
+                CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
+            }
+            else if (item is Episode episode)
+            {
+                CreateEpisodeNotification(episode);
+            }
+
+            _repository.MarkSeenMedia(key);
         }
 
         /// <summary>
@@ -204,52 +418,7 @@ namespace Jellyfin.Plugin.Ratings
         {
             try
             {
-                // Check if notifications are enabled
-                var config = Plugin.Instance?.Configuration;
-                if (config?.EnableNewMediaNotifications != true)
-                {
-                    return;
-                }
-
-                var item = e.Item;
-
-                // Skip old media (refresh/re-scan) and anything already announced.
-                if (!ShouldNotify(item))
-                {
-                    return;
-                }
-
-                // Notify for movies, series, and episodes - but only if they have an image (metadata complete)
-                if (item is Movie movie)
-                {
-                    if (!movie.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
-                    {
-                        _logger.LogDebug("Skipping notification for movie '{Title}' - no primary image yet", movie.Name);
-                        return;
-                    }
-                    CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
-                }
-                else if (item is Series series)
-                {
-                    if (!series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
-                    {
-                        _logger.LogDebug("Skipping notification for series '{Title}' - no primary image yet", series.Name);
-                        return;
-                    }
-                    CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
-                }
-                else if (item is Episode episode)
-                {
-                    // For episodes, check if either episode or series has an image
-                    var hasImage = episode.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ||
-                                   (episode.Series?.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ?? false);
-                    if (!hasImage)
-                    {
-                        _logger.LogDebug("Skipping notification for episode '{Title}' - no primary image yet", episode.Name);
-                        return;
-                    }
-                    CreateEpisodeNotification(episode);
-                }
+                HandleItem(e.Item);
             }
             catch (Exception ex)
             {
@@ -264,43 +433,7 @@ namespace Jellyfin.Plugin.Ratings
         {
             try
             {
-                // Check if notifications are enabled
-                var config = Plugin.Instance?.Configuration;
-                if (config?.EnableNewMediaNotifications != true)
-                {
-                    return;
-                }
-
-                var item = e.Item;
-
-                // Skip old media (this is the main culprit: a metadata refresh of months-old media
-                // fires ItemUpdated) and anything already announced.
-                if (!ShouldNotify(item))
-                {
-                    return;
-                }
-
-                // Only process movies, series, and episodes that now have images
-                if (item is Movie movie && movie.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
-                {
-                    _logger.LogDebug("Item updated with image, creating notification for movie: {Title}", movie.Name);
-                    CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);
-                }
-                else if (item is Series series && series.HasImage(MediaBrowser.Model.Entities.ImageType.Primary))
-                {
-                    _logger.LogDebug("Item updated with image, creating notification for series: {Title}", series.Name);
-                    CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
-                }
-                else if (item is Episode episode)
-                {
-                    var hasImage = episode.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ||
-                                   (episode.Series?.HasImage(MediaBrowser.Model.Entities.ImageType.Primary) ?? false);
-                    if (hasImage)
-                    {
-                        _logger.LogDebug("Item updated with image, creating notification for episode: {Title}", episode.Name);
-                        CreateEpisodeNotification(episode);
-                    }
-                }
+                HandleItem(e.Item);
             }
             catch (Exception ex)
             {
@@ -346,11 +479,9 @@ namespace Jellyfin.Plugin.Ratings
                 IsTest = false
             };
 
-            // Queue notification for delayed release
+            // Queue notification for delayed release. The item is recorded as seen by the caller
+            // (Announce -> MarkSeenMedia) so it is never re-announced, even across restarts/re-adds.
             _notificationQueue.Enqueue(notification);
-
-            // Persistently mark as announced so it is never re-notified (survives restarts).
-            _repository.MarkItemNotified(itemId);
         }
 
         /// <summary>
@@ -407,7 +538,6 @@ namespace Jellyfin.Plugin.Ratings
                 };
 
                 _notificationQueue.Enqueue(notification);
-                _repository.MarkItemNotified(episode.Id);
                 return;
             }
 
@@ -442,8 +572,7 @@ namespace Jellyfin.Plugin.Ratings
                 }
             }
 
-            // Persistently mark this episode as announced so it is never re-notified.
-            _repository.MarkItemNotified(episode.Id);
+            // The episode is recorded as seen by the caller (Announce -> MarkSeenMedia).
         }
 
         /// <summary>
