@@ -34,6 +34,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private static readonly SemaphoreSlim _privateMessagesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _publicChatLastSeenWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _notifiedItemsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _seenMediaWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _moderatorActionsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _userStyleOverridesWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _mediaQuotasWriteLock = new(1, 1);
@@ -65,6 +66,13 @@ namespace Jellyfin.Plugin.Ratings.Data
         // announced them. Disk-backed so a server restart (e.g. after a plugin update) does not wipe
         // the dedup and cause a rescan/metadata-refresh to re-announce already-known media.
         private Dictionary<Guid, DateTime> _notifiedItems;
+
+        // Persistent set of STABLE content keys (path / provider-id based, see NotificationService)
+        // for every media item the plugin has ever seen. Unlike the Guid set above, these survive
+        // Jellyfin re-creating an item row with a new internal Id and resetting its DateCreated
+        // (common on NAS/Docker rescans). This is the authoritative "have we ever seen this file?"
+        // record that prevents already-present media from being announced as new.
+        private Dictionary<string, DateTime> _seenMediaKeys;
         private List<ModeratorAction> _moderatorActions;
         private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
         private Dictionary<Guid, MediaQuota> _mediaQuotas;
@@ -103,6 +111,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _keepRequests = new List<KeepRequest>();
             _reviewComments = new Dictionary<Guid, ReviewComment>();
             _notifiedItems = new Dictionary<Guid, DateTime>();
+            _seenMediaKeys = new Dictionary<string, DateTime>();
 
             if (!Directory.Exists(_dataPath))
             {
@@ -129,7 +138,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadKeepRequests,
                 LoadReviewLikes,
                 LoadReviewComments,
-                LoadNotifiedItems);
+                LoadNotifiedItems,
+                LoadSeenMediaKeys);
         }
 
         /// <summary>
@@ -1249,6 +1259,159 @@ namespace Jellyfin.Plugin.Ratings.Data
             finally
             {
                 _notifiedItemsWriteLock.Release();
+            }
+        }
+
+        // --- Seen-media baseline (stable content-key dedup for new-media notifications) ---
+        //
+        // These back the new-media notification "have we ever seen this file?" check. They are keyed
+        // by a STABLE content key (path / provider-id, built in NotificationService.GetContentKey)
+        // rather than the volatile item Guid, so a rescan that re-creates the same file under a new
+        // internal Id and a reset DateCreated is still recognised as already-known and stays silent.
+
+        /// <summary>
+        /// Returns true if this content key has been seen before (existing library, previously
+        /// announced, or a re-add of the same underlying file).
+        /// </summary>
+        /// <param name="key">Stable content key.</param>
+        /// <returns>True if already seen.</returns>
+        public bool HasSeenMedia(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            lock (_lock)
+            {
+                return _seenMediaKeys.ContainsKey(key);
+            }
+        }
+
+        /// <summary>
+        /// Records a single content key as seen and persists.
+        /// </summary>
+        /// <param name="key">Stable content key.</param>
+        public void MarkSeenMedia(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+
+            lock (_lock)
+            {
+                _seenMediaKeys[key] = DateTime.UtcNow;
+            }
+
+            _ = SaveSeenMediaKeysAsync();
+        }
+
+        /// <summary>
+        /// Records many content keys as seen in one shot and persists once. Used to seed the baseline
+        /// from the existing library on first run so the whole pre-existing collection is silent.
+        /// </summary>
+        /// <param name="keys">Stable content keys.</param>
+        public void MarkSeenMediaBulk(IEnumerable<string> keys)
+        {
+            if (keys == null)
+            {
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            lock (_lock)
+            {
+                foreach (var key in keys)
+                {
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        _seenMediaKeys[key] = now;
+                    }
+                }
+            }
+
+            _ = SaveSeenMediaKeysAsync();
+        }
+
+        /// <summary>
+        /// Returns true once the one-time new-media notification baseline has been established (i.e.
+        /// the existing library has been recorded as known so it is never announced as new).
+        /// </summary>
+        /// <returns>True if the baseline marker exists on disk.</returns>
+        public bool IsNotificationBaselineEstablished()
+        {
+            var marker = Path.Combine(_dataPath, "notification_baseline.marker");
+            return File.Exists(marker);
+        }
+
+        /// <summary>
+        /// Writes the baseline marker so the seeding step only ever runs once.
+        /// </summary>
+        public void SetNotificationBaselineEstablished()
+        {
+            try
+            {
+                var marker = Path.Combine(_dataPath, "notification_baseline.marker");
+                File.WriteAllText(marker, DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error writing notification baseline marker");
+            }
+        }
+
+        /// <summary>
+        /// Loads the seen-media key set from disk.
+        /// </summary>
+        private void LoadSeenMediaKeys()
+        {
+            _seenMediaKeys = new Dictionary<string, DateTime>();
+            try
+            {
+                var file = Path.Combine(_dataPath, "seen_media.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    if (data != null)
+                    {
+                        _seenMediaKeys = data;
+                        _logger.LogInformation("Loaded {Count} seen-media keys", _seenMediaKeys.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading seen-media keys from disk");
+            }
+        }
+
+        /// <summary>
+        /// Saves the seen-media key set to disk.
+        /// </summary>
+        private async Task SaveSeenMediaKeysAsync()
+        {
+            await _seenMediaWriteLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var file = Path.Combine(_dataPath, "seen_media.json");
+                Dictionary<string, DateTime> snapshot;
+                lock (_lock)
+                {
+                    snapshot = new Dictionary<string, DateTime>(_seenMediaKeys);
+                }
+
+                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = false });
+                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving seen-media keys to disk");
+            }
+            finally
+            {
+                _seenMediaWriteLock.Release();
             }
         }
 
