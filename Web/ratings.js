@@ -6624,9 +6624,8 @@
 
                 .admin-category-list {
                     padding: 8px !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 4px !important;
+		    max-height: 400px !important
+		    overflow-y: auto !important
                 }
 
                 /* Category Colors */
