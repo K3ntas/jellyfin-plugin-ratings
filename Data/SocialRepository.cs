@@ -20,6 +20,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly ILogger<SocialRepository> _logger;
         private readonly string _dataPath;
         private readonly object _lock = new object();
+        private readonly JsonFileWriter _writer;
 
         // Semaphores for thread-safe writes
         private static readonly SemaphoreSlim _profilesWriteLock = new(1, 1);
@@ -61,6 +62,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _appPaths = appPaths;
             _logger = logger;
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings", "social");
+            _writer = new JsonFileWriter(_dataPath, logger, "[Social] ");
             _profiles = new Dictionary<Guid, UserProfile>();
             _friendRequests = new List<FriendRequest>();
             _friendships = new List<Friendship>();
@@ -100,53 +102,34 @@ namespace Jellyfin.Plugin.Ratings.Data
                 _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count, _blockedUsers.Count, _follows.Count, _profileLikes.Count, _mediaLists.Count);
         }
 
-        // Shared across all persistence calls: a fresh JsonSerializerOptions per write defeats
-        // System.Text.Json's metadata cache. WriteIndented is off - these files are machine-read
-        // only and pretty-printing added ~30-40% bytes to every mutation.
-        private static readonly JsonSerializerOptions PersistOptions = new JsonSerializerOptions
-        {
-            WriteIndented = false
-        };
-
         /// <summary>
-        /// Serializes a snapshot and writes it atomically (temp file + rename), off the data lock.
+        /// Queues an atomic, coalesced write of a snapshot. See <see cref="JsonFileWriter"/>.
         /// </summary>
         /// <remarks>
-        /// The <c>await Task.Yield()</c> matters: callers start these writes from inside
-        /// <c>lock (_lock)</c>, and an uncontended SemaphoreSlim.WaitAsync completes synchronously,
-        /// so without it JsonSerializer.Serialize would run while the global lock is still held.
-        /// The temp-file rename makes the swap atomic so a crash mid-write cannot leave a truncated,
-        /// unparseable file that the loader would silently treat as empty.
+        /// Coalescing matters most here: every client heartbeat and every playback-progress update
+        /// called SaveOnlineStatusesAsync, so N online users rewrote the whole online_statuses.json
+        /// N times per heartbeat interval. Only the newest snapshot of a whole-file write is
+        /// meaningful, so the intermediate ones are simply dropped.
+        /// The <paramref name="gate"/> parameter is retained so the many call sites keep compiling;
+        /// JsonFileWriter serialises per file internally.
         /// </remarks>
         /// <typeparam name="T">Snapshot type.</typeparam>
         /// <param name="fileName">File name within the data directory.</param>
         /// <param name="snapshot">Already-captured snapshot to persist.</param>
-        /// <param name="gate">Per-file write gate.</param>
+        /// <param name="gate">Unused; kept for call-site compatibility.</param>
         /// <param name="label">Human-readable label for log messages.</param>
         /// <returns>Task.</returns>
-        private async Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
+        private Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
         {
-            await Task.Yield();
-
-            await gate.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                var path = Path.Combine(_dataPath, fileName);
-                var tempPath = path + ".tmp";
-
-                var json = JsonSerializer.Serialize(snapshot, PersistOptions);
-                await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
-                File.Move(tempPath, path, true);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving {Label} to disk", label);
-            }
-            finally
-            {
-                gate.Release();
-            }
+            _writer.Queue(fileName, snapshot, label);
+            return Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Writes any debounced snapshots to disk immediately.
+        /// </summary>
+        /// <returns>Task.</returns>
+        public Task FlushPendingWritesAsync() => _writer.FlushAsync();
 
         /// <summary>
         /// Gets debug information about the social repository state.

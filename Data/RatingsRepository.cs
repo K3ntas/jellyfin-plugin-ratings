@@ -20,6 +20,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly ILogger<RatingsRepository> _logger;
         private readonly string _dataPath;
         private readonly object _lock = new object();
+        private readonly JsonFileWriter _writer;
 
         // Semaphores to prevent concurrent file writes (fixes race condition)
         private static readonly SemaphoreSlim _ratingsWriteLock = new(1, 1);
@@ -89,6 +90,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _appPaths = appPaths;
             _logger = logger;
             _dataPath = Path.Combine(_appPaths.DataPath, "ratings");
+            _writer = new JsonFileWriter(_dataPath, logger);
             _ratings = new Dictionary<Guid, UserRating>();
             _ratingsByItemId = new Dictionary<Guid, List<UserRating>>();
             _ratingsByTmdbId = new Dictionary<string, List<UserRating>>();
@@ -142,68 +144,34 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadSeenMediaKeys);
         }
 
-        // A fresh JsonSerializerOptions per call defeats System.Text.Json's internal metadata
-        // cache and makes every write measurably slower, so persistence shares one instance.
-        // WriteIndented is off: these files are machine-read only, and pretty-printing cost
-        // roughly 30-40% extra bytes to serialize and write on every single mutation.
-        private static readonly JsonSerializerOptions PersistOptions = new JsonSerializerOptions
-        {
-            WriteIndented = false
-        };
-
         /// <summary>
-        /// Serializes a snapshot and writes it to <paramref name="fileName"/> atomically.
+        /// Queues an atomic, coalesced write of a snapshot. See <see cref="JsonFileWriter"/>.
         /// </summary>
         /// <remarks>
-        /// Two problems this solves:
-        /// <para>
-        /// 1. Serialization used to run inline inside the caller's <c>lock (_lock)</c>. Callers do
-        /// <c>_ = SaveXAsync()</c> from inside the lock, and an uncontended SemaphoreSlim.WaitAsync
-        /// completes synchronously, so JsonSerializer.Serialize ran while the global data lock was
-        /// held - a chat message serialized all 1000 retained messages before any other reader could
-        /// touch the repository. The <c>await Task.Yield()</c> below forces the remainder onto the
-        /// thread pool so the caller's lock is released first.
-        /// </para>
-        /// <para>
-        /// 2. File.WriteAllTextAsync truncates in place, so a crash or power loss mid-write left a
-        /// truncated file that the loader could not parse - silently starting from empty on next
-        /// boot. Writing to a temp file and renaming makes the swap atomic.
-        /// </para>
+        /// The <paramref name="gate"/> parameter is retained so the many call sites keep compiling;
+        /// JsonFileWriter serialises per file internally, so it is no longer used.
         /// </remarks>
         /// <typeparam name="T">Snapshot type.</typeparam>
         /// <param name="fileName">File name within the data directory.</param>
         /// <param name="snapshot">Already-captured snapshot to persist.</param>
-        /// <param name="gate">Per-file write gate.</param>
+        /// <param name="gate">Unused; kept for call-site compatibility.</param>
         /// <param name="label">Human-readable label for log messages.</param>
         /// <returns>Task.</returns>
-        private async Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
+        private Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
         {
-            // Get off the caller's lock before doing any real work. See remarks above.
-            await Task.Yield();
-
-            await gate.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                var path = Path.Combine(_dataPath, fileName);
-                var tempPath = path + ".tmp";
-
-                var json = JsonSerializer.Serialize(snapshot, PersistOptions);
-                await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
-
-                // Atomic replace - either the old file or the complete new one is visible.
-                File.Move(tempPath, path, true);
-
-                _logger.LogDebug("Saved {Label} to disk", label);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving {Label} to disk", label);
-            }
-            finally
-            {
-                gate.Release();
-            }
+            _writer.Queue(fileName, snapshot, label);
+            return Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Writes any debounced snapshots to disk immediately.
+        /// </summary>
+        /// <remarks>
+        /// Must be called on shutdown, and before anything that reads these files straight off
+        /// disk (backup export), otherwise the debounce window can hide the newest data.
+        /// </remarks>
+        /// <returns>Task.</returns>
+        public Task FlushPendingWritesAsync() => _writer.FlushAsync();
 
         /// <summary>
         /// Reloads all data from disk. Used after importing a backup.
