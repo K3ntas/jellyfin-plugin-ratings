@@ -10358,3 +10358,190 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         padding: 2px 0 !important;
     }
 }
+
+/* ============================================================================
+   Profile sidebar: taste breakdown and user matching
+
+   The genre ring shows what a user actually watches, weighted by playback time
+   rather than by ratings, and the match list finds people with a similar genre
+   mix so they can be visited or messaged.
+   ============================================================================ */
+
+.lb-side-sub {
+    font-size: 10px;
+    color: #6b7f92;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.lb-side-empty {
+    font-size: 12px;
+    color: #6b7f92;
+    padding: 6px 0;
+}
+
+/* --- Donut --- */
+.lb-donut-wrap {
+    position: relative;
+    width: 128px;
+    margin: 2px auto 12px;
+}
+
+.lb-donut {
+    width: 128px;
+    height: 128px;
+    /* Start the first slice at 12 o'clock instead of 3 o'clock. */
+    transform: rotate(-90deg);
+}
+
+.lb-donut-seg {
+    transition: stroke-width 0.15s ease;
+}
+
+.lb-donut-seg:hover {
+    stroke-width: 6.5;
+}
+
+/* Centre label sits over the hole; pointer-events off so the slices stay hoverable. */
+.lb-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+}
+
+.lb-donut-top {
+    font-size: 11px;
+    color: #cbd5e1;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-donut-pct {
+    font-size: 19px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+}
+
+/* --- Legend --- */
+.lb-genre-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lb-genre-legend li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+}
+
+.lb-genre-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.lb-genre-name {
+    color: #cbd5e1;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-genre-pct {
+    color: #8fa3b5;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* --- Similar users --- */
+.lb-match {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lb-match:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.lb-match-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #40bcf4, #00e054);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.lb-match-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lb-match-name {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-match-genres {
+    font-size: 10px;
+    color: #8fa3b5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-match-score {
+    font-size: 13px;
+    font-weight: 700;
+    color: #00e054;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.lb-match-msg {
+    background: none;
+    border: none;
+    color: #8fa3b5;
+    font-size: 15px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.lb-match-msg:hover {
+    color: #40bcf4;
+    background: rgba(64, 188, 244, 0.12);
+}

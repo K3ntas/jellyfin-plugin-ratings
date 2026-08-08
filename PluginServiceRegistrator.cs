@@ -22,6 +22,11 @@ namespace Jellyfin.Plugin.Ratings
             // Register SocialRepository for social features (friends, profiles, etc.)
             serviceCollection.AddSingleton<SocialRepository>();
 
+            // Computes per-user genre watch-time profiles for the taste chart and user matching.
+            // Singleton so its cache is shared - building a profile is an indexed library query
+            // per user, and matching needs one for everybody on the server.
+            serviceCollection.AddSingleton<GenreAffinityService>();
+
             // Register WebSocket listener for real-time social updates (Jellyfin's IWebSocketListener)
             serviceCollection.AddSingleton<SocialWebSocketListener>();
             serviceCollection.AddSingleton<IWebSocketListener>(sp => sp.GetRequiredService<SocialWebSocketListener>());

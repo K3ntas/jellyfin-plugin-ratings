@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.365.0",
+        "changelog": "See what you actually watch, find people with the same taste, and Back now works properly. Profiles have a new Taste ring in the sidebar showing your genre breakdown by real watch time - taken from what you have actually played, not just what you rated - with total hours and a percentage per genre. Below it, a Similar Taste list ranks everyone on the server by how closely their genre mix matches yours, showing the genres you have most in common; click anyone to open their profile, or use the envelope button to message them directly. Also fixed: opening someone's profile from a followers or match list and pressing Back used to close the whole profile window instead of returning to the profile you came from.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.365.0/jellyfin-plugin-ratings_1.0.365.0.zip",
+        "checksum": "7f9e4b94292e3ac1f6a569039378ec6f",
+        "timestamp": "2026-08-08T17:02:00Z"
+      },
+      {
         "version": "1.0.364.0",
         "changelog": "Rate films that are not on the server, keep ratings readable after media is deleted, choose your TMDB search language, and browse other users. You can now rate a title added to a profile row from the catalog even though it is not on the server - hover it and press Rate. If it is added to the library later, your rating attaches to it automatically. Ratings also remember the title, year and poster of what you rated, so deleting a film no longer leaves a nameless row of stars behind; older ratings fill this in as you use them. Admins can set the language TMDB search returns titles in (Settings, TMDB Search Language) instead of always getting English. And profiles have a new Other Users tab listing everyone on the server, with a filter box, so you can find and visit other people's profiles without knowing their name in advance.",
         "targetAbi": "10.11.0.0",

@@ -3187,14 +3187,29 @@
         },
 
         /**
-         * Show the profile page for a user (Letterboxd-style modal)
+         * Show the profile page for a user (Letterboxd-style modal).
+         * @param {string} userId Profile to show.
+         * @param {boolean} [isBack] True when navigating back, so the history is not re-pushed.
          */
-        showProfilePage: function (userId) {
+        showProfilePage: function (userId, isBack) {
             var self = this;
             self.injectProfileRedesignStyles();
             var existing = document.getElementById('socialProfilePage');
             if (existing) {
                 existing.remove();
+            }
+
+            // Remember where we came from, so Back returns to the previous profile instead of
+            // closing the whole thing. Opening someone's profile from a match/follower list used
+            // to be a one-way trip: Back tore the overlay down and dumped you on the page behind.
+            self._profileHistory = self._profileHistory || [];
+            if (!isBack && self._viewingProfileUserId && self._viewingProfileUserId !== userId) {
+                self._profileHistory.push(self._viewingProfileUserId);
+
+                // Guard against a long chain of profile-hopping growing without bound.
+                if (self._profileHistory.length > 20) {
+                    self._profileHistory.shift();
+                }
             }
 
             // Track which profile we're viewing
@@ -3309,7 +3324,9 @@
         renderProfileError: function (page, message) {
             var container = page.querySelector('.social-profile-container');
             if (container) {
-                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
+                // Also goes back rather than closing: hitting a broken profile from someone's
+                // follower list should return you to where you were, not dump you out entirely.
+                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
@@ -4296,8 +4313,9 @@
 
             // Toolbar with back, fullscreen, and settings
             html += '<div class="lb-toolbar">' +
-                '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
-                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()">' +
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+                ((self._profileHistory && self._profileHistory.length > 0) ? 'Back to profile' : 'Back') + '</div>' +
                 '<div class="lb-toolbar-actions">' +
                 (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
                 '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
@@ -4711,6 +4729,14 @@
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
                 '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
 
+            // Genre breakdown by actual watch time
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Taste <span class="lb-side-sub" id="lbGenreTotal"></span></h4>' +
+                '<div class="lb-genre-chart" id="lbGenreChart"><div class="lb-loading-small">Loading…</div></div></section>';
+
+            // Users with a similar genre profile
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Similar Taste</h4>' +
+                '<div class="lb-similar-users" id="lbSimilarUsers"><div class="lb-loading-small">Loading…</div></div></section>';
+
             // Activity feed (compact)
             html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
                 '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading…</div></div></section>';
@@ -4723,9 +4749,185 @@
             // Wire interactions + load data
             self.initAddMediaSearch();
             this.loadProfileRatingDistribution();
+            this.loadProfileGenreChart();
+            this.loadProfileSimilarUsers();
             this.loadProfileRecentActivity(6);
             this.loadProfileRecentPosters();
             this.loadProfileRecentReviews();
+        },
+
+        // Fixed palette so a genre keeps the same colour between the ring and its legend, and
+        // between one profile and the next.
+        GENRE_COLORS: [
+            '#00e054', '#40bcf4', '#ff8000', '#e5a00d', '#c084fc',
+            '#f472b6', '#2dd4bf', '#facc15', '#94a3b8', '#fb7185'
+        ],
+
+        /**
+         * Draws the genre ring: what this user actually watches, weighted by time.
+         *
+         * An inline SVG donut rather than a chart library - the plugin ships no dependencies, and
+         * a ring of stroked arcs is a handful of elements.
+         */
+        loadProfileGenreChart: function () {
+            var self = this;
+            var el = document.getElementById('lbGenreChart');
+            if (!el || !window.ApiClient) return;
+
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/Genres?limit=8', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.hasData || !data.genres || data.genres.length === 0) {
+                    el.innerHTML = '<div class="lb-side-empty">Nothing watched yet</div>';
+                    return;
+                }
+
+                var slices = data.genres.slice();
+                if (data.otherPercent > 0) {
+                    slices.push({ name: 'Other', percent: data.otherPercent, minutes: data.otherMinutes });
+                }
+
+                var totalEl = document.getElementById('lbGenreTotal');
+                if (totalEl) {
+                    var hours = Math.round((data.totalMinutes || 0) / 60);
+                    totalEl.textContent = hours.toLocaleString() + 'h';
+                }
+
+                // Donut geometry: one circle per slice, each rotated to start where the last ended.
+                // r is chosen so the circumference is a round 100, which lets stroke-dasharray be
+                // set directly in percent.
+                var r = 15.9155;
+                var offset = 0;
+                var circles = '';
+
+                slices.forEach(function (g, i) {
+                    var pct = Math.max(0, Math.min(100, g.percent || 0));
+                    var color = g.name === 'Other' ? '#4b5563' : self.GENRE_COLORS[i % self.GENRE_COLORS.length];
+                    circles += '<circle class="lb-donut-seg" cx="21" cy="21" r="' + r + '" fill="none"' +
+                        ' stroke="' + color + '" stroke-width="5"' +
+                        ' stroke-dasharray="' + pct.toFixed(2) + ' ' + (100 - pct).toFixed(2) + '"' +
+                        ' stroke-dashoffset="' + (25 - offset).toFixed(2) + '">' +
+                        '<title>' + self.escapeHtml(g.name) + ' — ' + pct.toFixed(1) + '%</title></circle>';
+                    offset += pct;
+                });
+
+                var top = slices[0];
+                var html = '<div class="lb-donut-wrap">' +
+                    '<svg viewBox="0 0 42 42" class="lb-donut" role="img" aria-label="Genre breakdown by watch time">' +
+                    '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#2c3440" stroke-width="5"></circle>' +
+                    circles +
+                    '</svg>' +
+                    '<div class="lb-donut-center">' +
+                    '<span class="lb-donut-top">' + self.escapeHtml(top.name) + '</span>' +
+                    '<span class="lb-donut-pct">' + Math.round(top.percent) + '%</span>' +
+                    '</div></div>';
+
+                html += '<ul class="lb-genre-legend">';
+                slices.forEach(function (g, i) {
+                    var color = g.name === 'Other' ? '#4b5563' : self.GENRE_COLORS[i % self.GENRE_COLORS.length];
+                    html += '<li><span class="lb-genre-dot" style="background:' + color + '"></span>' +
+                        '<span class="lb-genre-name">' + self.escapeHtml(g.name) + '</span>' +
+                        '<span class="lb-genre-pct">' + (g.percent || 0).toFixed(1) + '%</span></li>';
+                });
+                html += '</ul>';
+
+                el.innerHTML = html;
+            })
+            .catch(function () {
+                el.innerHTML = '<div class="lb-side-empty">Could not load taste breakdown</div>';
+            });
+        },
+
+        /**
+         * Lists users whose genre profile is closest to this one, so people can find others with
+         * similar taste, open their profile, or message them directly.
+         */
+        loadProfileSimilarUsers: function () {
+            var self = this;
+            var el = document.getElementById('lbSimilarUsers');
+            if (!el || !window.ApiClient) return;
+
+            var userId = self._viewingProfileUserId;
+            var baseUrl = ApiClient.serverAddress();
+
+            fetch(baseUrl + '/Social/Profile/' + userId + '/SimilarUsers?limit=5', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var matches = (data && data.matches) || [];
+                if (matches.length === 0) {
+                    el.innerHTML = '<div class="lb-side-empty">No one else has watched enough yet</div>';
+                    return;
+                }
+
+                var html = '';
+                matches.forEach(function (m) {
+                    var name = m.username || 'Unknown';
+                    var initial = name[0] ? name[0].toUpperCase() : '?';
+                    var shared = (m.sharedGenres || []).join(' · ');
+                    var encName = encodeURIComponent(name);
+
+                    html += '<div class="lb-match" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(m.userId) + '\')">' +
+                        '<div class="lb-match-avatar">' + self.escapeHtml(initial) + '</div>' +
+                        '<div class="lb-match-info">' +
+                        '<div class="lb-match-name">' + self.escapeHtml(name) +
+                        (m.isFriend ? '<span class="lb-user-badge friend">Friend</span>' : '') + '</div>' +
+                        (shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '') +
+                        '</div>' +
+                        '<div class="lb-match-score" title="Genre taste match">' + m.matchPercent + '%</div>' +
+                        (m.canMessage
+                            ? '<button class="lb-match-msg" title="Send a private message" ' +
+                              'onclick="event.stopPropagation();RatingsPlugin.messageUser(\'' + self.escapeJs(m.userId) + '\',\'' + encName + '\')">✉</button>'
+                            : '') +
+                        '</div>';
+                });
+
+                el.innerHTML = html;
+            })
+            .catch(function () {
+                el.innerHTML = '<div class="lb-side-empty">Could not load matches</div>';
+            });
+        },
+
+        /**
+         * Opens a private message conversation with a user, from anywhere in the profile UI.
+         * @param {string} userId Target user id.
+         * @param {string} encodedName URI-encoded username.
+         */
+        messageUser: function (userId, encodedName) {
+            var self = this;
+            var name;
+            try { name = decodeURIComponent(encodedName || ''); } catch (e) { name = encodedName || ''; }
+
+            if (!self.chatEnabled) {
+                self.lbToast('Chat is disabled on this server');
+                return;
+            }
+
+            // Close the profile overlay first, otherwise the chat window opens behind it.
+            var page = document.querySelector('.social-profile-page');
+            if (page) { page.remove(); }
+
+            if (!self.chatOpen && typeof self.toggleChat === 'function') {
+                self.toggleChat();
+            }
+
+            // The chat window is created asynchronously the first time it opens.
+            setTimeout(function () {
+                if (typeof self.openDMConversation === 'function') {
+                    self.openDMConversation(userId, name, null);
+                }
+            }, 250);
         },
 
         /**
@@ -6223,12 +6425,35 @@
         /**
          * Close the profile page
          */
+        /**
+         * Back button: return to the profile you came from, or close if this is the first one.
+         *
+         * The button used to call closeProfilePage() unconditionally, so opening someone's profile
+         * from a followers or match list and pressing Back closed the whole overlay rather than
+         * returning to the profile you were looking at.
+         */
+        profileGoBack: function () {
+            var self = this;
+            var history = self._profileHistory || [];
+
+            if (history.length > 0) {
+                var previous = history.pop();
+                self.showProfilePage(previous, true);
+                return;
+            }
+
+            self.closeProfilePage();
+        },
+
         closeProfilePage: function () {
             var self = this;
             var page = document.getElementById('socialProfilePage');
             if (page) {
                 page.remove();
             }
+
+            // Closing for real ends the trail - a later profile open starts fresh.
+            self._profileHistory = [];
 
             // Restore background page scrolling.
             document.body.style.overflow = self._prevBodyOverflow || '';
