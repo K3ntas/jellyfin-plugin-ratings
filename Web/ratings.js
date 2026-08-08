@@ -2776,6 +2776,27 @@
         },
 
         /**
+         * Returns the value only if it is a Jellyfin item id, otherwise null.
+         *
+         * Item ids arrive from DOM attributes and from JSON, and end up in URLs and in markup.
+         * Escaping alone is easy to forget at one call site out of many, so anything that is not
+         * a GUID - with or without dashes - is rejected outright. This is what closes
+         * CodeQL js/xss-through-dom on the watching hover card.
+         * @param {*} value Candidate id.
+         * @returns {string|null} The id, or null when it is not one.
+         */
+        asItemGuid: function (value) {
+            if (typeof value !== 'string') {
+                return null;
+            }
+
+            var v = value.trim();
+            return /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/.test(v)
+                ? v
+                : null;
+        },
+
+        /**
          * Escape a string for safe use in JavaScript string contexts (onclick handlers, etc.)
          * Escapes backslashes first, then quotes
          */
@@ -4993,7 +5014,9 @@
             var self = this;
             if (!el || !window.ApiClient) return;
 
-            var itemId = el.getAttribute('data-item-id');
+            // Read from the DOM, so untrusted by definition - reject anything that is not a
+            // Jellyfin item id before it is used in a URL or in markup.
+            var itemId = self.asItemGuid(el.getAttribute('data-item-id'));
             if (!itemId) return;
 
             self._watchInfoEl = el;
@@ -5058,8 +5081,15 @@
             }
 
             var baseUrl = ApiClient.serverAddress();
-            var imgId = info.imageItemId || info.itemId;
-            var poster = baseUrl + '/Items/' + imgId + '/Images/Primary?maxHeight=260&quality=90';
+
+            // The id originates in a DOM attribute, so it is treated as untrusted and must be a
+            // plain Jellyfin GUID before it can go anywhere near markup. Without this, a crafted
+            // data-item-id could close the src attribute and inject an event handler
+            // (CodeQL js/xss-through-dom).
+            var imgId = self.asItemGuid(info.imageItemId) || self.asItemGuid(info.itemId);
+            var poster = imgId
+                ? baseUrl + '/Items/' + encodeURIComponent(imgId) + '/Images/Primary?maxHeight=260&quality=90'
+                : '';
 
             var meta = [];
             if (info.year) meta.push(info.year);
@@ -5071,9 +5101,12 @@
                 : self.escapeHtml(info.name || '');
             var sub = info.seriesName && info.name ? self.escapeHtml(info.name) : '';
 
+            // The poster <img> is created as a DOM node rather than concatenated into this
+            // string: its src derives from a DOM attribute, and building it here would put
+            // untrusted text inside an HTML attribute. Setting .src as a property cannot break
+            // out of markup, and it also drops the inline onerror handler.
             pop.innerHTML =
-                '<div class="lb-wi-poster"><img src="' + poster + '" alt="" ' +
-                'onerror="this.style.display=\'none\'"></div>' +
+                '<div class="lb-wi-poster"></div>' +
                 '<div class="lb-wi-body">' +
                 '<div class="lb-wi-title">' + heading + '</div>' +
                 (sub ? '<div class="lb-wi-sub">' + sub + '</div>' : '') +
@@ -5086,6 +5119,17 @@
                     ? '<div class="lb-wi-desc">' + self.escapeHtml(info.overview) + '</div>'
                     : (info.loading ? '' : '<div class="lb-wi-desc dim">No description available.</div>')) +
                 '</div>';
+
+            if (poster) {
+                var holder = pop.querySelector('.lb-wi-poster');
+                if (holder) {
+                    var img = document.createElement('img');
+                    img.alt = '';
+                    img.addEventListener('error', function () { img.style.display = 'none'; });
+                    img.src = poster;
+                    holder.appendChild(img);
+                }
+            }
 
             pop.style.display = 'flex';
 
