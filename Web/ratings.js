@@ -5735,6 +5735,11 @@
             var self = this;
             var profile = self._currentProfile || {};
 
+            // The toggles below used to read profile.showRatings / showActivity / allowFollows,
+            // which the server has never returned - so they always rendered as checked no matter
+            // what was actually saved. The real values live under profile.privacy (issue #72).
+            var privacy = profile.privacy || profile.Privacy || {};
+
             // Create settings modal
             var modal = document.createElement('div');
             modal.className = 'lb-settings-modal';
@@ -5764,17 +5769,18 @@
                 '<div class="lb-settings-section">' +
                 '<h3>Privacy</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsShowRatings" ' + (profile.showRatings !== false ? 'checked' : '') + '> Show my ratings to others</label>' +
+                '<label><input type="checkbox" id="settingsShowRatings" ' + (privacy.ratingsVisibleRegular !== false ? 'checked' : '') + '> Show my ratings to others</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsShowActivity" ' + (profile.showActivity !== false ? 'checked' : '') + '> Show my activity feed</label>' +
+                '<label><input type="checkbox" id="settingsShowActivity" ' + (privacy.watchHistoryVisibleRegular !== false ? 'checked' : '') + '> Show my activity feed</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsAllowFollows" ' + (profile.allowFollows !== false ? 'checked' : '') + '> Allow others to follow me</label>' +
+                '<label><input type="checkbox" id="settingsAllowFollows" ' + (privacy.allowFriendRequests !== 'Nobody' ? 'checked' : '') + '> Allow others to follow me</label>' +
                 '</div>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
+                '<div id="profileSettingsStatus" class="lb-settings-error" style="display:none;"></div>' +
                 '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeProfileSettings()">Cancel</button>' +
                 '<button class="lb-btn-save" onclick="RatingsPlugin.saveProfileSettings()">Save Changes</button>' +
                 '</div>' +
@@ -5812,31 +5818,51 @@
             };
 
             var bio = document.getElementById('settingsBio')?.value || '';
-            var showRatings = document.getElementById('settingsShowRatings')?.checked;
-            var showActivity = document.getElementById('settingsShowActivity')?.checked;
-            var allowFollows = document.getElementById('settingsAllowFollows')?.checked;
+            var showRatings = document.getElementById('settingsShowRatings')?.checked !== false;
+            var showActivity = document.getElementById('settingsShowActivity')?.checked !== false;
+            var allowFollows = document.getElementById('settingsAllowFollows')?.checked !== false;
 
-            fetch(baseUrl + '/Social/MyProfile', {
-                method: 'PUT',
+            // This used to PUT /Social/MyProfile - a route that never existed. Jellyfin answered
+            // 405 with "Allow: GET", the response body was empty, and .json() then threw, so the
+            // Save button silently did nothing (issue #72). The bio and the privacy toggles live
+            // behind two different endpoints, both of which already exist.
+            var saveBio = fetch(baseUrl + '/Social/Profile', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: JSON.stringify({ bio: bio })
+            });
+
+            var savePrivacy = fetch(baseUrl + '/Social/Settings', {
+                method: 'POST',
                 credentials: 'include',
                 headers: headers,
                 body: JSON.stringify({
-                    bio: bio,
                     showRatings: showRatings,
                     showActivity: showActivity,
                     allowFollows: allowFollows
                 })
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    self.closeProfileSettings();
-                    // Refresh profile
-                    self.showProfilePage(ApiClient.getCurrentUserId());
+            });
+
+            Promise.all([saveBio, savePrivacy])
+            .then(function (responses) {
+                var failed = responses.filter(function (r) { return !r.ok; });
+                if (failed.length > 0) {
+                    throw new Error('save failed: ' + failed.map(function (r) { return r.status; }).join(', '));
                 }
+
+                // Drop the cached profile so the reopened page shows what was just saved.
+                self._myProfileCache = null;
+                self.closeProfileSettings();
+                self.showProfilePage(ApiClient.getCurrentUserId());
             })
             .catch(function (err) {
                 console.error('[Social] Failed to save settings:', err);
+                var status = document.getElementById('profileSettingsStatus');
+                if (status) {
+                    status.textContent = self.t('errorSavingSettings') || 'Could not save settings. Please try again.';
+                    status.style.display = 'block';
+                }
             });
         },
 

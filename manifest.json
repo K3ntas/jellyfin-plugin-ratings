@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.345.0",
+        "changelog": "Fixes from reported issues. The Save button in Profile Settings now works - it was calling an address the server does not accept, so nothing was ever saved, and the privacy tick-boxes always looked switched on regardless of your real settings (#72). The search bar no longer disappears on phones held in portrait: it now shrinks to just the magnifier icon and expands when tapped, instead of being hidden below 400px wide (#69). Deleting media now also removes its trickplay thumbnails and any extracted subtitles or attachments, which used to be left behind forever (#70). Uninstalling the plugin now really removes the header buttons - the plugin no longer edits Jellyfin's index.html, and it cleans up that edit if an older version made it, so users no longer have to clear their browser cache by hand (#66). When an old plugin folder cannot be deleted on Windows because the file is locked, its meta.json is now removed so the stale version stops being listed and loaded (#67). New-media notifications now log exactly why an item was treated as new, to make the remaining reports diagnosable (#65).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.345.0/Jellyfin.Plugin.Ratings_2.0.345.0.zip",
+        "checksum": "3065211f00378e96836310f0bdb9d848",
+        "timestamp": "2026-08-08T14:32:00Z"
+      },
+      {
         "version": "2.0.344.0",
         "changelog": "Downloads get dramatically smaller and the server writes to disk far less. The plugin's script, stylesheet and language files are now sent pre-compressed, so a first page load transfers about 108 KB instead of 676 KB - roughly six times less. This works even if you reach Jellyfin over HTTPS directly, where Jellyfin's own compression is switched off by default. Separately, rapid saves are now merged into one write: previously every user's presence heartbeat rewrote the entire online-users file, so a handful of people online meant constant disk churn. Nothing is lost - pending saves are flushed on shutdown and before any backup export or import. Also adds automated build checks so a release can no longer go out with an unminified or syntactically broken script.",
         "targetAbi": "10.11.0.0",

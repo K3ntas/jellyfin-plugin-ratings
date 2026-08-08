@@ -395,6 +395,18 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         private void Announce(BaseItem item, string key)
         {
+            // Logged at Information level on purpose. When someone reports "it pinged for media
+            // that is not new" (issue #65), this single line says exactly which identity the item
+            // was filed under and how old the server thinks it is - which is what distinguishes a
+            // genuine bug (key changed between scans, so the seen-set missed it) from a genuinely
+            // new file. Without it the report is not actionable.
+            _logger.LogInformation(
+                "New-media notification for '{Title}' (key={Key}, dateCreated={Date:u}, ageDays={Age:F1})",
+                item.Name,
+                key,
+                item.DateCreated,
+                (DateTime.UtcNow - item.DateCreated).TotalDays);
+
             if (item is Movie movie)
             {
                 CreateNotification(movie.Id, movie.Name, "Movie", movie.ProductionYear, item);

@@ -49,8 +49,10 @@ namespace Jellyfin.Plugin.Ratings
                     // Add a small delay to ensure web files are loaded
                     Thread.Sleep(2000);
 
+                    // Only CLEAN now - we deliberately no longer write our tag into index.html.
+                    // See CleanupOldInjection for why (issue #66). This also removes the tag left
+                    // behind by older versions of the plugin.
                     CleanupOldInjection();
-                    InjectRatingsScript();
                 }
                 catch
                 {
@@ -177,11 +179,27 @@ namespace Jellyfin.Plugin.Ratings
                     }
                     catch (Exception ex)
                     {
-                        failed++;
-                        // On Windows-hosted Jellyfin this usually means the old DLL is still loaded/locked.
-                        _logger.LogWarning(ex,
-                            "Ratings cleanup: FAILED to remove old folder '{Dir}' (likely a locked DLL on Windows); will retry next restart",
-                            dir);
+                        // On Windows the old DLL is usually still mapped into the process, so the
+                        // folder cannot be deleted until the next restart. Deleting the folder's
+                        // meta.json is normally still allowed, and that is what Jellyfin reads to
+                        // decide a plugin is installed - so removing it stops the stale version
+                        // being listed and loaded, even while the DLL itself lingers (issue #67).
+                        var neutralized = TryNeutralizePluginFolder(dir);
+
+                        if (neutralized)
+                        {
+                            removed++;
+                            _logger.LogInformation(
+                                "Ratings cleanup: could not delete '{Dir}' (locked DLL), but removed its meta.json so the stale version is no longer registered; the folder itself will go on a later restart",
+                                dir);
+                        }
+                        else
+                        {
+                            failed++;
+                            _logger.LogWarning(ex,
+                                "Ratings cleanup: FAILED to remove old folder '{Dir}' (likely a locked DLL on Windows); will retry next restart",
+                                dir);
+                        }
                     }
                 }
 
@@ -196,6 +214,72 @@ namespace Jellyfin.Plugin.Ratings
             }
         }
 
+        /// <summary>
+        /// Last resort when a stale plugin folder cannot be deleted: strip everything deletable
+        /// inside it, above all meta.json.
+        /// </summary>
+        /// <remarks>
+        /// Jellyfin identifies an installed plugin by the meta.json in its folder. With that file
+        /// gone the stale version stops appearing in the plugin list and stops being loaded, which
+        /// is the visible half of the "two versions installed / restart required" loop, even though
+        /// the locked DLL itself has to wait for a restart (issue #67).
+        /// </remarks>
+        /// <param name="dir">Plugin folder that could not be deleted.</param>
+        /// <returns>True if meta.json is gone when this returns.</returns>
+        private bool TryNeutralizePluginFolder(string dir)
+        {
+            var metaPath = Path.Combine(dir, "meta.json");
+
+            try
+            {
+                if (File.Exists(metaPath))
+                {
+                    File.Delete(metaPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Ratings cleanup: could not remove '{Meta}'", metaPath);
+                return false;
+            }
+
+            // Best effort: clear whatever else will delete, so the leftover folder is as small as
+            // possible until a restart lets it go entirely.
+            try
+            {
+                foreach (var file in Directory.GetFiles(dir))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch
+                    {
+                        // Locked (typically the DLL itself) - leave it for the next restart.
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Ratings cleanup: partial cleanup of '{Dir}' incomplete", dir);
+            }
+
+            return !File.Exists(metaPath);
+        }
+
+        /// <summary>
+        /// Removes any Ratings plugin block previously written into jellyfin-web/index.html.
+        /// </summary>
+        /// <remarks>
+        /// The plugin used to write its script tag directly into index.html as a "fallback"
+        /// alongside the middleware. That file is part of jellyfin-web, not the plugin, so nothing
+        /// removed the tag when the plugin was uninstalled: the header buttons kept appearing on
+        /// every client until each user manually cleared their cache, and there was no way for an
+        /// admin to fix it server-side (issue #66).
+        /// Injection is now middleware-only (ScriptInjectionMiddleware), which disappears with the
+        /// plugin, so uninstalling really does remove the UI. This method still runs on every start
+        /// so servers upgrading from an older version get their index.html cleaned up.
+        /// </remarks>
         private void CleanupOldInjection()
         {
             var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
@@ -224,55 +308,5 @@ namespace Jellyfin.Plugin.Ratings
             }
         }
 
-        private void InjectRatingsScript()
-        {
-            var indexPath = Path.Combine(_appPaths.WebPath, "index.html");
-            if (!File.Exists(indexPath))
-            {
-                return;
-            }
-
-            try
-            {
-                var content = File.ReadAllText(indexPath);
-
-                // Check if already injected (in case cleanup failed)
-                if (content.Contains("<!-- BEGIN Ratings Plugin -->", StringComparison.Ordinal))
-                {
-                    ScriptInjectionMiddleware.FileInjectionActive = true;
-                    return;
-                }
-
-                var startComment = "<!-- BEGIN Ratings Plugin -->";
-                var endComment = "<!-- END Ratings Plugin -->";
-
-                // ?v=<pluginVersion> cache-busts these so the browser can cache them immutably
-                // (RatingsController serves immutable for the matching version) yet still pick up
-                // fresh copies after a plugin update.
-                var version = typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1";
-                var scriptTag = $"<script defer src=\"/Ratings/ratings.js?v={version}\"></script>";
-
-                // The stylesheet is a separate file now (it used to be a ~374 KB string inside the
-                // script). The id matches what RatingsPlugin.injectStyles() checks for, so the
-                // script does not add a duplicate.
-                var styleTag = $"<link id=\"ratingsPluginStyles\" rel=\"stylesheet\" href=\"/Ratings/ratings.css?v={version}\">";
-
-                var injectionBlock = $"{startComment}\n{styleTag}\n{scriptTag}\n{endComment}\n";
-
-                if (content.Contains("</body>", StringComparison.Ordinal))
-                {
-                    content = content.Replace("</body>", $"{injectionBlock}</body>", StringComparison.Ordinal);
-                    File.WriteAllText(indexPath, content);
-
-                    // Tell the middleware to stop intercepting index.html - it would otherwise
-                    // buffer and de-compress every page load just to find the tag already there.
-                    ScriptInjectionMiddleware.FileInjectionActive = true;
-                }
-            }
-            catch
-            {
-                // Silent failure - middleware will handle injection
-            }
-        }
     }
 }

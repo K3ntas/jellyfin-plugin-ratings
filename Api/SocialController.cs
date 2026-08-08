@@ -1598,6 +1598,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                 profile.Privacy.AllowMessages = request.AllowMessages;
             }
 
+            // Simple toggles from the profile settings dialog, mapped onto the granular model so
+            // both UIs stay in sync (issue #72).
+            if (request.ShowRatings.HasValue)
+            {
+                profile.Privacy.RatingsVisibleRegular = request.ShowRatings.Value;
+                profile.Privacy.RatingsVisibleFriends = request.ShowRatings.Value;
+                profile.Privacy.ReviewsVisibleRegular = request.ShowRatings.Value;
+                profile.Privacy.ReviewsVisibleFriends = request.ShowRatings.Value;
+            }
+
+            if (request.ShowActivity.HasValue)
+            {
+                profile.Privacy.WatchHistoryVisibleRegular = request.ShowActivity.Value;
+                profile.Privacy.WatchHistoryVisibleFriends = request.ShowActivity.Value;
+                profile.Privacy.ShowWatchedHistory = request.ShowActivity.Value ? "Everyone" : "Nobody";
+            }
+
+            if (request.AllowFollows.HasValue)
+            {
+                profile.Privacy.AllowFriendRequests = request.AllowFollows.Value ? "Everyone" : "Nobody";
+            }
+
             profile.UpdatedAt = DateTime.UtcNow;
             await _socialRepository.SaveProfileAsync(profile).ConfigureAwait(false);
 
@@ -3072,6 +3094,25 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Gets or sets who can send messages. Values: Everyone, Friends, Nobody.
         /// </summary>
         public string? AllowMessages { get; set; }
+
+        // The three below back the simple toggles in the profile settings dialog. That dialog used
+        // to PUT /Social/MyProfile, a route that never existed - Jellyfin answered 405 with
+        // "Allow: GET" and the Save button silently did nothing (issue #72).
+
+        /// <summary>
+        /// Gets or sets whether this user's ratings and reviews are visible to others.
+        /// </summary>
+        public bool? ShowRatings { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this user's watch activity is visible to others.
+        /// </summary>
+        public bool? ShowActivity { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether others may follow / send friend requests to this user.
+        /// </summary>
+        public bool? AllowFollows { get; set; }
     }
 
     /// <summary>

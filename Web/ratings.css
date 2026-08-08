@@ -1262,9 +1262,52 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     }
 }
 
+/* Narrow phones (issue #69).
+   This used to be "display: none", which hid the search bar entirely on any viewport under
+   400px - i.e. essentially every phone held in portrait, while the same phone in landscape
+   (640px+) showed it. Instead of removing it, collapse to just the magnifier and let it expand
+   over the header when tapped, so the feature stays reachable at any width. */
 @media screen and (max-width: 400px) {
     #headerSearchField {
-        display: none !important;
+        display: flex !important;
+        padding: 2px 4px !important;
+        margin: 0 1px !important;
+    }
+
+    #headerSearchIcon {
+        margin-right: 0 !important;
+        opacity: 1 !important;
+    }
+
+    /* Collapsed: icon only. */
+    #headerSearchInput {
+        width: 0 !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        opacity: 0;
+        transition: width 0.2s ease, opacity 0.2s ease, padding 0.2s ease !important;
+    }
+
+    /* Expanded on tap/focus: overlay the header rather than squeezing the other buttons. */
+    #headerSearchField:focus-within {
+        position: absolute !important;
+        left: 8px !important;
+        right: 8px !important;
+        z-index: 1002 !important;
+        background: rgba(30, 30, 30, 0.98) !important;
+        padding: 4px 10px !important;
+    }
+
+    #headerSearchField:focus-within #headerSearchIcon {
+        margin-right: 6px !important;
+    }
+
+    #headerSearchField:focus-within #headerSearchInput {
+        width: 100% !important;
+        min-width: 0 !important;
+        opacity: 1;
+        font-size: 14px !important;
     }
 }
 

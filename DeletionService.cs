@@ -16,6 +16,7 @@ namespace Jellyfin.Plugin.Ratings
         private readonly ILibraryManager _libraryManager;
         private readonly RatingsRepository _repository;
         private readonly ILogger<DeletionService> _logger;
+        private readonly MediaBrowser.Controller.IO.IPathManager? _pathManager;
         private Timer? _deletionTimer;
         private bool _disposed;
 
@@ -25,14 +26,21 @@ namespace Jellyfin.Plugin.Ratings
         /// <param name="libraryManager">Library manager.</param>
         /// <param name="repository">Ratings repository.</param>
         /// <param name="logger">Logger instance.</param>
+        /// <param name="pathManager">
+        /// Jellyfin path manager, used to locate trickplay / extracted-data folders so they can be
+        /// removed with the media (issue #70). Optional so the service still starts on a server
+        /// build that does not provide it.
+        /// </param>
         public DeletionService(
             ILibraryManager libraryManager,
             RatingsRepository repository,
-            ILogger<DeletionService> logger)
+            ILogger<DeletionService> logger,
+            MediaBrowser.Controller.IO.IPathManager? pathManager = null)
         {
             _libraryManager = libraryManager;
             _repository = repository;
             _logger = logger;
+            _pathManager = pathManager;
         }
 
         /// <inheritdoc />
@@ -143,6 +151,11 @@ namespace Jellyfin.Plugin.Ratings
                         {
                             DeleteFileLocation = true
                         };
+
+                        // Trickplay tiles and extracted subtitles/attachments live outside the
+                        // media folder, so DeleteItem leaves them behind (issue #70). Resolve and
+                        // remove them BEFORE the item goes, while its media sources still exist.
+                        MediaDeletionHelper.DeleteExtractedData(_pathManager, item, _logger);
 
                         _libraryManager.DeleteItem(item, deleteOptions);
 

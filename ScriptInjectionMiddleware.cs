@@ -32,25 +32,20 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         /// <param name="context">The HTTP context.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        /// <summary>
-        /// Gets or sets a value indicating whether the on-disk injection into index.html succeeded.
-        /// </summary>
         /// <remarks>
-        /// Set by <see cref="JavaScriptInjectionService"/>. When the tag is already in the file on
-        /// disk this middleware has nothing to do, and short-circuiting here matters: the
-        /// interception path strips Accept-Encoding and buffers the whole response into memory
-        /// before discovering the tag is already present, so index.html was served uncompressed
-        /// on every page load for no reason.
+        /// This middleware is now the ONLY way the plugin's script and stylesheet reach the page.
+        /// The old on-disk injection into jellyfin-web/index.html was removed because nothing could
+        /// undo it when the plugin was uninstalled - the header buttons survived until every user
+        /// cleared their client cache by hand (issue #66). Middleware disappears with the plugin,
+        /// so an uninstall is clean.
         /// </remarks>
-        public static volatile bool FileInjectionActive;
-
         public async Task InvokeAsync(HttpContext context)
         {
             var path = context.Request.Path.Value ?? string.Empty;
             var pathBase = context.Request.PathBase.Value ?? string.Empty;
 
             // Only intercept exact index.html requests (strict matching)
-            if (FileInjectionActive || !IsIndexHtmlRequest(path))
+            if (!IsIndexHtmlRequest(path))
             {
                 await _next(context).ConfigureAwait(false);
                 return;
