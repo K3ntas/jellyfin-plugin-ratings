@@ -2007,77 +2007,77 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        // Static assets (ratings.js, ratings.css, i18n/<lang>.js) are read out of the assembly
+        // once per process and cached as UTF-8 BYTES. They used to be cached as strings and
+        // returned through Content(), which re-encoded the whole payload to bytes on every single
+        // request - about a megabyte of allocation per cache miss for the script alone.
+        //
+        // Each injected URL carries ?v=<pluginVersion>. When it matches we serve immutable, so the
+        // browser keeps the asset for a year with no re-download and no revalidation round-trip; a
+        // plugin update changes the URL and the new copy is fetched automatically.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte[]> _assetCache = new(StringComparer.Ordinal);
+
+        private static readonly string AssetVersion =
+            System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1";
+
+        /// <summary>
+        /// Serves an embedded web asset with ETag / immutable caching.
+        /// </summary>
+        /// <param name="resourceName">Fully qualified embedded resource name.</param>
+        /// <param name="contentType">MIME type to serve it as.</param>
+        /// <param name="cacheKey">Stable key for the in-process byte cache.</param>
+        /// <returns>The asset, or 304 / 404.</returns>
+        private ActionResult ServeEmbeddedAsset(string resourceName, string contentType, string cacheKey)
+        {
+            var bytes = _assetCache.GetOrAdd(cacheKey, _ =>
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    return Array.Empty<byte>();
+                }
+
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                return ms.ToArray();
+            });
+
+            if (bytes.Length == 0)
+            {
+                _logger.LogError("Embedded resource {ResourceName} not found in assembly", resourceName);
+                return NotFound();
+            }
+
+            var etag = "\"" + cacheKey + "-" + AssetVersion + "\"";
+            Response.Headers["ETag"] = etag;
+
+            var requestedVersion = Request.Query["v"].ToString();
+            Response.Headers["Cache-Control"] =
+                !string.IsNullOrEmpty(requestedVersion) && requestedVersion == AssetVersion
+                    ? "public, max-age=31536000, immutable"
+                    : "no-cache";
+
+            var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
+            if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == etag)
+            {
+                return StatusCode(304);
+            }
+
+            return File(bytes, contentType);
+        }
+
         /// <summary>
         /// Serves the ratings.js file.
         /// </summary>
         /// <returns>The JavaScript file content.</returns>
-        // The ratings.js bundle is ~1.6MB. Cache it once per process so we never re-read the
-        // embedded resource or re-allocate the string on subsequent requests. The injected
-        // <script> tag carries ?v=<pluginVersion>, so when that matches we serve the bundle as
-        // immutable and the browser keeps it for a year (no re-download, no per-page revalidation).
-        // A plugin update bumps the version, the injected URL changes, and the browser fetches the
-        // new bundle automatically - the old cached copy is simply never requested again.
-        private static string? _cachedScript;
-        private static string? _cachedScriptETag;
-        private static string? _cachedVersion;
-        private static readonly object _scriptCacheLock = new object();
-
         [HttpGet("ratings.js")]
         [AllowAnonymous]
         public ActionResult GetRatingsScript()
         {
             try
             {
-                if (_cachedScript == null || _cachedScriptETag == null)
-                {
-                    lock (_scriptCacheLock)
-                    {
-                        if (_cachedScript == null || _cachedScriptETag == null)
-                        {
-                            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                            var resourceName = "Jellyfin.Plugin.Ratings.Web.ratings.js";
-
-                            using var stream = assembly.GetManifestResourceStream(resourceName);
-                            if (stream == null)
-                            {
-                                var allResources = assembly.GetManifestResourceNames();
-                                _logger.LogError("Resource {ResourceName} not found in assembly. Available: {Resources}", resourceName, string.Join(", ", allResources));
-                                return Content("// ERROR: Resource not available", "application/javascript");
-                            }
-
-                            using var reader = new System.IO.StreamReader(stream);
-                            _cachedScript = reader.ReadToEnd();
-                            var version = assembly.GetName().Version?.ToString() ?? "1";
-                            _cachedVersion = version;
-                            _cachedScriptETag = "\"ratings-" + version + "\"";
-                        }
-                    }
-                }
-
-                Response.Headers["ETag"] = _cachedScriptETag!;
-
-                // When the request carries the current version (?v=<pluginVersion>, added by the
-                // injected <script> tag) the URL is a content-hash style cache-buster, so the bundle
-                // is safe to cache for a year - this removes the 1.6MB re-download AND the per-page
-                // revalidation round-trip. Anything without the matching version (stale tab, direct
-                // hit, old cached index.html) falls back to no-cache so it can never serve a stale script.
-                var requestedVersion = Request.Query["v"].ToString();
-                if (!string.IsNullOrEmpty(requestedVersion) && requestedVersion == _cachedVersion)
-                {
-                    Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
-                }
-                else
-                {
-                    Response.Headers["Cache-Control"] = "no-cache";
-                }
-
-                var ifNoneMatch = Request.Headers["If-None-Match"].ToString();
-                if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == _cachedScriptETag)
-                {
-                    return StatusCode(304);
-                }
-
-                return Content(_cachedScript!, "application/javascript");
+                return ServeEmbeddedAsset("Jellyfin.Plugin.Ratings.Web.ratings.js", "application/javascript", "ratings.js");
             }
             catch (Exception ex)
             {
@@ -2085,6 +2085,71 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Content("// ERROR: Failed to load ratings.js", "application/javascript");
             }
         }
+
+        /// <summary>
+        /// Serves the plugin stylesheet.
+        /// </summary>
+        /// <remarks>
+        /// This CSS used to be a ~374 KB template literal inside ratings.js, which esbuild could
+        /// not minify and which the browser had to parse as a JS string before it could build the
+        /// CSSOM. As a real stylesheet it is minified at build time and the preload scanner can
+        /// fetch it in parallel with the script.
+        /// </remarks>
+        /// <returns>The stylesheet.</returns>
+        [HttpGet("ratings.css")]
+        [AllowAnonymous]
+        public ActionResult GetRatingsStylesheet()
+        {
+            try
+            {
+                return ServeEmbeddedAsset("Jellyfin.Plugin.Ratings.Web.ratings.css", "text/css", "ratings.css");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to serve ratings.css");
+                return Content("/* ERROR: Failed to load ratings.css */", "text/css");
+            }
+        }
+
+        /// <summary>
+        /// Serves an on-demand language pack.
+        /// </summary>
+        /// <remarks>
+        /// All 16 languages used to be bundled into ratings.js (~232 KB) so that every user
+        /// downloaded 15 languages they would never see. Only English is inline now.
+        /// </remarks>
+        /// <param name="lang">Two-letter language code.</param>
+        /// <returns>The language pack script.</returns>
+        [HttpGet("i18n/{lang}.js")]
+        [AllowAnonymous]
+        public ActionResult GetLanguagePack([FromRoute] [Required] string lang)
+        {
+            try
+            {
+                // Whitelist - this value goes into a resource name, so it must never be
+                // attacker-controlled free text.
+                if (!SupportedLanguagePacks.Contains(lang, StringComparer.Ordinal))
+                {
+                    return NotFound();
+                }
+
+                return ServeEmbeddedAsset(
+                    "Jellyfin.Plugin.Ratings.Web.i18n." + lang + ".js",
+                    "application/javascript",
+                    "i18n." + lang);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to serve language pack {Lang}", lang);
+                return NotFound();
+            }
+        }
+
+        // English is bundled inline in ratings.js and is deliberately not served here.
+        private static readonly string[] SupportedLanguagePacks =
+        {
+            "es", "zh", "pt", "ru", "ja", "de", "fr", "ko", "it", "tr", "pl", "nl", "ar", "hi", "lt"
+        };
 
         /// <summary>
         /// Creates a new media request.
@@ -2844,16 +2909,61 @@ namespace Jellyfin.Plugin.Ratings.Api
                     query.SearchTerm = search;
                 }
 
-                var allItems = _libraryManager.GetItemList(query);
+                var sortField = sortBy.ToLowerInvariant();
+                var ascending = sortOrder.Equals("asc", StringComparison.OrdinalIgnoreCase);
+
+                // Title / year / dateAdded can be sorted and paged by Jellyfin's own query layer.
+                // For those we ask the database for just this page instead of materialising the
+                // entire library and paging in memory - on a large library that was tens of
+                // thousands of items (plus a repository lock each) to render 50 rows.
+                // rating / playcount / size are computed by this plugin and are not expressible in
+                // InternalItemsQuery, so they still need the whole set before they can be ordered.
+                var nativeSort = sortField switch
+                {
+                    "title" => (Jellyfin.Data.Enums.ItemSortBy?)Jellyfin.Data.Enums.ItemSortBy.SortName,
+                    "year" => Jellyfin.Data.Enums.ItemSortBy.ProductionYear,
+                    "dateadded" => Jellyfin.Data.Enums.ItemSortBy.DateCreated,
+                    _ => null
+                };
+
+                IReadOnlyList<MediaBrowser.Controller.Entities.BaseItem> allItems;
+                int totalItems;
+                var pagedInQuery = false;
+
+                if (nativeSort.HasValue)
+                {
+                    query.OrderBy = new[]
+                    {
+                        (nativeSort.Value, ascending ? Jellyfin.Database.Implementations.Enums.SortOrder.Ascending : Jellyfin.Database.Implementations.Enums.SortOrder.Descending)
+                    };
+                    query.StartIndex = (page - 1) * pageSize;
+                    query.Limit = pageSize;
+                    query.EnableTotalRecordCount = true;
+
+                    var result = _libraryManager.GetItemsResult(query);
+                    allItems = result.Items;
+                    totalItems = result.TotalRecordCount;
+                    pagedInQuery = true;
+                }
+                else
+                {
+                    allItems = _libraryManager.GetItemList(query);
+                    totalItems = allItems.Count;
+                }
 
                 // Get scheduled deletions for badge info
                 var scheduledDeletions = _repository.GetAllScheduledDeletions()
                     .ToDictionary(d => d.ItemId);
 
+                // Rating stats for the whole working set in ONE lock acquisition rather than one
+                // per item.
+                var ratingStatsById = _repository.GetBatchRatingStats(
+                    allItems.Select(i => (i.Id, (string?)null, (string?)null, (string?)null)).ToList());
+
                 // STEP 1: Build basic stats quickly (no expensive episode queries)
                 var mediaStats = allItems.Select(item =>
                 {
-                    var ratingStats = _repository.GetRatingStats(item.Id);
+                    ratingStatsById.TryGetValue(item.Id.ToString("N"), out var ratingStats);
 
                     // Build image URL
                     string? imageUrl = null;
@@ -2875,21 +2985,30 @@ namespace Jellyfin.Plugin.Ratings.Api
                         PlayCount = 0, // Will be calculated for current page only
                         TotalWatchTimeMinutes = (long)(item.RunTimeTicks.HasValue ? TimeSpan.FromTicks(item.RunTimeTicks.Value).TotalMinutes : 0),
                         FileSizeBytes = 0, // Will be calculated for current page only
-                        AverageRating = ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
-                        RatingCount = ratingStats.TotalRatings,
+                        AverageRating = ratingStats != null && ratingStats.TotalRatings > 0 ? ratingStats.AverageRating : null,
+                        RatingCount = ratingStats?.TotalRatings ?? 0,
                         DateAdded = item.DateCreated,
                         ScheduledDeletion = deletion
                     };
                 }).ToList();
 
                 // When sorting by playcount or size, calculate those stats for ALL items first
-                var sortField = sortBy.ToLower();
                 if (sortField == "playcount" || sortField == "size")
                 {
+                    // Index by id - this used to be allItems.FirstOrDefault(...) inside the loop,
+                    // which made the pass O(n^2) over the entire library.
+                    var itemsById = new Dictionary<Guid, MediaBrowser.Controller.Entities.BaseItem>();
+                    foreach (var i in allItems)
+                    {
+                        itemsById[i.Id] = i;
+                    }
+
                     foreach (var stat in mediaStats)
                     {
-                        var item = allItems.FirstOrDefault(i => i.Id == stat.ItemId);
-                        if (item == null) continue;
+                        if (!itemsById.TryGetValue(stat.ItemId, out var item))
+                        {
+                            continue;
+                        }
 
                         if (sortField == "size" && item is MediaBrowser.Controller.Entities.Movies.Movie sizeMovie)
                         {
@@ -2944,42 +3063,58 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
-                // Apply sorting
-                mediaStats = sortField switch
+                // Apply sorting. When the query layer already sorted and paged for us, mediaStats
+                // is this page in the right order and re-sorting it would be wrong (it would
+                // reorder within the page only).
+                if (!pagedInQuery)
                 {
-                    "title" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.Title).ToList()
-                        : mediaStats.OrderByDescending(m => m.Title).ToList(),
-                    "year" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.Year ?? 0).ToList()
-                        : mediaStats.OrderByDescending(m => m.Year ?? 0).ToList(),
-                    "playcount" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.PlayCount).ToList()
-                        : mediaStats.OrderByDescending(m => m.PlayCount).ToList(),
-                    "watchtime" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.TotalWatchTimeMinutes).ToList()
-                        : mediaStats.OrderByDescending(m => m.TotalWatchTimeMinutes).ToList(),
-                    "size" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.FileSizeBytes).ToList()
-                        : mediaStats.OrderByDescending(m => m.FileSizeBytes).ToList(),
-                    "rating" => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.AverageRating ?? 0).ToList()
-                        : mediaStats.OrderByDescending(m => m.AverageRating ?? 0).ToList(),
-                    _ => sortOrder.ToLower() == "asc"
-                        ? mediaStats.OrderBy(m => m.DateAdded).ToList()
-                        : mediaStats.OrderByDescending(m => m.DateAdded).ToList()
-                };
+                    mediaStats = sortField switch
+                    {
+                        "title" => ascending
+                            ? mediaStats.OrderBy(m => m.Title).ToList()
+                            : mediaStats.OrderByDescending(m => m.Title).ToList(),
+                        "year" => ascending
+                            ? mediaStats.OrderBy(m => m.Year ?? 0).ToList()
+                            : mediaStats.OrderByDescending(m => m.Year ?? 0).ToList(),
+                        "playcount" => ascending
+                            ? mediaStats.OrderBy(m => m.PlayCount).ToList()
+                            : mediaStats.OrderByDescending(m => m.PlayCount).ToList(),
+                        "watchtime" => ascending
+                            ? mediaStats.OrderBy(m => m.TotalWatchTimeMinutes).ToList()
+                            : mediaStats.OrderByDescending(m => m.TotalWatchTimeMinutes).ToList(),
+                        "size" => ascending
+                            ? mediaStats.OrderBy(m => m.FileSizeBytes).ToList()
+                            : mediaStats.OrderByDescending(m => m.FileSizeBytes).ToList(),
+                        "rating" => ascending
+                            ? mediaStats.OrderBy(m => m.AverageRating ?? 0).ToList()
+                            : mediaStats.OrderByDescending(m => m.AverageRating ?? 0).ToList(),
+                        _ => ascending
+                            ? mediaStats.OrderBy(m => m.DateAdded).ToList()
+                            : mediaStats.OrderByDescending(m => m.DateAdded).ToList()
+                    };
+                }
 
-                // Apply pagination
-                var totalItems = mediaStats.Count;
+                // Apply pagination (already applied by the query on the native-sort path)
                 var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-                var pagedItems = mediaStats.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+                var pagedItems = pagedInQuery
+                    ? mediaStats
+                    : mediaStats.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                // Index once for the enrichment pass below - this was another
+                // allItems.FirstOrDefault(...) inside a loop.
+                var pagedItemsById = new Dictionary<Guid, MediaBrowser.Controller.Entities.BaseItem>();
+                foreach (var i in allItems)
+                {
+                    pagedItemsById[i.Id] = i;
+                }
 
                 // STEP 2: Calculate expensive stats only for paginated items
                 foreach (var stat in pagedItems)
                 {
-                    var item = allItems.FirstOrDefault(i => i.Id == stat.ItemId);
-                    if (item == null) continue;
+                    if (!pagedItemsById.TryGetValue(stat.ItemId, out var item))
+                    {
+                        continue;
+                    }
 
                     if (item is MediaBrowser.Controller.Entities.Movies.Movie movie)
                     {

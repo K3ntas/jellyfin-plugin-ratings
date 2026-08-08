@@ -239,24 +239,34 @@ namespace Jellyfin.Plugin.Ratings
                 // Check if already injected (in case cleanup failed)
                 if (content.Contains("<!-- BEGIN Ratings Plugin -->", StringComparison.Ordinal))
                 {
+                    ScriptInjectionMiddleware.FileInjectionActive = true;
                     return;
                 }
 
                 var startComment = "<!-- BEGIN Ratings Plugin -->";
                 var endComment = "<!-- END Ratings Plugin -->";
 
-                // ?v=<pluginVersion> cache-busts the script so the browser can cache it immutably
-                // (RatingsController serves immutable for the matching version) yet still pick up a
-                // fresh bundle after a plugin update.
+                // ?v=<pluginVersion> cache-busts these so the browser can cache them immutably
+                // (RatingsController serves immutable for the matching version) yet still pick up
+                // fresh copies after a plugin update.
                 var version = typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1";
                 var scriptTag = $"<script defer src=\"/Ratings/ratings.js?v={version}\"></script>";
 
-                var injectionBlock = $"{startComment}\n{scriptTag}\n{endComment}\n";
+                // The stylesheet is a separate file now (it used to be a ~374 KB string inside the
+                // script). The id matches what RatingsPlugin.injectStyles() checks for, so the
+                // script does not add a duplicate.
+                var styleTag = $"<link id=\"ratingsPluginStyles\" rel=\"stylesheet\" href=\"/Ratings/ratings.css?v={version}\">";
+
+                var injectionBlock = $"{startComment}\n{styleTag}\n{scriptTag}\n{endComment}\n";
 
                 if (content.Contains("</body>", StringComparison.Ordinal))
                 {
                     content = content.Replace("</body>", $"{injectionBlock}</body>", StringComparison.Ordinal);
                     File.WriteAllText(indexPath, content);
+
+                    // Tell the middleware to stop intercepting index.html - it would otherwise
+                    // buffer and de-compress every page load just to find the tag already there.
+                    ScriptInjectionMiddleware.FileInjectionActive = true;
                 }
             }
             catch

@@ -32,13 +32,25 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         /// <param name="context">The HTTP context.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
+        /// <summary>
+        /// Gets or sets a value indicating whether the on-disk injection into index.html succeeded.
+        /// </summary>
+        /// <remarks>
+        /// Set by <see cref="JavaScriptInjectionService"/>. When the tag is already in the file on
+        /// disk this middleware has nothing to do, and short-circuiting here matters: the
+        /// interception path strips Accept-Encoding and buffers the whole response into memory
+        /// before discovering the tag is already present, so index.html was served uncompressed
+        /// on every page load for no reason.
+        /// </remarks>
+        public static volatile bool FileInjectionActive;
+
         public async Task InvokeAsync(HttpContext context)
         {
             var path = context.Request.Path.Value ?? string.Empty;
             var pathBase = context.Request.PathBase.Value ?? string.Empty;
 
             // Only intercept exact index.html requests (strict matching)
-            if (!IsIndexHtmlRequest(path))
+            if (FileInjectionActive || !IsIndexHtmlRequest(path))
             {
                 await _next(context).ConfigureAwait(false);
                 return;
@@ -219,7 +231,30 @@ namespace Jellyfin.Plugin.Ratings
             // Build script tag with dynamic base path for reverse proxy support
             var safeBasePath = System.Net.WebUtility.HtmlEncode(basePath);
             var scriptTag = $"<script defer src=\"{safeBasePath}/Ratings/ratings.js?v={ScriptVersion}\"></script>";
-            return html.Insert(bodyCloseIndex, scriptTag + "\n");
+
+            // The stylesheet is linked separately (it used to be a ~374 KB string inside the
+            // script). The id matches the one RatingsPlugin.injectStyles() looks for, so the
+            // script's own fallback does not add a second copy.
+            var styleTag = $"<link id=\"ratingsPluginStyles\" rel=\"stylesheet\" href=\"{safeBasePath}/Ratings/ratings.css?v={ScriptVersion}\">";
+
+            // Prefer </head> for the stylesheet so the browser's preload scanner starts it early
+            // and in parallel with the script, rather than discovering it at the end of the body.
+            var headCloseIndex = html.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+            if (headCloseIndex >= 0)
+            {
+                html = html.Insert(headCloseIndex, styleTag + "\n");
+
+                // The insert shifted everything after </head>, so re-find the body close.
+                bodyCloseIndex = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+                if (bodyCloseIndex == -1)
+                {
+                    return html;
+                }
+
+                return html.Insert(bodyCloseIndex, scriptTag + "\n");
+            }
+
+            return html.Insert(bodyCloseIndex, styleTag + "\n" + scriptTag + "\n");
         }
     }
 }
