@@ -3663,6 +3663,122 @@
         },
 
         /**
+         * Rate a TMDB title that is not on the server.
+         *
+         * Ratings used to require a Jellyfin item, so a film added to a favourites row from the
+         * catalog search could not be rated at all (issue #72). The server files these under a
+         * stable id derived from the TMDB id and stores the title, year and poster alongside, so
+         * the rating displays on its own - and is picked up automatically by the real item if the
+         * film is later added to the library.
+         * @param {string} payloadEnc URI-encoded JSON with tmdbId, title, year, type, poster.
+         */
+        rateExternalMedia: function (payloadEnc) {
+            var self = this;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!data || !data.tmdbId) { return; }
+
+            self.showExternalRatingModal(data);
+        },
+
+        /**
+         * Star picker for a not-on-server title.
+         * @param {object} data Title info (tmdbId, title, year, type, poster).
+         */
+        showExternalRatingModal: function (data) {
+            var self = this;
+            var existing = document.getElementById('lbExternalRatingModal');
+            if (existing) { existing.remove(); }
+
+            var stars = '';
+            for (var i = 1; i <= 10; i++) {
+                stars += '<button type="button" class="lb-ext-star" data-value="' + i + '" title="' + i + '/10">☆</button>';
+            }
+
+            var modal = document.createElement('div');
+            modal.className = 'lb-settings-modal';
+            modal.id = 'lbExternalRatingModal';
+            modal.innerHTML = '<div class="lb-settings-content lb-ext-rating">' +
+                '<div class="lb-settings-header">' +
+                '<h2>Rate “' + self.escapeHtml(data.title || '') + '”' + (data.year ? ' (' + data.year + ')' : '') + '</h2>' +
+                '<button class="lb-settings-close" onclick="RatingsPlugin.closeExternalRatingModal()">&times;</button>' +
+                '</div>' +
+                '<div class="lb-settings-body">' +
+                '<p class="lb-settings-hint">This title is not on the server. Your rating is kept, and will attach ' +
+                'itself to the film automatically if it is added later.</p>' +
+                '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
+                '<div class="lb-ext-value" id="lbExtValue">Select a rating</div>' +
+                '</div>' +
+                '<div class="lb-settings-footer">' +
+                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeExternalRatingModal()">Cancel</button>' +
+                '</div></div>';
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) { self.closeExternalRatingModal(); }
+            });
+
+            document.body.appendChild(modal);
+
+            modal.querySelectorAll('.lb-ext-star').forEach(function (star) {
+                var value = parseInt(star.dataset.value, 10);
+
+                star.addEventListener('mouseenter', function () {
+                    modal.querySelectorAll('.lb-ext-star').forEach(function (s) {
+                        s.textContent = parseInt(s.dataset.value, 10) <= value ? '★' : '☆';
+                    });
+                    var label = document.getElementById('lbExtValue');
+                    if (label) { label.textContent = value + ' / 10'; }
+                });
+
+                star.addEventListener('click', function () {
+                    self.submitExternalRating(data, value);
+                });
+            });
+        },
+
+        /**
+         * Closes the external rating picker.
+         */
+        closeExternalRatingModal: function () {
+            var modal = document.getElementById('lbExternalRatingModal');
+            if (modal) { modal.remove(); }
+        },
+
+        /**
+         * Sends a rating for a title that is not in the library.
+         * @param {object} data Title info.
+         * @param {number} value Rating 1-10.
+         */
+        submitExternalRating: function (data, value) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+
+            fetch(baseUrl + '/Ratings/External/Rating', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tmdbId: String(data.tmdbId),
+                    mediaType: data.type === 'Series' ? 'Series' : 'Movie',
+                    title: data.title || '',
+                    year: data.year || null,
+                    posterUrl: data.poster || '',
+                    rating: value
+                })
+            })
+            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+            .then(function () {
+                self.closeExternalRatingModal();
+                self.lbToast('Rated “' + (data.title || '') + '” ' + value + '/10 ✓');
+            })
+            .catch(function (err) {
+                console.error('[Ratings] External rating failed:', err);
+                self.lbToast('Could not save rating');
+            });
+        },
+
+        /**
          * From a server search result: choose which favorite row to add the film to.
          */
         addToFavoritesFromSearch: function (itemId, title, btn) {
@@ -3955,10 +4071,13 @@
                     title: fav.title || fav.Title || '',
                     year: fav.year || fav.Year || '',
                     type: fav.mediaType || fav.MediaType || 'Movie',
-                    tmdbId: fav.tmdbId || fav.TmdbId || ''
+                    tmdbId: fav.tmdbId || fav.TmdbId || '',
+                    poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
                 }));
                 extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
-                    '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>';
+                    '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
+                    // Titles from the catalog could not be rated at all before (issue #72).
+                    '<button class="lb-fav-rate" title="Rate this title" onclick="event.stopPropagation();RatingsPlugin.rateExternalMedia(\'' + payload + '\')">★ Rate</button>';
                 clickAttr = ' onclick="RatingsPlugin.notInLibraryInfo()"';
             }
             return '<div class="' + cls + '" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + self.escapeHtml(itemId) + '"' +
@@ -4245,6 +4364,7 @@
                 '<button class="lb-tab" data-tab="activity">Activity</button>' +
                 '<button class="lb-tab" data-tab="following">Following</button>' +
                 '<button class="lb-tab" data-tab="followers">Followers</button>' +
+                '<button class="lb-tab" data-tab="users">Other Users</button>' +
                 '</div>';
 
             // Tab content area
@@ -4400,7 +4520,82 @@
                 case 'followers':
                     self.renderProfileFollowersTab();
                     break;
+                case 'users':
+                    self.renderProfileAllUsersTab();
+                    break;
             }
+        },
+
+        /**
+         * Render the "Other Users" tab - everyone else on this server, so profiles can be browsed
+         * without already knowing a name to search for.
+         */
+        renderProfileAllUsersTab: function () {
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+
+            fetch(baseUrl + '/Social/Users', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var users = data.users || [];
+                if (users.length === 0) {
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">👥</span>' +
+                        '<p>No other users on this server yet</p></div>';
+                    return;
+                }
+
+                // Simple client-side filter - the list is small and this avoids a request per
+                // keystroke.
+                var html = '<div class="lb-users-toolbar">' +
+                    '<input type="text" id="lbUserFilter" class="lb-user-filter" placeholder="Filter users..." />' +
+                    '<span class="lb-users-count">' + users.length + ' user' + (users.length === 1 ? '' : 's') + '</span>' +
+                    '</div>';
+
+                html += '<div class="lb-user-list" id="lbAllUsersList">';
+                users.forEach(function (user) {
+                    var username = user.username || 'Unknown';
+                    var initial = username[0] ? username[0].toUpperCase() : '?';
+                    var badges = '';
+                    if (user.isFriend) badges += '<span class="lb-user-badge friend">Friend</span>';
+                    else if (user.isFollowing) badges += '<span class="lb-user-badge following">Following</span>';
+
+                    html += '<div class="lb-user-card" data-username="' + self.escapeHtml(username.toLowerCase()) + '" ' +
+                        'onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(user.userId) + '\')">' +
+                        '<div class="lb-user-avatar' + (user.isOnline ? ' online' : '') + '">' + self.escapeHtml(initial) + '</div>' +
+                        '<div class="lb-user-meta">' +
+                        '<div class="lb-user-name">' + self.escapeHtml(username) + badges + '</div>' +
+                        (user.bio ? '<div class="lb-user-bio">' + self.escapeHtml(user.bio) + '</div>' : '') +
+                        '</div>' +
+                        '</div>';
+                });
+                html += '</div>';
+
+                content.innerHTML = html;
+
+                var filter = document.getElementById('lbUserFilter');
+                if (filter) {
+                    filter.addEventListener('input', function () {
+                        var term = filter.value.toLowerCase();
+                        document.querySelectorAll('#lbAllUsersList .lb-user-card').forEach(function (card) {
+                            var name = card.getAttribute('data-username') || '';
+                            card.style.display = name.indexOf(term) >= 0 ? '' : 'none';
+                        });
+                    });
+                }
+            })
+            .catch(function () {
+                content.innerHTML = '<div class="lb-error">Failed to load users</div>';
+            });
         },
 
         /**
@@ -4660,22 +4855,31 @@
                 var baseUrl = ApiClient.serverAddress();
                 var html = '<div class="lb-ratings-grid">';
                 ratings.forEach(function (r) {
-                    // Build image URL from itemId if imageUrl not present
-                    var imageUrl = r.imageUrl || r.ImageUrl || '';
-                    if (!imageUrl && (r.itemId || r.ItemId)) {
-                        imageUrl = baseUrl + '/Items/' + (r.itemId || r.ItemId) + '/Images/Primary?maxHeight=200';
-                    }
                     var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
                     var itemId = r.itemId || r.ItemId || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
-                    var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+                    var year = r.year || r.Year;
 
-                    html += '<div class="lb-rating-card"' + clickAttr + '>' +
-                        '<div class="lb-rating-poster" style="background-image: url(\'' + imageUrl + '\')"></div>' +
+                    // The server now remembers a poster with the rating, so a title that has been
+                    // removed from the server still shows properly instead of an empty card with
+                    // bare stars (issue #72). Only fall back to a live Jellyfin image URL when the
+                    // item is actually still in the library - otherwise it just 404s.
+                    var imageUrl = r.posterUrl || r.PosterUrl || r.imageUrl || r.ImageUrl || '';
+                    if (!imageUrl && inLib) {
+                        imageUrl = baseUrl + '/Items/' + itemId + '/Images/Primary?maxHeight=200';
+                    }
+
+                    var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
+                    var posterStyle = imageUrl ? ' style="background-image: url(\'' + self.escapeHtml(imageUrl) + '\')"' : '';
+
+                    html += '<div class="lb-rating-card' + (inLib ? '' : ' lb-rating-gone') + '"' + clickAttr + '>' +
+                        '<div class="lb-rating-poster"' + posterStyle + '></div>' +
                         '<div class="lb-rating-info">' +
-                        '<div class="lb-rating-title">' + self.escapeHtml(title) + '</div>' +
+                        '<div class="lb-rating-title">' + self.escapeHtml(title) +
+                        (year ? ' <span class="lb-rating-year">(' + year + ')</span>' : '') + '</div>' +
                         '<div class="lb-rating-value">' + self.renderStars(rating) + '</div>' +
+                        (inLib ? '' : '<span class="lb-not-in-library">Not on server</span>') +
                         '</div></div>';
                 });
                 html += '</div>';

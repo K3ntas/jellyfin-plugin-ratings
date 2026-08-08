@@ -1225,6 +1225,17 @@
                                 </div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtTmdbLanguage">TMDB Search Language</label>
+                                <input id="txtTmdbLanguage" type="text" is="emby-input" placeholder="en-US" />
+                                <div class="fieldDescription">
+                                    Language for titles and descriptions returned by the catalog search, e.g.
+                                    <code>en-US</code>, <code>es-ES</code>, <code>de-DE</code>, <code>pt-BR</code>, <code>fr-FR</code>.
+                                    Leave blank for English. TMDB falls back to the original title when it has no
+                                    translation, so nothing disappears if a title is untranslated.
+                                </div>
+                            </div>
+
                             <!-- Chat Notification Settings -->
                             <h3 class="sectionTitle" style="font-size: 1.1em; margin-top: 1.5em; margin-bottom: 0.3em;">Chat Notification Badge</h3>
                             <div class="fieldDescription" style="margin-bottom: 10px;">
@@ -2872,6 +2883,7 @@
                     document.querySelector('#chkChatAllowEmojis').checked = config.ChatAllowEmojis !== false;
                     document.querySelector('#txtKlipyApiKey').value = config.KlipyApiKey || config.TenorApiKey || '';
                     if (document.querySelector('#txtTmdbApiToken')) { document.querySelector('#txtTmdbApiToken').value = config.TmdbApiToken || ''; }
+                    if (document.querySelector('#txtTmdbLanguage')) { document.querySelector('#txtTmdbLanguage').value = config.TmdbLanguage || ''; }
                     document.querySelector('#chkChatNotifyPublic').checked = config.ChatNotifyPublic !== false;
                     document.querySelector('#chkChatNotifyPrivate').checked = config.ChatNotifyPrivate !== false;
 
@@ -3188,6 +3200,7 @@
                     config.KlipyApiKey = document.querySelector('#txtKlipyApiKey').value;
                     config.TenorApiKey = '';
                     if (document.querySelector('#txtTmdbApiToken')) { config.TmdbApiToken = document.querySelector('#txtTmdbApiToken').value; }
+                    if (document.querySelector('#txtTmdbLanguage')) { config.TmdbLanguage = (document.querySelector('#txtTmdbLanguage').value || '').trim() || 'en-US'; }
                     config.ChatNotifyPublic = document.querySelector('#chkChatNotifyPublic').checked;
                     config.ChatNotifyPrivate = document.querySelector('#chkChatNotifyPrivate').checked;
 

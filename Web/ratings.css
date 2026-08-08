@@ -9390,6 +9390,68 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 .lb-fav-request:hover { background: #33b5e0; }
 .lb-fav-request:disabled { background: #2a7d2a; opacity: 0.85; cursor: default; }
 
+/* Rate button for not-on-server titles (issue #72). Sits just above Request,
+   which keeps its own position at the bottom of the poster. */
+.lb-fav-rate {
+    position: absolute;
+    left: 50%;
+    bottom: 42px;
+    transform: translateX(-50%) translateY(6px);
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 6px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.lb-favorite-slot.not-in-library:hover .lb-fav-rate {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.lb-fav-rate:hover { background: rgba(0, 0, 0, 0.9); border-color: #ffd700; }
+
+/* Star picker shown for a not-on-server title. */
+.lb-ext-rating .lb-ext-stars {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin: 14px 0 6px;
+}
+
+.lb-ext-star {
+    background: none;
+    border: none;
+    color: #ffd700;
+    font-size: 28px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+}
+
+.lb-ext-star:hover { transform: scale(1.15); }
+
+.lb-ext-value {
+    text-align: center;
+    color: #9ab;
+    font-size: 13px;
+    min-height: 18px;
+}
+
+.lb-rating-year {
+    color: #9ab;
+    font-weight: 400;
+}
+
 /* Hover info popup for favorite posters (full title, year, description) */
 .lb-fav-info-pop {
     position: fixed;
@@ -10011,6 +10073,97 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     font-size: 14px;
     color: #fff;
     font-weight: 500;
+}
+
+/* --- "Other Users" tab: browse everyone on the server --- */
+.lb-users-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.lb-user-filter {
+    flex: 1 1 auto;
+    max-width: 320px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #1c2228;
+    color: #fff;
+    font-size: 14px;
+}
+
+.lb-user-filter:focus {
+    outline: none;
+    border-color: #40bcf4;
+}
+
+.lb-users-count {
+    font-size: 12px;
+    color: #9ab;
+    white-space: nowrap;
+}
+
+.lb-user-meta {
+    min-width: 0;
+}
+
+/* A green ring rather than a separate dot, so it reads at a glance without
+   crowding the small card. */
+.lb-user-avatar.online {
+    box-shadow: 0 0 0 2px #1c2228, 0 0 0 4px #00e054;
+}
+
+.lb-user-bio {
+    font-size: 12px;
+    color: #9ab;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-user-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+}
+
+.lb-user-badge.friend {
+    background: rgba(0, 224, 84, 0.15);
+    color: #00e054;
+}
+
+.lb-user-badge.following {
+    background: rgba(64, 188, 244, 0.15);
+    color: #40bcf4;
+}
+
+/* --- Ratings whose title has left the library (issue #72) --- */
+.lb-rating-gone .lb-poster,
+.lb-rating-gone .lb-rating-poster {
+    opacity: 0.75;
+}
+
+.lb-not-in-library {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 /* Mobile Responsive */

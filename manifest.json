@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.347.0",
+        "changelog": "Rate films that are not on the server, keep ratings readable after media is deleted, choose your TMDB search language, and browse other users. You can now rate a title added to a profile row from the catalog even though it is not on the server - hover it and press Rate. If it is added to the library later, your rating attaches to it automatically. Ratings also remember the title, year and poster of what you rated, so deleting a film no longer leaves a nameless row of stars behind; older ratings fill this in as you use them. Admins can set the language TMDB search returns titles in (Settings, TMDB Search Language) instead of always getting English. And profiles have a new Other Users tab listing everyone on the server, with a filter box, so you can find and visit other people's profiles without knowing their name in advance.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.347.0/Jellyfin.Plugin.Ratings_2.0.347.0.zip",
+        "checksum": "39da0748d57d49f04ad5e2f15dc512f7",
+        "timestamp": "2026-08-08T16:18:00Z"
+      },
+      {
         "version": "2.0.346.0",
         "changelog": "Header buttons now fold into a dropdown menu on phones. With search, language, profile, requests, notifications, latest media, chat and friends all in the header there was simply not enough room on a small screen, and buttons ended up clipped or wrapping badly. On phone-sized screens they now sit behind a single arrow button and open as a tidy list, with the search box at full width. Unread chat messages light a dot on that button so you can still tell something is waiting inside. Nothing changes on tablets or desktop. Thanks to @chosqui for the suggestion (discussion #71).",
         "targetAbi": "10.11.0.0",
