@@ -1,0 +1,123 @@
+name: Build
+
+# Runs on every push and PR to the two release branches. This exists because releases were
+# historically built by hand on a developer machine, which is how a missing Node install silently
+# shipped an unminified 1.6 MB bundle, and how a wrong enum namespace reached a commit.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Restore
+        run: dotnet restore
+
+      # RequireMinification turns a missing/broken esbuild into a build error instead of a warning
+      # with a silent copy-the-source fallback.
+      - name: Build
+        run: dotnet build -c Release --no-restore -p:RequireMinification=true
+
+      - name: Verify minification actually ran
+        shell: bash
+        run: |
+          set -euo pipefail
+          min_js=obj/Release/net9.0/ratings.min.js
+          min_css=obj/Release/net9.0/ratings.min.css
+          for f in "$min_js" "$min_css"; do
+            [ -f "$f" ] || { echo "::error::$f was not produced"; exit 1; }
+          done
+
+          src_js=$(wc -c < Web/ratings.js)
+          out_js=$(wc -c < "$min_js")
+          src_css=$(wc -c < Web/ratings.css)
+          out_css=$(wc -c < "$min_css")
+
+          echo "ratings.js  $src_js -> $out_js"
+          echo "ratings.css $src_css -> $out_css"
+
+          # A "minified" file that is not materially smaller means the fallback copy ran.
+          if [ "$out_js" -ge $((src_js * 80 / 100)) ]; then
+            echo "::error::ratings.min.js is not materially smaller than source - minification did not run"
+            exit 1
+          fi
+          if [ "$out_css" -ge $((src_css * 90 / 100)) ]; then
+            echo "::error::ratings.min.css is not materially smaller than source - minification did not run"
+            exit 1
+          fi
+
+      # Catches syntax errors in the shipped bundle, which a C# build cannot see: the JS is an
+      # embedded resource, so a broken script compiles perfectly and fails only in the browser.
+      - name: Syntax-check JavaScript
+        run: |
+          node --check obj/Release/net9.0/ratings.min.js
+          node --check Web/ratings.js
+          for f in Web/i18n/*.js; do node --check "$f"; done
+
+      - name: Validate manifest.json
+        run: |
+          node -e "
+            const m = require('./manifest.json');
+            if (!Array.isArray(m) || !m[0].versions?.length) throw new Error('manifest shape is wrong');
+            const seen = new Set();
+            for (const v of m[0].versions) {
+              if (seen.has(v.version)) throw new Error('duplicate version ' + v.version);
+              seen.add(v.version);
+              for (const k of ['version', 'changelog', 'targetAbi', 'sourceUrl', 'checksum', 'timestamp']) {
+                if (!v[k]) throw new Error(v.version + ' is missing ' + k);
+              }
+              if (v.checksum === 'PLACEHOLDER') throw new Error(v.version + ' still has a PLACEHOLDER checksum');
+              if (!v.sourceUrl.includes(v.version)) throw new Error(v.version + ' sourceUrl does not match its version');
+            }
+            // A timestamp in the future makes Jellyfin's plugin page hide the release until the
+            // clock catches up, which looks exactly like a broken release.
+            const newest = m[0].versions[0];
+            const ts = new Date(newest.timestamp);
+            if (Number.isNaN(ts.getTime())) throw new Error(newest.version + ' has an unparseable timestamp');
+            if (ts.getTime() > Date.now() + 60000) {
+              throw new Error(newest.version + ' timestamp ' + newest.timestamp + ' is in the future');
+            }
+            console.log('manifest OK -', m[0].versions.length, 'versions, latest', m[0].versions[0].version);
+          "
+
+      # The csproj version and the newest manifest entry must agree, or Jellyfin offers an update
+      # that installs a differently-versioned DLL.
+      - name: Check version consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          csproj_version=$(grep -oPm1 '(?<=<Version>)[^<]+' Jellyfin.Plugin.Ratings.csproj)
+          manifest_version=$(node -p "require('./manifest.json')[0].versions[0].version")
+          echo "csproj:   $csproj_version"
+          echo "manifest: $manifest_version"
+          [ "$csproj_version" = "$manifest_version" ] || {
+            echo "::error::csproj version ($csproj_version) does not match newest manifest entry ($manifest_version)"
+            exit 1
+          }
+
+      - name: Upload plugin build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jellyfin.Plugin.Ratings
+          path: |
+            bin/Release/net9.0/Jellyfin.Plugin.Ratings.dll
+          retention-days: 14
