@@ -519,6 +519,10 @@
             // Initialize unified button group container first
             this.initButtonGroup();
 
+            // Collapse that group into a dropdown on phone-sized screens (discussion #71).
+            // Created after the group exists; the CSS keeps it inert on desktop.
+            this.initMobileMenu();
+
             // Initialize buttons in order: search first, language right after, then others
             this.initSearchField();
             this.initLanguageButton();
@@ -9188,6 +9192,171 @@
             };
 
             setTimeout(tryCreate, 500);
+        },
+
+        // Screens at or below this width get the collapsed header menu. Chosen so phones in both
+        // orientations are covered while tablets and desktops keep the normal inline button row.
+        MOBILE_MENU_MAX_WIDTH: 768,
+
+        /**
+         * Collapses the plugin's header buttons into a dropdown on small screens.
+         *
+         * Suggested in discussion #71 by @chosqui: with search, language, profile, requests,
+         * notifications, latest media, media management, chat and friends all in the header, a
+         * phone runs out of room and buttons get clipped or wrap badly.
+         *
+         * Implementation note: this does NOT move anything in the DOM. The existing
+         * #ratingsButtonGroup simply becomes the dropdown panel via a CSS class, so every button
+         * keeps its parent, its event handlers and its unread badges, and buttons created later
+         * (they are added asynchronously as their config arrives) land in the panel automatically
+         * with no re-scan. That also means no MutationObserver and no polling timer are needed.
+         */
+        initMobileMenu: function () {
+            const self = this;
+
+            const tryCreate = () => {
+                if (document.getElementById('ratingsMenuToggle')) {
+                    return;
+                }
+
+                const group = document.getElementById('ratingsButtonGroup');
+                const headerRight = document.querySelector('.headerRight');
+                if (!group || !headerRight) {
+                    setTimeout(tryCreate, 500);
+                    return;
+                }
+
+                const toggle = document.createElement('button');
+                toggle.id = 'ratingsMenuToggle';
+                toggle.type = 'button';
+                toggle.className = 'paper-icon-button-light';
+                toggle.title = self.t('menu') || 'Menu';
+                toggle.setAttribute('aria-label', toggle.title);
+                toggle.setAttribute('aria-haspopup', 'true');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.style.position = 'relative';
+                toggle.innerHTML =
+                    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+                    '<path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>' +
+                    '<span class="ratings-menu-dot"></span>';
+
+                const position = () => {
+                    const rect = toggle.getBoundingClientRect();
+                    const margin = 8;
+                    group.style.top = (rect.bottom + 6) + 'px';
+
+                    // Anchor to the toggle's right edge, then clamp inside the viewport so the
+                    // panel can never hang off-screen on a narrow phone.
+                    const width = group.offsetWidth || 220;
+                    let left = rect.right - width;
+                    left = Math.min(left, window.innerWidth - width - margin);
+                    left = Math.max(margin, left);
+                    group.style.left = left + 'px';
+                };
+
+                const setOpen = (open) => {
+                    group.classList.toggle('ratings-menu-open', open);
+                    toggle.classList.toggle('open', open);
+                    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+                    if (open) {
+                        // Measure after the panel is displayed, otherwise offsetWidth is 0.
+                        position();
+                        toggle.classList.remove('has-activity');
+                    }
+                };
+
+                self._closeMobileMenu = () => setOpen(false);
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setOpen(!group.classList.contains('ratings-menu-open'));
+                });
+
+                // Tapping a button inside the panel should dismiss it, but not when the tap was
+                // aimed at the search box - that would close the menu before typing.
+                group.addEventListener('click', (e) => {
+                    if (!group.classList.contains('ratings-menu-open')) {
+                        return;
+                    }
+
+                    if (e.target.closest('#headerSearchField')) {
+                        return;
+                    }
+
+                    if (e.target.closest('button, .ratingsGroupBtn')) {
+                        setOpen(false);
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!group.classList.contains('ratings-menu-open')) {
+                        return;
+                    }
+
+                    if (!group.contains(e.target) && !toggle.contains(e.target)) {
+                        setOpen(false);
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        setOpen(false);
+                    }
+                });
+
+                window.addEventListener('hashchange', () => setOpen(false));
+
+                // Reposition rather than recompute on every frame, and only while open.
+                let frame = null;
+                const reposition = () => {
+                    if (!group.classList.contains('ratings-menu-open') || frame !== null) {
+                        return;
+                    }
+
+                    frame = window.requestAnimationFrame(() => {
+                        frame = null;
+                        position();
+                    });
+                };
+
+                window.addEventListener('resize', () => {
+                    // Leaving mobile width: drop the open state so the inline row is never left
+                    // wearing the panel's positioning.
+                    if (window.innerWidth > self.MOBILE_MENU_MAX_WIDTH) {
+                        setOpen(false);
+                        group.style.top = '';
+                        group.style.left = '';
+                        return;
+                    }
+
+                    reposition();
+                });
+
+                window.addEventListener('scroll', reposition, true);
+
+                headerRight.insertBefore(toggle, headerRight.firstChild);
+            };
+
+            setTimeout(tryCreate, 700);
+        },
+
+        /**
+         * Marks the collapsed header menu as having something waiting inside it.
+         *
+         * A badge on a button that is hidden in a closed panel cannot be seen, so unread chat
+         * messages and notifications also light a dot on the toggle.
+         * @param {boolean} active Whether to show the dot.
+         */
+        setMobileMenuActivity: function (active) {
+            const toggle = document.getElementById('ratingsMenuToggle');
+            if (!toggle) {
+                return;
+            }
+
+            const group = document.getElementById('ratingsButtonGroup');
+            const isOpen = group && group.classList.contains('ratings-menu-open');
+            toggle.classList.toggle('has-activity', !!active && !isOpen);
         },
 
         /**
@@ -21872,12 +22041,18 @@
          */
         updateCombinedBadge: function () {
             const badge = document.getElementById('chatDMBadge');
-            if (!badge) return;
 
             // Only count if the setting is enabled
             const publicCount = this.chatNotifyPublic ? (this.chatPublicUnreadCount || 0) : 0;
             const dmCount = this.chatNotifyPrivate ? (this.dmUnreadCount || 0) : 0;
             const totalCount = publicCount + dmCount;
+
+            // On a phone the chat button may be inside the collapsed header menu, where its badge
+            // cannot be seen - mirror the state onto the menu toggle. Done before the early return
+            // so it still works when the chat button itself has not been created yet.
+            this.setMobileMenuActivity(totalCount > 0);
+
+            if (!badge) return;
 
             if (totalCount > 0) {
                 badge.textContent = totalCount > 99 ? '99+' : totalCount;
