@@ -356,6 +356,20 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 var percent = (int)Math.Round(score * 100);
 
+                // Presence, so the card can show a green / light-green / grey dot and say what
+                // someone is watching right now.
+                var status = _socialRepository.GetOnlineStatus(other.Id);
+                var effective = status?.GetEffectiveStatus() ?? "Offline";
+                var online = !string.Equals(effective, "Offline", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(effective, "Invisible", StringComparison.OrdinalIgnoreCase);
+
+                // Treat a stale "watching" as not watching: the record lingers if a client dies
+                // mid-playback, and a stuck progress bar is worse than none.
+                var watching = online && status?.Watching != null
+                    && (DateTime.UtcNow - status.LastHeartbeat).TotalMinutes < 5
+                        ? status.Watching
+                        : null;
+
                 matches.Add((percent, new
                 {
                     userId = other.Id,
@@ -363,7 +377,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                     matchPercent = percent,
                     sharedGenres = shared,
                     isFriend = _socialRepository.AreFriends(currentUserId.Value, other.Id),
-                    canMessage = other.Id != currentUserId.Value
+                    canMessage = other.Id != currentUserId.Value,
+                    isOnline = online,
+                    status = effective,
+                    watching = watching == null ? null : new
+                    {
+                        itemId = watching.ItemId,
+                        title = watching.Title,
+                        type = watching.Type,
+                        seriesName = watching.SeriesName,
+                        episodeInfo = watching.EpisodeInfo,
+                        positionTicks = watching.PositionTicks,
+                        durationTicks = watching.DurationTicks,
+
+                        // The client ticks the clock forward from here rather than polling, so it
+                        // needs to know how stale this reading already is.
+                        reportedSecondsAgo = (int)Math.Max(0, (DateTime.UtcNow - status!.LastHeartbeat).TotalSeconds)
+                    }
                 }));
             }
 

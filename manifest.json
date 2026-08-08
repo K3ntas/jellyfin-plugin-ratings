@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.366.0",
+        "changelog": "See who is online and what they are watching, and a much better looking profile name. The Similar Taste list now shows a dot on each person: bright green and pulsing means they are watching something right now, and the card shows what it is with a clock that ticks along live; soft green means online but not watching; grey means offline. The profile name has also been fixed - it was drawn as a colour gradient clipped to the letters, which over a photo or video header turned it into washed-out grey. It is now solid white with proper display typography, using each platform's large-text typeface.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.366.0/jellyfin-plugin-ratings_1.0.366.0.zip",
+        "checksum": "ca234e98cb0aaea8787bc200568aa699",
+        "timestamp": "2026-08-08T17:32:00Z"
+      },
+      {
         "version": "1.0.365.0",
         "changelog": "See what you actually watch, find people with the same taste, and Back now works properly. Profiles have a new Taste ring in the sidebar showing your genre breakdown by real watch time - taken from what you have actually played, not just what you rated - with total hours and a percentage per genre. Below it, a Similar Taste list ranks everyone on the server by how closely their genre mix matches yours, showing the genres you have most in common; click anyone to open their profile, or use the envelope button to message them directly. Also fixed: opening someone's profile from a followers or match list and pressing Back used to close the whole profile window instead of returning to the profile you came from.",
         "targetAbi": "10.11.0.0",

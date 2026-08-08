@@ -3419,7 +3419,31 @@
 .social-profile-page.letterboxd-style .lb-rating-card .lb-rating-poster{box-shadow:0 5px 14px rgba(0,0,0,.45);}
 /* gradient avatar + title */
 .social-profile-page.letterboxd-style .lb-avatar{background:linear-gradient(135deg,#00e054,#1aa3ff)!important;box-shadow:0 8px 30px rgba(0,224,84,.35);}
-.social-profile-page.letterboxd-style .lb-username{background:linear-gradient(90deg,#fff,#9fe7c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+/* Display typography for the profile name.
+   This used to be a gradient clipped to the text (-webkit-text-fill-color:transparent). Over a
+   header photo or video that renders as washed-out grey, and it silently defeated the
+   .has-media readability rule, because text-fill-color beats color. Solid white with real
+   weight and display-optimised tracking is both legible and better looking.
+   The stack asks for each platform's DISPLAY face first - the cut designed for large sizes -
+   before falling back to its UI face; no webfont, so nothing to download or block. */
+.social-profile-page.letterboxd-style .lb-username{
+  font-family:"Segoe UI Variable Display","SF Pro Display",-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-weight:800;
+  /* Large text needs NEGATIVE tracking; the old +0.5px was working against the size. */
+  letter-spacing:-0.02em;
+  line-height:1.1;
+  color:#fff;
+  -webkit-text-fill-color:currentColor;
+  background:none;
+  font-optical-sizing:auto;
+  text-rendering:optimizeLegibility;
+}
+/* Same display face for section headings and the sidebar card titles. */
+.social-profile-page.letterboxd-style .lb-sec-title,
+.social-profile-page.letterboxd-style .lb-side-title,
+.social-profile-page.letterboxd-style .lb-tab{
+  font-family:"Segoe UI Variable Display","SF Pro Display",-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
 /* section title accent diamond */
 .social-profile-page.letterboxd-style .lb-sec-title{display:flex;align-items:center;}
 .social-profile-page.letterboxd-style .lb-sec-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;background:#00e054;margin-right:10px;transform:rotate(45deg);box-shadow:0 0 9px #00e054;}
@@ -4871,18 +4895,51 @@
                 }
 
                 var html = '';
+                self._matchWatching = [];
+
                 matches.forEach(function (m) {
                     var name = m.username || 'Unknown';
                     var initial = name[0] ? name[0].toUpperCase() : '?';
                     var shared = (m.sharedGenres || []).join(' · ');
                     var encName = encodeURIComponent(name);
+                    var w = m.watching;
+
+                    // Three presence states: watching something (bright green), online but idle
+                    // (soft green), offline (grey).
+                    var presence = w ? 'watching' : (m.isOnline ? 'online' : 'offline');
+                    var presenceLabel = w ? 'Watching now' : (m.isOnline ? 'Online' : 'Offline');
+
+                    // Second line is what they are watching if they are, otherwise their genres.
+                    var subLine;
+                    if (w) {
+                        var mediaName = w.seriesName
+                            ? (w.seriesName + (w.episodeInfo ? ' · ' + w.episodeInfo : ''))
+                            : (w.title || 'Something');
+
+                        // The clock is advanced locally from this reading rather than polled.
+                        var startedSec = Math.floor((w.positionTicks || 0) / 10000000) + (w.reportedSecondsAgo || 0);
+                        var totalSec = Math.floor((w.durationTicks || 0) / 10000000);
+                        var id = 'lbWatch' + self._matchWatching.length;
+
+                        self._matchWatching.push({ id: id, seconds: startedSec, total: totalSec });
+
+                        subLine = '<div class="lb-match-watching" title="' + self.escapeHtml(mediaName) + '">' +
+                            '<span class="lb-watch-title">' + self.escapeHtml(mediaName) + '</span>' +
+                            '<span class="lb-watch-time" id="' + id + '">' + self.formatWatchClock(startedSec, totalSec) + '</span>' +
+                            '</div>';
+                    } else {
+                        subLine = shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '';
+                    }
 
                     html += '<div class="lb-match" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(m.userId) + '\')">' +
+                        '<div class="lb-match-avatar-wrap">' +
                         '<div class="lb-match-avatar">' + self.escapeHtml(initial) + '</div>' +
+                        '<span class="lb-presence-dot ' + presence + '" title="' + presenceLabel + '"></span>' +
+                        '</div>' +
                         '<div class="lb-match-info">' +
                         '<div class="lb-match-name">' + self.escapeHtml(name) +
                         (m.isFriend ? '<span class="lb-user-badge friend">Friend</span>' : '') + '</div>' +
-                        (shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '') +
+                        subLine +
                         '</div>' +
                         '<div class="lb-match-score" title="Genre taste match">' + m.matchPercent + '%</div>' +
                         (m.canMessage
@@ -4893,10 +4950,76 @@
                 });
 
                 el.innerHTML = html;
+                self.startMatchWatchClocks();
             })
             .catch(function () {
                 el.innerHTML = '<div class="lb-side-empty">Could not load matches</div>';
             });
+        },
+
+        /**
+         * Formats a playback position as "12:34 / 1:45:00".
+         * @param {number} seconds Elapsed seconds.
+         * @param {number} totalSeconds Total runtime in seconds (0 if unknown).
+         * @returns {string} Display string.
+         */
+        formatWatchClock: function (seconds, totalSeconds) {
+            function clock(s) {
+                s = Math.max(0, Math.floor(s));
+                var h = Math.floor(s / 3600);
+                var m = Math.floor((s % 3600) / 60);
+                var sec = s % 60;
+                return h > 0
+                    ? h + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0')
+                    : m + ':' + String(sec).padStart(2, '0');
+            }
+
+            if (totalSeconds > 0) {
+                return clock(Math.min(seconds, totalSeconds)) + ' / ' + clock(totalSeconds);
+            }
+
+            return clock(seconds);
+        },
+
+        /**
+         * Advances the "now watching" clocks once a second.
+         *
+         * Ticks locally from the last reported position rather than re-requesting: the card is
+         * refreshed on its own schedule anyway, and polling every second for a cosmetic timer
+         * would be a lot of traffic for every open profile.
+         */
+        startMatchWatchClocks: function () {
+            var self = this;
+
+            if (self._matchClockTimer) {
+                clearInterval(self._matchClockTimer);
+                self._matchClockTimer = null;
+            }
+
+            if (!self._matchWatching || self._matchWatching.length === 0) {
+                return;
+            }
+
+            self._matchClockTimer = setInterval(function () {
+                var alive = 0;
+
+                self._matchWatching.forEach(function (w) {
+                    var el = document.getElementById(w.id);
+                    if (!el) {
+                        return;
+                    }
+
+                    alive++;
+                    w.seconds++;
+                    el.textContent = self.formatWatchClock(w.seconds, w.total);
+                });
+
+                // The profile was closed or re-rendered - stop rather than tick forever.
+                if (alive === 0) {
+                    clearInterval(self._matchClockTimer);
+                    self._matchClockTimer = null;
+                }
+            }, 1000);
         },
 
         /**
