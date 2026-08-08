@@ -4482,13 +4482,28 @@
                     var rawItems = (row && (row.items || row.Items)) || [];
                     return {
                         title: (row && (row.title || (row.title ?? row.Title))) || 'Favorites',
+                        // Keep EVERY field. This used to rebuild each item as {itemId,title,imageUrl}
+                        // and then drop anything without an itemId - which is exactly what a
+                        // not-on-server catalog title is (it has a tmdbId and an empty itemId).
+                        // Adding one worked and saved, but reopening the profile pruned it here and
+                        // the next save wrote the pruned list back, deleting it for good (issue #72).
                         items: rawItems.map(function (it) {
+                            if (!it) { return null; }
+                            var tmdbId = String((it.tmdbId ?? it.TmdbId) || '');
+                            var notInLibrary = (it.notInLibrary ?? it.NotInLibrary) === true || (!(it.itemId || it.ItemId) && !!tmdbId);
                             return {
-                                itemId: (it && (it.itemId || (it.itemId ?? it.ItemId))) || '',
-                                title: (it && (it.title || (it.title ?? it.Title))) || '',
-                                imageUrl: (it && (it.imageUrl || it.ImageUrl)) || ''
+                                itemId: (it.itemId || it.ItemId) || '',
+                                title: (it.title || it.Title) || '',
+                                imageUrl: (it.imageUrl || it.ImageUrl) || '',
+                                notInLibrary: notInLibrary,
+                                tmdbId: tmdbId,
+                                year: (it.year ?? it.Year) ?? null,
+                                mediaType: (it.mediaType || it.MediaType) || '',
+                                overview: (it.overview || it.Overview) || ''
                             };
-                        }).filter(function (it) { return it.itemId; })
+                        // Mirror the save filter: an entry is real if it points at a library item
+                        // OR at a catalog title.
+                        }).filter(function (it) { return it && (it.itemId || it.tmdbId || it.notInLibrary); })
                     };
                 });
             }
