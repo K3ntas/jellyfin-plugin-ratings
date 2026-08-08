@@ -25,13 +25,18 @@ namespace Jellyfin.Plugin.Ratings
             @"/items/[a-f0-9-]+/playbackinfo",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex VideoStreamRegex = new(
-            @"/videos/[a-f0-9-]+/(stream|master\.m3u8)",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private static readonly Regex AuthTokenRegex = new(
             @"Token=""([^""]+)""",
             RegexOptions.Compiled);
+
+        // Resolving an auth token to a user hits the session store. During playback the same token
+        // arrives on every segment request, so the result is memoised briefly. The TTL is short so
+        // a revoked session stops being honoured almost immediately.
+        private static readonly TimeSpan TokenCacheTtl = TimeSpan.FromSeconds(30);
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Guid UserId, DateTime Expires)> TokenCache = new(StringComparer.Ordinal);
+
+        private static DateTime _lastTokenCachePrune = DateTime.UtcNow;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaybackBlockingMiddleware"/> class.
@@ -53,7 +58,11 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         public async Task InvokeAsync(HttpContext context)
         {
-            var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
+            // This middleware is registered through an IStartupFilter, which places it at the very
+            // front of the pipeline - ahead of Jellyfin's own middleware. It therefore sees EVERY
+            // request in the server: images, API calls, HLS segments. ToLowerInvariant() here
+            // allocated a new string for every one of them; ordinal comparisons allocate nothing.
+            var path = context.Request.Path.Value ?? string.Empty;
 
             // Only check playback-related requests
             if (!IsPlaybackRequest(path))
@@ -116,13 +125,14 @@ namespace Jellyfin.Plugin.Ratings
         private static bool IsPlaybackRequest(string path)
         {
             // Video/Audio streaming endpoints
-            if (path.Contains("/videos/") || path.Contains("/audio/"))
+            if (path.Contains("/videos/", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("/audio/", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
             // PlaybackInfo requests
-            if (path.Contains("/playbackinfo"))
+            if (path.Contains("/playbackinfo", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -139,30 +149,18 @@ namespace Jellyfin.Plugin.Ratings
         /// <summary>
         /// Checks if this is an actual playback start request (vs info/metadata).
         /// </summary>
+        /// <remarks>
+        /// This deliberately matches ONLY <c>POST /PlaybackInfo</c>, which the client sends exactly
+        /// once when starting playback. It used to also match any GET containing "/stream",
+        /// "master.m3u8" or "main.m3u8" - but during HLS playback the client re-fetches the
+        /// playlist every few seconds and each segment is its own request, so a single stream
+        /// incremented the user's quota hundreds of times per hour and rewrote media_quotas.json
+        /// on each one. Quota is a count of playback starts, not of HTTP requests.
+        /// </remarks>
         private static bool IsPlaybackStartRequest(string path, string method)
         {
-            // POST to PlaybackInfo or actual stream requests count as playback
-            if (method.Equals("POST", StringComparison.OrdinalIgnoreCase) && path.Contains("/playbackinfo"))
-            {
-                return true;
-            }
-
-            // GET requests for actual video/audio streams
-            if (method.Equals("GET", StringComparison.OrdinalIgnoreCase))
-            {
-                if (path.Contains("/stream") || path.Contains("/master.m3u8") || path.Contains("/main.m3u8"))
-                {
-                    return true;
-                }
-
-                // Direct video file requests
-                if (VideoStreamRegex.IsMatch(path))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return method.Equals("POST", StringComparison.OrdinalIgnoreCase)
+                && path.Contains("/playbackinfo", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -193,14 +191,50 @@ namespace Jellyfin.Plugin.Ratings
             }
 
             var token = tokenMatch.Groups[1].Value;
+
+            var now = DateTime.UtcNow;
+            if (TokenCache.TryGetValue(token, out var cached) && cached.Expires > now)
+            {
+                return cached.UserId;
+            }
+
             try
             {
                 var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                return session?.UserId ?? Guid.Empty;
+                var userId = session?.UserId ?? Guid.Empty;
+
+                if (userId != Guid.Empty)
+                {
+                    TokenCache[token] = (userId, now.Add(TokenCacheTtl));
+                    PruneTokenCache(now);
+                }
+
+                return userId;
             }
             catch
             {
                 return Guid.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Drops expired entries so the token cache cannot grow without bound.
+        /// </summary>
+        private static void PruneTokenCache(DateTime now)
+        {
+            if (now - _lastTokenCachePrune < TokenCacheTtl)
+            {
+                return;
+            }
+
+            _lastTokenCachePrune = now;
+
+            foreach (var entry in TokenCache)
+            {
+                if (entry.Value.Expires <= now)
+                {
+                    TokenCache.TryRemove(entry.Key, out _);
+                }
             }
         }
     }

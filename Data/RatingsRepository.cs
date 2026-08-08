@@ -142,6 +142,69 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadSeenMediaKeys);
         }
 
+        // A fresh JsonSerializerOptions per call defeats System.Text.Json's internal metadata
+        // cache and makes every write measurably slower, so persistence shares one instance.
+        // WriteIndented is off: these files are machine-read only, and pretty-printing cost
+        // roughly 30-40% extra bytes to serialize and write on every single mutation.
+        private static readonly JsonSerializerOptions PersistOptions = new JsonSerializerOptions
+        {
+            WriteIndented = false
+        };
+
+        /// <summary>
+        /// Serializes a snapshot and writes it to <paramref name="fileName"/> atomically.
+        /// </summary>
+        /// <remarks>
+        /// Two problems this solves:
+        /// <para>
+        /// 1. Serialization used to run inline inside the caller's <c>lock (_lock)</c>. Callers do
+        /// <c>_ = SaveXAsync()</c> from inside the lock, and an uncontended SemaphoreSlim.WaitAsync
+        /// completes synchronously, so JsonSerializer.Serialize ran while the global data lock was
+        /// held - a chat message serialized all 1000 retained messages before any other reader could
+        /// touch the repository. The <c>await Task.Yield()</c> below forces the remainder onto the
+        /// thread pool so the caller's lock is released first.
+        /// </para>
+        /// <para>
+        /// 2. File.WriteAllTextAsync truncates in place, so a crash or power loss mid-write left a
+        /// truncated file that the loader could not parse - silently starting from empty on next
+        /// boot. Writing to a temp file and renaming makes the swap atomic.
+        /// </para>
+        /// </remarks>
+        /// <typeparam name="T">Snapshot type.</typeparam>
+        /// <param name="fileName">File name within the data directory.</param>
+        /// <param name="snapshot">Already-captured snapshot to persist.</param>
+        /// <param name="gate">Per-file write gate.</param>
+        /// <param name="label">Human-readable label for log messages.</param>
+        /// <returns>Task.</returns>
+        private async Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
+        {
+            // Get off the caller's lock before doing any real work. See remarks above.
+            await Task.Yield();
+
+            await gate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var path = Path.Combine(_dataPath, fileName);
+                var tempPath = path + ".tmp";
+
+                var json = JsonSerializer.Serialize(snapshot, PersistOptions);
+                await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
+
+                // Atomic replace - either the old file or the complete new one is visible.
+                File.Move(tempPath, path, true);
+
+                _logger.LogDebug("Saved {Label} to disk", label);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving {Label} to disk", label);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
         /// <summary>
         /// Reloads all data from disk. Used after importing a backup.
         /// </summary>
@@ -337,33 +400,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves ratings to disk.
         /// </summary>
-        private async Task SaveRatingsAsync()
+        private Task SaveRatingsAsync()
         {
-            await _ratingsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserRating> snapshot;
+            lock (_lock)
             {
-                var ratingsFile = Path.Combine(_dataPath, "ratings.json");
-                List<UserRating> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _ratings.Values.ToList();
-                }
+                snapshot = _ratings.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(ratingsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} ratings to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving ratings to disk");
-            }
-            finally
-            {
-                _ratingsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("ratings.json", snapshot, _ratingsWriteLock, "ratings");
         }
 
         /// <summary>
@@ -381,24 +426,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                // First try exact ItemId match
-                var existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
-
-                // If not found by ItemId, try provider ID fallback (handles replaced media)
-                if (existing == null && !string.IsNullOrEmpty(tmdbId))
-                {
-                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.TmdbId == tmdbId);
-                }
-
-                if (existing == null && !string.IsNullOrEmpty(imdbId))
-                {
-                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
-                }
-
-                if (existing == null && !string.IsNullOrEmpty(aniDbId))
-                {
-                    existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.AniDbId == aniDbId);
-                }
+                var existing = FindUserRatingInternal(userId, itemId, tmdbId, imdbId, aniDbId);
 
                 if (existing != null)
                 {
@@ -469,34 +497,89 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                // First try exact ItemId match
-                var rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
-
-                // Fallback to provider ID lookup (handles replaced media)
-                if (rating == null && !string.IsNullOrEmpty(tmdbId))
-                {
-                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.TmdbId == tmdbId);
-                }
-
-                if (rating == null && !string.IsNullOrEmpty(imdbId))
-                {
-                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ImdbId == imdbId);
-                }
-
-                if (rating == null && !string.IsNullOrEmpty(aniDbId))
-                {
-                    rating = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.AniDbId == aniDbId);
-                }
+                var rating = FindUserRatingInternal(userId, itemId, tmdbId, imdbId, aniDbId);
 
                 // Auto-migrate ItemId if found by provider ID
                 if (rating != null && rating.ItemId != itemId)
                 {
+                    var oldItemId = rating.ItemId;
                     rating.ItemId = itemId;
+
+                    // The ItemId index has to follow the move, otherwise the rating stays filed
+                    // under the old ItemId and every later lookup falls back to the provider scan.
+                    UpdateRatingItemIdIndex(rating, oldItemId);
                     _ = SaveRatingsAsync();
                 }
 
                 return rating;
             }
+        }
+
+        /// <summary>
+        /// Finds a single user's rating for an item, using the secondary indexes.
+        /// </summary>
+        /// <remarks>
+        /// Previously this was up to four <c>_ratings.Values.FirstOrDefault(...)</c> scans over
+        /// every rating in the system, on paths that run for every detail page view and every
+        /// rating submission. Each index bucket holds only the ratings for one item / provider ID,
+        /// so this is a handful of comparisons instead of a full sweep.
+        /// Caller must hold <c>_lock</c>.
+        /// </remarks>
+        private UserRating? FindUserRatingInternal(Guid userId, Guid itemId, string? tmdbId, string? imdbId, string? aniDbId)
+        {
+            static UserRating? FirstByUser(List<UserRating>? bucket, Guid userId)
+            {
+                if (bucket == null)
+                {
+                    return null;
+                }
+
+                for (var i = 0; i < bucket.Count; i++)
+                {
+                    if (bucket[i].UserId == userId)
+                    {
+                        return bucket[i];
+                    }
+                }
+
+                return null;
+            }
+
+            _ratingsByItemId.TryGetValue(itemId, out var byItem);
+            var found = FirstByUser(byItem, userId);
+            if (found != null)
+            {
+                return found;
+            }
+
+            if (!string.IsNullOrEmpty(tmdbId) && _ratingsByTmdbId.TryGetValue(tmdbId, out var byTmdb))
+            {
+                found = FirstByUser(byTmdb, userId);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(imdbId) && _ratingsByImdbId.TryGetValue(imdbId, out var byImdb))
+            {
+                found = FirstByUser(byImdb, userId);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(aniDbId) && _ratingsByAniDbId.TryGetValue(aniDbId, out var byAniDb))
+            {
+                found = FirstByUser(byAniDb, userId);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -511,68 +594,89 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                return GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
+                // Public callers get their own copy - the internal helper hands back the live
+                // indexed list to avoid allocating on the batch-stats hot path.
+                return GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId).ToList();
             }
         }
+
+        private static readonly List<UserRating> EmptyRatings = new List<UserRating>();
 
         /// <summary>
         /// Internal helper for GetItemRatings without lock (for use within already-locked methods).
         /// Uses secondary indexes for O(1) lookup instead of O(n) scan.
         /// </summary>
+        /// <remarks>
+        /// The returned list must be treated as READ-ONLY: on the common path it is the live list
+        /// held by the index, not a copy. GetBatchRatingStats calls this once per item (up to 100
+        /// per request), and the previous unconditional ToList() meant 100 list allocations per
+        /// card batch. A copy is still taken on the rare provider-ID migration path, where
+        /// UpdateRatingItemIdIndex mutates the very list being iterated.
+        /// </remarks>
         private List<UserRating> GetItemRatingsInternal(Guid itemId, string? tmdbId, string? imdbId, string? aniDbId = null)
         {
-            // Use index for O(1) lookup by ItemId
-            List<UserRating> ratings;
-            if (_ratingsByItemId.TryGetValue(itemId, out var itemList))
+            // Resolve via the indexes, preferring an exact ItemId hit and falling back to provider IDs.
+            List<UserRating>? source = null;
+
+            if (_ratingsByItemId.TryGetValue(itemId, out var itemList) && itemList.Count > 0)
             {
-                ratings = itemList.ToList();
-            }
-            else
-            {
-                ratings = new List<UserRating>();
+                source = itemList;
             }
 
-            // If no ratings by ItemId, try provider ID fallback using indexes
-            if (ratings.Count == 0 && !string.IsNullOrEmpty(tmdbId))
+            if (source == null && !string.IsNullOrEmpty(tmdbId)
+                && _ratingsByTmdbId.TryGetValue(tmdbId, out var tmdbList) && tmdbList.Count > 0)
             {
-                if (_ratingsByTmdbId.TryGetValue(tmdbId, out var tmdbList))
+                source = tmdbList;
+            }
+
+            if (source == null && !string.IsNullOrEmpty(imdbId)
+                && _ratingsByImdbId.TryGetValue(imdbId, out var imdbList) && imdbList.Count > 0)
+            {
+                source = imdbList;
+            }
+
+            if (source == null && !string.IsNullOrEmpty(aniDbId)
+                && _ratingsByAniDbId.TryGetValue(aniDbId, out var anidbList) && anidbList.Count > 0)
+            {
+                source = anidbList;
+            }
+
+            if (source == null)
+            {
+                return EmptyRatings;
+            }
+
+            // Fast path: nothing to migrate, hand back the live list without copying.
+            var needsMigration = false;
+            for (var i = 0; i < source.Count; i++)
+            {
+                if (source[i].ItemId != itemId)
                 {
-                    ratings = tmdbList.ToList();
+                    needsMigration = true;
+                    break;
                 }
             }
 
-            if (ratings.Count == 0 && !string.IsNullOrEmpty(imdbId))
+            if (!needsMigration)
             {
-                if (_ratingsByImdbId.TryGetValue(imdbId, out var imdbList))
+                return source;
+            }
+
+            // Migration path: copy first, because UpdateRatingItemIdIndex removes entries from
+            // the list we are iterating.
+            var migrated = source.ToList();
+            foreach (var rating in migrated)
+            {
+                if (rating.ItemId != itemId)
                 {
-                    ratings = imdbList.ToList();
+                    var oldItemId = rating.ItemId;
+                    rating.ItemId = itemId;
+                    UpdateRatingItemIdIndex(rating, oldItemId);
                 }
             }
 
-            if (ratings.Count == 0 && !string.IsNullOrEmpty(aniDbId))
-            {
-                if (_ratingsByAniDbId.TryGetValue(aniDbId, out var anidbList))
-                {
-                    ratings = anidbList.ToList();
-                }
-            }
-
-            // Auto-migrate ItemIds for ratings found by provider ID
-            bool needsSave = false;
-            foreach (var rating in ratings.Where(r => r.ItemId != itemId))
-            {
-                var oldItemId = rating.ItemId;
-                rating.ItemId = itemId;
-                UpdateRatingItemIdIndex(rating, oldItemId);
-                needsSave = true;
-            }
-
-            if (needsSave)
-            {
-                _ = SaveRatingsAsync();
-            }
-
-            return ratings;
+            _ = SaveRatingsAsync();
+            return migrated;
         }
 
         /// <summary>
@@ -652,31 +756,51 @@ namespace Jellyfin.Plugin.Ratings.Data
             {
                 // Use GetItemRatings which already handles provider ID fallback
                 var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
-                var stats = new RatingStats
-                {
-                    ItemId = itemId,
-                    TotalRatings = itemRatings.Count
-                };
+                return BuildStats(itemId, itemRatings, userId);
+            }
+        }
 
-                if (itemRatings.Any())
-                {
-                    stats.AverageRating = Math.Round(itemRatings.Average(r => r.Rating), 2);
+        /// <summary>
+        /// Builds rating statistics from a rating list in a single pass.
+        /// </summary>
+        /// <remarks>
+        /// This used to walk the list twelve times: once for Average, ten times for the
+        /// distribution buckets, and once more for the user's own rating. On a 100-item batch
+        /// request that was 1200 enumerations instead of 100.
+        /// </remarks>
+        private static RatingStats BuildStats(Guid itemId, List<UserRating> itemRatings, Guid? userId)
+        {
+            var stats = new RatingStats
+            {
+                ItemId = itemId,
+                TotalRatings = itemRatings.Count
+            };
 
-                    // Calculate distribution
-                    for (int i = 1; i <= 10; i++)
-                    {
-                        stats.Distribution[i - 1] = itemRatings.Count(r => r.Rating == i);
-                    }
-                }
-
-                if (userId.HasValue)
-                {
-                    var userRating = itemRatings.FirstOrDefault(r => r.UserId == userId.Value);
-                    stats.UserRating = userRating?.Rating;
-                }
-
+            if (itemRatings.Count == 0)
+            {
                 return stats;
             }
+
+            var sum = 0L;
+            for (var i = 0; i < itemRatings.Count; i++)
+            {
+                var rating = itemRatings[i];
+                sum += rating.Rating;
+
+                var bucket = rating.Rating - 1;
+                if (bucket >= 0 && bucket < stats.Distribution.Length)
+                {
+                    stats.Distribution[bucket]++;
+                }
+
+                if (userId.HasValue && rating.UserId == userId.Value)
+                {
+                    stats.UserRating = rating.Rating;
+                }
+            }
+
+            stats.AverageRating = Math.Round((double)sum / itemRatings.Count, 2);
+            return stats;
         }
 
         /// <summary>
@@ -697,30 +821,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 foreach (var (itemId, tmdbId, imdbId, aniDbId) in items)
                 {
                     var itemRatings = GetItemRatingsInternal(itemId, tmdbId, imdbId, aniDbId);
-                    var stats = new RatingStats
-                    {
-                        ItemId = itemId,
-                        TotalRatings = itemRatings.Count
-                    };
-
-                    if (itemRatings.Count > 0)
-                    {
-                        stats.AverageRating = Math.Round(itemRatings.Average(r => r.Rating), 2);
-
-                        // Calculate distribution
-                        for (int i = 1; i <= 10; i++)
-                        {
-                            stats.Distribution[i - 1] = itemRatings.Count(r => r.Rating == i);
-                        }
-                    }
-
-                    if (userId.HasValue)
-                    {
-                        var userRating = itemRatings.FirstOrDefault(r => r.UserId == userId.Value);
-                        stats.UserRating = userRating?.Rating;
-                    }
-
-                    result[itemId.ToString("N")] = stats;
+                    result[itemId.ToString("N")] = BuildStats(itemId, itemRatings, userId);
                 }
             }
 
@@ -737,7 +838,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         {
             lock (_lock)
             {
-                var existing = _ratings.Values.FirstOrDefault(r => r.UserId == userId && r.ItemId == itemId);
+                var existing = FindUserRatingInternal(userId, itemId, null, null, null);
                 if (existing != null)
                 {
                     RemoveRatingFromIndexes(existing);
@@ -780,33 +881,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves media requests to disk.
         /// </summary>
-        private async Task SaveMediaRequestsAsync()
+        private Task SaveMediaRequestsAsync()
         {
-            await _requestsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<MediaRequest> snapshot;
+            lock (_lock)
             {
-                var requestsFile = Path.Combine(_dataPath, "media_requests.json");
-                List<MediaRequest> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _mediaRequests.Values.ToList();
-                }
+                snapshot = _mediaRequests.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} media requests to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving media requests to disk");
-            }
-            finally
-            {
-                _requestsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("media_requests.json", snapshot, _requestsWriteLock, "media requests");
         }
 
         /// <summary>
@@ -1237,29 +1320,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves the already-notified item set to disk.
         /// </summary>
-        private async Task SaveNotifiedItemsAsync()
+        private Task SaveNotifiedItemsAsync()
         {
-            await _notifiedItemsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            Dictionary<string, DateTime> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "notified_items.json");
-                Dictionary<string, DateTime> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _notifiedItems.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
-                }
+                snapshot = _notifiedItems.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving notified items to disk");
-            }
-            finally
-            {
-                _notifiedItemsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("notified_items.json", snapshot, _notifiedItemsWriteLock, "notified items");
         }
 
         // --- Seen-media baseline (stable content-key dedup for new-media notifications) ---
@@ -1390,29 +1459,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves the seen-media key set to disk.
         /// </summary>
-        private async Task SaveSeenMediaKeysAsync()
+        private Task SaveSeenMediaKeysAsync()
         {
-            await _seenMediaWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            Dictionary<string, DateTime> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "seen_media.json");
-                Dictionary<string, DateTime> snapshot;
-                lock (_lock)
-                {
-                    snapshot = new Dictionary<string, DateTime>(_seenMediaKeys);
-                }
+                snapshot = new Dictionary<string, DateTime>(_seenMediaKeys);
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = false });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving seen-media keys to disk");
-            }
-            finally
-            {
-                _seenMediaWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("seen_media.json", snapshot, _seenMediaWriteLock, "seen-media keys");
         }
 
         // Scheduled Deletion Methods
@@ -1445,33 +1500,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves scheduled deletions to disk.
         /// </summary>
-        private async Task SaveScheduledDeletionsAsync()
+        private Task SaveScheduledDeletionsAsync()
         {
-            await _deletionsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ScheduledDeletion> snapshot;
+            lock (_lock)
             {
-                var deletionsFile = Path.Combine(_dataPath, "scheduled_deletions.json");
-                List<ScheduledDeletion> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _scheduledDeletions.Values.ToList();
-                }
+                snapshot = _scheduledDeletions.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(deletionsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} scheduled deletions to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving scheduled deletions to disk");
-            }
-            finally
-            {
-                _deletionsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("scheduled_deletions.json", snapshot, _deletionsWriteLock, "scheduled deletions");
         }
 
         /// <summary>
@@ -1645,33 +1682,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves keep requests to disk.
         /// </summary>
-        private async Task SaveKeepRequestsAsync()
+        private Task SaveKeepRequestsAsync()
         {
-            await _keepRequestsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<KeepRequest> snapshot;
+            lock (_lock)
             {
-                var filePath = Path.Combine(_dataPath, "keep_requests.json");
-                List<KeepRequest> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _keepRequests.ToList();
-                }
+                snapshot = _keepRequests.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} keep requests to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving keep requests to disk");
-            }
-            finally
-            {
-                _keepRequestsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("keep_requests.json", snapshot, _keepRequestsWriteLock, "keep requests");
         }
 
         /// <summary>
@@ -1702,33 +1721,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves review likes to disk.
         /// </summary>
-        private async Task SaveReviewLikesAsync()
+        private Task SaveReviewLikesAsync()
         {
-            await _reviewLikesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ReviewLike> snapshot;
+            lock (_lock)
             {
-                var filePath = Path.Combine(_dataPath, "review_likes.json");
-                List<ReviewLike> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _reviewLikes.Values.ToList();
-                }
+                snapshot = _reviewLikes.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} review likes to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving review likes to disk");
-            }
-            finally
-            {
-                _reviewLikesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("review_likes.json", snapshot, _reviewLikesWriteLock, "review likes");
         }
 
         /// <summary>
@@ -1759,33 +1760,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves review comments to disk.
         /// </summary>
-        private async Task SaveReviewCommentsAsync()
+        private Task SaveReviewCommentsAsync()
         {
-            await _reviewCommentsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ReviewComment> snapshot;
+            lock (_lock)
             {
-                var filePath = Path.Combine(_dataPath, "review_comments.json");
-                List<ReviewComment> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _reviewComments.Values.ToList();
-                }
+                snapshot = _reviewComments.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} review comments to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving review comments to disk");
-            }
-            finally
-            {
-                _reviewCommentsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("review_comments.json", snapshot, _reviewCommentsWriteLock, "review comments");
         }
 
         /// <summary>
@@ -2129,33 +2112,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves deletion requests to disk.
         /// </summary>
-        private async Task SaveDeletionRequestsAsync()
+        private Task SaveDeletionRequestsAsync()
         {
-            await _deletionRequestsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<DeletionRequest> snapshot;
+            lock (_lock)
             {
-                var requestsFile = Path.Combine(_dataPath, "deletion_requests.json");
-                List<DeletionRequest> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _deletionRequests.Values.ToList();
-                }
+                snapshot = _deletionRequests.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(requestsFile, json).ConfigureAwait(false);
-                _logger.LogDebug("Saved {Count} deletion requests to disk", snapshot.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving deletion requests to disk");
-            }
-            finally
-            {
-                _deletionRequestsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("deletion_requests.json", snapshot, _deletionRequestsWriteLock, "deletion requests");
         }
 
         /// <summary>
@@ -2300,32 +2265,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves user bans to disk.
         /// </summary>
-        private async Task SaveUserBansAsync()
+        private Task SaveUserBansAsync()
         {
-            await _userBansWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserBan> snapshot;
+            lock (_lock)
             {
-                var bansFile = Path.Combine(_dataPath, "user_bans.json");
-                List<UserBan> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _userBans.Values.ToList();
-                }
+                snapshot = _userBans.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                await File.WriteAllTextAsync(bansFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving user bans to disk");
-            }
-            finally
-            {
-                _userBansWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("user_bans.json", snapshot, _userBansWriteLock, "user bans");
         }
 
         /// <summary>
@@ -2426,29 +2374,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves chat messages to disk.
         /// </summary>
-        private async Task SaveChatMessagesAsync()
+        private Task SaveChatMessagesAsync()
         {
-            await _chatMessagesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ChatMessage> snapshot;
+            lock (_lock)
             {
-                var messagesFile = Path.Combine(_dataPath, "chat_messages.json");
-                List<ChatMessage> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _chatMessages.ToList();
-                }
+                snapshot = _chatMessages.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving chat messages to disk");
-            }
-            finally
-            {
-                _chatMessagesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("chat_messages.json", snapshot, _chatMessagesWriteLock, "chat messages");
         }
 
         /// <summary>
@@ -2595,29 +2529,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves chat users to disk.
         /// </summary>
-        private async Task SaveChatUsersAsync()
+        private Task SaveChatUsersAsync()
         {
-            await _chatUsersWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ChatUser> snapshot;
+            lock (_lock)
             {
-                var usersFile = Path.Combine(_dataPath, "chat_users.json");
-                List<ChatUser> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _chatUsers.Values.ToList();
-                }
+                snapshot = _chatUsers.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(usersFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving chat users to disk");
-            }
-            finally
-            {
-                _chatUsersWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("chat_users.json", snapshot, _chatUsersWriteLock, "chat users");
         }
 
         /// <summary>
@@ -2769,29 +2689,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves chat moderators to disk.
         /// </summary>
-        private async Task SaveChatModeratorsAsync()
+        private Task SaveChatModeratorsAsync()
         {
-            await _chatModeratorsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ChatModerator> snapshot;
+            lock (_lock)
             {
-                var modsFile = Path.Combine(_dataPath, "chat_moderators.json");
-                List<ChatModerator> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _chatModerators.Values.ToList();
-                }
+                snapshot = _chatModerators.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(modsFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving chat moderators to disk");
-            }
-            finally
-            {
-                _chatModeratorsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("chat_moderators.json", snapshot, _chatModeratorsWriteLock, "chat moderators");
         }
 
         /// <summary>
@@ -2897,29 +2803,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves chat bans to disk.
         /// </summary>
-        private async Task SaveChatBansAsync()
+        private Task SaveChatBansAsync()
         {
-            await _chatBansWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ChatBan> snapshot;
+            lock (_lock)
             {
-                var bansFile = Path.Combine(_dataPath, "chat_bans.json");
-                List<ChatBan> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _chatBans.Values.ToList();
-                }
+                snapshot = _chatBans.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(bansFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving chat bans to disk");
-            }
-            finally
-            {
-                _chatBansWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("chat_bans.json", snapshot, _chatBansWriteLock, "chat bans");
         }
 
         /// <summary>
@@ -3029,29 +2921,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves private messages to disk.
         /// </summary>
-        private async Task SavePrivateMessagesAsync()
+        private Task SavePrivateMessagesAsync()
         {
-            await _privateMessagesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<PrivateMessage> snapshot;
+            lock (_lock)
             {
-                var messagesFile = Path.Combine(_dataPath, "private_messages.json");
-                List<PrivateMessage> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _privateMessages.ToList();
-                }
+                snapshot = _privateMessages.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(messagesFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving private messages to disk");
-            }
-            finally
-            {
-                _privateMessagesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("private_messages.json", snapshot, _privateMessagesWriteLock, "private messages");
         }
 
         /// <summary>
@@ -3090,29 +2968,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves public chat last seen timestamps to disk.
         /// </summary>
-        private async Task SavePublicChatLastSeenAsync()
+        private Task SavePublicChatLastSeenAsync()
         {
-            await _publicChatLastSeenWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            Dictionary<string, DateTime> snapshot;
+            lock (_lock)
             {
-                var lastSeenFile = Path.Combine(_dataPath, "public_chat_last_seen.json");
-                Dictionary<string, DateTime> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _publicChatLastSeen.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
-                }
+                snapshot = _publicChatLastSeen.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(lastSeenFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving public chat last seen to disk");
-            }
-            finally
-            {
-                _publicChatLastSeenWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("public_chat_last_seen.json", snapshot, _publicChatLastSeenWriteLock, "public chat last seen");
         }
 
         /// <summary>
@@ -3433,29 +3297,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves moderator actions to disk.
         /// </summary>
-        private async Task SaveModeratorActionsAsync()
+        private Task SaveModeratorActionsAsync()
         {
-            await _moderatorActionsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ModeratorAction> snapshot;
+            lock (_lock)
             {
-                var actionsFile = Path.Combine(_dataPath, "moderator_actions.json");
-                List<ModeratorAction> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _moderatorActions.ToList();
-                }
+                snapshot = _moderatorActions.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(actionsFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving moderator actions to disk");
-            }
-            finally
-            {
-                _moderatorActionsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("moderator_actions.json", snapshot, _moderatorActionsWriteLock, "moderator actions");
         }
 
         /// <summary>
@@ -3566,29 +3416,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves user style overrides to disk.
         /// </summary>
-        private async Task SaveUserStyleOverridesAsync()
+        private Task SaveUserStyleOverridesAsync()
         {
-            await _userStyleOverridesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserStyleOverride> snapshot;
+            lock (_lock)
             {
-                var stylesFile = Path.Combine(_dataPath, "user_style_overrides.json");
-                List<UserStyleOverride> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _userStyleOverrides.Values.ToList();
-                }
+                snapshot = _userStyleOverrides.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(stylesFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving user style overrides to disk");
-            }
-            finally
-            {
-                _userStyleOverridesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("user_style_overrides.json", snapshot, _userStyleOverridesWriteLock, "user style overrides");
         }
 
         /// <summary>
@@ -3673,29 +3509,15 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves media quotas to disk.
         /// </summary>
-        private async Task SaveMediaQuotasAsync()
+        private Task SaveMediaQuotasAsync()
         {
-            await _mediaQuotasWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<MediaQuota> snapshot;
+            lock (_lock)
             {
-                var quotasFile = Path.Combine(_dataPath, "media_quotas.json");
-                List<MediaQuota> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _mediaQuotas.Values.ToList();
-                }
+                snapshot = _mediaQuotas.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(quotasFile, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving media quotas to disk");
-            }
-            finally
-            {
-                _mediaQuotasWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("media_quotas.json", snapshot, _mediaQuotasWriteLock, "media quotas");
         }
 
         /// <summary>

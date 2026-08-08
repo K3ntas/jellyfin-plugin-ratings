@@ -100,6 +100,54 @@ namespace Jellyfin.Plugin.Ratings.Data
                 _profiles.Count, _friendRequests.Count, _friendships.Count, _onlineStatuses.Count, _blockedUsers.Count, _follows.Count, _profileLikes.Count, _mediaLists.Count);
         }
 
+        // Shared across all persistence calls: a fresh JsonSerializerOptions per write defeats
+        // System.Text.Json's metadata cache. WriteIndented is off - these files are machine-read
+        // only and pretty-printing added ~30-40% bytes to every mutation.
+        private static readonly JsonSerializerOptions PersistOptions = new JsonSerializerOptions
+        {
+            WriteIndented = false
+        };
+
+        /// <summary>
+        /// Serializes a snapshot and writes it atomically (temp file + rename), off the data lock.
+        /// </summary>
+        /// <remarks>
+        /// The <c>await Task.Yield()</c> matters: callers start these writes from inside
+        /// <c>lock (_lock)</c>, and an uncontended SemaphoreSlim.WaitAsync completes synchronously,
+        /// so without it JsonSerializer.Serialize would run while the global lock is still held.
+        /// The temp-file rename makes the swap atomic so a crash mid-write cannot leave a truncated,
+        /// unparseable file that the loader would silently treat as empty.
+        /// </remarks>
+        /// <typeparam name="T">Snapshot type.</typeparam>
+        /// <param name="fileName">File name within the data directory.</param>
+        /// <param name="snapshot">Already-captured snapshot to persist.</param>
+        /// <param name="gate">Per-file write gate.</param>
+        /// <param name="label">Human-readable label for log messages.</param>
+        /// <returns>Task.</returns>
+        private async Task WriteJsonAtomicAsync<T>(string fileName, T snapshot, SemaphoreSlim gate, string label)
+        {
+            await Task.Yield();
+
+            await gate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var path = Path.Combine(_dataPath, fileName);
+                var tempPath = path + ".tmp";
+
+                var json = JsonSerializer.Serialize(snapshot, PersistOptions);
+                await File.WriteAllTextAsync(tempPath, json).ConfigureAwait(false);
+                File.Move(tempPath, path, true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Social] Error saving {Label} to disk", label);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
         /// <summary>
         /// Gets debug information about the social repository state.
         /// </summary>
@@ -205,29 +253,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveProfilesAsync()
+        private Task SaveProfilesAsync()
         {
-            await _profilesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserProfile> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "profiles.json");
-                List<UserProfile> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _profiles.Values.ToList();
-                }
+                snapshot = _profiles.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving profiles to disk");
-            }
-            finally
-            {
-                _profilesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("profiles.json", snapshot, _profilesWriteLock, "profiles");
         }
 
         #endregion
@@ -378,29 +412,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveFriendRequestsAsync()
+        private Task SaveFriendRequestsAsync()
         {
-            await _friendRequestsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<FriendRequest> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "friend_requests.json");
-                List<FriendRequest> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _friendRequests.ToList();
-                }
+                snapshot = _friendRequests.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving friend requests to disk");
-            }
-            finally
-            {
-                _friendRequestsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("friend_requests.json", snapshot, _friendRequestsWriteLock, "friend requests");
         }
 
         #endregion
@@ -520,29 +540,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveFriendshipsAsync()
+        private Task SaveFriendshipsAsync()
         {
-            await _friendshipsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<Friendship> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "friendships.json");
-                List<Friendship> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _friendships.ToList();
-                }
+                snapshot = _friendships.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving friendships to disk");
-            }
-            finally
-            {
-                _friendshipsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("friendships.json", snapshot, _friendshipsWriteLock, "friendships");
         }
 
         #endregion
@@ -747,29 +753,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveNotificationsAsync()
+        private Task SaveNotificationsAsync()
         {
-            await _notificationsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<SocialNotification> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "notifications.json");
-                List<SocialNotification> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _notifications.ToList();
-                }
+                snapshot = _notifications.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving notifications to disk");
-            }
-            finally
-            {
-                _notificationsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("notifications.json", snapshot, _notificationsWriteLock, "notifications");
         }
 
         #endregion
@@ -1034,29 +1026,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveOnlineStatusesAsync()
+        private Task SaveOnlineStatusesAsync()
         {
-            await _onlineStatusWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserOnlineStatus> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "online_statuses.json");
-                List<UserOnlineStatus> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _onlineStatuses.Values.ToList();
-                }
+                snapshot = _onlineStatuses.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving online statuses to disk");
-            }
-            finally
-            {
-                _onlineStatusWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("online_statuses.json", snapshot, _onlineStatusWriteLock, "online statuses");
         }
 
         #endregion
@@ -1093,19 +1071,17 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <summary>
         /// Saves blocked users to disk.
         /// </summary>
-        private async Task SaveBlockedUsersAsync()
+        private Task SaveBlockedUsersAsync()
         {
-            await _blockedUsersLock.WaitAsync().ConfigureAwait(false);
-            try
+            // Snapshot under the lock: serializing the live list directly could throw
+            // "Collection was modified" if another request blocks/unblocks concurrently.
+            List<BlockedUser> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "blocked_users.json");
-                var json = JsonSerializer.Serialize(_blockedUsers, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
+                snapshot = _blockedUsers.ToList();
             }
-            finally
-            {
-                _blockedUsersLock.Release();
-            }
+
+            return WriteJsonAtomicAsync("blocked_users.json", snapshot, _blockedUsersLock, "blocked users");
         }
 
         /// <summary>
@@ -1359,29 +1335,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveFollowsAsync()
+        private Task SaveFollowsAsync()
         {
-            await _followsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserFollow> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "follows.json");
-                List<UserFollow> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _follows.ToList();
-                }
+                snapshot = _follows.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving follows to disk");
-            }
-            finally
-            {
-                _followsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("follows.json", snapshot, _followsWriteLock, "follows");
         }
 
         #endregion
@@ -1492,29 +1454,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveProfileLikesAsync()
+        private Task SaveProfileLikesAsync()
         {
-            await _profileLikesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ProfileLike> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "profile_likes.json");
-                List<ProfileLike> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _profileLikes.ToList();
-                }
+                snapshot = _profileLikes.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving profile likes to disk");
-            }
-            finally
-            {
-                _profileLikesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("profile_likes.json", snapshot, _profileLikesWriteLock, "profile likes");
         }
 
         #endregion
@@ -1720,29 +1668,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveMediaListsAsync()
+        private Task SaveMediaListsAsync()
         {
-            await _mediaListsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserMediaList> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "media_lists.json");
-                List<UserMediaList> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _mediaLists.ToList();
-                }
+                snapshot = _mediaLists.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving media lists to disk");
-            }
-            finally
-            {
-                _mediaListsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("media_lists.json", snapshot, _mediaListsWriteLock, "media lists");
         }
 
         #endregion
@@ -1874,29 +1808,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveListItemsAsync()
+        private Task SaveListItemsAsync()
         {
-            await _listItemsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserMediaListItem> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "list_items.json");
-                List<UserMediaListItem> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _listItems.ToList();
-                }
+                snapshot = _listItems.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving list items to disk");
-            }
-            finally
-            {
-                _listItemsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("list_items.json", snapshot, _listItemsWriteLock, "list items");
         }
 
         #endregion
@@ -1971,29 +1891,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveProfileStylesAsync()
+        private Task SaveProfileStylesAsync()
         {
-            await _profileStylesWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<UserProfileStyle> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "profile_styles.json");
-                List<UserProfileStyle> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _profileStyles.Values.ToList();
-                }
+                snapshot = _profileStyles.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving profile styles to disk");
-            }
-            finally
-            {
-                _profileStylesWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("profile_styles.json", snapshot, _profileStylesWriteLock, "profile styles");
         }
 
         #endregion
@@ -2068,29 +1974,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveImdbCacheDataAsync()
+        private Task SaveImdbCacheDataAsync()
         {
-            await _imdbCacheWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<ImdbCacheItem> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "imdb_cache.json");
-                List<ImdbCacheItem> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _imdbCache.Values.ToList();
-                }
+                snapshot = _imdbCache.Values.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving IMDB cache to disk");
-            }
-            finally
-            {
-                _imdbCacheWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("imdb_cache.json", snapshot, _imdbCacheWriteLock, "IMDB cache");
         }
 
         #endregion
@@ -2196,29 +2088,15 @@ namespace Jellyfin.Plugin.Ratings.Data
             }
         }
 
-        private async Task SaveFeaturedReviewsAsync()
+        private Task SaveFeaturedReviewsAsync()
         {
-            await _featuredReviewsWriteLock.WaitAsync().ConfigureAwait(false);
-            try
+            List<FeaturedReview> snapshot;
+            lock (_lock)
             {
-                var file = Path.Combine(_dataPath, "featured_reviews.json");
-                List<FeaturedReview> snapshot;
-                lock (_lock)
-                {
-                    snapshot = _featuredReviews.ToList();
-                }
+                snapshot = _featuredReviews.ToList();
+            }
 
-                var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-                await File.WriteAllTextAsync(file, json).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[Social] Error saving featured reviews to disk");
-            }
-            finally
-            {
-                _featuredReviewsWriteLock.Release();
-            }
+            return WriteJsonAtomicAsync("featured_reviews.json", snapshot, _featuredReviewsWriteLock, "featured reviews");
         }
 
         #endregion

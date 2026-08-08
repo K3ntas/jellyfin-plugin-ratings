@@ -721,6 +721,18 @@ namespace Jellyfin.Plugin.Ratings.Api
             var messages = _repository.GetRecentChatMessages(limit, since);
             var typingUsers = _repository.GetTypingUsers();
 
+            // Resolve admin/moderator status ONCE per distinct sender rather than once per message.
+            // A 50-message page from a handful of people used to cost 100 lookups (each
+            // IsJellyfinAdmin hits IUserManager.GetUserById) on every poll, from every client.
+            var roles = new Dictionary<Guid, (bool IsAdmin, bool IsModerator)>();
+            foreach (var m in messages)
+            {
+                if (!roles.ContainsKey(m.UserId))
+                {
+                    roles[m.UserId] = (IsJellyfinAdmin(m.UserId), _repository.IsChatModerator(m.UserId));
+                }
+            }
+
             // Enrich messages - null out content for deleted messages (#13)
             var enrichedMessages = messages.Select(m => new Dictionary<string, object?>
             {
@@ -733,8 +745,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 { "timestamp", m.Timestamp },
                 { "isDeleted", m.IsDeleted },
                 { "replyToId", m.ReplyToId },
-                { "isAdmin", IsJellyfinAdmin(m.UserId) },
-                { "isModerator", _repository.IsChatModerator(m.UserId) }
+                { "isAdmin", roles[m.UserId].IsAdmin },
+                { "isModerator", roles[m.UserId].IsModerator }
             }).ToList();
 
             return Ok(new { messages = enrichedMessages, typingUsers });

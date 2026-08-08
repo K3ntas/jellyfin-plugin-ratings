@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.360.0",
+        "changelog": "Big speed and smoothness pass. Pages load about a third lighter: the plugin's styles are now a proper stylesheet instead of being stuffed inside the script, and only your own language is downloaded rather than all sixteen. Scrolling through libraries is noticeably smoother because the plugin no longer re-scans the whole page every time anything on it changes. The admin Media list now asks the database for just the page you're looking at instead of loading your entire library first, so it opens quickly even on large collections. Chat only fetches new messages instead of re-downloading the last 50 every two seconds, and background tabs stop polling entirely. Watching something no longer rewrites a settings file every few seconds of playback. Data files are also written more safely, so a crash or power cut mid-save can no longer leave them corrupted. Includes the admin category list scrollbar fix from PR #73.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.360.0/jellyfin-plugin-ratings_1.0.360.0.zip",
+        "checksum": "1ee6ddacb27c32404098ce78a6170a5c",
+        "timestamp": "2026-08-08T14:00:00Z"
+      },
+      {
         "version": "1.0.359.0",
         "changelog": "Properly fixes the 'new media' pop-ups that kept appearing for films and shows already on your server. The plugin now learns your whole existing library the first time it runs and only alerts you about genuinely new additions. A library scan, a re-scan, or installing the plugin on a big existing collection no longer floods you with 'now available' alerts for old content - including whole seasons that were already there. Re-scans and re-added files no longer fool it either.",
         "targetAbi": "10.11.0.0",
