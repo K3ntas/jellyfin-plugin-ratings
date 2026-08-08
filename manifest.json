@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.350.0",
+        "changelog": "Back now returns to the previous profile instead of closing everything. Opening someone's profile from a followers, following or Similar Taste list used to be a one-way trip - pressing Back tore the whole profile window down and dropped you back on the page behind it. It now steps back through the profiles you visited, and only closes once there is nowhere left to go back to. The button reads 'Back to profile' when there is.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.350.0/Jellyfin.Plugin.Ratings_2.0.350.0.zip",
+        "checksum": "d7c01077f00f7764a8cec1d5d9503546",
+        "timestamp": "2026-08-08T17:01:00Z"
+      },
+      {
         "version": "2.0.349.0",
         "changelog": "The Similar Taste list now includes everyone on the server. Users with a private profile were previously left out of the matching, which made the list thin on servers where people had tightened their privacy settings. Since what the card shows is an aggregate genre percentage rather than any particular title, everyone is now included. Blocked users are still left out, in both directions.",
         "targetAbi": "10.11.0.0",

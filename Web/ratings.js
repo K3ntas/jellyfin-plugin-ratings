@@ -3187,14 +3187,29 @@
         },
 
         /**
-         * Show the profile page for a user (Letterboxd-style modal)
+         * Show the profile page for a user (Letterboxd-style modal).
+         * @param {string} userId Profile to show.
+         * @param {boolean} [isBack] True when navigating back, so the history is not re-pushed.
          */
-        showProfilePage: function (userId) {
+        showProfilePage: function (userId, isBack) {
             var self = this;
             self.injectProfileRedesignStyles();
             var existing = document.getElementById('socialProfilePage');
             if (existing) {
                 existing.remove();
+            }
+
+            // Remember where we came from, so Back returns to the previous profile instead of
+            // closing the whole thing. Opening someone's profile from a match/follower list used
+            // to be a one-way trip: Back tore the overlay down and dumped you on the page behind.
+            self._profileHistory = self._profileHistory || [];
+            if (!isBack && self._viewingProfileUserId && self._viewingProfileUserId !== userId) {
+                self._profileHistory.push(self._viewingProfileUserId);
+
+                // Guard against a long chain of profile-hopping growing without bound.
+                if (self._profileHistory.length > 20) {
+                    self._profileHistory.shift();
+                }
             }
 
             // Track which profile we're viewing
@@ -3309,7 +3324,9 @@
         renderProfileError: function (page, message) {
             var container = page.querySelector('.social-profile-container');
             if (container) {
-                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
+                // Also goes back rather than closing: hitting a broken profile from someone's
+                // follower list should return you to where you were, not dump you out entirely.
+                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
@@ -4296,8 +4313,9 @@
 
             // Toolbar with back, fullscreen, and settings
             html += '<div class="lb-toolbar">' +
-                '<div class="lb-back" onclick="RatingsPlugin.closeProfilePage()">' +
-                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div>' +
+                '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()">' +
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+                ((self._profileHistory && self._profileHistory.length > 0) ? 'Back to profile' : 'Back') + '</div>' +
                 '<div class="lb-toolbar-actions">' +
                 (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
                 '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
@@ -6407,12 +6425,35 @@
         /**
          * Close the profile page
          */
+        /**
+         * Back button: return to the profile you came from, or close if this is the first one.
+         *
+         * The button used to call closeProfilePage() unconditionally, so opening someone's profile
+         * from a followers or match list and pressing Back closed the whole overlay rather than
+         * returning to the profile you were looking at.
+         */
+        profileGoBack: function () {
+            var self = this;
+            var history = self._profileHistory || [];
+
+            if (history.length > 0) {
+                var previous = history.pop();
+                self.showProfilePage(previous, true);
+                return;
+            }
+
+            self.closeProfilePage();
+        },
+
         closeProfilePage: function () {
             var self = this;
             var page = document.getElementById('socialProfilePage');
             if (page) {
                 page.remove();
             }
+
+            // Closing for real ends the trail - a later profile open starts fresh.
+            self._profileHistory = [];
 
             // Restore background page scrolling.
             document.body.style.overflow = self._prevBodyOverflow || '';
