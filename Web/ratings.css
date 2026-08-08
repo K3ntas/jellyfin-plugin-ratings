@@ -10545,3 +10545,102 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     color: #40bcf4;
     background: rgba(64, 188, 244, 0.12);
 }
+
+/* ============================================================================
+   Presence in the Similar Taste card, and display typography
+
+   Three states, per request:
+     bright green  - online AND watching something (title + live clock shown)
+     soft green    - online, not watching
+     grey          - offline
+   ============================================================================ */
+
+.lb-match-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.lb-presence-dot {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    /* Ring in the card's own background colour so the dot reads as a cut-out
+       rather than a sticker sitting on the avatar. */
+    box-shadow: 0 0 0 2.5px #1a212a;
+}
+
+/* Watching now - brightest, with a slow pulse so live activity is noticeable
+   without being distracting. */
+.lb-presence-dot.watching {
+    background: #00e054;
+    animation: lbPresencePulse 2.4s ease-in-out infinite;
+}
+
+/* Online but idle - present, deliberately quieter than "watching". */
+.lb-presence-dot.online {
+    background: #7ee2a8;
+}
+
+.lb-presence-dot.offline {
+    background: #5a6672;
+}
+
+@keyframes lbPresencePulse {
+    0%, 100% { box-shadow: 0 0 0 2.5px #1a212a, 0 0 0 0 rgba(0, 224, 84, 0.55); }
+    70%      { box-shadow: 0 0 0 2.5px #1a212a, 0 0 0 6px rgba(0, 224, 84, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lb-presence-dot.watching {
+        animation: none;
+    }
+}
+
+/* --- "Now watching" line --- */
+.lb-match-watching {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 11px;
+    min-width: 0;
+}
+
+.lb-watch-title {
+    color: #00e054;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lb-watch-time {
+    color: #8fa3b5;
+    /* Tabular figures stop the row twitching as the clock ticks. */
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* --- Display typography for the sidebar cards --- */
+.lb-match-name,
+.lb-user-name,
+.lb-donut-pct {
+    font-family: "Segoe UI Variable Display", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+        "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.lb-match-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.lb-match-score {
+    font-family: "Segoe UI Variable Display", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+        "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    letter-spacing: -0.02em;
+}

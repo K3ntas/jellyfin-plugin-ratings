@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.351.0",
+        "changelog": "See who is online and what they are watching, and a much better looking profile name. The Similar Taste list now shows a dot on each person: bright green and pulsing means they are watching something right now, and the card shows what it is with a clock that ticks along live; soft green means online but not watching; grey means offline. The profile name has also been fixed - it was drawn as a colour gradient clipped to the letters, which over a photo or video header turned it into washed-out grey. It is now solid white with proper display typography, using each platform's large-text typeface.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.351.0/Jellyfin.Plugin.Ratings_2.0.351.0.zip",
+        "checksum": "afc4d0808cc06d61e21e040d8608f91e",
+        "timestamp": "2026-08-08T17:30:00Z"
+      },
+      {
         "version": "2.0.350.0",
         "changelog": "Back now returns to the previous profile instead of closing everything. Opening someone's profile from a followers, following or Similar Taste list used to be a one-way trip - pressing Back tore the whole profile window down and dropped you back on the page behind it. It now steps back through the profiles you visited, and only closes once there is nowhere left to go back to. The button reads 'Back to profile' when there is.",
         "targetAbi": "10.11.0.0",
