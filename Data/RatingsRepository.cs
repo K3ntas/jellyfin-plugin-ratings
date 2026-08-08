@@ -22,6 +22,14 @@ namespace Jellyfin.Plugin.Ratings.Data
         private readonly object _lock = new object();
         private readonly JsonFileWriter _writer;
 
+        // Files written by older versions used PascalCase property names. The API-facing models
+        // now carry explicit camelCase names, so reads MUST be case-insensitive or every existing
+        // ratings.json would silently deserialize to defaults - i.e. look like total data loss.
+        private static readonly JsonSerializerOptions ReadOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         // Semaphores to prevent concurrent file writes (fixes race condition)
         private static readonly SemaphoreSlim _ratingsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _requestsWriteLock = new(1, 1);
@@ -212,7 +220,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(ratingsFile))
                 {
                     var json = File.ReadAllText(ratingsFile);
-                    var ratings = JsonSerializer.Deserialize<List<UserRating>>(json);
+                    var ratings = JsonSerializer.Deserialize<List<UserRating>>(json, ReadOptions);
                     if (ratings != null)
                     {
                         _ratings = ratings.ToDictionary(r => r.Id);
@@ -911,7 +919,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(requestsFile))
                 {
                     var json = File.ReadAllText(requestsFile);
-                    var requests = JsonSerializer.Deserialize<List<MediaRequest>>(json);
+                    var requests = JsonSerializer.Deserialize<List<MediaRequest>>(json, ReadOptions);
                     if (requests != null)
                     {
                         _mediaRequests = requests.ToDictionary(r => r.Id);
@@ -1341,7 +1349,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json, ReadOptions);
                     if (data != null)
                     {
                         var cutoff = DateTime.UtcNow - NotifiedItemRetention;
@@ -1489,7 +1497,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(file))
                 {
                     var json = File.ReadAllText(file);
-                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json, ReadOptions);
                     if (data != null)
                     {
                         _seenMediaKeys = data;
@@ -1530,7 +1538,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(deletionsFile))
                 {
                     var json = File.ReadAllText(deletionsFile);
-                    var deletions = JsonSerializer.Deserialize<List<ScheduledDeletion>>(json);
+                    var deletions = JsonSerializer.Deserialize<List<ScheduledDeletion>>(json, ReadOptions);
                     if (deletions != null)
                     {
                         _scheduledDeletions = deletions.ToDictionary(d => d.ItemId);
@@ -1712,7 +1720,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(filePath))
                 {
                     var json = File.ReadAllText(filePath);
-                    var requests = JsonSerializer.Deserialize<List<KeepRequest>>(json);
+                    var requests = JsonSerializer.Deserialize<List<KeepRequest>>(json, ReadOptions);
                     if (requests != null)
                     {
                         _keepRequests = requests;
@@ -1751,7 +1759,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(filePath))
                 {
                     var json = File.ReadAllText(filePath);
-                    var likes = JsonSerializer.Deserialize<List<ReviewLike>>(json);
+                    var likes = JsonSerializer.Deserialize<List<ReviewLike>>(json, ReadOptions);
                     if (likes != null)
                     {
                         _reviewLikes = likes.ToDictionary(l => l.Id);
@@ -1790,7 +1798,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(filePath))
                 {
                     var json = File.ReadAllText(filePath);
-                    var comments = JsonSerializer.Deserialize<List<ReviewComment>>(json);
+                    var comments = JsonSerializer.Deserialize<List<ReviewComment>>(json, ReadOptions);
                     if (comments != null)
                     {
                         _reviewComments = comments.ToDictionary(c => c.Id);
@@ -2142,7 +2150,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(requestsFile))
                 {
                     var json = File.ReadAllText(requestsFile);
-                    var requests = JsonSerializer.Deserialize<List<DeletionRequest>>(json);
+                    var requests = JsonSerializer.Deserialize<List<DeletionRequest>>(json, ReadOptions);
                     if (requests != null)
                     {
                         _deletionRequests = requests.ToDictionary(r => r.Id);
@@ -2296,7 +2304,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(bansFile))
                 {
                     var json = File.ReadAllText(bansFile);
-                    var bans = JsonSerializer.Deserialize<List<UserBan>>(json);
+                    var bans = JsonSerializer.Deserialize<List<UserBan>>(json, ReadOptions);
                     if (bans != null)
                     {
                         _userBans = bans.ToDictionary(b => b.Id);
@@ -2404,7 +2412,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(messagesFile))
                 {
                     var json = File.ReadAllText(messagesFile);
-                    var messages = JsonSerializer.Deserialize<List<ChatMessage>>(json);
+                    var messages = JsonSerializer.Deserialize<List<ChatMessage>>(json, ReadOptions);
                     if (messages != null)
                     {
                         _chatMessages = messages;
@@ -2560,7 +2568,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(usersFile))
                 {
                     var json = File.ReadAllText(usersFile);
-                    var users = JsonSerializer.Deserialize<List<ChatUser>>(json);
+                    var users = JsonSerializer.Deserialize<List<ChatUser>>(json, ReadOptions);
                     if (users != null)
                     {
                         _chatUsers = users.ToDictionary(u => u.UserId);
@@ -2720,7 +2728,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(modsFile))
                 {
                     var json = File.ReadAllText(modsFile);
-                    var mods = JsonSerializer.Deserialize<List<ChatModerator>>(json);
+                    var mods = JsonSerializer.Deserialize<List<ChatModerator>>(json, ReadOptions);
                     if (mods != null)
                     {
                         _chatModerators = mods.ToDictionary(m => m.Id);
@@ -2834,7 +2842,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(bansFile))
                 {
                     var json = File.ReadAllText(bansFile);
-                    var bans = JsonSerializer.Deserialize<List<ChatBan>>(json);
+                    var bans = JsonSerializer.Deserialize<List<ChatBan>>(json, ReadOptions);
                     if (bans != null)
                     {
                         _chatBans = bans.ToDictionary(b => b.Id);
@@ -2951,7 +2959,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(messagesFile))
                 {
                     var json = File.ReadAllText(messagesFile);
-                    var messages = JsonSerializer.Deserialize<List<PrivateMessage>>(json);
+                    var messages = JsonSerializer.Deserialize<List<PrivateMessage>>(json, ReadOptions);
                     if (messages != null)
                     {
                         _privateMessages = messages;
@@ -2991,7 +2999,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(lastSeenFile))
                 {
                     var json = File.ReadAllText(lastSeenFile);
-                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                    var data = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json, ReadOptions);
                     if (data != null)
                     {
                         foreach (var kvp in data)
@@ -3327,7 +3335,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(actionsFile))
                 {
                     var json = File.ReadAllText(actionsFile);
-                    var actions = JsonSerializer.Deserialize<List<ModeratorAction>>(json);
+                    var actions = JsonSerializer.Deserialize<List<ModeratorAction>>(json, ReadOptions);
                     if (actions != null)
                     {
                         _moderatorActions = actions;
@@ -3446,7 +3454,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(stylesFile))
                 {
                     var json = File.ReadAllText(stylesFile);
-                    var styles = JsonSerializer.Deserialize<List<UserStyleOverride>>(json);
+                    var styles = JsonSerializer.Deserialize<List<UserStyleOverride>>(json, ReadOptions);
                     if (styles != null)
                     {
                         _userStyleOverrides = styles.ToDictionary(s => s.UserId);
@@ -3539,7 +3547,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 if (File.Exists(quotasFile))
                 {
                     var json = File.ReadAllText(quotasFile);
-                    var quotas = JsonSerializer.Deserialize<List<MediaQuota>>(json);
+                    var quotas = JsonSerializer.Deserialize<List<MediaQuota>>(json, ReadOptions);
                     if (quotas != null)
                     {
                         _mediaQuotas = quotas.ToDictionary(q => q.UserId);

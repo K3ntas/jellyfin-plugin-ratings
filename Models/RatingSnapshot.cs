@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace Jellyfin.Plugin.Ratings.Models
 {
     /// <summary>
@@ -16,26 +17,31 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the title.
         /// </summary>
+        [JsonPropertyName("title")]
         public string? Title { get; set; }
 
         /// <summary>
         /// Gets or sets the release year.
         /// </summary>
+        [JsonPropertyName("year")]
         public int? Year { get; set; }
 
         /// <summary>
         /// Gets or sets the media type ("Movie" or "Series").
         /// </summary>
+        [JsonPropertyName("mediaType")]
         public string? MediaType { get; set; }
 
         /// <summary>
         /// Gets or sets a poster URL that outlives the item.
         /// </summary>
+        [JsonPropertyName("posterUrl")]
         public string? PosterUrl { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the rated title is not in the library.
         /// </summary>
+        [JsonPropertyName("isExternal")]
         public bool? IsExternal { get; set; }
     }
 }

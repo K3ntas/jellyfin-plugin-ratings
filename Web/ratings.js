@@ -2238,7 +2238,7 @@
             self._currentWatching = {
                 itemId: item.Id,
                 title: item.Name || 'Unknown',
-                type: item.MediaType || item.Type || 'Video',
+                type: (item.mediaType ?? item.MediaType) || item.Type || 'Video',
                 seriesName: item.SeriesName || null,
                 episodeInfo: self.formatEpisodeInfo(item),
                 positionTicks: state.PlayState?.PositionTicks || 0,
@@ -2253,7 +2253,7 @@
          */
         onPlaybackStartFromApi: function (options) {
             var self = this;
-            if (!options || !options.ItemId) return;
+            if (!options || !(options.itemId ?? options.ItemId)) return;
 
             // Fetch item details if needed
             if (options.Item) {
@@ -2261,7 +2261,7 @@
                 self._currentWatching = {
                     itemId: item.Id,
                     title: item.Name || 'Unknown',
-                    type: item.MediaType || item.Type || 'Video',
+                    type: (item.mediaType ?? item.MediaType) || item.Type || 'Video',
                     seriesName: item.SeriesName || null,
                     episodeInfo: self.formatEpisodeInfo(item),
                     positionTicks: options.PositionTicks || 0,
@@ -2270,11 +2270,11 @@
                 self.sendWatching(self._currentWatching);
             } else {
                 // We have ItemId but no details - fetch them
-                ApiClient.getItem(ApiClient.getCurrentUserId(), options.ItemId).then(function (item) {
+                ApiClient.getItem(ApiClient.getCurrentUserId(), (options.itemId ?? options.ItemId)).then(function (item) {
                     self._currentWatching = {
                         itemId: item.Id,
                         title: item.Name || 'Unknown',
-                        type: item.MediaType || item.Type || 'Video',
+                        type: (item.mediaType ?? item.MediaType) || item.Type || 'Video',
                         seriesName: item.SeriesName || null,
                         episodeInfo: self.formatEpisodeInfo(item),
                         positionTicks: options.PositionTicks || 0,
@@ -2284,7 +2284,7 @@
                 }).catch(function () {
                     // Fallback: send minimal info
                     self._currentWatching = {
-                        itemId: options.ItemId,
+                        itemId: (options.itemId ?? options.ItemId),
                         title: 'Unknown',
                         type: 'Video',
                         positionTicks: options.PositionTicks || 0,
@@ -3526,8 +3526,8 @@
                     var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
                     var html = '';
                     ratings.slice(0, 12).forEach(function (r) {
-                        var id = r.itemId || r.ItemId || '';
-                        var name = r.itemName || r.ItemName || 'Unknown';
+                        var id = r.itemId || (r.itemId ?? r.ItemId) || '';
+                        var name = r.itemName || (r.itemName ?? r.ItemName) || 'Unknown';
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
                         var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
@@ -3550,13 +3550,13 @@
             self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentReviews');
                     if (!c) return;
-                    var reviews = ratings.filter(function (r) { return r.reviewText || r.ReviewText || r.review || r.Review; }).slice(0, 3);
+                    var reviews = ratings.filter(function (r) { return r.reviewText || (r.reviewText ?? r.ReviewText) || r.review || r.Review; }).slice(0, 3);
                     if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
                     var html = '';
                     reviews.forEach(function (r) {
-                        var id = r.itemId || r.ItemId || '';
-                        var name = r.itemName || r.ItemName || 'Unknown';
-                        var txt = r.reviewText || r.ReviewText || r.review || r.Review || '';
+                        var id = r.itemId || (r.itemId ?? r.ItemId) || '';
+                        var name = r.itemName || (r.itemName ?? r.ItemName) || 'Unknown';
+                        var txt = r.reviewText || (r.reviewText ?? r.ReviewText) || r.review || r.Review || '';
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
                         var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=120' : '';
@@ -3619,7 +3619,7 @@
                     html += '<div class="lb-am-section">On your server</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
-                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: it.Overview || '' }));
+                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' }));
                         html += '<div class="lb-am-row" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + sp + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + sp + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
@@ -3843,7 +3843,7 @@
             var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(title || 'film') + '” to…</div>';
             rows.forEach(function (row, i) {
                 var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
-                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                var rowName = (input && input.value.trim()) || row.title || (row.title ?? row.Title) || ('Row ' + (i + 1));
                 h += '<button onclick="RatingsPlugin.confirmAddToFavorites(\'' + self.escapeJs(itemId) + '\',' + i + ',\'' + self.escapeJs(title || '') + '\')">' + self.escapeHtml(rowName) + '</button>';
             });
             if (rows.length < 5) {
@@ -3918,7 +3918,7 @@
             var h = '<div class="lb-addrow-title">Add “' + self.escapeHtml(data.title || 'film') + '” to…</div>';
             rows.forEach(function (row, i) {
                 var input = document.querySelector('.lb-favorite-row[data-row="' + i + '"] .lb-row-title-input');
-                var rowName = (input && input.value.trim()) || row.title || row.Title || ('Row ' + (i + 1));
+                var rowName = (input && input.value.trim()) || row.title || (row.title ?? row.Title) || ('Row ' + (i + 1));
                 h += '<button onclick="RatingsPlugin.confirmAddExternalToFavorites(\'' + payloadEnc + '\',' + i + ')">' + self.escapeHtml(rowName) + '</button>';
             });
             if (rows.length < 5) {
@@ -3955,7 +3955,7 @@
             if (!rows[rowIndex]) return;
             if (!rows[rowIndex].items) rows[rowIndex].items = [];
             var tmdbId = String(data.tmdbId || '');
-            var dup = rows[rowIndex].items.some(function (it) { return it && tmdbId && String(it.tmdbId || it.TmdbId || '') === tmdbId; });
+            var dup = rows[rowIndex].items.some(function (it) { return it && tmdbId && String(it.tmdbId || (it.tmdbId ?? it.TmdbId) || '') === tmdbId; });
             if (!dup) {
                 rows[rowIndex].items.push({
                     itemId: '',
@@ -4020,7 +4020,7 @@
                 if (d.tmdbId) {
                     // Not-on-server catalog item (dedup by tmdbId).
                     var tid = String(d.tmdbId);
-                    if (items.some(function (it) { return it && String(it.tmdbId || it.TmdbId || '') === tid; })) { self.lbToast('Already in that row'); return; }
+                    if (items.some(function (it) { return it && String(it.tmdbId || (it.tmdbId ?? it.TmdbId) || '') === tid; })) { self.lbToast('Already in that row'); return; }
                     items.splice(pos, 0, {
                         itemId: '',
                         title: d.title || '',
@@ -4091,7 +4091,7 @@
          * True when a favorite entry is a catalog title that is NOT on the server.
          */
         isFavNotInLibrary: function (fav) {
-            return !!fav && (fav.notInLibrary === true || fav.NotInLibrary === true || (!fav.itemId && !fav.ItemId && !!(fav.tmdbId || fav.TmdbId)));
+            return !!fav && (fav.notInLibrary === true || fav.NotInLibrary === true || (!fav.itemId && !(fav.itemId ?? fav.ItemId) && !!(fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))));
         },
 
         /**
@@ -4103,7 +4103,7 @@
             var self = this;
             var base = ApiClient.serverAddress();
             var notInLib = self.isFavNotInLibrary(fav);
-            var itemId = fav.itemId || fav.ItemId || '';
+            var itemId = fav.itemId || (fav.itemId ?? fav.ItemId) || '';
             var img = notInLib
                 ? (fav.imageUrl || fav.ImageUrl || '')
                 : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
@@ -4116,10 +4116,10 @@
             var clickAttr = '';
             if (notInLib) {
                 var payload = encodeURIComponent(JSON.stringify({
-                    title: fav.title || fav.Title || '',
-                    year: fav.year || fav.Year || '',
-                    type: fav.mediaType || fav.MediaType || 'Movie',
-                    tmdbId: fav.tmdbId || fav.TmdbId || '',
+                    title: fav.title || (fav.title ?? fav.Title) || '',
+                    year: fav.year || (fav.year ?? fav.Year) || '',
+                    type: fav.mediaType || (fav.mediaType ?? fav.MediaType) || 'Movie',
+                    tmdbId: fav.tmdbId || (fav.tmdbId ?? fav.TmdbId) || '',
                     poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
                 }));
                 extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
@@ -4147,10 +4147,10 @@
             var rows = (self._currentProfile && self._currentProfile.favoriteRows) || [];
             var item = rows[row] && rows[row].items && rows[row].items[idx];
             if (!item) return;
-            var title = item.title || item.Title || 'Untitled';
-            var year = item.year || item.Year || '';
-            var overview = item.overview || item.Overview || '';
-            var itemId = item.itemId || item.ItemId || '';
+            var title = item.title || (item.title ?? item.Title) || 'Untitled';
+            var year = item.year || (item.year ?? item.Year) || '';
+            var overview = item.overview || (item.overview ?? item.Overview) || '';
+            var itemId = item.itemId || (item.itemId ?? item.ItemId) || '';
             var notInLib = self.isFavNotInLibrary(item);
             self._renderFavInfoPopup(slotEl, title, year, overview, notInLib);
 
@@ -4170,7 +4170,7 @@
                     .then(function (r) { return r.ok ? r.json() : null; })
                     .then(function (d) {
                         if (!d) return;
-                        var info = { title: d.Name || title, year: d.ProductionYear || year, overview: d.Overview || '' };
+                        var info = { title: d.Name || title, year: d.ProductionYear || year, overview: (d.overview ?? d.Overview) || '' };
                         self._favInfoCache[itemId] = info;
                         if (self._favInfoSlot === slotEl) {
                             self._renderFavInfoPopup(slotEl, info.title, info.year, info.overview, notInLib);
@@ -4231,7 +4231,7 @@
             var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
             // Compact (drop nulls) so array indices match rendered indices. Keep both on-server
             // items (have itemId) and catalog items (have tmdbId but no itemId).
-            var items = (row.items || []).filter(function (f) { return f && (f.itemId || f.ItemId || f.tmdbId || f.TmdbId); });
+            var items = (row.items || []).filter(function (f) { return f && (f.itemId || (f.itemId ?? f.ItemId) || f.tmdbId || (f.tmdbId ?? f.TmdbId)); });
             row.items = items;
             var html = '';
             items.forEach(function (fav, i) {
@@ -4361,7 +4361,7 @@
                 '</div></div>';
 
             // Profile header with gradient background (or an uploaded looping GIF/video behind it).
-            var headerMediaUrl = profile.headerMediaUrl || profile.HeaderMediaUrl || '';
+            var headerMediaUrl = profile.headerMediaUrl || (profile.headerMediaUrl ?? profile.HeaderMediaUrl) || '';
             var headerMediaType = profile.headerMediaType || profile.HeaderMediaType || '';
             var headerBgInner = '';
             if (headerMediaUrl) {
@@ -4425,15 +4425,15 @@
             // with PascalCase nested keys (Items/ItemId/ImageUrl); the favorites UI reads camelCase,
             // so without this the rows load EMPTY and the next save overwrites the saved items.
             if (profile) {
-                var rawRows = profile.favoriteRows || profile.FavoriteRows || [];
+                var rawRows = profile.favoriteRows || (profile.favoriteRows ?? profile.FavoriteRows) || [];
                 profile.favoriteRows = rawRows.map(function (row) {
                     var rawItems = (row && (row.items || row.Items)) || [];
                     return {
-                        title: (row && (row.title || row.Title)) || 'Favorites',
+                        title: (row && (row.title || (row.title ?? row.Title))) || 'Favorites',
                         items: rawItems.map(function (it) {
                             return {
-                                itemId: (it && (it.itemId || it.ItemId)) || '',
-                                title: (it && (it.title || it.Title)) || '',
+                                itemId: (it && (it.itemId || (it.itemId ?? it.ItemId))) || '',
+                                title: (it && (it.title || (it.title ?? it.Title))) || '',
                                 imageUrl: (it && (it.imageUrl || it.ImageUrl)) || ''
                             };
                         }).filter(function (it) { return it.itemId; })
@@ -4691,7 +4691,7 @@
                 var visibleCount = Math.min(itemCount, 10);
                 for (var i = 0; i < visibleCount; i++) {
                     var fav = items[i];
-                    if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                    if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
                         html += self.favSlotHtml(fav, rowIndex, i, isSelf);
                     }
                 }
@@ -5023,7 +5023,7 @@
                     name: d.Name || '',
                     seriesName: d.SeriesName || '',
                     year: d.ProductionYear || '',
-                    overview: d.Overview || '',
+                    overview: (d.overview ?? d.Overview) || '',
                     genres: d.Genres || [],
                     runtimeMinutes: d.RunTimeTicks ? Math.round(d.RunTimeTicks / 600000000) : 0,
                     officialRating: d.OfficialRating || '',
@@ -5417,11 +5417,11 @@
 
                 var html = '<div class="lb-activity-list">';
                 ratings.slice(0, limit || 10).forEach(function (r) {
-                    var title = r.itemName || r.title || r.ItemName || r.Title || 'Unknown';
+                    var title = r.itemName || r.title || (r.itemName ?? r.ItemName) || (r.title ?? r.Title) || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
-                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
-                    var hasReview = r.review || r.Review || r.reviewText || r.ReviewText;
-                    var itemId = r.itemId || r.ItemId || '';
+                    var timestamp = r.updatedAt || (r.updatedAt ?? r.UpdatedAt) || r.createdAt || (r.createdAt ?? r.CreatedAt);
+                    var hasReview = r.review || r.Review || r.reviewText || (r.reviewText ?? r.ReviewText);
+                    var itemId = r.itemId || (r.itemId ?? r.ItemId) || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
                     var titleHtml = inLib
                         ? '<strong style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')">' + self.escapeHtml(title) + '</strong>'
@@ -5490,17 +5490,17 @@
                 var baseUrl = ApiClient.serverAddress();
                 var html = '<div class="lb-ratings-grid">';
                 ratings.forEach(function (r) {
-                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var title = r.itemName || (r.itemName ?? r.ItemName) || r.title || (r.title ?? r.Title) || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
-                    var itemId = r.itemId || r.ItemId || '';
+                    var itemId = r.itemId || (r.itemId ?? r.ItemId) || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
-                    var year = r.year || r.Year;
+                    var year = r.year || (r.year ?? r.Year);
 
                     // The server now remembers a poster with the rating, so a title that has been
                     // removed from the server still shows properly instead of an empty card with
                     // bare stars (issue #72). Only fall back to a live Jellyfin image URL when the
                     // item is actually still in the library - otherwise it just 404s.
-                    var imageUrl = r.posterUrl || r.PosterUrl || r.imageUrl || r.ImageUrl || '';
+                    var imageUrl = r.posterUrl || (r.posterUrl ?? r.PosterUrl) || r.imageUrl || r.ImageUrl || '';
                     if (!imageUrl && inLib) {
                         imageUrl = baseUrl + '/Items/' + itemId + '/Images/Primary?maxHeight=200';
                     }
@@ -5588,7 +5588,7 @@
                 var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 // Filter to only those with review text
                 var reviews = ratings.filter(function (r) {
-                    return r.review || r.Review || r.reviewText || r.ReviewText;
+                    return r.review || r.Review || r.reviewText || (r.reviewText ?? r.ReviewText);
                 });
 
                 if (reviews.length === 0) {
@@ -5598,13 +5598,13 @@
 
                 var html = '<div class="lb-reviews-list">';
                 reviews.forEach(function (r) {
-                    var reviewText = r.review || r.Review || r.reviewText || r.ReviewText || '';
-                    var title = r.itemName || r.ItemName || r.title || r.Title || 'Unknown';
+                    var reviewText = r.review || r.Review || r.reviewText || (r.reviewText ?? r.ReviewText) || '';
+                    var title = r.itemName || (r.itemName ?? r.ItemName) || r.title || (r.title ?? r.Title) || 'Unknown';
                     var rating = r.rating || r.Rating || 0;
-                    var timestamp = r.updatedAt || r.UpdatedAt || r.createdAt || r.CreatedAt;
+                    var timestamp = r.updatedAt || (r.updatedAt ?? r.UpdatedAt) || r.createdAt || (r.createdAt ?? r.CreatedAt);
                     var likeCount = r.likeCount || r.LikeCount || 0;
                     var dislikeCount = r.dislikeCount || r.DislikeCount || 0;
-                    var itemId = r.itemId || r.ItemId || '';
+                    var itemId = r.itemId || (r.itemId ?? r.ItemId) || '';
                     var inLib = (r.inLibrary !== false && r.InLibrary !== false) && itemId;
                     var titleAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
                     var canVote = (!self._currentProfileStatus || !self._currentProfileStatus.isSelf) && itemId;
@@ -6044,7 +6044,7 @@
                 }
 
                 // Get item IDs
-                var itemIds = pageRatings.map(function (r) { return r.itemId || r.ItemId; }).filter(Boolean);
+                var itemIds = pageRatings.map(function (r) { return r.itemId || (r.itemId ?? r.ItemId); }).filter(Boolean);
 
                 // Fetch media details for these items
                 fetch(baseUrl + '/Users/' + userId + '/Items?Ids=' + itemIds.join(',') + '&Fields=PrimaryImageAspectRatio,CommunityRating', {
@@ -6057,7 +6057,7 @@
                     // Build ratings map
                     var ratingsMap = {};
                     pageRatings.forEach(function (r) {
-                        var id = r.itemId || r.ItemId;
+                        var id = r.itemId || (r.itemId ?? r.ItemId);
                         if (id) {
                             ratingsMap[id.toLowerCase()] = r.rating || r.Rating;
                             ratingsMap[id.toUpperCase()] = r.rating || r.Rating;
@@ -6099,7 +6099,7 @@
                 var ratings = {};
                 var list = data.ratings || data || [];
                 list.forEach(function (r) {
-                    var id = r.itemId || r.ItemId;
+                    var id = r.itemId || (r.itemId ?? r.ItemId);
                     var rating = r.rating || r.Rating;
                     if (id) {
                         // Store both lowercase and uppercase versions for matching
@@ -6459,7 +6459,7 @@
             var addSlot = grid.querySelector('.add-slot');
             for (var i = 10; i < items.length; i++) {
                 var fav = items[i];
-                if (fav && (fav.itemId || fav.ItemId || fav.tmdbId || fav.TmdbId)) {
+                if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
                     var slotHtml = self.favSlotHtml(fav, rowIndex, i, isSelf);
                     if (addSlot) {
                         addSlot.insertAdjacentHTML('beforebegin', slotHtml);
@@ -7506,13 +7506,13 @@
                 .then(stats => {
                     // Use knownUserRating if provided (avoids race condition after submit)
                     // Otherwise use server response
-                    var userRating = knownUserRating !== undefined ? knownUserRating : (stats.UserRating || 0);
+                    var userRating = knownUserRating !== undefined ? knownUserRating : ((stats.userRating ?? stats.UserRating) || 0);
 
                     // Track user's current rating for toggle-off feature
                     self.currentUserRating = userRating;
 
                     // For collections (no UserRating), show average in stars; otherwise show user's rating
-                    var displayRating = userRating || (stats.TotalRatings > 0 ? Math.round(stats.AverageRating) : 0);
+                    var displayRating = userRating || ((stats.totalRatings ?? stats.TotalRatings) > 0 ? Math.round((stats.averageRating ?? stats.AverageRating)) : 0);
                     self.updateStarDisplay(displayRating);
 
                     const cfg = self.starWidgetConfig || {};
@@ -7524,12 +7524,12 @@
                     if (statsElement) {
                         statsElement.textContent = '';
 
-                        if (stats.TotalRatings > 0 && showStats) {
+                        if ((stats.totalRatings ?? stats.TotalRatings) > 0 && showStats) {
                             // Build stats text from format - values are numeric from API
                             let statsText = statsFormat
-                                .replace('{avg}', Number(stats.AverageRating).toFixed(1))
-                                .replace('{count}', Number(stats.TotalRatings))
-                                .replace('{s}', stats.TotalRatings !== 1 ? 's' : '');
+                                .replace('{avg}', Number((stats.averageRating ?? stats.AverageRating)).toFixed(1))
+                                .replace('{count}', Number((stats.totalRatings ?? stats.TotalRatings)))
+                                .replace('{s}', (stats.totalRatings ?? stats.TotalRatings) !== 1 ? 's' : '');
 
                             var avgSpan = document.createElement('span');
                             avgSpan.className = 'ratings-plugin-average';
@@ -7547,13 +7547,13 @@
                             statsElement.appendChild(linkSpan);
                         }
 
-                        if (stats.UserRating && showYourRating) {
-                            let yourText = yourRatingFormat.replace('{rating}', Number(stats.UserRating));
+                        if ((stats.userRating ?? stats.UserRating) && showYourRating) {
+                            let yourText = yourRatingFormat.replace('{rating}', Number((stats.userRating ?? stats.UserRating)));
                             var yourDiv = document.createElement('div');
                             yourDiv.className = 'ratings-plugin-your-rating';
                             yourDiv.textContent = yourText;
                             statsElement.appendChild(yourDiv);
-                        } else if (stats.TotalRatings === 0 && showStats) {
+                        } else if ((stats.totalRatings ?? stats.TotalRatings) === 0 && showStats) {
                             statsElement.textContent = 'No ratings yet. Be the first to rate!';
                         }
                     }
@@ -7742,7 +7742,7 @@
                         ratings.forEach(rating => {
                             html += `
                                 <li class="ratings-plugin-popup-item">
-                                    <span class="ratings-plugin-popup-username">${this.escapeHtml(rating.Username)}</span>
+                                    <span class="ratings-plugin-popup-username">${this.escapeHtml((rating.username ?? rating.Username))}</span>
                                     <span class="ratings-plugin-popup-rating">${rating.Rating}/10</span>
                                 </li>
                             `;
@@ -7826,9 +7826,9 @@
                 .then(ratings => {
                     const currentUserId = ApiClient.getCurrentUserId();
                     const myRating = ratings.find(r => r.UserId === currentUserId);
-                    if (myRating && myRating.ReviewText) {
+                    if (myRating && (myRating.reviewText ?? myRating.ReviewText)) {
                         const textarea = overlay.querySelector('.ratings-modal-review');
-                        if (textarea) textarea.value = myRating.ReviewText;
+                        if (textarea) textarea.value = (myRating.reviewText ?? myRating.ReviewText);
                     }
                 })
                 .catch(() => {});
@@ -8032,7 +8032,7 @@
 
                     var usernameSpan = document.createElement('span');
                     usernameSpan.className = 'ratings-list-username';
-                    usernameSpan.textContent = rating.Username || 'Unknown';
+                    usernameSpan.textContent = (rating.username ?? rating.Username) || 'Unknown';
                     if (isMe) {
                         var youSpan = document.createElement('span');
                         youSpan.className = 'ratings-list-you';
@@ -8123,10 +8123,10 @@
                         <button class="ratings-modal-close">&times;</button>
                     </div>
                     <div class="review-mini-header">
-                        <span class="review-mini-username">${self.escapeHtml(ratingData.Username)}</span>
+                        <span class="review-mini-username">${self.escapeHtml((ratingData.username ?? ratingData.Username))}</span>
                         <span class="review-mini-rating">${ratingData.Rating}/10</span>
                     </div>
-                    <div class="review-mini-text">${self.escapeHtml(ratingData.ReviewText || '')}</div>
+                    <div class="review-mini-text">${self.escapeHtml((ratingData.reviewText ?? ratingData.ReviewText) || '')}</div>
                     <div class="review-mini-actions">
                         <button class="review-like-btn${likeActive}${disabledClass}" data-action="like" ${isOwnReview ? 'disabled title="Cannot like your own review"' : ''}>
                             👍 <span class="like-count">${ratingData.LikeCount || 0}</span>
@@ -8272,7 +8272,7 @@
             .then(r => r.json())
             .then(ratings => {
                 // Filter to only those with reviews
-                const reviews = (ratings || []).filter(r => r.HasReview && r.ReviewText);
+                const reviews = (ratings || []).filter(r => r.HasReview && (r.reviewText ?? r.ReviewText));
 
                 // Sort by likes (most liked first)
                 reviews.sort((a, b) => {
@@ -8321,7 +8321,7 @@
                 const safeUserId = String(review.UserId || '').replace(/[^a-zA-Z0-9-]/g, '');
                 const safeItemId = String(itemId || '').replace(/[^a-zA-Z0-9-]/g, '');
                 const avatarUrl = baseUrl + '/Users/' + safeUserId + '/Images/Primary?height=80&quality=90';
-                const timestamp = this.formatReviewTimestamp(review.CreatedAt);
+                const timestamp = this.formatReviewTimestamp((review.createdAt ?? review.CreatedAt));
                 const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
 
                 var card = document.createElement('div');
@@ -8366,7 +8366,7 @@
 
                 var usernameDiv = document.createElement('div');
                 usernameDiv.className = 'user-review-username';
-                usernameDiv.textContent = review.Username || 'Unknown';
+                usernameDiv.textContent = (review.username ?? review.Username) || 'Unknown';
                 userInfo.appendChild(usernameDiv);
 
                 var timestampDiv = document.createElement('div');
@@ -8394,8 +8394,8 @@
                 // Review text
                 var textDiv = document.createElement('div');
                 textDiv.className = 'user-review-text';
-                textDiv.setAttribute('data-full-text', review.ReviewText || '');
-                textDiv.textContent = review.ReviewText || '';
+                textDiv.setAttribute('data-full-text', (review.reviewText ?? review.ReviewText) || '');
+                textDiv.textContent = (review.reviewText ?? review.ReviewText) || '';
                 card.appendChild(textDiv);
 
                 // Actions
@@ -8820,7 +8820,7 @@
                                 <div class="review-comment-content">
                                     <div class="review-comment-header">
                                         <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.CommenterName || 'Unknown')}</span>
-                                        <span class="review-comment-time">${self.formatReviewTimestamp(c.CreatedAt)}</span>
+                                        <span class="review-comment-time">${self.formatReviewTimestamp((c.createdAt ?? c.CreatedAt))}</span>
                                         ${deleteBtn}
                                     </div>
                                     <div class="review-comment-text">${self.escapeHtml(c.Text)}</div>
@@ -9020,7 +9020,7 @@
                 // Update cache and apply overlays
                 pendingItems.forEach(item => {
                     const stats = batchStats[item.itemId];
-                    if (stats && stats.TotalRatings > 0) {
+                    if (stats && (stats.totalRatings ?? stats.TotalRatings) > 0) {
                         self.ratingsCache[item.itemId] = stats;
                         self.createAndPositionOverlay(item.imageContainer, stats, item.itemId);
                     } else {
@@ -9255,7 +9255,7 @@
             const self = this;
 
             // Build badge text - start with rating
-            let badgeText = '★ ' + stats.AverageRating.toFixed(1);
+            let badgeText = '★ ' + (stats.averageRating ?? stats.AverageRating).toFixed(1);
 
             // Append leaving info if available
             if (itemId && self.scheduledDeletionsCache) {
@@ -11426,7 +11426,7 @@
                 const isAdmin = activeDeletions.length > 0 && (activeDeletions[0].IsAdmin || activeDeletions[0].isAdmin);
 
                 activeDeletions.forEach(deletion => {
-                    const itemId = deletion.ItemId || deletion.itemId;
+                    const itemId = (deletion.itemId ?? deletion.ItemId) || deletion.itemId;
                     const itemTitle = deletion.ItemTitle || deletion.itemTitle || 'Unknown';
                     const itemType = deletion.ItemType || deletion.itemType || 'Movie';
                     const deleteAt = deletion.DeleteAt || deletion.deleteAt;
@@ -12183,12 +12183,12 @@
                     </td>
                     <td>
                         <div class="media-item-title">
-                            <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.Title)}</a>
+                            <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml((item.title ?? item.Title))}</a>
                         </div>
                         <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
                     </td>
-                    <td>${item.Year || '-'}</td>
-                    <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
+                    <td>${(item.year ?? item.Year) || '-'}</td>
+                    <td class="media-item-rating">${(item.averageRating ?? item.AverageRating) ? '★ ' + (item.averageRating ?? item.AverageRating).toFixed(1) : '-'}</td>
                     <td class="media-item-plays">${playCountDisplay}</td>
                     <td>${formatSize(item.FileSizeBytes)}</td>
                     <td>
@@ -12198,8 +12198,8 @@
                     </td>
                     <td class="media-actions">
                         ${hasScheduledDeletion
-                            ? `<button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
-                            : `<button class="media-action-btn delete" data-item-id="${item.ItemId}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                            ? `<button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                            : `<button class="media-action-btn delete" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
                         }
                     </td>
                 `;
@@ -12285,12 +12285,12 @@
                         </td>
                         <td>
                             <div class="media-item-title">
-                                <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.Title)}</a>
+                                <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml((item.title ?? item.Title))}</a>
                             </div>
                             <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
                         </td>
-                        <td>${item.Year || '-'}</td>
-                        <td class="media-item-rating">${item.AverageRating ? '★ ' + item.AverageRating.toFixed(1) : '-'}</td>
+                        <td>${(item.year ?? item.Year) || '-'}</td>
+                        <td class="media-item-rating">${(item.averageRating ?? item.AverageRating) ? '★ ' + (item.averageRating ?? item.AverageRating).toFixed(1) : '-'}</td>
                         <td class="media-item-plays">${playCountDisplay}</td>
                         <td>${formatSize(item.FileSizeBytes)}</td>
                         <td>
@@ -12300,8 +12300,8 @@
                         </td>
                         <td class="media-actions">
                             ${hasScheduledDeletion
-                                ? `<button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
-                                : `<button class="media-action-btn delete" data-item-id="${item.ItemId}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                                ? `<button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                                : `<button class="media-action-btn delete" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
                             }
                         </td>
                     </tr>
@@ -12554,7 +12554,7 @@
                 `;
 
                 deletions.forEach((item, index) => {
-                    const imageUrl = `/Items/${item.ItemId}/Images/Primary`;
+                    const imageUrl = `/Items/${(item.itemId ?? item.ItemId)}/Images/Primary`;
                     const deleteDate = new Date(item.DeleteAt);
                     const now = new Date();
                     const diffMs = deleteDate - now;
@@ -12574,7 +12574,7 @@
                             </td>
                             <td>
                                 <div class="media-item-title">
-                                    <a href="#/details?id=${item.ItemId}">${self.escapeHtml(item.ItemTitle)}</a>
+                                    <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml(item.ItemTitle)}</a>
                                 </div>
                                 <span class="media-item-type ${self.escapeHtml(item.ItemType).toLowerCase()}">${self.escapeHtml(item.ItemType)}</span>
                             </td>
@@ -12589,10 +12589,10 @@
                             </td>
                             <td class="media-actions">
                                 <div class="scheduled-actions-wrapper">
-                                    <button class="media-action-btn change" data-item-id="${item.ItemId}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
+                                    <button class="media-action-btn change" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
                                         ${self.t('mediaChange') || 'Change'}
                                     </button>
-                                    <button class="media-action-btn cancel" data-item-id="${item.ItemId}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
+                                    <button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
                                         ${self.t('mediaCancel') || 'Cancel'}
                                     </button>
                                 </div>
@@ -13083,7 +13083,7 @@
                     html += `
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
-                                <span class="imdb-id">IMDB: ${self.escapeHtml(group.ImdbId)} - ${self.escapeHtml(group.Title)}</span>
+                                <span class="imdb-id">IMDB: ${self.escapeHtml((group.imdbId ?? group.ImdbId))} - ${self.escapeHtml((group.title ?? group.Title))}</span>
                                 <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
                             </div>
                             <div class="duplicate-items">
@@ -13091,7 +13091,7 @@
 
                     group.Items.forEach((item, index) => {
                         html += `
-                            <div class="duplicate-item" data-item-id="${item.ItemId}">
+                            <div class="duplicate-item" data-item-id="${(item.itemId ?? item.ItemId)}">
                                 <div class="duplicate-info">
                                     <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
                                     <div class="duplicate-path">${self.escapeHtml(item.Path || self.t('unknown'))}</div>
@@ -13099,7 +13099,7 @@
                                 </div>
                                 ${index > 0 ? `
                                     <div class="duplicate-actions">
-                                        <button class="delete-duplicate-btn" data-item-id="${item.ItemId}" title="${self.t('duplicateDelete')}">🗑️</button>
+                                        <button class="delete-duplicate-btn" data-item-id="${(item.itemId ?? item.ItemId)}" title="${self.t('duplicateDelete')}">🗑️</button>
                                     </div>
                                 ` : `<div class="duplicate-actions"><span style="color:#52b54b">✓ ${self.t('duplicateKeep')}</span></div>`}
                             </div>
@@ -13307,8 +13307,8 @@
                 // Build cache by itemId
                 self.scheduledDeletionsCache = {};
                 deletions.forEach(d => {
-                    if (d && d.ItemId) {
-                        self.scheduledDeletionsCache[d.ItemId.toLowerCase()] = d;
+                    if (d && (d.itemId ?? d.ItemId)) {
+                        self.scheduledDeletionsCache[(d.itemId ?? d.ItemId).toLowerCase()] = d;
                     }
                 });
                 // Update badges immediately
@@ -14461,7 +14461,7 @@
          */
         renderAdminRequestItem: function (request, isSnoozed) {
             const self = this;
-            const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : self.t('unknown');
+            const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : self.t('unknown');
             const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
             const hasLink = request.MediaLink && request.Status === 'done';
             const isRejected = request.Status === 'rejected';
@@ -14535,9 +14535,9 @@
                 <li class="admin-request-item" data-request-id="${request.Id}">
                     <!-- Compact View (always visible) -->
                     <div class="admin-request-compact">
-                        <span class="admin-request-compact-title" title="${self.escapeHtml(request.Title)}">${self.escapeHtml(request.Title)}</span>
+                        <span class="admin-request-compact-title" title="${self.escapeHtml((request.title ?? request.Title))}">${self.escapeHtml((request.title ?? request.Title))}</span>
                         <div class="admin-request-compact-meta">
-                            <span class="admin-request-compact-user">${self.escapeHtml(request.Username)}</span>
+                            <span class="admin-request-compact-user">${self.escapeHtml((request.username ?? request.Username))}</span>
                             ${request.Type ? `<span class="admin-request-compact-type">${self.escapeHtml(request.Type)}</span>` : ''}
                             <span class="admin-request-compact-date">${createdAt}</span>
                             <span class="admin-request-compact-status ${statusClass}">${statusText}</span>
@@ -14939,7 +14939,7 @@
                 let html = '<ul class="user-request-list">';
                 userRequests.forEach(request => {
                     // Format timestamps
-                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : '';
+                    const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : '';
                     const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
                     const hasLink = request.MediaLink && request.Status === 'done';
                     const isRejected = request.Status === 'rejected';
@@ -14976,7 +14976,7 @@
                     const isPending = request.Status === 'pending';
                     const actionsHtml = isPending ? `
                         <div class="user-request-actions">
-                            <button class="user-edit-btn" data-request-id="${request.Id}" data-request-title="${self.escapeHtml(request.Title)}" data-request-type="${self.escapeHtml(request.Type || '')}" data-request-notes="${self.escapeHtml(request.Notes || '')}" data-request-imdb-code="${self.escapeHtml(request.ImdbCode || '')}" data-request-imdb-link="${self.escapeHtml(request.ImdbLink || '')}" data-request-custom-fields="${self.escapeHtml(request.CustomFields || '')}">✏️ ${self.t('edit') || 'Edit'}</button>
+                            <button class="user-edit-btn" data-request-id="${request.Id}" data-request-title="${self.escapeHtml((request.title ?? request.Title))}" data-request-type="${self.escapeHtml(request.Type || '')}" data-request-notes="${self.escapeHtml(request.Notes || '')}" data-request-imdb-code="${self.escapeHtml(request.ImdbCode || '')}" data-request-imdb-link="${self.escapeHtml(request.ImdbLink || '')}" data-request-custom-fields="${self.escapeHtml(request.CustomFields || '')}">✏️ ${self.t('edit') || 'Edit'}</button>
                             <button class="user-delete-btn" data-request-id="${request.Id}">🗑️ ${self.t('delete') || 'Delete'}</button>
                         </div>
                     ` : '';
@@ -14984,7 +14984,7 @@
                     html += `
                         <li class="user-request-item">
                             <div class="user-request-info">
-                                <div class="user-request-item-title">${self.escapeHtml(request.Title)}</div>
+                                <div class="user-request-item-title">${self.escapeHtml((request.title ?? request.Title))}</div>
                                 <div class="user-request-item-type">${request.Type ? self.escapeHtml(request.Type) : self.t('notSpecified')}</div>
                                 ${imdbHtml}
                                 ${customFieldsHtml}
@@ -15027,10 +15027,10 @@
                                     if (isDone && hasLink) {
                                         // "Request to delete media" for fulfilled requests
                                         const itemId = self.extractItemIdFromLink(request.MediaLink) || '';
-                                        return rejectedHtml + `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
+                                        return rejectedHtml + `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
                                     } else if (!isDone && !isRejectedStatus) {
                                         // "Request to delete request" for non-done, non-rejected requests
-                                        return rejectedHtml + `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml(request.Title)}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
+                                        return rejectedHtml + `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
                                     }
                                     return rejectedHtml;
                                 })()}
@@ -16103,12 +16103,12 @@
                 const sorted = requests.sort((a, b) => {
                     if (a.Status === 'pending' && b.Status !== 'pending') return -1;
                     if (a.Status !== 'pending' && b.Status === 'pending') return 1;
-                    return new Date(b.CreatedAt) - new Date(a.CreatedAt);
+                    return new Date((b.createdAt ?? b.CreatedAt)) - new Date((a.createdAt ?? a.CreatedAt));
                 });
 
                 let html = '<div class="deletion-requests-list">';
                 sorted.forEach(request => {
-                    const createdAt = request.CreatedAt ? self.formatDateTime(request.CreatedAt) : '';
+                    const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : '';
                     const resolvedAt = request.ResolvedAt ? self.formatDateTime(request.ResolvedAt) : '';
                     const isPending = request.Status === 'pending';
 
@@ -16154,9 +16154,9 @@
                     html += `
                         <div class="deletion-request-item ${isPending ? '' : 'resolved'}">
                             <div class="deletion-request-info">
-                                <div class="deletion-request-title">${self.escapeHtml(request.Title)} <span style="font-size:10px;color:#999;font-weight:400;">[${typeLabel}]</span></div>
+                                <div class="deletion-request-title">${self.escapeHtml((request.title ?? request.Title))} <span style="font-size:10px;color:#999;font-weight:400;">[${typeLabel}]</span></div>
                                 <div class="deletion-request-meta">
-                                    <span class="deletion-request-user">${self.escapeHtml(request.Username)}</span>
+                                    <span class="deletion-request-user">${self.escapeHtml((request.username ?? request.Username))}</span>
                                     <span> • ${request.Type ? self.escapeHtml(request.Type) : ''}</span>
                                     <span> • ${createdAt}</span>
                                     ${resolvedHtml}
@@ -16434,7 +16434,7 @@
                         html += `
                             <div class="ban-item">
                                 <div>
-                                    <div class="ban-item-info">${self.escapeHtml(ban.Username)}</div>
+                                    <div class="ban-item-info">${self.escapeHtml((ban.username ?? ban.Username))}</div>
                                     <div class="ban-item-meta">${expires} • ${self.t('bannedBy')} ${self.escapeHtml(ban.BannedByUsername)}</div>
                                 </div>
                                 <button class="ban-btn unban" data-ban-id="${ban.Id}">${self.t('unbanUser')}</button>
@@ -16451,7 +16451,7 @@
                     users.forEach(u => {
                         if (!seen.has(u.UserId) && !bannedIds.has(u.UserId)) {
                             seen.add(u.UserId);
-                            uniqueUsers.push({ id: u.UserId, name: u.Username || u.UserId });
+                            uniqueUsers.push({ id: u.UserId, name: (u.username ?? u.Username) || u.UserId });
                         }
                     });
 
@@ -17114,14 +17114,14 @@
                     </div>
                 `;
             } else {
-                const yearText = notification.Year ? ` (${notification.Year})` : '';
+                const yearText = (notification.year ?? notification.Year) ? ` (${(notification.year ?? notification.Year)})` : '';
                 let typeLabel, titleText, icon;
 
-                if (notification.MediaType === 'Movie') {
+                if ((notification.mediaType ?? notification.MediaType) === 'Movie') {
                     typeLabel = 'New Movie Available';
-                    titleText = this.escapeHtml(notification.Title) + yearText;
+                    titleText = this.escapeHtml((notification.title ?? notification.Title)) + yearText;
                     icon = '🎬';
-                } else if (notification.MediaType === 'Episode') {
+                } else if ((notification.mediaType ?? notification.MediaType) === 'Episode') {
                     const seriesName = notification.SeriesName ? this.escapeHtml(notification.SeriesName) : 'Series';
                     const seasonNum = notification.SeasonNumber;
                     const seasonText = (seasonNum !== null && seasonNum !== undefined && seasonNum > 0)
@@ -17142,7 +17142,7 @@
                     icon = '📺';
                 } else {
                     typeLabel = 'New Series Available';
-                    titleText = this.escapeHtml(notification.Title) + yearText;
+                    titleText = this.escapeHtml((notification.title ?? notification.Title)) + yearText;
                     icon = '📺';
                 }
 
@@ -17170,11 +17170,11 @@
             });
 
             // Add click handler to navigate to item (if not a test)
-            if (!notification.IsTest && notification.ItemId && notification.ItemId !== '00000000-0000-0000-0000-000000000000') {
+            if (!notification.IsTest && (notification.itemId ?? notification.ItemId) && (notification.itemId ?? notification.ItemId) !== '00000000-0000-0000-0000-000000000000') {
                 notifEl.style.cursor = 'pointer';
                 notifEl.addEventListener('click', (e) => {
                     if (e.target !== closeBtn && !closeBtn.contains(e.target)) {
-                        window.location.hash = `#/details?id=${notification.ItemId}`;
+                        window.location.hash = `#/details?id=${(notification.itemId ?? notification.ItemId)}`;
                         this.hideNotification(notifEl);
                     }
                 });
@@ -18608,7 +18608,7 @@
                 self.rebuildLibraryCards(grid, data.items.map(item => ({
                     Id: item.Id,
                     Name: item.Name,
-                    ProductionYear: item.Year,
+                    ProductionYear: (item.year ?? item.Year),
                     Type: item.Type,
                     ImageTags: item.ImageUrl ? { Primary: true } : {},
                     _imageUrl: item.ImageUrl,
@@ -18900,7 +18900,7 @@
                     // Update cache with results
                     ids.forEach(itemId => {
                         const stats = batchStats[itemId];
-                        if (stats && stats.TotalRatings > 0) {
+                        if (stats && (stats.totalRatings ?? stats.TotalRatings) > 0) {
                             self.ratingsCache[itemId] = stats;
                         } else {
                             self.ratingsCache[itemId] = null;
@@ -18995,7 +18995,7 @@
                     if (self.ratingsCache[itemId] !== null) {
                         const stats = self.ratingsCache[itemId];
                         card.classList.add('has-rating');
-                        card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+                        card.setAttribute('data-rating', '★ ' + (stats.averageRating ?? stats.AverageRating).toFixed(1));
                     }
                     return;
                 }
@@ -19042,13 +19042,13 @@
             .then(batchStats => {
                 uncachedIds.forEach(itemId => {
                     const stats = batchStats[itemId];
-                    if (stats && stats.TotalRatings > 0) {
+                    if (stats && (stats.totalRatings ?? stats.TotalRatings) > 0) {
                         self.ratingsCache[itemId] = stats;
                         const cardsForItem = cardMap.get(itemId);
                         if (cardsForItem) {
                             cardsForItem.forEach(card => {
                                 card.classList.add('has-rating');
-                                card.setAttribute('data-rating', '★ ' + stats.AverageRating.toFixed(1));
+                                card.setAttribute('data-rating', '★ ' + (stats.averageRating ?? stats.AverageRating).toFixed(1));
                             });
                         }
                     } else {

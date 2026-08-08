@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,21 +11,25 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique friendship ID.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the first user's ID.
         /// </summary>
+        [JsonPropertyName("userId1")]
         public Guid UserId1 { get; set; }
 
         /// <summary>
         /// Gets or sets the second user's ID.
         /// </summary>
+        [JsonPropertyName("userId2")]
         public Guid UserId2 { get; set; }
 
         /// <summary>
         /// Gets or sets when the friendship was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>

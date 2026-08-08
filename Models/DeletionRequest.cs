@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,71 +11,85 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique identifier for this deletion request.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the user ID who made the request.
         /// </summary>
+        [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the username who made the request.
         /// </summary>
+        [JsonPropertyName("username")]
         public string Username { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the original media request ID this deletion request is linked to.
         /// </summary>
+        [JsonPropertyName("mediaRequestId")]
         public Guid MediaRequestId { get; set; }
 
         /// <summary>
         /// Gets or sets the Jellyfin item ID of the media to be deleted.
         /// </summary>
+        [JsonPropertyName("itemId")]
         public Guid ItemId { get; set; }
 
         /// <summary>
         /// Gets or sets the title of the media.
         /// </summary>
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the type of media (e.g., Movie, TV Series).
         /// </summary>
+        [JsonPropertyName("type")]
         public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the media link (URL to the media in Jellyfin).
         /// </summary>
+        [JsonPropertyName("mediaLink")]
         public string MediaLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the deletion type: "request" (delete the request) or "media" (delete the media from library).
         /// </summary>
+        [JsonPropertyName("deletionType")]
         public string DeletionType { get; set; } = "media";
 
         /// <summary>
         /// Gets or sets the status of the deletion request (pending, approved, rejected).
         /// </summary>
+        [JsonPropertyName("status")]
         public string Status { get; set; } = "pending";
 
         /// <summary>
         /// Gets or sets the timestamp when the request was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when the request was resolved.
         /// </summary>
+        [JsonPropertyName("resolvedAt")]
         public DateTime? ResolvedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the username of the admin who resolved the request.
         /// </summary>
+        [JsonPropertyName("resolvedByUsername")]
         public string ResolvedByUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the rejection reason provided by admin.
         /// </summary>
+        [JsonPropertyName("rejectionReason")]
         public string RejectionReason { get; set; } = string.Empty;
 
         /// <summary>

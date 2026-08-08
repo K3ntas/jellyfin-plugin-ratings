@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.369.0",
+        "changelog": "API fixes for third-party and TV clients. Social endpoints previously accepted only the raw X-Emby-Token header, so any app using Jellyfin's standard authentication got 401 from every social call while the identical request worked against the ratings API - they now accept every form Jellyfin does, including API keys. All responses are also camelCase now; some endpoints returned PascalCase and others camelCase, which silently produced empty fields in other clients. Your existing data is unaffected. New endpoints make a profile page far cheaper to build: one aggregated profile call instead of nine, ratings/reviews/activity that already include title, poster and year, a per-user rating histogram, a capability check, and paging on followers and following. Nothing changes in the web interface.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.369.0/jellyfin-plugin-ratings_1.0.369.0.zip",
+        "checksum": "d47e9b00ba3c8e0029d4918c92f089fd",
+        "timestamp": "2026-08-08T22:03:00Z"
+      },
+      {
         "version": "1.0.368.0",
         "changelog": "Hover what someone is watching to see the poster and details. Pointing at the title in the Similar Taste list now brings up a card with the artwork, year, running time, age rating, community score, genres and a synopsis - so you can tell what it is without leaving the profile. For an episode it shows the series artwork and the episode name. Details are fetched once and remembered for the rest of the session.",
         "targetAbi": "10.11.0.0",

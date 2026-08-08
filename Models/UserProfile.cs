@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -11,42 +12,50 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the Jellyfin item ID.
         /// </summary>
+        [JsonPropertyName("itemId")]
         public string ItemId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the title.
         /// </summary>
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the image URL.
         /// </summary>
+        [JsonPropertyName("imageUrl")]
         public string ImageUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether this title is NOT on the server (added from the
         /// external catalog). Such items show a "Request" action on hover instead of opening.
         /// </summary>
+        [JsonPropertyName("notInLibrary")]
         public bool NotInLibrary { get; set; }
 
         /// <summary>
         /// Gets or sets the TMDB id for a not-in-library item (used to request it).
         /// </summary>
+        [JsonPropertyName("tmdbId")]
         public string TmdbId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the release year for a not-in-library item.
         /// </summary>
+        [JsonPropertyName("year")]
         public int? Year { get; set; }
 
         /// <summary>
         /// Gets or sets the media type ("Movie"/"Series") for a not-in-library item.
         /// </summary>
+        [JsonPropertyName("mediaType")]
         public string MediaType { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a short description/overview (shown in the hover info popup).
         /// </summary>
+        [JsonPropertyName("overview")]
         public string Overview { get; set; } = string.Empty;
     }
 
@@ -58,11 +67,13 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the row title (e.g., "Favorite Movies", "Top Anime").
         /// </summary>
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the items in this row (up to 5).
         /// </summary>
+        [JsonPropertyName("items")]
         public List<FavoriteItem> Items { get; set; } = new List<FavoriteItem>();
     }
 
@@ -74,62 +85,74 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique profile ID.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the Jellyfin user ID this profile belongs to.
         /// </summary>
+        [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the username.
         /// </summary>
+        [JsonPropertyName("username")]
         public string Username { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the user's bio/description.
         /// </summary>
+        [JsonPropertyName("bio")]
         public string Bio { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the avatar URL.
         /// </summary>
+        [JsonPropertyName("avatarUrl")]
         public string AvatarUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the uploaded header background media URL (a looping GIF or video shown
         /// behind the username/picture). Empty when none is set.
         /// </summary>
+        [JsonPropertyName("headerMediaUrl")]
         public string HeaderMediaUrl { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the header media kind: "gif", "video", or empty.
         /// </summary>
+        [JsonPropertyName("headerMediaType")]
         public string HeaderMediaType { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets when the profile was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
         /// Gets or sets when the profile was last updated.
         /// </summary>
+        [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the user's privacy settings.
         /// </summary>
+        [JsonPropertyName("privacy")]
         public UserPrivacySettings Privacy { get; set; }
 
         /// <summary>
         /// Gets or sets the user's favorite items (legacy, for backwards compatibility).
         /// </summary>
+        [JsonPropertyName("favorites")]
         public List<FavoriteItem> Favorites { get; set; }
 
         /// <summary>
         /// Gets or sets the user's favorite rows (up to 5 rows, each with up to 5 items).
         /// </summary>
+        [JsonPropertyName("favoriteRows")]
         public List<FavoriteRow> FavoriteRows { get; set; }
 
         /// <summary>

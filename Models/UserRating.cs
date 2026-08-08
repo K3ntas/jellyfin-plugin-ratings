@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,41 +11,49 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique identifier for this rating.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the user ID who made the rating.
         /// </summary>
+        [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the item ID being rated.
         /// </summary>
+        [JsonPropertyName("itemId")]
         public Guid ItemId { get; set; }
 
         /// <summary>
         /// Gets or sets the TMDB ID for fallback lookup when item ID changes.
         /// </summary>
+        [JsonPropertyName("tmdbId")]
         public string? TmdbId { get; set; }
 
         /// <summary>
         /// Gets or sets the IMDB ID for fallback lookup when item ID changes.
         /// </summary>
+        [JsonPropertyName("imdbId")]
         public string? ImdbId { get; set; }
 
         /// <summary>
         /// Gets or sets the AniDB ID for fallback lookup when item ID changes (anime libraries).
         /// </summary>
+        [JsonPropertyName("aniDbId")]
         public string? AniDbId { get; set; }
 
         /// <summary>
         /// Gets or sets the rating value (1-10).
         /// </summary>
+        [JsonPropertyName("rating")]
         public int Rating { get; set; }
 
         /// <summary>
         /// Gets or sets the optional review text.
         /// </summary>
+        [JsonPropertyName("reviewText")]
         public string? ReviewText { get; set; }
 
         // ---- Snapshot of what was rated, captured when the rating is made ----
@@ -58,16 +67,19 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the title as it was when rated.
         /// </summary>
+        [JsonPropertyName("title")]
         public string? Title { get; set; }
 
         /// <summary>
         /// Gets or sets the release year as it was when rated.
         /// </summary>
+        [JsonPropertyName("year")]
         public int? Year { get; set; }
 
         /// <summary>
         /// Gets or sets the media type ("Movie" or "Series").
         /// </summary>
+        [JsonPropertyName("mediaType")]
         public string? MediaType { get; set; }
 
         /// <summary>
@@ -79,6 +91,7 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// and the item has a TMDB id). Ratings created directly from a TMDB search already carry
         /// the poster the search returned.
         /// </remarks>
+        [JsonPropertyName("posterUrl")]
         public string? PosterUrl { get; set; }
 
         /// <summary>
@@ -90,16 +103,19 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// title is later added to the library the existing provider-id fallback migrates the
         /// rating onto the real item automatically.
         /// </remarks>
+        [JsonPropertyName("isExternal")]
         public bool IsExternal { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when the rating was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when the rating was last updated.
         /// </summary>
+        [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt { get; set; }
 
         /// <summary>
