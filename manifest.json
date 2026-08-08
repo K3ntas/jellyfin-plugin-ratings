@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.368.0",
+        "changelog": "Hover what someone is watching to see the poster and details. Pointing at the title in the Similar Taste list now brings up a card with the artwork, year, running time, age rating, community score, genres and a synopsis - so you can tell what it is without leaving the profile. For an episode it shows the series artwork and the episode name. Details are fetched once and remembered for the rest of the session.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.368.0/jellyfin-plugin-ratings_1.0.368.0.zip",
+        "checksum": "12c71af9b58677dcc80cdda82185bba6",
+        "timestamp": "2026-08-08T18:30:00Z"
+      },
+      {
         "version": "1.0.367.0",
         "changelog": "Live presence, full titles, and a Watch too button. The Similar Taste list now updates by itself when someone comes online or starts watching - you no longer have to close and reopen the profile to see it. What someone is watching moved onto its own line, so long series titles are readable in full instead of being squeezed between the name and the match percentage. And each person who is watching now has a Watch too button: press it and you are asked whether to join them at the point they are at right now, or start from the beginning.",
         "targetAbi": "10.11.0.0",

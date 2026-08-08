@@ -4942,7 +4942,9 @@
 
                         watchLine = '<div class="lb-match-watching">' +
                             '<span class="lb-watch-icon" aria-hidden="true">▶</span>' +
-                            '<span class="lb-watch-title" title="' + self.escapeHtml(mediaName) + '">' + self.escapeHtml(mediaName) + '</span>' +
+                            '<span class="lb-watch-title" data-item-id="' + self.escapeHtml(w.itemId || '') + '"' +
+                            ' onmouseenter="RatingsPlugin.showWatchInfo(this)" onmouseleave="RatingsPlugin.hideWatchInfo()">' +
+                            self.escapeHtml(mediaName) + '</span>' +
                             '<span class="lb-watch-time" id="' + id + '">' + self.formatWatchClock(startedSec, totalSec) + '</span>' +
                             '<button class="lb-watch-join" title="Watch this too" ' +
                             'onclick="event.stopPropagation();RatingsPlugin.openJoinWatchModal(\'' + joinPayload + '\')">Watch too</button>' +
@@ -4977,6 +4979,140 @@
             .catch(function () {
                 el.innerHTML = '<div class="lb-side-empty">Could not load matches</div>';
             });
+        },
+
+        /**
+         * Shows a poster + details card when hovering what someone is watching.
+         *
+         * The existing favourites popup is text-only; seeing the artwork is the point here, so
+         * this one leads with the poster. Details are fetched once per item and cached for the
+         * session - hovering along a list should not re-query the server each time.
+         * @param {HTMLElement} el The hovered title element.
+         */
+        showWatchInfo: function (el) {
+            var self = this;
+            if (!el || !window.ApiClient) return;
+
+            var itemId = el.getAttribute('data-item-id');
+            if (!itemId) return;
+
+            self._watchInfoEl = el;
+            self._watchInfoCache = self._watchInfoCache || {};
+
+            if (self._watchInfoCache[itemId]) {
+                self._renderWatchInfoPopup(el, self._watchInfoCache[itemId]);
+                return;
+            }
+
+            // Show something immediately - the poster alone is useful while the rest loads.
+            self._renderWatchInfoPopup(el, { itemId: itemId, name: el.textContent || '', loading: true });
+
+            var baseUrl = ApiClient.serverAddress();
+            var uid = ApiClient.getCurrentUserId();
+
+            fetch(baseUrl + '/Users/' + uid + '/Items/' + itemId + '?Fields=Overview,Genres,RunTimeTicks,ProductionYear', {
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d) return;
+
+                var info = {
+                    itemId: itemId,
+                    name: d.Name || '',
+                    seriesName: d.SeriesName || '',
+                    year: d.ProductionYear || '',
+                    overview: d.Overview || '',
+                    genres: d.Genres || [],
+                    runtimeMinutes: d.RunTimeTicks ? Math.round(d.RunTimeTicks / 600000000) : 0,
+                    officialRating: d.OfficialRating || '',
+                    communityRating: d.CommunityRating || 0,
+                    // An episode's own poster is often missing - fall back to the series artwork.
+                    imageItemId: (d.ImageTags && d.ImageTags.Primary) ? itemId : (d.SeriesId || itemId)
+                };
+
+                self._watchInfoCache[itemId] = info;
+
+                // Only paint if the pointer is still on the same element.
+                if (self._watchInfoEl === el) {
+                    self._renderWatchInfoPopup(el, info);
+                }
+            })
+            .catch(function () { /* the poster-only card stays */ });
+        },
+
+        /**
+         * Paints the watching-info popup next to the hovered element.
+         * @param {HTMLElement} el Anchor element.
+         * @param {object} info Item info.
+         */
+        _renderWatchInfoPopup: function (el, info) {
+            var self = this;
+            var pop = document.getElementById('lbWatchInfoPop');
+            if (!pop) {
+                pop = document.createElement('div');
+                pop.id = 'lbWatchInfoPop';
+                pop.className = 'lb-watch-info-pop';
+                document.body.appendChild(pop);
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var imgId = info.imageItemId || info.itemId;
+            var poster = baseUrl + '/Items/' + imgId + '/Images/Primary?maxHeight=260&quality=90';
+
+            var meta = [];
+            if (info.year) meta.push(info.year);
+            if (info.runtimeMinutes) meta.push(info.runtimeMinutes + ' min');
+            if (info.officialRating) meta.push(self.escapeHtml(info.officialRating));
+
+            var heading = info.seriesName
+                ? self.escapeHtml(info.seriesName)
+                : self.escapeHtml(info.name || '');
+            var sub = info.seriesName && info.name ? self.escapeHtml(info.name) : '';
+
+            pop.innerHTML =
+                '<div class="lb-wi-poster"><img src="' + poster + '" alt="" ' +
+                'onerror="this.style.display=\'none\'"></div>' +
+                '<div class="lb-wi-body">' +
+                '<div class="lb-wi-title">' + heading + '</div>' +
+                (sub ? '<div class="lb-wi-sub">' + sub + '</div>' : '') +
+                (meta.length ? '<div class="lb-wi-meta">' + meta.join(' · ') + '</div>' : '') +
+                (info.communityRating ? '<div class="lb-wi-rating">★ ' + info.communityRating.toFixed(1) + '</div>' : '') +
+                ((info.genres && info.genres.length)
+                    ? '<div class="lb-wi-genres">' + self.escapeHtml(info.genres.slice(0, 3).join(' · ')) + '</div>'
+                    : '') +
+                (info.overview
+                    ? '<div class="lb-wi-desc">' + self.escapeHtml(info.overview) + '</div>'
+                    : (info.loading ? '' : '<div class="lb-wi-desc dim">No description available.</div>')) +
+                '</div>';
+
+            pop.style.display = 'flex';
+
+            // Clamp inside the viewport; the sidebar sits at the right edge, so this popup would
+            // otherwise hang off-screen.
+            var rect = el.getBoundingClientRect();
+            var popW = 340;
+            var left = rect.left - popW - 12;
+            if (left < 8) {
+                left = Math.min(rect.right + 12, window.innerWidth - popW - 8);
+            }
+
+            pop.style.left = Math.max(8, left) + 'px';
+
+            var popH = pop.offsetHeight || 200;
+            var top = rect.top + rect.height / 2 - popH / 2;
+            top = Math.max(8, Math.min(top, window.innerHeight - popH - 8));
+            pop.style.top = top + 'px';
+        },
+
+        /**
+         * Hides the watching-info popup.
+         */
+        hideWatchInfo: function () {
+            this._watchInfoEl = null;
+            var pop = document.getElementById('lbWatchInfoPop');
+            if (pop) { pop.style.display = 'none'; }
         },
 
         /**
