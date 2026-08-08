@@ -40,6 +40,10 @@ namespace Jellyfin.Plugin.Ratings
 
             // Register deletion service for scheduled media deletions
             serviceCollection.AddHostedService<DeletionService>();
+
+            // Flushes debounced repository writes on shutdown so coalescing cannot lose the last
+            // few seconds of changes across a restart.
+            serviceCollection.AddHostedService<RepositoryFlushService>();
         }
     }
 }

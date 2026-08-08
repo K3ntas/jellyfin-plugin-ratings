@@ -2021,15 +2021,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1";
 
         /// <summary>
-        /// Serves an embedded web asset with ETag / immutable caching.
+        /// Loads an embedded resource into the byte cache, returning an empty array if absent.
         /// </summary>
+        /// <param name="cacheKey">Cache key.</param>
         /// <param name="resourceName">Fully qualified embedded resource name.</param>
-        /// <param name="contentType">MIME type to serve it as.</param>
-        /// <param name="cacheKey">Stable key for the in-process byte cache.</param>
-        /// <returns>The asset, or 304 / 404.</returns>
-        private ActionResult ServeEmbeddedAsset(string resourceName, string contentType, string cacheKey)
+        /// <returns>The resource bytes, or an empty array.</returns>
+        private static byte[] LoadAsset(string cacheKey, string resourceName)
         {
-            var bytes = _assetCache.GetOrAdd(cacheKey, _ =>
+            return _assetCache.GetOrAdd(cacheKey, _ =>
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 using var stream = assembly.GetManifestResourceStream(resourceName);
@@ -2042,14 +2041,115 @@ namespace Jellyfin.Plugin.Ratings.Api
                 stream.CopyTo(ms);
                 return ms.ToArray();
             });
+        }
 
+        /// <summary>
+        /// Picks the best pre-compressed encoding the client accepts.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately simple: it looks for the coding as a whole token and ignores q-values, but
+        /// it never selects an encoding the client did not list, and "identity" is always a legal
+        /// answer. Real browsers all send "gzip, deflate, br".
+        /// </remarks>
+        /// <param name="acceptEncoding">Raw Accept-Encoding header value.</param>
+        /// <returns>"br", "gzip" or null for identity.</returns>
+        private static string? NegotiateEncoding(string? acceptEncoding)
+        {
+            if (string.IsNullOrEmpty(acceptEncoding))
+            {
+                return null;
+            }
+
+            var accepted = acceptEncoding.Split(',');
+            var wantsBrotli = false;
+            var wantsGzip = false;
+
+            foreach (var raw in accepted)
+            {
+                var token = raw;
+
+                // Strip any q-value, then trim.
+                var semi = token.IndexOf(';', StringComparison.Ordinal);
+                if (semi >= 0)
+                {
+                    // "br;q=0" means explicitly refused.
+                    if (token.AsSpan(semi).IndexOf("q=0".AsSpan(), StringComparison.OrdinalIgnoreCase) >= 0
+                        && token.AsSpan(semi).IndexOf("q=0.".AsSpan(), StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    token = token.Substring(0, semi);
+                }
+
+                token = token.Trim();
+
+                if (token.Equals("br", StringComparison.OrdinalIgnoreCase))
+                {
+                    wantsBrotli = true;
+                }
+                else if (token.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+                {
+                    wantsGzip = true;
+                }
+            }
+
+            if (wantsBrotli)
+            {
+                return "br";
+            }
+
+            return wantsGzip ? "gzip" : null;
+        }
+
+        /// <summary>
+        /// Serves an embedded web asset with ETag / immutable caching and pre-compressed encodings.
+        /// </summary>
+        /// <remarks>
+        /// The .br/.gz variants are produced at build time (see the CompressAssets target). Serving
+        /// our own Content-Encoding matters because Jellyfin registers response compression with
+        /// ResponseCompressionOptions.EnableForHttps left at its default of false, so clients
+        /// reaching the server over direct HTTPS otherwise receive these assets completely
+        /// uncompressed - and a plugin cannot change that setting. Setting Content-Encoding
+        /// ourselves also stops the framework's compression middleware from re-compressing.
+        /// If the pre-compressed resources are missing (built without Node) this transparently
+        /// falls back to the raw bytes.
+        /// </remarks>
+        /// <param name="resourceName">Fully qualified embedded resource name.</param>
+        /// <param name="contentType">MIME type to serve it as.</param>
+        /// <param name="cacheKey">Stable key for the in-process byte cache.</param>
+        /// <returns>The asset, or 304 / 404.</returns>
+        private ActionResult ServeEmbeddedAsset(string resourceName, string contentType, string cacheKey)
+        {
+            var bytes = LoadAsset(cacheKey, resourceName);
             if (bytes.Length == 0)
             {
                 _logger.LogError("Embedded resource {ResourceName} not found in assembly", resourceName);
                 return NotFound();
             }
 
-            var etag = "\"" + cacheKey + "-" + AssetVersion + "\"";
+            // Caches keyed on this URL must not mix encodings.
+            Response.Headers["Vary"] = "Accept-Encoding";
+
+            var encoding = NegotiateEncoding(Request.Headers.AcceptEncoding.ToString());
+            if (encoding != null)
+            {
+                var suffix = encoding == "br" ? ".br" : ".gz";
+                var encoded = LoadAsset(cacheKey + suffix, resourceName + suffix);
+                if (encoded.Length > 0)
+                {
+                    bytes = encoded;
+                    Response.Headers["Content-Encoding"] = encoding;
+                }
+                else
+                {
+                    encoding = null;
+                }
+            }
+
+            // The ETag has to include the encoding, otherwise a cache holding the brotli copy could
+            // answer an identity request with it (and vice versa).
+            var etag = "\"" + cacheKey + "-" + AssetVersion + (encoding == null ? string.Empty : "-" + encoding) + "\"";
             Response.Headers["ETag"] = etag;
 
             var requestedVersion = Request.Query["v"].ToString();
@@ -4044,6 +4144,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                // Writes are coalesced, so up to a debounce window's worth of changes may still be
+                // in memory. This reads the files straight off disk, so flush first or the backup
+                // silently omits the newest data. (Only ratings-repository files are exported.)
+                await _repository.FlushPendingWritesAsync().ConfigureAwait(false);
+
                 var dataPath = Path.Combine(_appPaths.DataPath, "ratings");
                 var backupData = new Dictionary<string, object?>
                 {
@@ -4125,6 +4230,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
+                // Drain any debounced write BEFORE overwriting the files. A pending write still
+                // holds a pre-import snapshot, and if it fired after the import it would put the
+                // old data straight back on disk.
+                await _repository.FlushPendingWritesAsync().ConfigureAwait(false);
+
                 var dataPath = Path.Combine(_appPaths.DataPath, "ratings");
 
                 // Ensure directory exists

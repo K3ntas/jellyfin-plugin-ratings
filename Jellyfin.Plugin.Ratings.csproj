@@ -8,7 +8,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <Version>2.0.343.0</Version>
+    <Version>2.0.344.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,32 @@
          embeds them under the SAME resource names the controller serves. -->
     <EmbeddedResource Include="$(IntermediateOutputPath)ratings.min.js" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.js" />
     <EmbeddedResource Include="$(IntermediateOutputPath)ratings.min.css" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.css" />
+  </ItemGroup>
+
+  <!-- Pre-compressed (.br/.gz) copies of every served asset.
+       These MUST be declared statically here rather than inside the CompressAssets target: items
+       added to @(EmbeddedResource) from a target run after the resource pipeline has already been
+       prepared, so they are silently ignored. Declaring the literal paths at evaluation time works
+       even though the files are produced during the build - the compiler only reads them at
+       CoreCompile, which is the same trick the minified assets above rely on.
+       Each generated file is named after the resource name it should carry, so LogicalName is
+       just %(Filename)%(Extension) (e.g. "…Web.i18n.es.js" + ".br").
+       If Node is unavailable the target below creates these as ZERO-BYTE files; the controller
+       treats an empty variant as absent and serves the uncompressed asset instead. -->
+  <ItemGroup>
+    <_LangPackSource Include="Web/i18n/*.js" />
+
+    <EmbeddedResource Include="$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.br" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.js.br" />
+    <EmbeddedResource Include="$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.gz" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.js.gz" />
+    <EmbeddedResource Include="$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.css.br" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.css.br" />
+    <EmbeddedResource Include="$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.css.gz" LogicalName="Jellyfin.Plugin.Ratings.Web.ratings.css.gz" />
+
+    <EmbeddedResource Include="@(_LangPackSource->'$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.i18n.%(Filename)%(Extension).br')">
+      <LogicalName>%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="@(_LangPackSource->'$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.i18n.%(Filename)%(Extension).gz')">
+      <LogicalName>%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Set this on release builds (dotnet build -c Release -p:RequireMinification=true) to turn a
@@ -63,6 +89,44 @@
            Text="esbuild is unavailable, so ratings.css would ship UNMINIFIED. Install Node.js, or build without -p:RequireMinification=true for a local/dev build." />
     <Warning Condition="!Exists('$(IntermediateOutputPath)ratings.min.css')" Text="esbuild minify unavailable - embedding unminified ratings.css" />
     <Copy Condition="!Exists('$(IntermediateOutputPath)ratings.min.css')" SourceFiles="Web/ratings.css" DestinationFiles="$(IntermediateOutputPath)ratings.min.css" />
+  </Target>
+
+  <!-- Brotli + gzip copies of every served asset, so the plugin can set its own Content-Encoding.
+       This matters because Jellyfin registers response compression with EnableForHttps left at its
+       default of false, so direct-HTTPS clients otherwise get no compression at all - and a plugin
+       cannot change that setting. Runs after minification and before compile. -->
+  <Target Name="CompressAssets"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="MinifyRatingsJs;MinifyRatingsCss">
+    <ItemGroup>
+      <_AssetToCompress Include="Jellyfin.Plugin.Ratings.Web.ratings.js=$(IntermediateOutputPath)ratings.min.js" />
+      <_AssetToCompress Include="Jellyfin.Plugin.Ratings.Web.ratings.css=$(IntermediateOutputPath)ratings.min.css" />
+      <_LangPack Include="Web/i18n/*.js" />
+      <_AssetToCompress Include="@(_LangPack->'Jellyfin.Plugin.Ratings.Web.i18n.%(Filename)%(Extension)=%(FullPath)')" />
+    </ItemGroup>
+
+    <Exec Command="node &quot;tools/compress-assets.js&quot; &quot;$(IntermediateOutputPath)compressed&quot; @(_AssetToCompress->'&quot;%(Identity)&quot;', ' ')"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          ContinueOnError="true" />
+
+    <Error Condition="'$(RequireMinification)' == 'true' And !Exists('$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.br')"
+           Text="Asset pre-compression did not run (Node unavailable?), so assets would ship uncompressed to direct-HTTPS clients." />
+    <Warning Condition="!Exists('$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.br')"
+             Text="Node unavailable - shipping without pre-compressed assets (the controller will serve them uncompressed)." />
+
+    <!-- The EmbeddedResource items are declared statically, so every one of these paths must
+         exist by CoreCompile or csc fails outright. When compression did not run we create them
+         empty; the controller treats a zero-length variant as absent and serves identity. -->
+    <ItemGroup>
+      <_ExpectedCompressed Include="$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.br;$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.js.gz;$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.css.br;$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.ratings.css.gz" />
+      <_ExpectedCompressed Include="@(_LangPackSource->'$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.i18n.%(Filename)%(Extension).br')" />
+      <_ExpectedCompressed Include="@(_LangPackSource->'$(IntermediateOutputPath)compressed\Jellyfin.Plugin.Ratings.Web.i18n.%(Filename)%(Extension).gz')" />
+    </ItemGroup>
+
+    <!-- MakeDir first: without Node the script never ran, so the output directory does not exist
+         and Touch cannot create files inside it. -->
+    <MakeDir Directories="$(IntermediateOutputPath)compressed" />
+    <Touch Files="@(_ExpectedCompressed)" AlwaysCreate="true" Condition="!Exists('%(Identity)')" />
   </Target>
 
 </Project>

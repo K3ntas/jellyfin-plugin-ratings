@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.344.0",
+        "changelog": "Downloads get dramatically smaller and the server writes to disk far less. The plugin's script, stylesheet and language files are now sent pre-compressed, so a first page load transfers about 108 KB instead of 676 KB - roughly six times less. This works even if you reach Jellyfin over HTTPS directly, where Jellyfin's own compression is switched off by default. Separately, rapid saves are now merged into one write: previously every user's presence heartbeat rewrote the entire online-users file, so a handful of people online meant constant disk churn. Nothing is lost - pending saves are flushed on shutdown and before any backup export or import. Also adds automated build checks so a release can no longer go out with an unminified or syntactically broken script.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.344.0/Jellyfin.Plugin.Ratings_2.0.344.0.zip",
+        "checksum": "ddaf7ea9637dbbdd1d9f4bcfcdfd2913",
+        "timestamp": "2026-08-08T13:48:00Z"
+      },
+      {
         "version": "2.0.343.0",
         "changelog": "Big speed and smoothness pass. Pages load a lot lighter: the plugin's styles are now a proper stylesheet instead of being stuffed inside the script, and only your own language is downloaded rather than all sixteen - together that roughly halves what your browser has to fetch and parse on every page. Scrolling through libraries is noticeably smoother because the plugin no longer re-scans the whole page every time anything on it changes. The admin Media list now asks the database for just the page you're looking at instead of loading your entire library first, so it opens quickly even on large collections. Chat only fetches new messages instead of re-downloading the last 50 every two seconds, and background tabs stop polling entirely. Watching something no longer rewrites a settings file on every few seconds of playback. Data files are also written more safely, so a crash or power cut mid-save can no longer leave them corrupted. Includes the admin category list scrollbar fix from PR #73.",
         "targetAbi": "10.11.0.0",
