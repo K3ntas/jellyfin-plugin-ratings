@@ -2776,6 +2776,37 @@
         },
 
         /**
+         * URI-encodes a payload so it is safe inside a single-quoted inline handler.
+         *
+         * encodeURIComponent deliberately leaves ! ' ( ) * ~ unencoded, because they are legal in
+         * a URI. That is fine for URLs and wrong here: these payloads get embedded in
+         * onclick="RatingsPlugin.foo('...')", so a film whose title contains an apostrophe or
+         * brackets - "Schindler's List", anything "(1993)" - terminated the JS string early and
+         * the browser reported "missing ) after argument list". The handler then did nothing at
+         * all, which is why it only failed for SOME media.
+         *
+         * decodeURIComponent reverses these escapes, so callers need no change.
+         * @param {*} value Value to serialize and encode.
+         * @returns {string} Encoded payload safe for an inline handler.
+         */
+        encodePayload: function (value) {
+            return this.encodeParam(JSON.stringify(value));
+        },
+
+        /**
+         * Strictly URI-encodes a single string for the same inline-handler use as encodePayload.
+         * decodeURIComponent reverses it, so the receiving end needs no change.
+         * @param {string} text Text to encode.
+         * @returns {string} Encoded text safe for an inline handler.
+         */
+        encodeParam: function (text) {
+            return encodeURIComponent(text == null ? '' : String(text))
+                .replace(/[!'()*~]/g, function (c) {
+                    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+                });
+        },
+
+        /**
          * Returns the value only if it is a Jellyfin item id, otherwise null.
          *
          * Item ids arrive from DOM attributes and from JSON, and end up in URLs and in markup.
@@ -3640,7 +3671,7 @@
                     html += '<div class="lb-am-section">On your server</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
-                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' }));
+                        var sp = self.encodePayload({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' });
                         html += '<div class="lb-am-row" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + sp + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + sp + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
@@ -3662,7 +3693,7 @@
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
-                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview }));
+                        var payload = self.encodePayload({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview });
                         html += '<div class="lb-am-row ext" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + payload + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + payload + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
@@ -4136,13 +4167,13 @@
             var extra = '';
             var clickAttr = '';
             if (notInLib) {
-                var payload = encodeURIComponent(JSON.stringify({
+                var payload = self.encodePayload({
                     title: fav.title || (fav.title ?? fav.Title) || '',
                     year: fav.year || (fav.year ?? fav.Year) || '',
                     type: fav.mediaType || (fav.mediaType ?? fav.MediaType) || 'Movie',
                     tmdbId: fav.tmdbId || (fav.tmdbId ?? fav.TmdbId) || '',
                     poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
-                }));
+                });
                 extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
                     '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                     // Titles from the catalog could not be rated at all before (issue #72).
@@ -4933,7 +4964,7 @@
                     var name = m.username || 'Unknown';
                     var initial = name[0] ? name[0].toUpperCase() : '?';
                     var shared = (m.sharedGenres || []).join(' · ');
-                    var encName = encodeURIComponent(name);
+                    var encName = self.encodeParam(name);
                     var w = m.watching;
 
                     // Three presence states: watching something (bright green), online but idle
@@ -4962,13 +4993,13 @@
                             self._watchTitles[titleKey] = mediaName;
                         }
 
-                        var joinPayload = encodeURIComponent(JSON.stringify({
+                        var joinPayload = self.encodePayload({
                             itemId: w.itemId,
                             title: mediaName,
                             positionTicks: w.positionTicks || 0,
                             reportedSecondsAgo: w.reportedSecondsAgo || 0,
                             user: name
-                        }));
+                        });
 
                         watchLine = '<div class="lb-match-watching">' +
                             '<span class="lb-watch-icon" aria-hidden="true">▶</span>' +
@@ -5916,7 +5947,7 @@
             categories.forEach(function (cat) {
                 navHtml += '<button class="lb-picker-cat-btn" data-category="' + cat.id + '"' +
                     (cat.genre ? ' data-genre="' + cat.genre + '"' : '') +
-                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + cat.id + '\'' + (cat.genre ? ',\'' + cat.genre + '\'' : '') + ')">' +
+                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + self.escapeJs(cat.id) + '\'' + (cat.genre ? ',\'' + self.escapeJs(cat.genre) + '\'' : '') + ')">' +
                     '<span class="cat-icon">' + cat.icon + '</span>' +
                     '<span class="cat-name">' + cat.name + '</span>' +
                     '</button>';
