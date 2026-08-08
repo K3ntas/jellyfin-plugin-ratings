@@ -11198,9 +11198,21 @@
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'X-Emby-Authorization': authHeader }
-                }).then(r => r.json())
+                }).then(r => r.json()),
+
+                // What the plugin ITSELF announced as new. The two queries above sort by
+                // DateCreated, which Jellyfin takes from the file rather than from when the item
+                // reached the library - so media copied in with its original timestamps sorts to
+                // wherever that old date falls, often past the end of the list. That is why an
+                // item could be announced as new and still never appear here. This list is
+                // stamped with the time the plugin saw each item, so the two cannot disagree.
+                fetch(`${baseUrl}/Ratings/LatestMedia?limit=30`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Authorization': authHeader }
+                }).then(r => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }))
             ])
-            .then(([mediaData, episodeData]) => {
+            .then(([mediaData, episodeData, announcedData]) => {
                 // Helper function to format time ago
                 const formatTimeAgo = (dateString) => {
                     if (!dateString) return '';
@@ -11297,6 +11309,43 @@
                                 DateCreated: epInfo.latestDate
                             });
                         }
+                    });
+
+                    // Anything the plugin announced must appear here, and must be dated by when
+                    // the plugin saw it rather than by the file's own timestamp.
+                    const announced = (announcedData && announcedData.items) || [];
+                    const byId = new Map(combinedItems.map(i => [i.Id, i]));
+
+                    announced.forEach(a => {
+                        if (!a || !a.itemId) return;
+
+                        const addedAt = new Date(a.addedAt);
+                        if (isNaN(addedAt.getTime())) return;
+
+                        const existing = byId.get(a.itemId);
+                        if (existing) {
+                            // Already listed, but possibly sorted by a misleading file date.
+                            if (addedAt > existing.sortDate) {
+                                existing.sortDate = addedAt;
+                                existing.DateCreated = a.addedAt;
+                            }
+                            return;
+                        }
+
+                        // Missing entirely - this is the reported bug.
+                        const entry = {
+                            Id: a.itemId,
+                            Name: a.name || a.seriesName || '',
+                            Type: a.type || 'Movie',
+                            ProductionYear: a.year,
+                            DateCreated: a.addedAt,
+                            isNewMedia: true,
+                            newEpisodeCount: 0,
+                            sortDate: addedAt
+                        };
+
+                        combinedItems.push(entry);
+                        byId.set(a.itemId, entry);
                     });
 
                     // Sort by date descending

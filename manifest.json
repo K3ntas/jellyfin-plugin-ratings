@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.357.0",
+        "changelog": "Fixes new media being announced but never appearing in the Latest Media list. The list was ordered by the date Jellyfin takes from the file itself, not by when the media actually reached your server - so anything copied in keeping its original timestamps sorted to wherever that old date fell, usually past the end of the list. You would get the 'now available' notification and then find nothing there. The list now also includes everything the plugin announced, dated by when it actually saw it, so the notification and the list can no longer disagree. Items removed from the server since being announced are left out.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.357.0/Jellyfin.Plugin.Ratings_2.0.357.0.zip",
+        "checksum": "b7778e77a8ab5e6821455d1928a1cebc",
+        "timestamp": "2026-08-08T22:49:00Z"
+      },
+      {
         "version": "2.0.356.0",
         "changelog": "Further hardening of the watching hover card, following up the security fix in the previous version. The card no longer reads any text back out of the page at all - the title it shows while loading now comes from data the plugin already holds. Re-inserting text taken from the page undoes whatever escaping made it safe, so the read was removed rather than escaped. Numbers shown on the card (year, running time, score) are also validated as numbers before being displayed, which additionally stops an unexpected value breaking the card.",
         "targetAbi": "10.11.0.0",

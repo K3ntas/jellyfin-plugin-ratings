@@ -2057,6 +2057,111 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="since">ISO 8601 timestamp to get notifications since.</param>
         /// <returns>List of notifications.</returns>
+        /// <summary>
+        /// Items the plugin has actually announced as new, newest first.
+        /// </summary>
+        /// <remarks>
+        /// The Latest Media list used to be built purely from a Jellyfin query sorted by
+        /// DateCreated, which is taken from the file rather than from when the item reached the
+        /// library. Media copied in with its original timestamps therefore sorted to wherever that
+        /// old date fell - often past the end of the list - so the plugin would announce something
+        /// as new that never appeared in Latest Media. That is the reported bug.
+        ///
+        /// This returns what the plugin itself recorded when it announced each item, stamped with
+        /// the time it was seen, so the notification and the list cannot disagree. Items that have
+        /// since been removed from the library are dropped.
+        /// </remarks>
+        /// <param name="limit">Maximum items to return.</param>
+        /// <param name="days">How far back to look.</param>
+        /// <returns>Recently announced media.</returns>
+        [HttpGet("LatestMedia")]
+        [Authorize]
+        public ActionResult<object> GetLatestAnnouncedMedia([FromQuery] int limit = 30, [FromQuery] int days = 30)
+        {
+            try
+            {
+                limit = Math.Clamp(limit, 1, 100);
+                days = Math.Clamp(days, 1, 365);
+
+                var since = DateTime.UtcNow.AddDays(-days);
+
+                // One record per item - a series that gained several episodes is announced more
+                // than once, and the list wants the newest entry for it.
+                var newest = _repository.GetNotificationsSince(since)
+                    .Where(n => !n.IsTest && n.ItemId != Guid.Empty)
+                    .GroupBy(n => n.ItemId)
+                    .Select(g => g.OrderByDescending(n => n.CreatedAt).First())
+                    .OrderByDescending(n => n.CreatedAt)
+                    .Take(limit * 2)
+                    .ToList();
+
+                if (newest.Count == 0)
+                {
+                    return Ok(new { items = Array.Empty<object>() });
+                }
+
+                // Resolve them in one query so anything already deleted is filtered out and the
+                // caller gets a current image tag.
+                var itemMap = new Dictionary<Guid, MediaBrowser.Controller.Entities.BaseItem>();
+                try
+                {
+                    var ids = newest.Select(n => n.ItemId).Distinct().ToArray();
+                    foreach (var item in _libraryManager.GetItemList(
+                        new MediaBrowser.Controller.Entities.InternalItemsQuery { ItemIds = ids }))
+                    {
+                        itemMap[item.Id] = item;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Could not resolve announced items");
+                }
+
+                var results = new List<object>();
+                foreach (var n in newest)
+                {
+                    if (!itemMap.TryGetValue(n.ItemId, out var item))
+                    {
+                        // Announced but no longer in the library - do not offer a dead link.
+                        continue;
+                    }
+
+                    // An episode announcement points at the episode; the list shows series, so
+                    // surface the series it belongs to.
+                    var displayItem = item is MediaBrowser.Controller.Entities.TV.Episode ep && ep.SeriesId != Guid.Empty
+                        ? (itemMap.TryGetValue(ep.SeriesId, out var s) ? s : item)
+                        : item;
+
+                    results.Add(new
+                    {
+                        itemId = displayItem.Id,
+                        name = displayItem.Name,
+                        type = displayItem.GetType().Name,
+                        year = displayItem.ProductionYear,
+                        seriesName = n.SeriesName,
+
+                        // When the PLUGIN saw it, which is the honest "added" time.
+                        addedAt = n.CreatedAt,
+
+                        // What Jellyfin thinks, kept so a client can see the discrepancy.
+                        dateCreated = item.DateCreated
+                    });
+
+                    if (results.Count >= limit)
+                    {
+                        break;
+                    }
+                }
+
+                return Ok(new { items = results });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error building latest announced media");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpGet("Notifications")]
         [Authorize]
         public async Task<ActionResult<List<Models.NewMediaNotification>>> GetNotifications([FromQuery] string? since = null)
