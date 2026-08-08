@@ -37,6 +37,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly ILogger<SocialController> _logger;
         private readonly SocialWebSocketListener _webSocketListener;
         private readonly IApplicationPaths _appPaths;
+        private readonly GenreAffinityService _genreAffinity;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SocialController"/> class.
@@ -59,7 +60,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             IUserDataManager userDataManager,
             ILogger<SocialController> logger,
             SocialWebSocketListener webSocketListener,
-            IApplicationPaths appPaths)
+            IApplicationPaths appPaths,
+            GenreAffinityService genreAffinity)
         {
             _socialRepository = socialRepository;
             _ratingsRepository = ratingsRepository;
@@ -70,6 +72,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger = logger;
             _webSocketListener = webSocketListener;
             _appPaths = appPaths;
+            _genreAffinity = genreAffinity;
         }
 
         /// <summary>
@@ -223,6 +226,153 @@ namespace Jellyfin.Plugin.Ratings.Api
                 .ToList();
 
             return Ok(new { users = results, total = results.Count });
+        }
+
+        /// <summary>
+        /// Gets a user's viewing breakdown by genre, based on what they have actually watched.
+        /// </summary>
+        /// <remarks>
+        /// Every other profile statistic in this plugin comes from ratings, which only reflects
+        /// what people bother to rate. This uses Jellyfin's playback data, so it covers everything
+        /// watched. Percentages are of total watch time; an item's runtime is split across its
+        /// genres so the parts add up to the whole.
+        /// </remarks>
+        /// <param name="userId">User to describe.</param>
+        /// <param name="limit">How many genres to return.</param>
+        /// <returns>Top genres with minutes and share.</returns>
+        [HttpGet("Profile/{userId}/Genres")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public ActionResult<object> GetGenreBreakdown([FromRoute] Guid userId, [FromQuery] int limit = 8)
+        {
+            if (GetCurrentUserId() == null)
+            {
+                return Unauthorized();
+            }
+
+            limit = Math.Clamp(limit, 3, 20);
+
+            var profile = _genreAffinity.GetProfile(userId);
+            if (!profile.HasData)
+            {
+                return Ok(new { hasData = false, genres = Array.Empty<object>(), totalMinutes = 0, itemCount = 0 });
+            }
+
+            var ordered = profile.MinutesByGenre
+                .OrderByDescending(kv => kv.Value)
+                .ToList();
+
+            var top = ordered.Take(limit)
+                .Select(kv => new
+                {
+                    name = kv.Key,
+                    minutes = (long)Math.Round(kv.Value),
+                    percent = Math.Round(100 * kv.Value / profile.TotalMinutes, 1)
+                })
+                .ToList();
+
+            // Everything past the cut-off collapses into one slice, so the ring is always whole
+            // rather than mysteriously not adding up.
+            var otherMinutes = ordered.Skip(limit).Sum(kv => kv.Value);
+
+            return Ok(new
+            {
+                hasData = true,
+                genres = top,
+                otherMinutes = (long)Math.Round(otherMinutes),
+                otherPercent = otherMinutes > 0 ? Math.Round(100 * otherMinutes / profile.TotalMinutes, 1) : 0,
+                totalMinutes = (long)Math.Round(profile.TotalMinutes),
+                itemCount = profile.ItemCount
+            });
+        }
+
+        /// <summary>
+        /// Finds users whose viewing taste is closest to this user's.
+        /// </summary>
+        /// <remarks>
+        /// Compares genre watch-time profiles, so the score answers "do we like the same things?"
+        /// rather than "who watches most" - a light viewer and a heavy one can still match highly
+        /// if their genre mix lines up. Private profiles and blocked users are excluded, matching
+        /// the rules used by the user list.
+        /// </remarks>
+        /// <param name="userId">User to match against.</param>
+        /// <param name="limit">How many matches to return.</param>
+        /// <returns>Ranked matches with a percentage and shared genres.</returns>
+        [HttpGet("Profile/{userId}/SimilarUsers")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public ActionResult<object> GetSimilarUsers([FromRoute] Guid userId, [FromQuery] int limit = 5)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            limit = Math.Clamp(limit, 1, 20);
+
+            var target = _genreAffinity.GetProfile(userId);
+            if (!target.HasData)
+            {
+                return Ok(new { hasData = false, matches = Array.Empty<object>() });
+            }
+
+            var matches = new List<(int Score, object Payload)>();
+
+            foreach (var other in JellyfinCompat.GetAllUsers(_userManager))
+            {
+                if (other.Id == userId)
+                {
+                    continue;
+                }
+
+                var otherProfile = _socialRepository.GetProfile(other.Id);
+                if (otherProfile != null && otherProfile.Privacy.ProfileVisibility == "Private")
+                {
+                    continue;
+                }
+
+                if (_socialRepository.IsBlockedEitherWay(currentUserId.Value, other.Id))
+                {
+                    continue;
+                }
+
+                var otherGenres = _genreAffinity.GetProfile(other.Id);
+                var score = GenreAffinityService.Similarity(target, otherGenres);
+                if (score <= 0)
+                {
+                    continue;
+                }
+
+                // The genres they have most in common, for a one-line "because you both watch..."
+                var shared = target.MinutesByGenre.Keys
+                    .Where(g => otherGenres.MinutesByGenre.ContainsKey(g))
+                    .OrderByDescending(g => Math.Min(target.MinutesByGenre[g], otherGenres.MinutesByGenre[g]))
+                    .Take(3)
+                    .ToList();
+
+                var percent = (int)Math.Round(score * 100);
+
+                matches.Add((percent, new
+                {
+                    userId = other.Id,
+                    username = other.Username,
+                    matchPercent = percent,
+                    sharedGenres = shared,
+                    isFriend = _socialRepository.AreFriends(currentUserId.Value, other.Id),
+                    canMessage = other.Id != currentUserId.Value
+                }));
+            }
+
+            var ranked = matches
+                .OrderByDescending(m => m.Score)
+                .Take(limit)
+                .Select(m => m.Payload)
+                .ToList();
+
+            return Ok(new { hasData = true, matches = ranked });
         }
 
         /// <summary>
