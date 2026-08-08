@@ -293,8 +293,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <remarks>
         /// Compares genre watch-time profiles, so the score answers "do we like the same things?"
         /// rather than "who watches most" - a light viewer and a heavy one can still match highly
-        /// if their genre mix lines up. Private profiles and blocked users are excluded, matching
-        /// the rules used by the user list.
+        /// if their genre mix lines up.
+        /// Everyone on the server is considered, including users with a private profile: the point
+        /// is discovery, and what is revealed is an aggregate genre percentage rather than any
+        /// particular title. Blocked users are still left out, in both directions.
         /// </remarks>
         /// <param name="userId">User to match against.</param>
         /// <param name="limit">How many matches to return.</param>
@@ -328,12 +330,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                     continue;
                 }
 
-                var otherProfile = _socialRepository.GetProfile(other.Id);
-                if (otherProfile != null && otherProfile.Privacy.ProfileVisibility == "Private")
-                {
-                    continue;
-                }
-
+                // Privacy settings deliberately do NOT filter this list: the whole point is to
+                // find everyone with similar taste, and what is exposed is an aggregate genre
+                // percentage, not which titles anyone watched.
+                // Blocking is still honoured - it is not a privacy preference but an explicit
+                // "keep this person away from me", and the card offers a direct message button.
                 if (_socialRepository.IsBlockedEitherWay(currentUserId.Value, other.Id))
                 {
                     continue;
