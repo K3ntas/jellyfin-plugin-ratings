@@ -1918,6 +1918,10 @@
                         // Merge but preserve watching if not provided
                         self._friendsStatusCache[statusUserId] = Object.assign({}, existing, data.SocialData);
                         self.updateFriendStatusOnly(data.SocialData);
+
+                        // Keep the profile's Similar Taste card live - it used to need the profile
+                        // closing and reopening before a status change showed up.
+                        self.refreshSimilarUsersNow();
                     }
                     break;
 
@@ -1941,6 +1945,9 @@
                         existingFriend.userId = odataUserId;
                         self._friendsStatusCache[odataUserId] = existingFriend;
                         self.updateFriendWatchingOnly(data.SocialData);
+
+                        // Someone started or stopped watching - reflect it in the profile card.
+                        self.refreshSimilarUsersNow();
                     }
                     break;
 
@@ -4909,8 +4916,10 @@
                     var presence = w ? 'watching' : (m.isOnline ? 'online' : 'offline');
                     var presenceLabel = w ? 'Watching now' : (m.isOnline ? 'Online' : 'Offline');
 
-                    // Second line is what they are watching if they are, otherwise their genres.
-                    var subLine;
+                    // What they are watching goes on its OWN full-width line beneath the name, so
+                    // long series titles are readable instead of being squeezed between the name
+                    // and the match percentage.
+                    var watchLine = '';
                     if (w) {
                         var mediaName = w.seriesName
                             ? (w.seriesName + (w.episodeInfo ? ' · ' + w.episodeInfo : ''))
@@ -4923,15 +4932,25 @@
 
                         self._matchWatching.push({ id: id, seconds: startedSec, total: totalSec });
 
-                        subLine = '<div class="lb-match-watching" title="' + self.escapeHtml(mediaName) + '">' +
-                            '<span class="lb-watch-title">' + self.escapeHtml(mediaName) + '</span>' +
+                        var joinPayload = encodeURIComponent(JSON.stringify({
+                            itemId: w.itemId,
+                            title: mediaName,
+                            positionTicks: w.positionTicks || 0,
+                            reportedSecondsAgo: w.reportedSecondsAgo || 0,
+                            user: name
+                        }));
+
+                        watchLine = '<div class="lb-match-watching">' +
+                            '<span class="lb-watch-icon" aria-hidden="true">▶</span>' +
+                            '<span class="lb-watch-title" title="' + self.escapeHtml(mediaName) + '">' + self.escapeHtml(mediaName) + '</span>' +
                             '<span class="lb-watch-time" id="' + id + '">' + self.formatWatchClock(startedSec, totalSec) + '</span>' +
+                            '<button class="lb-watch-join" title="Watch this too" ' +
+                            'onclick="event.stopPropagation();RatingsPlugin.openJoinWatchModal(\'' + joinPayload + '\')">Watch too</button>' +
                             '</div>';
-                    } else {
-                        subLine = shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '';
                     }
 
-                    html += '<div class="lb-match" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(m.userId) + '\')">' +
+                    html += '<div class="lb-match' + (w ? ' is-watching' : '') + '">' +
+                        '<div class="lb-match-row" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(m.userId) + '\')">' +
                         '<div class="lb-match-avatar-wrap">' +
                         '<div class="lb-match-avatar">' + self.escapeHtml(initial) + '</div>' +
                         '<span class="lb-presence-dot ' + presence + '" title="' + presenceLabel + '"></span>' +
@@ -4939,21 +4958,176 @@
                         '<div class="lb-match-info">' +
                         '<div class="lb-match-name">' + self.escapeHtml(name) +
                         (m.isFriend ? '<span class="lb-user-badge friend">Friend</span>' : '') + '</div>' +
-                        subLine +
+                        (shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '') +
                         '</div>' +
                         '<div class="lb-match-score" title="Genre taste match">' + m.matchPercent + '%</div>' +
                         (m.canMessage
                             ? '<button class="lb-match-msg" title="Send a private message" ' +
                               'onclick="event.stopPropagation();RatingsPlugin.messageUser(\'' + self.escapeJs(m.userId) + '\',\'' + encName + '\')">✉</button>'
                             : '') +
+                        '</div>' +
+                        watchLine +
                         '</div>';
                 });
 
                 el.innerHTML = html;
                 self.startMatchWatchClocks();
+                self.startSimilarUsersRefresh();
             })
             .catch(function () {
                 el.innerHTML = '<div class="lb-side-empty">Could not load matches</div>';
+            });
+        },
+
+        /**
+         * Keeps the Similar Taste card current while the profile is open.
+         *
+         * Presence changes (someone comes online, starts or stops watching) used to require
+         * closing and reopening the profile. The plugin's WebSocket already carries
+         * SocialStatusUpdate / SocialWatchingUpdate, so those trigger an immediate refresh; the
+         * timer is the safety net for users the socket does not cover, and it is deliberately
+         * slow and paused while the tab is hidden.
+         */
+        startSimilarUsersRefresh: function () {
+            var self = this;
+
+            if (self._similarRefreshTimer) {
+                return;
+            }
+
+            self._similarRefreshTimer = setInterval(function () {
+                var el = document.getElementById('lbSimilarUsers');
+                if (!el) {
+                    // Profile closed - stop.
+                    clearInterval(self._similarRefreshTimer);
+                    self._similarRefreshTimer = null;
+                    return;
+                }
+
+                if (document.hidden) {
+                    return;
+                }
+
+                self.loadProfileSimilarUsers();
+            }, 30000);
+        },
+
+        /**
+         * Refreshes the Similar Taste card right now, if it is on screen.
+         * Called from the WebSocket presence handlers so status changes appear immediately.
+         */
+        refreshSimilarUsersNow: function () {
+            var self = this;
+            if (!document.getElementById('lbSimilarUsers') || document.hidden) {
+                return;
+            }
+
+            // Coalesce: a burst of presence messages should cause one refresh, not one each.
+            if (self._similarRefreshPending) {
+                return;
+            }
+
+            self._similarRefreshPending = true;
+            setTimeout(function () {
+                self._similarRefreshPending = false;
+                self.loadProfileSimilarUsers();
+            }, 1200);
+        },
+
+        /**
+         * Offers to watch what another user is watching - from the start, or from where they are.
+         * @param {string} payloadEnc URI-encoded JSON with itemId, title, positionTicks, user.
+         */
+        openJoinWatchModal: function (payloadEnc) {
+            var self = this;
+            var d;
+            try { d = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!d || !d.itemId) { return; }
+
+            var existing = document.getElementById('lbJoinWatchModal');
+            if (existing) { existing.remove(); }
+
+            // Their position has moved on since the server reported it; offer the live figure.
+            var liveSeconds = Math.floor((d.positionTicks || 0) / 10000000) + (d.reportedSecondsAgo || 0);
+            var liveTicks = liveSeconds * 10000000;
+            var liveLabel = self.formatWatchClock(liveSeconds, 0);
+
+            var modal = document.createElement('div');
+            modal.className = 'lb-settings-modal';
+            modal.id = 'lbJoinWatchModal';
+            modal.innerHTML = '<div class="lb-settings-content lb-join-watch">' +
+                '<div class="lb-settings-header">' +
+                '<h2>Watch “' + self.escapeHtml(d.title || '') + '”</h2>' +
+                '<button class="lb-settings-close" onclick="RatingsPlugin.closeJoinWatchModal()">&times;</button>' +
+                '</div>' +
+                '<div class="lb-settings-body">' +
+                '<p class="lb-settings-hint">' + self.escapeHtml(d.user || 'They') + ' is at ' + liveLabel + '.</p>' +
+                '<div class="lb-join-options">' +
+                '<button class="lb-join-opt primary" onclick="RatingsPlugin.startWatching(\'' + self.escapeJs(d.itemId) + '\',' + liveTicks + ')">' +
+                '<span class="lb-join-opt-icon">⏱</span>' +
+                '<span class="lb-join-opt-text"><strong>Join them at ' + liveLabel + '</strong>' +
+                '<small>Start where they are now</small></span></button>' +
+                '<button class="lb-join-opt" onclick="RatingsPlugin.startWatching(\'' + self.escapeJs(d.itemId) + '\',0)">' +
+                '<span class="lb-join-opt-icon">⏮</span>' +
+                '<span class="lb-join-opt-text"><strong>Start from the beginning</strong>' +
+                '<small>Watch it from the top</small></span></button>' +
+                '</div></div></div>';
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) { self.closeJoinWatchModal(); }
+            });
+
+            document.body.appendChild(modal);
+        },
+
+        /**
+         * Closes the join-watch chooser.
+         */
+        closeJoinWatchModal: function () {
+            var modal = document.getElementById('lbJoinWatchModal');
+            if (modal) { modal.remove(); }
+        },
+
+        /**
+         * Starts playback of an item, optionally at a position.
+         *
+         * Jellyfin's playbackManager is the direct route but is not reliably reachable from an
+         * injected script across versions. The fallback writes the position as this user's resume
+         * point through the public API and then opens the item, so Jellyfin itself offers
+         * "Resume" at that spot - which works on every client, including TV and mobile.
+         * @param {string} itemId Item to play.
+         * @param {number} positionTicks Start position in ticks (0 = from the beginning).
+         */
+        startWatching: function (itemId, positionTicks) {
+            var self = this;
+            self.closeJoinWatchModal();
+
+            var pm = window.playbackManager
+                || (window.Emby && window.Emby.playbackManager)
+                || null;
+
+            if (pm && typeof pm.play === 'function') {
+                try {
+                    pm.play({ ids: [itemId], startPositionTicks: positionTicks || 0 });
+                    self.closeProfilePage();
+                    return;
+                } catch (e) {
+                    // Fall through to the resume-point route below.
+                }
+            }
+
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+
+            fetch(baseUrl + '/PlayingItems/' + encodeURIComponent(itemId) + '/Progress?positionTicks=' + (positionTicks || 0), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': token }
+            })
+            .catch(function () { /* opening the item still works without it */ })
+            .then(function () {
+                self.closeProfilePage();
+                self.goToMedia(itemId);
             });
         },
 
@@ -6577,6 +6751,17 @@
 
             // Closing for real ends the trail - a later profile open starts fresh.
             self._profileHistory = [];
+
+            // Stop the sidebar's live timers, or they keep running against a removed DOM.
+            if (self._similarRefreshTimer) {
+                clearInterval(self._similarRefreshTimer);
+                self._similarRefreshTimer = null;
+            }
+
+            if (self._matchClockTimer) {
+                clearInterval(self._matchClockTimer);
+                self._matchClockTimer = null;
+            }
 
             // Restore background page scrolling.
             document.body.style.overflow = self._prevBodyOverflow || '';

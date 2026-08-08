@@ -10472,12 +10472,11 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 /* --- Similar users --- */
 .lb-match {
     display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 7px 6px;
+    flex-direction: column;
+    padding: 7px 8px;
     border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s ease;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .lb-match:hover {
@@ -10599,17 +10598,40 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     }
 }
 
-/* --- "Now watching" line --- */
+/* --- "Now watching" line ---
+   Its own full-width row beneath the name, so a long series title is readable
+   instead of being squeezed between the username and the match percentage. */
+.lb-match.is-watching {
+    background: rgba(0, 224, 84, 0.05);
+    border: 1px solid rgba(0, 224, 84, 0.16);
+}
+
+.lb-match-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+}
+
 .lb-match-watching {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-size: 11px;
+    align-items: center;
+    gap: 7px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 11.5px;
     min-width: 0;
 }
 
-.lb-watch-title {
+.lb-watch-icon {
     color: #00e054;
+    font-size: 9px;
+    flex-shrink: 0;
+}
+
+.lb-watch-title {
+    color: #d7e3ee;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -10622,6 +10644,86 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     /* Tabular figures stop the row twitching as the clock ticks. */
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
+}
+
+.lb-watch-join {
+    flex-shrink: 0;
+    background: rgba(0, 224, 84, 0.14);
+    color: #00e054;
+    border: 1px solid rgba(0, 224, 84, 0.35);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lb-watch-join:hover {
+    background: #00e054;
+    color: #0d1117;
+}
+
+/* --- "Watch too" chooser --- */
+.lb-join-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.lb-join-opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #cbd5e1;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lb-join-opt:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.lb-join-opt.primary {
+    border-color: rgba(0, 224, 84, 0.45);
+    background: rgba(0, 224, 84, 0.08);
+}
+
+.lb-join-opt.primary:hover {
+    background: rgba(0, 224, 84, 0.16);
+    border-color: #00e054;
+}
+
+.lb-join-opt-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.lb-join-opt-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lb-join-opt-text strong {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.lb-join-opt-text small {
+    color: #8fa3b5;
+    font-size: 11.5px;
 }
 
 /* --- Display typography for the sidebar cards --- */
