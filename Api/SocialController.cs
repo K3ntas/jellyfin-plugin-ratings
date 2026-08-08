@@ -160,6 +160,72 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Lists everyone on the server, so profiles can be browsed without knowing a name to
+        /// search for.
+        /// </summary>
+        /// <remarks>
+        /// SearchUsers only answers once you have typed two characters, which is no help if you do
+        /// not already know who else is here. This backs the "Other Users" tab on the profile page.
+        /// Users who have set their profile to Private are omitted, and blocked users in either
+        /// direction are hidden from each other.
+        /// </remarks>
+        /// <param name="limit">Maximum users to return.</param>
+        /// <returns>The list of users.</returns>
+        [HttpGet("Users")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public ActionResult<object> ListUsers([FromQuery] int limit = 200)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            limit = Math.Clamp(limit, 1, 500);
+
+            var results = JellyfinCompat.GetAllUsers(_userManager)
+                .Where(u => u.Id != userId.Value)
+                .Select(u =>
+                {
+                    var profile = _socialRepository.GetProfile(u.Id);
+                    return new { User = u, Profile = profile };
+                })
+                .Where(x =>
+                {
+                    // Respect an explicit "Private" profile, and hide people who have blocked the
+                    // viewer (or whom the viewer has blocked) from the browse list entirely.
+                    if (x.Profile != null && x.Profile.Privacy.ProfileVisibility == "Private")
+                    {
+                        return false;
+                    }
+
+                    return !_socialRepository.IsBlockedEitherWay(userId.Value, x.User.Id);
+                })
+                .OrderBy(x => x.User.Username, StringComparer.OrdinalIgnoreCase)
+                .Take(limit)
+                .Select(x =>
+                {
+                    var isFriend = _socialRepository.AreFriends(userId.Value, x.User.Id);
+                    var status = _socialRepository.GetOnlineStatus(x.User.Id);
+
+                    return new
+                    {
+                        userId = x.User.Id,
+                        username = x.User.Username,
+                        bio = x.Profile?.Bio ?? string.Empty,
+                        isFriend,
+                        isFollowing = _socialRepository.IsFollowing(userId.Value, x.User.Id),
+                        isOnline = status != null && !string.Equals(status.GetEffectiveStatus(), "Offline", StringComparison.OrdinalIgnoreCase)
+                    };
+                })
+                .ToList();
+
+            return Ok(new { users = results, total = results.Count });
+        }
+
+        /// <summary>
         /// Gets the current user's profile.
         /// </summary>
         /// <returns>The user's profile.</returns>

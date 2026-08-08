@@ -389,8 +389,9 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="imdbId">Optional IMDB ID for fallback lookup.</param>
         /// <param name="aniDbId">Optional AniDB ID for fallback lookup (anime).</param>
         /// <param name="reviewText">Optional review text.</param>
+        /// <param name="snapshot">Optional title/year/type/poster to remember with the rating.</param>
         /// <returns>The created or updated rating.</returns>
-        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null, string? reviewText = null)
+        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null, string? reviewText = null, RatingSnapshot? snapshot = null)
         {
             lock (_lock)
             {
@@ -430,6 +431,8 @@ namespace Jellyfin.Plugin.Ratings.Data
                         existing.ReviewText = string.IsNullOrWhiteSpace(reviewText) ? null : reviewText;
                     }
 
+                    ApplySnapshot(existing, snapshot);
+
                     _ = SaveRatingsAsync();
                     return existing;
                 }
@@ -445,10 +448,86 @@ namespace Jellyfin.Plugin.Ratings.Data
                     ReviewText = string.IsNullOrWhiteSpace(reviewText) ? null : reviewText
                 };
 
+                ApplySnapshot(newRating, snapshot);
+
                 _ratings[newRating.Id] = newRating;
                 AddRatingToIndexes(newRating);
                 _ = SaveRatingsAsync();
                 return newRating;
+            }
+        }
+
+        /// <summary>
+        /// Copies title/year/type/poster onto a rating, filling gaps without discarding what is
+        /// already there.
+        /// </summary>
+        /// <remarks>
+        /// Called on every rating write, so ratings saved before these fields existed get
+        /// backfilled the next time the user touches them while the item is still in the library.
+        /// A value already stored is never overwritten with an empty one - that is what keeps the
+        /// snapshot alive once the item is gone.
+        /// </remarks>
+        private static void ApplySnapshot(UserRating rating, RatingSnapshot? snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(snapshot.Title))
+            {
+                rating.Title = snapshot.Title;
+            }
+
+            if (snapshot.Year.HasValue)
+            {
+                rating.Year = snapshot.Year;
+            }
+
+            if (!string.IsNullOrWhiteSpace(snapshot.MediaType))
+            {
+                rating.MediaType = snapshot.MediaType;
+            }
+
+            if (!string.IsNullOrWhiteSpace(snapshot.PosterUrl))
+            {
+                rating.PosterUrl = snapshot.PosterUrl;
+            }
+
+            if (snapshot.IsExternal.HasValue)
+            {
+                rating.IsExternal = snapshot.IsExternal.Value;
+            }
+        }
+
+        /// <summary>
+        /// Stores a poster URL resolved after the fact (see the TMDB backfill in RatingsController).
+        /// </summary>
+        /// <param name="ratingId">Rating id.</param>
+        /// <param name="posterUrl">Poster URL to store.</param>
+        /// <returns>True if the rating existed and was updated.</returns>
+        public bool SetRatingPoster(Guid ratingId, string posterUrl)
+        {
+            if (string.IsNullOrWhiteSpace(posterUrl))
+            {
+                return false;
+            }
+
+            lock (_lock)
+            {
+                if (!_ratings.TryGetValue(ratingId, out var rating))
+                {
+                    return false;
+                }
+
+                if (string.Equals(rating.PosterUrl, posterUrl, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                rating.PosterUrl = posterUrl;
+                _ = SaveRatingsAsync();
+                return true;
             }
         }
 

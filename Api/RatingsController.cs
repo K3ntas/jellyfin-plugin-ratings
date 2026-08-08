@@ -305,8 +305,22 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Sanitize review text
                 var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
 
-                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview).ConfigureAwait(false);
+                // Remember what was rated, so the entry still shows a title and a poster if the
+                // item is later removed from the library (issue #72).
+                var snapshot = new RatingSnapshot
+                {
+                    Title = item.Name,
+                    Year = item.ProductionYear,
+                    MediaType = item is MediaBrowser.Controller.Entities.TV.Series ? "Series" : "Movie",
+                    IsExternal = false
+                };
+
+                var result = await _repository.SetRatingAsync(userId, itemId, rating, tmdbId, imdbId, aniDbId, sanitizedReview, snapshot).ConfigureAwait(false);
                 _logger.LogDebug("User rated item {ItemId} with {Rating}", itemId, rating);
+
+                // Jellyfin's own image URL dies with the item, so fetch a poster that will outlive
+                // it. Deliberately off the request path - rating must stay instant.
+                QueueTmdbPosterBackfill(result);
 
                 // Mirror into Jellyfin's native fields so external apps can read it via the API.
                 WriteNativeRating(userId, item, rating);
@@ -711,6 +725,19 @@ namespace Jellyfin.Plugin.Ratings.Api
                     }
                 }
 
+                // Fall back to the snapshot taken when the rating was made. Without this a film
+                // removed from the library left a row of stars with no title and no poster,
+                // because everything shown came from the (now missing) library item.
+                var name = item?.Name ?? r.Title;
+                var year = item?.ProductionYear ?? r.Year;
+                var type = item?.GetType().Name ?? r.MediaType;
+
+                // A live library item always wins for the poster - it is local and always current.
+                // r.PosterUrl is the remembered one, used once the item is gone.
+                var poster = item != null
+                    ? "/Items/" + item.Id.ToString("N") + "/Images/Primary"
+                    : r.PosterUrl;
+
                 result.Add(new
                 {
                     r.Id,
@@ -723,10 +750,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     r.ReviewText,
                     r.CreatedAt,
                     r.UpdatedAt,
-                    ItemName = item?.Name,
-                    Year = item?.ProductionYear,
-                    Type = item?.GetType().Name,
+                    ItemName = name,
+                    Year = year,
+                    Type = type,
                     InLibrary = item != null,
+                    IsExternal = r.IsExternal,
+                    PosterUrl = poster,
                     LikeCount = likeCount,
                     DislikeCount = dislikeCount
                 });
@@ -736,6 +765,225 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         private static readonly System.Net.Http.HttpClient _tmdbHttp = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+
+        // Ratings whose poster has already been looked up (or attempted) this process, so a user
+        // re-rating the same title does not re-hit TMDB.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, byte> _posterBackfillSeen = new();
+
+        /// <summary>
+        /// Builds a stable ItemId for a TMDB title that is not on the server.
+        /// </summary>
+        /// <remarks>
+        /// Everything in the repository is keyed on ItemId, so external ratings need one. Deriving
+        /// it deterministically from the TMDB id means the same title always lands on the same key,
+        /// and because the rating also stores its TmdbId, the existing provider-id fallback will
+        /// migrate it onto the real library item automatically if the title is ever added to the
+        /// server - the user keeps their rating with no special handling anywhere.
+        /// </remarks>
+        /// <param name="tmdbId">TMDB numeric id.</param>
+        /// <param name="mediaType">"Movie" or "Series".</param>
+        /// <returns>A deterministic id for this external title.</returns>
+        internal static Guid GetExternalItemId(string tmdbId, string mediaType)
+        {
+            var seed = "ratings-plugin:tmdb:" + (mediaType ?? "Movie").ToLowerInvariant() + ":" + tmdbId;
+            var bytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(seed));
+            return new Guid(bytes);
+        }
+
+        /// <summary>
+        /// Looks up a TMDB poster for a rating in the background and stores it on the rating.
+        /// </summary>
+        /// <remarks>
+        /// Only runs when a TMDB token is configured, the rating has a TMDB id, and no poster has
+        /// been stored yet. Failure is silent: a missing poster is a cosmetic loss, and this must
+        /// never affect whether the rating itself was saved.
+        /// </remarks>
+        /// <param name="rating">The rating just written.</param>
+        private void QueueTmdbPosterBackfill(UserRating? rating)
+        {
+            if (rating == null
+                || !string.IsNullOrWhiteSpace(rating.PosterUrl)
+                || string.IsNullOrWhiteSpace(rating.TmdbId))
+            {
+                return;
+            }
+
+            var token = Plugin.Instance?.Configuration?.TmdbApiToken;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return;
+            }
+
+            if (!_posterBackfillSeen.TryAdd(rating.Id, 0))
+            {
+                return;
+            }
+
+            var ratingId = rating.Id;
+            var tmdbId = rating.TmdbId;
+            var isSeries = string.Equals(rating.MediaType, "Series", StringComparison.OrdinalIgnoreCase);
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var kind = isSeries ? "tv" : "movie";
+                    var url = "https://api.themoviedb.org/3/" + kind + "/" + Uri.EscapeDataString(tmdbId!);
+
+                    using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                    request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
+                    request.Headers.TryAddWithoutValidation("accept", "application/json");
+
+                    using var resp = await _tmdbHttp.SendAsync(request).ConfigureAwait(false);
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        return;
+                    }
+
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+                    if (doc.RootElement.TryGetProperty("poster_path", out var pp)
+                        && pp.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        var path = pp.GetString();
+                        if (!string.IsNullOrEmpty(path))
+                        {
+                            _repository.SetRatingPoster(ratingId, "https://image.tmdb.org/t/p/w185" + path);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "TMDB poster backfill failed for rating {RatingId}", ratingId);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Rates a TMDB title that is not on the server.
+        /// </summary>
+        /// <remarks>
+        /// Ratings previously required a Jellyfin item, so titles added to a profile row from the
+        /// TMDB catalog could not be rated at all (issue #72). The rating is filed under a
+        /// deterministic id derived from the TMDB id and carries its own title, year and poster, so
+        /// it displays properly with nothing else to look up - and is picked up automatically by
+        /// the real item if the title is later added to the library.
+        /// </remarks>
+        /// <param name="request">External rating request.</param>
+        /// <returns>The stored rating.</returns>
+        [HttpPost("External/Rating")]
+        [Authorize]
+        public async Task<ActionResult<UserRating>> SetExternalRating([FromBody] [Required] ExternalRatingDto request)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                if (userId == Guid.Empty)
+                {
+                    return Unauthorized("User not authenticated");
+                }
+
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableRatings == false)
+                {
+                    return BadRequest("Ratings are currently disabled");
+                }
+
+                if (request == null || string.IsNullOrWhiteSpace(request.TmdbId))
+                {
+                    return BadRequest("tmdbId is required");
+                }
+
+                if (request.Rating < (config?.MinRating ?? 1) || request.Rating > (config?.MaxRating ?? 10))
+                {
+                    return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
+                }
+
+                var mediaType = string.Equals(request.MediaType, "Series", StringComparison.OrdinalIgnoreCase)
+                    ? "Series"
+                    : "Movie";
+
+                // If this title IS on the server after all, rate the real item instead - otherwise
+                // the user would end up with two separate ratings for the same film.
+                var existingItem = FindLibraryItemByTmdbId(request.TmdbId, mediaType);
+                if (existingItem != null)
+                {
+                    return await SetRating(existingItem.Id, request.Rating, request.Review).ConfigureAwait(false);
+                }
+
+                var itemId = GetExternalItemId(request.TmdbId, mediaType);
+                var snapshot = new RatingSnapshot
+                {
+                    Title = SanitizeInput(request.Title ?? string.Empty, 300),
+                    Year = request.Year,
+                    MediaType = mediaType,
+                    PosterUrl = IsSafePosterUrl(request.PosterUrl) ? request.PosterUrl : null,
+                    IsExternal = true
+                };
+
+                var sanitizedReview = request.Review != null ? SanitizeInput(request.Review, 2000) : null;
+
+                var result = await _repository.SetRatingAsync(
+                    userId, itemId, request.Rating, request.TmdbId, null, null, sanitizedReview, snapshot).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "User rated external TMDB title '{Title}' (tmdb {TmdbId}) with {Rating}",
+                    snapshot.Title, request.TmdbId, request.Rating);
+
+                // No poster from the client (or an unsafe one) - fetch it from TMDB.
+                QueueTmdbPosterBackfill(result);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting external rating");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Only TMDB's own image host is accepted, so a client cannot store an arbitrary URL that
+        /// would later be rendered in someone else's profile.
+        /// </summary>
+        /// <param name="url">Candidate poster URL.</param>
+        /// <returns>True when the URL is a TMDB image URL.</returns>
+        private static bool IsSafePosterUrl(string? url)
+        {
+            return !string.IsNullOrWhiteSpace(url)
+                && url.StartsWith("https://image.tmdb.org/t/p/", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Finds a library item carrying the given TMDB id, so an external rating collapses onto
+        /// the real item when the title is actually on the server.
+        /// </summary>
+        /// <param name="tmdbId">TMDB id.</param>
+        /// <param name="mediaType">"Movie" or "Series".</param>
+        /// <returns>The item, or null.</returns>
+        private MediaBrowser.Controller.Entities.BaseItem? FindLibraryItemByTmdbId(string tmdbId, string mediaType)
+        {
+            try
+            {
+                var query = new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = mediaType == "Series"
+                        ? new[] { Jellyfin.Data.Enums.BaseItemKind.Series }
+                        : new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
+                    Recursive = true,
+                    HasAnyProviderId = new Dictionary<string, string> { { "Tmdb", tmdbId } },
+                    Limit = 1
+                };
+
+                return _libraryManager.GetItemList(query).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not check whether TMDB id {TmdbId} is in the library", tmdbId);
+                return null;
+            }
+        }
 
         /// <summary>
         /// Searches the external TMDB catalog for the profile "Add a film" box. Uses the
@@ -761,7 +1009,18 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return Ok(new { configured = false, results = new List<object>() });
                 }
 
-                var url = "https://api.themoviedb.org/3/search/multi?include_adult=false&language=en-US&page=1&query=" + Uri.EscapeDataString(q);
+                // Language was hardcoded to en-US, so a Spanish user searching "La mejor oferta" got
+                // back "The Best Offer". TMDB falls back to the original title when it has no
+                // translation, so an unusual setting degrades rather than returning nothing.
+                var language = Plugin.Instance?.Configuration?.TmdbLanguage;
+                if (string.IsNullOrWhiteSpace(language))
+                {
+                    language = "en-US";
+                }
+
+                var url = "https://api.themoviedb.org/3/search/multi?include_adult=false&language="
+                    + Uri.EscapeDataString(language)
+                    + "&page=1&query=" + Uri.EscapeDataString(q);
                 using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
                 request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
                 request.Headers.TryAddWithoutValidation("accept", "application/json");

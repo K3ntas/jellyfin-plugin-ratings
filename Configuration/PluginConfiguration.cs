@@ -126,6 +126,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             TenorApiKey = string.Empty;
             KlipyApiKey = string.Empty;
             TmdbApiToken = string.Empty;
+            TmdbLanguage = "en-US";
 
             // Chat notification settings
             ChatNotifyPublic = true;
@@ -585,6 +586,18 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Get a free token at https://www.themoviedb.org/settings/api
         /// </summary>
         public string TmdbApiToken { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the language TMDB returns titles and descriptions in, as an ISO code such
+        /// as "es-ES", "de-DE" or "pt-BR". Defaults to "en-US".
+        /// </summary>
+        /// <remarks>
+        /// Search results were previously hardcoded to en-US, so a Spanish user searching for
+        /// "La mejor oferta" was shown "The Best Offer". TMDB falls back to the original title when
+        /// it has no translation for the requested language, so an unusual value degrades rather
+        /// than returning nothing.
+        /// </remarks>
+        public string TmdbLanguage { get; set; } = "en-US";
 
         /// <summary>
         /// Gets or sets the last backup date (ISO 8601 format).
