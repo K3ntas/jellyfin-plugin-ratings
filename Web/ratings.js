@@ -4925,6 +4925,10 @@
                 var html = '';
                 self._matchWatching = [];
 
+                // itemId -> title, kept from the API response so the hover card never has to read
+                // its placeholder text back out of the DOM (see showWatchInfo).
+                self._watchTitles = {};
+
                 matches.forEach(function (m) {
                     var name = m.username || 'Unknown';
                     var initial = name[0] ? name[0].toUpperCase() : '?';
@@ -4952,6 +4956,11 @@
                         var id = 'lbWatch' + self._matchWatching.length;
 
                         self._matchWatching.push({ id: id, seconds: startedSec, total: totalSec });
+
+                        var titleKey = self.asItemGuid(w.itemId);
+                        if (titleKey) {
+                            self._watchTitles[titleKey] = mediaName;
+                        }
 
                         var joinPayload = encodeURIComponent(JSON.stringify({
                             itemId: w.itemId,
@@ -5027,8 +5036,14 @@
                 return;
             }
 
-            // Show something immediately - the poster alone is useful while the rest loads.
-            self._renderWatchInfoPopup(el, { itemId: itemId, name: el.textContent || '', loading: true });
+            // The placeholder title comes from the data we already hold, NOT from el.textContent.
+            // Reading text back out of the page and putting it into HTML is what CodeQL flags as
+            // js/xss-through-dom: text taken from the DOM arrives already decoded, so re-inserting
+            // it as markup undoes whatever escaping made it safe in the first place. Escaping it
+            // again happens to work, but it only stays safe for as long as nobody removes that
+            // escape - so the read is gone instead.
+            var placeholder = (self._watchTitles && self._watchTitles[itemId]) || '';
+            self._renderWatchInfoPopup(el, { itemId: itemId, name: placeholder, loading: true });
 
             var baseUrl = ApiClient.serverAddress();
             var uid = ApiClient.getCurrentUserId();
@@ -5091,9 +5106,23 @@
                 ? baseUrl + '/Items/' + encodeURIComponent(imgId) + '/Images/Primary?maxHeight=260&quality=90'
                 : '';
 
+            // Numeric fields are coerced rather than trusted. They come from the server's item
+            // metadata and should already be numbers, but "should be" is not a guarantee worth
+            // relying on when the result is concatenated into markup - and Number() also stops a
+            // non-numeric value reaching .toFixed() and throwing.
             var meta = [];
-            if (info.year) meta.push(info.year);
-            if (info.runtimeMinutes) meta.push(info.runtimeMinutes + ' min');
+            var year = Number(info.year);
+            var runtime = Number(info.runtimeMinutes);
+            var community = Number(info.communityRating);
+
+            if (Number.isFinite(year) && year > 0) {
+                meta.push(String(Math.trunc(year)));
+            }
+
+            if (Number.isFinite(runtime) && runtime > 0) {
+                meta.push(Math.round(runtime) + ' min');
+            }
+
             if (info.officialRating) meta.push(self.escapeHtml(info.officialRating));
 
             var heading = info.seriesName
@@ -5111,7 +5140,9 @@
                 '<div class="lb-wi-title">' + heading + '</div>' +
                 (sub ? '<div class="lb-wi-sub">' + sub + '</div>' : '') +
                 (meta.length ? '<div class="lb-wi-meta">' + meta.join(' · ') + '</div>' : '') +
-                (info.communityRating ? '<div class="lb-wi-rating">★ ' + info.communityRating.toFixed(1) + '</div>' : '') +
+                (Number.isFinite(community) && community > 0
+                    ? '<div class="lb-wi-rating">★ ' + community.toFixed(1) + '</div>'
+                    : '') +
                 ((info.genres && info.genres.length)
                     ? '<div class="lb-wi-genres">' + self.escapeHtml(info.genres.slice(0, 3).join(' · ')) + '</div>'
                     : '') +
