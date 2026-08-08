@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.362.0",
+        "changelog": "Fixes from reported issues. The Save button in Profile Settings now works - it was calling an address the server does not accept, so nothing was ever saved, and the privacy tick-boxes always looked switched on regardless of your real settings (#72). The search bar no longer disappears on phones held in portrait: it shrinks to just the magnifier icon and expands when tapped, instead of being hidden on any screen under 400px wide (#69). Deleting media now also removes its trickplay thumbnails and any extracted subtitles or attachments, which used to be left behind forever (#70). Uninstalling the plugin now really removes the header buttons - the plugin no longer edits Jellyfin's index.html, and it cleans up that edit if an older version made one, so users no longer have to clear their browser cache by hand (#66). When an old plugin folder cannot be deleted on Windows because its file is locked, the plugin now removes that folder's meta.json so the stale version stops being listed and loaded (#67). New-media notifications now log why an item was treated as new, to make the remaining reports diagnosable (#65).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.362.0/jellyfin-plugin-ratings_1.0.362.0.zip",
+        "checksum": "e3bfc1ba884feb4fb48d31c0b113e83f",
+        "timestamp": "2026-08-08T14:34:00Z"
+      },
+      {
         "version": "1.0.361.0",
         "changelog": "Much smaller downloads and far less disk activity. The plugin's script, stylesheet and language files are now sent pre-compressed, so a first page load transfers roughly 108 KB instead of 676 KB - about six times less. This applies even if you reach Jellyfin over HTTPS directly, where Jellyfin's own compression is off by default. Separately, rapid saves are now merged into a single write: previously every user's presence heartbeat rewrote the entire online-users file, so a few people online meant constant disk churn. Nothing is lost - pending saves are flushed on shutdown and before any backup export or import.",
         "targetAbi": "10.11.0.0",

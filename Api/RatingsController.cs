@@ -41,6 +41,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly ILogger<RatingsController> _logger;
         private readonly SocialWebSocketListener _socialWebSocketListener;
         private readonly ISystemManager _systemManager;
+        private readonly MediaBrowser.Controller.IO.IPathManager? _pathManager;
 
         // Server restart state
         private static CancellationTokenSource? _restartCts;
@@ -68,7 +69,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             IApplicationPaths appPaths,
             ILogger<RatingsController> logger,
             SocialWebSocketListener socialWebSocketListener,
-            ISystemManager systemManager)
+            ISystemManager systemManager,
+            MediaBrowser.Controller.IO.IPathManager? pathManager = null)
         {
             _repository = repository;
             _userManager = userManager;
@@ -79,6 +81,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger = logger;
             _socialWebSocketListener = socialWebSocketListener;
             _systemManager = systemManager;
+            _pathManager = pathManager;
         }
 
         /// <summary>
@@ -4802,6 +4805,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     var fileInfo = new FileInfo(filePath);
                     freedSpace = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                }
+
+                // Trickplay tiles and extracted subtitles/attachments live outside the media
+                // folder, so DeleteItem leaves them behind (issue #70). Clean them up first, while
+                // the item's media sources still exist.
+                if (deleteFile)
+                {
+                    MediaDeletionHelper.DeleteExtractedData(_pathManager, item, _logger);
                 }
 
                 // Delete from library
