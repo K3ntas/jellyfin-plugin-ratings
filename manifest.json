@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.358.0",
+        "changelog": "Fixes rating a film that is not on the server failing with a not-authenticated error. Four endpoints checked the signed-in user in a stricter way than the rest of the plugin and rejected perfectly valid requests - rating a TMDB title, reading your own rating for an item, the batch rating lookup used to draw badges, and listing or creating media requests. They now identify you the same way every other endpoint does, so any client sending a valid token is accepted.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.358.0/Jellyfin.Plugin.Ratings_2.0.358.0.zip",
+        "checksum": "48da286865f7095da27e84c495e0fead",
+        "timestamp": "2026-08-08T23:15:00Z"
+      },
+      {
         "version": "2.0.357.0",
         "changelog": "Fixes new media being announced but never appearing in the Latest Media list. The list was ordered by the date Jellyfin takes from the file itself, not by when the media actually reached your server - so anything copied in keeping its original timestamps sorted to wherever that old date fell, usually past the end of the list. You would get the 'now available' notification and then find nothing there. The list now also includes everything the plugin announced, dated by when it actually saw it, so the notification and the list can no longer disagree. Items removed from the server since being announced are left out.",
         "targetAbi": "10.11.0.0",

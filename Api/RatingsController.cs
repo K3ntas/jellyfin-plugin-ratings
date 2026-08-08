@@ -465,7 +465,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>Dictionary of item ID to rating stats.</returns>
         [HttpGet("Items/BatchStats")]
         [Authorize]
-        public ActionResult<Dictionary<string, RatingStats>> GetBatchRatingStats([FromQuery] [Required] string itemIds)
+        public async Task<ActionResult<Dictionary<string, RatingStats>>> GetBatchRatingStats([FromQuery] [Required] string itemIds)
         {
             try
             {
@@ -487,7 +487,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("No valid item IDs provided");
                 }
 
-                var userId = User.GetUserId();
+                // Resolved through the shared helper so every way a client can present a token
+                // works here, not just the ones that populate the claim (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 // Batch fetch items from library manager and extract provider IDs
                 var itemsWithProviders = new List<(Guid ItemId, string? TmdbId, string? ImdbId, string? AniDbId)>();
@@ -528,11 +530,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>The user's rating or null if not found.</returns>
         [HttpGet("Items/{itemId}/UserRating")]
         [Authorize]
-        public ActionResult<UserRating> GetUserRating([FromRoute] [Required] Guid itemId)
+        public async Task<ActionResult<UserRating>> GetUserRating([FromRoute] [Required] Guid itemId)
         {
             try
             {
-                var userId = User.GetUserId();
+                // Resolved through the shared helper so every way a client can present a token
+                // works here, not just the ones that populate the claim (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -878,7 +882,11 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                var userId = User.GetUserId();
+                // Must go through the shared helper, not User.GetUserId() alone: the claim is only
+                // populated for some of the ways a client can present a token, so a caller sending
+                // a bare X-Emby-Token got 401 "User not authenticated" here while the same token
+                // worked on every other rating endpoint (reported in issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -2630,7 +2638,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
+                // Resolved through the shared helper so every way a client can present a token
+                // works here, not just the ones that populate the claim (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 // If standard auth didn't work, try to get from session token
                 if (userId == Guid.Empty)
@@ -2760,7 +2770,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                var userId = User.GetUserId();
+                // Resolved through the shared helper so every way a client can present a token
+                // works here, not just the ones that populate the claim (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
