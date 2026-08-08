@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,44 +11,52 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the user ID.
         /// </summary>
+        [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the current status.
         /// Values: Online, Away, DoNotDisturb, Invisible, Offline.
         /// </summary>
+        [JsonPropertyName("status")]
         public string Status { get; set; } = "Offline";
 
         /// <summary>
         /// Gets or sets the manually set status (user override).
         /// Null means automatic status based on heartbeat.
         /// </summary>
+        [JsonPropertyName("manualStatus")]
         public string? ManualStatus { get; set; }
 
         /// <summary>
         /// Gets or sets when the user was last seen active.
         /// </summary>
+        [JsonPropertyName("lastSeen")]
         public DateTime LastSeen { get; set; }
 
         /// <summary>
         /// Gets or sets when the last heartbeat was received.
         /// </summary>
+        [JsonPropertyName("lastHeartbeat")]
         public DateTime LastHeartbeat { get; set; }
 
         /// <summary>
         /// Gets or sets what the user is currently watching.
         /// </summary>
+        [JsonPropertyName("watching")]
         public CurrentlyWatching? Watching { get; set; }
 
         /// <summary>
         /// Gets or sets whether the user explicitly went offline (browser closed, logout).
         /// This flag takes priority over heartbeat-based status.
         /// </summary>
+        [JsonPropertyName("forceOffline")]
         public bool ForceOffline { get; set; }
 
         /// <summary>
         /// Gets or sets when the ForceOffline was set. Used to make it sticky for a period.
         /// </summary>
+        [JsonPropertyName("forceOfflineAt")]
         public DateTime ForceOfflineAt { get; set; }
 
         /// <summary>
@@ -97,41 +106,49 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the media item ID.
         /// </summary>
+        [JsonPropertyName("itemId")]
         public Guid ItemId { get; set; }
 
         /// <summary>
         /// Gets or sets the media title.
         /// </summary>
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the media type (Movie, Episode, etc.).
         /// </summary>
+        [JsonPropertyName("type")]
         public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the series name (for episodes).
         /// </summary>
+        [JsonPropertyName("seriesName")]
         public string? SeriesName { get; set; }
 
         /// <summary>
         /// Gets or sets the season and episode info (e.g., "S01E05").
         /// </summary>
+        [JsonPropertyName("episodeInfo")]
         public string? EpisodeInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the current position in ticks.
         /// </summary>
+        [JsonPropertyName("positionTicks")]
         public long PositionTicks { get; set; }
 
         /// <summary>
         /// Gets or sets the total duration in ticks.
         /// </summary>
+        [JsonPropertyName("durationTicks")]
         public long DurationTicks { get; set; }
 
         /// <summary>
         /// Gets or sets when playback started.
         /// </summary>
+        [JsonPropertyName("startedAt")]
         public DateTime StartedAt { get; set; }
 
         /// <summary>
@@ -169,12 +186,14 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the watching info sent from client for instant updates.
         /// </summary>
+        [JsonPropertyName("watching")]
         public WatchingInfo? Watching { get; set; }
 
         /// <summary>
         /// Gets or sets whether playback was explicitly stopped.
         /// When true, watching status will be cleared immediately.
         /// </summary>
+        [JsonPropertyName("stopped")]
         public bool Stopped { get; set; }
     }
 
@@ -186,36 +205,43 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the media item ID.
         /// </summary>
+        [JsonPropertyName("itemId")]
         public Guid ItemId { get; set; }
 
         /// <summary>
         /// Gets or sets the media title.
         /// </summary>
+        [JsonPropertyName("title")]
         public string? Title { get; set; }
 
         /// <summary>
         /// Gets or sets the media type.
         /// </summary>
+        [JsonPropertyName("type")]
         public string? Type { get; set; }
 
         /// <summary>
         /// Gets or sets the series name (for episodes).
         /// </summary>
+        [JsonPropertyName("seriesName")]
         public string? SeriesName { get; set; }
 
         /// <summary>
         /// Gets or sets the season/episode info.
         /// </summary>
+        [JsonPropertyName("episodeInfo")]
         public string? EpisodeInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the current position in ticks.
         /// </summary>
+        [JsonPropertyName("positionTicks")]
         public long PositionTicks { get; set; }
 
         /// <summary>
         /// Gets or sets the total duration in ticks.
         /// </summary>
+        [JsonPropertyName("durationTicks")]
         public long DurationTicks { get; set; }
     }
 }

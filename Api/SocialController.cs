@@ -229,6 +229,352 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Tells a client which plugin version is installed and what it can do.
+        /// </summary>
+        /// <remarks>
+        /// Clients previously detected the plugin by calling MyProfile and seeing whether it 404'd,
+        /// which costs a round trip on every launch and says nothing about which features exist.
+        /// Check <c>features</c> rather than comparing version numbers.
+        /// </remarks>
+        /// <returns>Version and feature list.</returns>
+        [HttpGet("Capabilities")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetCapabilities()
+        {
+            var config = Plugin.Instance?.Configuration;
+
+            return Ok(new
+            {
+                plugin = "Jellyfin.Plugin.Ratings",
+                version = Plugin.Instance?.Version.ToString() ?? "unknown",
+
+                // Everything a client can rely on being present at this version.
+                features = new[]
+                {
+                    "profile", "profile.full", "profile.style",
+                    "ratings", "ratings.distribution", "ratings.external",
+                    "reviews", "activity",
+                    "friends", "followers", "following", "friendRequests",
+                    "notifications", "presence", "genres", "similarUsers",
+                    "lists", "chat", "directMessages", "capabilities",
+                    "pagination"
+                },
+
+                // Server-side switches that decide whether a feature is usable at all.
+                enabled = new
+                {
+                    ratings = config?.EnableRatings ?? true,
+                    social = config?.EnableFriendsButton ?? false,
+                    chat = config?.EnableChat ?? false,
+                    requests = config?.EnableRequestButton ?? true
+                },
+
+                // How often a client should POST /Social/Heartbeat to stay "Online", and when the
+                // server stops considering someone present. Documented so clients neither hammer
+                // the server nor appear offline while watching.
+                presence = new
+                {
+                    heartbeatSeconds = 30,
+                    onlineWithinSeconds = 60,
+                    awayWithinSeconds = 300,
+                    offlineAfterSeconds = 300
+                },
+
+                // JSON is camelCase across every endpoint from this version onward.
+                jsonCasing = "camelCase"
+            });
+        }
+
+        /// <summary>
+        /// Everything needed to render a profile page, in one request.
+        /// </summary>
+        /// <remarks>
+        /// Rendering a profile previously took nine round trips. On a TV box over Wi-Fi the
+        /// handshakes dominate, so this returns the profile, stats, style, genre breakdown and
+        /// relationship counts together. Heavier lists (ratings, reviews, activity, followers)
+        /// stay on their own paginated endpoints so this response cannot grow without bound.
+        /// </remarks>
+        /// <param name="userId">Profile to load.</param>
+        /// <returns>Aggregated profile payload.</returns>
+        [HttpGet("Profile/{userId}/Full")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public ActionResult<object> GetProfileFull([FromRoute] Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            var user = _userManager.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            var profile = _socialRepository.GetProfile(userId);
+            var status = _socialRepository.GetOnlineStatus(userId);
+            var ratings = _ratingsRepository.GetUserRatings(userId);
+            var genres = _genreAffinity.GetProfile(userId);
+
+            var distribution = new int[10];
+            foreach (var r in ratings)
+            {
+                var bucket = r.Rating - 1;
+                if (bucket >= 0 && bucket < distribution.Length)
+                {
+                    distribution[bucket]++;
+                }
+            }
+
+            var topGenres = genres.HasData
+                ? genres.MinutesByGenre.OrderByDescending(kv => kv.Value).Take(6)
+                    .Select(kv => new { name = kv.Key, percent = Math.Round(100 * kv.Value / genres.TotalMinutes, 1) })
+                    .ToList<object>()
+                : new List<object>();
+
+            return Ok(new
+            {
+                userId,
+                username = user.Username,
+                bio = profile?.Bio ?? string.Empty,
+                avatarUrl = profile?.AvatarUrl ?? string.Empty,
+                headerMediaUrl = profile?.HeaderMediaUrl ?? string.Empty,
+                headerMediaType = profile?.HeaderMediaType ?? string.Empty,
+                createdAt = profile?.CreatedAt,
+                privacy = profile?.Privacy,
+                style = _socialRepository.GetProfileStyle(userId),
+                onlineStatus = status?.GetEffectiveStatus() ?? "Offline",
+                watching = status?.Watching,
+                stats = new
+                {
+                    totalRatings = ratings.Count,
+                    averageRating = ratings.Count > 0 ? Math.Round(ratings.Average(r => r.Rating), 2) : 0,
+                    reviewCount = ratings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)),
+                    watchedMinutes = (long)Math.Round(genres.TotalMinutes),
+                    watchedItems = genres.ItemCount
+                },
+                ratingDistribution = distribution,
+                topGenres,
+                counts = new
+                {
+                    friends = _socialRepository.GetFriendIds(userId).Count,
+                    followers = _socialRepository.GetFollowerCount(userId),
+                    following = _socialRepository.GetFollowingCount(userId),
+                    profileLikes = _socialRepository.GetProfileLikeCount(userId)
+                },
+                viewer = new
+                {
+                    isSelf = currentUserId.Value == userId,
+                    isFriend = _socialRepository.AreFriends(currentUserId.Value, userId),
+                    isFollowing = _socialRepository.IsFollowing(currentUserId.Value, userId)
+                }
+            });
+        }
+
+        /// <summary>
+        /// A user's rating histogram (1-10).
+        /// </summary>
+        /// <remarks>
+        /// /Ratings/RatingDistribution is server-wide, computed from the most recent 1000 ratings
+        /// across all users, so it cannot back the per-user chart shown on a profile.
+        /// </remarks>
+        /// <param name="userId">User to describe.</param>
+        /// <returns>Counts for ratings 1 through 10.</returns>
+        [HttpGet("Profile/{userId}/RatingDistribution")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetUserRatingDistribution([FromRoute] Guid userId)
+        {
+            if (GetCurrentUserId() == null)
+            {
+                return Unauthorized();
+            }
+
+            var ratings = _ratingsRepository.GetUserRatings(userId);
+            var distribution = new int[10];
+
+            foreach (var r in ratings)
+            {
+                var bucket = r.Rating - 1;
+                if (bucket >= 0 && bucket < distribution.Length)
+                {
+                    distribution[bucket]++;
+                }
+            }
+
+            return Ok(new
+            {
+                userId,
+                distribution,
+                total = ratings.Count,
+                average = ratings.Count > 0 ? Math.Round(ratings.Average(r => r.Rating), 2) : 0
+            });
+        }
+
+        /// <summary>
+        /// A user's ratings, already carrying title, poster, year and type.
+        /// </summary>
+        /// <remarks>
+        /// Rating records hold only an item id, so a client previously had to resolve every one
+        /// separately - dozens of extra round trips to draw a single row on a TV. This resolves
+        /// them in one library query, and falls back to the snapshot stored with the rating when
+        /// the item has since been removed from the library.
+        /// </remarks>
+        /// <param name="userId">Whose ratings.</param>
+        /// <param name="limit">Page size.</param>
+        /// <param name="offset">Items to skip.</param>
+        /// <param name="reviewsOnly">Only return ratings that carry review text.</param>
+        /// <returns>Enriched, paginated ratings.</returns>
+        [HttpGet("Profile/{userId}/Ratings")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetProfileRatings(
+            [FromRoute] Guid userId,
+            [FromQuery] int limit = 50,
+            [FromQuery] int offset = 0,
+            [FromQuery] bool reviewsOnly = false)
+        {
+            if (GetCurrentUserId() == null)
+            {
+                return Unauthorized();
+            }
+
+            limit = Math.Clamp(limit, 1, 200);
+            offset = Math.Max(0, offset);
+
+            var all = _ratingsRepository.GetUserRatings(userId);
+            if (reviewsOnly)
+            {
+                all = all.Where(r => !string.IsNullOrWhiteSpace(r.ReviewText)).ToList();
+            }
+
+            var total = all.Count;
+            var page = all.OrderByDescending(r => r.UpdatedAt).Skip(offset).Take(limit).ToList();
+
+            return Ok(new
+            {
+                userId,
+                total,
+                offset,
+                limit,
+                items = EnrichRatingList(page)
+            });
+        }
+
+        /// <summary>
+        /// A user's reviews (ratings that carry text), enriched the same way as ratings.
+        /// </summary>
+        /// <param name="userId">Whose reviews.</param>
+        /// <param name="limit">Page size.</param>
+        /// <param name="offset">Items to skip.</param>
+        /// <returns>Enriched, paginated reviews.</returns>
+        [HttpGet("Profile/{userId}/Reviews")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetProfileReviews(
+            [FromRoute] Guid userId,
+            [FromQuery] int limit = 50,
+            [FromQuery] int offset = 0)
+        {
+            return GetProfileRatings(userId, limit, offset, true);
+        }
+
+        /// <summary>
+        /// A user's recent activity, enriched with item metadata.
+        /// </summary>
+        /// <param name="userId">Whose activity.</param>
+        /// <param name="limit">How many entries.</param>
+        /// <returns>Enriched activity entries, newest first.</returns>
+        [HttpGet("Profile/{userId}/Activity")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> GetProfileActivity([FromRoute] Guid userId, [FromQuery] int limit = 20)
+        {
+            if (GetCurrentUserId() == null)
+            {
+                return Unauthorized();
+            }
+
+            limit = Math.Clamp(limit, 1, 100);
+
+            var recent = _ratingsRepository.GetUserRatings(userId)
+                .OrderByDescending(r => r.UpdatedAt)
+                .Take(limit)
+                .ToList();
+
+            var enriched = EnrichRatingList(recent);
+
+            return Ok(new
+            {
+                userId,
+                total = enriched.Count,
+                items = enriched
+            });
+        }
+
+        /// <summary>
+        /// Resolves item metadata for a set of ratings in one library query.
+        /// </summary>
+        /// <param name="ratings">Ratings to enrich.</param>
+        /// <returns>Ratings with title, poster, year and type attached.</returns>
+        private List<object> EnrichRatingList(List<UserRating> ratings)
+        {
+            var itemMap = new Dictionary<Guid, BaseItem>();
+
+            try
+            {
+                var ids = ratings.Select(r => r.ItemId).Where(id => id != Guid.Empty).Distinct().ToArray();
+                if (ids.Length > 0)
+                {
+                    foreach (var item in _libraryManager.GetItemList(new InternalItemsQuery { ItemIds = ids }))
+                    {
+                        itemMap[item.Id] = item;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "[Social] Could not resolve items while enriching ratings");
+            }
+
+            var result = new List<object>(ratings.Count);
+
+            foreach (var r in ratings)
+            {
+                itemMap.TryGetValue(r.ItemId, out var item);
+                var inLibrary = item != null;
+
+                result.Add(new
+                {
+                    id = r.Id,
+                    itemId = r.ItemId,
+                    rating = r.Rating,
+                    review = r.ReviewText,
+                    createdAt = r.CreatedAt,
+                    updatedAt = r.UpdatedAt,
+
+                    // Falls back to the snapshot stored with the rating, so entries for media that
+                    // has since been deleted still show a title and poster instead of bare stars.
+                    title = item?.Name ?? r.Title,
+                    year = item?.ProductionYear ?? r.Year,
+                    mediaType = item?.GetType().Name ?? r.MediaType,
+                    imageUrl = inLibrary
+                        ? "/Items/" + item!.Id.ToString("N") + "/Images/Primary"
+                        : r.PosterUrl,
+                    inLibrary,
+                    tmdbId = r.TmdbId,
+                    imdbId = r.ImdbId
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets a user's viewing breakdown by genre, based on what they have actually watched.
         /// </summary>
         /// <remarks>
@@ -1706,16 +2052,103 @@ namespace Jellyfin.Plugin.Ratings.Api
 
         #region Helper Methods
 
+        // Token -> user cache for the rare path that still has to ask the session manager.
+        // See GetCurrentUserId: the claim below covers virtually every real request, so this
+        // exists to keep the fallback from blocking a thread more than once per token.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Guid UserId, DateTime Expires)> _tokenUserCache
+            = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// Resolves the calling user.
+        /// </summary>
+        /// <remarks>
+        /// This used to read ONLY the raw <c>X-Emby-Token</c> header. Jellyfin accepts a token in
+        /// several forms - that header, <c>Authorization: MediaBrowser ... Token="..."</c>,
+        /// <c>X-Emby-Authorization</c>, and API keys - so any client using the standard form got a
+        /// 401 from every /Social endpoint while the identical request succeeded against /Ratings,
+        /// which reads the claim. That made the social API unusable from anything but the bundled
+        /// web client (reported by a TV client author).
+        ///
+        /// The claim is now checked first. Jellyfin's authentication middleware populates it
+        /// however the token arrived, so this is both correct for all callers and synchronous -
+        /// which also takes the old <c>.Result</c> sync-over-async off the request path.
+        /// </remarks>
+        /// <returns>The user id, or null when unauthenticated.</returns>
         private Guid? GetCurrentUserId()
         {
-            var authHeader = HttpContext.Request.Headers["X-Emby-Token"].ToString();
-            if (string.IsNullOrEmpty(authHeader))
+            // 1. The normal path: whatever scheme was used, Jellyfin has already resolved it.
+            var claimUserId = User.GetUserId();
+            if (claimUserId != Guid.Empty)
+            {
+                return claimUserId;
+            }
+
+            // 2. Fall back to a raw token, accepting every form a client might send it in.
+            var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                              ?? Request.Headers["Authorization"].FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(authHeader))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
+                    if (match.Success)
+                    {
+                        token = match.Groups[1].Value;
+                    }
+                    else if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        token = authHeader.Substring(7).Trim();
+                    }
+                }
+            }
+
+            // Some clients still pass it as a query parameter.
+            if (string.IsNullOrEmpty(token))
+            {
+                token = Request.Query["api_key"].FirstOrDefault() ?? Request.Query["ApiKey"].FirstOrDefault();
+            }
+
+            if (string.IsNullOrEmpty(token))
             {
                 return null;
             }
 
-            var session = _sessionManager.GetSessionByAuthenticationToken(authHeader, null, null).Result;
-            return session?.UserId;
+            var now = DateTime.UtcNow;
+            if (_tokenUserCache.TryGetValue(token, out var cached) && cached.Expires > now)
+            {
+                return cached.UserId == Guid.Empty ? null : cached.UserId;
+            }
+
+            try
+            {
+                // Blocking, but only ever on a cache miss for a client that bypassed the claim.
+                var session = _sessionManager.GetSessionByAuthenticationToken(token, null, null)
+                    .GetAwaiter().GetResult();
+
+                var userId = session?.UserId ?? Guid.Empty;
+                _tokenUserCache[token] = (userId, now.AddMinutes(1));
+
+                if (_tokenUserCache.Count > 512)
+                {
+                    foreach (var entry in _tokenUserCache)
+                    {
+                        if (entry.Value.Expires <= now)
+                        {
+                            _tokenUserCache.TryRemove(entry.Key, out _);
+                        }
+                    }
+                }
+
+                return userId == Guid.Empty ? null : userId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "[Social] Could not resolve token to a user");
+                return null;
+            }
         }
 
         private static string SanitizeInput(string input, int maxLength)
@@ -2210,9 +2643,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpGet("Profile/{userId}/Followers")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<object> GetFollowers(Guid userId)
+        public ActionResult<object> GetFollowers(Guid userId, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
-            var followers = _socialRepository.GetFollowers(userId);
+            limit = Math.Clamp(limit, 1, 500);
+            offset = Math.Max(0, offset);
+
+            var all = _socialRepository.GetFollowers(userId);
+            var total = all.Count;
+            var followers = all.OrderByDescending(f => f.CreatedAt).Skip(offset).Take(limit);
             var result = followers.Select(f =>
             {
                 var user = _userManager.GetUserById(f.FollowerId);
@@ -2226,7 +2664,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 };
             }).ToList();
 
-            return Ok(new { followers = result, count = result.Count });
+            // 'count' stays for existing clients; 'total' is the unpaginated size.
+            return Ok(new { followers = result, count = result.Count, total, offset, limit });
         }
 
         /// <summary>
@@ -2237,9 +2676,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpGet("Profile/{userId}/Following")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<object> GetFollowing(Guid userId)
+        public ActionResult<object> GetFollowing(Guid userId, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
-            var following = _socialRepository.GetFollowing(userId);
+            limit = Math.Clamp(limit, 1, 500);
+            offset = Math.Max(0, offset);
+
+            var all = _socialRepository.GetFollowing(userId);
+            var total = all.Count;
+            var following = all.OrderByDescending(f => f.CreatedAt).Skip(offset).Take(limit);
             var result = following.Select(f =>
             {
                 var user = _userManager.GetUserById(f.FollowingId);
@@ -2253,7 +2697,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 };
             }).ToList();
 
-            return Ok(new { following = result, count = result.Count });
+            return Ok(new { following = result, count = result.Count, total, offset, limit });
         }
 
         /// <summary>

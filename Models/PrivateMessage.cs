@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,61 +11,73 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique message ID.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// Gets or sets the sender's user ID.
         /// </summary>
+        [JsonPropertyName("senderId")]
         public Guid SenderId { get; set; }
 
         /// <summary>
         /// Gets or sets the sender's username.
         /// </summary>
+        [JsonPropertyName("senderName")]
         public string SenderName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the sender's avatar URL.
         /// </summary>
+        [JsonPropertyName("senderAvatar")]
         public string? SenderAvatar { get; set; }
 
         /// <summary>
         /// Gets or sets the recipient's user ID.
         /// </summary>
+        [JsonPropertyName("recipientId")]
         public Guid RecipientId { get; set; }
 
         /// <summary>
         /// Gets or sets the recipient's username.
         /// </summary>
+        [JsonPropertyName("recipientName")]
         public string RecipientName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the message content (sanitized).
         /// </summary>
+        [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the GIF URL if message contains a GIF.
         /// </summary>
+        [JsonPropertyName("gifUrl")]
         public string? GifUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when message was sent.
         /// </summary>
+        [JsonPropertyName("timestamp")]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Gets or sets whether the message has been read by recipient.
         /// </summary>
+        [JsonPropertyName("isRead")]
         public bool IsRead { get; set; }
 
         /// <summary>
         /// Gets or sets whether the message has been deleted.
         /// </summary>
+        [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
 
         /// <summary>
         /// Gets or sets when the message was deleted.
         /// </summary>
+        [JsonPropertyName("deletedAt")]
         public DateTime? DeletedAt { get; set; }
     }
 }

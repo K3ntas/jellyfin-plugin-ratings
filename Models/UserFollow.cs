@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,21 +11,25 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique follow ID.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the user who is following.
         /// </summary>
+        [JsonPropertyName("followerId")]
         public Guid FollowerId { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the user being followed.
         /// </summary>
+        [JsonPropertyName("followingId")]
         public Guid FollowingId { get; set; }
 
         /// <summary>
         /// Gets or sets when the follow was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>

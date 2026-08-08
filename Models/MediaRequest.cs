@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Ratings.Models
 {
@@ -10,77 +11,92 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// <summary>
         /// Gets or sets the unique identifier for this request.
         /// </summary>
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the user ID who made the request.
         /// </summary>
+        [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the username who made the request.
         /// </summary>
+        [JsonPropertyName("username")]
         public string Username { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the title of the requested media.
         /// </summary>
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the type of media (e.g., Movie, TV Series, Anime).
         /// </summary>
+        [JsonPropertyName("type")]
         public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets additional notes or details about the request.
         /// </summary>
+        [JsonPropertyName("notes")]
         public string Notes { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the status of the request (pending, processing, done).
         /// </summary>
+        [JsonPropertyName("status")]
         public string Status { get; set; } = "pending";
 
         /// <summary>
         /// Gets or sets the timestamp when the request was created.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when the request was completed (marked as done).
         /// </summary>
+        [JsonPropertyName("completedAt")]
         public DateTime? CompletedAt { get; set; }
 
         /// <summary>
         /// Gets or sets the media link (URL to the media in Jellyfin) when request is fulfilled.
         /// </summary>
+        [JsonPropertyName("mediaLink")]
         public string MediaLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the rejection reason when request is rejected.
         /// </summary>
+        [JsonPropertyName("rejectionReason")]
         public string RejectionReason { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets custom fields as JSON string (key-value pairs).
         /// </summary>
+        [JsonPropertyName("customFields")]
         public string CustomFields { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the IMDB code (e.g., tt0448134).
         /// </summary>
+        [JsonPropertyName("imdbCode")]
         public string ImdbCode { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the full IMDB link.
         /// </summary>
+        [JsonPropertyName("imdbLink")]
         public string ImdbLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the date until which this request is snoozed.
         /// Null means the request is not snoozed.
         /// </summary>
+        [JsonPropertyName("snoozedUntil")]
         public DateTime? SnoozedUntil { get; set; }
 
         /// <summary>
