@@ -588,6 +588,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         public string TmdbApiToken { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets a value indicating whether Media Management may show a TMDB poster for a
+        /// library item Jellyfin holds no artwork for (typically one it never identified, whose
+        /// name still carries the raw "[tt...]" from the filename). Requires
+        /// <see cref="TmdbApiToken"/>. Lookups happen in the background and are cached in memory.
+        /// </summary>
+        public bool EnableExternalPosterFallback { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets the language TMDB returns titles and descriptions in, as an ISO code such
         /// as "es-ES", "de-DE" or "pt-BR". Defaults to "en-US".
         /// </summary>

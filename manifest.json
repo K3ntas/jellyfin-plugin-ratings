@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.374.0",
+        "changelog": "Profile favourites and Media Management fixes. Adding a title from the catalog to a favourites row now works and stays: the button no longer ignores films whose name contains an apostrophe, the card is no longer discarded when you reopen the profile, and rows containing only catalog titles now show them straight away instead of only after adding something else. Titles lost by the earlier fault need re-adding once. Media Management was showing no posters, no media type and dashes for rating, plays, size and status - it now reads every field correctly, and the same fault is fixed on the Scheduled tab, the 'Leaving in' badges, and the media request and ban screens. Media that Jellyfin has not identified, which has no artwork at all, now falls back to a poster from TMDB where one can be found. On phones the header menu is now a compact row of icons rather than one full-width row per button, which previously left most buttons unreachable, plus a layout fix for the ElegantFin skin that is applied only on servers actually using it.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.374.0/jellyfin-plugin-ratings_1.0.374.0.zip",
+        "checksum": "f0210a15a222b61b2ac5c7ec148d6a6a",
+        "timestamp": "2026-08-09T00:51:00Z"
+      },
+      {
         "version": "1.0.373.0",
         "changelog": "Fixes rating a film that is not on the server failing with a not-authenticated error. Four endpoints checked the signed-in user in a stricter way than the rest of the plugin and rejected perfectly valid requests - rating a TMDB title, reading your own rating for an item, the batch rating lookup used to draw badges, and listing or creating media requests. They now identify you the same way every other endpoint does, so any client sending a valid token is accepted.",
         "targetAbi": "10.11.0.0",

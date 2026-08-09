@@ -2776,6 +2776,37 @@
         },
 
         /**
+         * URI-encodes a payload so it is safe inside a single-quoted inline handler.
+         *
+         * encodeURIComponent deliberately leaves ! ' ( ) * ~ unencoded, because they are legal in
+         * a URI. That is fine for URLs and wrong here: these payloads get embedded in
+         * onclick="RatingsPlugin.foo('...')", so a film whose title contains an apostrophe or
+         * brackets - "Schindler's List", anything "(1993)" - terminated the JS string early and
+         * the browser reported "missing ) after argument list". The handler then did nothing at
+         * all, which is why it only failed for SOME media.
+         *
+         * decodeURIComponent reverses these escapes, so callers need no change.
+         * @param {*} value Value to serialize and encode.
+         * @returns {string} Encoded payload safe for an inline handler.
+         */
+        encodePayload: function (value) {
+            return this.encodeParam(JSON.stringify(value));
+        },
+
+        /**
+         * Strictly URI-encodes a single string for the same inline-handler use as encodePayload.
+         * decodeURIComponent reverses it, so the receiving end needs no change.
+         * @param {string} text Text to encode.
+         * @returns {string} Encoded text safe for an inline handler.
+         */
+        encodeParam: function (text) {
+            return encodeURIComponent(text == null ? '' : String(text))
+                .replace(/[!'()*~]/g, function (c) {
+                    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+                });
+        },
+
+        /**
          * Returns the value only if it is a Jellyfin item id, otherwise null.
          *
          * Item ids arrive from DOM attributes and from JSON, and end up in URLs and in markup.
@@ -2800,6 +2831,50 @@
          * Escape a string for safe use in JavaScript string contexts (onclick handlers, etc.)
          * Escapes backslashes first, then quotes
          */
+        /**
+         * Reads a field from a PLUGIN API response regardless of casing.
+         *
+         * Jellyfin's own API serializes PascalCase, and this file reads it that way throughout -
+         * that is correct and must stay. The plugin's own models, however, now carry
+         * [JsonPropertyName] camelCase names, so responses built from them arrive camelCase.
+         * Anywhere the JS still read those PascalCase, the value came back undefined and the
+         * field rendered blank: Media Management showed no posters, no type, no plays, no size
+         * and no deletion status, while title and year - which had already been made
+         * casing-tolerant - kept working.
+         *
+         * Checking camelCase first and PascalCase second is safe for both shapes.
+         * @param {object} obj The API object.
+         * @param {string} name The camelCase field name.
+         * @returns {*} The field value, or undefined.
+         */
+        /**
+         * Resolves a poster URL from the plugin API.
+         *
+         * Jellyfin artwork comes back as a server-relative path ("/Items/<id>/Images/Primary")
+         * and needs the server address in front. The TMDB fallback used for items Jellyfin never
+         * identified is already absolute, so prefixing it would produce a broken URL.
+         * Only http(s) is accepted, so a hostile value cannot turn into javascript: or data:.
+         * @param {string} baseUrl The server address.
+         * @param {string} raw The URL or path from the API.
+         * @returns {string} A usable URL, or '' when there is nothing to show.
+         */
+        resolvePosterUrl: function (baseUrl, raw) {
+            if (!raw) { return ''; }
+            var value = String(raw);
+            if (/^https?:\/\//i.test(value)) { return value; }
+            // A leading "//" is protocol-relative; appending it to the server address yields a
+            // confusing double-slash path, so require a single-slash server path.
+            if (value.charAt(0) !== '/' || value.charAt(1) === '/') { return ''; }
+            return baseUrl + value;
+        },
+
+        apiField: function (obj, name) {
+            if (!obj) { return undefined; }
+            var v = obj[name];
+            if (v !== undefined && v !== null) { return v; }
+            return obj[name.charAt(0).toUpperCase() + name.slice(1)];
+        },
+
         escapeJs: function (text) {
             if (text == null) return '';
             return String(text)
@@ -3640,7 +3715,7 @@
                     html += '<div class="lb-am-section">On your server</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
-                        var sp = encodeURIComponent(JSON.stringify({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' }));
+                        var sp = self.encodePayload({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' });
                         html += '<div class="lb-am-row" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + sp + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + sp + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
@@ -3662,7 +3737,7 @@
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
-                        var payload = encodeURIComponent(JSON.stringify({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview }));
+                        var payload = self.encodePayload({ title: e.title, year: e.year, type: e.mediaType, tmdbId: e.tmdbId, poster: e.poster, overview: e.overview });
                         html += '<div class="lb-am-row ext" draggable="true" ondragstart="RatingsPlugin.searchDragStart(event,\'' + payload + '\')" onmouseenter="RatingsPlugin.showSearchInfo(\'' + payload + '\', this)" onmouseleave="RatingsPlugin.hideFavInfo()">' +
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
@@ -3687,6 +3762,8 @@
             var authHeader = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + deviceId + '", Version="10.11.0", Token="' + token + '"';
             var isImdb = /^tt\d+$/i.test(q);
             var body = { Title: q, Type: 'Movie' };
+            // Outbound body binds to MediaRequestDto, which has NO [JsonPropertyName] attributes,
+            // so it is still PascalCase on the wire. Do not "fix" the casing here.
             if (isImdb) { body.ImdbCode = q; body.ImdbLink = 'https://www.imdb.com/title/' + q + '/'; }
             fetch(baseUrl + '/Ratings/Requests', {
                 method: 'POST',
@@ -4136,13 +4213,13 @@
             var extra = '';
             var clickAttr = '';
             if (notInLib) {
-                var payload = encodeURIComponent(JSON.stringify({
+                var payload = self.encodePayload({
                     title: fav.title || (fav.title ?? fav.Title) || '',
                     year: fav.year || (fav.year ?? fav.Year) || '',
                     type: fav.mediaType || (fav.mediaType ?? fav.MediaType) || 'Movie',
                     tmdbId: fav.tmdbId || (fav.tmdbId ?? fav.TmdbId) || '',
                     poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
-                }));
+                });
                 extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
                     '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                     // Titles from the catalog could not be rated at all before (issue #72).
@@ -4243,6 +4320,26 @@
             this.lbToast('Not on the server yet — click the Request button to ask for this title.');
         },
 
+        /**
+         * Returns a row's real entries, dropping empty slots, and writes the compacted array back
+         * so array indices match rendered indices (remove/drag address items by index).
+         *
+         * An entry is real if it points at a library item OR at a catalog title. Both render paths
+         * MUST agree on this: the first render used to count only entries with an itemId and cap
+         * its loop at that count, so catalog titles - which have no itemId by design - were never
+         * reached. A row holding only catalog titles drew nothing at all, and they appeared only
+         * once adding another item triggered rerenderFavoriteRow, which counted them correctly.
+         * @param {object} row The favourite row.
+         * @returns {Array} The row's real entries.
+         */
+        compactFavItems: function (row) {
+            var items = ((row && row.items) || []).filter(function (f) {
+                return f && ((f.itemId || f.ItemId) || (f.tmdbId || f.TmdbId) || (f.notInLibrary || f.NotInLibrary));
+            });
+            if (row) { row.items = items; }
+            return items;
+        },
+
         rerenderFavoriteRow: function (rowIndex) {
             var self = this;
             var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
@@ -4250,10 +4347,7 @@
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
             var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
-            // Compact (drop nulls) so array indices match rendered indices. Keep both on-server
-            // items (have itemId) and catalog items (have tmdbId but no itemId).
-            var items = (row.items || []).filter(function (f) { return f && (f.itemId || (f.itemId ?? f.ItemId) || f.tmdbId || (f.tmdbId ?? f.TmdbId)); });
-            row.items = items;
+            var items = self.compactFavItems(row);
             var html = '';
             items.forEach(function (fav, i) {
                 html += self.favSlotHtml(fav, rowIndex, i, isSelf);
@@ -4451,13 +4545,28 @@
                     var rawItems = (row && (row.items || row.Items)) || [];
                     return {
                         title: (row && (row.title || (row.title ?? row.Title))) || 'Favorites',
+                        // Keep EVERY field. This used to rebuild each item as {itemId,title,imageUrl}
+                        // and then drop anything without an itemId - which is exactly what a
+                        // not-on-server catalog title is (it has a tmdbId and an empty itemId).
+                        // Adding one worked and saved, but reopening the profile pruned it here and
+                        // the next save wrote the pruned list back, deleting it for good (issue #72).
                         items: rawItems.map(function (it) {
+                            if (!it) { return null; }
+                            var tmdbId = String((it.tmdbId ?? it.TmdbId) || '');
+                            var notInLibrary = (it.notInLibrary ?? it.NotInLibrary) === true || (!(it.itemId || it.ItemId) && !!tmdbId);
                             return {
-                                itemId: (it && (it.itemId || (it.itemId ?? it.ItemId))) || '',
-                                title: (it && (it.title || (it.title ?? it.Title))) || '',
-                                imageUrl: (it && (it.imageUrl || it.ImageUrl)) || ''
+                                itemId: (it.itemId || it.ItemId) || '',
+                                title: (it.title || it.Title) || '',
+                                imageUrl: (it.imageUrl || it.ImageUrl) || '',
+                                notInLibrary: notInLibrary,
+                                tmdbId: tmdbId,
+                                year: (it.year ?? it.Year) ?? null,
+                                mediaType: (it.mediaType || it.MediaType) || '',
+                                overview: (it.overview || it.Overview) || ''
                             };
-                        }).filter(function (it) { return it.itemId; })
+                        // Mirror the save filter: an entry is real if it points at a library item
+                        // OR at a catalog title.
+                        }).filter(function (it) { return it && (it.itemId || it.tmdbId || it.notInLibrary); })
                     };
                 });
             }
@@ -4688,8 +4797,9 @@
             // Render existing rows
             for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
                 var row = favoriteRows[rowIndex];
-                var items = row.items || [];
-                var itemCount = items.filter(function(i) { return i && i.itemId; }).length;
+                // Same rule as rerenderFavoriteRow - see compactFavItems.
+                var items = self.compactFavItems(row);
+                var itemCount = items.length;
 
                 html += '<div class="lb-favorite-row" data-row="' + rowIndex + '">';
                 html += '<div class="lb-row-header">';
@@ -4708,13 +4818,11 @@
                 html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '"' +
                     (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') + '>';
 
-                // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
+                // Render the first 10 (lazy load - the rest arrive via "load more"). items is
+                // already compacted, so every entry here is real.
                 var visibleCount = Math.min(itemCount, 10);
                 for (var i = 0; i < visibleCount; i++) {
-                    var fav = items[i];
-                    if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
-                        html += self.favSlotHtml(fav, rowIndex, i, isSelf);
-                    }
+                    html += self.favSlotHtml(items[i], rowIndex, i, isSelf);
                 }
 
                 // Show "load more" if there are more items
@@ -4933,7 +5041,7 @@
                     var name = m.username || 'Unknown';
                     var initial = name[0] ? name[0].toUpperCase() : '?';
                     var shared = (m.sharedGenres || []).join(' · ');
-                    var encName = encodeURIComponent(name);
+                    var encName = self.encodeParam(name);
                     var w = m.watching;
 
                     // Three presence states: watching something (bright green), online but idle
@@ -4962,13 +5070,13 @@
                             self._watchTitles[titleKey] = mediaName;
                         }
 
-                        var joinPayload = encodeURIComponent(JSON.stringify({
+                        var joinPayload = self.encodePayload({
                             itemId: w.itemId,
                             title: mediaName,
                             positionTicks: w.positionTicks || 0,
                             reportedSecondsAgo: w.reportedSecondsAgo || 0,
                             user: name
-                        }));
+                        });
 
                         watchLine = '<div class="lb-match-watching">' +
                             '<span class="lb-watch-icon" aria-hidden="true">▶</span>' +
@@ -5916,7 +6024,7 @@
             categories.forEach(function (cat) {
                 navHtml += '<button class="lb-picker-cat-btn" data-category="' + cat.id + '"' +
                     (cat.genre ? ' data-genre="' + cat.genre + '"' : '') +
-                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + cat.id + '\'' + (cat.genre ? ',\'' + cat.genre + '\'' : '') + ')">' +
+                    ' onclick="RatingsPlugin.selectPickerCategory(\'' + self.escapeJs(cat.id) + '\'' + (cat.genre ? ',\'' + self.escapeJs(cat.genre) + '\'' : '') + ')">' +
                     '<span class="cat-icon">' + cat.icon + '</span>' +
                     '<span class="cat-name">' + cat.name + '</span>' +
                     '</button>';
@@ -6520,7 +6628,8 @@
             if (!favoriteRows[rowIndex]) return;
 
             var row = favoriteRows[rowIndex];
-            var items = row.items || [];
+            // Same rule and indices as the initial render - see compactFavItems.
+            var items = self.compactFavItems(row);
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
 
@@ -6534,7 +6643,7 @@
             var addSlot = grid.querySelector('.add-slot');
             for (var i = 10; i < items.length; i++) {
                 var fav = items[i];
-                if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
+                if (fav) {
                     var slotHtml = self.favSlotHtml(fav, rowIndex, i, isSelf);
                     if (addSlot) {
                         addSlot.insertAdjacentHTML('beforebegin', slotHtml);
@@ -8883,18 +8992,18 @@
 
                     let html = '';
                     comments.forEach(c => {
-                        const avatarUrl = `${baseUrl}/Users/${c.CommenterId}/Images/Primary?height=64`;
-                        const isOwn = c.CommenterId === currentUserId;
+                        const avatarUrl = `${baseUrl}/Users/${self.apiField(c, 'commenterId')}/Images/Primary?height=64`;
+                        const isOwn = self.apiField(c, 'commenterId') === currentUserId;
                         const deleteBtn = isOwn ? `<button class="review-comment-delete" data-comment-id="${c.Id}" title="Delete">🗑️</button>` : '';
 
                         html += `
                             <div class="review-comment-item" data-comment-id="${c.Id}">
-                                <div class="review-comment-avatar" data-user-id="${c.CommenterId}">
+                                <div class="review-comment-avatar" data-user-id="${self.apiField(c, 'commenterId')}">
                                     <img src="${avatarUrl}" onerror="this.style.display='none'">
                                 </div>
                                 <div class="review-comment-content">
                                     <div class="review-comment-header">
-                                        <span class="review-comment-username" data-user-id="${c.CommenterId}">${self.escapeHtml(c.CommenterName || 'Unknown')}</span>
+                                        <span class="review-comment-username" data-user-id="${self.apiField(c, 'commenterId')}">${self.escapeHtml(c.CommenterName || 'Unknown')}</span>
                                         <span class="review-comment-time">${self.formatReviewTimestamp((c.createdAt ?? c.CreatedAt))}</span>
                                         ${deleteBtn}
                                     </div>
@@ -9336,7 +9445,7 @@
             if (itemId && self.scheduledDeletionsCache) {
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
                 if (deletion) {
-                    const leavingText = self.formatLeavingText(deletion.DeleteAt);
+                    const leavingText = self.formatLeavingText(self.apiField(deletion, 'deleteAt'));
                     badgeText += ' | ' + leavingText;
                 }
             }
@@ -9388,7 +9497,7 @@
 
             // Calculate days until deletion
             const now = new Date();
-            const deleteDate = new Date(deletion.DeleteAt);
+            const deleteDate = new Date(self.apiField(deletion, 'deleteAt'));
             const diffMs = deleteDate - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
             const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
@@ -10159,6 +10268,45 @@
          * (they are added asynchronously as their config arrives) land in the panel automatically
          * with no re-scan. That also means no MutationObserver and no polling timer are needed.
          */
+        /**
+         * Flags the ElegantFin skin on <html> so its compatibility CSS can be scoped to it.
+         *
+         * That skin adds top padding to the body and the tab bar, which on a phone pushes the
+         * header down far enough to cut the plugin's buttons off (discussion #71). Zeroing that
+         * padding fixes it, but the rule targets Jellyfin's own elements rather than ours, so it
+         * is applied only when the skin is actually present instead of to every install.
+         *
+         * The skin is normally added through Dashboard > General > Custom CSS, either pasted in
+         * full or as an @import, so both inline <style> text and <link> hrefs are searched.
+         * cssRules is deliberately not touched: it throws on cross-origin sheets (the theme is
+         * usually served from a CDN), whereas href and textContent are always readable.
+         * @returns {boolean} Whether the skin was detected.
+         */
+        detectSkinCompat: function () {
+            let found = false;
+            try {
+                const nodes = document.querySelectorAll('style, link[rel="stylesheet"][href]');
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    const text = node.tagName === 'LINK'
+                        ? (node.getAttribute('href') || '')
+                        : (node.textContent || '');
+                    // Regex test rather than toLowerCase().indexOf(): a pasted theme can be
+                    // hundreds of KB and this runs again each time the menu opens, so scanning
+                    // in place beats copying the whole string every time.
+                    if (/elegantfin/i.test(text)) {
+                        found = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                return false;
+            }
+
+            document.documentElement.classList.toggle('ratings-skin-elegantfin', found);
+            return found;
+        },
+
         initMobileMenu: function () {
             const self = this;
 
@@ -10208,6 +10356,9 @@
                     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 
                     if (open) {
+                        // Custom CSS can be injected after the toggle is built, so re-check on
+                        // open. It is a handful of string scans, only on mobile, only on demand.
+                        self.detectSkinCompat();
                         // Measure after the panel is displayed, otherwise offsetWidth is 0.
                         position();
                         toggle.classList.remove('has-activity');
@@ -10215,6 +10366,9 @@
                 };
 
                 self._closeMobileMenu = () => setOpen(false);
+
+                // Once at startup so the layout is right before the menu is ever opened.
+                self.detectSkinCompat();
 
                 toggle.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -12294,9 +12448,19 @@
             };
 
             items.forEach((item, index) => {
-                const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
-                const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
-                const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
+                // Every field goes through apiField - the mix of tolerant and PascalCase-only
+                // reads here is exactly what left posters, type, plays, size and status blank.
+                const f = (name) => self.apiField(item, name);
+                const imageUrlRaw = f('imageUrl');
+                // A TMDB fallback poster is absolute; a Jellyfin one is a server-relative path.
+                const imageUrl = self.resolvePosterUrl(baseUrl, imageUrlRaw);
+                const scheduled = f('scheduledDeletion');
+                const hasScheduledDeletion = !!scheduled && !self.apiField(scheduled, 'isCancelled');
+                const playCount = Number(f('playCount')) || 0;
+                const playCountDisplay = playCount > 0 ? playCount.toLocaleString() : '-';
+                const rating = Number(f('averageRating'));
+                const itemId = f('itemId') || '';
+                const type = f('type') || '';
                 const animDelay = (startIndex + index) * 60;
 
                 const tr = document.createElement('tr');
@@ -12307,23 +12471,23 @@
                     </td>
                     <td>
                         <div class="media-item-title">
-                            <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml((item.title ?? item.Title))}</a>
+                            <a href="#/details?id=${self.escapeHtml(itemId)}">${self.escapeHtml(f('title') || '')}</a>
                         </div>
-                        <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
+                        <span class="media-item-type ${self.escapeHtml(type).toLowerCase()}">${self.escapeHtml(type)}</span>
                     </td>
-                    <td>${(item.year ?? item.Year) || '-'}</td>
-                    <td class="media-item-rating">${(item.averageRating ?? item.AverageRating) ? '★ ' + (item.averageRating ?? item.AverageRating).toFixed(1) : '-'}</td>
+                    <td>${f('year') || '-'}</td>
+                    <td class="media-item-rating">${Number.isFinite(rating) && rating > 0 ? '★ ' + rating.toFixed(1) : '-'}</td>
                     <td class="media-item-plays">${playCountDisplay}</td>
-                    <td>${formatSize(item.FileSizeBytes)}</td>
+                    <td>${formatSize(f('fileSizeBytes'))}</td>
                     <td>
                         ${hasScheduledDeletion
-                            ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(item.ScheduledDeletion.DeleteAt)}</span>`
+                            ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(self.apiField(scheduled, 'deleteAt'))}</span>`
                             : ''}
                     </td>
                     <td class="media-actions">
                         ${hasScheduledDeletion
-                            ? `<button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
-                            : `<button class="media-action-btn delete" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                            ? `<button class="media-action-btn cancel" data-item-id="${self.escapeHtml(itemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                            : `<button class="media-action-btn delete" data-item-id="${self.escapeHtml(itemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
                         }
                     </td>
                 `;
@@ -12393,11 +12557,18 @@
             `;
 
             items.forEach((item, index) => {
-                const imageUrl = item.ImageUrl ? baseUrl + item.ImageUrl : '';
-                const hasScheduledDeletion = item.ScheduledDeletion && !item.ScheduledDeletion.IsCancelled;
-
-                // Format play count
-                const playCountDisplay = item.PlayCount > 0 ? item.PlayCount.toLocaleString() : '-';
+                // See renderMediaRows - same fields, same casing rule.
+                const f = (name) => self.apiField(item, name);
+                const imageUrlRaw = f('imageUrl');
+                // A TMDB fallback poster is absolute; a Jellyfin one is a server-relative path.
+                const imageUrl = self.resolvePosterUrl(baseUrl, imageUrlRaw);
+                const scheduled = f('scheduledDeletion');
+                const hasScheduledDeletion = !!scheduled && !self.apiField(scheduled, 'isCancelled');
+                const playCount = Number(f('playCount')) || 0;
+                const playCountDisplay = playCount > 0 ? playCount.toLocaleString() : '-';
+                const rating = Number(f('averageRating'));
+                const itemId = f('itemId') || '';
+                const type = f('type') || '';
 
                 // Staggered animation delay for each row
                 const animDelay = (startIndex + index) * 60;
@@ -12409,23 +12580,23 @@
                         </td>
                         <td>
                             <div class="media-item-title">
-                                <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml((item.title ?? item.Title))}</a>
+                                <a href="#/details?id=${self.escapeHtml(itemId)}">${self.escapeHtml(f('title') || '')}</a>
                             </div>
-                            <span class="media-item-type ${self.escapeHtml(item.Type).toLowerCase()}">${self.escapeHtml(item.Type)}</span>
+                            <span class="media-item-type ${self.escapeHtml(type).toLowerCase()}">${self.escapeHtml(type)}</span>
                         </td>
-                        <td>${(item.year ?? item.Year) || '-'}</td>
-                        <td class="media-item-rating">${(item.averageRating ?? item.AverageRating) ? '★ ' + (item.averageRating ?? item.AverageRating).toFixed(1) : '-'}</td>
+                        <td>${f('year') || '-'}</td>
+                        <td class="media-item-rating">${Number.isFinite(rating) && rating > 0 ? '★ ' + rating.toFixed(1) : '-'}</td>
                         <td class="media-item-plays">${playCountDisplay}</td>
-                        <td>${formatSize(item.FileSizeBytes)}</td>
+                        <td>${formatSize(f('fileSizeBytes'))}</td>
                         <td>
                             ${hasScheduledDeletion
-                                ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(item.ScheduledDeletion.DeleteAt)}</span>`
+                                ? `<span class="media-item-scheduled">${self.t('mediaLeavingIn')} ${formatDaysUntil(self.apiField(scheduled, 'deleteAt'))}</span>`
                                 : ''}
                         </td>
                         <td class="media-actions">
                             ${hasScheduledDeletion
-                                ? `<button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
-                                : `<button class="media-action-btn delete" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
+                                ? `<button class="media-action-btn cancel" data-item-id="${self.escapeHtml(itemId)}" data-action="cancel">${self.t('mediaCancelDelete')}</button>`
+                                : `<button class="media-action-btn delete" data-item-id="${self.escapeHtml(itemId)}" data-action="delete">${self.t('mediaScheduleDelete')}</button>`
                             }
                         </td>
                     </tr>
@@ -12678,8 +12849,15 @@
                 `;
 
                 deletions.forEach((item, index) => {
-                    const imageUrl = `/Items/${(item.itemId ?? item.ItemId)}/Images/Primary`;
-                    const deleteDate = new Date(item.DeleteAt);
+                    // ScheduledDeletion is a plugin model, so it arrives camelCase - see apiField.
+                    const f = (name) => self.apiField(item, name);
+                    const itemId = f('itemId') || '';
+                    const itemTitle = f('itemTitle') || '';
+                    const itemType = f('itemType') || '';
+                    const scheduledBy = f('scheduledByUsername') || '';
+                    const deleteAt = f('deleteAt');
+                    const imageUrl = `/Items/${encodeURIComponent(itemId)}/Images/Primary`;
+                    const deleteDate = new Date(deleteAt);
                     const now = new Date();
                     const diffMs = deleteDate - now;
                     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -12698,14 +12876,14 @@
                             </td>
                             <td>
                                 <div class="media-item-title">
-                                    <a href="#/details?id=${(item.itemId ?? item.ItemId)}">${self.escapeHtml(item.ItemTitle)}</a>
+                                    <a href="#/details?id=${self.escapeHtml(itemId)}">${self.escapeHtml(itemTitle)}</a>
                                 </div>
-                                <span class="media-item-type ${self.escapeHtml(item.ItemType).toLowerCase()}">${self.escapeHtml(item.ItemType)}</span>
+                                <span class="media-item-type ${self.escapeHtml(itemType).toLowerCase()}">${self.escapeHtml(itemType)}</span>
                             </td>
-                            <td style="color: #888;">${self.escapeHtml(item.ScheduledByUsername)}</td>
+                            <td style="color: #888;">${self.escapeHtml(scheduledBy)}</td>
                             <td>
                                 <span class="scheduled-time-badge" style="background: ${urgencyColor};">
-                                    ${formatTimeLeft(item.DeleteAt)}
+                                    ${formatTimeLeft(deleteAt)}
                                 </span>
                                 <div style="font-size: 11px; color: #666; margin-top: 4px;">
                                     ${deleteDate.toLocaleDateString()} ${deleteDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -12713,10 +12891,10 @@
                             </td>
                             <td class="media-actions">
                                 <div class="scheduled-actions-wrapper">
-                                    <button class="media-action-btn change" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
+                                    <button class="media-action-btn change" data-item-id="${self.escapeHtml(itemId)}" data-action="change" title="${self.t('mediaChangeTime') || 'Change time'}">
                                         ${self.t('mediaChange') || 'Change'}
                                     </button>
-                                    <button class="media-action-btn cancel" data-item-id="${(item.itemId ?? item.ItemId)}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
+                                    <button class="media-action-btn cancel" data-item-id="${self.escapeHtml(itemId)}" data-action="cancel" title="${self.t('mediaCancelDelete')}">
                                         ${self.t('mediaCancel') || 'Cancel'}
                                     </button>
                                 </div>
@@ -13501,7 +13679,7 @@
                 if (playButton && playButton.parentNode) {
                     const badge = document.createElement('span');
                     badge.className = 'detail-leaving-badge';
-                    badge.textContent = formatDaysUntil(deletion.DeleteAt);
+                    badge.textContent = formatDaysUntil(self.apiField(deletion, 'deleteAt'));
                     // Insert before the play button
                     playButton.parentNode.insertBefore(badge, playButton);
                 }
@@ -14316,18 +14494,18 @@
 
                 requests.forEach(request => {
                     // Check if request is snoozed (has SnoozedUntil date in the future)
-                    const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
+                    const isSnoozed = self.apiField(request, 'snoozedUntil') && new Date(self.apiField(request, 'snoozedUntil')) > new Date();
 
                     if (isSnoozed) {
                         categorized.snoozed.push(request);
-                    } else if (request.Status === 'pending') {
+                    } else if (self.apiField(request, 'status') === 'pending') {
                         // Pending = New (not yet viewed by admin)
                         categorized.new.push(request);
-                    } else if (request.Status === 'processing') {
+                    } else if (self.apiField(request, 'status') === 'processing') {
                         categorized.processing.push(request);
-                    } else if (request.Status === 'done') {
+                    } else if (self.apiField(request, 'status') === 'done') {
                         categorized.done.push(request);
-                    } else if (request.Status === 'rejected') {
+                    } else if (self.apiField(request, 'status') === 'rejected') {
                         categorized.rejected.push(request);
                     } else {
                         categorized.new.push(request); // Fallback
@@ -14586,17 +14764,17 @@
         renderAdminRequestItem: function (request, isSnoozed) {
             const self = this;
             const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : self.t('unknown');
-            const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
-            const hasLink = request.MediaLink && request.Status === 'done';
-            const isRejected = request.Status === 'rejected';
-            const statusText = isSnoozed ? self.t('snoozed') : self.t(request.Status);
-            const statusClass = isSnoozed ? 'snoozed' : request.Status;
+            const completedAt = self.apiField(request, 'completedAt') ? self.formatDateTime(self.apiField(request, 'completedAt')) : null;
+            const hasLink = self.apiField(request, 'mediaLink') && self.apiField(request, 'status') === 'done';
+            const isRejected = self.apiField(request, 'status') === 'rejected';
+            const statusText = isSnoozed ? self.t('snoozed') : self.t(self.apiField(request, 'status'));
+            const statusClass = isSnoozed ? 'snoozed' : self.apiField(request, 'status');
 
             // Build custom fields HTML
             let customFieldsHtml = '';
-            if (request.CustomFields) {
+            if (self.apiField(request, 'customFields')) {
                 try {
-                    const customFields = JSON.parse(request.CustomFields);
+                    const customFields = JSON.parse(self.apiField(request, 'customFields'));
                     for (const [key, value] of Object.entries(customFields)) {
                         customFieldsHtml += `<div class="admin-request-detail-item"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
                     }
@@ -14605,21 +14783,21 @@
 
             // IMDB display
             let imdbHtml = '';
-            if (request.ImdbCode || request.ImdbLink) {
+            if (self.apiField(request, 'imdbCode') || self.apiField(request, 'imdbLink')) {
                 imdbHtml = `<div class="admin-request-detail-item imdb">`;
-                if (request.ImdbCode) {
-                    imdbHtml += `<span>🎬 ${self.escapeHtml(request.ImdbCode)}</span>`;
+                if (self.apiField(request, 'imdbCode')) {
+                    imdbHtml += `<span>🎬 ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</span>`;
                 }
-                if (request.ImdbLink) {
-                    imdbHtml += `<a href="${self.sanitizeUrl(self.escapeHtml(request.ImdbLink))}" target="_blank">IMDB →</a>`;
+                if (self.apiField(request, 'imdbLink')) {
+                    imdbHtml += `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank">IMDB →</a>`;
                 }
                 imdbHtml += `</div>`;
             }
 
             // Snooze info display
             let snoozeInfoHtml = '';
-            if (isSnoozed && request.SnoozedUntil) {
-                const snoozedUntilDate = self.formatDateTime(request.SnoozedUntil);
+            if (isSnoozed && self.apiField(request, 'snoozedUntil')) {
+                const snoozedUntilDate = self.formatDateTime(self.apiField(request, 'snoozedUntil'));
                 snoozeInfoHtml = `<div class="admin-request-detail-item">💤 Until: ${snoozedUntilDate}</div>`;
             }
 
@@ -14628,41 +14806,41 @@
             if (isSnoozed) {
                 snoozeHtml = `
                     <div class="admin-snooze-controls">
-                        <button class="admin-unsnooze-btn" data-request-id="${request.Id}">⏰ ${self.t('unsnooze')}</button>
+                        <button class="admin-unsnooze-btn" data-request-id="${self.apiField(request, 'id')}">⏰ ${self.t('unsnooze')}</button>
                     </div>
                 `;
-            } else if (request.Status !== 'done' && request.Status !== 'rejected') {
+            } else if (self.apiField(request, 'status') !== 'done' && self.apiField(request, 'status') !== 'rejected') {
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const minDate = tomorrow.toISOString().split('T')[0];
                 snoozeHtml = `
                     <div class="admin-snooze-controls">
-                        <input type="date" class="admin-snooze-date" data-request-id="${request.Id}" min="${minDate}">
-                        <button class="admin-snooze-btn" data-request-id="${request.Id}">💤 ${self.t('snooze')}</button>
+                        <input type="date" class="admin-snooze-date" data-request-id="${self.apiField(request, 'id')}" min="${minDate}">
+                        <button class="admin-snooze-btn" data-request-id="${self.apiField(request, 'id')}">💤 ${self.t('snooze')}</button>
                     </div>
                 `;
             }
 
             // Rejection display
             let rejectionHtml = '';
-            if (isRejected && request.RejectionReason) {
-                rejectionHtml = `<div class="admin-request-rejection">❌ ${self.escapeHtml(request.RejectionReason)}</div>`;
+            if (isRejected && self.apiField(request, 'rejectionReason')) {
+                rejectionHtml = `<div class="admin-request-rejection">❌ ${self.escapeHtml(self.apiField(request, 'rejectionReason'))}</div>`;
             }
 
             // Watch button for completed requests
             let watchHtml = '';
             if (hasLink) {
-                watchHtml = `<a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
+                watchHtml = `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
             }
 
             return `
-                <li class="admin-request-item" data-request-id="${request.Id}">
+                <li class="admin-request-item" data-request-id="${self.apiField(request, 'id')}">
                     <!-- Compact View (always visible) -->
                     <div class="admin-request-compact">
                         <span class="admin-request-compact-title" title="${self.escapeHtml((request.title ?? request.Title))}">${self.escapeHtml((request.title ?? request.Title))}</span>
                         <div class="admin-request-compact-meta">
                             <span class="admin-request-compact-user">${self.escapeHtml((request.username ?? request.Username))}</span>
-                            ${request.Type ? `<span class="admin-request-compact-type">${self.escapeHtml(request.Type)}</span>` : ''}
+                            ${self.apiField(request, 'type') ? `<span class="admin-request-compact-type">${self.escapeHtml(self.apiField(request, 'type'))}</span>` : ''}
                             <span class="admin-request-compact-date">${createdAt}</span>
                             <span class="admin-request-compact-status ${statusClass}">${statusText}</span>
                             <span class="admin-request-expand-icon">▼</span>
@@ -14681,24 +14859,24 @@
                             </div>
 
                             <!-- Notes -->
-                            ${request.Notes ? `<div class="admin-request-notes">${self.escapeHtml(request.Notes)}</div>` : ''}
+                            ${self.apiField(request, 'notes') ? `<div class="admin-request-notes">${self.escapeHtml(self.apiField(request, 'notes'))}</div>` : ''}
 
                             <!-- Rejection reason -->
                             ${rejectionHtml}
 
                             <!-- Action buttons -->
                             <div class="admin-request-actions-row">
-                                <button class="admin-action-btn pending admin-status-btn" data-status="pending" data-request-id="${request.Id}">${self.t('pending')}</button>
-                                <button class="admin-action-btn processing admin-status-btn" data-status="processing" data-request-id="${request.Id}">${self.t('processing')}</button>
-                                <button class="admin-action-btn done admin-status-btn" data-status="done" data-request-id="${request.Id}">${self.t('done')}</button>
-                                <button class="admin-action-btn rejected admin-status-btn" data-status="rejected" data-request-id="${request.Id}">${self.t('rejected')}</button>
-                                <button class="admin-action-btn delete admin-delete-btn" data-request-id="${request.Id}">🗑️</button>
+                                <button class="admin-action-btn pending admin-status-btn" data-status="pending" data-request-id="${self.apiField(request, 'id')}">${self.t('pending')}</button>
+                                <button class="admin-action-btn processing admin-status-btn" data-status="processing" data-request-id="${self.apiField(request, 'id')}">${self.t('processing')}</button>
+                                <button class="admin-action-btn done admin-status-btn" data-status="done" data-request-id="${self.apiField(request, 'id')}">${self.t('done')}</button>
+                                <button class="admin-action-btn rejected admin-status-btn" data-status="rejected" data-request-id="${self.apiField(request, 'id')}">${self.t('rejected')}</button>
+                                <button class="admin-action-btn delete admin-delete-btn" data-request-id="${self.apiField(request, 'id')}">🗑️</button>
                             </div>
 
                             <!-- Input fields -->
                             <div class="admin-request-inputs">
-                                <input type="text" class="admin-request-input admin-link-input" data-request-id="${request.Id}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(request.MediaLink || '')}">
-                                <input type="text" class="admin-request-input admin-rejection-input" data-request-id="${request.Id}" placeholder="Rejection reason..." value="${self.escapeHtml(request.RejectionReason || '')}">
+                                <input type="text" class="admin-request-input admin-link-input" data-request-id="${self.apiField(request, 'id')}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(self.apiField(request, 'mediaLink') || '')}">
+                                <input type="text" class="admin-request-input admin-rejection-input" data-request-id="${self.apiField(request, 'id')}" placeholder="Rejection reason..." value="${self.escapeHtml(self.apiField(request, 'rejectionReason') || '')}">
                             </div>
 
                             <!-- Snooze controls -->
@@ -14710,11 +14888,11 @@
                     </div>
 
                     <!-- Hidden mobile elements -->
-                    <select class="admin-status-select" data-request-id="${request.Id}">
-                        <option value="pending" ${request.Status === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
-                        <option value="processing" ${request.Status === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
-                        <option value="done" ${request.Status === 'done' ? 'selected' : ''}>${self.t('done')}</option>
-                        <option value="rejected" ${request.Status === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
+                    <select class="admin-status-select" data-request-id="${self.apiField(request, 'id')}">
+                        <option value="pending" ${self.apiField(request, 'status') === 'pending' ? 'selected' : ''}>${self.t('pending')}</option>
+                        <option value="processing" ${self.apiField(request, 'status') === 'processing' ? 'selected' : ''}>${self.t('processing')}</option>
+                        <option value="done" ${self.apiField(request, 'status') === 'done' ? 'selected' : ''}>${self.t('done')}</option>
+                        <option value="rejected" ${self.apiField(request, 'status') === 'rejected' ? 'selected' : ''}>${self.t('rejected')}</option>
                     </select>
                 </li>
             `;
@@ -15064,16 +15242,16 @@
                 userRequests.forEach(request => {
                     // Format timestamps
                     const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : '';
-                    const completedAt = request.CompletedAt ? self.formatDateTime(request.CompletedAt) : null;
-                    const hasLink = request.MediaLink && request.Status === 'done';
-                    const isRejected = request.Status === 'rejected';
-                    const statusText = self.t(request.Status);
+                    const completedAt = self.apiField(request, 'completedAt') ? self.formatDateTime(self.apiField(request, 'completedAt')) : null;
+                    const hasLink = self.apiField(request, 'mediaLink') && self.apiField(request, 'status') === 'done';
+                    const isRejected = self.apiField(request, 'status') === 'rejected';
+                    const statusText = self.t(self.apiField(request, 'status'));
 
                     // Parse custom fields if present
                     let customFieldsHtml = '';
-                    if (request.CustomFields) {
+                    if (self.apiField(request, 'customFields')) {
                         try {
-                            const customFields = JSON.parse(request.CustomFields);
+                            const customFields = JSON.parse(self.apiField(request, 'customFields'));
                             for (const [key, value] of Object.entries(customFields)) {
                                 customFieldsHtml += `<div class="user-request-custom-field"><strong>${self.escapeHtml(key)}:</strong> ${self.escapeHtml(value)}</div>`;
                             }
@@ -15083,25 +15261,25 @@
                     }
 
                     // Rejection reason
-                    const rejectionHtml = isRejected && request.RejectionReason
-                        ? `<div class="user-request-rejection-reason">❌ ${self.escapeHtml(request.RejectionReason)}</div>`
+                    const rejectionHtml = isRejected && self.apiField(request, 'rejectionReason')
+                        ? `<div class="user-request-rejection-reason">❌ ${self.escapeHtml(self.apiField(request, 'rejectionReason'))}</div>`
                         : '';
 
                     // IMDB info
                     let imdbHtml = '';
-                    if (request.ImdbCode) {
-                        imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(request.ImdbCode)}</div>`;
+                    if (self.apiField(request, 'imdbCode')) {
+                        imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</div>`;
                     }
-                    if (request.ImdbLink) {
-                        imdbHtml += `<div class="user-request-imdb"><a href="${self.sanitizeUrl(self.escapeHtml(request.ImdbLink))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                    if (self.apiField(request, 'imdbLink')) {
+                        imdbHtml += `<div class="user-request-imdb"><a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
                     }
 
                     // Edit/Delete buttons only for pending requests
-                    const isPending = request.Status === 'pending';
+                    const isPending = self.apiField(request, 'status') === 'pending';
                     const actionsHtml = isPending ? `
                         <div class="user-request-actions">
-                            <button class="user-edit-btn" data-request-id="${request.Id}" data-request-title="${self.escapeHtml((request.title ?? request.Title))}" data-request-type="${self.escapeHtml(request.Type || '')}" data-request-notes="${self.escapeHtml(request.Notes || '')}" data-request-imdb-code="${self.escapeHtml(request.ImdbCode || '')}" data-request-imdb-link="${self.escapeHtml(request.ImdbLink || '')}" data-request-custom-fields="${self.escapeHtml(request.CustomFields || '')}">✏️ ${self.t('edit') || 'Edit'}</button>
-                            <button class="user-delete-btn" data-request-id="${request.Id}">🗑️ ${self.t('delete') || 'Delete'}</button>
+                            <button class="user-edit-btn" data-request-id="${self.apiField(request, 'id')}" data-request-title="${self.escapeHtml((request.title ?? request.Title))}" data-request-type="${self.escapeHtml(self.apiField(request, 'type') || '')}" data-request-notes="${self.escapeHtml(self.apiField(request, 'notes') || '')}" data-request-imdb-code="${self.escapeHtml(self.apiField(request, 'imdbCode') || '')}" data-request-imdb-link="${self.escapeHtml(self.apiField(request, 'imdbLink') || '')}" data-request-custom-fields="${self.escapeHtml(self.apiField(request, 'customFields') || '')}">✏️ ${self.t('edit') || 'Edit'}</button>
+                            <button class="user-delete-btn" data-request-id="${self.apiField(request, 'id')}">🗑️ ${self.t('delete') || 'Delete'}</button>
                         </div>
                     ` : '';
 
@@ -15109,35 +15287,35 @@
                         <li class="user-request-item">
                             <div class="user-request-info">
                                 <div class="user-request-item-title">${self.escapeHtml((request.title ?? request.Title))}</div>
-                                <div class="user-request-item-type">${request.Type ? self.escapeHtml(request.Type) : self.t('notSpecified')}</div>
+                                <div class="user-request-item-type">${self.apiField(request, 'type') ? self.escapeHtml(self.apiField(request, 'type')) : self.t('notSpecified')}</div>
                                 ${imdbHtml}
                                 ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
-                                ${hasLink ? `<a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${hasLink ? `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                                 ${(() => {
                                     const isDeletionBanned = deletionBanInfo && deletionBanInfo.banned;
-                                    const hasPendingDeletion = deletionRequests.some(dr => dr.MediaRequestId === request.Id && dr.Status === 'pending');
+                                    const hasPendingDeletion = deletionRequests.some(dr => self.apiField(dr, 'mediaRequestId') === self.apiField(request, 'id') && self.apiField(dr, 'status') === 'pending');
                                     if (hasPendingDeletion) {
                                         return `<span class="deletion-requested-text">${self.t('alreadyRequested')}</span>`;
                                     }
                                     // Show all rejected deletion requests with reasons (clickable)
-                                    const rejectedDeletions = deletionRequests.filter(dr => dr.MediaRequestId === request.Id && dr.Status === 'rejected');
+                                    const rejectedDeletions = deletionRequests.filter(dr => self.apiField(dr, 'mediaRequestId') === self.apiField(request, 'id') && self.apiField(dr, 'status') === 'rejected');
                                     let rejectedHtml = '';
                                     if (rejectedDeletions.length > 0) {
-                                        const sorted = rejectedDeletions.sort((a, b) => new Date(b.ResolvedAt) - new Date(a.ResolvedAt));
-                                        const hasAnyReason = sorted.some(r => r.RejectionReason);
+                                        const sorted = rejectedDeletions.sort((a, b) => new Date(self.apiField(b, 'resolvedAt')) - new Date(self.apiField(a, 'resolvedAt')));
+                                        const hasAnyReason = sorted.some(r => self.apiField(r, 'rejectionReason'));
                                         const reasonsData = self.escapeHtml(JSON.stringify(sorted.map(r => ({
-                                            reason: r.RejectionReason || '',
-                                            admin: r.ResolvedByUsername || '',
-                                            date: r.ResolvedAt || ''
+                                            reason: self.apiField(r, 'rejectionReason') || '',
+                                            admin: self.apiField(r, 'resolvedByUsername') || '',
+                                            date: self.apiField(r, 'resolvedAt') || ''
                                         }))));
                                         rejectedHtml = `<span class="deletion-rejected-text rejection-reason-trigger" data-reasons="${reasonsData}" style="cursor:pointer;">${self.t('deletionRejected')} (${sorted.length})${hasAnyReason ? ' ℹ️' : ''}</span>`;
                                     }
-                                    const isDone = request.Status === 'done';
-                                    const isRejectedStatus = request.Status === 'rejected';
+                                    const isDone = self.apiField(request, 'status') === 'done';
+                                    const isRejectedStatus = self.apiField(request, 'status') === 'rejected';
                                     // Count total deletion requests for this media request (for limit check)
-                                    const totalDeletionRequests = deletionRequests.filter(dr => dr.MediaRequestId === request.Id).length;
+                                    const totalDeletionRequests = deletionRequests.filter(dr => self.apiField(dr, 'mediaRequestId') === self.apiField(request, 'id')).length;
                                     if (totalDeletionRequests >= 3) {
                                         return rejectedHtml + `<span class="deletion-requested-text">${self.t('deletionLimitReached')}</span>`;
                                     }
@@ -15150,17 +15328,17 @@
                                     }
                                     if (isDone && hasLink) {
                                         // "Request to delete media" for fulfilled requests
-                                        const itemId = self.extractItemIdFromLink(request.MediaLink) || '';
-                                        return rejectedHtml + `<button class="deletion-request-btn" data-request-id="${request.Id}" data-item-id="${itemId}" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="${self.escapeHtml(request.MediaLink)}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
+                                        const itemId = self.extractItemIdFromLink(self.apiField(request, 'mediaLink')) || '';
+                                        return rejectedHtml + `<button class="deletion-request-btn" data-request-id="${self.apiField(request, 'id')}" data-item-id="${itemId}" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(self.apiField(request, 'type') || '')}" data-media-link="${self.escapeHtml(self.apiField(request, 'mediaLink'))}" data-deletion-type="media">${self.t('requestDeleteMedia')}</button>`;
                                     } else if (!isDone && !isRejectedStatus) {
                                         // "Request to delete request" for non-done, non-rejected requests
-                                        return rejectedHtml + `<button class="deletion-request-btn delete-request-type" data-request-id="${request.Id}" data-item-id="" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(request.Type || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
+                                        return rejectedHtml + `<button class="deletion-request-btn delete-request-type" data-request-id="${self.apiField(request, 'id')}" data-item-id="" data-title="${self.escapeHtml((request.title ?? request.Title))}" data-type="${self.escapeHtml(self.apiField(request, 'type') || '')}" data-media-link="" data-deletion-type="request">${self.t('requestDeleteRequest')}</button>`;
                                     }
                                     return rejectedHtml;
                                 })()}
                                 ${actionsHtml}
                             </div>
-                            <span class="user-request-status ${request.Status}">${statusText}</span>
+                            <span class="user-request-status ${self.apiField(request, 'status')}">${statusText}</span>
                         </li>
                     `;
                 });
@@ -15561,18 +15739,18 @@
 
                 requests.forEach(request => {
                     // Check if request is snoozed (has SnoozedUntil date in the future)
-                    const isSnoozed = request.SnoozedUntil && new Date(request.SnoozedUntil) > new Date();
+                    const isSnoozed = self.apiField(request, 'snoozedUntil') && new Date(self.apiField(request, 'snoozedUntil')) > new Date();
 
                     if (isSnoozed) {
                         categorized.snoozed.push(request);
-                    } else if (request.Status === 'pending') {
+                    } else if (self.apiField(request, 'status') === 'pending') {
                         // Pending = New (not yet viewed by admin)
                         categorized.new.push(request);
-                    } else if (request.Status === 'processing') {
+                    } else if (self.apiField(request, 'status') === 'processing') {
                         categorized.processing.push(request);
-                    } else if (request.Status === 'done') {
+                    } else if (self.apiField(request, 'status') === 'done') {
                         categorized.done.push(request);
-                    } else if (request.Status === 'rejected') {
+                    } else if (self.apiField(request, 'status') === 'rejected') {
                         categorized.rejected.push(request);
                     } else {
                         categorized.new.push(request); // Fallback
@@ -16233,33 +16411,33 @@
                 let html = '<div class="deletion-requests-list">';
                 sorted.forEach(request => {
                     const createdAt = (request.createdAt ?? request.CreatedAt) ? self.formatDateTime((request.createdAt ?? request.CreatedAt)) : '';
-                    const resolvedAt = request.ResolvedAt ? self.formatDateTime(request.ResolvedAt) : '';
-                    const isPending = request.Status === 'pending';
+                    const resolvedAt = self.apiField(request, 'resolvedAt') ? self.formatDateTime(self.apiField(request, 'resolvedAt')) : '';
+                    const isPending = self.apiField(request, 'status') === 'pending';
 
-                    let statusBadgeClass = request.Status;
-                    let statusText = self.t('deletion' + request.Status.charAt(0).toUpperCase() + request.Status.slice(1)) || request.Status.toUpperCase();
+                    let statusBadgeClass = self.apiField(request, 'status');
+                    let statusText = self.t('deletion' + self.apiField(request, 'status').charAt(0).toUpperCase() + self.apiField(request, 'status').slice(1)) || self.apiField(request, 'status').toUpperCase();
 
                     let actionsHtml = '';
-                    const isDeleteRequest = request.DeletionType === 'request';
+                    const isDeleteRequest = self.apiField(request, 'deletionType') === 'request';
                     const typeLabel = isDeleteRequest ? (self.t('deleteRequest')) : (self.t('deleteMedia'));
                     if (isPending) {
                         if (isDeleteRequest) {
                             // For "delete request" type: just Approve (deletes the request) or Reject
                             actionsHtml = `
                                 <div class="deletion-request-actions">
-                                    <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve">${self.t('approveDeleteRequest')}</button>
-                                    <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
+                                    <button class="deletion-action-btn approve" data-request-id="${self.apiField(request, 'id')}" data-action="approve">${self.t('approveDeleteRequest')}</button>
+                                    <button class="deletion-action-btn reject" data-request-id="${self.apiField(request, 'id')}" data-action="reject">${self.t('rejectDeletion')}</button>
                                 </div>
                             `;
                         } else {
                             // For "delete media" type: schedule options
                             actionsHtml = `
                                 <div class="deletion-request-actions">
-                                    <button class="deletion-action-btn approve" data-request-id="${request.Id}" data-action="approve" data-delay-hours="1">${self.t('deleteNow')}</button>
-                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="1">${self.t('schedule1Day')}</button>
-                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="7">${self.t('schedule1Week')}</button>
-                                    <button class="deletion-action-btn schedule" data-request-id="${request.Id}" data-action="approve" data-delay-days="30">${self.t('schedule1Month')}</button>
-                                    <button class="deletion-action-btn reject" data-request-id="${request.Id}" data-action="reject">${self.t('rejectDeletion')}</button>
+                                    <button class="deletion-action-btn approve" data-request-id="${self.apiField(request, 'id')}" data-action="approve" data-delay-hours="1">${self.t('deleteNow')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${self.apiField(request, 'id')}" data-action="approve" data-delay-days="1">${self.t('schedule1Day')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${self.apiField(request, 'id')}" data-action="approve" data-delay-days="7">${self.t('schedule1Week')}</button>
+                                    <button class="deletion-action-btn schedule" data-request-id="${self.apiField(request, 'id')}" data-action="approve" data-delay-days="30">${self.t('schedule1Month')}</button>
+                                    <button class="deletion-action-btn reject" data-request-id="${self.apiField(request, 'id')}" data-action="reject">${self.t('rejectDeletion')}</button>
                                 </div>
                             `;
                         }
@@ -16267,12 +16445,12 @@
 
                     let resolvedHtml = '';
                     if (!isPending && resolvedAt) {
-                        resolvedHtml = `<span> • ${request.ResolvedByUsername ? self.escapeHtml(request.ResolvedByUsername) : ''} ${resolvedAt}</span>`;
+                        resolvedHtml = `<span> • ${self.apiField(request, 'resolvedByUsername') ? self.escapeHtml(self.apiField(request, 'resolvedByUsername')) : ''} ${resolvedAt}</span>`;
                     }
 
                     let rejectionReasonHtml = '';
-                    if (request.Status === 'rejected' && request.RejectionReason) {
-                        rejectionReasonHtml = `<div style="margin-top:4px;font-size:11px;color:#f44336;">❌ ${self.t('rejectionReasonLabel')} ${self.escapeHtml(request.RejectionReason)}</div>`;
+                    if (self.apiField(request, 'status') === 'rejected' && self.apiField(request, 'rejectionReason')) {
+                        rejectionReasonHtml = `<div style="margin-top:4px;font-size:11px;color:#f44336;">❌ ${self.t('rejectionReasonLabel')} ${self.escapeHtml(self.apiField(request, 'rejectionReason'))}</div>`;
                     }
 
                     html += `
@@ -16281,10 +16459,10 @@
                                 <div class="deletion-request-title">${self.escapeHtml((request.title ?? request.Title))} <span style="font-size:10px;color:#999;font-weight:400;">[${typeLabel}]</span></div>
                                 <div class="deletion-request-meta">
                                     <span class="deletion-request-user">${self.escapeHtml((request.username ?? request.Username))}</span>
-                                    <span> • ${request.Type ? self.escapeHtml(request.Type) : ''}</span>
+                                    <span> • ${self.apiField(request, 'type') ? self.escapeHtml(self.apiField(request, 'type')) : ''}</span>
                                     <span> • ${createdAt}</span>
                                     ${resolvedHtml}
-                                    ${request.MediaLink ? ` • <a href="${self.sanitizeUrl(self.escapeHtml(request.MediaLink))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                                    ${self.apiField(request, 'mediaLink') ? ` • <a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
                                 </div>
                                 ${rejectionReasonHtml}
                                 ${actionsHtml}
@@ -16552,16 +16730,16 @@
                     html += `<div style="font-size:11px;color:#666;margin-bottom:8px;">${self.t('noBannedUsers')}</div>`;
                 } else {
                     bans.forEach(ban => {
-                        const expires = ban.ExpiresAt
-                            ? `${self.t('banExpires')} ${self.formatDateTime(ban.ExpiresAt)}`
+                        const expires = self.apiField(ban, 'expiresAt')
+                            ? `${self.t('banExpires')} ${self.formatDateTime(self.apiField(ban, 'expiresAt'))}`
                             : self.t('banPermanentLabel');
                         html += `
                             <div class="ban-item">
                                 <div>
                                     <div class="ban-item-info">${self.escapeHtml((ban.username ?? ban.Username))}</div>
-                                    <div class="ban-item-meta">${expires} • ${self.t('bannedBy')} ${self.escapeHtml(ban.BannedByUsername)}</div>
+                                    <div class="ban-item-meta">${expires} • ${self.t('bannedBy')} ${self.escapeHtml(self.apiField(ban, 'bannedByUsername'))}</div>
                                 </div>
-                                <button class="ban-btn unban" data-ban-id="${ban.Id}">${self.t('unbanUser')}</button>
+                                <button class="ban-btn unban" data-ban-id="${self.apiField(ban, 'id')}">${self.t('unbanUser')}</button>
                             </div>
                         `;
                     });
@@ -16890,8 +17068,8 @@
 
                     // Add all done request IDs
                     doneRequests.forEach(request => {
-                        if (!viewedIds.includes(request.Id)) {
-                            viewedIds.push(request.Id);
+                        if (!viewedIds.includes(self.apiField(request, 'id'))) {
+                            viewedIds.push(self.apiField(request, 'id'));
                         }
                     });
 
@@ -19207,7 +19385,7 @@
                 // Check if this item has scheduled deletion
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
                 if (deletion) {
-                    const leavingText = self.formatLeavingText(deletion.DeleteAt);
+                    const leavingText = self.formatLeavingText(self.apiField(deletion, 'deleteAt'));
                     card.classList.add('has-leaving');
                     card.setAttribute('data-leaving', leavingText);
                 }
@@ -20306,7 +20484,7 @@
             // Check chat ban
             if (this.chatBanStatus && this.chatBanStatus.chatBan) {
                 const ban = this.chatBanStatus.chatBan;
-                this.showBanNotification('chat', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                this.showBanNotification('chat', ban.expiresAt || self.apiField(ban, 'expiresAt'), ban.isPermanent || ban.IsPermanent);
                 activeBans.push('chat');
             } else {
                 this.closeBanNotification('chat');
@@ -20315,7 +20493,7 @@
             // Check snooze/mute ban
             if (this.chatBanStatus && this.chatBanStatus.snoozeBan) {
                 const ban = this.chatBanStatus.snoozeBan;
-                this.showBanNotification('snooze', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                this.showBanNotification('snooze', ban.expiresAt || self.apiField(ban, 'expiresAt'), ban.isPermanent || ban.IsPermanent);
                 activeBans.push('snooze');
             } else {
                 this.closeBanNotification('snooze');
@@ -20324,7 +20502,7 @@
             // Check media ban
             if (this.chatBanStatus && this.chatBanStatus.mediaBan) {
                 const ban = this.chatBanStatus.mediaBan;
-                this.showBanNotification('media', ban.expiresAt || ban.ExpiresAt, ban.isPermanent || ban.IsPermanent);
+                this.showBanNotification('media', ban.expiresAt || self.apiField(ban, 'expiresAt'), ban.isPermanent || ban.IsPermanent);
                 activeBans.push('media');
             } else {
                 this.closeBanNotification('media');
@@ -21208,12 +21386,12 @@
             } else {
                 list.innerHTML = bans.map(function (ban) {
                     // API returns PascalCase, handle both
-                    const banId = ban.Id || ban.id;
+                    const banId = self.apiField(ban, 'id') || ban.id;
                     const banUserId = ban.UserId || ban.userId;
                     const banUserName = ban.UserName || ban.userName || 'Unknown';
                     const banType = ban.BanType || ban.banType || 'unknown';
                     const isPermanent = ban.IsPermanent || ban.isPermanent;
-                    const expiresAt = ban.ExpiresAt || ban.expiresAt;
+                    const expiresAt = self.apiField(ban, 'expiresAt') || ban.expiresAt;
                     const reason = ban.Reason || ban.reason;
 
                     const expiresText = isPermanent ? 'Permanent' : (expiresAt ? 'Expires ' + self.formatTimeUntil(new Date(expiresAt)) : '');
