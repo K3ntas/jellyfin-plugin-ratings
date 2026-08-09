@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.361.0",
+        "changelog": "Fixes titles that are not on the server staying invisible in your profile rows until you added another item. The row was drawn by counting only the entries that point at a file on the server, and then drawing that many cards - so a catalog title, which has no server file by design, was never reached. Adding another item redrew the row using a different rule that counted it correctly, which is why it suddenly appeared. Both the first draw and the redraw now use one shared rule, so a row containing only catalog titles displays them immediately.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.361.0/Jellyfin.Plugin.Ratings_2.0.361.0.zip",
+        "checksum": "14f1a6f85eddfab3db8c9480326e65dc",
+        "timestamp": "2026-08-08T23:59:00Z"
+      },
+      {
         "version": "2.0.360.0",
         "changelog": "Fixes titles that are not on the server disappearing from your profile rows. Adding one worked and it was saved correctly, but reopening the profile ran a clean-up step that kept only the item id, title and poster and then discarded anything without an item id - which is exactly what a catalog title is. The card vanished, and the next save wrote the shortened row back, deleting it on the server for good. Catalog titles now keep all their details and survive reopening the profile. Rows saved before this update that already lost their titles cannot be recovered and need re-adding.",
         "targetAbi": "10.11.0.0",

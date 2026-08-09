@@ -4274,6 +4274,26 @@
             this.lbToast('Not on the server yet — click the Request button to ask for this title.');
         },
 
+        /**
+         * Returns a row's real entries, dropping empty slots, and writes the compacted array back
+         * so array indices match rendered indices (remove/drag address items by index).
+         *
+         * An entry is real if it points at a library item OR at a catalog title. Both render paths
+         * MUST agree on this: the first render used to count only entries with an itemId and cap
+         * its loop at that count, so catalog titles - which have no itemId by design - were never
+         * reached. A row holding only catalog titles drew nothing at all, and they appeared only
+         * once adding another item triggered rerenderFavoriteRow, which counted them correctly.
+         * @param {object} row The favourite row.
+         * @returns {Array} The row's real entries.
+         */
+        compactFavItems: function (row) {
+            var items = ((row && row.items) || []).filter(function (f) {
+                return f && ((f.itemId || f.ItemId) || (f.tmdbId || f.TmdbId) || (f.notInLibrary || f.NotInLibrary));
+            });
+            if (row) { row.items = items; }
+            return items;
+        },
+
         rerenderFavoriteRow: function (rowIndex) {
             var self = this;
             var row = self._currentProfile && self._currentProfile.favoriteRows && self._currentProfile.favoriteRows[rowIndex];
@@ -4281,10 +4301,7 @@
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
             var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
-            // Compact (drop nulls) so array indices match rendered indices. Keep both on-server
-            // items (have itemId) and catalog items (have tmdbId but no itemId).
-            var items = (row.items || []).filter(function (f) { return f && (f.itemId || (f.itemId ?? f.ItemId) || f.tmdbId || (f.tmdbId ?? f.TmdbId)); });
-            row.items = items;
+            var items = self.compactFavItems(row);
             var html = '';
             items.forEach(function (fav, i) {
                 html += self.favSlotHtml(fav, rowIndex, i, isSelf);
@@ -4734,8 +4751,9 @@
             // Render existing rows
             for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
                 var row = favoriteRows[rowIndex];
-                var items = row.items || [];
-                var itemCount = items.filter(function(i) { return i && i.itemId; }).length;
+                // Same rule as rerenderFavoriteRow - see compactFavItems.
+                var items = self.compactFavItems(row);
+                var itemCount = items.length;
 
                 html += '<div class="lb-favorite-row" data-row="' + rowIndex + '">';
                 html += '<div class="lb-row-header">';
@@ -4754,13 +4772,11 @@
                 html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '"' +
                     (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') + '>';
 
-                // Render only filled slots (lazy load - show max 10 visible, rest on scroll)
+                // Render the first 10 (lazy load - the rest arrive via "load more"). items is
+                // already compacted, so every entry here is real.
                 var visibleCount = Math.min(itemCount, 10);
                 for (var i = 0; i < visibleCount; i++) {
-                    var fav = items[i];
-                    if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
-                        html += self.favSlotHtml(fav, rowIndex, i, isSelf);
-                    }
+                    html += self.favSlotHtml(items[i], rowIndex, i, isSelf);
                 }
 
                 // Show "load more" if there are more items
@@ -6566,7 +6582,8 @@
             if (!favoriteRows[rowIndex]) return;
 
             var row = favoriteRows[rowIndex];
-            var items = row.items || [];
+            // Same rule and indices as the initial render - see compactFavItems.
+            var items = self.compactFavItems(row);
             var grid = document.querySelector('.lb-favorites-grid[data-row="' + rowIndex + '"]');
             if (!grid) return;
 
@@ -6580,7 +6597,7 @@
             var addSlot = grid.querySelector('.add-slot');
             for (var i = 10; i < items.length; i++) {
                 var fav = items[i];
-                if (fav && (fav.itemId || (fav.itemId ?? fav.ItemId) || fav.tmdbId || (fav.tmdbId ?? fav.TmdbId))) {
+                if (fav) {
                     var slotHtml = self.favSlotHtml(fav, rowIndex, i, isSelf);
                     if (addSlot) {
                         addSlot.insertAdjacentHTML('beforebegin', slotHtml);
