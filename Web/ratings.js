@@ -2847,6 +2847,27 @@
          * @param {string} name The camelCase field name.
          * @returns {*} The field value, or undefined.
          */
+        /**
+         * Resolves a poster URL from the plugin API.
+         *
+         * Jellyfin artwork comes back as a server-relative path ("/Items/<id>/Images/Primary")
+         * and needs the server address in front. The TMDB fallback used for items Jellyfin never
+         * identified is already absolute, so prefixing it would produce a broken URL.
+         * Only http(s) is accepted, so a hostile value cannot turn into javascript: or data:.
+         * @param {string} baseUrl The server address.
+         * @param {string} raw The URL or path from the API.
+         * @returns {string} A usable URL, or '' when there is nothing to show.
+         */
+        resolvePosterUrl: function (baseUrl, raw) {
+            if (!raw) { return ''; }
+            var value = String(raw);
+            if (/^https?:\/\//i.test(value)) { return value; }
+            // A leading "//" is protocol-relative; appending it to the server address yields a
+            // confusing double-slash path, so require a single-slash server path.
+            if (value.charAt(0) !== '/' || value.charAt(1) === '/') { return ''; }
+            return baseUrl + value;
+        },
+
         apiField: function (obj, name) {
             if (!obj) { return undefined; }
             var v = obj[name];
@@ -12386,7 +12407,8 @@
                 // reads here is exactly what left posters, type, plays, size and status blank.
                 const f = (name) => self.apiField(item, name);
                 const imageUrlRaw = f('imageUrl');
-                const imageUrl = imageUrlRaw ? baseUrl + imageUrlRaw : '';
+                // A TMDB fallback poster is absolute; a Jellyfin one is a server-relative path.
+                const imageUrl = self.resolvePosterUrl(baseUrl, imageUrlRaw);
                 const scheduled = f('scheduledDeletion');
                 const hasScheduledDeletion = !!scheduled && !self.apiField(scheduled, 'isCancelled');
                 const playCount = Number(f('playCount')) || 0;
@@ -12493,7 +12515,8 @@
                 // See renderMediaRows - same fields, same casing rule.
                 const f = (name) => self.apiField(item, name);
                 const imageUrlRaw = f('imageUrl');
-                const imageUrl = imageUrlRaw ? baseUrl + imageUrlRaw : '';
+                // A TMDB fallback poster is absolute; a Jellyfin one is a server-relative path.
+                const imageUrl = self.resolvePosterUrl(baseUrl, imageUrlRaw);
                 const scheduled = f('scheduledDeletion');
                 const hasScheduledDeletion = !!scheduled && !self.apiField(scheduled, 'isCancelled');
                 const playCount = Number(f('playCount')) || 0;

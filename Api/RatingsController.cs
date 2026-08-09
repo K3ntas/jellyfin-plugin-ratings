@@ -774,6 +774,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         // re-rating the same title does not re-hit TMDB.
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, byte> _posterBackfillSeen = new();
 
+        // Library items Jellyfin holds no artwork for, mapped to a TMDB poster we resolved.
+        // In-memory only: it is a display nicety, and a restart simply looks them up again.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> _externalPosterCache = new();
+
+        // Items already attempted this process, successful or not, so a title TMDB does not
+        // know is not re-requested on every page view.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, byte> _externalPosterSeen = new();
+
+        // Matches an IMDB id left in an item's name by the filename, e.g. "Undertone [tt35892608]".
+        // Unidentified items usually have no provider ids, so the name is the only source.
+        // (A [GeneratedRegex] partial method would need the controller to be partial.)
+        private static readonly Regex _imdbIdInName = new(
+            @"\b(tt\d{7,10})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            TimeSpan.FromMilliseconds(200));
+
         /// <summary>
         /// Builds a stable ItemId for a TMDB title that is not on the server.
         /// </summary>
@@ -803,6 +819,143 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// never affect whether the rating itself was saved.
         /// </remarks>
         /// <param name="rating">The rating just written.</param>
+        /// <summary>
+        /// Looks up a TMDB poster for a library item Jellyfin holds no artwork for.
+        ///
+        /// An item Jellyfin never identified has no images and often no provider ids either -
+        /// its name still carries the raw "[tt1234567]" from the filename. So the IMDB id is
+        /// taken from the provider ids when present and scraped from the name otherwise, then
+        /// resolved through TMDB's /find endpoint.
+        ///
+        /// Runs off the request thread and caches the result, so the list response is never
+        /// held up by network calls; the poster appears on the next load. Failures are cached
+        /// as a miss too, so a title TMDB does not know is not retried on every page view.
+        /// </summary>
+        /// <param name="item">The library item lacking a primary image.</param>
+        private void QueueExternalPosterLookup(MediaBrowser.Controller.Entities.BaseItem? item)
+        {
+            if (item == null || Plugin.Instance?.Configuration?.EnableExternalPosterFallback != true)
+            {
+                return;
+            }
+
+            var token = Plugin.Instance?.Configuration?.TmdbApiToken;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return;
+            }
+
+            // One attempt per item per server lifetime.
+            if (!_externalPosterSeen.TryAdd(item.Id, 0))
+            {
+                return;
+            }
+
+            var itemId = item.Id;
+            var isSeries = item is MediaBrowser.Controller.Entities.TV.Series;
+            string? tmdbId = null;
+            string? imdbId = null;
+            if (item.ProviderIds != null)
+            {
+                item.ProviderIds.TryGetValue("Tmdb", out tmdbId);
+                item.ProviderIds.TryGetValue("Imdb", out imdbId);
+            }
+
+            if (string.IsNullOrWhiteSpace(imdbId) && !string.IsNullOrWhiteSpace(item.Name))
+            {
+                var m = _imdbIdInName.Match(item.Name);
+                if (m.Success)
+                {
+                    imdbId = m.Groups[1].Value;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(tmdbId) && string.IsNullOrWhiteSpace(imdbId))
+            {
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    string? posterPath = null;
+
+                    if (!string.IsNullOrWhiteSpace(tmdbId))
+                    {
+                        var kind = isSeries ? "tv" : "movie";
+                        posterPath = await FetchTmdbPosterPathAsync(
+                            "https://api.themoviedb.org/3/" + kind + "/" + Uri.EscapeDataString(tmdbId),
+                            token!,
+                            null).ConfigureAwait(false);
+                    }
+
+                    if (posterPath == null && !string.IsNullOrWhiteSpace(imdbId))
+                    {
+                        // /find returns results grouped by kind, so pick the matching bucket.
+                        posterPath = await FetchTmdbPosterPathAsync(
+                            "https://api.themoviedb.org/3/find/" + Uri.EscapeDataString(imdbId)
+                                + "?external_source=imdb_id",
+                            token!,
+                            isSeries ? "tv_results" : "movie_results").ConfigureAwait(false);
+                    }
+
+                    if (!string.IsNullOrEmpty(posterPath))
+                    {
+                        _externalPosterCache[itemId] = "https://image.tmdb.org/t/p/w185" + posterPath;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "External poster lookup failed for item {ItemId}", itemId);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Requests a TMDB endpoint and pulls poster_path out, optionally from a results array.
+        /// </summary>
+        /// <param name="url">The TMDB URL.</param>
+        /// <param name="token">The TMDB API token.</param>
+        /// <param name="resultsProperty">Results array to look inside, or null for a direct object.</param>
+        /// <returns>The poster path, or null.</returns>
+        private async Task<string?> FetchTmdbPosterPathAsync(string url, string token, string? resultsProperty)
+        {
+            using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+            request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
+            request.Headers.TryAddWithoutValidation("accept", "application/json");
+
+            using var resp = await _tmdbHttp.SendAsync(request).ConfigureAwait(false);
+            if (!resp.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            var root = doc.RootElement;
+            if (resultsProperty != null)
+            {
+                if (!root.TryGetProperty(resultsProperty, out var arr)
+                    || arr.ValueKind != System.Text.Json.JsonValueKind.Array
+                    || arr.GetArrayLength() == 0)
+                {
+                    return null;
+                }
+
+                root = arr[0];
+            }
+
+            if (root.TryGetProperty("poster_path", out var pp)
+                && pp.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return pp.GetString();
+            }
+
+            return null;
+        }
+
         private void QueueTmdbPosterBackfill(UserRating? rating)
         {
             if (rating == null
@@ -3449,6 +3602,19 @@ namespace Jellyfin.Plugin.Ratings.Api
                     if (item.ImageInfos != null && item.ImageInfos.Any(i => i.Type == MediaBrowser.Model.Entities.ImageType.Primary))
                     {
                         imageUrl = $"/Items/{item.Id}/Images/Primary";
+                    }
+                    else if (_externalPosterCache.TryGetValue(item.Id, out var externalPoster))
+                    {
+                        // Resolved earlier from TMDB - an absolute URL, which the client
+                        // detects and uses as-is instead of prefixing the server address.
+                        imageUrl = externalPoster;
+                    }
+                    else
+                    {
+                        // Items Jellyfin has not identified have no artwork at all, so the row
+                        // drew a grey box. Look one up in the background; it lands in the cache
+                        // for the next page load rather than blocking this response.
+                        QueueExternalPosterLookup(item);
                     }
 
                     // Get scheduled deletion if any

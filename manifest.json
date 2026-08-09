@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.363.0",
+        "changelog": "Media Management now shows a TMDB poster for titles Jellyfin has no artwork for. An item Jellyfin never identified keeps the raw '[tt...]' from its filename and has no images at all, so those rows drew a grey box. The IMDB id is taken from the item, or read out of its name when Jellyfin never matched it, and the cover is fetched from TMDB in the background - the list itself is never held up, so the poster appears on the next load. Needs the TMDB token already used for catalog search, and can be turned off in settings. Also applies mobile dropdown feedback from discussion #71: the menu now lays out as a wrapping row of icons instead of one full-width row per button, which on a phone left most buttons unreachable behind the tab bar, plus the reporter's fix for buttons being cut off under themed skins such as ElegantFin.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.363.0/Jellyfin.Plugin.Ratings_2.0.363.0.zip",
+        "checksum": "5c084f5eac5b3f14ad94cb7222e360a9",
+        "timestamp": "2026-08-09T00:35:00Z"
+      },
+      {
         "version": "2.0.362.0",
         "changelog": "Fixes Media Management showing no posters, no media type, and dashes instead of rating, plays, size and deletion status on every tab. An earlier update renamed the fields in the plugin's API responses to start with a lower-case letter, but parts of the interface still looked for the old capitalised names and so found nothing. Titles and years kept working because they had already been updated, which is why the tables looked half-filled. Media Management now reads every field correctly, and the same fix is applied to the Scheduled tab, the 'Leaving in' badges on cards and detail pages, and the media request and ban screens, which were affected in the same way.",
         "targetAbi": "10.11.0.0",
