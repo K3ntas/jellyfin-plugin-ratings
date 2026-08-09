@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.364.0",
+        "changelog": "The ElegantFin layout fix added in the previous release now applies only to servers actually using that skin. It adjusts two of Jellyfin's own elements to stop the plugin's buttons being cut off on phones, so leaving it switched on everywhere was heavier-handed than needed. The plugin now checks whether the skin is loaded - pasted into Custom CSS, added as an @import, or linked as a stylesheet - and applies the adjustment only then. Every other theme is left completely untouched.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.364.0/Jellyfin.Plugin.Ratings_2.0.364.0.zip",
+        "checksum": "784d0903e7fc9b48eee13c7ec13b424d",
+        "timestamp": "2026-08-09T00:44:00Z"
+      },
+      {
         "version": "2.0.363.0",
         "changelog": "Media Management now shows a TMDB poster for titles Jellyfin has no artwork for. An item Jellyfin never identified keeps the raw '[tt...]' from its filename and has no images at all, so those rows drew a grey box. The IMDB id is taken from the item, or read out of its name when Jellyfin never matched it, and the cover is fetched from TMDB in the background - the list itself is never held up, so the poster appears on the next load. Needs the TMDB token already used for catalog search, and can be turned off in settings. Also applies mobile dropdown feedback from discussion #71: the menu now lays out as a wrapping row of icons instead of one full-width row per button, which on a phone left most buttons unreachable behind the tab bar, plus the reporter's fix for buttons being cut off under themed skins such as ElegantFin.",
         "targetAbi": "10.11.0.0",

@@ -10268,6 +10268,45 @@
          * (they are added asynchronously as their config arrives) land in the panel automatically
          * with no re-scan. That also means no MutationObserver and no polling timer are needed.
          */
+        /**
+         * Flags the ElegantFin skin on <html> so its compatibility CSS can be scoped to it.
+         *
+         * That skin adds top padding to the body and the tab bar, which on a phone pushes the
+         * header down far enough to cut the plugin's buttons off (discussion #71). Zeroing that
+         * padding fixes it, but the rule targets Jellyfin's own elements rather than ours, so it
+         * is applied only when the skin is actually present instead of to every install.
+         *
+         * The skin is normally added through Dashboard > General > Custom CSS, either pasted in
+         * full or as an @import, so both inline <style> text and <link> hrefs are searched.
+         * cssRules is deliberately not touched: it throws on cross-origin sheets (the theme is
+         * usually served from a CDN), whereas href and textContent are always readable.
+         * @returns {boolean} Whether the skin was detected.
+         */
+        detectSkinCompat: function () {
+            let found = false;
+            try {
+                const nodes = document.querySelectorAll('style, link[rel="stylesheet"][href]');
+                for (let i = 0; i < nodes.length; i++) {
+                    const node = nodes[i];
+                    const text = node.tagName === 'LINK'
+                        ? (node.getAttribute('href') || '')
+                        : (node.textContent || '');
+                    // Regex test rather than toLowerCase().indexOf(): a pasted theme can be
+                    // hundreds of KB and this runs again each time the menu opens, so scanning
+                    // in place beats copying the whole string every time.
+                    if (/elegantfin/i.test(text)) {
+                        found = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                return false;
+            }
+
+            document.documentElement.classList.toggle('ratings-skin-elegantfin', found);
+            return found;
+        },
+
         initMobileMenu: function () {
             const self = this;
 
@@ -10317,6 +10356,9 @@
                     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 
                     if (open) {
+                        // Custom CSS can be injected after the toggle is built, so re-check on
+                        // open. It is a handful of string scans, only on mobile, only on demand.
+                        self.detectSkinCompat();
                         // Measure after the panel is displayed, otherwise offsetWidth is 0.
                         position();
                         toggle.classList.remove('has-activity');
@@ -10324,6 +10366,9 @@
                 };
 
                 self._closeMobileMenu = () => setOpen(false);
+
+                // Once at startup so the layout is right before the menu is ever opened.
+                self.detectSkinCompat();
 
                 toggle.addEventListener('click', (e) => {
                     e.stopPropagation();

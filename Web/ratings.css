@@ -10369,23 +10369,23 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 }
 
 /* ----------------------------------------------------------------------------
-   Themed-skin compatibility on small screens (discussion #71)
+   ElegantFin compatibility on small screens (discussion #71)
 
-   Reported against ElegantFin: the skin adds top padding to the body and to the tab
-   bar, which on a phone pushes the header down far enough that the plugin's buttons
-   are cut off at the top of the screen. Zeroing that padding below 600px restores
-   them. Supplied by the reporter and applied as given.
+   That skin adds top padding to the body and to the tab bar, which on a phone pushes
+   the header down far enough that the plugin's buttons are cut off. Zeroing it below
+   600px restores them.
 
-   Note this reaches outside the plugin's own elements, which is deliberate here but
-   worth knowing: on a skin that does not add the padding the rules change nothing,
-   since padding-top is already 0.
+   These selectors are Jellyfin's own, not the plugin's, so they are gated behind
+   .ratings-skin-elegantfin - a class the plugin puts on <html> only when it actually
+   finds that skin loaded (see detectSkinCompat). Installs on any other theme are left
+   completely untouched rather than relying on the rule happening to be a no-op.
    -------------------------------------------------------------------------- */
 @media screen and (max-width: 600px) {
-    .skinBody {
+    html.ratings-skin-elegantfin .skinBody {
         padding-top: 0 !important;
     }
 
-    .tabs-viewmenubar.emby-tabs {
+    html.ratings-skin-elegantfin .tabs-viewmenubar.emby-tabs {
         padding-top: 0 !important;
     }
 }
