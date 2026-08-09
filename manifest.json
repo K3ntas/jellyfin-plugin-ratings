@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.362.0",
+        "changelog": "Fixes Media Management showing no posters, no media type, and dashes instead of rating, plays, size and deletion status on every tab. An earlier update renamed the fields in the plugin's API responses to start with a lower-case letter, but parts of the interface still looked for the old capitalised names and so found nothing. Titles and years kept working because they had already been updated, which is why the tables looked half-filled. Media Management now reads every field correctly, and the same fix is applied to the Scheduled tab, the 'Leaving in' badges on cards and detail pages, and the media request and ban screens, which were affected in the same way.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.362.0/Jellyfin.Plugin.Ratings_2.0.362.0.zip",
+        "checksum": "5d19a3ab50b351fb00090602492e0afc",
+        "timestamp": "2026-08-09T00:19:00Z"
+      },
+      {
         "version": "2.0.361.0",
         "changelog": "Fixes titles that are not on the server staying invisible in your profile rows until you added another item. The row was drawn by counting only the entries that point at a file on the server, and then drawing that many cards - so a catalog title, which has no server file by design, was never reached. Adding another item redrew the row using a different rule that counted it correctly, which is why it suddenly appeared. Both the first draw and the redraw now use one shared rule, so a row containing only catalog titles displays them immediately.",
         "targetAbi": "10.11.0.0",
