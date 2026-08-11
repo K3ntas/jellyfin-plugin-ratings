@@ -1419,7 +1419,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
-                    self.showToast(t.privacySaved || 'Settings saved', 'success');
+                    self.lbToast(t.privacySaved || 'Settings saved');
                 }
             })
             .catch(function (err) {
@@ -1446,7 +1446,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
-                    self.showToast(t.privacyPresetApplied || 'Preset applied', 'success');
+                    self.lbToast(t.privacyPresetApplied || 'Preset applied');
                     // Reload settings to reflect changes
                     self.loadFriendsData('settings');
                 }
@@ -2769,10 +2769,16 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
-            if (text == null) return '';
+            if (text == null) { return ''; }
             var div = document.createElement('div');
             div.textContent = String(text);
-            return div.innerHTML;
+            // The HTML fragment serializer escapes & < > in a text node but NOT quotes, and this
+            // function guards ~36 double-quoted ATTRIBUTE values across the bundle. Without the
+            // quotes escaped, a value containing " closes the attribute and the rest becomes
+            // markup - a stored XSS. Escaped here rather than at each call site so no site can
+            // be missed. (NB: this object literal declares escapeHtml more than once; every copy
+            // must match, since the last declaration is the one that actually runs.)
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -2858,6 +2864,37 @@
          * @param {string} raw The URL or path from the API.
          * @returns {string} A usable URL, or '' when there is nothing to show.
          */
+        /**
+         * Returns a URL only if it is safe to drop inside a CSS url('...') in a style attribute.
+         *
+         * These are built by string concatenation, so a value containing a quote or parenthesis
+         * would escape the url() and then the attribute. Only plain http(s) URLs are allowed
+         * through, which also rules out javascript: and data:.
+         * @param {string} raw Candidate URL.
+         * @returns {string} The URL, or '' if it is not safe.
+         */
+        /**
+         * Formats a byte count for display. Shared, unlike the per-renderer formatSize closures.
+         * @param {number} bytes Byte count.
+         * @returns {string} Human-readable size.
+         */
+        formatBytes: function (bytes) {
+            var n = Number(bytes);
+            if (!Number.isFinite(n) || n <= 0) { return '0 B'; }
+            var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            var i = 0;
+            while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+            return (i === 0 ? n : n.toFixed(1)) + ' ' + units[i];
+        },
+
+        safeCssUrl: function (raw) {
+            if (!raw) { return ''; }
+            var value = String(raw);
+            if (!/^https?:\/\//i.test(value)) { return ''; }
+            if (/["'()\\<>\s]/.test(value)) { return ''; }
+            return value;
+        },
+
         resolvePosterUrl: function (baseUrl, raw) {
             if (!raw) { return ''; }
             var value = String(raw);
@@ -3626,7 +3663,12 @@
                         var name = r.itemName || (r.itemName ?? r.ItemName) || 'Unknown';
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
-                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
+                        // A catalog title has no Jellyfin item behind it, so /Items/<id>/Images
+                        // 404s and the card drew a grey box even though the rating itself showed.
+                        // Those ratings carry the TMDB poster the server backfilled.
+                        var img = inLib
+                            ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240'
+                            : self.safeCssUrl(self.apiField(r, 'posterUrl'));
                         var dragAttr = (isSelf && id) ? ' draggable="true" ondragstart="RatingsPlugin.activityDragStart(event,\'' + self.escapeJs(id) + '\',\'' + self.escapeJs(name) + '\')"' : '';
                         html += '<div class="lb-poster-card"' + dragAttr + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + (isSelf ? ' — drag to a row' : '') + '">' +
                             '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
@@ -3668,6 +3710,38 @@
         /**
          * Wire the "Add a film" search box (find on server, or request if missing).
          */
+        /**
+         * Punctuation-insensitive library search, via the plugin's own endpoint.
+         *
+         * Jellyfin matches the term as typed, so "xfiles" and "x files" both miss "The X-Files".
+         * The server reduces both sides to letters and digits before comparing. Results come back
+         * shaped like Jellyfin's own items so callers can use them interchangeably.
+         * @param {string} q Search text.
+         * @param {number} limit Maximum results.
+         * @returns {Promise<Array>} Matching items, or [] on any failure.
+         */
+        searchLibraryLoose: function (q, limit) {
+            var baseUrl = ApiClient.serverAddress();
+            return fetch(baseUrl + '/Ratings/Search?query=' + encodeURIComponent(q) + '&limit=' + (limit || 10), {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+                .then(function (d) {
+                    return ((d && d.items) || []).map(function (i) {
+                        return {
+                            Id: i.Id || i.id,
+                            Name: i.Name || i.name,
+                            ProductionYear: i.ProductionYear || i.productionYear,
+                            Type: i.Type || i.type,
+                            Overview: i.Overview || i.overview
+                        };
+                    });
+                })
+                .catch(function () { return []; });
+        },
+
         initAddMediaSearch: function () {
             var self = this;
             var input = document.getElementById('lbAddMediaInput');
@@ -3698,6 +3772,13 @@
             var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { return (d && d.Items) || []; })
+                .then(function (items) {
+                    // Jellyfin's search is punctuation-sensitive, so "xfiles" or "x files" finds
+                    // nothing for "The X-Files". Fall back to the plugin's own search, which
+                    // ignores punctuation and spacing entirely.
+                    if (items.length) { return items; }
+                    return self.searchLibraryLoose(q, 6);
+                })
                 .catch(function () { return []; });
 
             // 2) External TMDB catalog (server-side proxy; the token never reaches the browser)
@@ -3831,14 +3912,20 @@
          * Star picker for a not-on-server title.
          * @param {object} data Title info (tmdbId, title, year, type, poster).
          */
-        showExternalRatingModal: function (data) {
+        showExternalRatingModal: function (data, isEdit) {
             var self = this;
             var existing = document.getElementById('lbExternalRatingModal');
             if (existing) { existing.remove(); }
 
+            // Chosen value lives on the modal, so the star row and the review box can be saved
+            // together. Rating alone used to submit on click, which left no room for a review.
+            var chosen = Number(data.rating) || 0;
+            var inLib = data.inLib === true;
+
             var stars = '';
             for (var i = 1; i <= 10; i++) {
-                stars += '<button type="button" class="lb-ext-star" data-value="' + i + '" title="' + i + '/10">☆</button>';
+                stars += '<button type="button" class="lb-ext-star" data-value="' + i + '" title="' + i + '/10">' +
+                    (i <= chosen ? '★' : '☆') + '</button>';
             }
 
             var modal = document.createElement('div');
@@ -3846,17 +3933,25 @@
             modal.id = 'lbExternalRatingModal';
             modal.innerHTML = '<div class="lb-settings-content lb-ext-rating">' +
                 '<div class="lb-settings-header">' +
-                '<h2>Rate “' + self.escapeHtml(data.title || '') + '”' + (data.year ? ' (' + data.year + ')' : '') + '</h2>' +
+                '<h2>' + (isEdit ? 'Edit rating' : 'Rate') + ' “' + self.escapeHtml(data.title || '') + '”' +
+                (data.year ? ' (' + data.year + ')' : '') + '</h2>' +
                 '<button class="lb-settings-close" onclick="RatingsPlugin.closeExternalRatingModal()">&times;</button>' +
                 '</div>' +
                 '<div class="lb-settings-body">' +
-                '<p class="lb-settings-hint">This title is not on the server. Your rating is kept, and will attach ' +
-                'itself to the film automatically if it is added later.</p>' +
+                (inLib ? '' : '<p class="lb-settings-hint">This title is not on the server. Your rating and review are kept, ' +
+                    'and will attach themselves to the film automatically if it is added later.</p>') +
                 '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
-                '<div class="lb-ext-value" id="lbExtValue">Select a rating</div>' +
+                '<div class="lb-ext-value" id="lbExtValue">' + (chosen ? chosen + ' / 10' : 'Select a rating') + '</div>' +
+                '<label class="lb-ext-review-label" for="lbExtReview">Review <span>(optional)</span></label>' +
+                '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
+                'placeholder="What did you think?">' + self.escapeHtml(data.review || '') + '</textarea>' +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
+                (isEdit && data.itemId
+                    ? '<button class="lb-btn-danger" onclick="RatingsPlugin.removeRatingFromEditor()">Remove</button>'
+                    : '') +
                 '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeExternalRatingModal()">Cancel</button>' +
+                '<button class="lb-btn-save" id="lbExtSave" onclick="RatingsPlugin.saveRatingFromEditor()">Save</button>' +
                 '</div></div>';
 
             modal.addEventListener('click', function (e) {
@@ -3865,21 +3960,121 @@
 
             document.body.appendChild(modal);
 
+            // State the footer buttons read back when pressed.
+            self._ratingEditor = { data: data, value: chosen };
+
+            var paint = function (upto) {
+                modal.querySelectorAll('.lb-ext-star').forEach(function (s) {
+                    s.textContent = parseInt(s.dataset.value, 10) <= upto ? '★' : '☆';
+                });
+            };
+
             modal.querySelectorAll('.lb-ext-star').forEach(function (star) {
                 var value = parseInt(star.dataset.value, 10);
 
                 star.addEventListener('mouseenter', function () {
-                    modal.querySelectorAll('.lb-ext-star').forEach(function (s) {
-                        s.textContent = parseInt(s.dataset.value, 10) <= value ? '★' : '☆';
-                    });
+                    paint(value);
                     var label = document.getElementById('lbExtValue');
                     if (label) { label.textContent = value + ' / 10'; }
                 });
 
                 star.addEventListener('click', function () {
-                    self.submitExternalRating(data, value);
+                    self._ratingEditor.value = value;
+                    paint(value);
+                    var label = document.getElementById('lbExtValue');
+                    if (label) { label.textContent = value + ' / 10'; }
                 });
             });
+
+            // Leaving the row restores the chosen value rather than the last hovered one.
+            var row = document.getElementById('lbExtStars');
+            if (row) {
+                row.addEventListener('mouseleave', function () {
+                    paint(self._ratingEditor.value);
+                    var label = document.getElementById('lbExtValue');
+                    if (label) {
+                        label.textContent = self._ratingEditor.value
+                            ? self._ratingEditor.value + ' / 10'
+                            : 'Select a rating';
+                    }
+                });
+            }
+        },
+
+        /**
+         * Saves whatever the rating editor currently holds - stars plus review - to the right
+         * endpoint: library items take query parameters, catalog titles take a JSON body.
+         */
+        saveRatingFromEditor: function () {
+            var self = this;
+            var state = self._ratingEditor;
+            if (!state) { return; }
+            var value = Number(state.value) || 0;
+            if (value < 1 || value > 10) {
+                self.lbToast('Pick a rating first');
+                return;
+            }
+
+            var box = document.getElementById('lbExtReview');
+            var review = box ? String(box.value || '').slice(0, 4000) : '';
+            var data = state.data || {};
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var request;
+
+            if (data.inLib === true && data.itemId) {
+                request = fetch(baseUrl + '/Ratings/Items/' + encodeURIComponent(data.itemId) + '/Rating'
+                    + '?rating=' + value + '&review=' + encodeURIComponent(review), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': token }
+                });
+            } else {
+                if (!data.tmdbId) {
+                    self.lbToast('This rating cannot be edited here');
+                    return;
+                }
+                request = fetch(baseUrl + '/Ratings/External/Rating', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tmdbId: String(data.tmdbId),
+                        mediaType: data.mediaType === 'Series' || data.type === 'Series' ? 'Series' : 'Movie',
+                        title: data.title || '',
+                        year: data.year || null,
+                        posterUrl: data.poster || '',
+                        rating: value,
+                        review: review
+                    })
+                });
+            }
+
+            request
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json().catch(function () { return {}; }); })
+                .then(function () {
+                    self.closeExternalRatingModal();
+                    self.lbToast('Saved “' + (data.title || '') + '” ' + value + '/10 ✓');
+                    self._profileRatings = null;
+                    self._profileRatingsUser = null;
+                    self.reloadRatingsTab();
+                })
+                .catch(function (err) {
+                    console.error('[Ratings] Save failed:', err);
+                    self.lbToast('Could not save that rating');
+                });
+        },
+
+        /**
+         * Removes the rating currently open in the editor.
+         */
+        removeRatingFromEditor: function () {
+            var self = this;
+            var state = self._ratingEditor;
+            if (!state || !state.data || !state.data.itemId) { return; }
+            if (!window.confirm('Remove your rating for “' + (state.data.title || 'this title') + '”?')) { return; }
+            self.closeExternalRatingModal();
+            self.deleteRatingById(state.data.itemId, state.data.title || '');
         },
 
         /**
@@ -3888,6 +4083,128 @@
         closeExternalRatingModal: function () {
             var modal = document.getElementById('lbExternalRatingModal');
             if (modal) { modal.remove(); }
+        },
+
+        /**
+         * Agree/disagree buttons for someone else's rating.
+         * @param {string} userId The rating's owner.
+         * @param {string} itemId The rated item.
+         * @param {number} likes Current like count.
+         * @param {number} dislikes Current dislike count.
+         * @param {*} mine The viewer's existing vote (true/false/null).
+         * @returns {string} Markup.
+         */
+        ratingVoteHtml: function (userId, itemId, likes, dislikes, mine) {
+            var self = this;
+            var safeUser = self.escapeJs(userId || '');
+            var safeItem = self.escapeJs(itemId || '');
+            var liked = mine === true;
+            var disliked = mine === false;
+            return '<div class="lb-rating-votes">' +
+                '<button class="lb-vote' + (liked ? ' on' : '') + '" title="Agree"' +
+                ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',true,this)">' +
+                '👍<span>' + likes + '</span></button>' +
+                '<button class="lb-vote' + (disliked ? ' on' : '') + '" title="Disagree"' +
+                ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',false,this)">' +
+                '👎<span>' + dislikes + '</span></button>' +
+                '</div>';
+        },
+
+        /**
+         * Records an agree/disagree on someone's rating and updates the counts in place.
+         * @param {string} userId The rating's owner.
+         * @param {string} itemId The rated item.
+         * @param {boolean} isLike True to agree.
+         * @param {HTMLElement} btn The button pressed.
+         */
+        voteOnRating: function (userId, itemId, isLike, btn) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var wrap = btn && btn.parentNode;
+            fetch(baseUrl + '/Ratings/Reviews/' + encodeURIComponent(userId) + '/' + encodeURIComponent(itemId) + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                .then(function (data) {
+                    if (!wrap) { return; }
+                    var likes = Number(self.apiField(data, 'likeCount')) || 0;
+                    var dislikes = Number(self.apiField(data, 'dislikeCount')) || 0;
+                    var mine = self.apiField(data, 'userLiked');
+                    wrap.outerHTML = self.ratingVoteHtml(userId, itemId, likes, dislikes,
+                        mine === undefined ? null : mine);
+                })
+                .catch(function (err) {
+                    console.error('[Ratings] Vote failed:', err);
+                    self.lbToast('Could not save that');
+                });
+        },
+
+        /**
+         * Opens the rating editor for an existing rating, on-server or from the catalog.
+         * @param {string} payloadEnc Encoded rating descriptor.
+         */
+        openRatingEditor: function (payloadEnc) {
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            this.showExternalRatingModal(data, true);
+        },
+
+        /**
+         * Asks before deleting a rating, then deletes it.
+         * @param {string} payloadEnc Encoded rating descriptor.
+         */
+        confirmRemoveRating: function (payloadEnc) {
+            var self = this;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!data || !data.itemId) { return; }
+            if (!window.confirm('Remove your rating for “' + (data.title || 'this title') + '”?')) { return; }
+            self.deleteRatingById(data.itemId, data.title || '');
+        },
+
+        /**
+         * Deletes a rating. Catalog titles are stored against a generated item id, so the same
+         * endpoint serves both - which is why removing them needed no new API.
+         * @param {string} itemId The rated item id.
+         * @param {string} title Title, for the confirmation message.
+         */
+        deleteRatingById: function (itemId, title) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Items/' + encodeURIComponent(itemId) + '/Rating', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) {
+                    // 404 means the rating is already gone, which is the outcome asked for -
+                    // treat it as success rather than reporting a failure the user cannot act on.
+                    if (r.status === 404) { return; }
+                    if (!r.ok) { throw new Error('HTTP ' + r.status); }
+                })
+                .then(function () {
+                    self.lbToast('Removed' + (title ? ' “' + title + '”' : ''));
+                    self._profileRatings = null;
+                    self._profileRatingsUser = null;
+                    self.reloadRatingsTab();
+                })
+                .catch(function (err) {
+                    // Say which failure it was: "could not remove" on its own gave nothing to go on.
+                    console.error('[Ratings] Delete failed for item', itemId, err);
+                    self.lbToast('Could not remove that rating (' + (err && err.message ? err.message : 'error') + ')');
+                });
+        },
+
+        /**
+         * Redraws the Ratings tab after a change, if it is the tab on screen.
+         */
+        reloadRatingsTab: function () {
+            var active = document.querySelector('.lb-tab.active');
+            if (active && active.getAttribute('data-tab') === 'ratings') {
+                this.switchProfileTab('ratings');
+            }
         },
 
         /**
@@ -4201,10 +4518,16 @@
             var self = this;
             var base = ApiClient.serverAddress();
             var notInLib = self.isFavNotInLibrary(fav);
-            var itemId = fav.itemId || (fav.itemId ?? fav.ItemId) || '';
+            // FavoriteItem.ItemId is a free-form string the profile owner controls, and it lands
+            // in a CSS url('...') and an attribute. Anything that is not a genuine Jellyfin id is
+            // rejected outright, so a crafted value cannot reach markup at all - the row would
+            // otherwise run for EVERY viewer of that profile, not just its owner.
+            var itemId = self.asItemGuid(fav.itemId || (fav.itemId ?? fav.ItemId) || '') || '';
+            // Both branches go through the CSS url() guard: the catalog poster is an external URL,
+            // and the library one is built from the (now validated) id.
             var img = notInLib
-                ? (fav.imageUrl || fav.ImageUrl || '')
-                : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
+                ? self.safeCssUrl(fav.imageUrl || fav.ImageUrl || '')
+                : (itemId ? self.safeCssUrl(base + '/Items/' + encodeURIComponent(itemId) + '/Images/Primary?maxHeight=300') : '');
             var dragAttrs = isSelf
                 ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"'
                 : '';
@@ -4318,6 +4641,33 @@
          */
         notInLibraryInfo: function () {
             this.lbToast('Not on the server yet — click the Request button to ask for this title.');
+        },
+
+        /**
+         * Moves a favourites row up or down and saves the new order.
+         *
+         * Rows are rendered in stored order, so reordering is a swap in that array followed by the
+         * usual debounced save. The whole overview is redrawn because every row's index - and so
+         * every button on it - shifts.
+         * @param {number} rowIndex Row to move.
+         * @param {number} direction -1 for up, 1 for down.
+         */
+        moveFavoriteRow: function (rowIndex, direction) {
+            var self = this;
+            var rows = (self._currentProfile && self._currentProfile.favoriteRows) || [];
+            var target = rowIndex + direction;
+            if (!rows[rowIndex] || target < 0 || target >= rows.length) { return; }
+
+            var moved = rows[rowIndex];
+            rows[rowIndex] = rows[target];
+            rows[target] = moved;
+
+            self.saveFavorites();
+
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = rows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
         },
 
         /**
@@ -4807,6 +5157,11 @@
                     html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
                         'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
                     html += '<span class="lb-row-count">' + itemCount + '/30</span>';
+                    // Row order is the order they are stored in, so moving one is a swap + save.
+                    html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',-1)"' +
+                        (rowIndex === 0 ? ' disabled' : '') + ' title="Move row up">↑</button>';
+                    html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',1)"' +
+                        (rowIndex === favoriteRows.length - 1 ? ' disabled' : '') + ' title="Move row down">↓</button>';
                     html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
                 } else {
                     html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
@@ -5671,6 +6026,8 @@
                 }
 
                 var baseUrl = ApiClient.serverAddress();
+                var isSelf = !!(self._currentProfileStatus && self._currentProfileStatus.isSelf);
+                var profileUserId = self._viewingProfileUserId || '';
                 var html = '<div class="lb-ratings-grid">';
                 ratings.forEach(function (r) {
                     var title = r.itemName || (r.itemName ?? r.ItemName) || r.title || (r.title ?? r.Title) || 'Unknown';
@@ -5689,10 +6046,41 @@
                     }
 
                     var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
-                    var posterStyle = imageUrl ? ' style="background-image: url(\'' + self.escapeHtml(imageUrl) + '\')"' : '';
+                    var safePoster = self.safeCssUrl(imageUrl) || (inLib ? imageUrl : '');
+                    var posterStyle = safePoster ? ' style="background-image: url(\'' + self.escapeHtml(safePoster) + '\')"' : '';
+
+                    // Own profile: edit or remove the rating, including titles that are not on the
+                    // server - previously the only way to change one of those was to re-add the film
+                    // to a profile row and rate it again.
+                    var actions = '';
+                    if (isSelf) {
+                        var editPayload = self.encodePayload({
+                            itemId: itemId,
+                            tmdbId: String(self.apiField(r, 'tmdbId') || ''),
+                            mediaType: self.apiField(r, 'type') === 'Series' ? 'Series' : 'Movie',
+                            title: title,
+                            year: year || null,
+                            poster: imageUrl,
+                            rating: rating,
+                            review: self.apiField(r, 'reviewText') || '',
+                            inLib: !!inLib
+                        });
+                        actions = '<div class="lb-rating-actions">' +
+                            '<button class="lb-rating-act" title="Edit rating"' +
+                            ' onclick="event.stopPropagation();RatingsPlugin.openRatingEditor(\'' + editPayload + '\')">✎</button>' +
+                            '<button class="lb-rating-act danger" title="Remove rating"' +
+                            ' onclick="event.stopPropagation();RatingsPlugin.confirmRemoveRating(\'' + editPayload + '\')">🗑</button>' +
+                            '</div>';
+                    } else if (itemId) {
+                        // Any rating can be agreed or disagreed with now, review text or not.
+                        actions = self.ratingVoteHtml(profileUserId, itemId,
+                            Number(self.apiField(r, 'likeCount')) || 0,
+                            Number(self.apiField(r, 'dislikeCount')) || 0,
+                            self.apiField(r, 'userLiked'));
+                    }
 
                     html += '<div class="lb-rating-card' + (inLib ? '' : ' lb-rating-gone') + '"' + clickAttr + '>' +
-                        '<div class="lb-rating-poster"' + posterStyle + '></div>' +
+                        '<div class="lb-rating-poster"' + posterStyle + '>' + actions + '</div>' +
                         '<div class="lb-rating-info">' +
                         '<div class="lb-rating-title">' + self.escapeHtml(title) +
                         (year ? ' <span class="lb-rating-year">(' + year + ')</span>' : '') + '</div>' +
@@ -5802,16 +6190,45 @@
                         voteHtml = '<span class="lb-rev-likes"><span class="lb-rev-vote" disabled>👍 ' + likeCount + '</span><span class="lb-rev-vote" disabled>👎 ' + dislikeCount + '</span></span>';
                     }
 
-                    html += '<div class="lb-review-card">' +
+                    // Poster + media badge, so a review reads as being about a film rather than
+                    // as a bare row of text. Library items use their Jellyfin artwork; a catalog
+                    // title uses the TMDB poster stored with the rating.
+                    var baseUrl = ApiClient.serverAddress();
+                    var storedPoster = self.safeCssUrl(self.apiField(r, 'posterUrl'));
+                    var posterUrl = inLib
+                        ? baseUrl + '/Items/' + itemId + '/Images/Primary?maxHeight=180'
+                        : storedPoster;
+                    var rawType = String(self.apiField(r, 'type') || '');
+                    var isSeries = /series|season|episode/i.test(rawType);
+                    var typeLabel = isSeries ? 'Series' : 'Movie';
+                    var year = self.apiField(r, 'year');
+
+                    // Click handler only - NOT titleAttr, which carries its own style attribute.
+                    // Two style attributes on one element means the browser keeps the first and
+                    // drops the other, which would silently lose the poster.
+                    var openAttr = inLib
+                        ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"'
+                        : '';
+
+                    html += '<article class="lb-review-card' + (inLib ? ' lb-review-openable' : ' lb-review-external') + '">' +
+                        '<div class="lb-review-poster"' + openAttr +
+                        (posterUrl ? ' style="background-image:url(\'' + self.escapeHtml(posterUrl) + '\')"' : '') + '>' +
+                        (posterUrl ? '' : '<span class="lb-review-poster-fallback">' + (isSeries ? '📺' : '🎬') + '</span>') +
+                        '<span class="lb-review-type ' + (isSeries ? 'series' : 'movie') + '">' + typeLabel + '</span>' +
+                        '</div>' +
+                        '<div class="lb-review-body">' +
                         '<div class="lb-review-header">' +
-                        '<span class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) + '</span>' +
+                        '<h4 class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) +
+                        (year ? ' <span class="lb-review-year">' + self.escapeHtml(String(year)) + '</span>' : '') +
+                        (inLib ? '' : '<span class="lb-review-offserver">Not on server</span>') +
+                        '</h4>' +
                         '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
                         '</div>' +
                         '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
                         '<div class="lb-review-footer">' +
                         '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
                         voteHtml +
-                        '</div></div>';
+                        '</div></div></article>';
                 });
                 html += '</div>';
                 content.innerHTML = html;
@@ -6432,6 +6849,14 @@
                     headers: headers
                 })
                 .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    // Same punctuation fallback as the profile search - see searchLibraryLoose.
+                    if (!(data.Items || []).length && self._pickerPage === 0) {
+                        return self.searchLibraryLoose(query, self._pickerItemsPerPage)
+                            .then(function (items) { return { Items: items, TotalRecordCount: items.length }; });
+                    }
+                    return data;
+                })
                 .then(function (data) {
                     var items = data.Items || [];
                     var totalCount = data.TotalRecordCount || 0;
@@ -7945,9 +8370,11 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            // Duplicate declaration - kept identical to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -10352,6 +10779,10 @@
 
                 const setOpen = (open) => {
                     group.classList.toggle('ratings-menu-open', open);
+                    // Also on <html>, so page-level rules can react to the menu state - a themed
+                    // skin reserves header space for buttons that are collapsed behind the toggle,
+                    // and that space is only wanted once the panel is actually showing.
+                    document.documentElement.classList.toggle('ratings-menu-expanded', open);
                     toggle.classList.toggle('open', open);
                     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 
@@ -13341,10 +13772,107 @@
                     `;
                 });
                 html += '</div>';
+                // Leftover trickplay tiles are invisible in Jellyfin's own UI, so they are shown
+                // here next to the free space they are taking up.
+                html += '<div id="orphanTrickplaySection" class="orphan-trickplay"></div>';
                 body.innerHTML = html;
+                self.loadOrphanedTrickplay();
             } catch (error) {
                 console.error('Error loading disk usage:', error);
                 body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading disk usage</div>`;
+            }
+        },
+
+        /**
+         * Shows trickplay folders left behind by media that is no longer in the library.
+         *
+         * Deleting media leaves its trickplay tiles on disk, and they can add up to a lot on a
+         * large library. Clearing the whole trickplay directory would work but forces every
+         * remaining file to be reprocessed, so only the orphaned folders are offered here.
+         */
+        loadOrphanedTrickplay: async function () {
+            const self = this;
+            const box = document.getElementById('orphanTrickplaySection');
+            if (!box) return;
+
+            box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                <div class="orphan-trickplay-note">${self.t('orphanScanning') || 'Scanning…'}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                const items = self.apiField(data, 'items') || [];
+                const totalBytes = Number(self.apiField(data, 'totalBytes')) || 0;
+
+                if (self.apiField(data, 'supported') === false) {
+                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                        <div class="orphan-trickplay-note">${self.escapeHtml(self.apiField(data, 'reason') || 'Not available on this server.')}</div>`;
+                    return;
+                }
+
+                if (!items.length) {
+                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                        <div class="orphan-trickplay-note">${self.t('orphanNone') || 'Nothing left behind — every trickplay folder belongs to media still in your library.'}</div>`;
+                    return;
+                }
+
+                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                    <div class="orphan-trickplay-note">
+                        ${items.length} ${items.length === 1 ? 'folder' : 'folders'} from media that is no longer in your library,
+                        taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
+                        Removing these does not affect any media you still have, and nothing is reprocessed.
+                    </div>
+                    <button class="orphan-trickplay-btn" onclick="RatingsPlugin.deleteOrphanedTrickplay()">
+                        ${self.t('orphanDelete') || 'Delete leftover data'} (${self.escapeHtml(self.formatBytes(totalBytes))})
+                    </button>`;
+            } catch (error) {
+                console.error('Error scanning for orphaned trickplay:', error);
+                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                    <div class="orphan-trickplay-note error">Could not scan (${self.escapeHtml(String(error && error.message ? error.message : error))}).</div>`;
+            }
+        },
+
+        /**
+         * Removes every leftover trickplay folder, after confirming.
+         *
+         * No paths are sent: the server re-scans and deletes only what it identifies itself.
+         */
+        deleteOrphanedTrickplay: async function () {
+            const self = this;
+            if (!window.confirm(self.t('orphanConfirm')
+                || 'Delete all leftover trickplay data? Media still in your library is not affected.')) {
+                return;
+            }
+
+            const btn = document.querySelector('.orphan-trickplay-btn');
+            if (btn) { btn.disabled = true; btn.textContent = self.t('orphanDeleting') || 'Deleting…'; }
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay/Delete`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': ApiClient.accessToken(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                const removed = Number(self.apiField(data, 'removed')) || 0;
+                const freed = Number(self.apiField(data, 'freedBytes')) || 0;
+                self.lbToast('Removed ' + removed + ' folder' + (removed === 1 ? '' : 's') + ', freed ' + self.formatBytes(freed));
+                self.loadDiskUsage();
+            } catch (error) {
+                console.error('Error deleting orphaned trickplay:', error);
+                self.lbToast('Could not delete leftover data');
+                if (btn) { btn.disabled = false; }
             }
         },
 
@@ -14789,7 +15317,7 @@
                     imdbHtml += `<span>🎬 ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</span>`;
                 }
                 if (self.apiField(request, 'imdbLink')) {
-                    imdbHtml += `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank">IMDB →</a>`;
+                    imdbHtml += `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'imdbLink')))}" target="_blank">IMDB →</a>`;
                 }
                 imdbHtml += `</div>`;
             }
@@ -14830,7 +15358,7 @@
             // Watch button for completed requests
             let watchHtml = '';
             if (hasLink) {
-                watchHtml = `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
+                watchHtml = `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
             }
 
             return `
@@ -15271,7 +15799,7 @@
                         imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</div>`;
                     }
                     if (self.apiField(request, 'imdbLink')) {
-                        imdbHtml += `<div class="user-request-imdb"><a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                        imdbHtml += `<div class="user-request-imdb"><a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'imdbLink')))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
                     }
 
                     // Edit/Delete buttons only for pending requests
@@ -15292,7 +15820,7 @@
                                 ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
-                                ${hasLink ? `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${hasLink ? `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                                 ${(() => {
                                     const isDeletionBanned = deletionBanInfo && deletionBanInfo.banned;
                                     const hasPendingDeletion = deletionRequests.some(dr => self.apiField(dr, 'mediaRequestId') === self.apiField(request, 'id') && self.apiField(dr, 'status') === 'pending');
@@ -16462,7 +16990,7 @@
                                     <span> • ${self.apiField(request, 'type') ? self.escapeHtml(self.apiField(request, 'type')) : ''}</span>
                                     <span> • ${createdAt}</span>
                                     ${resolvedHtml}
-                                    ${self.apiField(request, 'mediaLink') ? ` • <a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                                    ${self.apiField(request, 'mediaLink') ? ` • <a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
                                 </div>
                                 ${rejectionReasonHtml}
                                 ${actionsHtml}
@@ -17650,9 +18178,11 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            // Duplicate declaration - kept identical to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -23242,10 +23772,12 @@
          * Escape HTML for XSS prevention
          */
         escapeHtml: function (text) {
-            if (!text) return '';
+            // Duplicate declaration - and, being last, the one that actually runs. Kept identical
+            // to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**

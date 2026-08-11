@@ -308,6 +308,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+            // Same visibility rule as GetProfile - see CheckProfileVisibility. Without it these
+            // endpoints returned a private profile's data to anyone who asked for it directly.
+            var visibilityError = CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, currentUserId.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
+            }
+
 
             var user = _userManager.GetUserById(userId);
             if (user == null)
@@ -393,6 +401,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+            // Same visibility rule as GetProfile - see CheckProfileVisibility. Without it these
+            // endpoints returned a private profile's data to anyone who asked for it directly.
+            var visibilityError = CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, GetCurrentUserId()!.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
+            }
+
 
             var ratings = _ratingsRepository.GetUserRatings(userId);
             var distribution = new int[10];
@@ -442,6 +458,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+            // Same visibility rule as GetProfile - see CheckProfileVisibility. Without it these
+            // endpoints returned a private profile's data to anyone who asked for it directly.
+            var visibilityError = CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, GetCurrentUserId()!.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
+            }
+
 
             limit = Math.Clamp(limit, 1, 200);
             offset = Math.Max(0, offset);
@@ -498,6 +522,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 return Unauthorized();
             }
+            // Same visibility rule as GetProfile - see CheckProfileVisibility. Without it these
+            // endpoints returned a private profile's data to anyone who asked for it directly.
+            var visibilityError = CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, GetCurrentUserId()!.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
+            }
+
 
             limit = Math.Clamp(limit, 1, 100);
 
@@ -808,17 +840,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             var profile = await _socialRepository.GetOrCreateProfileAsync(userId, user.Username);
 
             // Check privacy settings
-            if (profile.Privacy.ProfileVisibility == "Private" && profile.UserId != currentUserId)
+            var visibilityError = CheckProfileVisibility(profile, userId, currentUserId.Value);
+            if (visibilityError != null)
             {
-                return NotFound(new { error = "Profile is private" });
-            }
-
-            if (profile.Privacy.ProfileVisibility == "Friends" && profile.UserId != currentUserId)
-            {
-                if (!_socialRepository.AreFriends(currentUserId.Value, userId))
-                {
-                    return NotFound(new { error = "Profile is friends-only" });
-                }
+                return visibilityError;
             }
 
             // Get last seen from online status
@@ -3122,6 +3147,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
+            // Cloning hands the caller a copy of the contents, so it needs the SAME visibility
+            // check as reading the list. Without it a private list could be read by cloning it
+            // and then opening the copy, which the caller owns.
+            var source = _socialRepository.GetList(listId);
+            if (source == null)
+            {
+                return NotFound(new { error = "List not found" });
+            }
+
+            if (source.UserId != currentUserId.Value)
+            {
+                var isFriend = _socialRepository.AreFriends(currentUserId.Value, source.UserId);
+                if (!((isFriend && source.VisibleToFriends) || (!isFriend && source.VisibleToRegularUsers)))
+                {
+                    return NotFound(new { error = "List not found" });
+                }
+            }
+
             var currentUser = _userManager.GetUserById(currentUserId.Value);
             try
             {
@@ -3363,6 +3406,68 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpPut("MyProfile/Favorites")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        /// <summary>
+        /// Keeps only values a favourite entry is allowed to hold.
+        ///
+        /// ItemId must be a Jellyfin id or empty; TmdbId digits only. Both are drawn into markup
+        /// by every viewer of the profile, so they are constrained here at the point of storage
+        /// rather than relying on each render site to escape correctly.
+        /// </summary>
+        /// <param name="item">The submitted entry.</param>
+        /// <returns>The entry with unusable identifiers cleared.</returns>
+        /// <summary>
+        /// Applies a profile's visibility setting, or null when the viewer may see it.
+        ///
+        /// This check used to live inline in GetProfile only. The endpoints added later to make a
+        /// profile page cheaper to build - Full, Ratings, Reviews, Activity, RatingDistribution,
+        /// Stats/Full - returned the same information without it, so a private profile could be
+        /// read by asking a different endpoint. Shared here so every one of them uses it.
+        /// </summary>
+        /// <param name="profile">The profile being requested.</param>
+        /// <param name="userId">The profile's owner.</param>
+        /// <param name="currentUserId">The viewer.</param>
+        /// <returns>A result to return, or null if viewing is allowed.</returns>
+        private ActionResult? CheckProfileVisibility(UserProfile? profile, Guid userId, Guid currentUserId)
+        {
+            if (profile == null || profile.UserId == currentUserId)
+            {
+                return null;
+            }
+
+            var visibility = profile.Privacy?.ProfileVisibility;
+            if (visibility == "Private")
+            {
+                return NotFound(new { error = "Profile is private" });
+            }
+
+            if (visibility == "Friends" && !_socialRepository.AreFriends(currentUserId, userId))
+            {
+                return NotFound(new { error = "Profile is friends-only" });
+            }
+
+            return null;
+        }
+
+        private static FavoriteItem SanitizeFavoriteItem(FavoriteItem item)
+        {
+            if (item == null)
+            {
+                return new FavoriteItem();
+            }
+
+            if (!string.IsNullOrEmpty(item.ItemId) && !Guid.TryParse(item.ItemId, out _))
+            {
+                item.ItemId = string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(item.TmdbId) && !item.TmdbId.All(char.IsDigit))
+            {
+                item.TmdbId = string.Empty;
+            }
+
+            return item;
+        }
+
         public async Task<ActionResult> UpdateMyProfileFavorites([FromBody] FavoritesRequest request)
         {
             var currentUserId = GetCurrentUserId();
@@ -3387,7 +3492,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                     .Select(row => new FavoriteRow
                     {
                         Title = row.Title ?? string.Empty,
-                        Items = (row.Items ?? new List<FavoriteItem>()).Take(30).ToList()
+                        // ItemId is a free-form string on the model, and the web UI puts it inside
+                        // a CSS url() and an attribute when drawing the row - which every viewer
+                        // of the profile renders, not just its owner. Anything that is not a real
+                        // Jellyfin id is blanked here so a crafted value cannot be stored at all.
+                        // Empty is legitimate: a catalog title is identified by its TMDB id.
+                        Items = (row.Items ?? new List<FavoriteItem>())
+                            .Take(30)
+                            .Select(SanitizeFavoriteItem)
+                            .ToList()
                     })
                     .ToList();
             }
@@ -3427,12 +3540,24 @@ namespace Jellyfin.Plugin.Ratings.Api
         public ActionResult<object> GetFullProfileStats(Guid userId)
         {
             var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
             var profile = _socialRepository.GetProfile(userId);
             var user = _userManager.GetUserById(userId);
 
             if (user == null)
             {
                 return NotFound(new { error = "User not found" });
+            }
+
+            // Same visibility rule as GetProfile - see CheckProfileVisibility.
+            var visibilityError = CheckProfileVisibility(profile, userId, currentUserId.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
             }
 
             // Get all ratings for the user

@@ -1487,6 +1487,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             var recipient = _userManager.GetUserById(otherUserId);
             if (recipient == null) return NotFound("User not found");
 
+            // Blocking is enforced on friend requests, likes, comments and the social feed, but
+            // was never checked here - so a blocked user could still deliver unlimited DMs, with
+            // unread badges and notifications.
+            if (_socialRepository.IsBlockedEitherWay(userId, otherUserId))
+            {
+                return StatusCode(403, "You cannot message this user");
+            }
+
             // Check recipient's AllowMessages privacy setting
             var recipientProfile = _socialRepository.GetProfile(otherUserId);
             if (recipientProfile != null)

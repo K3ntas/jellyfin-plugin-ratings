@@ -9,6 +9,15 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.375.0",
+        "changelog": "Security and features. Fixes three ways a user could have got script to run inside someone else's session: one through a profile's favourite films, which affected anyone viewing that profile, and two through links attached to media and deletion requests, which ran in an administrator's session. Also closes several privacy and permission gaps - private profiles could be read through the newer profile endpoints, a private list could be read by copying it, direct messages ignored blocking, the recent-requests list showed every user's requests to non-administrators, and a user banned from playback or over quota could bypass both by sending their login token in a different but equally valid form. New: leftover trickplay data can now be cleared from Media Management, so space used by tiles belonging to deleted media can be recovered without reprocessing everything you still have. Search now ignores punctuation and spacing, so 'xfiles', 'x files' and 'X-Files' all find the same show. Ratings can be edited or removed from the Ratings tab, including titles not on the server; reviews can be written for those titles; custom profile rows can be reordered; and any rating can be agreed or disagreed with, not only ones with a written review. The Reviews tab now shows posters. Fixes the empty gap under the header on phones, the plugin's buttons covering the video player in portrait, and missing posters in Recent Activity. Every endpoint now identifies you the same way, so apps signing in with a plain token are no longer refused."
+        ,
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.375.0/jellyfin-plugin-ratings_1.0.375.0.zip",
+        "checksum": "c407db9e3a7dc7b5a82aa352e2b83ad5",
+        "timestamp": "2026-08-11T22:15:00Z"
+      },
+      {
         "version": "1.0.374.0",
         "changelog": "Profile favourites and Media Management fixes. Adding a title from the catalog to a favourites row now works and stays: the button no longer ignores films whose name contains an apostrophe, the card is no longer discarded when you reopen the profile, and rows containing only catalog titles now show them straight away instead of only after adding something else. Titles lost by the earlier fault need re-adding once. Media Management was showing no posters, no media type and dashes for rating, plays, size and status - it now reads every field correctly, and the same fault is fixed on the Scheduled tab, the 'Leaving in' badges, and the media request and ban screens. Media that Jellyfin has not identified, which has no artwork at all, now falls back to a poster from TMDB where one can be found. On phones the header menu is now a compact row of icons rather than one full-width row per button, which previously left most buttons unreachable, plus a layout fix for the ElegantFin skin that is applied only on servers actually using it.",
         "targetAbi": "10.11.0.0",
