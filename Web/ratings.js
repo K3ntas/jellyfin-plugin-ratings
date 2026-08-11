@@ -3690,6 +3690,38 @@
         /**
          * Wire the "Add a film" search box (find on server, or request if missing).
          */
+        /**
+         * Punctuation-insensitive library search, via the plugin's own endpoint.
+         *
+         * Jellyfin matches the term as typed, so "xfiles" and "x files" both miss "The X-Files".
+         * The server reduces both sides to letters and digits before comparing. Results come back
+         * shaped like Jellyfin's own items so callers can use them interchangeably.
+         * @param {string} q Search text.
+         * @param {number} limit Maximum results.
+         * @returns {Promise<Array>} Matching items, or [] on any failure.
+         */
+        searchLibraryLoose: function (q, limit) {
+            var baseUrl = ApiClient.serverAddress();
+            return fetch(baseUrl + '/Ratings/Search?query=' + encodeURIComponent(q) + '&limit=' + (limit || 10), {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+                .then(function (d) {
+                    return ((d && d.items) || []).map(function (i) {
+                        return {
+                            Id: i.Id || i.id,
+                            Name: i.Name || i.name,
+                            ProductionYear: i.ProductionYear || i.productionYear,
+                            Type: i.Type || i.type,
+                            Overview: i.Overview || i.overview
+                        };
+                    });
+                })
+                .catch(function () { return []; });
+        },
+
         initAddMediaSearch: function () {
             var self = this;
             var input = document.getElementById('lbAddMediaInput');
@@ -3720,6 +3752,13 @@
             var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { return (d && d.Items) || []; })
+                .then(function (items) {
+                    // Jellyfin's search is punctuation-sensitive, so "xfiles" or "x files" finds
+                    // nothing for "The X-Files". Fall back to the plugin's own search, which
+                    // ignores punctuation and spacing entirely.
+                    if (items.length) { return items; }
+                    return self.searchLibraryLoose(q, 6);
+                })
                 .catch(function () { return []; });
 
             // 2) External TMDB catalog (server-side proxy; the token never reaches the browser)
@@ -6757,6 +6796,14 @@
                     headers: headers
                 })
                 .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    // Same punctuation fallback as the profile search - see searchLibraryLoose.
+                    if (!(data.Items || []).length && self._pickerPage === 0) {
+                        return self.searchLibraryLoose(query, self._pickerItemsPerPage)
+                            .then(function (items) { return { Items: items, TotalRecordCount: items.length }; });
+                    }
+                    return data;
+                })
                 .then(function (data) {
                     var items = data.Items || [];
                     var totalCount = data.TotalRecordCount || 0;

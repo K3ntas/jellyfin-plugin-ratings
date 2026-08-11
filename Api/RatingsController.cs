@@ -345,31 +345,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        // Extract token from header
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-
-                            // Get session by authentication token
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 // Check if this is a collection (BoxSet) - calculate average from child items
                 if (item is MediaBrowser.Controller.Entities.Movies.BoxSet boxSet)
@@ -540,39 +519,9 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var authUserId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (authUserId == Guid.Empty)
-                {
-                    // Try X-Emby-Token header first (simple token)
-                    var token = Request.Headers["X-Emby-Token"].FirstOrDefault();
-
-                    // If not found, try X-Emby-Authorization or Authorization with Token="..." format
-                    if (string.IsNullOrEmpty(token))
-                    {
-                        var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                      ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                        if (!string.IsNullOrEmpty(authHeader))
-                        {
-                            var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                            if (tokenMatch.Success)
-                            {
-                                token = tokenMatch.Groups[1].Value;
-                            }
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(token))
-                    {
-                        var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                        if (session != null)
-                        {
-                            authUserId = session.UserId;
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here missed at least
+                // one of the ways a client can present a token (issue #72).
+                var authUserId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (authUserId == Guid.Empty)
                 {
@@ -608,28 +557,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -751,6 +682,146 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             return result;
+        }
+
+        // A punctuation-insensitive name index, rebuilt at most every few minutes.
+        // "The X-Files", "x files" and "xfiles" all reduce to "thexfiles"/"xfiles", so a query
+        // matches however the user types the separators - Jellyfin's own SearchTerm does not.
+        private static List<(Guid Id, string Normalized)>? _searchIndex;
+        private static DateTime _searchIndexBuiltUtc = DateTime.MinValue;
+        private static readonly object _searchIndexLock = new();
+        private static readonly TimeSpan _searchIndexTtl = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// Reduces a title to letters and digits, lower-cased, so punctuation and spacing stop
+        /// mattering: "The X-Files" and "xfiles" both become comparable.
+        /// </summary>
+        /// <param name="value">Title or query.</param>
+        /// <returns>The normalized form.</returns>
+        private static string NormalizeForSearch(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var sb = new System.Text.StringBuilder(value.Length);
+            foreach (var ch in value)
+            {
+                if (char.IsLetterOrDigit(ch))
+                {
+                    sb.Append(char.ToLowerInvariant(ch));
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns the ids of movies and series whose name matches the query once punctuation and
+        /// spacing are ignored. Used as a fallback when Jellyfin's own search finds nothing.
+        /// </summary>
+        /// <param name="query">The raw user query.</param>
+        /// <param name="limit">Maximum ids to return.</param>
+        /// <returns>Matching item ids, best (prefix) matches first.</returns>
+        private List<Guid> FindByNormalizedName(string query, int limit)
+        {
+            var needle = NormalizeForSearch(query);
+            if (needle.Length == 0)
+            {
+                return new List<Guid>();
+            }
+
+            List<(Guid Id, string Normalized)> index;
+            lock (_searchIndexLock)
+            {
+                if (_searchIndex == null || DateTime.UtcNow - _searchIndexBuiltUtc > _searchIndexTtl)
+                {
+                    var built = new List<(Guid, string)>();
+                    var all = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        IncludeItemTypes = new[]
+                        {
+                            Jellyfin.Data.Enums.BaseItemKind.Movie,
+                            Jellyfin.Data.Enums.BaseItemKind.Series,
+                        },
+                        Recursive = true,
+                    });
+
+                    foreach (var it in all)
+                    {
+                        var n = NormalizeForSearch(it.Name);
+                        if (n.Length > 0)
+                        {
+                            built.Add((it.Id, n));
+                        }
+                    }
+
+                    _searchIndex = built;
+                    _searchIndexBuiltUtc = DateTime.UtcNow;
+                }
+
+                index = _searchIndex;
+            }
+
+            // Titles that start with the query are the better answer, so they come first.
+            return index
+                .Where(e => e.Normalized.Contains(needle, StringComparison.Ordinal))
+                .OrderByDescending(e => e.Normalized.StartsWith(needle, StringComparison.Ordinal))
+                .ThenBy(e => e.Normalized.Length)
+                .Take(limit)
+                .Select(e => e.Id)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Searches the library ignoring punctuation and spacing, so "xfiles", "x files" and
+        /// "X-Files" all find the same show.
+        /// </summary>
+        /// <param name="query">Search text.</param>
+        /// <param name="limit">Maximum results (1-50).</param>
+        /// <returns>Matching items with the fields the pickers need.</returns>
+        [HttpGet("Search")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<object> SearchLibrary(
+            [FromQuery] string? query = null,
+            [FromQuery] [Range(1, 50)] int limit = 10)
+        {
+            try
+            {
+                var ids = FindByNormalizedName(query ?? string.Empty, limit);
+                if (ids.Count == 0)
+                {
+                    return Ok(new { items = Array.Empty<object>() });
+                }
+
+                var items = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    ItemIds = ids.ToArray(),
+                });
+
+                // Preserve the ranking from the index rather than the library's own ordering.
+                var order = ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
+                var result = items
+                    .OrderBy(i => order.TryGetValue(i.Id, out var pos) ? pos : int.MaxValue)
+                    .Select(i => new
+                    {
+                        Id = i.Id.ToString("N"),
+                        i.Name,
+                        i.ProductionYear,
+                        Type = i is MediaBrowser.Controller.Entities.TV.Series ? "Series" : "Movie",
+                        i.Overview,
+                    })
+                    .ToList();
+
+                return Ok(new { items = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching library");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         private static readonly System.Net.Http.HttpClient _tmdbHttp = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(8) };
@@ -2343,28 +2414,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -2763,36 +2816,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 // If standard auth didn't work, try to get from session token
+                // The helper above already covers every token form, so the fallback that used to
+                // follow here was dead code.
+
                 if (userId == Guid.Empty)
                 {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(authHeader))
-                    {
-                        _logger.LogError("No authentication header found");
-                        return Unauthorized("No authentication header provided");
-                    }
-
-                    // Extract token from header
-                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                    if (!tokenMatch.Success)
-                    {
-                        _logger.LogError("Could not extract token from header");
-                        return Unauthorized("Invalid authentication header format");
-                    }
-
-                    var token = tokenMatch.Groups[1].Value;
-
-                    // Get session by authentication token
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session == null)
-                    {
-                        _logger.LogError("No active session found for token");
-                        return Unauthorized("Invalid or expired token");
-                    }
-
-                    userId = session.UserId;
+                    return Unauthorized("User not authenticated");
                 }
 
                 if (userId == Guid.Empty)
@@ -2929,28 +2958,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -2993,28 +3004,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -3069,28 +3062,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -3131,28 +3106,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -3236,28 +3193,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -3304,28 +3243,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -3360,28 +3281,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -3433,28 +3336,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -3502,10 +3387,31 @@ namespace Jellyfin.Plugin.Ratings.Api
                     query.IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie, Jellyfin.Data.Enums.BaseItemKind.Series, Jellyfin.Data.Enums.BaseItemKind.MusicVideo };
                 }
 
-                // Apply search filter
+                // Apply search filter. Jellyfin's SearchTerm is used first because it is indexed
+                // and understands more than the name alone; if it finds nothing, fall back to a
+                // punctuation-insensitive match so "xfiles" and "x files" still find "The X-Files".
                 if (!string.IsNullOrEmpty(search))
                 {
                     query.SearchTerm = search;
+
+                    var probe = _libraryManager.GetItemsResult(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                    {
+                        IncludeItemTypes = query.IncludeItemTypes,
+                        ParentId = query.ParentId,
+                        Recursive = true,
+                        SearchTerm = search,
+                        Limit = 1,
+                    });
+
+                    if (probe.TotalRecordCount == 0)
+                    {
+                        var ids = FindByNormalizedName(search, 500);
+                        if (ids.Count > 0)
+                        {
+                            query.SearchTerm = null;
+                            query.ItemIds = ids.ToArray();
+                        }
+                    }
                 }
 
                 var sortField = sortBy.ToLowerInvariant();
@@ -3815,28 +3721,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -3918,28 +3806,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -4135,34 +4005,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(authHeader))
-                    {
-                        return Unauthorized("No authentication header provided");
-                    }
-
-                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                    if (!tokenMatch.Success)
-                    {
-                        return Unauthorized("Invalid authentication header format");
-                    }
-
-                    var token = tokenMatch.Groups[1].Value;
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session == null)
-                    {
-                        return Unauthorized("Invalid or expired token");
-                    }
-
-                    userId = session.UserId;
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (userId == Guid.Empty)
                 {
@@ -4272,28 +4118,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {
@@ -4331,28 +4159,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
+                // Shared helper: the hand-rolled fallback that used to be here read only
+                // X-Emby-Authorization/Authorization, so a client sending a plain X-Emby-Token
+                // was rejected with 401 while the same token worked elsewhere (issue #72).
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 if (!IsAdminRequest(userId))
                 {

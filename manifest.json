@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.368.0",
+        "changelog": "Search now ignores punctuation and spacing, so 'xfiles', 'x files' and 'X-Files' all find the same show - the same goes for 'spiderman', 'walle' or 'swat'. It applies to the film search on your profile, the media picker and the Media Management search box. Jellyfin's own search is still tried first; the looser match only steps in when that finds nothing. Also completes an authentication clean-up: seventeen more endpoints identified the caller in a stricter way than the rest of the plugin, so apps that sign in with a plain token - TV and mobile clients in particular - were refused by them even though the same token worked elsewhere. Every endpoint in the plugin now identifies you the same way. Nothing changes for the web interface, which was never affected.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.368.0/Jellyfin.Plugin.Ratings_2.0.368.0.zip",
+        "checksum": "4e48ec3a09e2105cf03bfaf58cd78e66",
+        "timestamp": "2026-08-11T21:34:00Z"
+      },
+      {
         "version": "2.0.367.0",
         "changelog": "Fixes removing a rating failing with 'Could not remove that rating'. The delete request was rejected before it did anything: that endpoint only recognised one of the ways a client can present its login, and the Remove button uses the other. It now identifies you the same way the rest of the plugin does. Saving a rating went through the same check and is fixed with it. Also makes the edit and remove buttons easy to press: the card grew slightly on hover at the same moment the buttons appeared, so the button moved out from under the pointer as you reached for it. Cards no longer resize, the buttons are larger, and they stay visible on phones and TVs where there is no hover at all.",
         "targetAbi": "10.11.0.0",
