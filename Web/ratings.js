@@ -4119,7 +4119,12 @@
                 credentials: 'include',
                 headers: { 'X-Emby-Token': ApiClient.accessToken() }
             })
-                .then(function (r) { if (!r.ok) { throw new Error(r.status); } })
+                .then(function (r) {
+                    // 404 means the rating is already gone, which is the outcome asked for -
+                    // treat it as success rather than reporting a failure the user cannot act on.
+                    if (r.status === 404) { return; }
+                    if (!r.ok) { throw new Error('HTTP ' + r.status); }
+                })
                 .then(function () {
                     self.lbToast('Removed' + (title ? ' “' + title + '”' : ''));
                     self._profileRatings = null;
@@ -4127,8 +4132,9 @@
                     self.reloadRatingsTab();
                 })
                 .catch(function (err) {
-                    console.error('[Ratings] Delete failed:', err);
-                    self.lbToast('Could not remove that rating');
+                    // Say which failure it was: "could not remove" on its own gave nothing to go on.
+                    console.error('[Ratings] Delete failed for item', itemId, err);
+                    self.lbToast('Could not remove that rating (' + (err && err.message ? err.message : 'error') + ')');
                 });
         },
 

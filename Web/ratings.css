@@ -9947,7 +9947,12 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     cursor: pointer;
     transition: transform 0.2s;
 }
-.lb-rating-card:hover { transform: scale(1.05); }
+/* Deliberately no scale on hover. The card also reveals its edit/remove buttons on hover, so
+   growing at the same moment moved the target out from under the cursor - and moving toward
+   the button could re-trigger it. A shadow gives the same lift without shifting hit areas. */
+.lb-rating-card:hover {
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .55);
+}
 .lb-rating-poster {
     aspect-ratio: 2/3;
     background: #2c3440;
@@ -10432,18 +10437,29 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     opacity: 1;
 }
 
+/* Touch and TV have no hover, so hover-to-reveal would hide these permanently. */
+@media (hover: none) {
+    .lb-rating-actions {
+        opacity: 1;
+    }
+}
+
 .lb-rating-act,
 .lb-vote {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 3px;
     border: none;
     border-radius: 6px;
-    padding: 4px 6px;
-    font-size: 12px;
+    /* Comfortably tappable rather than a 20px square. */
+    min-width: 30px;
+    min-height: 30px;
+    padding: 4px 7px;
+    font-size: 14px;
     line-height: 1;
     color: #fff;
-    background: rgba(0, 0, 0, .72);
+    background: rgba(0, 0, 0, .78);
     cursor: pointer;
 }
 

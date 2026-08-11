@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.367.0",
+        "changelog": "Fixes removing a rating failing with 'Could not remove that rating'. The delete request was rejected before it did anything: that endpoint only recognised one of the ways a client can present its login, and the Remove button uses the other. It now identifies you the same way the rest of the plugin does. Saving a rating went through the same check and is fixed with it. Also makes the edit and remove buttons easy to press: the card grew slightly on hover at the same moment the buttons appeared, so the button moved out from under the pointer as you reached for it. Cards no longer resize, the buttons are larger, and they stay visible on phones and TVs where there is no hover at all.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.367.0/Jellyfin.Plugin.Ratings_2.0.367.0.zip",
+        "checksum": "05141920a5a05f5eba922501166d6582",
+        "timestamp": "2026-08-11T21:24:00Z"
+      },
+      {
         "version": "2.0.366.0",
         "changelog": "Four requested additions. Ratings can now be edited or removed directly from the Ratings tab, including titles that are not on the server - previously the only way to change one of those was to add the film to a profile row and rate it again. Reviews can now be written for catalog titles too, in the same box as the rating. Custom profile rows can be reordered with arrows in the row header. And a rating can now be agreed or disagreed with even when the person did not write a review; your own vote is remembered and shown when you come back.",
         "targetAbi": "10.11.0.0",

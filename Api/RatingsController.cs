@@ -233,39 +233,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             try
             {
                 // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(authHeader))
-                    {
-                        _logger.LogError("No authentication header found");
-                        return Unauthorized("No authentication header provided");
-                    }
-
-                    // Extract token from header
-                    var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                    if (!tokenMatch.Success)
-                    {
-                        return Unauthorized("Invalid authentication header format");
-                    }
-
-                    var token = tokenMatch.Groups[1].Value;
-
-                    // Get session by authentication token
-                    var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                    if (session == null)
-                    {
-                        return Unauthorized("Invalid or expired token");
-                    }
-
-                    userId = session.UserId;
-                }
-
+                // Shared helper, not the hand-rolled fallback that used to be here: that one read
+                // only X-Emby-Authorization/Authorization and pulled Token="..." out of it, so a
+                // caller sending a plain X-Emby-Token header was rejected. Same fault as issue #72.
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
@@ -1510,30 +1481,10 @@ namespace Jellyfin.Plugin.Ratings.Api
         {
             try
             {
-                // Try to get user from authentication
-                var userId = User.GetUserId();
-
-                // If standard auth didn't work, try to get from session token
-                if (userId == Guid.Empty)
-                {
-                    var authHeader = Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                                  ?? Request.Headers["Authorization"].FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(authHeader))
-                    {
-                        var tokenMatch = System.Text.RegularExpressions.Regex.Match(authHeader, @"Token=""([^""]+)""");
-                        if (tokenMatch.Success)
-                        {
-                            var token = tokenMatch.Groups[1].Value;
-                            var session = await _sessionManager.GetSessionByAuthenticationToken(token, null, null).ConfigureAwait(false);
-                            if (session != null)
-                            {
-                                userId = session.UserId;
-                            }
-                        }
-                    }
-                }
-
+                // Shared helper - the old fallback here read only X-Emby-Authorization, so the
+                // Remove button (which sends a plain X-Emby-Token) got 401 and the UI could only
+                // report "Could not remove that rating". Same fault as issue #72.
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (userId == Guid.Empty)
                 {
                     return Unauthorized("User not authenticated");
