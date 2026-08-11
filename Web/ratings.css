@@ -1094,21 +1094,27 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         width: 100% !important;
     }
 
-    /* Push ALL content down to account for second header bar */
-    .skinBody {
+    /* Push ALL content down to account for the second header bar.
+       ONLY while that bar is actually showing. These date from when the plugin's buttons
+       occupied a full-width row under the header; they now collapse behind the dropdown
+       toggle, so unconditionally reserving the space left a 48-56px empty gap between the
+       header and the tabs on every phone (visible as the blank strip above Home/Favourites).
+       .ratings-menu-expanded is set on <html> while the panel is open. */
+    html.ratings-menu-expanded .skinBody {
         padding-top: 48px !important;
     }
 
-    .mainAnimatedPages {
+    html.ratings-menu-expanded .mainAnimatedPages {
         margin-top: 48px !important;
     }
 
-    .view, .page {
+    html.ratings-menu-expanded .view,
+    html.ratings-menu-expanded .page {
         padding-top: 48px !important;
     }
 
     /* Push Home/Favorites tabs container down - use padding on parent */
-    .tabs-viewmenubar.emby-tabs {
+    html.ratings-menu-expanded .tabs-viewmenubar.emby-tabs {
         padding-top: 56px !important;
     }
 
@@ -10380,14 +10386,33 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
    finds that skin loaded (see detectSkinCompat). Installs on any other theme are left
    completely untouched rather than relying on the rule happening to be a no-op.
    -------------------------------------------------------------------------- */
-@media screen and (max-width: 600px) {
-    html.ratings-skin-elegantfin .skinBody {
+@media screen and (max-width: 768px) {
+    /* Only while the panel is CLOSED. The skin reserves that strip for the plugin's buttons,
+       but they are collapsed behind the toggle, so it sits there as an empty gap pushing the
+       page down. Once the panel is open the skin's own padding comes back, which keeps the
+       space the buttons now need - and avoids hard-coding the skin's pixel value here. */
+    html.ratings-skin-elegantfin:not(.ratings-menu-expanded) .skinBody {
         padding-top: 0 !important;
     }
 
-    html.ratings-skin-elegantfin .tabs-viewmenubar.emby-tabs {
+    html.ratings-skin-elegantfin:not(.ratings-menu-expanded) .tabs-viewmenubar.emby-tabs {
         padding-top: 0 !important;
     }
+}
+
+/* ----------------------------------------------------------------------------
+   Playback: keep the plugin out of the video OSD (issue #74)
+
+   During playback Jellyfin shows its own slim overlay header with the back button.
+   The plugin's buttons were still being drawn into it, so in portrait the bar stayed
+   put and covered the controls needed to get out of the video.
+
+   :has() rather than a MutationObserver: the plugin already treats .videoPlayerContainer
+   as the playback marker, and this costs nothing at runtime.
+   -------------------------------------------------------------------------- */
+body:has(.videoPlayerContainer) #ratingsButtonGroup,
+body:has(.videoPlayerContainer) #ratingsMenuToggle {
+    display: none !important;
 }
 
 /* ============================================================================

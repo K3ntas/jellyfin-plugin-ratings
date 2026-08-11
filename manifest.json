@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.365.0",
+        "changelog": "Removes the empty gap under the header on phones. The plugin used to place its buttons in a full-width row below the header and pushed the whole page down to make room. The buttons now collapse behind the dropdown, but the space was still being reserved, leaving a blank strip above Home and Favourites. The space is now only reserved while the menu is actually open. Fixes the plugin's buttons staying on top of the video player, which in portrait covered the controls needed to get out of a video (issue #74). Recent Activity now shows the poster for titles that are not on the server; the rating showed but the artwork was blank, because it was being requested from your server for a title that only exists in the catalog.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.365.0/Jellyfin.Plugin.Ratings_2.0.365.0.zip",
+        "checksum": "a635ed59e822868c3e9b31496cf80a46",
+        "timestamp": "2026-08-11T20:47:00Z"
+      },
+      {
         "version": "2.0.364.0",
         "changelog": "The ElegantFin layout fix added in the previous release now applies only to servers actually using that skin. It adjusts two of Jellyfin's own elements to stop the plugin's buttons being cut off on phones, so leaving it switched on everywhere was heavier-handed than needed. The plugin now checks whether the skin is loaded - pasted into Custom CSS, added as an @import, or linked as a stylesheet - and applies the adjustment only then. Every other theme is left completely untouched.",
         "targetAbi": "10.11.0.0",

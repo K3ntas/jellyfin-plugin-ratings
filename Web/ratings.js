@@ -2858,6 +2858,23 @@
          * @param {string} raw The URL or path from the API.
          * @returns {string} A usable URL, or '' when there is nothing to show.
          */
+        /**
+         * Returns a URL only if it is safe to drop inside a CSS url('...') in a style attribute.
+         *
+         * These are built by string concatenation, so a value containing a quote or parenthesis
+         * would escape the url() and then the attribute. Only plain http(s) URLs are allowed
+         * through, which also rules out javascript: and data:.
+         * @param {string} raw Candidate URL.
+         * @returns {string} The URL, or '' if it is not safe.
+         */
+        safeCssUrl: function (raw) {
+            if (!raw) { return ''; }
+            var value = String(raw);
+            if (!/^https?:\/\//i.test(value)) { return ''; }
+            if (/["'()\\<>\s]/.test(value)) { return ''; }
+            return value;
+        },
+
         resolvePosterUrl: function (baseUrl, raw) {
             if (!raw) { return ''; }
             var value = String(raw);
@@ -3626,7 +3643,12 @@
                         var name = r.itemName || (r.itemName ?? r.ItemName) || 'Unknown';
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
-                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240' : '';
+                        // A catalog title has no Jellyfin item behind it, so /Items/<id>/Images
+                        // 404s and the card drew a grey box even though the rating itself showed.
+                        // Those ratings carry the TMDB poster the server backfilled.
+                        var img = inLib
+                            ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240'
+                            : self.safeCssUrl(self.apiField(r, 'posterUrl'));
                         var dragAttr = (isSelf && id) ? ' draggable="true" ondragstart="RatingsPlugin.activityDragStart(event,\'' + self.escapeJs(id) + '\',\'' + self.escapeJs(name) + '\')"' : '';
                         html += '<div class="lb-poster-card"' + dragAttr + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + (isSelf ? ' — drag to a row' : '') + '">' +
                             '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
@@ -4202,8 +4224,10 @@
             var base = ApiClient.serverAddress();
             var notInLib = self.isFavNotInLibrary(fav);
             var itemId = fav.itemId || (fav.itemId ?? fav.ItemId) || '';
+            // The catalog poster is an external URL that ends up inside a CSS url('...'), so it
+            // goes through the same guard as everywhere else.
             var img = notInLib
-                ? (fav.imageUrl || fav.ImageUrl || '')
+                ? self.safeCssUrl(fav.imageUrl || fav.ImageUrl || '')
                 : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
             var dragAttrs = isSelf
                 ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"'
@@ -10352,6 +10376,10 @@
 
                 const setOpen = (open) => {
                     group.classList.toggle('ratings-menu-open', open);
+                    // Also on <html>, so page-level rules can react to the menu state - a themed
+                    // skin reserves header space for buttons that are collapsed behind the toggle,
+                    // and that space is only wanted once the panel is actually showing.
+                    document.documentElement.classList.toggle('ratings-menu-expanded', open);
                     toggle.classList.toggle('open', open);
                     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 
