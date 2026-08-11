@@ -13795,8 +13795,11 @@
             const box = document.getElementById('orphanTrickplaySection');
             if (!box) return;
 
-            box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
-                <div class="orphan-trickplay-note">${self.t('orphanScanning') || 'Scanning…'}</div>`;
+            // Plain strings, not self.t(): t() returns the KEY when a translation is missing, so
+            // `t('x') || 'fallback'` never falls back - it renders "orphanTitle" on screen.
+            const HEAD = 'Leftover trickplay data';
+            box.innerHTML = `<div class="orphan-trickplay-head">${HEAD}</div>
+                <div class="orphan-trickplay-note">Scanning…</div>`;
 
             try {
                 const baseUrl = ApiClient.serverAddress();
@@ -13811,30 +13814,44 @@
                 const items = self.apiField(data, 'items') || [];
                 const totalBytes = Number(self.apiField(data, 'totalBytes')) || 0;
 
+                const scanned = Number(self.apiField(data, 'scanned')) || 0;
+                const skipped = Number(self.apiField(data, 'skipped')) || 0;
+                const root = self.apiField(data, 'root') || '';
+
                 if (self.apiField(data, 'supported') === false) {
-                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                    box.innerHTML = `<div class="orphan-trickplay-head">${HEAD}</div>
                         <div class="orphan-trickplay-note">${self.escapeHtml(self.apiField(data, 'reason') || 'Not available on this server.')}</div>`;
                     return;
                 }
 
+                // Always say what was examined and where. "Nothing found" on its own is
+                // indistinguishable from a scan that never ran.
+                const evidence = `Checked <strong>${scanned}</strong> trickplay ${scanned === 1 ? 'folder' : 'folders'} in
+                    <code>${self.escapeHtml(root)}</code>${skipped ? ` (${skipped} not named after a library item, left alone)` : ''}.`;
+
                 if (!items.length) {
-                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
-                        <div class="orphan-trickplay-note">${self.t('orphanNone') || 'Nothing left behind — every trickplay folder belongs to media still in your library.'}</div>`;
+                    box.innerHTML = `<div class="orphan-trickplay-head">${HEAD}</div>
+                        <div class="orphan-trickplay-note">
+                            ${scanned === 0
+                                ? `No trickplay folders exist yet in <code>${self.escapeHtml(root)}</code> — nothing to clean up.`
+                                : `${evidence} Every one belongs to media still in your library, so there is nothing to remove.`}
+                        </div>`;
                     return;
                 }
 
-                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                box.innerHTML = `<div class="orphan-trickplay-head">${HEAD}</div>
                     <div class="orphan-trickplay-note">
-                        ${items.length} ${items.length === 1 ? 'folder' : 'folders'} from media that is no longer in your library,
-                        taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
-                        Removing these does not affect any media you still have, and nothing is reprocessed.
+                        ${evidence}<br>
+                        <strong>${items.length}</strong> ${items.length === 1 ? 'folder belongs' : 'folders belong'} to media
+                        that is no longer in your library, taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
+                        Removing them does not affect any media you still have, and nothing is reprocessed.
                     </div>
                     <button class="orphan-trickplay-btn" onclick="RatingsPlugin.deleteOrphanedTrickplay()">
-                        ${self.t('orphanDelete') || 'Delete leftover data'} (${self.escapeHtml(self.formatBytes(totalBytes))})
+                        Delete leftover data (${self.escapeHtml(self.formatBytes(totalBytes))})
                     </button>`;
             } catch (error) {
                 console.error('Error scanning for orphaned trickplay:', error);
-                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                box.innerHTML = `<div class="orphan-trickplay-head">Leftover trickplay data</div>
                     <div class="orphan-trickplay-note error">Could not scan (${self.escapeHtml(String(error && error.message ? error.message : error))}).</div>`;
             }
         },
@@ -13846,13 +13863,12 @@
          */
         deleteOrphanedTrickplay: async function () {
             const self = this;
-            if (!window.confirm(self.t('orphanConfirm')
-                || 'Delete all leftover trickplay data? Media still in your library is not affected.')) {
+            if (!window.confirm('Delete all leftover trickplay data? Media still in your library is not affected.')) {
                 return;
             }
 
             const btn = document.querySelector('.orphan-trickplay-btn');
-            if (btn) { btn.disabled = true; btn.textContent = self.t('orphanDeleting') || 'Deleting…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
 
             try {
                 const baseUrl = ApiClient.serverAddress();

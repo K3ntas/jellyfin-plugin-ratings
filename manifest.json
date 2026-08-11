@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.372.0",
+        "changelog": "Fixes the leftover-trickplay panel showing the words orphanTitle and orphanNone instead of readable text, and makes its result verifiable. It now says how many trickplay folders it examined and where, so 'nothing to clean up' can be told apart from a scan that never ran. If there are no trickplay folders at all yet, it says that explicitly.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.372.0/Jellyfin.Plugin.Ratings_2.0.372.0.zip",
+        "checksum": "b962cfff50a8fe94dd6a569d8c78ae2d",
+        "timestamp": "2026-08-11T22:32:00Z"
+      },
+      {
         "version": "2.0.371.0",
         "changelog": "Two clean-ups from the security review. Searching and browsing through the plugin now respects the libraries each account is allowed to see, so a user with limited access can no longer come across titles from libraries they cannot open - this affected the plugin's own search, the sorted library view and the latest-media list. And when the plugin refuses an action because you are not an administrator, it now says so properly instead of returning a server error; access was already correctly denied, but the message was wrong.",
         "targetAbi": "10.11.0.0",

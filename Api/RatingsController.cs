@@ -4850,7 +4850,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>The orphaned folders with their sizes.</returns>
         private List<(Guid Id, string Path, long Size)> ScanOrphanedTrickplay()
         {
+            return ScanOrphanedTrickplay(out _, out _);
+        }
+
+        /// <summary>
+        /// As <see cref="ScanOrphanedTrickplay()"/>, also reporting what was examined so the UI can
+        /// show evidence the scan ran rather than an unverifiable "nothing found".
+        /// </summary>
+        /// <param name="scanned">Folders examined.</param>
+        /// <param name="skipped">Folders whose name is not an item id, so not ours to judge.</param>
+        /// <returns>The orphaned folders with their sizes.</returns>
+        private List<(Guid Id, string Path, long Size)> ScanOrphanedTrickplay(out int scanned, out int skipped)
+        {
             var found = new List<(Guid, string, long)>();
+            scanned = 0;
+            skipped = 0;
+
             var root = GetTrickplayRoot();
             if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
             {
@@ -4859,9 +4874,11 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             foreach (var dir in Directory.EnumerateDirectories(root))
             {
+                scanned++;
                 var name = Path.GetFileName(dir);
                 if (!Guid.TryParse(name, out var itemId))
                 {
+                    skipped++;
                     continue;
                 }
 
@@ -4905,12 +4922,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                     });
                 }
 
-                var orphans = ScanOrphanedTrickplay();
+                var orphans = ScanOrphanedTrickplay(out var scanned, out var skipped);
 
                 return Ok(new
                 {
                     supported = true,
                     root,
+                    // Reported so "nothing found" can be told apart from "nothing ran".
+                    scanned,
+                    skipped,
                     items = orphans.Select(o => new
                     {
                         itemId = o.Id.ToString("N"),
