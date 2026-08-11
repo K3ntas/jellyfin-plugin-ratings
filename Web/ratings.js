@@ -3853,14 +3853,20 @@
          * Star picker for a not-on-server title.
          * @param {object} data Title info (tmdbId, title, year, type, poster).
          */
-        showExternalRatingModal: function (data) {
+        showExternalRatingModal: function (data, isEdit) {
             var self = this;
             var existing = document.getElementById('lbExternalRatingModal');
             if (existing) { existing.remove(); }
 
+            // Chosen value lives on the modal, so the star row and the review box can be saved
+            // together. Rating alone used to submit on click, which left no room for a review.
+            var chosen = Number(data.rating) || 0;
+            var inLib = data.inLib === true;
+
             var stars = '';
             for (var i = 1; i <= 10; i++) {
-                stars += '<button type="button" class="lb-ext-star" data-value="' + i + '" title="' + i + '/10">☆</button>';
+                stars += '<button type="button" class="lb-ext-star" data-value="' + i + '" title="' + i + '/10">' +
+                    (i <= chosen ? '★' : '☆') + '</button>';
             }
 
             var modal = document.createElement('div');
@@ -3868,17 +3874,25 @@
             modal.id = 'lbExternalRatingModal';
             modal.innerHTML = '<div class="lb-settings-content lb-ext-rating">' +
                 '<div class="lb-settings-header">' +
-                '<h2>Rate “' + self.escapeHtml(data.title || '') + '”' + (data.year ? ' (' + data.year + ')' : '') + '</h2>' +
+                '<h2>' + (isEdit ? 'Edit rating' : 'Rate') + ' “' + self.escapeHtml(data.title || '') + '”' +
+                (data.year ? ' (' + data.year + ')' : '') + '</h2>' +
                 '<button class="lb-settings-close" onclick="RatingsPlugin.closeExternalRatingModal()">&times;</button>' +
                 '</div>' +
                 '<div class="lb-settings-body">' +
-                '<p class="lb-settings-hint">This title is not on the server. Your rating is kept, and will attach ' +
-                'itself to the film automatically if it is added later.</p>' +
+                (inLib ? '' : '<p class="lb-settings-hint">This title is not on the server. Your rating and review are kept, ' +
+                    'and will attach themselves to the film automatically if it is added later.</p>') +
                 '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
-                '<div class="lb-ext-value" id="lbExtValue">Select a rating</div>' +
+                '<div class="lb-ext-value" id="lbExtValue">' + (chosen ? chosen + ' / 10' : 'Select a rating') + '</div>' +
+                '<label class="lb-ext-review-label" for="lbExtReview">Review <span>(optional)</span></label>' +
+                '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
+                'placeholder="What did you think?">' + self.escapeHtml(data.review || '') + '</textarea>' +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
+                (isEdit && data.itemId
+                    ? '<button class="lb-btn-danger" onclick="RatingsPlugin.removeRatingFromEditor()">Remove</button>'
+                    : '') +
                 '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeExternalRatingModal()">Cancel</button>' +
+                '<button class="lb-btn-save" id="lbExtSave" onclick="RatingsPlugin.saveRatingFromEditor()">Save</button>' +
                 '</div></div>';
 
             modal.addEventListener('click', function (e) {
@@ -3887,21 +3901,121 @@
 
             document.body.appendChild(modal);
 
+            // State the footer buttons read back when pressed.
+            self._ratingEditor = { data: data, value: chosen };
+
+            var paint = function (upto) {
+                modal.querySelectorAll('.lb-ext-star').forEach(function (s) {
+                    s.textContent = parseInt(s.dataset.value, 10) <= upto ? '★' : '☆';
+                });
+            };
+
             modal.querySelectorAll('.lb-ext-star').forEach(function (star) {
                 var value = parseInt(star.dataset.value, 10);
 
                 star.addEventListener('mouseenter', function () {
-                    modal.querySelectorAll('.lb-ext-star').forEach(function (s) {
-                        s.textContent = parseInt(s.dataset.value, 10) <= value ? '★' : '☆';
-                    });
+                    paint(value);
                     var label = document.getElementById('lbExtValue');
                     if (label) { label.textContent = value + ' / 10'; }
                 });
 
                 star.addEventListener('click', function () {
-                    self.submitExternalRating(data, value);
+                    self._ratingEditor.value = value;
+                    paint(value);
+                    var label = document.getElementById('lbExtValue');
+                    if (label) { label.textContent = value + ' / 10'; }
                 });
             });
+
+            // Leaving the row restores the chosen value rather than the last hovered one.
+            var row = document.getElementById('lbExtStars');
+            if (row) {
+                row.addEventListener('mouseleave', function () {
+                    paint(self._ratingEditor.value);
+                    var label = document.getElementById('lbExtValue');
+                    if (label) {
+                        label.textContent = self._ratingEditor.value
+                            ? self._ratingEditor.value + ' / 10'
+                            : 'Select a rating';
+                    }
+                });
+            }
+        },
+
+        /**
+         * Saves whatever the rating editor currently holds - stars plus review - to the right
+         * endpoint: library items take query parameters, catalog titles take a JSON body.
+         */
+        saveRatingFromEditor: function () {
+            var self = this;
+            var state = self._ratingEditor;
+            if (!state) { return; }
+            var value = Number(state.value) || 0;
+            if (value < 1 || value > 10) {
+                self.lbToast('Pick a rating first');
+                return;
+            }
+
+            var box = document.getElementById('lbExtReview');
+            var review = box ? String(box.value || '').slice(0, 4000) : '';
+            var data = state.data || {};
+            var baseUrl = ApiClient.serverAddress();
+            var token = ApiClient.accessToken();
+            var request;
+
+            if (data.inLib === true && data.itemId) {
+                request = fetch(baseUrl + '/Ratings/Items/' + encodeURIComponent(data.itemId) + '/Rating'
+                    + '?rating=' + value + '&review=' + encodeURIComponent(review), {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': token }
+                });
+            } else {
+                if (!data.tmdbId) {
+                    self.lbToast('This rating cannot be edited here');
+                    return;
+                }
+                request = fetch(baseUrl + '/Ratings/External/Rating', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tmdbId: String(data.tmdbId),
+                        mediaType: data.mediaType === 'Series' || data.type === 'Series' ? 'Series' : 'Movie',
+                        title: data.title || '',
+                        year: data.year || null,
+                        posterUrl: data.poster || '',
+                        rating: value,
+                        review: review
+                    })
+                });
+            }
+
+            request
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json().catch(function () { return {}; }); })
+                .then(function () {
+                    self.closeExternalRatingModal();
+                    self.lbToast('Saved “' + (data.title || '') + '” ' + value + '/10 ✓');
+                    self._profileRatings = null;
+                    self._profileRatingsUser = null;
+                    self.reloadRatingsTab();
+                })
+                .catch(function (err) {
+                    console.error('[Ratings] Save failed:', err);
+                    self.lbToast('Could not save that rating');
+                });
+        },
+
+        /**
+         * Removes the rating currently open in the editor.
+         */
+        removeRatingFromEditor: function () {
+            var self = this;
+            var state = self._ratingEditor;
+            if (!state || !state.data || !state.data.itemId) { return; }
+            if (!window.confirm('Remove your rating for “' + (state.data.title || 'this title') + '”?')) { return; }
+            self.closeExternalRatingModal();
+            self.deleteRatingById(state.data.itemId, state.data.title || '');
         },
 
         /**
@@ -3910,6 +4024,122 @@
         closeExternalRatingModal: function () {
             var modal = document.getElementById('lbExternalRatingModal');
             if (modal) { modal.remove(); }
+        },
+
+        /**
+         * Agree/disagree buttons for someone else's rating.
+         * @param {string} userId The rating's owner.
+         * @param {string} itemId The rated item.
+         * @param {number} likes Current like count.
+         * @param {number} dislikes Current dislike count.
+         * @param {*} mine The viewer's existing vote (true/false/null).
+         * @returns {string} Markup.
+         */
+        ratingVoteHtml: function (userId, itemId, likes, dislikes, mine) {
+            var self = this;
+            var safeUser = self.escapeJs(userId || '');
+            var safeItem = self.escapeJs(itemId || '');
+            var liked = mine === true;
+            var disliked = mine === false;
+            return '<div class="lb-rating-votes">' +
+                '<button class="lb-vote' + (liked ? ' on' : '') + '" title="Agree"' +
+                ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',true,this)">' +
+                '👍<span>' + likes + '</span></button>' +
+                '<button class="lb-vote' + (disliked ? ' on' : '') + '" title="Disagree"' +
+                ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',false,this)">' +
+                '👎<span>' + dislikes + '</span></button>' +
+                '</div>';
+        },
+
+        /**
+         * Records an agree/disagree on someone's rating and updates the counts in place.
+         * @param {string} userId The rating's owner.
+         * @param {string} itemId The rated item.
+         * @param {boolean} isLike True to agree.
+         * @param {HTMLElement} btn The button pressed.
+         */
+        voteOnRating: function (userId, itemId, isLike, btn) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            var wrap = btn && btn.parentNode;
+            fetch(baseUrl + '/Ratings/Reviews/' + encodeURIComponent(userId) + '/' + encodeURIComponent(itemId) + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                .then(function (data) {
+                    if (!wrap) { return; }
+                    var likes = Number(self.apiField(data, 'likeCount')) || 0;
+                    var dislikes = Number(self.apiField(data, 'dislikeCount')) || 0;
+                    var mine = self.apiField(data, 'userLiked');
+                    wrap.outerHTML = self.ratingVoteHtml(userId, itemId, likes, dislikes,
+                        mine === undefined ? null : mine);
+                })
+                .catch(function (err) {
+                    console.error('[Ratings] Vote failed:', err);
+                    self.lbToast('Could not save that');
+                });
+        },
+
+        /**
+         * Opens the rating editor for an existing rating, on-server or from the catalog.
+         * @param {string} payloadEnc Encoded rating descriptor.
+         */
+        openRatingEditor: function (payloadEnc) {
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            this.showExternalRatingModal(data, true);
+        },
+
+        /**
+         * Asks before deleting a rating, then deletes it.
+         * @param {string} payloadEnc Encoded rating descriptor.
+         */
+        confirmRemoveRating: function (payloadEnc) {
+            var self = this;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(payloadEnc)); } catch (e) { return; }
+            if (!data || !data.itemId) { return; }
+            if (!window.confirm('Remove your rating for “' + (data.title || 'this title') + '”?')) { return; }
+            self.deleteRatingById(data.itemId, data.title || '');
+        },
+
+        /**
+         * Deletes a rating. Catalog titles are stored against a generated item id, so the same
+         * endpoint serves both - which is why removing them needed no new API.
+         * @param {string} itemId The rated item id.
+         * @param {string} title Title, for the confirmation message.
+         */
+        deleteRatingById: function (itemId, title) {
+            var self = this;
+            var baseUrl = ApiClient.serverAddress();
+            fetch(baseUrl + '/Ratings/Items/' + encodeURIComponent(itemId) + '/Rating', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+            })
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } })
+                .then(function () {
+                    self.lbToast('Removed' + (title ? ' “' + title + '”' : ''));
+                    self._profileRatings = null;
+                    self._profileRatingsUser = null;
+                    self.reloadRatingsTab();
+                })
+                .catch(function (err) {
+                    console.error('[Ratings] Delete failed:', err);
+                    self.lbToast('Could not remove that rating');
+                });
+        },
+
+        /**
+         * Redraws the Ratings tab after a change, if it is the tab on screen.
+         */
+        reloadRatingsTab: function () {
+            var active = document.querySelector('.lb-tab.active');
+            if (active && active.getAttribute('data-tab') === 'ratings') {
+                this.switchProfileTab('ratings');
+            }
         },
 
         /**
@@ -4342,6 +4572,33 @@
          */
         notInLibraryInfo: function () {
             this.lbToast('Not on the server yet — click the Request button to ask for this title.');
+        },
+
+        /**
+         * Moves a favourites row up or down and saves the new order.
+         *
+         * Rows are rendered in stored order, so reordering is a swap in that array followed by the
+         * usual debounced save. The whole overview is redrawn because every row's index - and so
+         * every button on it - shifts.
+         * @param {number} rowIndex Row to move.
+         * @param {number} direction -1 for up, 1 for down.
+         */
+        moveFavoriteRow: function (rowIndex, direction) {
+            var self = this;
+            var rows = (self._currentProfile && self._currentProfile.favoriteRows) || [];
+            var target = rowIndex + direction;
+            if (!rows[rowIndex] || target < 0 || target >= rows.length) { return; }
+
+            var moved = rows[rowIndex];
+            rows[rowIndex] = rows[target];
+            rows[target] = moved;
+
+            self.saveFavorites();
+
+            if (self._currentProfileStatus) {
+                self._currentProfileStatus.favoriteRows = rows;
+                self.renderProfileOverviewTab(self._currentProfileStatus.stats || {}, self._currentProfileStatus);
+            }
         },
 
         /**
@@ -4831,6 +5088,11 @@
                     html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
                         'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
                     html += '<span class="lb-row-count">' + itemCount + '/30</span>';
+                    // Row order is the order they are stored in, so moving one is a swap + save.
+                    html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',-1)"' +
+                        (rowIndex === 0 ? ' disabled' : '') + ' title="Move row up">↑</button>';
+                    html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',1)"' +
+                        (rowIndex === favoriteRows.length - 1 ? ' disabled' : '') + ' title="Move row down">↓</button>';
                     html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
                 } else {
                     html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
@@ -5695,6 +5957,8 @@
                 }
 
                 var baseUrl = ApiClient.serverAddress();
+                var isSelf = !!(self._currentProfileStatus && self._currentProfileStatus.isSelf);
+                var profileUserId = self._viewingProfileUserId || '';
                 var html = '<div class="lb-ratings-grid">';
                 ratings.forEach(function (r) {
                     var title = r.itemName || (r.itemName ?? r.ItemName) || r.title || (r.title ?? r.Title) || 'Unknown';
@@ -5713,10 +5977,41 @@
                     }
 
                     var clickAttr = inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"' : '';
-                    var posterStyle = imageUrl ? ' style="background-image: url(\'' + self.escapeHtml(imageUrl) + '\')"' : '';
+                    var safePoster = self.safeCssUrl(imageUrl) || (inLib ? imageUrl : '');
+                    var posterStyle = safePoster ? ' style="background-image: url(\'' + self.escapeHtml(safePoster) + '\')"' : '';
+
+                    // Own profile: edit or remove the rating, including titles that are not on the
+                    // server - previously the only way to change one of those was to re-add the film
+                    // to a profile row and rate it again.
+                    var actions = '';
+                    if (isSelf) {
+                        var editPayload = self.encodePayload({
+                            itemId: itemId,
+                            tmdbId: String(self.apiField(r, 'tmdbId') || ''),
+                            mediaType: self.apiField(r, 'type') === 'Series' ? 'Series' : 'Movie',
+                            title: title,
+                            year: year || null,
+                            poster: imageUrl,
+                            rating: rating,
+                            review: self.apiField(r, 'reviewText') || '',
+                            inLib: !!inLib
+                        });
+                        actions = '<div class="lb-rating-actions">' +
+                            '<button class="lb-rating-act" title="Edit rating"' +
+                            ' onclick="event.stopPropagation();RatingsPlugin.openRatingEditor(\'' + editPayload + '\')">✎</button>' +
+                            '<button class="lb-rating-act danger" title="Remove rating"' +
+                            ' onclick="event.stopPropagation();RatingsPlugin.confirmRemoveRating(\'' + editPayload + '\')">🗑</button>' +
+                            '</div>';
+                    } else if (itemId) {
+                        // Any rating can be agreed or disagreed with now, review text or not.
+                        actions = self.ratingVoteHtml(profileUserId, itemId,
+                            Number(self.apiField(r, 'likeCount')) || 0,
+                            Number(self.apiField(r, 'dislikeCount')) || 0,
+                            self.apiField(r, 'userLiked'));
+                    }
 
                     html += '<div class="lb-rating-card' + (inLib ? '' : ' lb-rating-gone') + '"' + clickAttr + '>' +
-                        '<div class="lb-rating-poster"' + posterStyle + '></div>' +
+                        '<div class="lb-rating-poster"' + posterStyle + '>' + actions + '</div>' +
                         '<div class="lb-rating-info">' +
                         '<div class="lb-rating-title">' + self.escapeHtml(title) +
                         (year ? ' <span class="lb-rating-year">(' + year + ')</span>' : '') + '</div>' +

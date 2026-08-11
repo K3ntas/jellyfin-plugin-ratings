@@ -10401,6 +10401,131 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 }
 
 /* ----------------------------------------------------------------------------
+   Ratings tab: per-card actions, and agreeing with someone else's rating
+   -------------------------------------------------------------------------- */
+.lb-rating-poster {
+    position: relative;
+}
+
+.lb-rating-actions,
+.lb-rating-votes {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.lb-rating-votes {
+    top: auto;
+    bottom: 6px;
+    left: 6px;
+    right: auto;
+    /* Counts are worth seeing without hovering; the edit controls are not. */
+    opacity: 1;
+}
+
+.lb-rating-card:hover .lb-rating-actions,
+.lb-rating-card:focus-within .lb-rating-actions {
+    opacity: 1;
+}
+
+.lb-rating-act,
+.lb-vote {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, .72);
+    cursor: pointer;
+}
+
+.lb-rating-act:hover {
+    background: rgba(0, 164, 220, .9);
+}
+
+.lb-rating-act.danger:hover {
+    background: rgba(231, 76, 60, .9);
+}
+
+.lb-vote.on {
+    background: rgba(0, 224, 84, .85);
+    color: #14181c;
+}
+
+.lb-vote:hover {
+    background: rgba(0, 224, 84, .7);
+    color: #14181c;
+}
+
+/* Review box in the rating editor */
+.lb-ext-review-label {
+    display: block;
+    margin: 14px 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lb-ext-review-label span {
+    font-weight: 400;
+    opacity: .6;
+}
+
+.lb-ext-review {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .06);
+    color: inherit;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 14px;
+}
+
+.lb-btn-danger {
+    /* Sits away from Cancel/Save so Remove is not hit by accident. */
+    margin-right: auto;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    background: rgba(231, 76, 60, .85);
+    color: #fff;
+    cursor: pointer;
+}
+
+.lb-btn-danger:hover {
+    background: #e74c3c;
+}
+
+.lb-row-move {
+    border: none;
+    background: transparent;
+    color: inherit;
+    opacity: .6;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+}
+
+.lb-row-move:hover:not(:disabled) {
+    opacity: 1;
+}
+
+.lb-row-move:disabled {
+    opacity: .2;
+    cursor: default;
+}
+
+/* ----------------------------------------------------------------------------
    Playback: keep the plugin out of the video OSD (issue #74)
 
    During playback Jellyfin shows its own slim overlay header with the back button.

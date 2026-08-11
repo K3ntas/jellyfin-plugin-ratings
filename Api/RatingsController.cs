@@ -617,7 +617,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var ratings = _repository.GetUserRatings(targetUserId);
                 _logger.LogDebug("Retrieved {Count} ratings for user", ratings.Count);
 
-                return Ok(EnrichRatings(ratings));
+                return Ok(EnrichRatings(ratings, authUserId));
             }
             catch (Exception ex)
             {
@@ -668,7 +668,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var ratings = _repository.GetUserRatings(userId);
                 _logger.LogInformation("Retrieved {Count} ratings for current user {UserId}", ratings.Count, userId);
 
-                return Ok(EnrichRatings(ratings));
+                return Ok(EnrichRatings(ratings, userId));
             }
             catch (Exception ex)
             {
@@ -684,7 +684,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="ratings">The raw ratings.</param>
         /// <returns>Enriched rating objects.</returns>
-        private List<object> EnrichRatings(IEnumerable<UserRating> ratings)
+        private List<object> EnrichRatings(IEnumerable<UserRating> ratings, Guid viewerId = default)
         {
             var list = ratings as IList<UserRating> ?? ratings.ToList();
 
@@ -708,26 +708,39 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // fall through with whatever resolved
             }
 
+            // Like/dislike counts for every rating, not only ones carrying review text - a plain
+            // star rating can be agreed or disagreed with too. Collected in a single pass, since
+            // the per-item lookup walks the whole like collection each time.
+            Dictionary<(Guid ReviewerUserId, Guid ItemId), (int LikeCount, int DislikeCount)> likeMap;
+            try
+            {
+                likeMap = _repository.GetReviewLikeCountsFor(list.Select(r => r.UserId).Distinct());
+            }
+            catch
+            {
+                likeMap = new Dictionary<(Guid, Guid), (int, int)>();
+            }
+
+            // The viewer's own votes, so the buttons come back highlighted after a reload rather
+            // than only until the page is refreshed.
+            Dictionary<(Guid ReviewerUserId, Guid ItemId), bool> myVotes;
+            try
+            {
+                myVotes = _repository.GetUserReviewLikes(viewerId);
+            }
+            catch
+            {
+                myVotes = new Dictionary<(Guid, Guid), bool>();
+            }
+
             var result = new List<object>(list.Count);
             foreach (var r in list)
             {
                 itemMap.TryGetValue(r.ItemId, out var item);
 
-                // Only reviews (ratings with text) carry like/dislike counts.
-                int likeCount = 0, dislikeCount = 0;
-                if (!string.IsNullOrWhiteSpace(r.ReviewText))
-                {
-                    try
-                    {
-                        var lc = _repository.GetReviewLikeCounts(r.UserId, r.ItemId);
-                        likeCount = lc.LikeCount;
-                        dislikeCount = lc.DislikeCount;
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
-                }
+                likeMap.TryGetValue((r.UserId, r.ItemId), out var lc);
+                var likeCount = lc.LikeCount;
+                var dislikeCount = lc.DislikeCount;
 
                 // Fall back to the snapshot taken when the rating was made. Without this a film
                 // removed from the library left a row of stars with no title and no poster,
@@ -761,7 +774,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     IsExternal = r.IsExternal,
                     PosterUrl = poster,
                     LikeCount = likeCount,
-                    DislikeCount = dislikeCount
+                    DislikeCount = dislikeCount,
+                    UserLiked = myVotes.TryGetValue((r.UserId, r.ItemId), out var mine) ? (bool?)mine : null
                 });
             }
 
@@ -1837,10 +1851,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Verify review exists
+                // A plain star rating can be agreed or disagreed with as well, so only the rating
+                // itself has to exist - review text is no longer required.
                 var rating = _repository.GetUserRating(reviewerUserId, itemId);
-                if (rating == null || string.IsNullOrWhiteSpace(rating.ReviewText))
+                if (rating == null)
                 {
-                    return NotFound("Review not found");
+                    return NotFound("Rating not found");
                 }
 
                 await _repository.SetReviewLikeAsync(reviewerUserId, itemId, userId, isLike).ConfigureAwait(false);

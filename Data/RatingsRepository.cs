@@ -1973,12 +1973,80 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Gets like/dislike counts for every rating belonging to the given reviewers, in one pass.
+        ///
+        /// The single-item overload walks the whole like collection per call, which is fine for the
+        /// handful of reviews on a page but not for a profile with hundreds of ratings - now that
+        /// any rating can be liked, not only one with review text, that would be a scan per rating.
+        /// </summary>
+        /// <param name="reviewerUserIds">The reviewers to collect counts for.</param>
+        /// <returns>Counts keyed by reviewer and item.</returns>
+        public Dictionary<(Guid ReviewerUserId, Guid ItemId), (int LikeCount, int DislikeCount)> GetReviewLikeCountsFor(
+            IEnumerable<Guid> reviewerUserIds)
+        {
+            var wanted = new HashSet<Guid>(reviewerUserIds ?? Enumerable.Empty<Guid>());
+            var result = new Dictionary<(Guid, Guid), (int, int)>();
+            if (wanted.Count == 0)
+            {
+                return result;
+            }
+
+            lock (_lock)
+            {
+                foreach (var like in _reviewLikes.Values)
+                {
+                    if (!wanted.Contains(like.ReviewerUserId))
+                    {
+                        continue;
+                    }
+
+                    var key = (like.ReviewerUserId, like.ItemId);
+                    result.TryGetValue(key, out var counts);
+                    result[key] = like.IsLike
+                        ? (counts.Item1 + 1, counts.Item2)
+                        : (counts.Item1, counts.Item2 + 1);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets the current user's like/dislike status for a review.
         /// </summary>
         /// <param name="reviewerUserId">User ID of the review owner.</param>
         /// <param name="itemId">Item ID of the review.</param>
         /// <param name="userId">Current user's ID.</param>
         /// <returns>True if liked, false if disliked, null if no vote.</returns>
+        /// <summary>
+        /// Gets every vote one user has cast, keyed by whose rating it was on and which item.
+        /// Lets a list of ratings show which ones the viewer already voted on without a scan per
+        /// row (see <see cref="GetReviewLikeCountsFor"/> for the same reasoning).
+        /// </summary>
+        /// <param name="userId">The viewer.</param>
+        /// <returns>True for a like, false for a dislike, keyed by reviewer and item.</returns>
+        public Dictionary<(Guid ReviewerUserId, Guid ItemId), bool> GetUserReviewLikes(Guid userId)
+        {
+            var result = new Dictionary<(Guid, Guid), bool>();
+            if (userId == Guid.Empty)
+            {
+                return result;
+            }
+
+            lock (_lock)
+            {
+                foreach (var like in _reviewLikes.Values)
+                {
+                    if (like.UserId == userId)
+                    {
+                        result[(like.ReviewerUserId, like.ItemId)] = like.IsLike;
+                    }
+                }
+            }
+
+            return result;
+        }
+
         public bool? GetUserReviewLike(Guid reviewerUserId, Guid itemId, Guid userId)
         {
             lock (_lock)
