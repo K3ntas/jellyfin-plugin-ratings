@@ -1419,7 +1419,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
-                    self.showToast(t.privacySaved || 'Settings saved', 'success');
+                    self.lbToast(t.privacySaved || 'Settings saved');
                 }
             })
             .catch(function (err) {
@@ -1446,7 +1446,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
-                    self.showToast(t.privacyPresetApplied || 'Preset applied', 'success');
+                    self.lbToast(t.privacyPresetApplied || 'Preset applied');
                     // Reload settings to reflect changes
                     self.loadFriendsData('settings');
                 }
@@ -2873,6 +2873,20 @@
          * @param {string} raw Candidate URL.
          * @returns {string} The URL, or '' if it is not safe.
          */
+        /**
+         * Formats a byte count for display. Shared, unlike the per-renderer formatSize closures.
+         * @param {number} bytes Byte count.
+         * @returns {string} Human-readable size.
+         */
+        formatBytes: function (bytes) {
+            var n = Number(bytes);
+            if (!Number.isFinite(n) || n <= 0) { return '0 B'; }
+            var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            var i = 0;
+            while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+            return (i === 0 ? n : n.toFixed(1)) + ' ' + units[i];
+        },
+
         safeCssUrl: function (raw) {
             if (!raw) { return ''; }
             var value = String(raw);
@@ -13758,10 +13772,107 @@
                     `;
                 });
                 html += '</div>';
+                // Leftover trickplay tiles are invisible in Jellyfin's own UI, so they are shown
+                // here next to the free space they are taking up.
+                html += '<div id="orphanTrickplaySection" class="orphan-trickplay"></div>';
                 body.innerHTML = html;
+                self.loadOrphanedTrickplay();
             } catch (error) {
                 console.error('Error loading disk usage:', error);
                 body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading disk usage</div>`;
+            }
+        },
+
+        /**
+         * Shows trickplay folders left behind by media that is no longer in the library.
+         *
+         * Deleting media leaves its trickplay tiles on disk, and they can add up to a lot on a
+         * large library. Clearing the whole trickplay directory would work but forces every
+         * remaining file to be reprocessed, so only the orphaned folders are offered here.
+         */
+        loadOrphanedTrickplay: async function () {
+            const self = this;
+            const box = document.getElementById('orphanTrickplaySection');
+            if (!box) return;
+
+            box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                <div class="orphan-trickplay-note">${self.t('orphanScanning') || 'Scanning…'}</div>`;
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                const items = self.apiField(data, 'items') || [];
+                const totalBytes = Number(self.apiField(data, 'totalBytes')) || 0;
+
+                if (self.apiField(data, 'supported') === false) {
+                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                        <div class="orphan-trickplay-note">${self.escapeHtml(self.apiField(data, 'reason') || 'Not available on this server.')}</div>`;
+                    return;
+                }
+
+                if (!items.length) {
+                    box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                        <div class="orphan-trickplay-note">${self.t('orphanNone') || 'Nothing left behind — every trickplay folder belongs to media still in your library.'}</div>`;
+                    return;
+                }
+
+                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                    <div class="orphan-trickplay-note">
+                        ${items.length} ${items.length === 1 ? 'folder' : 'folders'} from media that is no longer in your library,
+                        taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
+                        Removing these does not affect any media you still have, and nothing is reprocessed.
+                    </div>
+                    <button class="orphan-trickplay-btn" onclick="RatingsPlugin.deleteOrphanedTrickplay()">
+                        ${self.t('orphanDelete') || 'Delete leftover data'} (${self.escapeHtml(self.formatBytes(totalBytes))})
+                    </button>`;
+            } catch (error) {
+                console.error('Error scanning for orphaned trickplay:', error);
+                box.innerHTML = `<div class="orphan-trickplay-head">${self.t('orphanTitle') || 'Leftover trickplay data'}</div>
+                    <div class="orphan-trickplay-note error">Could not scan (${self.escapeHtml(String(error && error.message ? error.message : error))}).</div>`;
+            }
+        },
+
+        /**
+         * Removes every leftover trickplay folder, after confirming.
+         *
+         * No paths are sent: the server re-scans and deletes only what it identifies itself.
+         */
+        deleteOrphanedTrickplay: async function () {
+            const self = this;
+            if (!window.confirm(self.t('orphanConfirm')
+                || 'Delete all leftover trickplay data? Media still in your library is not affected.')) {
+                return;
+            }
+
+            const btn = document.querySelector('.orphan-trickplay-btn');
+            if (btn) { btn.disabled = true; btn.textContent = self.t('orphanDeleting') || 'Deleting…'; }
+
+            try {
+                const baseUrl = ApiClient.serverAddress();
+                const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay/Delete`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Emby-Token': ApiClient.accessToken(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                const removed = Number(self.apiField(data, 'removed')) || 0;
+                const freed = Number(self.apiField(data, 'freedBytes')) || 0;
+                self.lbToast('Removed ' + removed + ' folder' + (removed === 1 ? '' : 's') + ', freed ' + self.formatBytes(freed));
+                self.loadDiskUsage();
+            } catch (error) {
+                console.error('Error deleting orphaned trickplay:', error);
+                self.lbToast('Could not delete leftover data');
+                if (btn) { btn.disabled = false; }
             }
         },
 

@@ -10657,6 +10657,59 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 }
 
 /* ----------------------------------------------------------------------------
+   Media Management: leftover trickplay data
+   -------------------------------------------------------------------------- */
+.orphan-trickplay {
+    margin: 18px 0 4px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .03);
+}
+
+.orphan-trickplay-head {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.orphan-trickplay-note {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #9aa9b8;
+}
+
+.orphan-trickplay-note.error {
+    color: #e74c3c;
+}
+
+.orphan-trickplay-note strong {
+    color: #fff;
+}
+
+.orphan-trickplay-btn {
+    margin-top: 12px;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: #c0392b;
+    cursor: pointer;
+}
+
+.orphan-trickplay-btn:hover:not(:disabled) {
+    background: #e74c3c;
+}
+
+.orphan-trickplay-btn:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+/* ----------------------------------------------------------------------------
    Playback: keep the plugin out of the video OSD (issue #74)
 
    During playback Jellyfin shows its own slim overlay header with the back button.

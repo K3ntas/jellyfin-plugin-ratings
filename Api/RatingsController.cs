@@ -4753,6 +4753,250 @@ namespace Jellyfin.Plugin.Ratings.Api
             return Guid.Empty;
         }
 
+        #region Admin - Orphaned trickplay data
+
+        /// <summary>
+        /// Resolves the folder Jellyfin keeps trickplay tiles in, by asking Jellyfin rather than
+        /// assembling a path ourselves: the per-item directory's parent IS the root.
+        /// </summary>
+        /// <returns>The trickplay root, or null if it cannot be determined.</returns>
+        private string? GetTrickplayRoot()
+        {
+            if (_pathManager == null)
+            {
+                return null;
+            }
+
+            var probe = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+            {
+                IncludeItemTypes = new[]
+                {
+                    Jellyfin.Data.Enums.BaseItemKind.Movie,
+                    Jellyfin.Data.Enums.BaseItemKind.Episode,
+                },
+                Recursive = true,
+                Limit = 1,
+            }).FirstOrDefault();
+
+            if (probe == null)
+            {
+                return null;
+            }
+
+            var itemDir = _pathManager.GetTrickplayDirectory(probe, false);
+            return string.IsNullOrEmpty(itemDir) ? null : Path.GetDirectoryName(itemDir);
+        }
+
+        /// <summary>
+        /// Total size of a directory tree, ignoring anything unreadable.
+        /// </summary>
+        /// <param name="path">Directory to measure.</param>
+        /// <returns>Size in bytes.</returns>
+        private static long DirectorySize(string path)
+        {
+            long total = 0;
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        total += new FileInfo(file).Length;
+                    }
+                    catch
+                    {
+                        // skip files that vanish or cannot be read
+                    }
+                }
+            }
+            catch
+            {
+                // unreadable directory: report what we have
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        /// Finds trickplay folders whose media is no longer in the library.
+        ///
+        /// Jellyfin names each folder after the item id, so a folder whose id no longer resolves
+        /// belongs to media that has been removed - the tiles were left behind. Folders whose name
+        /// is not an item id are ignored entirely rather than guessed at.
+        /// </summary>
+        /// <returns>The orphaned folders with their sizes.</returns>
+        private List<(Guid Id, string Path, long Size)> ScanOrphanedTrickplay()
+        {
+            var found = new List<(Guid, string, long)>();
+            var root = GetTrickplayRoot();
+            if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
+            {
+                return found;
+            }
+
+            foreach (var dir in Directory.EnumerateDirectories(root))
+            {
+                var name = Path.GetFileName(dir);
+                if (!Guid.TryParse(name, out var itemId))
+                {
+                    continue;
+                }
+
+                if (_libraryManager.GetItemById(itemId) != null)
+                {
+                    continue;
+                }
+
+                found.Add((itemId, dir, DirectorySize(dir)));
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Lists trickplay folders left behind by media that is no longer in the library.
+        /// </summary>
+        /// <returns>The orphaned folders and how much space they take.</returns>
+        [HttpGet("Admin/OrphanedTrickplay")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> GetOrphanedTrickplay()
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(userId))
+                {
+                    return Forbid();
+                }
+
+                var root = GetTrickplayRoot();
+                if (string.IsNullOrEmpty(root))
+                {
+                    return Ok(new
+                    {
+                        supported = false,
+                        reason = "Trickplay location could not be determined on this server.",
+                        items = Array.Empty<object>(),
+                        totalBytes = 0L,
+                    });
+                }
+
+                var orphans = ScanOrphanedTrickplay();
+
+                return Ok(new
+                {
+                    supported = true,
+                    root,
+                    items = orphans.Select(o => new
+                    {
+                        itemId = o.Id.ToString("N"),
+                        name = Path.GetFileName(o.Path),
+                        sizeBytes = o.Size,
+                    }).ToList(),
+                    totalBytes = orphans.Sum(o => o.Size),
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error scanning for orphaned trickplay data");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Deletes trickplay folders left behind by removed media.
+        ///
+        /// The caller sends ids, never paths: the server re-scans and deletes only folders it has
+        /// itself just identified as orphaned, and each one is confirmed to sit directly under the
+        /// trickplay root before removal. A request cannot therefore point the delete anywhere
+        /// else on disk.
+        /// </summary>
+        /// <param name="request">Optional ids to remove; all orphans when omitted.</param>
+        /// <returns>How many folders were removed and how much space that freed.</returns>
+        [HttpPost("Admin/OrphanedTrickplay/Delete")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> DeleteOrphanedTrickplay([FromBody] OrphanedTrickplayDeleteDto? request = null)
+        {
+            try
+            {
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(userId))
+                {
+                    return Forbid();
+                }
+
+                var root = GetTrickplayRoot();
+                if (string.IsNullOrEmpty(root))
+                {
+                    return BadRequest("Trickplay location could not be determined on this server.");
+                }
+
+                var rootFull = Path.GetFullPath(root);
+                var orphans = ScanOrphanedTrickplay();
+
+                HashSet<Guid>? wanted = null;
+                if (request?.ItemIds != null && request.ItemIds.Count > 0)
+                {
+                    wanted = new HashSet<Guid>();
+                    foreach (var raw in request.ItemIds)
+                    {
+                        if (Guid.TryParse(raw, out var parsed))
+                        {
+                            wanted.Add(parsed);
+                        }
+                    }
+                }
+
+                long freed = 0;
+                var removed = 0;
+
+                foreach (var orphan in orphans)
+                {
+                    if (wanted != null && !wanted.Contains(orphan.Id))
+                    {
+                        continue;
+                    }
+
+                    // Belt and braces: the path came from our own scan, but confirm it really is
+                    // a direct child of the trickplay root before deleting anything.
+                    var full = Path.GetFullPath(orphan.Path);
+                    var parent = Path.GetDirectoryName(full);
+                    if (parent == null || !string.Equals(Path.GetFullPath(parent), rootFull, StringComparison.Ordinal))
+                    {
+                        _logger.LogWarning("Skipping trickplay path outside the root: {Path}", full);
+                        continue;
+                    }
+
+                    try
+                    {
+                        Directory.Delete(full, true);
+                        freed += orphan.Size;
+                        removed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete orphaned trickplay folder {Path}", full);
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Admin removed {Count} orphaned trickplay folder(s), freeing {Bytes} bytes",
+                    removed,
+                    freed);
+
+                return Ok(new { removed, freedBytes = freed });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting orphaned trickplay data");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        #endregion
+
         #region Admin - Disk Usage
 
         /// <summary>
