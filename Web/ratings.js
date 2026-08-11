@@ -13826,15 +13826,24 @@
 
                 // Always say what was examined and where. "Nothing found" on its own is
                 // indistinguishable from a scan that never ran.
-                const evidence = `Checked <strong>${scanned}</strong> trickplay ${scanned === 1 ? 'folder' : 'folders'} in
-                    <code>${self.escapeHtml(root)}</code>${skipped ? ` (${skipped} not named after a library item, left alone)` : ''}.`;
+                // Both storage layouts are scanned: the central directory, and "<video>.trickplay"
+                // folders beside the media for libraries set to save next to media.
+                const siblingScanned = Number(self.apiField(data, 'siblingScanned')) || 0;
+                const siblingCount = Number(self.apiField(data, 'siblingCount')) || 0;
+                const centralCount = items.length - siblingCount;
+                const breakdown = (centralCount && siblingCount)
+                    ? ` (${centralCount} in the trickplay folder, ${siblingCount} next to your media)`
+                    : (siblingCount ? ' (stored next to your media)' : '');
+                const evidence = `Checked <strong>${scanned}</strong> in <code>${self.escapeHtml(root)}</code>`
+                    + `${skipped ? ` (${skipped} not named after a library item, left alone)` : ''}`
+                    + ` and <strong>${siblingScanned}</strong> stored next to your media.`;
 
                 if (!items.length) {
                     box.innerHTML = `<div class="orphan-trickplay-head">${HEAD}</div>
                         <div class="orphan-trickplay-note">
-                            ${scanned === 0
-                                ? `No trickplay folders exist yet in <code>${self.escapeHtml(root)}</code> — nothing to clean up.`
-                                : `${evidence} Every one belongs to media still in your library, so there is nothing to remove.`}
+                            ${scanned === 0 && siblingScanned === 0
+                                ? `No trickplay data found — neither in <code>${self.escapeHtml(root)}</code> nor beside your media. Nothing to clean up.`
+                                : `${evidence} Every one belongs to media you still have, so there is nothing to remove.`}
                         </div>`;
                     return;
                 }
@@ -13843,7 +13852,7 @@
                     <div class="orphan-trickplay-note">
                         ${evidence}<br>
                         <strong>${items.length}</strong> ${items.length === 1 ? 'folder belongs' : 'folders belong'} to media
-                        that is no longer in your library, taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
+                        you no longer have${breakdown}, taking <strong>${self.escapeHtml(self.formatBytes(totalBytes))}</strong>.
                         Removing them does not affect any media you still have, and nothing is reprocessed.
                     </div>
                     <button class="orphan-trickplay-btn" onclick="RatingsPlugin.deleteOrphanedTrickplay()">
