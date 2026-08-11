@@ -809,27 +809,39 @@ namespace Jellyfin.Plugin.Ratings.Api
         [HttpGet("Search")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<object> SearchLibrary(
+        public async Task<ActionResult<object>> SearchLibrary(
             [FromQuery] string? query = null,
             [FromQuery] [Range(1, 50)] int limit = 10)
         {
             try
             {
-                var ids = FindByNormalizedName(query ?? string.Empty, limit);
+                var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+
+                // Ask the index for more than we need: the permission-scoped fetch below drops
+                // anything this account cannot see, and trimming afterwards keeps a restricted
+                // user from getting a short list just because the extras were filtered out.
+                var ids = FindByNormalizedName(query ?? string.Empty, limit * 4);
                 if (ids.Count == 0)
                 {
                     return Ok(new { items = Array.Empty<object>() });
                 }
 
+                // Scoped to the caller. The index behind FindByNormalizedName is built once for the
+                // whole server, so without this a user could find titles in libraries Jellyfin does
+                // not let them browse. Jellyfin applies the account's library permissions when the
+                // query carries the user, so inaccessible ids simply do not come back.
+                var searchUser = _userManager.GetUserById(userId);
                 var items = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
                 {
                     ItemIds = ids.ToArray(),
+                    User = searchUser,
                 });
 
                 // Preserve the ranking from the index rather than the library's own ordering.
                 var order = ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
                 var result = items
                     .OrderBy(i => order.TryGetValue(i.Id, out var pos) ? pos : int.MaxValue)
+                    .Take(limit)
                     .Select(i => new
                     {
                         Id = i.Id.ToString("N"),
@@ -1498,9 +1510,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Filter by library if parentId was provided. User is required so a GROUPED
                     // view (merged folders) expands into its underlying folders instead of
                     // resolving to nothing.
+                    // The user goes on the query ALWAYS, not only when a library was picked: it is
+                    // what makes Jellyfin apply this account's library permissions, so without it
+                    // the unfiltered view listed titles from libraries the account cannot browse.
+                    // (It is also what expands a grouped view into its underlying folders.)
+                    query.User = sortUser;
                     if (parentGuid.HasValue)
                     {
-                        query.User = sortUser;
                         query.ParentId = parentGuid.Value;
                     }
 
@@ -1720,7 +1736,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(adminId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 var config = Plugin.Instance?.Configuration;
@@ -2300,7 +2316,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>Recently announced media.</returns>
         [HttpGet("LatestMedia")]
         [Authorize]
-        public ActionResult<object> GetLatestAnnouncedMedia([FromQuery] int limit = 30, [FromQuery] int days = 30)
+        public async Task<ActionResult<object>> GetLatestAnnouncedMedia([FromQuery] int limit = 30, [FromQuery] int days = 30)
         {
             try
             {
@@ -2331,7 +2347,14 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     var ids = newest.Select(n => n.ItemId).Distinct().ToArray();
                     foreach (var item in _libraryManager.GetItemList(
-                        new MediaBrowser.Controller.Entities.InternalItemsQuery { ItemIds = ids }))
+                        // Scoped to the caller so announcements cannot reveal titles from
+                        // libraries this account is not permitted to browse.
+                        new MediaBrowser.Controller.Entities.InternalItemsQuery
+                        {
+                            ItemIds = ids,
+                            User = _userManager.GetUserById(
+                                await GetAuthenticatedUserIdAsync().ConfigureAwait(false)),
+                        }))
                     {
                         itemMap[item.Id] = item;
                     }
@@ -2446,7 +2469,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can send test notifications");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can send test notifications");
                 }
 
                 // Try to get a random movie, series, or episode from the library
@@ -2957,7 +2980,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can view all requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can view all requests");
                 }
                 // API key auth passes through - has implicit admin rights
 
@@ -2997,7 +3020,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can update request status");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can update request status");
                 }
 
                 // Validate status
@@ -3063,7 +3086,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var isOwner = existingRequest.UserId == userId;
                 if (!isOwner && !IsJellyfinAdmin(userId))
                 {
-                    return Forbid("You can only delete your own requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "You can only delete your own requests");
                 }
 
                 var result = await _repository.DeleteMediaRequestAsync(requestId).ConfigureAwait(false);
@@ -3158,7 +3181,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Users can only edit their own requests
                 if (existingRequest.UserId != userId)
                 {
-                    return Forbid("You can only edit your own requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "You can only edit your own requests");
                 }
 
                 // Users can only edit pending requests
@@ -3232,7 +3255,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can snooze requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can snooze requests");
                 }
 
                 // Parse the snooze date
@@ -3282,7 +3305,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can unsnooze requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can unsnooze requests");
                 }
 
                 var result = await _repository.UnsnoozeMediaRequestAsync(requestId).ConfigureAwait(false);
@@ -3375,7 +3398,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can access media management");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can access media management");
                 }
 
                 // Get user for play count data (null for API key auth)
@@ -3760,7 +3783,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can schedule deletions");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can schedule deletions");
                 }
 
                 var user = _userManager.GetUserById(userId);
@@ -3845,7 +3868,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can cancel scheduled deletions");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can cancel scheduled deletions");
                 }
 
                 var user = _userManager.GetUserById(userId);
@@ -4161,7 +4184,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can view all deletion requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can view all deletion requests");
                 }
 
                 var requests = _repository.GetAllDeletionRequests();
@@ -4202,7 +4225,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Only administrators can action deletion requests");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can action deletion requests");
                 }
 
                 var user = _userManager.GetUserById(userId);
@@ -4330,7 +4353,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(adminId))
                 {
-                    return Forbid("Only administrators can create bans");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can create bans");
                 }
 
                 var admin = _userManager.GetUserById(adminId);
@@ -4410,7 +4433,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(adminId))
                 {
-                    return Forbid("Only administrators can view bans");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can view bans");
                 }
 
                 var bans = _repository.GetActiveBans(banType.ToLower());
@@ -4469,7 +4492,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(adminId))
                 {
-                    return Forbid("Only administrators can lift bans");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can lift bans");
                 }
 
                 var lifted = await _repository.LiftBanAsync(banId).ConfigureAwait(false);
@@ -5011,7 +5034,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 var disks = new List<object>();
@@ -5194,7 +5217,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 var duplicateGroups = new List<object>();
@@ -5383,7 +5406,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 // Accept both "deleteFile" and "deleteFiles" so an older cached frontend cannot
@@ -5453,7 +5476,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 if (_restartCts != null)
@@ -5504,7 +5527,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 if (_restartCts == null)
@@ -5547,7 +5570,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
                 if (!IsAdminRequest(userId))
                 {
-                    return Forbid("Admin access required");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
                 }
 
                 if (_restartScheduledAt == null)
