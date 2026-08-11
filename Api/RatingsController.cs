@@ -4807,7 +4807,28 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             var itemDir = _pathManager.GetTrickplayDirectory(probe, false);
-            return string.IsNullOrEmpty(itemDir) ? null : Path.GetDirectoryName(itemDir);
+            if (string.IsNullOrEmpty(itemDir))
+            {
+                return null;
+            }
+
+            var parent = Path.GetDirectoryName(itemDir);
+            if (string.IsNullOrEmpty(parent))
+            {
+                return null;
+            }
+
+            // Jellyfin shards this directory by the first two characters of the item id, so the
+            // item's parent is a shard like ".../trickplay/1b", not the root. Climbing one more
+            // level only when the parent really looks like a shard keeps this correct for both
+            // layouts, rather than assuming either.
+            var parentName = Path.GetFileName(parent);
+            if (parentName.Length == 2 && parentName.All(Uri.IsHexDigit))
+            {
+                return Path.GetDirectoryName(parent) ?? parent;
+            }
+
+            return parent;
         }
 
         /// <summary>
@@ -4872,22 +4893,46 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return found;
             }
 
-            foreach (var dir in Directory.EnumerateDirectories(root))
+            // Item folders sit one level down inside a two-character shard ("1b/<itemid>"), so both
+            // levels are walked. A flat layout still works: a directory named like an item id is
+            // treated as an item wherever it is found.
+            foreach (var entry in Directory.EnumerateDirectories(root))
             {
-                scanned++;
-                var name = Path.GetFileName(dir);
-                if (!Guid.TryParse(name, out var itemId))
+                var entryName = Path.GetFileName(entry);
+
+                if (Guid.TryParse(entryName, out var flatId))
+                {
+                    scanned++;
+                    if (_libraryManager.GetItemById(flatId) == null)
+                    {
+                        found.Add((flatId, entry, DirectorySize(entry)));
+                    }
+
+                    continue;
+                }
+
+                if (entryName.Length != 2 || !entryName.All(Uri.IsHexDigit))
                 {
                     skipped++;
                     continue;
                 }
 
-                if (_libraryManager.GetItemById(itemId) != null)
+                foreach (var dir in Directory.EnumerateDirectories(entry))
                 {
-                    continue;
-                }
+                    scanned++;
+                    if (!Guid.TryParse(Path.GetFileName(dir), out var itemId))
+                    {
+                        skipped++;
+                        continue;
+                    }
 
-                found.Add((itemId, dir, DirectorySize(dir)));
+                    if (_libraryManager.GetItemById(itemId) != null)
+                    {
+                        continue;
+                    }
+
+                    found.Add((itemId, dir, DirectorySize(dir)));
+                }
             }
 
             return found;
@@ -5002,11 +5047,19 @@ namespace Jellyfin.Plugin.Ratings.Api
                         continue;
                     }
 
-                    // Belt and braces: the path came from our own scan, but confirm it really is
-                    // a direct child of the trickplay root before deleting anything.
+                    // Belt and braces: the path came from our own scan, but confirm it really sits
+                    // inside the trickplay root before deleting anything. Item folders are one or
+                    // two levels down depending on whether the layout is sharded, so this checks
+                    // containment rather than a direct-child relationship - with the separator
+                    // appended, so a sibling directory whose name merely starts with the root
+                    // ("/config/data/trickplay-old") cannot pass.
                     var full = Path.GetFullPath(orphan.Path);
-                    var parent = Path.GetDirectoryName(full);
-                    if (parent == null || !string.Equals(Path.GetFullPath(parent), rootFull, StringComparison.Ordinal))
+                    var rootPrefix = rootFull.EndsWith(Path.DirectorySeparatorChar)
+                        ? rootFull
+                        : rootFull + Path.DirectorySeparatorChar;
+
+                    if (!full.StartsWith(rootPrefix, StringComparison.Ordinal)
+                        || full.Contains("..", StringComparison.Ordinal))
                     {
                         _logger.LogWarning("Skipping trickplay path outside the root: {Path}", full);
                         continue;
