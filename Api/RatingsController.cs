@@ -4939,6 +4939,86 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Finds "&lt;video&gt;.trickplay" folders sitting beside media that no longer exists.
+        ///
+        /// With "save trickplay images next to media" the tiles never reach the central directory -
+        /// they live in a sibling folder named after the video file. Deleting the video leaves that
+        /// folder behind, and nothing in the central scan can see it.
+        ///
+        /// The test needs no library lookup: the folder is orphaned when the video file it is named
+        /// after is gone. That stays correct even for media Jellyfin never indexed.
+        /// </summary>
+        /// <param name="scanned">Sibling folders examined.</param>
+        /// <returns>The orphaned folders with their sizes.</returns>
+        private List<(string Path, long Size)> ScanOrphanedSiblingTrickplay(out int scanned)
+        {
+            var found = new List<(string, long)>();
+            scanned = 0;
+
+            List<string> roots;
+            try
+            {
+                roots = _libraryManager.GetVirtualFolders()
+                    .SelectMany(v => v.Locations ?? Array.Empty<string>())
+                    .Where(p => !string.IsNullOrEmpty(p) && Directory.Exists(p))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not enumerate library folders for sibling trickplay scan");
+                return found;
+            }
+
+            foreach (var root in roots)
+            {
+                IEnumerable<string> dirs;
+                try
+                {
+                    dirs = Directory.EnumerateDirectories(root, "*.trickplay", SearchOption.AllDirectories);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not walk library folder {Root}", root);
+                    continue;
+                }
+
+                foreach (var dir in dirs)
+                {
+                    scanned++;
+
+                    try
+                    {
+                        var parent = Path.GetDirectoryName(dir);
+                        if (parent == null)
+                        {
+                            continue;
+                        }
+
+                        // "Movie.1080p.trickplay" belongs to "Movie.1080p.<ext>". Compared by name
+                        // rather than a glob, so brackets in a title cannot break the match.
+                        var baseName = Path.GetFileName(dir);
+                        baseName = baseName.Substring(0, baseName.Length - ".trickplay".Length);
+
+                        var mediaStillThere = Directory.EnumerateFiles(parent).Any(f =>
+                            string.Equals(Path.GetFileNameWithoutExtension(f), baseName, StringComparison.OrdinalIgnoreCase));
+
+                        if (!mediaStillThere)
+                        {
+                            found.Add((dir, DirectorySize(dir)));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Skipping sibling trickplay folder {Dir}", dir);
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
         /// Lists trickplay folders left behind by media that is no longer in the library.
         /// </summary>
         /// <returns>The orphaned folders and how much space they take.</returns>
@@ -4968,6 +5048,23 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var orphans = ScanOrphanedTrickplay(out var scanned, out var skipped);
+                var siblings = ScanOrphanedSiblingTrickplay(out var siblingScanned);
+
+                var items = orphans.Select(o => new
+                {
+                    itemId = o.Id.ToString("N"),
+                    name = Path.GetFileName(o.Path),
+                    sizeBytes = o.Size,
+                    nextToMedia = false,
+                })
+                .Concat(siblings.Select(s => new
+                {
+                    itemId = string.Empty,
+                    name = Path.GetFileName(s.Path),
+                    sizeBytes = s.Size,
+                    nextToMedia = true,
+                }))
+                .ToList();
 
                 return Ok(new
                 {
@@ -4976,13 +5073,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Reported so "nothing found" can be told apart from "nothing ran".
                     scanned,
                     skipped,
-                    items = orphans.Select(o => new
-                    {
-                        itemId = o.Id.ToString("N"),
-                        name = Path.GetFileName(o.Path),
-                        sizeBytes = o.Size,
-                    }).ToList(),
-                    totalBytes = orphans.Sum(o => o.Size),
+                    // Libraries set to "save trickplay next to media" keep nothing in the central
+                    // directory, so these are counted separately - otherwise a server using that
+                    // setting looks like it has no trickplay at all.
+                    siblingScanned,
+                    siblingCount = siblings.Count,
+                    items,
+                    totalBytes = orphans.Sum(o => o.Size) + siblings.Sum(s => s.Size),
                 });
             }
             catch (Exception ex)
@@ -5074,6 +5171,35 @@ namespace Jellyfin.Plugin.Ratings.Api
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "Could not delete orphaned trickplay folder {Path}", full);
+                    }
+                }
+
+                // Sibling folders live beside the media, not under the trickplay root, so they get
+                // their own containment rule: the path must come from this same fresh scan AND
+                // still end in ".trickplay". As with the central ones, the client never supplies
+                // a path - it can only ask for all of them.
+                if (wanted == null)
+                {
+                    foreach (var sibling in ScanOrphanedSiblingTrickplay(out _))
+                    {
+                        var siblingFull = Path.GetFullPath(sibling.Path);
+                        if (!siblingFull.EndsWith(".trickplay", StringComparison.OrdinalIgnoreCase)
+                            || siblingFull.Contains("..", StringComparison.Ordinal))
+                        {
+                            _logger.LogWarning("Skipping unexpected sibling trickplay path: {Path}", siblingFull);
+                            continue;
+                        }
+
+                        try
+                        {
+                            Directory.Delete(siblingFull, true);
+                            freed += sibling.Size;
+                            removed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Could not delete sibling trickplay folder {Path}", siblingFull);
+                        }
                     }
                 }
 
