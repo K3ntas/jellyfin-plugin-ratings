@@ -2769,10 +2769,16 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
-            if (text == null) return '';
+            if (text == null) { return ''; }
             var div = document.createElement('div');
             div.textContent = String(text);
-            return div.innerHTML;
+            // The HTML fragment serializer escapes & < > in a text node but NOT quotes, and this
+            // function guards ~36 double-quoted ATTRIBUTE values across the bundle. Without the
+            // quotes escaped, a value containing " closes the attribute and the rest becomes
+            // markup - a stored XSS. Escaped here rather than at each call site so no site can
+            // be missed. (NB: this object literal declares escapeHtml more than once; every copy
+            // must match, since the last declaration is the one that actually runs.)
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -4498,12 +4504,16 @@
             var self = this;
             var base = ApiClient.serverAddress();
             var notInLib = self.isFavNotInLibrary(fav);
-            var itemId = fav.itemId || (fav.itemId ?? fav.ItemId) || '';
-            // The catalog poster is an external URL that ends up inside a CSS url('...'), so it
-            // goes through the same guard as everywhere else.
+            // FavoriteItem.ItemId is a free-form string the profile owner controls, and it lands
+            // in a CSS url('...') and an attribute. Anything that is not a genuine Jellyfin id is
+            // rejected outright, so a crafted value cannot reach markup at all - the row would
+            // otherwise run for EVERY viewer of that profile, not just its owner.
+            var itemId = self.asItemGuid(fav.itemId || (fav.itemId ?? fav.ItemId) || '') || '';
+            // Both branches go through the CSS url() guard: the catalog poster is an external URL,
+            // and the library one is built from the (now validated) id.
             var img = notInLib
                 ? self.safeCssUrl(fav.imageUrl || fav.ImageUrl || '')
-                : (base + '/Items/' + itemId + '/Images/Primary?maxHeight=300');
+                : (itemId ? self.safeCssUrl(base + '/Items/' + encodeURIComponent(itemId) + '/Images/Primary?maxHeight=300') : '');
             var dragAttrs = isSelf
                 ? ' draggable="true" ondragstart="RatingsPlugin.favDragStart(event,' + rowIndex + ',' + i + ')" ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',' + i + ')"'
                 : '';
@@ -6166,16 +6176,45 @@
                         voteHtml = '<span class="lb-rev-likes"><span class="lb-rev-vote" disabled>👍 ' + likeCount + '</span><span class="lb-rev-vote" disabled>👎 ' + dislikeCount + '</span></span>';
                     }
 
-                    html += '<div class="lb-review-card">' +
+                    // Poster + media badge, so a review reads as being about a film rather than
+                    // as a bare row of text. Library items use their Jellyfin artwork; a catalog
+                    // title uses the TMDB poster stored with the rating.
+                    var baseUrl = ApiClient.serverAddress();
+                    var storedPoster = self.safeCssUrl(self.apiField(r, 'posterUrl'));
+                    var posterUrl = inLib
+                        ? baseUrl + '/Items/' + itemId + '/Images/Primary?maxHeight=180'
+                        : storedPoster;
+                    var rawType = String(self.apiField(r, 'type') || '');
+                    var isSeries = /series|season|episode/i.test(rawType);
+                    var typeLabel = isSeries ? 'Series' : 'Movie';
+                    var year = self.apiField(r, 'year');
+
+                    // Click handler only - NOT titleAttr, which carries its own style attribute.
+                    // Two style attributes on one element means the browser keeps the first and
+                    // drops the other, which would silently lose the poster.
+                    var openAttr = inLib
+                        ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')"'
+                        : '';
+
+                    html += '<article class="lb-review-card' + (inLib ? ' lb-review-openable' : ' lb-review-external') + '">' +
+                        '<div class="lb-review-poster"' + openAttr +
+                        (posterUrl ? ' style="background-image:url(\'' + self.escapeHtml(posterUrl) + '\')"' : '') + '>' +
+                        (posterUrl ? '' : '<span class="lb-review-poster-fallback">' + (isSeries ? '📺' : '🎬') + '</span>') +
+                        '<span class="lb-review-type ' + (isSeries ? 'series' : 'movie') + '">' + typeLabel + '</span>' +
+                        '</div>' +
+                        '<div class="lb-review-body">' +
                         '<div class="lb-review-header">' +
-                        '<span class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) + '</span>' +
+                        '<h4 class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) +
+                        (year ? ' <span class="lb-review-year">' + self.escapeHtml(String(year)) + '</span>' : '') +
+                        (inLib ? '' : '<span class="lb-review-offserver">Not on server</span>') +
+                        '</h4>' +
                         '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
                         '</div>' +
                         '<p class="lb-review-text">' + self.escapeHtml(reviewText) + '</p>' +
                         '<div class="lb-review-footer">' +
                         '<span class="lb-review-date">' + (timestamp ? self.formatTimeAgo(new Date(timestamp)) : '') + '</span>' +
                         voteHtml +
-                        '</div></div>';
+                        '</div></div></article>';
                 });
                 html += '</div>';
                 content.innerHTML = html;
@@ -8317,9 +8356,11 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            // Duplicate declaration - kept identical to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -15165,7 +15206,7 @@
                     imdbHtml += `<span>🎬 ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</span>`;
                 }
                 if (self.apiField(request, 'imdbLink')) {
-                    imdbHtml += `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank">IMDB →</a>`;
+                    imdbHtml += `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'imdbLink')))}" target="_blank">IMDB →</a>`;
                 }
                 imdbHtml += `</div>`;
             }
@@ -15206,7 +15247,7 @@
             // Watch button for completed requests
             let watchHtml = '';
             if (hasLink) {
-                watchHtml = `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
+                watchHtml = `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="admin-watch-btn" target="_blank">▶ ${self.t('watchNow')}</a>`;
             }
 
             return `
@@ -15647,7 +15688,7 @@
                         imdbHtml += `<div class="user-request-imdb"><strong>IMDB:</strong> ${self.escapeHtml(self.apiField(request, 'imdbCode'))}</div>`;
                     }
                     if (self.apiField(request, 'imdbLink')) {
-                        imdbHtml += `<div class="user-request-imdb"><a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'imdbLink')))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
+                        imdbHtml += `<div class="user-request-imdb"><a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'imdbLink')))}" target="_blank" class="imdb-link">View on IMDB</a></div>`;
                     }
 
                     // Edit/Delete buttons only for pending requests
@@ -15668,7 +15709,7 @@
                                 ${customFieldsHtml}
                                 <div class="user-request-time">📅 ${createdAt}${completedAt ? ` • ✅ ${completedAt}` : ''}</div>
                                 ${rejectionHtml}
-                                ${hasLink ? `<a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
+                                ${hasLink ? `<a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="request-media-link" target="_blank">${self.t('watchNow')}</a>` : ''}
                                 ${(() => {
                                     const isDeletionBanned = deletionBanInfo && deletionBanInfo.banned;
                                     const hasPendingDeletion = deletionRequests.some(dr => self.apiField(dr, 'mediaRequestId') === self.apiField(request, 'id') && self.apiField(dr, 'status') === 'pending');
@@ -16838,7 +16879,7 @@
                                     <span> • ${self.apiField(request, 'type') ? self.escapeHtml(self.apiField(request, 'type')) : ''}</span>
                                     <span> • ${createdAt}</span>
                                     ${resolvedHtml}
-                                    ${self.apiField(request, 'mediaLink') ? ` • <a href="${self.sanitizeUrl(self.escapeHtml(self.apiField(request, 'mediaLink')))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
+                                    ${self.apiField(request, 'mediaLink') ? ` • <a href="${self.escapeHtml(self.sanitizeUrl(self.apiField(request, 'mediaLink')))}" class="deletion-request-link" target="_blank">▶ ${self.t('watchNow')}</a>` : ''}
                                 </div>
                                 ${rejectionReasonHtml}
                                 ${actionsHtml}
@@ -18026,9 +18067,11 @@
          * Escape HTML to prevent XSS
          */
         escapeHtml: function (text) {
+            // Duplicate declaration - kept identical to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**
@@ -23618,10 +23661,12 @@
          * Escape HTML for XSS prevention
          */
         escapeHtml: function (text) {
-            if (!text) return '';
+            // Duplicate declaration - and, being last, the one that actually runs. Kept identical
+            // to the first; see the note there.
+            if (text == null) { return ''; }
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         /**

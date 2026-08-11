@@ -9976,36 +9976,151 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 .lb-star.half { color: #00e054; opacity: 0.6; }
 
 /* Reviews List */
-.lb-reviews-list { }
-.lb-review-card {
-    background: #1c2228;
-    border-radius: 6px;
-    padding: 20px;
-    margin-bottom: 16px;
+/* Review cards: poster on the left, so a review reads as being about a film rather than as a
+   row of text. The old card was title + text + date only, which looked like a log entry. */
+.lb-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
+
+.lb-review-card {
+    display: flex;
+    gap: 16px;
+    background: linear-gradient(180deg, #1e252c 0%, #1a2027 100%);
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 10px;
+    padding: 14px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.lb-review-card:hover {
+    border-color: rgba(0, 224, 84, .35);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+
+.lb-review-poster {
+    position: relative;
+    flex: 0 0 80px;
+    width: 80px;
+    aspect-ratio: 2 / 3;
+    border-radius: 7px;
+    background: #11161b center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.lb-review-openable .lb-review-poster {
+    cursor: pointer;
+}
+
+.lb-review-poster-fallback {
+    font-size: 24px;
+    opacity: .35;
+}
+
+/* The media badge sits on the poster corner. */
+.lb-review-type {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #0d1114;
+    background: rgba(0, 224, 84, .9);
+}
+
+.lb-review-type.series {
+    background: rgba(90, 170, 255, .9);
+    color: #08111c;
+}
+
+.lb-review-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .lb-review-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
 }
+
 .lb-review-title {
+    margin: 0;
     font-size: 16px;
     font-weight: 600;
     color: #fff;
+    /* Long titles wrap instead of shoving the stars off the card. */
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
-.lb-review-rating { font-size: 14px; }
+
+.lb-review-year {
+    font-weight: 400;
+    color: #7d8b99;
+    margin-left: 4px;
+}
+
+.lb-review-offserver {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #cbd6e2;
+    background: rgba(255, 255, 255, .08);
+    vertical-align: middle;
+}
+
+.lb-review-rating {
+    font-size: 14px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
 .lb-review-text {
-    color: #99aabb;
+    color: #9db0c2;
     font-size: 14px;
     line-height: 1.6;
     margin: 0 0 12px 0;
+    overflow-wrap: anywhere;
 }
+
 .lb-review-footer {
     display: flex;
+    align-items: center;
     gap: 16px;
     font-size: 12px;
     color: #678;
+    /* Pushed to the bottom so cards of differing text length still line up. */
+    margin-top: auto;
+}
+
+@media screen and (max-width: 560px) {
+    .lb-review-poster {
+        flex-basis: 58px;
+        width: 58px;
+    }
+
+    .lb-review-header {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
 .lb-review-likes { color: #00e054; }
 

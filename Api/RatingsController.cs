@@ -698,6 +698,31 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="value">Title or query.</param>
         /// <returns>The normalized form.</returns>
+        /// <summary>
+        /// Returns a link only if it parses as an absolute http(s) URL, in its parsed form.
+        ///
+        /// Storing the string as typed is not safe even after a host check: Uri.TryCreate accepts
+        /// embedded quotes and spaces and still reports the expected host, and these links are
+        /// rendered into an href. AbsoluteUri percent-encodes anything that could break out.
+        /// </summary>
+        /// <param name="value">The submitted link.</param>
+        /// <returns>The normalized URL, or empty.</returns>
+        private static string NormalizeExternalLink(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return string.Empty;
+            }
+
+            return uri.AbsoluteUri;
+        }
+
         private static string NormalizeForSearch(string? value)
         {
             if (string.IsNullOrEmpty(value))
@@ -2865,6 +2890,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Validate ImdbLink URL if provided
+                var normalizedImdbLink = string.Empty;
                 if (!string.IsNullOrWhiteSpace(request.ImdbLink))
                 {
                     if (!Uri.TryCreate(request.ImdbLink, UriKind.Absolute, out var imdbUri) ||
@@ -2880,6 +2906,12 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         return BadRequest("IMDB link must be from imdb.com");
                     }
+
+                    // Keep the PARSED form. Uri.TryCreate accepts embedded quotes and spaces and
+                    // still reports the allow-listed host, so passing the check does not make the
+                    // original text safe - and it is later rendered into an href an administrator
+                    // sees. AbsoluteUri percent-encodes those characters.
+                    normalizedImdbLink = imdbUri.AbsoluteUri;
                 }
 
                 var mediaRequest = new MediaRequest
@@ -2892,7 +2924,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Notes = SanitizeInput(request.Notes, 2000),
                     CustomFields = SanitizeJsonFields(request.CustomFields, 5000),
                     ImdbCode = SanitizeInput(request.ImdbCode, 50),
-                    ImdbLink = request.ImdbLink, // Already validated as URL above
+                    ImdbLink = normalizedImdbLink,
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -3160,7 +3192,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     SanitizeInput(request.Notes, 2000),
                     SanitizeJsonFields(request.CustomFields, 5000),
                     SanitizeInput(request.ImdbCode, 50),
-                    request.ImdbLink).ConfigureAwait(false);
+                    NormalizeExternalLink(request.ImdbLink)).ConfigureAwait(false);
 
                 if (result == null)
                 {
@@ -4086,9 +4118,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Username = user.Username,
                     MediaRequestId = request.MediaRequestId,
                     ItemId = request.ItemId,
-                    Title = request.Title,
-                    Type = request.Type,
-                    MediaLink = request.MediaLink,
+                    // These reach an administrator's screen, so they get the same treatment the
+                    // media-request path already applies. MediaLink additionally goes into an
+                    // href, so only a parsed absolute http(s) URL is kept - anything else is
+                    // dropped rather than stored as typed.
+                    Title = SanitizeInput(request.Title, 500),
+                    Type = SanitizeInput(request.Type, 100),
+                    MediaLink = NormalizeExternalLink(request.MediaLink),
                     DeletionType = deletionType,
                     Status = "pending",
                     CreatedAt = DateTime.UtcNow
@@ -5633,10 +5669,18 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <returns>Recent requests list.</returns>
         [HttpGet("RecentRequests")]
         [Authorize]
-        public ActionResult GetRecentRequests([FromQuery] int limit = 5)
+        public async Task<ActionResult> GetRecentRequests([FromQuery] int limit = 5)
         {
             try
             {
+                // Returns every user's request title and requesting username, and backs the admin
+                // dashboard - so it needs the same gate as GET Requests, which is admin-only.
+                var callerId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(callerId))
+                {
+                    return Forbid();
+                }
+
                 limit = Math.Clamp(limit, 1, 20);
                 var requests = _repository.GetRecentMediaRequests(limit);
 

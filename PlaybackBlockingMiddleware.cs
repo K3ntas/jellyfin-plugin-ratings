@@ -175,22 +175,41 @@ namespace Jellyfin.Plugin.Ratings
                 return claimUserId;
             }
 
-            // Try from authorization header
-            var authHeader = context.Request.Headers["X-Emby-Authorization"].FirstOrDefault()
-                          ?? context.Request.Headers["Authorization"].FirstOrDefault();
+            // This middleware runs ahead of Jellyfin's authentication, so the claim above is
+            // usually empty and the token has to be read from the request. Jellyfin accepts the
+            // token in several forms; reading only Token="..." meant a banned or over-quota user
+            // could play anything simply by sending it as X-Emby-Token or ?api_key= instead,
+            // because an unresolved user is treated as "let through" by the caller.
+            var token = context.Request.Headers["X-Emby-Token"].FirstOrDefault();
 
-            if (string.IsNullOrEmpty(authHeader))
+            if (string.IsNullOrEmpty(token))
+            {
+                var authHeader = context.Request.Headers["X-Emby-Authorization"].FirstOrDefault()
+                              ?? context.Request.Headers["Authorization"].FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(authHeader))
+                {
+                    var tokenMatch = AuthTokenRegex.Match(authHeader);
+                    if (tokenMatch.Success)
+                    {
+                        token = tokenMatch.Groups[1].Value;
+                    }
+                    else if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        token = authHeader.Substring("Bearer ".Length).Trim();
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(token))
+            {
+                token = context.Request.Query["api_key"].FirstOrDefault();
+            }
+
+            if (string.IsNullOrEmpty(token))
             {
                 return Guid.Empty;
             }
-
-            var tokenMatch = AuthTokenRegex.Match(authHeader);
-            if (!tokenMatch.Success)
-            {
-                return Guid.Empty;
-            }
-
-            var token = tokenMatch.Groups[1].Value;
 
             var now = DateTime.UtcNow;
             if (TokenCache.TryGetValue(token, out var cached) && cached.Expires > now)

@@ -9,6 +9,15 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.369.0",
+        "changelog": "Security release. Fixes three ways a user could have got script to run inside someone else's session: one through a profile's favourite films, which affected anyone viewing that profile, and two through links attached to media and deletion requests, which ran in an administrator's session and so could have been used to act as an administrator. The underlying cause was that the routine used to make text safe for display did not escape quotation marks, which is what let a crafted value break out. Also closes several privacy and permission gaps: private profiles could be read through the newer profile endpoints, a private list could be read by copying it, direct messages ignored blocking, the recent-requests list showed every user's requests to non-administrators, and a user banned from playback or over their quota could bypass both by sending their login token in a different but equally valid form. Nothing in the interface changes."
+        ,
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.369.0/Jellyfin.Plugin.Ratings_2.0.369.0.zip",
+        "checksum": "364ec5ea1e85e7cd1246b7c8c51e30fc",
+        "timestamp": "2026-08-11T22:06:00Z"
+      },
+      {
         "version": "2.0.368.0",
         "changelog": "Search now ignores punctuation and spacing, so 'xfiles', 'x files' and 'X-Files' all find the same show - the same goes for 'spiderman', 'walle' or 'swat'. It applies to the film search on your profile, the media picker and the Media Management search box. Jellyfin's own search is still tried first; the looser match only steps in when that finds nothing. Also completes an authentication clean-up: seventeen more endpoints identified the caller in a stricter way than the rest of the plugin, so apps that sign in with a plain token - TV and mobile clients in particular - were refused by them even though the same token worked elsewhere. Every endpoint in the plugin now identifies you the same way. Nothing changes for the web interface, which was never affected.",
         "targetAbi": "10.11.0.0",
