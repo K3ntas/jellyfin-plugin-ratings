@@ -16,6 +16,7 @@ using Jellyfin.Plugin.Ratings.Models;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
@@ -859,7 +860,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Moderator deleting another user's message
             if (!CanModerate(userId))
             {
-                return Forbid("You can only delete your own messages");
+                return StatusCode(StatusCodes.Status403Forbidden, "You can only delete your own messages");
             }
 
             // Check rate limit for moderator actions
@@ -1022,7 +1023,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Level 3+ or admin can add moderators
             if (myLevel < 3 && !isAdmin)
             {
-                return Forbid("Only level 3 moderators or admins can add moderators");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only level 3 moderators or admins can add moderators");
             }
 
             // Validate level
@@ -1082,7 +1083,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Level 3+ or admin can remove moderators
             if (myLevel < 3 && !isAdmin)
             {
-                return Forbid("Only level 3 moderators or admins can remove moderators");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only level 3 moderators or admins can remove moderators");
             }
 
             var targetMod = _repository.GetChatModeratorById(moderatorId);
@@ -1149,7 +1150,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Level 1+ can snooze
                 if (modLevel < 1)
                 {
-                    return Forbid("Snooze requires moderator level 1 or higher");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Snooze requires moderator level 1 or higher");
                 }
             }
             else if (banType == "chat")
@@ -1159,7 +1160,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     if (modLevel < 3 && !isAdmin)
                     {
-                        return Forbid("Permanent chat bans require moderator level 3 or admin");
+                        return StatusCode(StatusCodes.Status403Forbidden, "Permanent chat bans require moderator level 3 or admin");
                     }
                 }
                 else
@@ -1167,7 +1168,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Temp bans require Level 2+
                     if (modLevel < 2)
                     {
-                        return Forbid("Temporary chat bans require moderator level 2 or higher");
+                        return StatusCode(StatusCodes.Status403Forbidden, "Temporary chat bans require moderator level 2 or higher");
                     }
 
                     // Level 2 has max temp ban duration
@@ -1187,7 +1188,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Media bans require Level 3+ or Admin
                 if (modLevel < 3 && !isAdmin)
                 {
-                    return Forbid("Media bans require moderator level 3 or admin");
+                    return StatusCode(StatusCodes.Status403Forbidden, "Media bans require moderator level 3 or admin");
                 }
 
                 // Check monthly media ban limit per user (Level 3 only, not admins)
@@ -1628,7 +1629,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Only admins can delete entire conversations
             if (!IsJellyfinAdmin(userId))
             {
-                return Forbid("Only admins can delete entire conversations");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only admins can delete entire conversations");
             }
 
             // Delete all messages in this conversation (both directions)
@@ -1738,7 +1739,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (myLevel < 3 && !isAdmin)
             {
-                return Forbid("Only level 3 moderators or admins can change levels");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only level 3 moderators or admins can change levels");
             }
 
             if (level < 1 || level > 3)
@@ -1785,7 +1786,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (modLevel < 1)
             {
-                return Forbid("Only moderators can set user styles");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only moderators can set user styles");
             }
 
             // Validate colors
@@ -1842,7 +1843,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (modLevel < 1)
             {
-                return Forbid("Only moderators can remove user styles");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only moderators can remove user styles");
             }
 
             var removed = await _repository.RemoveUserStyleOverrideAsync(targetUserId).ConfigureAwait(false);
@@ -1895,7 +1896,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (modLevel < 3 && !isAdmin)
             {
-                return Forbid("Only level 3 moderators or admins can set media quotas");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only level 3 moderators or admins can set media quotas");
             }
 
             // Cannot set quota on admins
@@ -1951,7 +1952,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             if (modLevel < 3 && !isAdmin)
             {
-                return Forbid("Only level 3 moderators or admins can remove media quotas");
+                return StatusCode(StatusCodes.Status403Forbidden, "Only level 3 moderators or admins can remove media quotas");
             }
 
             var removed = await _repository.RemoveMediaQuotaAsync(targetUserId).ConfigureAwait(false);
