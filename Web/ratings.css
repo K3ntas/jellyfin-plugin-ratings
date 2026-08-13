@@ -2254,7 +2254,7 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 .admin-category-list {
     padding: 8px !important;
     display: flex !important;
-    flex-direction: column !important
+    flex-direction: column !important;
     gap: 4px !important;
     /* Long category lists get their own scrollbar instead of overflowing the modal (PR #73). */
     max-height: 500px !important;
@@ -2325,6 +2325,8 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     cursor: pointer !important;
     transition: all 0.2s ease !important;
     overflow: hidden !important;
+    /* overflow:hidden zeroes the automatic flex minimum size, so past the category list's
+       max-height the cards would shrink to fit instead of letting the list scroll (PR #77). */
     flex-shrink: 0 !important;
 }
 
