@@ -2253,9 +2253,6 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 
 .admin-category-list {
     padding: 8px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
     /* Long category lists get their own scrollbar instead of overflowing the modal (PR #73). */
     max-height: 400px !important;
     overflow-y: auto !important;
