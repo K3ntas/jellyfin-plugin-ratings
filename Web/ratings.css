@@ -2325,6 +2325,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     cursor: pointer !important;
     transition: all 0.2s ease !important;
     overflow: hidden !important;
+    /* overflow:hidden zeroes the automatic flex minimum size, so past the category list's
+       max-height the cards would shrink to fit instead of letting the list scroll (PR #77). */
+    flex-shrink: 0 !important;
 }
 
 .admin-request-item:hover {
