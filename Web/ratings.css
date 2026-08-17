@@ -11223,3 +11223,71 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     color: #fff;
     text-decoration-color: rgba(0, 224, 84, 0.6);
 }
+
+@media screen and (max-width: 768px) {
+    /* 1. Compact request item row layout */
+    .admin-request-compact {
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    /* 2. Force full-width visible movie/show title at the top */
+    .admin-request-compact-title {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 1 0 100% !important;
+        width: 100% !important;
+        margin-top: -2px !important;
+        margin-bottom: 2px !important;
+        line-height: 1.2 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* 3. Keep meta tags (user, date, status button) cleanly aligned below title */
+    .admin-request-compact-meta {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* 4. Pin the dropdown expand arrow to the right edge */
+    .admin-request-expand-icon {
+        display: inline-block !important;
+        visibility: visible !important;
+        margin-left: auto !important;
+    }
+
+    /* 5. Stack action inputs (Media & Rejection reason) vertically */
+    .admin-request-compact-expanded,
+    .admin-request-details,
+    div:has(> input[placeholder*="Media"]),
+    div:has(> input[placeholder*="Rejection"]) {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    /* 6. Expand input fields to 100% width so text is never cut off */
+    input[placeholder*="Media"],
+    input[placeholder*="Rejection"],
+    .admin-request-compact-expanded input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
