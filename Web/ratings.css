@@ -11224,68 +11224,52 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     text-decoration-color: rgba(0, 224, 84, 0.6);
 }
 
+/* Mobile layout for the admin request list. On a phone the compact row is too wide to sit on one
+   line: the title, its meta line and the expanded inputs all have to stack. Written by @daki456
+   in PR #78 - the selectors here were moved onto the plugin's own classes, because the originals
+   (div:has(> input[placeholder*="Media"]), input[placeholder*="Rejection"]) were unscoped and this
+   stylesheet is injected into the whole Jellyfin web app, so they matched any input on any page
+   whose placeholder happened to contain those words. They also only ever matched in English:
+   the media-link placeholder is translated, so "Medien-Link" / "Lien du media" never matched at
+   all and the two input rules did nothing outside an English UI. */
 @media screen and (max-width: 768px) {
-    /* 1. Compact request item row layout */
+    /* Let the row wrap so the title can take a line of its own. */
     .admin-request-compact {
         flex-wrap: wrap !important;
         align-items: center !important;
-        padding-top: 4px !important;
-        padding-bottom: 4px !important;
-        padding-left: 8px !important;
-        padding-right: 8px !important;
+        padding: 4px 8px !important;
     }
 
-    /* 2. Force full-width visible movie/show title at the top */
+    /* Title on its own full-width line, above the meta row. */
     .admin-request-compact-title {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
         flex: 1 0 100% !important;
         width: 100% !important;
-        margin-top: -2px !important;
-        margin-bottom: 2px !important;
+        margin: -2px 0 2px !important;
+        padding: 0 !important;
         line-height: 1.2 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
     }
 
-    /* 3. Keep meta tags (user, date, status button) cleanly aligned below title */
+    /* User, type, date and status stay on one line underneath it. */
     .admin-request-compact-meta {
-        display: flex !important;
         flex-wrap: nowrap !important;
-        align-items: center !important;
         width: 100% !important;
         margin-top: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding: 0 !important;
     }
 
-    /* 4. Pin the dropdown expand arrow to the right edge */
+    /* Expand arrow pinned to the right edge of that line. */
     .admin-request-expand-icon {
-        display: inline-block !important;
-        visibility: visible !important;
         margin-left: auto !important;
     }
 
-    /* 5. Stack action inputs (Media & Rejection reason) vertically */
-    .admin-request-compact-expanded,
-    .admin-request-details,
-    div:has(> input[placeholder*="Media"]),
-    div:has(> input[placeholder*="Rejection"]) {
-        display: flex !important;
+    /* Media link and rejection reason stack instead of splitting the width. */
+    .admin-request-details-content .admin-request-inputs {
         flex-direction: column !important;
         width: 100% !important;
         gap: 8px !important;
     }
 
-    /* 6. Expand input fields to 100% width so text is never cut off */
-    input[placeholder*="Media"],
-    input[placeholder*="Rejection"],
-    .admin-request-compact-expanded input {
+    .admin-request-inputs .admin-request-input {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
