@@ -2257,7 +2257,7 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     flex-direction: column !important;
     gap: 4px !important;
     /* Long category lists get their own scrollbar instead of overflowing the modal (PR #73). */
-    max-height: 400px !important;
+    max-height: 500px !important;
     overflow-y: auto !important;
 }
 
@@ -11222,4 +11222,56 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
 .lb-watch-title:hover {
     color: #fff;
     text-decoration-color: rgba(0, 224, 84, 0.6);
+}
+
+/* Mobile layout for the admin request list. On a phone the compact row is too wide to sit on one
+   line: the title, its meta line and the expanded inputs all have to stack. Written by @daki456
+   in PR #78 - the selectors here were moved onto the plugin's own classes, because the originals
+   (div:has(> input[placeholder*="Media"]), input[placeholder*="Rejection"]) were unscoped and this
+   stylesheet is injected into the whole Jellyfin web app, so they matched any input on any page
+   whose placeholder happened to contain those words. They also only ever matched in English:
+   the media-link placeholder is translated, so "Medien-Link" / "Lien du media" never matched at
+   all and the two input rules did nothing outside an English UI. */
+@media screen and (max-width: 768px) {
+    /* Let the row wrap so the title can take a line of its own. */
+    .admin-request-compact {
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Title on its own full-width line, above the meta row. */
+    .admin-request-compact-title {
+        flex: 1 0 100% !important;
+        width: 100% !important;
+        margin: -2px 0 2px !important;
+        padding: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    /* User, type, date and status stay on one line underneath it. */
+    .admin-request-compact-meta {
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Expand arrow pinned to the right edge of that line. */
+    .admin-request-expand-icon {
+        margin-left: auto !important;
+    }
+
+    /* Media link and rejection reason stack instead of splitting the width. */
+    .admin-request-details-content .admin-request-inputs {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .admin-request-inputs .admin-request-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
 }
