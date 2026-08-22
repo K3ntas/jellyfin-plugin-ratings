@@ -116,6 +116,56 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                addNewRow: 'Add New Row', addToARow: 'Add to a row', agree: 'Agree', allRatings: 'All Ratings',
+                allowOthersToFollowMe: 'Allow others to follow me', background: 'Background', block: 'Block',
+                clickToView: 'Click to view', close: 'Close', comments: 'Comments',
+                communityRating: 'Community Rating', createRow: 'Create Row',
+                defaultStyleApplied: 'Default style applied', deleteRow: 'Delete row', disagree: 'Disagree',
+                dismiss: 'Dismiss', editRating: 'Edit rating', emojis: 'Emojis',
+                enterCustomTitle: 'Enter custom title...', enterUsername: 'Enter username...',
+                filterUsers: 'Filter users...', friend: 'Friend',
+                genreBreakdownByWatchTime: 'Genre breakdown by watch time', genreTasteMatch: 'Genre taste match',
+                gifs: 'GIFs', headerBackground: 'Header Background', incomingRequests: 'Incoming Requests',
+                jumpToLatest: 'Jump to latest', leftoverTrickplayData: 'Leftover trickplay data',
+                loadingActivity: 'Loading activity...', loadingAvailableTypes: 'Loading available types...',
+                loadingCategories: 'Loading categories...', loadingGenres: 'Loading genres...',
+                loadingProfile: 'Loading profile...', loadingRatings: 'Loading ratings...',
+                loadingReviews: 'Loading reviews...', manage: 'Manage', messageColor: 'Message color:',
+                moreActions: 'More actions', moveRowDown: 'Move row down', moveRowUp: 'Move row up',
+                myRatingsHighest: 'My Ratings (Highest)', myRatingsLowest: 'My Ratings (Lowest)', nameAZ: 'Name A-Z',
+                newestFirst: 'Newest First', nicknameColor: 'Nickname color:', noActivityYet: 'No activity yet',
+                noBlockedUsers: 'No blocked users', noCommentsYetBeTheFirst: 'No comments yet. Be the first!',
+                noDescriptionAvailable: 'No description available.', noGenresFound: 'No genres found',
+                noGifsFound: 'No GIFs found', noItemsFound: 'No items found',
+                noListsCreatedYet: 'No lists created yet', noMatchesFound: 'No matches found.',
+                noMoreItems: 'No more items', noOneElseHasWatchedEnoughYet: 'No one else has watched enough yet',
+                noOnlineUsers: 'No online users', noOtherUsersOnThisServerYet: 'No other users on this server yet',
+                noPendingRequests: 'No pending requests', noRecentActivity: 'No recent activity',
+                noResultsFound: 'No results found', noReviewsYet: 'No reviews yet',
+                notAcceptingRequests: 'Not accepting requests', nothingWatchedYet: 'Nothing watched yet',
+                onYourServer: 'On your server', penaltyApplied: 'Penalty Applied', permissions: 'Permissions:',
+                privacy: 'Privacy', profileInformation: 'Profile Information', profileSettings: 'Profile Settings',
+                rateThisTitle: 'Rate this title', rejectionReason: 'Rejection reason...',
+                removeHeaderBackground: 'Remove header background', removeRating: 'Remove rating',
+                requestFromCatalog: 'Request from catalog', requestThisTitle: 'Request this title', review: 'Review',
+                rowTitle: 'Row Title', save: 'Save', saveChanges: 'Save Changes', scrollLeft: 'Scroll left',
+                scrollRight: 'Scroll right', searchError: 'Search error', searchFailed: 'Search failed',
+                searchForUsersToAddAsFriends: 'Search for users to add as friends', searching: 'Searching...',
+                selectACategoryAboveOrSearchForMedia: 'Select a category above or search for media',
+                selectACategoryOrTypeToSearch: 'Select a category or type to search...', selectMedia: 'Select Media',
+                selectUser: 'Select user...', sendAPrivateMessage: 'Send a private message',
+                sentRequests: 'Sent Requests', serverRestarting: 'Server Restarting',
+                shareYourThoughtsAboutThisTitle: 'Share your thoughts about this title...',
+                showAllRandom: 'Show all (random)', showMyActivityFeed: 'Show my activity feed',
+                showMyRatingsToOthers: 'Show my ratings to others', sortBy: 'Sort by:',
+                startFromTheBeginning: 'Start from the beginning', startWhereTheyAreNow: 'Start where they are now',
+                status: 'Status', styleApplied: 'Style Applied', submitRating: 'Submit Rating',
+                tellOthersAboutYourself: 'Tell others about yourself...', testNotification: 'Test Notification',
+                textStyle: 'Text style:', toggleFullscreen: 'Toggle Fullscreen',
+                typeAtLeast2Characters: 'Type at least 2 characters', unfriend: 'Unfriend', username: 'Username',
+                viewProfile: 'View Profile', watch: 'Watch', watchItFromTheTop: 'Watch it from the top',
+                watchThisToo: 'Watch this too', watchToo: 'Watch too', whatDidYouThink: 'What did you think?',
+                writeAComment: 'Write a comment...', writeAReviewOptional: 'Write a review (optional):',
                 addAFilm: 'Add a film', addFilmPlaceholder: 'Search title or IMDb id…', avgLabel: 'Avg', back: 'Back',
                 backToProfile: 'Back to profile', filmsLabel: 'Films', hoursLabel: 'Hours',
                 memberSince: 'Member since', notOnServer: 'Not on server', recentActivity: 'Recent Activity',
@@ -1042,7 +1092,7 @@
                     </button>
                 </div>
                 <div class="social-panel-search">
-                    <input type="text" placeholder="Search..." id="social-search-input">
+                    <input type="text" placeholder="${RatingsPlugin.t('mediaSearch')}" id="social-search-input">
                 </div>
                 <div class="social-panel-content" id="social-panel-content">
                     <div class="social-empty-state">
@@ -1333,7 +1383,7 @@
             if (!content) return;
 
             if (blockedUsers.length === 0) {
-                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg><div>No blocked users</div></div>';
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg><div>' + RatingsPlugin.t('noBlockedUsers') + '</div></div>';
                 return;
             }
 
@@ -1363,7 +1413,7 @@
             if (!content) return;
 
             if (users.length === 0) {
-                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No online users</div></div>';
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>' + RatingsPlugin.t('noOnlineUsers') + '</div></div>';
                 return;
             }
 
@@ -1585,9 +1635,9 @@
             var safeUserId = this.escapeJs(userId);
             var safeUsername = this.escapeJs(username);
             menu.innerHTML = `
-                <button onclick="RatingsPlugin.navigateToProfile('${safeUserId}')">View Profile</button>
-                <button onclick="RatingsPlugin.unfriendUser('${safeUserId}', '${safeUsername}')">Unfriend</button>
-                <button onclick="RatingsPlugin.blockUser('${safeUserId}')" style="color:#e74c3c;">Block</button>
+                <button onclick="RatingsPlugin.navigateToProfile('${safeUserId}')">${RatingsPlugin.t('viewProfile')}</button>
+                <button onclick="RatingsPlugin.unfriendUser('${safeUserId}', '${safeUsername}')">${RatingsPlugin.t('unfriend')}</button>
+                <button onclick="RatingsPlugin.blockUser('${safeUserId}')" style="color:#e74c3c;">${RatingsPlugin.t('block')}</button>
             `;
 
             // Position near the button
@@ -1674,7 +1724,7 @@
                         ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                         : friend.watching.title;
                     var safeItemId = self.escapeJs(friend.watching.itemId);
-                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + safeItemId + '\')" title="Click to view">' +
+                    watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + safeItemId + '\')" title="' + RatingsPlugin.t('clickToView') + '">' +
                         '<span class="watching-icon">&#9654;</span> ' +
                         self.escapeHtml(watchTitle) +
                         ' <span class="watching-progress">(' + self.escapeHtml(friend.watching.position) + '/' + self.escapeHtml(friend.watching.duration) + ')</span>' +
@@ -1689,7 +1739,7 @@
                     watchingHtml +
                     '</div>' +
                     '<div class="social-friend-actions">' +
-                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + self.escapeJs(friend.userId) + '\', \'' + self.escapeJs(friend.username) + '\')" title="More actions">&#8942;</button>' +
+                    '<button class="social-action-btn" onclick="RatingsPlugin.showFriendMenu(event, \'' + self.escapeJs(friend.userId) + '\', \'' + self.escapeJs(friend.username) + '\')" title="' + RatingsPlugin.t('moreActions') + '">&#8942;</button>' +
                     '</div></div>';
             });
             content.innerHTML = html;
@@ -1706,7 +1756,7 @@
             outgoing = outgoing || [];
 
             if (incoming.length === 0 && outgoing.length === 0) {
-                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>No pending requests</div></div>';
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div>' + RatingsPlugin.t('noPendingRequests') + '</div></div>';
                 return;
             }
 
@@ -1714,7 +1764,7 @@
 
             // Incoming requests section
             if (incoming.length > 0) {
-                html += '<div class="social-requests-section"><div class="social-section-title">Incoming Requests</div>';
+                html += '<div class="social-requests-section"><div class="social-section-title">' + RatingsPlugin.t('incomingRequests') + '</div>';
                 incoming.forEach(function (req) {
                     var username = req.FromUsername || req.fromUsername || '?';
                     var id = req.Id || req.id;
@@ -1736,7 +1786,7 @@
 
             // Outgoing requests section
             if (outgoing.length > 0) {
-                html += '<div class="social-requests-section"><div class="social-section-title">Sent Requests</div>';
+                html += '<div class="social-requests-section"><div class="social-section-title">' + RatingsPlugin.t('sentRequests') + '</div>';
                 outgoing.forEach(function (req) {
                     var username = req.ToUsername || req.toUsername || '?';
                     var id = req.Id || req.id;
@@ -1750,7 +1800,7 @@
                         '<div class="social-friend-status">' + self.t('requestPending') + '</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + safeId + '\')">Cancel</button>' +
+                        '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + safeId + '\')">' + RatingsPlugin.t('cancel') + '</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -2055,7 +2105,7 @@
                 toast.innerHTML = `
                     <div class="restart-toast-icon">🔄</div>
                     <div class="restart-toast-content">
-                        <div class="restart-toast-title">Server Restarting</div>
+                        <div class="restart-toast-title">${RatingsPlugin.t('serverRestarting')}</div>
                         <div class="restart-toast-countdown" id="restartCountdownValue">--</div>
                         <div class="restart-toast-reason" id="restartReasonDisplay"></div>
                     </div>
@@ -2453,7 +2503,7 @@
                     ? friend.watching.seriesName + ' ' + friend.watching.episodeInfo
                     : friend.watching.title;
                 var itemId = self.escapeJs(friend.watching.itemId);
-                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="Click to view">' +
+                var watchingHtml = '<div class="social-friend-watching clickable" onclick="RatingsPlugin.goToMedia(\'' + itemId + '\')" title="' + RatingsPlugin.t('clickToView') + '">' +
                     '<span class="watching-icon">&#9654;</span> ' +
                     self.escapeHtml(watchTitle) +
                     ' <span class="watching-progress">(' + friend.watching.position + '/' + friend.watching.duration + ')</span>' +
@@ -2648,8 +2698,8 @@
 
             content.innerHTML = `
                 <div style="padding: 10px;">
-                    <div style="margin-bottom: 10px; color: #888; font-size: 12px;">Search for users to add as friends</div>
-                    <input type="text" id="social-user-search" placeholder="Enter username..." style="width:100%;padding:10px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#fff;font-size:14px;">
+                    <div style="margin-bottom: 10px; color: #888; font-size: 12px;">${RatingsPlugin.t('searchForUsersToAddAsFriends')}</div>
+                    <input type="text" id="social-user-search" placeholder="${RatingsPlugin.t('enterUsername')}" style="width:100%;padding:10px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#fff;font-size:14px;">
                     <div id="social-user-results" style="margin-top: 10px;"></div>
                 </div>
             `;
@@ -2662,7 +2712,7 @@
                 var query = searchInput.value.trim();
 
                 if (query.length < 2) {
-                    document.getElementById('social-user-results').innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Type at least 2 characters</div>';
+                    document.getElementById('social-user-results').innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">' + RatingsPlugin.t('typeAtLeast2Characters') + '</div>';
                     return;
                 }
 
@@ -2685,7 +2735,7 @@
             var headers = { 'X-Emby-Token': ApiClient.accessToken() };
             var resultsDiv = document.getElementById('social-user-results');
 
-            resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">Searching...</div>';
+            resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">' + RatingsPlugin.t('searching') + '</div>';
 
             fetch(baseUrl + '/Social/SearchUsers?query=' + encodeURIComponent(query) + '&limit=10', {
                 method: 'GET',
@@ -2697,7 +2747,7 @@
                 self.renderUserSearchResults(data.users || []);
             })
             .catch(function () {
-                resultsDiv.innerHTML = '<div style="color:#f44;font-size:12px;padding:10px;">Search failed</div>';
+                resultsDiv.innerHTML = '<div style="color:#f44;font-size:12px;padding:10px;">' + RatingsPlugin.t('searchFailed') + '</div>';
             });
         },
 
@@ -2710,7 +2760,7 @@
             if (!resultsDiv) return;
 
             if (users.length === 0) {
-                resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">No users found</div>';
+                resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">' + RatingsPlugin.t('chatNoUsers') + '</div>';
                 return;
             }
 
@@ -2723,13 +2773,13 @@
                 if (user.isFriend) {
                     buttonHtml = '<span style="color:#4caf50;font-size:12px;">Already friends</span>';
                 } else if (user.hasPendingRequest) {
-                    buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
+                    buttonHtml = '<span style="color:#ff9800;font-size:12px;">' + RatingsPlugin.t('requestSent') + '</span>';
                 } else if (user.hasIncomingRequest) {
                     buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + safeUserId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">' + self.t('accept') + '</button>';
                 } else if (user.canSendRequest) {
                     buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + safeUserId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">' + self.t('addFriend') + '</button>';
                 } else {
-                    buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
+                    buttonHtml = '<span style="color:#666;font-size:11px;">' + RatingsPlugin.t('notAcceptingRequests') + '</span>';
                 }
 
                 html += '<div class="social-friend-item" onclick="RatingsPlugin.navigateToProfile(\'' + safeUserId + '\')" style="justify-content:space-between;cursor:pointer;">' +
@@ -3427,7 +3477,7 @@
             var page = document.createElement('div');
             page.id = 'socialProfilePage';
             page.className = 'social-profile-page letterboxd-style';
-            page.innerHTML = '<div class="social-profile-container letterboxd"><div class="profile-loading-spinner"><div class="spinner"></div><span>Loading profile...</span></div></div>';
+            page.innerHTML = '<div class="social-profile-container letterboxd"><div class="profile-loading-spinner"><div class="spinner"></div><span>' + RatingsPlugin.t('loadingProfile') + '</span></div></div>';
             try { page.setAttribute('data-bg', localStorage.getItem('lbProfileBg') || 'aurora'); } catch (e) { page.setAttribute('data-bg', 'aurora'); }
             document.body.appendChild(page);
 
@@ -3709,7 +3759,7 @@
             self.getProfileRatings(function (ratings) {
                     var c = document.getElementById('lbRecentPosters');
                     if (!c) return;
-                    if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">No activity yet</div>'; return; }
+                    if (!ratings.length) { c.innerHTML = '<div class="lb-empty-mini">' + RatingsPlugin.t('noActivityYet') + '</div>'; return; }
                     var isSelf = self._currentProfileStatus && self._currentProfileStatus.isSelf;
                     var html = '';
                     ratings.slice(0, 12).forEach(function (r) {
@@ -3743,7 +3793,7 @@
                     var c = document.getElementById('lbRecentReviews');
                     if (!c) return;
                     var reviews = ratings.filter(function (r) { return r.reviewText || (r.reviewText ?? r.ReviewText) || r.review || r.Review; }).slice(0, 3);
-                    if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">No reviews yet</div>'; return; }
+                    if (!reviews.length) { c.innerHTML = '<div class="lb-empty-mini">' + RatingsPlugin.t('noReviewsYet') + '</div>'; return; }
                     var html = '';
                     reviews.forEach(function (r) {
                         var id = r.itemId || (r.itemId ?? r.ItemId) || '';
@@ -3847,7 +3897,7 @@
                 var html = '';
 
                 if (local.length) {
-                    html += '<div class="lb-am-section">On your server</div>';
+                    html += '<div class="lb-am-section">' + RatingsPlugin.t('onYourServer') + '</div>';
                     local.forEach(function (it) {
                         var img = baseUrl + '/Items/' + it.Id + '/Images/Primary?maxHeight=90';
                         var sp = self.encodePayload({ itemId: it.Id, name: it.Name || '', year: it.ProductionYear || '', overview: (it.overview ?? it.Overview) || '' });
@@ -3855,8 +3905,8 @@
                             '<div class="lb-am-poster" style="background-image:url(\'' + img + '\')" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"></div>' +
                             '<div class="lb-am-info" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')"><span class="lb-am-name">' + self.escapeHtml(it.Name || '') + '</span>' +
                             '<span class="lb-am-year">' + (it.ProductionYear || '') + '</span></div>' +
-                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addToFavoritesFromSearch(\'' + self.escapeJs(it.Id) + '\',\'' + self.escapeJs(it.Name || '') + '\', this)">+ Add</button>' +
-                            '<span class="lb-am-watch" title="Watch" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">▶</span>' +
+                            '<button class="lb-am-add" title="' + RatingsPlugin.t('addToARow') + '" onclick="RatingsPlugin.addToFavoritesFromSearch(\'' + self.escapeJs(it.Id) + '\',\'' + self.escapeJs(it.Name || '') + '\', this)">+ Add</button>' +
+                            '<span class="lb-am-watch" title="' + RatingsPlugin.t('watch') + '" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(it.Id) + '\')">▶</span>' +
                             '</div>';
                     });
                 }
@@ -3868,7 +3918,7 @@
                 if (ext.configured === false) {
                     html += '<div class="lb-am-hint">Add a free TMDB token in plugin settings to search the full film catalog.</div>';
                 } else if (extFiltered.length) {
-                    html += '<div class="lb-am-section">Request from catalog</div>';
+                    html += '<div class="lb-am-section">' + RatingsPlugin.t('requestFromCatalog') + '</div>';
                     extFiltered.forEach(function (e) {
                         var label = (e.title || '') + (e.year ? ' (' + e.year + ')' : '');
                         var ratingStr = e.rating ? '★ ' + e.rating : '';
@@ -3877,13 +3927,13 @@
                             '<div class="lb-am-poster" style="background-image:url(\'' + (e.poster || '') + '\')"></div>' +
                             '<div class="lb-am-info"><span class="lb-am-name">' + self.escapeHtml(label) + '</span>' +
                             '<span class="lb-am-year">' + ratingStr + '</span></div>' +
-                            '<button class="lb-am-add" title="Add to a row" onclick="RatingsPlugin.addExternalToFavoritesFromSearch(\'' + payload + '\', this)">+ Add</button>' +
+                            '<button class="lb-am-add" title="' + RatingsPlugin.t('addToARow') + '" onclick="RatingsPlugin.addExternalToFavoritesFromSearch(\'' + payload + '\', this)">+ Add</button>' +
                             '<button class="lb-am-add req" onclick="RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                             '</div>';
                     });
                 }
 
-                if (!html) { html = '<div class="lb-am-hint">No matches found.</div>'; }
+                if (!html) { html = '<div class="lb-am-hint">' + RatingsPlugin.t('noMatchesFound') + '</div>'; }
                 results.innerHTML = html;
             });
         },
@@ -3996,16 +4046,16 @@
                     'and will attach themselves to the film automatically if it is added later.</p>') +
                 '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
                 '<div class="lb-ext-value" id="lbExtValue">' + (chosen ? chosen + ' / 10' : 'Select a rating') + '</div>' +
-                '<label class="lb-ext-review-label" for="lbExtReview">Review <span>(optional)</span></label>' +
+                '<label class="lb-ext-review-label" for="lbExtReview">' + RatingsPlugin.t('review') + ' <span>(optional)</span></label>' +
                 '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
-                'placeholder="What did you think?">' + self.escapeHtml(data.review || '') + '</textarea>' +
+                'placeholder="' + RatingsPlugin.t('whatDidYouThink') + '">' + self.escapeHtml(data.review || '') + '</textarea>' +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
                 (isEdit && data.itemId
-                    ? '<button class="lb-btn-danger" onclick="RatingsPlugin.removeRatingFromEditor()">Remove</button>'
+                    ? '<button class="lb-btn-danger" onclick="RatingsPlugin.removeRatingFromEditor()">' + RatingsPlugin.t('chatRemoveMod') + '</button>'
                     : '') +
-                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeExternalRatingModal()">Cancel</button>' +
-                '<button class="lb-btn-save" id="lbExtSave" onclick="RatingsPlugin.saveRatingFromEditor()">Save</button>' +
+                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeExternalRatingModal()">' + RatingsPlugin.t('cancel') + '</button>' +
+                '<button class="lb-btn-save" id="lbExtSave" onclick="RatingsPlugin.saveRatingFromEditor()">' + RatingsPlugin.t('save') + '</button>' +
                 '</div></div>';
 
             modal.addEventListener('click', function (e) {
@@ -4155,10 +4205,10 @@
             var liked = mine === true;
             var disliked = mine === false;
             return '<div class="lb-rating-votes">' +
-                '<button class="lb-vote' + (liked ? ' on' : '') + '" title="Agree"' +
+                '<button class="lb-vote' + (liked ? ' on' : '') + '" title="' + RatingsPlugin.t('agree') + '"' +
                 ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',true,this)">' +
                 '👍<span>' + likes + '</span></button>' +
-                '<button class="lb-vote' + (disliked ? ' on' : '') + '" title="Disagree"' +
+                '<button class="lb-vote' + (disliked ? ' on' : '') + '" title="' + RatingsPlugin.t('disagree') + '"' +
                 ' onclick="event.stopPropagation();RatingsPlugin.voteOnRating(\'' + safeUser + '\',\'' + safeItem + '\',false,this)">' +
                 '👎<span>' + dislikes + '</span></button>' +
                 '</div>';
@@ -4598,9 +4648,9 @@
                     poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
                 });
                 extra = '<span class="lb-fav-notlib-tag">' + self.t('notOnServer') + '</span>' +
-                    '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
+                    '<button class="lb-fav-request" title="' + RatingsPlugin.t('requestThisTitle') + '" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                     // Titles from the catalog could not be rated at all before (issue #72).
-                    '<button class="lb-fav-rate" title="Rate this title" onclick="event.stopPropagation();RatingsPlugin.rateExternalMedia(\'' + payload + '\')">★ Rate</button>';
+                    '<button class="lb-fav-rate" title="' + RatingsPlugin.t('rateThisTitle') + '" onclick="event.stopPropagation();RatingsPlugin.rateExternalMedia(\'' + payload + '\')">★ Rate</button>';
                 clickAttr = ' onclick="RatingsPlugin.notInLibraryInfo()"';
             }
             return '<div class="' + cls + '" data-row="' + rowIndex + '" data-index="' + i + '" data-item-id="' + self.escapeHtml(itemId) + '"' +
@@ -4671,7 +4721,7 @@
             pop.innerHTML = '<div class="lb-fav-info-title">' + self.escapeHtml(title) + yearStr + tag + '</div>' +
                 (overview
                     ? '<div class="lb-fav-info-desc">' + self.escapeHtml(overview) + '</div>'
-                    : '<div class="lb-fav-info-desc dim">No description available.</div>');
+                    : '<div class="lb-fav-info-desc dim">' + RatingsPlugin.t('noDescriptionAvailable') + '</div>');
             pop.style.display = 'block';
             var rect = slotEl.getBoundingClientRect();
             var popW = 300;
@@ -4869,14 +4919,14 @@
                 '<div class="lb-toolbar-actions">' +
                 (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="' + self.t('settings') + '">⚙</button>' : '') +
                 '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
-                '<button class="lb-toolbar-btn" onclick="RatingsPlugin.toggleBgMenu(event)" title="Background">🎨</button>' +
+                '<button class="lb-toolbar-btn" onclick="RatingsPlugin.toggleBgMenu(event)" title="' + RatingsPlugin.t('background') + '">🎨</button>' +
                 '<div class="lb-bg-menu" id="lbBgMenu" style="display:none;">' +
                 '<div class="lb-bg-swatch lb-bg-aurora" onclick="RatingsPlugin.setProfileBackground(\'aurora\')" title="Aurora"></div>' +
                 '<div class="lb-bg-swatch lb-bg-sunset" onclick="RatingsPlugin.setProfileBackground(\'sunset\')" title="Sunset"></div>' +
                 '<div class="lb-bg-swatch lb-bg-emerald" onclick="RatingsPlugin.setProfileBackground(\'emerald\')" title="Emerald"></div>' +
                 '<div class="lb-bg-swatch lb-bg-mono" onclick="RatingsPlugin.setProfileBackground(\'mono\')" title="Minimal"></div>' +
                 '</div></div>' +
-                '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="Toggle Fullscreen">⛶</button>' +
+                '<button class="lb-toolbar-btn" id="lbFullscreenBtn" onclick="RatingsPlugin.toggleProfileFullscreen()" title="' + RatingsPlugin.t('toggleFullscreen') + '">⛶</button>' +
                 '</div></div>';
 
             // Profile header with gradient background (or an uploaded looping GIF/video behind it).
@@ -5015,7 +5065,7 @@
             } else if (status.hasBlocked) {
                 html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">' + self.t('unblock') + '</button>';
             } else if (status.isBlockedBy) {
-                html += '<button class="lb-btn disabled" disabled>Blocked</button>';
+                html += '<button class="lb-btn disabled" disabled>' + RatingsPlugin.t('blocked') + '</button>';
             } else {
                 // Follow button
                 if (status.followStatus && status.followStatus.isFollowing) {
@@ -5829,7 +5879,7 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+            content.innerHTML = '<div class="lb-loading">' + RatingsPlugin.t('loading') + '</div>';
 
             var self = this;
             var baseUrl = ApiClient.serverAddress();
@@ -5845,14 +5895,14 @@
                 var users = data.users || [];
                 if (users.length === 0) {
                     content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">👥</span>' +
-                        '<p>No other users on this server yet</p></div>';
+                        '<p>' + RatingsPlugin.t('noOtherUsersOnThisServerYet') + '</p></div>';
                     return;
                 }
 
                 // Simple client-side filter - the list is small and this avoids a request per
                 // keystroke.
                 var html = '<div class="lb-users-toolbar">' +
-                    '<input type="text" id="lbUserFilter" class="lb-user-filter" placeholder="Filter users..." />' +
+                    '<input type="text" id="lbUserFilter" class="lb-user-filter" placeholder="' + RatingsPlugin.t('filterUsers') + '" />' +
                     '<span class="lb-users-count">' + users.length + ' user' + (users.length === 1 ? '' : 's') + '</span>' +
                     '</div>';
 
@@ -5861,8 +5911,8 @@
                     var username = user.username || 'Unknown';
                     var initial = username[0] ? username[0].toUpperCase() : '?';
                     var badges = '';
-                    if (user.isFriend) badges += '<span class="lb-user-badge friend">Friend</span>';
-                    else if (user.isFollowing) badges += '<span class="lb-user-badge following">Following</span>';
+                    if (user.isFriend) badges += '<span class="lb-user-badge friend">' + RatingsPlugin.t('friend') + '</span>';
+                    else if (user.isFollowing) badges += '<span class="lb-user-badge following">' + RatingsPlugin.t('following') + '</span>';
 
                     html += '<div class="lb-user-card" data-username="' + self.escapeHtml(username.toLowerCase()) + '" ' +
                         'onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(user.userId) + '\')">' +
@@ -5921,21 +5971,21 @@
                 html += '<div class="lb-row-header">';
                 if (isSelf) {
                     html += '<input type="text" class="lb-row-title-input" value="' + self.escapeHtml(row.title || 'Favorites') + '" ' +
-                        'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="Row Title">';
+                        'onchange="RatingsPlugin.updateRowTitle(' + rowIndex + ', this.value)" placeholder="' + RatingsPlugin.t('rowTitle') + '">';
                     html += '<span class="lb-row-count">' + itemCount + '/30</span>';
                     // Row order is the order they are stored in, so moving one is a swap + save.
                     html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',-1)"' +
-                        (rowIndex === 0 ? ' disabled' : '') + ' title="Move row up">↑</button>';
+                        (rowIndex === 0 ? ' disabled' : '') + ' title="' + RatingsPlugin.t('moveRowUp') + '">↑</button>';
                     html += '<button class="lb-row-move" onclick="RatingsPlugin.moveFavoriteRow(' + rowIndex + ',1)"' +
-                        (rowIndex === favoriteRows.length - 1 ? ' disabled' : '') + ' title="Move row down">↓</button>';
-                    html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="Delete row">×</button>';
+                        (rowIndex === favoriteRows.length - 1 ? ' disabled' : '') + ' title="' + RatingsPlugin.t('moveRowDown') + '">↓</button>';
+                    html += '<button class="lb-row-delete" onclick="RatingsPlugin.deleteRow(' + rowIndex + ')" title="' + RatingsPlugin.t('deleteRow') + '">×</button>';
                 } else {
                     html += '<h3 class="lb-row-title">' + self.escapeHtml(row.title || 'Favorites') + '</h3>';
                     if (itemCount > 0) html += '<span class="lb-row-count">' + itemCount + ' items</span>';
                 }
                 html += '</div>';
                 html += '<div class="lb-row-scroll">';
-                html += '<button class="lb-row-arrow left" onclick="RatingsPlugin.scrollFavRow(this,-1)" aria-label="Scroll left">‹</button>';
+                html += '<button class="lb-row-arrow left" onclick="RatingsPlugin.scrollFavRow(this,-1)" aria-label="' + RatingsPlugin.t('scrollLeft') + '">‹</button>';
                 html += '<div class="lb-favorites-grid" data-row="' + rowIndex + '"' +
                     (isSelf ? ' ondragover="RatingsPlugin.favDragOver(event)" ondrop="RatingsPlugin.favDrop(event,' + rowIndex + ',-1)"' : '') + '>';
 
@@ -5960,7 +6010,7 @@
                 }
 
                 html += '</div>'; // .lb-favorites-grid
-                html += '<button class="lb-row-arrow right" onclick="RatingsPlugin.scrollFavRow(this,1)" aria-label="Scroll right">›</button>';
+                html += '<button class="lb-row-arrow right" onclick="RatingsPlugin.scrollFavRow(this,1)" aria-label="' + RatingsPlugin.t('scrollRight') + '">›</button>';
                 html += '</div>'; // .lb-row-scroll
                 html += '</div>'; // .lb-favorite-row
             }
@@ -6066,7 +6116,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data || !data.hasData || !data.genres || data.genres.length === 0) {
-                    el.innerHTML = '<div class="lb-side-empty">Nothing watched yet</div>';
+                    el.innerHTML = '<div class="lb-side-empty">' + RatingsPlugin.t('nothingWatchedYet') + '</div>';
                     return;
                 }
 
@@ -6101,7 +6151,7 @@
 
                 var top = slices[0];
                 var html = '<div class="lb-donut-wrap">' +
-                    '<svg viewBox="0 0 42 42" class="lb-donut" role="img" aria-label="Genre breakdown by watch time">' +
+                    '<svg viewBox="0 0 42 42" class="lb-donut" role="img" aria-label="' + RatingsPlugin.t('genreBreakdownByWatchTime') + '">' +
                     '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#2c3440" stroke-width="5"></circle>' +
                     circles +
                     '</svg>' +
@@ -6147,7 +6197,7 @@
             .then(function (data) {
                 var matches = (data && data.matches) || [];
                 if (matches.length === 0) {
-                    el.innerHTML = '<div class="lb-side-empty">No one else has watched enough yet</div>';
+                    el.innerHTML = '<div class="lb-side-empty">' + RatingsPlugin.t('noOneElseHasWatchedEnoughYet') + '</div>';
                     return;
                 }
 
@@ -6205,8 +6255,8 @@
                             ' onmouseenter="RatingsPlugin.showWatchInfo(this)" onmouseleave="RatingsPlugin.hideWatchInfo()">' +
                             self.escapeHtml(mediaName) + '</span>' +
                             '<span class="lb-watch-time" id="' + id + '">' + self.formatWatchClock(startedSec, totalSec) + '</span>' +
-                            '<button class="lb-watch-join" title="Watch this too" ' +
-                            'onclick="event.stopPropagation();RatingsPlugin.openJoinWatchModal(\'' + joinPayload + '\')">Watch too</button>' +
+                            '<button class="lb-watch-join" title="' + RatingsPlugin.t('watchThisToo') + '" ' +
+                            'onclick="event.stopPropagation();RatingsPlugin.openJoinWatchModal(\'' + joinPayload + '\')">' + RatingsPlugin.t('watchToo') + '</button>' +
                             '</div>';
                     }
 
@@ -6218,12 +6268,12 @@
                         '</div>' +
                         '<div class="lb-match-info">' +
                         '<div class="lb-match-name">' + self.escapeHtml(name) +
-                        (m.isFriend ? '<span class="lb-user-badge friend">Friend</span>' : '') + '</div>' +
+                        (m.isFriend ? '<span class="lb-user-badge friend">' + RatingsPlugin.t('friend') + '</span>' : '') + '</div>' +
                         (shared ? '<div class="lb-match-genres">' + self.escapeHtml(shared) + '</div>' : '') +
                         '</div>' +
-                        '<div class="lb-match-score" title="Genre taste match">' + m.matchPercent + '%</div>' +
+                        '<div class="lb-match-score" title="' + RatingsPlugin.t('genreTasteMatch') + '">' + m.matchPercent + '%</div>' +
                         (m.canMessage
-                            ? '<button class="lb-match-msg" title="Send a private message" ' +
+                            ? '<button class="lb-match-msg" title="' + RatingsPlugin.t('sendAPrivateMessage') + '" ' +
                               'onclick="event.stopPropagation();RatingsPlugin.messageUser(\'' + self.escapeJs(m.userId) + '\',\'' + encName + '\')">✉</button>'
                             : '') +
                         '</div>' +
@@ -6377,7 +6427,7 @@
                     : '') +
                 (info.overview
                     ? '<div class="lb-wi-desc">' + self.escapeHtml(info.overview) + '</div>'
-                    : (info.loading ? '' : '<div class="lb-wi-desc dim">No description available.</div>')) +
+                    : (info.loading ? '' : '<div class="lb-wi-desc dim">' + RatingsPlugin.t('noDescriptionAvailable') + '</div>')) +
                 '</div>';
 
             if (poster) {
@@ -6506,11 +6556,11 @@
                 '<button class="lb-join-opt primary" onclick="RatingsPlugin.startWatching(\'' + self.escapeJs(d.itemId) + '\',' + liveTicks + ')">' +
                 '<span class="lb-join-opt-icon">⏱</span>' +
                 '<span class="lb-join-opt-text"><strong>Join them at ' + liveLabel + '</strong>' +
-                '<small>Start where they are now</small></span></button>' +
+                '<small>' + RatingsPlugin.t('startWhereTheyAreNow') + '</small></span></button>' +
                 '<button class="lb-join-opt" onclick="RatingsPlugin.startWatching(\'' + self.escapeJs(d.itemId) + '\',0)">' +
                 '<span class="lb-join-opt-icon">⏮</span>' +
-                '<span class="lb-join-opt-text"><strong>Start from the beginning</strong>' +
-                '<small>Watch it from the top</small></span></button>' +
+                '<span class="lb-join-opt-text"><strong>' + RatingsPlugin.t('startFromTheBeginning') + '</strong>' +
+                '<small>' + RatingsPlugin.t('watchItFromTheTop') + '</small></span></button>' +
                 '</div></div></div>';
 
             modal.addEventListener('click', function (e) {
@@ -6676,7 +6726,7 @@
                 var container = document.getElementById('lbRatingDist');
                 if (!container) return;
                 if (ratings.length === 0) {
-                    container.innerHTML = '<div class="lb-empty">No ratings yet</div>';
+                    container.innerHTML = '<div class="lb-empty">' + RatingsPlugin.t('noRatingsYet') + '</div>';
                     return;
                 }
 
@@ -6715,7 +6765,7 @@
                 var container = document.getElementById('lbRecentActivity');
                 if (!container) return;
                 if (ratings.length === 0) {
-                    container.innerHTML = '<div class="lb-empty">No recent activity</div>';
+                    container.innerHTML = '<div class="lb-empty">' + RatingsPlugin.t('noRecentActivity') + '</div>';
                     return;
                 }
 
@@ -6767,7 +6817,7 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            content.innerHTML = '<div class="lb-loading">Loading ratings...</div>';
+            content.innerHTML = '<div class="lb-loading">' + RatingsPlugin.t('loadingRatings') + '</div>';
 
             var self = this;
             var userId = self._viewingProfileUserId;
@@ -6787,7 +6837,7 @@
                 // API returns array directly
                 var ratings = Array.isArray(data) ? data : (data.ratings || data || []);
                 if (ratings.length === 0) {
-                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">⭐</span><p>No ratings yet</p></div>';
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">⭐</span><p>' + RatingsPlugin.t('noRatingsYet') + '</p></div>';
                     return;
                 }
 
@@ -6832,9 +6882,9 @@
                             inLib: !!inLib
                         });
                         actions = '<div class="lb-rating-actions">' +
-                            '<button class="lb-rating-act" title="Edit rating"' +
+                            '<button class="lb-rating-act" title="' + RatingsPlugin.t('editRating') + '"' +
                             ' onclick="event.stopPropagation();RatingsPlugin.openRatingEditor(\'' + editPayload + '\')">✎</button>' +
-                            '<button class="lb-rating-act danger" title="Remove rating"' +
+                            '<button class="lb-rating-act danger" title="' + RatingsPlugin.t('removeRating') + '"' +
                             ' onclick="event.stopPropagation();RatingsPlugin.confirmRemoveRating(\'' + editPayload + '\')">🗑</button>' +
                             '</div>';
                     } else if (itemId) {
@@ -6903,7 +6953,7 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            content.innerHTML = '<div class="lb-loading">Loading reviews...</div>';
+            content.innerHTML = '<div class="lb-loading">' + RatingsPlugin.t('loadingReviews') + '</div>';
 
             var self = this;
             var userId = self._viewingProfileUserId;
@@ -6929,7 +6979,7 @@
                 });
 
                 if (reviews.length === 0) {
-                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📝</span><p>No reviews yet</p></div>';
+                    content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📝</span><p>' + RatingsPlugin.t('noReviewsYet') + '</p></div>';
                     return;
                 }
 
@@ -7015,7 +7065,7 @@
             lists = lists || [];
 
             if (lists.length === 0) {
-                content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📋</span><p>No lists created yet</p></div>';
+                content.innerHTML = '<div class="lb-empty-state"><span class="lb-empty-icon">📋</span><p>' + RatingsPlugin.t('noListsCreatedYet') + '</p></div>';
                 return;
             }
 
@@ -7050,7 +7100,7 @@
         renderProfileActivityTab: function () {
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
-            content.innerHTML = '<div id="lbRecentActivity"><div class="lb-loading">Loading activity...</div></div>';
+            content.innerHTML = '<div id="lbRecentActivity"><div class="lb-loading">' + RatingsPlugin.t('loadingActivity') + '</div></div>';
             this.loadProfileRecentActivity(30);
         },
 
@@ -7061,7 +7111,7 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+            content.innerHTML = '<div class="lb-loading">' + RatingsPlugin.t('loading') + '</div>';
 
             var self = this;
             var userId = self._viewingProfileUserId;
@@ -7090,7 +7140,7 @@
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
 
-            content.innerHTML = '<div class="lb-loading">Loading...</div>';
+            content.innerHTML = '<div class="lb-loading">' + RatingsPlugin.t('loading') + '</div>';
 
             var self = this;
             var userId = self._viewingProfileUserId;
@@ -7160,15 +7210,15 @@
             modal.id = 'lbMediaPicker';
             modal.innerHTML = '<div class="lb-picker-content">' +
                 '<div class="lb-picker-header">' +
-                '<h2>Select Media</h2>' +
+                '<h2>' + RatingsPlugin.t('selectMedia') + '</h2>' +
                 '<button class="lb-picker-close" onclick="RatingsPlugin.closeMediaPicker()">&times;</button>' +
                 '</div>' +
                 '<div class="lb-picker-nav" id="pickerNav"></div>' +
                 '<div class="lb-picker-search">' +
-                '<input type="text" id="pickerSearchInput" placeholder="Search..." oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
+                '<input type="text" id="pickerSearchInput" placeholder="' + RatingsPlugin.t('mediaSearch') + '" oninput="RatingsPlugin.searchMediaForPicker(this.value)">' +
                 '</div>' +
                 '<div class="lb-picker-results" id="pickerResults">' +
-                '<div class="lb-picker-loading">Loading categories...</div>' +
+                '<div class="lb-picker-loading">' + RatingsPlugin.t('loadingCategories') + '</div>' +
                 '</div>' +
                 '<div class="lb-picker-pagination" id="pickerPagination"></div>' +
                 '</div>';
@@ -7215,7 +7265,7 @@
             navHtml += '</div>';
             nav.innerHTML = navHtml;
 
-            results.innerHTML = '<div class="lb-picker-empty">Select a category above or search for media</div>';
+            results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('selectACategoryAboveOrSearchForMedia') + '</div>';
             document.getElementById('pickerPagination').innerHTML = '';
         },
 
@@ -7253,14 +7303,14 @@
             if (document.getElementById('pickerSortSelect')) return;
 
             var sortHtml = '<div class="lb-picker-sort">' +
-                '<label>Sort by:</label>' +
+                '<label>' + RatingsPlugin.t('sortBy') + '</label>' +
                 '<select id="pickerSortSelect" onchange="RatingsPlugin.changePickerSort(this.value)">' +
-                '<option value="random"' + (this._pickerSortBy === 'random' ? ' selected' : '') + '>Show all (random)</option>' +
-                '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>My Ratings (Highest)</option>' +
-                '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>My Ratings (Lowest)</option>' +
-                '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>Community Rating</option>' +
-                '<option value="newest"' + (this._pickerSortBy === 'newest' ? ' selected' : '') + '>Newest First</option>' +
-                '<option value="name"' + (this._pickerSortBy === 'name' ? ' selected' : '') + '>Name A-Z</option>' +
+                '<option value="random"' + (this._pickerSortBy === 'random' ? ' selected' : '') + '>' + RatingsPlugin.t('showAllRandom') + '</option>' +
+                '<option value="myRating"' + (this._pickerSortBy === 'myRating' ? ' selected' : '') + '>' + RatingsPlugin.t('myRatingsHighest') + '</option>' +
+                '<option value="myRatingAsc"' + (this._pickerSortBy === 'myRatingAsc' ? ' selected' : '') + '>' + RatingsPlugin.t('myRatingsLowest') + '</option>' +
+                '<option value="communityRating"' + (this._pickerSortBy === 'communityRating' ? ' selected' : '') + '>' + RatingsPlugin.t('communityRating') + '</option>' +
+                '<option value="newest"' + (this._pickerSortBy === 'newest' ? ' selected' : '') + '>' + RatingsPlugin.t('newestFirst') + '</option>' +
+                '<option value="name"' + (this._pickerSortBy === 'name' ? ' selected' : '') + '>' + RatingsPlugin.t('nameAZ') + '</option>' +
                 '</select></div>';
 
             searchDiv.insertAdjacentHTML('afterend', sortHtml);
@@ -7283,7 +7333,7 @@
             var results = document.getElementById('pickerResults');
             if (!results) return;
 
-            results.innerHTML = '<div class="lb-picker-loading">Loading...</div>';
+            results.innerHTML = '<div class="lb-picker-loading">' + RatingsPlugin.t('loading') + '</div>';
 
             // If sorting by my ratings, use different approach
             if (self._pickerSortBy === 'myRating' || self._pickerSortBy === 'myRatingAsc') {
@@ -7331,7 +7381,7 @@
                 var totalCount = data.TotalRecordCount || 0;
 
                 if (items.length === 0) {
-                    results.innerHTML = '<div class="lb-picker-empty">No items found</div>';
+                    results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('noItemsFound') + '</div>';
                     document.getElementById('pickerPagination').innerHTML = '';
                     return;
                 }
@@ -7404,7 +7454,7 @@
                 var totalCount = allRatings.length;
 
                 if (pageRatings.length === 0) {
-                    results.innerHTML = '<div class="lb-picker-empty">No more items</div>';
+                    results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('noMoreItems') + '</div>';
                     document.getElementById('pickerPagination').innerHTML = '';
                     return;
                 }
@@ -7591,7 +7641,7 @@
                 if (self._pickerCategory) {
                     self.loadPickerItems();
                 } else {
-                    results.innerHTML = '<div class="lb-picker-empty">Select a category or type to search...</div>';
+                    results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('selectACategoryOrTypeToSearch') + '</div>';
                     if (pagination) pagination.innerHTML = '';
                 }
                 self._pickerSearchQuery = null;
@@ -7599,7 +7649,7 @@
             }
 
             self._pickerSearchQuery = query;
-            results.innerHTML = '<div class="lb-picker-loading">Searching...</div>';
+            results.innerHTML = '<div class="lb-picker-loading">' + RatingsPlugin.t('searching') + '</div>';
 
             // Debounce
             clearTimeout(self._pickerSearchTimeout);
@@ -7628,7 +7678,7 @@
                     var totalCount = data.TotalRecordCount || 0;
 
                     if (items.length === 0) {
-                        results.innerHTML = '<div class="lb-picker-empty">No results found</div>';
+                        results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('noResultsFound') + '</div>';
                         if (pagination) pagination.innerHTML = '';
                         return;
                     }
@@ -7642,7 +7692,7 @@
                     });
                 })
                 .catch(function () {
-                    results.innerHTML = '<div class="lb-picker-empty">Search failed</div>';
+                    results.innerHTML = '<div class="lb-picker-empty">' + RatingsPlugin.t('searchFailed') + '</div>';
                 });
             }, 300);
         },
@@ -7734,12 +7784,12 @@
 
             var html = '<div class="lb-picker-content lb-add-row-modal">' +
                 '<div class="lb-picker-header">' +
-                '<h2>Add New Row</h2>' +
+                '<h2>' + RatingsPlugin.t('addNewRow') + '</h2>' +
                 '<button class="lb-picker-close" onclick="RatingsPlugin.closeAddRowModal()">&times;</button>' +
                 '</div>' +
                 '<div class="lb-add-row-body">' +
-                '<label>Row Title</label>' +
-                '<input type="text" id="newRowTitleInput" placeholder="Enter custom title..." class="lb-row-name-input">' +
+                '<label>' + RatingsPlugin.t('rowTitle') + '</label>' +
+                '<input type="text" id="newRowTitleInput" placeholder="' + RatingsPlugin.t('enterCustomTitle') + '" class="lb-row-name-input">' +
                 '<div class="lb-preset-titles">';
 
             presets.forEach(function (preset) {
@@ -7748,8 +7798,8 @@
 
             html += '</div>' +
                 '<div class="lb-add-row-actions">' +
-                '<button class="lb-btn secondary" onclick="RatingsPlugin.closeAddRowModal()">Cancel</button>' +
-                '<button class="lb-btn primary" onclick="RatingsPlugin.confirmAddRow()">Create Row</button>' +
+                '<button class="lb-btn secondary" onclick="RatingsPlugin.closeAddRowModal()">' + RatingsPlugin.t('cancel') + '</button>' +
+                '<button class="lb-btn primary" onclick="RatingsPlugin.confirmAddRow()">' + RatingsPlugin.t('createRow') + '</button>' +
                 '</div></div></div>';
 
             modal.innerHTML = html;
@@ -7964,43 +8014,43 @@
             modal.id = 'lbSettingsModal';
             modal.innerHTML = '<div class="lb-settings-content">' +
                 '<div class="lb-settings-header">' +
-                '<h2>Profile Settings</h2>' +
+                '<h2>' + RatingsPlugin.t('profileSettings') + '</h2>' +
                 '<button class="lb-settings-close" onclick="RatingsPlugin.closeProfileSettings()">&times;</button>' +
                 '</div>' +
                 '<div class="lb-settings-body">' +
                 '<div class="lb-settings-section">' +
-                '<h3>Profile Information</h3>' +
+                '<h3>' + RatingsPlugin.t('profileInformation') + '</h3>' +
                 '<div class="lb-settings-field">' +
                 '<label>Bio</label>' +
-                '<textarea id="settingsBio" placeholder="Tell others about yourself...">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
+                '<textarea id="settingsBio" placeholder="' + RatingsPlugin.t('tellOthersAboutYourself') + '">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
-                '<h3>Header Background</h3>' +
+                '<h3>' + RatingsPlugin.t('headerBackground') + '</h3>' +
                 '<div class="lb-settings-field">' +
                 '<label>Looping GIF or video shown behind your name &amp; picture (GIF, MP4 or WEBM, max 25&nbsp;MB)</label>' +
                 '<input type="file" id="settingsHeaderMedia" accept="image/gif,video/mp4,video/webm" onchange="RatingsPlugin.uploadHeaderMedia(this)" />' +
                 '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? ('Current: ' + (profile.headerMediaType === 'video' ? 'video' : 'GIF') + ' set.') : 'None set.') + '</div>' +
-                '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">Remove header background</button>' +
+                '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">' + RatingsPlugin.t('removeHeaderBackground') + '</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
-                '<h3>Privacy</h3>' +
+                '<h3>' + RatingsPlugin.t('privacy') + '</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsShowRatings" ' + (privacy.ratingsVisibleRegular !== false ? 'checked' : '') + '> Show my ratings to others</label>' +
+                '<label><input type="checkbox" id="settingsShowRatings" ' + (privacy.ratingsVisibleRegular !== false ? 'checked' : '') + '> ' + RatingsPlugin.t('showMyRatingsToOthers') + '</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsShowActivity" ' + (privacy.watchHistoryVisibleRegular !== false ? 'checked' : '') + '> Show my activity feed</label>' +
+                '<label><input type="checkbox" id="settingsShowActivity" ' + (privacy.watchHistoryVisibleRegular !== false ? 'checked' : '') + '> ' + RatingsPlugin.t('showMyActivityFeed') + '</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
-                '<label><input type="checkbox" id="settingsAllowFollows" ' + (privacy.allowFriendRequests !== 'Nobody' ? 'checked' : '') + '> Allow others to follow me</label>' +
+                '<label><input type="checkbox" id="settingsAllowFollows" ' + (privacy.allowFriendRequests !== 'Nobody' ? 'checked' : '') + '> ' + RatingsPlugin.t('allowOthersToFollowMe') + '</label>' +
                 '</div>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
                 '<div id="profileSettingsStatus" class="lb-settings-error" style="display:none;"></div>' +
-                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeProfileSettings()">Cancel</button>' +
-                '<button class="lb-btn-save" onclick="RatingsPlugin.saveProfileSettings()">Save Changes</button>' +
+                '<button class="lb-btn-cancel" onclick="RatingsPlugin.closeProfileSettings()">' + RatingsPlugin.t('cancel') + '</button>' +
+                '<button class="lb-btn-save" onclick="RatingsPlugin.saveProfileSettings()">' + RatingsPlugin.t('saveChanges') + '</button>' +
                 '</div>' +
                 '</div>';
 
@@ -8570,7 +8620,7 @@
                     </div>
                 </div>
                 <div class="ratings-plugin-stats" id="ratingsPluginStats">
-                    <span class="ratings-plugin-loading">Loading ratings...</span>
+                    <span class="ratings-plugin-loading">${RatingsPlugin.t('loadingRatings')}</span>
                 </div>
             `;
 
@@ -9173,11 +9223,11 @@
                     </div>
                     <div class="ratings-modal-stars">${starsHtml}</div>
                     <div class="ratings-modal-rating-display">${selectedRating > 0 ? selectedRating + '/10' : 'Select a rating'}</div>
-                    <div class="ratings-modal-review-label">Write a review (optional):</div>
-                    <textarea class="ratings-modal-review" placeholder="Share your thoughts about this title..."></textarea>
+                    <div class="ratings-modal-review-label">${RatingsPlugin.t('writeAReviewOptional')}</div>
+                    <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"></textarea>
                     <div class="ratings-modal-buttons">
-                        <button class="ratings-modal-btn ratings-modal-btn-secondary" data-action="cancel">Cancel</button>
-                        <button class="ratings-modal-btn ratings-modal-btn-primary" data-action="submit" ${selectedRating === 0 ? 'disabled' : ''}>Submit Rating</button>
+                        <button class="ratings-modal-btn ratings-modal-btn-secondary" data-action="cancel">${RatingsPlugin.t('cancel')}</button>
+                        <button class="ratings-modal-btn ratings-modal-btn-primary" data-action="submit" ${selectedRating === 0 ? 'disabled' : ''}>${RatingsPlugin.t('submitRating')}</button>
                     </div>
                 </div>
             `;
@@ -9342,11 +9392,11 @@
             overlay.innerHTML = `
                 <div class="ratings-modal ratings-list-modal">
                     <div class="ratings-modal-header">
-                        <span class="ratings-modal-title">All Ratings</span>
+                        <span class="ratings-modal-title">${RatingsPlugin.t('allRatings')}</span>
                         <button class="ratings-modal-close">&times;</button>
                     </div>
                     <div class="ratings-list-content">
-                        <div class="ratings-list-empty">Loading...</div>
+                        <div class="ratings-list-empty">${RatingsPlugin.t('loading')}</div>
                     </div>
                 </div>
             `;
@@ -9496,7 +9546,7 @@
             overlay.innerHTML = `
                 <div class="ratings-modal review-mini-modal">
                     <div class="ratings-modal-header">
-                        <span class="ratings-modal-title">Review</span>
+                        <span class="ratings-modal-title">${RatingsPlugin.t('review')}</span>
                         <button class="ratings-modal-close">&times;</button>
                     </div>
                     <div class="review-mini-header">
@@ -10100,15 +10150,15 @@
             overlay.innerHTML = `
                 <div class="ratings-modal review-comments-modal">
                     <div class="ratings-modal-header">
-                        <span class="ratings-modal-title">Comments</span>
+                        <span class="ratings-modal-title">${RatingsPlugin.t('comments')}</span>
                         <button class="ratings-modal-close">&times;</button>
                     </div>
                     <div class="review-comments-list">
-                        <div class="review-comments-empty">Loading...</div>
+                        <div class="review-comments-empty">${RatingsPlugin.t('loading')}</div>
                     </div>
                     <div class="review-comment-input-area">
-                        <textarea class="review-comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
-                        <button class="review-comment-send" disabled>Send</button>
+                        <textarea class="review-comment-input" placeholder="${RatingsPlugin.t('writeAComment')}" maxlength="500"></textarea>
+                        <button class="review-comment-send" disabled>${RatingsPlugin.t('send')}</button>
                     </div>
                 </div>
             `;
@@ -10179,7 +10229,7 @@
                 .then(r => r.json())
                 .then(comments => {
                     if (!comments || comments.length === 0) {
-                        listContainer.innerHTML = '<div class="review-comments-empty">No comments yet. Be the first!</div>';
+                        listContainer.innerHTML = '<div class="review-comments-empty">' + RatingsPlugin.t('noCommentsYetBeTheFirst') + '</div>';
                         return;
                     }
 
@@ -10187,7 +10237,7 @@
                     comments.forEach(c => {
                         const avatarUrl = `${baseUrl}/Users/${self.apiField(c, 'commenterId')}/Images/Primary?height=64`;
                         const isOwn = self.apiField(c, 'commenterId') === currentUserId;
-                        const deleteBtn = isOwn ? `<button class="review-comment-delete" data-comment-id="${c.Id}" title="Delete">🗑️</button>` : '';
+                        const deleteBtn = isOwn ? `<button class="review-comment-delete" data-comment-id="${c.Id}" title="' + RatingsPlugin.t('delete') + '">🗑️</button>` : '';
 
                         html += `
                             <div class="review-comment-item" data-comment-id="${c.Id}">
@@ -10742,9 +10792,9 @@
                 modal.innerHTML = `
                     <div id="requestMediaModalContent">
                         <button id="requestMediaModalClose" type="button">&times;</button>
-                        <div id="requestMediaModalTitle">Request Media</div>
+                        <div id="requestMediaModalTitle">${RatingsPlugin.t('requestMedia')}</div>
                         <div id="requestMediaModalBody">
-                            <p style="text-align: center; color: #999;">Loading...</p>
+                            <p style="text-align: center; color: #999;">${RatingsPlugin.t('loading')}</p>
                         </div>
                     </div>
                 `;
@@ -11137,7 +11187,7 @@
                             }
 
                             // Show loading state and position dropdown
-                            searchDropdown.innerHTML = '<div class="dropdown-loading">Searching...</div>';
+                            searchDropdown.innerHTML = '<div class="dropdown-loading">' + RatingsPlugin.t('searching') + '</div>';
                             searchDropdown.classList.add('visible');
                             self.positionSearchDropdown();
 
@@ -13399,7 +13449,7 @@
                     deletionDialog.id = 'deletionDialog';
                     deletionDialog.innerHTML = `
                         <div id="deletionDialogContent">
-                            <button class="deletion-close-btn" title="Close">×</button>
+                            <button class="deletion-close-btn" title="${RatingsPlugin.t('close')}">×</button>
                             <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
                             <div id="deletionDialogOptions">
                                 <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
@@ -13746,8 +13796,8 @@
                             <th>${self.t('mediaSortRating')}</th>
                             <th>${self.t('mediaSortPlayCount')}</th>
                             <th>${self.t('mediaSortSize')}</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>${RatingsPlugin.t('status')}</th>
+                            <th>${RatingsPlugin.t('mediaActions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -14289,7 +14339,7 @@
 
             // If we haven't loaded available types yet, fetch from server
             if (!self.availableMediaTypes) {
-                container.innerHTML = '<p style="color: #888;">Loading available types...</p>';
+                container.innerHTML = '<p style="color: #888;">' + RatingsPlugin.t('loadingAvailableTypes') + '</p>';
                 self.fetchAvailableMediaTypes().then(() => {
                     self.renderMediaTypeCheckboxes(container);
                 });
@@ -14626,7 +14676,7 @@
                     </button>`;
             } catch (error) {
                 console.error('Error scanning for orphaned trickplay:', error);
-                box.innerHTML = `<div class="orphan-trickplay-head">Leftover trickplay data</div>
+                box.innerHTML = `<div class="orphan-trickplay-head">' + RatingsPlugin.t('leftoverTrickplayData') + '</div>
                     <div class="orphan-trickplay-note error">Could not scan (${self.escapeHtml(String(error && error.message ? error.message : error))}).</div>`;
             }
         },
@@ -15346,7 +15396,7 @@
                 });
 
                 if (!response.ok) {
-                    dropdown.innerHTML = '<div class="dropdown-empty">Search failed</div>';
+                    dropdown.innerHTML = '<div class="dropdown-empty">' + RatingsPlugin.t('searchFailed') + '</div>';
                     return;
                 }
 
@@ -15354,7 +15404,7 @@
                 const searchItems = data.SearchHints || [];
 
                 if (searchItems.length === 0) {
-                    dropdown.innerHTML = '<div class="dropdown-empty">No results found</div>';
+                    dropdown.innerHTML = '<div class="dropdown-empty">' + RatingsPlugin.t('noResultsFound') + '</div>';
                     dropdown.classList.add('visible');
                     return;
                 }
@@ -15406,7 +15456,7 @@
 
             } catch (error) {
                 console.error('RatingsPlugin: Dropdown search error:', error);
-                dropdown.innerHTML = '<div class="dropdown-empty">Search error</div>';
+                dropdown.innerHTML = '<div class="dropdown-empty">' + RatingsPlugin.t('searchError') + '</div>';
             }
         },
 
@@ -16202,7 +16252,7 @@
                             <!-- Input fields -->
                             <div class="admin-request-inputs">
                                 <input type="text" class="admin-request-input admin-link-input" data-request-id="${self.apiField(request, 'id')}" placeholder="${self.t('mediaLinkPlaceholder')}" value="${self.escapeHtml(self.apiField(request, 'mediaLink') || '')}">
-                                <input type="text" class="admin-request-input admin-rejection-input" data-request-id="${self.apiField(request, 'id')}" placeholder="Rejection reason..." value="${self.escapeHtml(self.apiField(request, 'rejectionReason') || '')}">
+                                <input type="text" class="admin-request-input admin-rejection-input" data-request-id="${self.apiField(request, 'id')}" placeholder="${RatingsPlugin.t('rejectionReason')}" value="${self.escapeHtml(self.apiField(request, 'rejectionReason') || '')}">
                             </div>
 
                             <!-- Snooze controls -->
@@ -18743,7 +18793,7 @@
                     <div class="ratings-notification-content">
                         <div class="ratings-notification-header">
                             <span class="ratings-notification-icon">🔔</span>
-                            <span class="ratings-notification-label">Test Notification</span>
+                            <span class="ratings-notification-label">${RatingsPlugin.t('testNotification')}</span>
                         </div>
                         <div class="ratings-notification-message">${this.escapeHtml(notification.Message || 'Test notification')}</div>
                     </div>
@@ -18795,7 +18845,7 @@
             notifEl.innerHTML = `
                 ${imageHtml}
                 ${contentHtml}
-                <button class="ratings-notification-close" title="Dismiss">&times;</button>
+                <button class="ratings-notification-close" title="${RatingsPlugin.t('dismiss')}">&times;</button>
             `;
 
             // Add close button handler
@@ -19278,7 +19328,7 @@
                 background: #141414 !important;
                 z-index: 100 !important;
             `;
-            netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">Loading genres...</div>';
+            netflixContainer.innerHTML = '<div class="netflix-loading" style="color: white; text-align: center; padding: 50px; font-size: 18px;">' + RatingsPlugin.t('loadingGenres') + '</div>';
 
             // Insert directly into body as fixed overlay
             document.body.appendChild(netflixContainer);
@@ -19341,7 +19391,7 @@
                     .sort((a, b) => b[1].length - a[1].length)
                     .slice(0, 15); // Limit to top 15 genres
                 if (sortedGenres.length === 0) {
-                    container.innerHTML = '<div class="netflix-loading" style="color: white; padding: 50px; text-align: center;">No genres found</div>';
+                    container.innerHTML = '<div class="netflix-loading" style="color: white; padding: 50px; text-align: center;">' + RatingsPlugin.t('noGenresFound') + '</div>';
                     return;
                 }
 
@@ -19435,11 +19485,11 @@
                         </span>
                     </div>
                     <div class="netflix-row-wrapper">
-                        <button class="netflix-scroll-btn left" aria-label="Scroll left">‹</button>
+                        <button class="netflix-scroll-btn left" aria-label="${RatingsPlugin.t('scrollLeft')}">‹</button>
                         <div class="netflix-row-content">
                             ${cardsHtml}
                         </div>
-                        <button class="netflix-scroll-btn right" aria-label="Scroll right">›</button>
+                        <button class="netflix-scroll-btn right" aria-label="${RatingsPlugin.t('scrollRight')}">›</button>
                     </div>
                 </div>
             `;
@@ -20931,7 +20981,7 @@
                         </div>
                     </div>
                     <div class="chat-typing" id="chatTyping"></div>
-                    <button class="chat-scroll-to-bottom" id="chatScrollToBottom" title="Jump to latest">↓</button>
+                    <button class="chat-scroll-to-bottom" id="chatScrollToBottom" title="${RatingsPlugin.t('jumpToLatest')}">↓</button>
                     <div class="chat-status" id="chatStatus" style="display:none;"></div>
                     <div class="chat-input-area" id="chatInputArea">
                         <div class="chat-emoji-picker" id="chatEmojiPicker">
@@ -20955,8 +21005,8 @@
                             <div class="chat-input-wrapper">
                                 <textarea class="chat-input" id="chatInput" placeholder="${this.t('chatPlaceholder')}" rows="1"></textarea>
                                 <div class="chat-input-btns">
-                                    <button class="chat-emoji-btn" id="chatEmojiBtn" title="Emojis">😊</button>
-                                    <button class="chat-gif-btn" id="chatGifBtn" title="GIFs" style="${this.chatConfig.allowGifs && this.chatConfig.hasGifSupport ? '' : 'display:none;'}">GIF</button>
+                                    <button class="chat-emoji-btn" id="chatEmojiBtn" title="${RatingsPlugin.t('emojis')}">😊</button>
+                                    <button class="chat-gif-btn" id="chatGifBtn" title="${RatingsPlugin.t('gifs')}" style="${this.chatConfig.allowGifs && this.chatConfig.hasGifSupport ? '' : 'display:none;'}">GIF</button>
                                 </div>
                             </div>
                             <button class="chat-send-btn" id="chatSendBtn" title="${this.t('chatSend')}">➤</button>
@@ -21021,7 +21071,7 @@
                                     </div>
                                     <div class="chat-mod-action-target" id="chatModActionTarget">
                                         <div class="chat-mod-action-avatar" id="chatModActionAvatar">U</div>
-                                        <span class="chat-mod-action-name" id="chatModActionName">Username</span>
+                                        <span class="chat-mod-action-name" id="chatModActionName">${RatingsPlugin.t('username')}</span>
                                         <span class="chat-mod-user-status" id="chatModUserStatus"></span>
                                     </div>
                                     <!-- Moderator Controls -->
@@ -21568,7 +21618,7 @@
 
             let countdownHtml = '';
             if (isPermanent) {
-                countdownHtml = '<span class="chat-ban-countdown">Permanent</span>';
+                countdownHtml = '<span class="chat-ban-countdown">' + RatingsPlugin.t('banPermanent') + '</span>';
             } else if (expiresAt) {
                 countdownHtml = '<span class="chat-ban-countdown" id="chatBanCountdown_' + banType + '"></span>';
             }
@@ -22071,7 +22121,7 @@
                             + '<button class="chat-action-btn delete" data-delete-id="' + self.escapeHtml(String(msg.id)) + '">' + self.t('delete') + '</button>';
                         // Add manage option for admin/mod on other users
                         if (!isOwn && (self.chatIsAdmin || self.chatIsModerator)) {
-                            html += '<button class="chat-action-btn" data-manage-userid="' + self.escapeHtml(String(msg.userId)) + '" data-manage-username="' + self.escapeHtml(msg.userName) + '">Manage</button>';
+                            html += '<button class="chat-action-btn" data-manage-userid="' + self.escapeHtml(String(msg.userId)) + '" data-manage-username="' + self.escapeHtml(msg.userName) + '">' + RatingsPlugin.t('manage') + '</button>';
                         }
                         html += '</div>';
                     }
@@ -22383,7 +22433,7 @@
             const container = document.getElementById('chatGifList');
 
             if (!gifs || gifs.length === 0) {
-                container.innerHTML = '<div style="color:#888;padding:10px;">No GIFs found</div>';
+                container.innerHTML = '<div style="color:#888;padding:10px;">' + RatingsPlugin.t('noGifsFound') + '</div>';
                 return;
             }
 
@@ -22738,7 +22788,7 @@
                         + '</div>'
                         + '<span class="chat-mod-ban-expires">' + expiresText + (reason ? ' · ' + self.escapeHtml(reason) : '') + '</span>'
                         + '</div>'
-                        + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">Unban</button>'
+                        + '<button class="chat-mod-unban-btn" data-unban-id="' + self.escapeHtml(banId) + '" data-ban-user="' + self.escapeHtml(banUserName) + '">' + RatingsPlugin.t('unbanUser') + '</button>'
                         + '</div>';
                 }).join('');
 
@@ -22903,7 +22953,7 @@
             if (!dropdown) return;
 
             if (this.modSearchUsers.length === 0) {
-                dropdown.innerHTML = '<div class="chat-mod-search-item"><span class="chat-mod-search-name">No users found</span></div>';
+                dropdown.innerHTML = '<div class="chat-mod-search-item"><span class="chat-mod-search-name">' + RatingsPlugin.t('chatNoUsers') + '</span></div>';
                 dropdown.classList.add('visible');
                 this.modSearchVisible = true;
                 return;
@@ -23064,7 +23114,7 @@
             if (!dropdown) return;
 
             if (!this.userSearchUsers || this.userSearchUsers.length === 0) {
-                dropdown.innerHTML = '<div class="chat-mod-user-search-item"><span>No users found</span></div>';
+                dropdown.innerHTML = '<div class="chat-mod-user-search-item"><span>' + RatingsPlugin.t('chatNoUsers') + '</span></div>';
                 dropdown.classList.add('visible');
                 this.userSearchVisible = true;
                 return;
@@ -23888,7 +23938,7 @@
             .then(function (r) { return r.json(); })
             .then(function (users) {
                 if (!select) return;
-                select.innerHTML = '<option value="">Select user...</option>' + users.filter(function (u) { return !u.isModerator && !u.isAdmin; }).map(function (u) {
+                select.innerHTML = '<option value="">' + RatingsPlugin.t('selectUser') + '</option>' + users.filter(function (u) { return !u.isModerator && !u.isAdmin; }).map(function (u) {
                     return '<option value="' + self.escapeHtml(u.id) + '">' + self.escapeHtml(u.name) + '</option>';
                 }).join('');
             })
@@ -24205,7 +24255,7 @@
                 const list = document.getElementById('chatBannedList');
                 if (!list) return; // Element doesn't exist in new mod panel
                 if (!bans || bans.length === 0) {
-                    list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
+                    list.innerHTML = '<div style="color:#666;font-size:12px;">' + RatingsPlugin.t('noBannedUsers') + '</div>';
                 } else {
                     list.innerHTML = bans.map(function (ban) {
                         const banTypeBadge = '<span class="chat-ban-type" style="background:' + self.getBanTypeColor(ban.banType) + ';">' + ban.banType + '</span>';
@@ -24226,7 +24276,7 @@
             })
             .catch(function () {
                 var list = document.getElementById('chatBannedList');
-                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">No banned users</div>';
+                if (list) list.innerHTML = '<div style="color:#666;font-size:12px;">' + RatingsPlugin.t('noBannedUsers') + '</div>';
             });
         },
 
@@ -24655,9 +24705,9 @@
                     '<div class="chat-penalty-modal-header">' +
                         '<div class="chat-penalty-modal-title">' +
                             '<span class="chat-penalty-modal-title-icon">✓</span>' +
-                            '<span>Penalty Applied</span>' +
+                            '<span>' + RatingsPlugin.t('penaltyApplied') + '</span>' +
                         '</div>' +
-                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                        '<button class="chat-penalty-modal-close" title="' + RatingsPlugin.t('close') + '">&times;</button>' +
                     '</div>' +
                     '<div class="chat-penalty-modal-body">' +
                         '<div class="chat-penalty-modal-icon">' + typeIcon + '</div>' +
@@ -24724,14 +24774,14 @@
             if (nicknameColor) {
                 const safeNickColor = self.escapeHtml(nicknameColor);
                 changesHtml += '<div class="chat-modal-change-item">' +
-                    '<span class="chat-modal-change-label">Nickname color:</span>' +
+                    '<span class="chat-modal-change-label">' + RatingsPlugin.t('nicknameColor') + '</span>' +
                     '<span class="chat-modal-change-value" style="color:' + safeNickColor + ';">' + safeNickColor + '</span>' +
                 '</div>';
             }
             if (messageColor) {
                 const safeMsgColor = self.escapeHtml(messageColor);
                 changesHtml += '<div class="chat-modal-change-item">' +
-                    '<span class="chat-modal-change-label">Message color:</span>' +
+                    '<span class="chat-modal-change-label">' + RatingsPlugin.t('messageColor') + '</span>' +
                     '<span class="chat-modal-change-value" style="color:' + safeMsgColor + ';">' + safeMsgColor + '</span>' +
                 '</div>';
             }
@@ -24740,12 +24790,12 @@
                 const styleDisplay = safeStyle === 'bold' ? 'Bold' : safeStyle === 'italic' ? 'Italic' : safeStyle;
                 const styleCSS = safeStyle === 'bold' ? 'font-weight:bold;' : safeStyle === 'italic' ? 'font-style:italic;' : '';
                 changesHtml += '<div class="chat-modal-change-item">' +
-                    '<span class="chat-modal-change-label">Text style:</span>' +
+                    '<span class="chat-modal-change-label">' + RatingsPlugin.t('textStyle') + '</span>' +
                     '<span class="chat-modal-change-value" style="' + styleCSS + '">' + styleDisplay + '</span>' +
                 '</div>';
             }
             if (!changesHtml) {
-                changesHtml = '<div class="chat-modal-change-item"><span class="chat-modal-change-label">Default style applied</span></div>';
+                changesHtml = '<div class="chat-modal-change-item"><span class="chat-modal-change-label">' + RatingsPlugin.t('defaultStyleApplied') + '</span></div>';
             }
 
             // Create modal HTML
@@ -24756,9 +24806,9 @@
                     '<div class="chat-penalty-modal-header">' +
                         '<div class="chat-penalty-modal-title" style="color:#4caf50;">' +
                             '<span class="chat-penalty-modal-title-icon">✓</span>' +
-                            '<span>Style Applied</span>' +
+                            '<span>' + RatingsPlugin.t('styleApplied') + '</span>' +
                         '</div>' +
-                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                        '<button class="chat-penalty-modal-close" title="' + RatingsPlugin.t('close') + '">&times;</button>' +
                     '</div>' +
                     '<div class="chat-penalty-modal-body">' +
                         '<div class="chat-penalty-modal-icon">🎨</div>' +
@@ -24827,7 +24877,7 @@
                             '<span class="chat-penalty-modal-title-icon">✓</span>' +
                             '<span>Moderator ' + (isUpdate ? 'Updated' : 'Added') + '</span>' +
                         '</div>' +
-                        '<button class="chat-penalty-modal-close" title="Close">&times;</button>' +
+                        '<button class="chat-penalty-modal-close" title="' + RatingsPlugin.t('close') + '">&times;</button>' +
                     '</div>' +
                     '<div class="chat-penalty-modal-body">' +
                         '<div class="chat-penalty-modal-icon">👮</div>' +
@@ -24837,7 +24887,7 @@
                         '</div>' +
                         '<div class="chat-modal-changes">' +
                             '<div class="chat-modal-change-item">' +
-                                '<span class="chat-modal-change-label">Permissions:</span>' +
+                                '<span class="chat-modal-change-label">' + RatingsPlugin.t('permissions') + '</span>' +
                                 '<span class="chat-modal-change-value">' + levelDesc + '</span>' +
                             '</div>' +
                         '</div>' +
