@@ -101,5 +101,25 @@ window.RatingsPluginI18n.ko = {
             changeLanguage: '언어 변경',
             testNotificationTooltip: '테스트 알림 보내기',
             notificationsOn: '알림 활성화됨',
-            notificationsOff: '알림 비활성화됨'
+            notificationsOff: '알림 비활성화됨',
+            // Social, profile, rating widget and the support queues.
+            accept: '수락', activity: '활동', addFriend: '친구 추가', away: '자리 비움', blockUser: '사용자 차단', blocked: '차단됨',
+            bugAddPhoto: '스크린샷 추가', bugCommentRequired: '문제를 설명해 주세요.', bugLimits: '최대 {n}개 이미지, 각 {mb} MB',
+            bugMine: '내 신고', bugNoneYet: '아직 신고한 내용이 없습니다.', bugPlaceholder: '무엇을 하고 있었고, 대신 어떤 일이 일어났나요?',
+            bugReport: '오류 신고', bugReports: '오류 신고', bugThanks: '감사합니다. 신고가 전송되었습니다.',
+            bugTooBig: '각 이미지는 {mb} MB 미만이어야 합니다', bugTooMany: '최대 {n}개 이미지', bugWhat: '무엇이 잘못되었나요?',
+            bugsNone: '오류 신고 없음', doNotDisturb: '방해 금지', editProfile: '프로필 편집', follow: '팔로우', followers: '팔로워',
+            following: '팔로잉', friendRequests: '요청', friends: '친구', likes: '좋아요', noFriendsYet: '아직 친구가 없습니다',
+            noRatingsBeFirst: '아직 평점이 없습니다. 첫 번째가 되어보세요!', noRatingsYet: '아직 평점이 없습니다', offline: '오프라인',
+            online: '온라인', otherUsers: '다른 사용자', overview: '개요', qualityAsk: '더 나은 품질 요청',
+            qualityCommentPlaceholder: '화질 저하, 잘못된 음성, 자막 없음, 싱크 어긋남...', qualityCommentRequired: '문제를 설명해 주세요.',
+            qualityMine: '내 요청', qualityNoResults: '라이브러리에 일치하는 항목이 없습니다.', qualityNone: '품질 요청 없음',
+            qualityNoneYet: '아직 요청한 항목이 없습니다.', qualityRequest: '품질 요청', qualityRequests: '품질',
+            qualitySearchPlaceholder: '라이브러리 검색...', qualityTab: '더 나은 품질',
+            qualityTabHint: '서버에 이미 있는 작품을 찾아 현재 파일의 어떤 점이 문제인지 알려주세요.', qualityTabTitle: '더 나은 품질 요청',
+            qualityWhat: '현재 파일의 어떤 점이 문제인가요?', ratings: '평점', reject: '거절', removeFriend: '친구 삭제',
+            reportBug: '문제 신고', requestPending: '요청 대기 중', requestSent: '요청 보냄', reviews: '리뷰', send: '보내기',
+            sending: '전송 중...', supportDecline: '거절', supportMarkSolved: '해결됨으로 표시', supportOpen: '접수됨',
+            supportRejected: '거절됨', supportReply: '답변', supportReplyLabel: '사용자에게 답변', supportReviewing: '확인 중',
+            supportSolved: '해결됨', unblock: '차단 해제', userRatings: '사용자 평점', wantsToBeFriends: '친구가 되고 싶어합니다'
 };

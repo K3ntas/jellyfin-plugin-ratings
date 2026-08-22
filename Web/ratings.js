@@ -116,6 +116,18 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                // Social, profile and rating-widget labels. These were literals in the
+                // markup until now, which is why the profile, friends panel and star
+                // widget stayed English in every language pack (discussion #76).
+                accept: 'Accept', activity: 'Activity', addFriend: 'Add Friend', away: 'Away',
+                blockUser: 'Block User', blocked: 'Blocked', doNotDisturb: 'Do Not Disturb',
+                editProfile: 'Edit Profile', follow: 'Follow', followers: 'Followers', following: 'Following',
+                friendRequests: 'Requests', friends: 'Friends', likes: 'Likes', noFriendsYet: 'No friends yet',
+                noRatingsBeFirst: 'No ratings yet. Be the first to rate!', noRatingsYet: 'No ratings yet',
+                offline: 'Offline', online: 'Online', otherUsers: 'Other Users', overview: 'Overview',
+                ratings: 'Ratings', reject: 'Reject', removeFriend: 'Remove Friend',
+                requestPending: 'Request pending', requestSent: 'Request Sent', reviews: 'Reviews',
+                unblock: 'Unblock', userRatings: 'User Ratings', wantsToBeFriends: 'Wants to be friends',
                 snooze: 'Snooze', unsnooze: 'Unsnooze', snoozed: 'SNOOZED', snoozedUntil: 'Snoozed until', snoozeDate: 'Snooze until date',
                 categoryNew: '🆕 New', categoryProcessing: '🔄 Processing', categoryPending: '⏳ Pending', categorySnoozed: '💤 Snoozed', categoryDone: '✅ Done', categoryRejected: '❌ Rejected',
                 createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
@@ -982,6 +994,23 @@
         /**
          * Create the friends panel HTML
          */
+        /**
+         * Turns a presence VALUE into text for the reader.
+         *
+         * The values themselves ('Online', 'Offline', 'Away', 'DoNotDisturb') are compared
+         * against all over this file and come straight from the API, so they must never be
+         * translated in place - only here, at the moment they are shown.
+         */
+        presenceLabel: function (status) {
+            switch (status) {
+                case 'Online': return this.t('online') || 'Online';
+                case 'Offline': return this.t('offline') || 'Offline';
+                case 'Away': return this.t('away') || 'Away';
+                case 'DoNotDisturb': return this.t('doNotDisturb') || 'Do Not Disturb';
+                default: return status;
+            }
+        },
+
         createFriendsPanel: function () {
             if (document.getElementById('social-friends-panel')) {
                 return;
@@ -992,14 +1021,14 @@
             panel.className = 'social-friends-panel';
             panel.innerHTML = `
                 <div class="social-panel-header">
-                    <h3>Friends</h3>
+                    <h3>${this.t('friends')}</h3>
                     <button class="social-panel-close">&times;</button>
                 </div>
                 <div class="social-panel-tabs">
-                    <button class="social-panel-tab active" data-tab="friends">Friends</button>
-                    <button class="social-panel-tab" data-tab="requests">Requests <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
-                    <button class="social-panel-tab" data-tab="blocked">Blocked</button>
-                    <button class="social-panel-tab" data-tab="online">Online</button>
+                    <button class="social-panel-tab active" data-tab="friends">${this.t('friends')}</button>
+                    <button class="social-panel-tab" data-tab="requests">${this.t('friendRequests')} <span class="tab-badge" id="requests-badge" style="display:none">0</span></button>
+                    <button class="social-panel-tab" data-tab="blocked">${this.t('blocked')}</button>
+                    <button class="social-panel-tab" data-tab="online">${this.t('online')}</button>
                     <button class="social-panel-tab" data-tab="addFriend">
                         <svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24"><path fill="currentColor" d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </button>
@@ -1013,7 +1042,7 @@
                 <div class="social-panel-content" id="social-panel-content">
                     <div class="social-empty-state">
                         <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                        <div>No friends yet</div>
+                        <div>${this.t('noFriendsYet')}</div>
                     </div>
                 </div>
                 <div class="social-panel-resize"></div>
@@ -1311,9 +1340,9 @@
                     '<div class="social-friend-avatar" style="background:#666;">' + initial + '</div>' +
                     '<div class="social-friend-info">' +
                     '<div class="social-friend-name">' + self.escapeHtml(user.username) + '</div>' +
-                    '<div class="social-friend-status" style="color:#888;">Blocked</div>' +
+                    '<div class="social-friend-status" style="color:#888;">' + self.t('blocked') + '</div>' +
                     '</div></div>' +
-                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + self.escapeJs(user.userId) + '\')">Unblock</button>' +
+                    '<button class="social-btn-unblock" onclick="RatingsPlugin.unblockUser(\'' + self.escapeJs(user.userId) + '\')">' + self.t('unblock') + '</button>' +
                     '</div>';
             });
             html += '</div>';
@@ -1621,7 +1650,7 @@
             if (!content) return;
 
             if (friends.length === 0) {
-                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><div>No friends yet</div></div>';
+                content.innerHTML = '<div class="social-empty-state"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><div>' + self.t('noFriendsYet') + '</div></div>';
                 return;
             }
 
@@ -1630,7 +1659,7 @@
                 var initial = (friend.username || '?')[0].toUpperCase();
                 var status = friend.status || 'Offline';
                 var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-                var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+                var statusText = this.presenceLabel(status);
 
                 // Build watching info if available
                 var watchingHtml = '';
@@ -1690,11 +1719,11 @@
                         '<div class="social-friend-avatar">' + initial + '</div>' +
                         '<div class="social-friend-info">' +
                         '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
-                        '<div class="social-friend-status">Wants to be friends</div>' +
+                        '<div class="social-friend-status">' + self.t('wantsToBeFriends') + '</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
-                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + self.escapeJs(id) + '\')">Accept</button>' +
-                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + self.escapeJs(id) + '\')">Reject</button>' +
+                        '<button class="social-btn-accept" onclick="RatingsPlugin.acceptFriendRequest(\'' + self.escapeJs(id) + '\')">' + self.t('accept') + '</button>' +
+                        '<button class="social-btn-reject" onclick="RatingsPlugin.rejectFriendRequest(\'' + self.escapeJs(id) + '\')">' + self.t('reject') + '</button>' +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -1713,7 +1742,7 @@
                         '<div class="social-friend-avatar">' + initial + '</div>' +
                         '<div class="social-friend-info">' +
                         '<div class="social-friend-name">' + self.escapeHtml(username) + '</div>' +
-                        '<div class="social-friend-status">Request pending</div>' +
+                        '<div class="social-friend-status">' + self.t('requestPending') + '</div>' +
                         '</div></div>' +
                         '<div class="social-request-actions">' +
                         '<button class="social-btn-cancel" onclick="RatingsPlugin.cancelFriendRequest(\'' + safeId + '\')">Cancel</button>' +
@@ -2071,7 +2100,7 @@
             var status = statusData.status || 'Offline';
             if (validStatuses.indexOf(status) === -1) status = 'Offline';
             var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+            var statusText = this.presenceLabel(status);
 
             // Redesigned profile DOM: avatar dot + status text live-update.
             var dot = page.querySelector('.lb-status-dot');
@@ -2396,7 +2425,7 @@
 
             var status = friend.status || 'Offline';
             var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+            var statusText = this.presenceLabel(status);
 
             // Update status dot
             var statusDot = friendEl.querySelector('.social-status-dot');
@@ -2450,7 +2479,7 @@
 
             var status = data.status || 'Offline';
             var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-            var statusText = status === 'DoNotDisturb' ? 'Do Not Disturb' : status;
+            var statusText = this.presenceLabel(status);
 
             // Update status dot ONLY
             var statusDot = friendEl.querySelector('.social-status-dot');
@@ -2691,9 +2720,9 @@
                 } else if (user.hasPendingRequest) {
                     buttonHtml = '<span style="color:#ff9800;font-size:12px;">Request sent</span>';
                 } else if (user.hasIncomingRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + safeUserId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Accept</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.acceptIncomingFromSearch(\'' + safeUserId + '\')" style="background:#4caf50;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">' + self.t('accept') + '</button>';
                 } else if (user.canSendRequest) {
-                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + safeUserId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Add Friend</button>';
+                    buttonHtml = '<button onclick="event.stopPropagation();RatingsPlugin.sendFriendRequestFromSearch(\'' + safeUserId + '\', this)" style="background:#00a4dc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">' + self.t('addFriend') + '</button>';
                 } else {
                     buttonHtml = '<span style="color:#666;font-size:11px;">Not accepting requests</span>';
                 }
@@ -4875,33 +4904,33 @@
             html += '<div class="lb-stats-bar">' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'ratings\')">' +
                 '<span class="lb-stat-value">' + (stats.ratingsCount || 0) + '</span>' +
-                '<span class="lb-stat-label">Ratings</span></div>' +
+                '<span class="lb-stat-label">' + self.t('ratings') + '</span></div>' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
                 '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
-                '<span class="lb-stat-label">Reviews</span></div>' +
+                '<span class="lb-stat-label">' + self.t('reviews') + '</span></div>' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
-                '<span class="lb-stat-label">Following</span></div>' +
+                '<span class="lb-stat-label">' + self.t('following') + '</span></div>' +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'followers\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followersCount || 0) + '</span>' +
-                '<span class="lb-stat-label">Followers</span></div>' +
+                '<span class="lb-stat-label">' + self.t('followers') + '</span></div>' +
                 '<div class="lb-stat">' +
                 '<span class="lb-stat-value"><span class="lb-heart">♥</span> ' + (likeStatus.likesCount || 0) + '</span>' +
-                '<span class="lb-stat-label">Likes</span></div>' +
+                '<span class="lb-stat-label">' + self.t('likes') + '</span></div>' +
                 '</div>';
 
             // Tab navigation
             html += '<div class="lb-tabs">' +
-                '<button class="lb-tab active" data-tab="overview">Overview</button>' +
-                '<button class="lb-tab" data-tab="ratings">Ratings</button>' +
-                '<button class="lb-tab" data-tab="reviews">Reviews</button>' +
-                '<button class="lb-tab" data-tab="activity">Activity</button>' +
-                '<button class="lb-tab" data-tab="following">Following</button>' +
-                '<button class="lb-tab" data-tab="followers">Followers</button>' +
+                '<button class="lb-tab active" data-tab="overview">' + (self.t('overview')) + '</button>' +
+                '<button class="lb-tab" data-tab="ratings">' + (self.t('ratings')) + '</button>' +
+                '<button class="lb-tab" data-tab="reviews">' + (self.t('reviews')) + '</button>' +
+                '<button class="lb-tab" data-tab="activity">' + (self.t('activity')) + '</button>' +
+                '<button class="lb-tab" data-tab="following">' + (self.t('following')) + '</button>' +
+                '<button class="lb-tab" data-tab="followers">' + (self.t('followers')) + '</button>' +
                 ((self._configCache || {}).EnableQualityRequests !== false
                     ? '<button class="lb-tab" data-tab="quality">' + (self.t('qualityTab') || 'Better Quality') + '</button>'
                     : '') +
-                '<button class="lb-tab" data-tab="users">Other Users</button>' +
+                '<button class="lb-tab" data-tab="users">' + (self.t('otherUsers')) + '</button>' +
                 '</div>';
 
             // Tab content area
@@ -4971,7 +5000,7 @@
             var username = profile.username || 'Unknown';
 
             if (status.isSelf) {
-                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.openProfileSettings()">Edit Profile</button>';
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.openProfileSettings()">' + self.t('editProfile') + '</button>';
                 if ((self._configCache || {}).EnableBugReports !== false) {
                     html += '<button class="lb-btn secondary lb-report-bug" title="' +
                         self.escapeHtml(self.t('reportBug') || 'Report a problem') +
@@ -4979,15 +5008,15 @@
                         self.escapeHtml(self.t('reportBug') || 'Report a problem') + '</button>';
                 }
             } else if (status.hasBlocked) {
-                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">Unblock</button>';
+                html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">' + self.t('unblock') + '</button>';
             } else if (status.isBlockedBy) {
                 html += '<button class="lb-btn disabled" disabled>Blocked</button>';
             } else {
                 // Follow button
                 if (status.followStatus && status.followStatus.isFollowing) {
-                    html += '<button class="lb-btn following" onclick="RatingsPlugin.profileUnfollow(\'' + self.escapeJs(userId) + '\')"><span class="follow-icon">✓</span> Following</button>';
+                    html += '<button class="lb-btn following" onclick="RatingsPlugin.profileUnfollow(\'' + self.escapeJs(userId) + '\')"><span class="follow-icon">✓</span> ' + self.t('following') + '</button>';
                 } else {
-                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileFollow(\'' + self.escapeJs(userId) + '\')">Follow</button>';
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileFollow(\'' + self.escapeJs(userId) + '\')">' + self.t('follow') + '</button>';
                 }
 
                 // Like profile button
@@ -4999,14 +5028,14 @@
 
                 // Friend button
                 if (status.isFriend) {
-                    html += '<button class="lb-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(userId) + '\', \'' + self.escapeJs(username) + '\')">Remove Friend</button>';
+                    html += '<button class="lb-btn danger" onclick="RatingsPlugin.profileRemoveFriend(\'' + self.escapeJs(userId) + '\', \'' + self.escapeJs(username) + '\')">' + self.t('removeFriend') + '</button>';
                 } else if (status.hasPendingOutgoing) {
-                    html += '<button class="lb-btn disabled" disabled>Request Sent</button>';
+                    html += '<button class="lb-btn disabled" disabled>' + self.t('requestSent') + '</button>';
                 } else if (status.hasPendingIncoming) {
-                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Accept</button>';
-                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">Reject</button>';
+                    html += '<button class="lb-btn primary" onclick="RatingsPlugin.profileAcceptRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">' + self.t('accept') + '</button>';
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileRejectRequest(\'' + self.escapeJs(status.incomingRequestId) + '\')">' + self.t('reject') + '</button>';
                 } else {
-                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">Add Friend</button>';
+                    html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileSendRequest(\'' + self.escapeJs(userId) + '\')">' + self.t('addFriend') + '</button>';
                 }
 
                 // More actions dropdown (menu is a SIBLING of the button, not nested inside it -
@@ -5016,7 +5045,7 @@
                     '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>' +
                     '</button>' +
                     '<div class="lb-more-menu" id="profileMoreMenu">' +
-                    '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">Block User</button>' +
+                    '<button onclick="RatingsPlugin.profileBlockUser(\'' + self.escapeJs(userId) + '\')">' + self.t('blockUser') + '</button>' +
                     '</div></span>';
             }
 
@@ -8529,9 +8558,9 @@
                 <div class="ratings-plugin-stars" id="ratingsPluginStars">
                     ${this.generateStars()}
                     <div class="ratings-plugin-popup" id="ratingsPluginPopup">
-                        <div class="ratings-plugin-popup-title">User Ratings</div>
+                        <div class="ratings-plugin-popup-title">${this.t('userRatings')}</div>
                         <ul class="ratings-plugin-popup-list" id="ratingsPluginPopupList">
-                            <li class="ratings-plugin-popup-empty">Loading...</li>
+                            <li class="ratings-plugin-popup-empty">${this.t('loading')}</li>
                         </ul>
                     </div>
                 </div>
@@ -8895,7 +8924,7 @@
                             yourDiv.textContent = yourText;
                             statsElement.appendChild(yourDiv);
                         } else if ((stats.totalRatings ?? stats.TotalRatings) === 0 && showStats) {
-                            statsElement.textContent = 'No ratings yet. Be the first to rate!';
+                            statsElement.textContent = this.t('noRatingsBeFirst');
                         }
                     }
                 })
@@ -9074,7 +9103,7 @@
             if (!popup || !popupList) return;
 
             popup.classList.add('visible');
-            popupList.innerHTML = '<li class="ratings-plugin-popup-empty">Loading...</li>';
+            popupList.innerHTML = '<li class="ratings-plugin-popup-empty">' + this.t('loading') + '</li>';
 
             ApiClient.getJSON(ApiClient.getUrl(`Ratings/Items/${itemId}/DetailedRatings`))
                 .then(ratings => {
@@ -9090,7 +9119,7 @@
                         });
                         popupList.innerHTML = html;
                     } else {
-                        popupList.innerHTML = '<li class="ratings-plugin-popup-empty">No ratings yet</li>';
+                        popupList.innerHTML = '<li class="ratings-plugin-popup-empty">' + this.t('noRatingsYet') + '</li>';
                     }
                 })
                 .catch(err => {
