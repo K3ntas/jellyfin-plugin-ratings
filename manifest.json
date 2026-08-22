@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.380.0",
+        "changelog": "Finishes translating the profile. The previous release covered the tabs, buttons and the rating widget; this one covers the column beside them - Stats, Films, Shows, Hours, Avg, Ratings, Taste, Similar Taste, Activity, Add a film, the section headings, Back and Settings, Member since, and the \"not on server\" badge. Another seventeen labels, filled in for all fifteen languages. The online badge on the profile header now reads as words in your language rather than a raw status value.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.380.0/Jellyfin.Plugin.Ratings_2.0.380.0.zip",
+        "checksum": "fffee696502f20619b738c0097bbad75",
+        "timestamp": "2026-08-22T15:27:27Z"
+      },
+      {
         "version": "2.0.379.0",
         "changelog": "The profile page, the friends panel and the star rating widget are translated at last. Those three areas were never connected to the translation system - the words were written straight into the markup - so they stayed in English no matter which language you picked, in all sixteen languages. Thirty labels now go through the translation layer and are filled in for every language, together with the thirty-eight strings added with the quality-request and bug-report queues. Every language pack gains sixty-eight entries. Thanks to chosqui for reporting it in discussion #76, with a Spanish patch that showed exactly what was missing.",
         "targetAbi": "10.11.0.0",
