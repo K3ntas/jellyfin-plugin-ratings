@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.376.0",
+        "changelog": "Two new ways for people to tell you something is wrong, and one place to work through both. A Better Quality tab on the profile searches what is already on the server, and every result carries a button to say what is wrong with the current copy - blurry, wrong audio, missing subtitles. A Report a problem button next to Edit Profile takes a description plus screenshots, pasted straight from the clipboard or picked from disk. Both land in the Request Media modal as their own tabs, badged with how many are still open, where you can read the report, look at the screenshots, reply to the person who sent it, and mark it solved or declined - the reply is shown back to them. Also fixes a profile that read 0 films and 0 hours beside a taste chart reporting hundreds: those stats were derived from ratings alone, so anyone who watches without rating saw zeros. They now count what you have watched as well as what you have rated. And the genre breakdown endpoint was the one profile endpoint missing its visibility check, so a private profile's viewing habits could be read directly.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.376.0/Jellyfin.Plugin.Ratings_2.0.376.0.zip",
+        "checksum": "a49d15ca6862dc4cbb83b93d065c09f5",
+        "timestamp": "2026-08-22T13:30:18Z"
+      },
+      {
         "version": "2.0.375.0",
         "changelog": "The admin request list now lays out properly on a phone. Each request kept its title, user, date and status on one row, so on a narrow screen the title was squeezed down to a few characters, and the media-link and rejection-reason boxes were split across a width that could not hold them. The title now takes a line of its own with the details underneath it, the expand arrow sits at the right edge, and the two input boxes stack at full width. Reported and written by @daki456 (PR #78). The category list also gets the same 500 pixel scroll height as the production build, which had drifted apart from it.",
         "targetAbi": "10.11.0.0",
