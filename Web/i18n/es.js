@@ -130,5 +130,10 @@ window.RatingsPluginI18n.es = {
             supportDecline: 'Rechazar', supportMarkSolved: 'Marcar resuelto', supportOpen: 'Abierto',
             supportRejected: 'Rechazado', supportReply: 'Respuesta', supportReplyLabel: 'Responder al usuario',
             supportReviewing: 'En revisión', supportSolved: 'Resuelto', unblock: 'Desbloquear',
-            userRatings: 'Valoraciones de usuarios', wantsToBeFriends: 'Quiere ser tu amigo'
+            userRatings: 'Valoraciones de usuarios', wantsToBeFriends: 'Quiere ser tu amigo',
+            addAFilm: 'Añadir película', addFilmPlaceholder: 'Buscar título o id de IMDb…', avgLabel: 'Media',
+            back: 'Volver', backToProfile: 'Volver al perfil', filmsLabel: 'Películas', hoursLabel: 'Horas',
+            memberSince: 'Miembro desde', notOnServer: 'No está en el servidor', recentActivity: 'Actividad reciente',
+            recentReviews: 'Reseñas recientes', sectionFavoriteFilms: 'Películas favoritas', settings: 'Ajustes',
+            showsLabel: 'Series', similarTaste: 'Gustos parecidos', statsTitle: 'Estadísticas', taste: 'Gustos'
 };

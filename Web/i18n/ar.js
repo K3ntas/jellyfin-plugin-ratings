@@ -127,5 +127,10 @@ window.RatingsPluginI18n.ar = {
             supportDecline: 'رفض', supportMarkSolved: 'وضع علامة تم الحل', supportOpen: 'مفتوح',
             supportRejected: 'مرفوض', supportReply: 'الرد', supportReplyLabel: 'الرد على المستخدم',
             supportReviewing: 'قيد المراجعة', supportSolved: 'تم الحل', unblock: 'إلغاء الحظر',
-            userRatings: 'تقييمات المستخدمين', wantsToBeFriends: 'يريد أن يكون صديقك'
+            userRatings: 'تقييمات المستخدمين', wantsToBeFriends: 'يريد أن يكون صديقك',
+            addAFilm: 'إضافة فيلم', addFilmPlaceholder: 'العنوان أو معرف IMDb…', avgLabel: 'المتوسط', back: 'رجوع',
+            backToProfile: 'العودة إلى الملف الشخصي', filmsLabel: 'أفلام', hoursLabel: 'ساعات',
+            memberSince: 'عضو منذ', notOnServer: 'غير موجود على الخادم', recentActivity: 'النشاط الأخير',
+            recentReviews: 'المراجعات الأخيرة', sectionFavoriteFilms: 'الأفلام المفضلة', settings: 'الإعدادات',
+            showsLabel: 'مسلسلات', similarTaste: 'ذوق مشابه', statsTitle: 'الإحصائيات', taste: 'الذوق'
 };

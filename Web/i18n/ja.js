@@ -121,5 +121,10 @@ window.RatingsPluginI18n.ja = {
             requestPending: 'リクエスト保留中', requestSent: 'リクエスト送信済み', reviews: 'レビュー', send: '送信', sending: '送信中...',
             supportDecline: '却下', supportMarkSolved: '解決済みにする', supportOpen: '未対応', supportRejected: '却下',
             supportReply: '返信', supportReplyLabel: 'ユーザーに返信', supportReviewing: '確認中', supportSolved: '解決済み',
-            unblock: 'ブロック解除', userRatings: 'ユーザー評価', wantsToBeFriends: 'フレンドになりたがっています'
+            unblock: 'ブロック解除', userRatings: 'ユーザー評価', wantsToBeFriends: 'フレンドになりたがっています',
+            addAFilm: '映画を追加', addFilmPlaceholder: 'タイトルまたは IMDb id…', avgLabel: '平均', back: '戻る',
+            backToProfile: 'プロフィールに戻る', filmsLabel: '映画', hoursLabel: '時間', memberSince: '登録日',
+            notOnServer: 'サーバーにありません', recentActivity: '最近のアクティビティ', recentReviews: '最近のレビュー',
+            sectionFavoriteFilms: 'お気に入りの映画', settings: '設定', showsLabel: 'シリーズ', similarTaste: '好みが近い人',
+            statsTitle: '統計', taste: '好み'
 };

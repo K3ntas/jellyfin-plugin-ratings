@@ -130,5 +130,10 @@ window.RatingsPluginI18n.nl = {
             supportMarkSolved: 'Markeer als opgelost', supportOpen: 'Open', supportRejected: 'Afgewezen',
             supportReply: 'Antwoord', supportReplyLabel: 'Antwoord de gebruiker', supportReviewing: 'In behandeling',
             supportSolved: 'Opgelost', unblock: 'Deblokkeren', userRatings: 'Gebruikersbeoordelingen',
-            wantsToBeFriends: 'Wil vrienden worden'
+            wantsToBeFriends: 'Wil vrienden worden',
+            addAFilm: 'Film toevoegen', addFilmPlaceholder: 'Titel of IMDb-id…', avgLabel: 'Gem.', back: 'Terug',
+            backToProfile: 'Terug naar profiel', filmsLabel: 'Films', hoursLabel: 'Uren', memberSince: 'Lid sinds',
+            notOnServer: 'Niet op de server', recentActivity: 'Recente activiteit',
+            recentReviews: 'Recente recensies', sectionFavoriteFilms: 'Favoriete films', settings: 'Instellingen',
+            showsLabel: 'Series', similarTaste: 'Vergelijkbare smaak', statsTitle: 'Statistieken', taste: 'Smaak'
 };

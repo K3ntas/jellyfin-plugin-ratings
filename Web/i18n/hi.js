@@ -129,5 +129,10 @@ window.RatingsPluginI18n.hi = {
             supportOpen: 'खुला', supportRejected: 'अस्वीकृत', supportReply: 'उत्तर',
             supportReplyLabel: 'उपयोगकर्ता को उत्तर दें', supportReviewing: 'देखा जा रहा है',
             supportSolved: 'हल हो गया', unblock: 'अनब्लॉक करें', userRatings: 'उपयोगकर्ता रेटिंग',
-            wantsToBeFriends: 'मित्र बनना चाहता है'
+            wantsToBeFriends: 'मित्र बनना चाहता है',
+            addAFilm: 'फ़िल्म जोड़ें', addFilmPlaceholder: 'शीर्षक या IMDb id…', avgLabel: 'औसत', back: 'वापस',
+            backToProfile: 'प्रोफ़ाइल पर वापस', filmsLabel: 'फ़िल्में', hoursLabel: 'घंटे', memberSince: 'सदस्य बने',
+            notOnServer: 'सर्वर पर नहीं', recentActivity: 'हाल की गतिविधि', recentReviews: 'हाल की समीक्षाएँ',
+            sectionFavoriteFilms: 'पसंदीदा फ़िल्में', settings: 'सेटिंग्स', showsLabel: 'शो',
+            similarTaste: 'समान रुचि', statsTitle: 'आँकड़े', taste: 'रुचि'
 };

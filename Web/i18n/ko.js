@@ -121,5 +121,9 @@ window.RatingsPluginI18n.ko = {
             reportBug: '문제 신고', requestPending: '요청 대기 중', requestSent: '요청 보냄', reviews: '리뷰', send: '보내기',
             sending: '전송 중...', supportDecline: '거절', supportMarkSolved: '해결됨으로 표시', supportOpen: '접수됨',
             supportRejected: '거절됨', supportReply: '답변', supportReplyLabel: '사용자에게 답변', supportReviewing: '확인 중',
-            supportSolved: '해결됨', unblock: '차단 해제', userRatings: '사용자 평점', wantsToBeFriends: '친구가 되고 싶어합니다'
+            supportSolved: '해결됨', unblock: '차단 해제', userRatings: '사용자 평점', wantsToBeFriends: '친구가 되고 싶어합니다',
+            addAFilm: '영화 추가', addFilmPlaceholder: '제목 또는 IMDb id…', avgLabel: '평균', back: '뒤로',
+            backToProfile: '프로필로 돌아가기', filmsLabel: '영화', hoursLabel: '시간', memberSince: '가입일', notOnServer: '서버에 없음',
+            recentActivity: '최근 활동', recentReviews: '최근 리뷰', sectionFavoriteFilms: '좋아하는 영화', settings: '설정',
+            showsLabel: '시리즈', similarTaste: '비슷한 취향', statsTitle: '통계', taste: '취향'
 };

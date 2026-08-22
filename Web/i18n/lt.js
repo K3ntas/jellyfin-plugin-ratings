@@ -132,5 +132,11 @@ window.RatingsPluginI18n.lt = {
             supportMarkSolved: 'Žymėti išspręsta', supportOpen: 'Atviras', supportRejected: 'Atmesta',
             supportReply: 'Atsakymas', supportReplyLabel: 'Atsakyti vartotojui', supportReviewing: 'Nagrinėjama',
             supportSolved: 'Išspręsta', unblock: 'Atblokuoti', userRatings: 'Vartotojų įvertinimai',
-            wantsToBeFriends: 'Nori tapti draugu'
+            wantsToBeFriends: 'Nori tapti draugu',
+            addAFilm: 'Pridėti filmą', addFilmPlaceholder: 'Pavadinimas arba IMDb id…', avgLabel: 'Vidurkis',
+            back: 'Atgal', backToProfile: 'Atgal į profilį', filmsLabel: 'Filmai', hoursLabel: 'Valandos',
+            memberSince: 'Narys nuo', notOnServer: 'Nėra serveryje', recentActivity: 'Naujausia veikla',
+            recentReviews: 'Naujausios apžvalgos', sectionFavoriteFilms: 'Mėgstamiausi filmai',
+            settings: 'Nustatymai', showsLabel: 'Serialai', similarTaste: 'Panašus skonis', statsTitle: 'Statistika',
+            taste: 'Skonis'
 };

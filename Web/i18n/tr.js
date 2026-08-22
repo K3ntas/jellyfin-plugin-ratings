@@ -129,5 +129,10 @@ window.RatingsPluginI18n.tr = {
             supportMarkSolved: 'Çözüldü olarak işaretle', supportOpen: 'Açık', supportRejected: 'Reddedildi',
             supportReply: 'Yanıt', supportReplyLabel: 'Kullanıcıya yanıt ver', supportReviewing: 'İnceleniyor',
             supportSolved: 'Çözüldü', unblock: 'Engeli kaldır', userRatings: 'Kullanıcı puanları',
-            wantsToBeFriends: 'Arkadaş olmak istiyor'
+            wantsToBeFriends: 'Arkadaş olmak istiyor',
+            addAFilm: 'Film ekle', addFilmPlaceholder: 'Başlık veya IMDb id…', avgLabel: 'Ortalama', back: 'Geri',
+            backToProfile: 'Profile dön', filmsLabel: 'Filmler', hoursLabel: 'Saat', memberSince: 'Üyelik tarihi',
+            notOnServer: 'Sunucuda yok', recentActivity: 'Son etkinlik', recentReviews: 'Son incelemeler',
+            sectionFavoriteFilms: 'Favori filmler', settings: 'Ayarlar', showsLabel: 'Diziler',
+            similarTaste: 'Benzer zevkler', statsTitle: 'İstatistikler', taste: 'Zevk'
 };

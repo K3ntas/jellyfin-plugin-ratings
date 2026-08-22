@@ -116,6 +116,11 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                addAFilm: 'Add a film', addFilmPlaceholder: 'Search title or IMDb id…', avgLabel: 'Avg', back: 'Back',
+                backToProfile: 'Back to profile', filmsLabel: 'Films', hoursLabel: 'Hours',
+                memberSince: 'Member since', notOnServer: 'Not on server', recentActivity: 'Recent Activity',
+                recentReviews: 'Recent Reviews', sectionFavoriteFilms: 'Favorite Films', settings: 'Settings',
+                showsLabel: 'Shows', similarTaste: 'Similar Taste', statsTitle: 'Stats', taste: 'Taste',
                 // Social, profile and rating-widget labels. These were literals in the
                 // markup until now, which is why the profile, friends panel and star
                 // widget stayed English in every language pack (discussion #76).
@@ -3515,7 +3520,7 @@
             if (container) {
                 // Also goes back rather than closing: hitting a broken profile from someone's
                 // follower list should return you to where you were, not dump you out entirely.
-                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
+                container.innerHTML = '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + this.t('back') + '</div><div class="lb-error">' + this.escapeHtml(message) + '</div>';
             }
         },
 
@@ -4592,7 +4597,7 @@
                     tmdbId: fav.tmdbId || (fav.tmdbId ?? fav.TmdbId) || '',
                     poster: fav.imageUrl || fav.ImageUrl || fav.poster || ''
                 });
-                extra = '<span class="lb-fav-notlib-tag">Not on server</span>' +
+                extra = '<span class="lb-fav-notlib-tag">' + self.t('notOnServer') + '</span>' +
                     '<button class="lb-fav-request" title="Request this title" onclick="event.stopPropagation();RatingsPlugin.requestExternalMedia(\'' + payload + '\', this)">+ Request</button>' +
                     // Titles from the catalog could not be rated at all before (issue #72).
                     '<button class="lb-fav-rate" title="Rate this title" onclick="event.stopPropagation();RatingsPlugin.rateExternalMedia(\'' + payload + '\')">★ Rate</button>';
@@ -4662,7 +4667,7 @@
                 document.body.appendChild(pop);
             }
             var yearStr = year ? ('<span class="lb-fav-info-year">' + self.escapeHtml(String(year)) + '</span>') : '';
-            var tag = notInLib ? '<span class="lb-fav-info-tag">Not on server</span>' : '';
+            var tag = notInLib ? '<span class="lb-fav-info-tag">' + self.t('notOnServer') + '</span>' : '';
             pop.innerHTML = '<div class="lb-fav-info-title">' + self.escapeHtml(title) + yearStr + tag + '</div>' +
                 (overview
                     ? '<div class="lb-fav-info-desc">' + self.escapeHtml(overview) + '</div>'
@@ -4851,7 +4856,7 @@
 
             // Status indicator
             var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
-            var statusText = status.onlineStatus === 'DoNotDisturb' ? 'Do Not Disturb' : status.onlineStatus;
+            var statusText = self.presenceLabel(status.onlineStatus);
 
             // Build the Letterboxd-style layout
             var html = '';
@@ -4860,9 +4865,9 @@
             html += '<div class="lb-toolbar">' +
                 '<div class="lb-back" onclick="RatingsPlugin.profileGoBack()">' +
                 '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-                ((self._profileHistory && self._profileHistory.length > 0) ? 'Back to profile' : 'Back') + '</div>' +
+                ((self._profileHistory && self._profileHistory.length > 0) ? self.t('backToProfile') : self.t('back')) + '</div>' +
                 '<div class="lb-toolbar-actions">' +
-                (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="Settings">⚙</button>' : '') +
+                (status.isSelf ? '<button class="lb-toolbar-btn" onclick="RatingsPlugin.openProfileSettings()" title="' + self.t('settings') + '">⚙</button>' : '') +
                 '<div class="lb-bg-wrap" style="position:relative;display:inline-block;">' +
                 '<button class="lb-toolbar-btn" onclick="RatingsPlugin.toggleBgMenu(event)" title="Background">🎨</button>' +
                 '<div class="lb-bg-menu" id="lbBgMenu" style="display:none;">' +
@@ -4895,7 +4900,7 @@
                 (bio ? '<p class="lb-bio">' + self.escapeHtml(bio) + '</p>' : '') +
                 '<div class="lb-meta">' +
                 '<span class="lb-status-text ' + statusClass + '">' + statusText + '</span>' +
-                (memberSince ? '<span class="lb-joined">Member since ' + memberSince + '</span>' : '') +
+                (memberSince ? '<span class="lb-joined">' + self.t('memberSince') + ' ' + memberSince + '</span>' : '') +
                 '</div></div>' +
                 '<div class="lb-header-actions">' + self.buildProfileActions(profile, status) + '</div>' +
                 '</div></div>';
@@ -5903,7 +5908,7 @@
 
             // Favorite Rows section (up to 5 rows, 5 items each)
             html += '<section class="lb-section lb-favorites-section lb-anim">';
-            html += '<h3 class="lb-sec-title">Favorite Films</h3>';
+            html += '<h3 class="lb-sec-title">' + self.t('sectionFavoriteFilms') + '</h3>';
 
             // Render existing rows
             for (var rowIndex = 0; rowIndex < favoriteRows.length; rowIndex++) {
@@ -5969,13 +5974,13 @@
 
             // Recent Activity (poster strip)
             html += '<section class="lb-section lb-anim">' +
-                '<h3 class="lb-sec-title">Recent Activity</h3>' +
+                '<h3 class="lb-sec-title">' + self.t('recentActivity') + '</h3>' +
                 '<div class="lb-poster-strip" id="lbRecentPosters"><div class="lb-loading-small">Loading…</div></div>' +
                 '</section>';
 
             // Recent Reviews
             html += '<section class="lb-section lb-anim">' +
-                '<h3 class="lb-sec-title">Recent Reviews</h3>' +
+                '<h3 class="lb-sec-title">' + self.t('recentReviews') + '</h3>' +
                 '<div class="lb-recent-reviews" id="lbRecentReviews"><div class="lb-loading-small">Loading…</div></div>' +
                 '</section>';
 
@@ -5986,35 +5991,35 @@
 
             // Add a film (search server / request if missing)
             html += '<section class="lb-side-card lb-anim">' +
-                '<h4 class="lb-side-title">Add a film</h4>' +
+                '<h4 class="lb-side-title">' + self.t('addAFilm') + '</h4>' +
                 '<div class="lb-addmedia">' +
-                '<input type="text" id="lbAddMediaInput" class="lb-addmedia-input" placeholder="Search title or IMDb id…" autocomplete="off">' +
+                '<input type="text" id="lbAddMediaInput" class="lb-addmedia-input" placeholder="' + self.t('addFilmPlaceholder') + '" autocomplete="off">' +
                 '<div class="lb-addmedia-results" id="lbAddMediaResults"></div>' +
                 '</div></section>';
 
             // Stats
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Stats</h4>' +
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">' + self.t('statsTitle') + '</h4>' +
                 '<div class="lb-side-stats">' +
-                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.moviesWatched || 0) + '</span><span class="lb-ss-lbl">Films</span></div>' +
-                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.seriesWatched || 0) + '</span><span class="lb-ss-lbl">Shows</span></div>' +
-                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.totalWatchHours || 0) + '</span><span class="lb-ss-lbl">Hours</span></div>' +
-                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</span><span class="lb-ss-lbl">Avg</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.moviesWatched || 0) + '</span><span class="lb-ss-lbl">' + self.t('filmsLabel') + '</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.seriesWatched || 0) + '</span><span class="lb-ss-lbl">' + self.t('showsLabel') + '</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.totalWatchHours || 0) + '</span><span class="lb-ss-lbl">' + self.t('hoursLabel') + '</span></div>' +
+                '<div class="lb-side-stat"><span class="lb-ss-num">' + (stats.averageRating ? stats.averageRating.toFixed(1) : '0') + '</span><span class="lb-ss-lbl">' + self.t('avgLabel') + '</span></div>' +
                 '</div></section>';
 
             // Ratings histogram
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Ratings</h4>' +
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">' + self.t('ratings') + '</h4>' +
                 '<div class="lb-rating-dist" id="lbRatingDist"><div class="lb-loading-small">Loading…</div></div></section>';
 
             // Genre breakdown by actual watch time
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Taste <span class="lb-side-sub" id="lbGenreTotal"></span></h4>' +
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">' + self.t('taste') + ' <span class="lb-side-sub" id="lbGenreTotal"></span></h4>' +
                 '<div class="lb-genre-chart" id="lbGenreChart"><div class="lb-loading-small">Loading…</div></div></section>';
 
             // Users with a similar genre profile
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Similar Taste</h4>' +
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">' + self.t('similarTaste') + '</h4>' +
                 '<div class="lb-similar-users" id="lbSimilarUsers"><div class="lb-loading-small">Loading…</div></div></section>';
 
             // Activity feed (compact)
-            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">Activity</h4>' +
+            html += '<section class="lb-side-card lb-anim"><h4 class="lb-side-title">' + self.t('activity') + '</h4>' +
                 '<div class="lb-recent-activity" id="lbRecentActivity"><div class="lb-loading-small">Loading…</div></div></section>';
 
             html += '</aside>';
@@ -6846,7 +6851,7 @@
                         '<div class="lb-rating-title">' + self.escapeHtml(title) +
                         (year ? ' <span class="lb-rating-year">(' + year + ')</span>' : '') + '</div>' +
                         '<div class="lb-rating-value">' + self.renderStars(rating) + '</div>' +
-                        (inLib ? '' : '<span class="lb-not-in-library">Not on server</span>') +
+                        (inLib ? '' : '<span class="lb-not-in-library">' + self.t('notOnServer') + '</span>') +
                         '</div></div>';
                 });
                 html += '</div>';
@@ -6981,7 +6986,7 @@
                         '<div class="lb-review-header">' +
                         '<h4 class="lb-review-title"' + titleAttr + '>' + self.escapeHtml(title) +
                         (year ? ' <span class="lb-review-year">' + self.escapeHtml(String(year)) + '</span>' : '') +
-                        (inLib ? '' : '<span class="lb-review-offserver">Not on server</span>') +
+                        (inLib ? '' : '<span class="lb-review-offserver">' + self.t('notOnServer') + '</span>') +
                         '</h4>' +
                         '<span class="lb-review-rating">' + self.renderStars(rating) + '</span>' +
                         '</div>' +
