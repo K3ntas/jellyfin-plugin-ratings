@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.379.0",
+        "changelog": "The profile page, the friends panel and the star rating widget are translated at last. Those three areas were never connected to the translation system - the words were written straight into the markup - so they stayed in English no matter which language you picked, in all sixteen languages. Thirty labels now go through the translation layer and are filled in for every language, together with the thirty-eight strings added with the quality-request and bug-report queues. Every language pack gains sixty-eight entries. Thanks to chosqui for reporting it in discussion #76, with a Spanish patch that showed exactly what was missing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.379.0/Jellyfin.Plugin.Ratings_2.0.379.0.zip",
+        "checksum": "f61a135845f3f92fdbb9d359298a622e",
+        "timestamp": "2026-08-22T15:14:39Z"
+      },
+      {
         "version": "2.0.378.0",
         "changelog": "Fixes the Quality and Bug Reports tabs never appearing in the Request Media window. That window is built in two places in the client and only one of them was given the new tabs - the one that was missed is the one that actually runs, so the two queues had no way in at all. Both now show the same five tabs.",
         "targetAbi": "10.11.0.0",
