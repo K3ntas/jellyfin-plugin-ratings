@@ -11464,7 +11464,8 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
 .support-overlay {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 100000 !important;
+    /* Opens on top of #requestMediaModal (9999999); same convention as .rejection-modal-overlay. */
+    z-index: 2147483000 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -11655,7 +11656,7 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     left: 50% !important;
     bottom: 28px !important;
     transform: translateX(-50%) translateY(12px) !important;
-    z-index: 100001 !important;
+    z-index: 2147483001 !important;
     padding: 11px 18px !important;
     border-radius: 9px !important;
     background: #1b1f24 !important;
@@ -11684,3 +11685,17 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     .support-foot-right .support-btn { flex: 1 !important; }
     .support-dialog-foot .support-btn.danger { width: 100% !important; }
 }
+
+/* The reporter's own history, listed under the compose box. */
+.support-mine { margin-top: 18px !important; padding-top: 14px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important; }
+
+.support-mine h4 {
+    margin: 0 0 9px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: #8b98a5 !important;
+}
+
+.support-row-side { flex-shrink: 0 !important; }
