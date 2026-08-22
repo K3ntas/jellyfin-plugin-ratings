@@ -187,5 +187,9 @@ window.RatingsPluginI18n.hi = {
             typeAtLeast2Characters: 'कम से कम 2 अक्षर लिखें', unfriend: 'मित्रता हटाएँ', username: 'उपयोगकर्ता नाम',
             viewProfile: 'प्रोफ़ाइल देखें', watch: 'देखें', watchItFromTheTop: 'इसे शुरू से देखें',
             watchThisToo: 'इसे भी देखें', watchToo: 'साथ देखें', whatDidYouThink: 'आपको कैसा लगा?',
-            writeAComment: 'टिप्पणी लिखें...', writeAReviewOptional: 'समीक्षा लिखें (वैकल्पिक):'
+            writeAComment: 'टिप्पणी लिखें...', writeAReviewOptional: 'समीक्षा लिखें (वैकल्पिक):',
+            add: 'जोड़ें', bio: 'परिचय', cancel: 'रद्द करें', currentlySet: 'वर्तमान: {type} सेट है।',
+            headerMediaHint: 'आपके नाम और चित्र के पीछे दिखने वाला लूपिंग GIF या वीडियो (GIF, MP4 या WEBM, अधिकतम 25 MB)',
+            noneSet: 'कुछ नहीं।',
+            tmdbTokenHint: 'पूरा कैटलॉग खोजने के लिए प्लगइन सेटिंग्स में मुफ़्त TMDB टोकन जोड़ें।'
 };

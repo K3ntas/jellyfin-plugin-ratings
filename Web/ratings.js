@@ -116,6 +116,10 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                add: 'Add', bio: 'Bio', currentlySet: 'Current: {type} set.',
+                headerMediaHint: 'Looping GIF or video shown behind your name & picture (GIF, MP4 or WEBM, max 25 MB)',
+                noneSet: 'None set.',
+                tmdbTokenHint: 'Add a free TMDB token in plugin settings to search the full film catalog.',
                 addNewRow: 'Add New Row', addToARow: 'Add to a row', agree: 'Agree', allRatings: 'All Ratings',
                 allowOthersToFollowMe: 'Allow others to follow me', background: 'Background', block: 'Block',
                 clickToView: 'Click to view', close: 'Close', comments: 'Comments',
@@ -3916,7 +3920,7 @@
                 var extFiltered = extResults.filter(function (e) { return !localTitles[(e.title || '').toLowerCase()]; });
 
                 if (ext.configured === false) {
-                    html += '<div class="lb-am-hint">Add a free TMDB token in plugin settings to search the full film catalog.</div>';
+                    html += '<div class="lb-am-hint">' + RatingsPlugin.t('tmdbTokenHint') + '</div>';
                 } else if (extFiltered.length) {
                     html += '<div class="lb-am-section">' + RatingsPlugin.t('requestFromCatalog') + '</div>';
                     extFiltered.forEach(function (e) {
@@ -8021,16 +8025,16 @@
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('profileInformation') + '</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label>Bio</label>' +
+                '<label>' + RatingsPlugin.t('bio') + '</label>' +
                 '<textarea id="settingsBio" placeholder="' + RatingsPlugin.t('tellOthersAboutYourself') + '">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('headerBackground') + '</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label>Looping GIF or video shown behind your name &amp; picture (GIF, MP4 or WEBM, max 25&nbsp;MB)</label>' +
+                '<label>' + RatingsPlugin.t('headerMediaHint') + '</label>' +
                 '<input type="file" id="settingsHeaderMedia" accept="image/gif,video/mp4,video/webm" onchange="RatingsPlugin.uploadHeaderMedia(this)" />' +
-                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? ('Current: ' + (profile.headerMediaType === 'video' ? 'video' : 'GIF') + ' set.') : 'None set.') + '</div>' +
+                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? (RatingsPlugin.t('currentlySet').replace('{type}', profile.headerMediaType === 'video' ? 'video' : 'GIF')) : RatingsPlugin.t('noneSet')) + '</div>' +
                 '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">' + RatingsPlugin.t('removeHeaderBackground') + '</button>' +
                 '</div>' +
                 '</div>' +

@@ -192,5 +192,9 @@ window.RatingsPluginI18n.lt = {
             username: 'Vartotojo vardas', viewProfile: 'Peržiūrėti profilį', watch: 'Žiūrėti',
             watchItFromTheTop: 'Žiūrėti nuo pradžios', watchThisToo: 'Žiūrėti ir tai', watchToo: 'Žiūrėti kartu',
             whatDidYouThink: 'Ką manote?', writeAComment: 'Rašykite komentarą...',
-            writeAReviewOptional: 'Parašykite apžvalgą (nebūtina):'
+            writeAReviewOptional: 'Parašykite apžvalgą (nebūtina):',
+            add: 'Pridėti', bio: 'Aprašymas', cancel: 'Atšaukti', currentlySet: 'Dabar: {type} nustatytas.',
+            headerMediaHint: 'Cikliškas GIF arba vaizdo įrašas už jūsų vardo ir nuotraukos (GIF, MP4 arba WEBM, iki 25 MB)',
+            noneSet: 'Nenustatyta.',
+            tmdbTokenHint: 'Pridėkite nemokamą TMDB raktą papildinio nustatymuose, kad ieškotumėte visame kataloge.'
 };

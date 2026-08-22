@@ -162,5 +162,8 @@ window.RatingsPluginI18n.ko = {
             testNotification: '테스트 알림', textStyle: '텍스트 스타일:', toggleFullscreen: '전체 화면 전환',
             typeAtLeast2Characters: '2자 이상 입력하세요', unfriend: '친구 끊기', username: '사용자 이름', viewProfile: '프로필 보기',
             watch: '시청', watchItFromTheTop: '처음부터 시청', watchThisToo: '같이 시청하기', watchToo: '같이 보기',
-            whatDidYouThink: '어떠셨나요?', writeAComment: '댓글 작성...', writeAReviewOptional: '리뷰 작성 (선택):'
+            whatDidYouThink: '어떠셨나요?', writeAComment: '댓글 작성...', writeAReviewOptional: '리뷰 작성 (선택):',
+            add: '추가', bio: '소개', cancel: '취소', currentlySet: '현재: {type} 설정됨.',
+            headerMediaHint: '이름과 사진 뒤에 반복 재생되는 GIF 또는 동영상 (GIF, MP4, WEBM, 최대 25 MB)', noneSet: '설정되지 않음.',
+            tmdbTokenHint: '플러그인 설정에 무료 TMDB 토큰을 추가하면 전체 카탈로그를 검색할 수 있습니다.'
 };

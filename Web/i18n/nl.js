@@ -190,5 +190,9 @@ window.RatingsPluginI18n.nl = {
             username: 'Gebruikersnaam', viewProfile: 'Profiel bekijken', watch: 'Bekijken',
             watchItFromTheTop: 'Bekijk het vanaf het begin', watchThisToo: 'Dit ook bekijken', watchToo: 'Mee kijken',
             whatDidYouThink: 'Wat vond je ervan?', writeAComment: 'Schrijf een reactie...',
-            writeAReviewOptional: 'Schrijf een recensie (optioneel):'
+            writeAReviewOptional: 'Schrijf een recensie (optioneel):',
+            add: 'Toevoegen', bio: 'Bio', cancel: 'Annuleren', currentlySet: 'Huidig: {type} ingesteld.',
+            headerMediaHint: 'Herhalende GIF of video achter je naam en foto (GIF, MP4 of WEBM, max. 25 MB)',
+            noneSet: 'Geen ingesteld.',
+            tmdbTokenHint: 'Voeg een gratis TMDB-token toe in de plug-ininstellingen om de hele catalogus te doorzoeken.'
 };

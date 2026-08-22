@@ -190,5 +190,9 @@ window.RatingsPluginI18n.ru = {
             username: 'Имя пользователя', viewProfile: 'Открыть профиль', watch: 'Смотреть',
             watchItFromTheTop: 'Смотреть с начала', watchThisToo: 'Смотреть тоже', watchToo: 'Смотреть вместе',
             whatDidYouThink: 'Что скажете?', writeAComment: 'Напишите комментарий...',
-            writeAReviewOptional: 'Напишите отзыв (необязательно):'
+            writeAReviewOptional: 'Напишите отзыв (необязательно):',
+            add: 'Добавить', bio: 'О себе', cancel: 'Отмена', currentlySet: 'Сейчас: {type} задан.',
+            headerMediaHint: 'Зацикленный GIF или видео позади вашего имени и фото (GIF, MP4 или WEBM, до 25 МБ)',
+            noneSet: 'Не задано.',
+            tmdbTokenHint: 'Добавьте бесплатный токен TMDB в настройках плагина, чтобы искать по всему каталогу.'
 };

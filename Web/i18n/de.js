@@ -190,5 +190,9 @@ window.RatingsPluginI18n.de = {
             username: 'Benutzername', viewProfile: 'Profil ansehen', watch: 'Ansehen',
             watchItFromTheTop: 'Von vorn ansehen', watchThisToo: 'Das auch ansehen', watchToo: 'Mitschauen',
             whatDidYouThink: 'Was hältst du davon?', writeAComment: 'Kommentar schreiben...',
-            writeAReviewOptional: 'Rezension schreiben (optional):'
+            writeAReviewOptional: 'Rezension schreiben (optional):',
+            add: 'Hinzufügen', bio: 'Bio', cancel: 'Abbrechen', currentlySet: 'Aktuell: {type} gesetzt.',
+            headerMediaHint: 'Schleifen-GIF oder -Video hinter deinem Namen und Bild (GIF, MP4 oder WEBM, max. 25 MB)',
+            noneSet: 'Nichts festgelegt.',
+            tmdbTokenHint: 'Füge in den Plugin-Einstellungen ein kostenloses TMDB-Token hinzu, um den ganzen Katalog zu durchsuchen.'
 };

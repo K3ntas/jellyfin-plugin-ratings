@@ -163,5 +163,8 @@ window.RatingsPluginI18n.ja = {
             testNotification: 'テスト通知', textStyle: '文字スタイル:', toggleFullscreen: '全画面表示',
             typeAtLeast2Characters: '2 文字以上入力してください', unfriend: 'フレンド解除', username: 'ユーザー名', viewProfile: 'プロフィールを見る',
             watch: '視聴', watchItFromTheTop: '最初から視聴する', watchThisToo: 'これも一緒に視聴', watchToo: '一緒に視聴',
-            whatDidYouThink: '感想はいかがですか？', writeAComment: 'コメントを書く...', writeAReviewOptional: 'レビューを書く（任意）:'
+            whatDidYouThink: '感想はいかがですか？', writeAComment: 'コメントを書く...', writeAReviewOptional: 'レビューを書く（任意）:',
+            add: '追加', bio: '自己紹介', cancel: 'キャンセル', currentlySet: '現在: {type} を設定済み。',
+            headerMediaHint: '名前と写真の背後に表示されるループする GIF または動画（GIF、MP4、WEBM、最大 25 MB）', noneSet: '未設定です。',
+            tmdbTokenHint: 'プラグイン設定に無料の TMDB トークンを追加すると、全カタログを検索できます。'
 };

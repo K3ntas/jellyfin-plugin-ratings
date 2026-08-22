@@ -192,5 +192,9 @@ window.RatingsPluginI18n.pt = {
             typeAtLeast2Characters: 'Escreva pelo menos 2 caracteres', unfriend: 'Remover amizade',
             username: 'Utilizador', viewProfile: 'Ver perfil', watch: 'Ver', watchItFromTheTop: 'Ver desde o início',
             watchThisToo: 'Ver isto também', watchToo: 'Ver também', whatDidYouThink: 'O que achou?',
-            writeAComment: 'Escreva um comentário...', writeAReviewOptional: 'Escreva uma crítica (opcional):'
+            writeAComment: 'Escreva um comentário...', writeAReviewOptional: 'Escreva uma crítica (opcional):',
+            add: 'Adicionar', bio: 'Biografia', cancel: 'Cancelar', currentlySet: 'Atual: {type} definido.',
+            headerMediaHint: 'GIF ou vídeo em loop mostrado atrás do seu nome e imagem (GIF, MP4 ou WEBM, máx. 25 MB)',
+            noneSet: 'Nenhum.',
+            tmdbTokenHint: 'Adicione um token gratuito do TMDB nas definições do plugin para pesquisar o catálogo completo.'
 };

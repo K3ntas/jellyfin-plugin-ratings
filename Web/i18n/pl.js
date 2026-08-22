@@ -190,5 +190,9 @@ window.RatingsPluginI18n.pl = {
             username: 'Nazwa użytkownika', viewProfile: 'Zobacz profil', watch: 'Oglądaj',
             watchItFromTheTop: 'Obejrzyj od początku', watchThisToo: 'Obejrzyj to też', watchToo: 'Oglądaj razem',
             whatDidYouThink: 'Co o tym sądzisz?', writeAComment: 'Napisz komentarz...',
-            writeAReviewOptional: 'Napisz recenzję (opcjonalnie):'
+            writeAReviewOptional: 'Napisz recenzję (opcjonalnie):',
+            add: 'Dodaj', bio: 'O mnie', cancel: 'Anuluj', currentlySet: 'Obecnie: ustawiono {type}.',
+            headerMediaHint: 'Zapętlony GIF lub film wyświetlany za twoim imieniem i zdjęciem (GIF, MP4 lub WEBM, maks. 25 MB)',
+            noneSet: 'Brak.',
+            tmdbTokenHint: 'Dodaj darmowy token TMDB w ustawieniach wtyczki, aby przeszukiwać cały katalog.'
 };

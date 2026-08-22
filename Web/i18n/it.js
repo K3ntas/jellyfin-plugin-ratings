@@ -193,5 +193,9 @@ window.RatingsPluginI18n.it = {
             username: 'Nome utente', viewProfile: 'Vedi profilo', watch: 'Guarda',
             watchItFromTheTop: 'Guardalo dall\'inizio', watchThisToo: 'Guarda anche questo',
             watchToo: 'Guarda anche tu', whatDidYouThink: 'Che ne pensi?', writeAComment: 'Scrivi un commento...',
-            writeAReviewOptional: 'Scrivi una recensione (facoltativo):'
+            writeAReviewOptional: 'Scrivi una recensione (facoltativo):',
+            add: 'Aggiungi', bio: 'Bio', cancel: 'Annulla', currentlySet: 'Attuale: {type} impostato.',
+            headerMediaHint: 'GIF o video in loop mostrato dietro il tuo nome e la tua immagine (GIF, MP4 o WEBM, max 25 MB)',
+            noneSet: 'Nessuno.',
+            tmdbTokenHint: 'Aggiungi un token TMDB gratuito nelle impostazioni del plugin per cercare nell\'intero catalogo.'
 };
