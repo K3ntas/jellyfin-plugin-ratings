@@ -2154,6 +2154,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                     MinRating = config?.MinRating ?? 1,
                     MaxRating = config?.MaxRating ?? 10,
 
+                    // Support queues - the client hides the profile tab and the report button
+                    // entirely when these are off, rather than letting them 404 on submit.
+                    EnableQualityRequests = config?.EnableQualityRequests ?? true,
+                    EnableBugReports = config?.EnableBugReports ?? true,
+                    BugReportMaxAttachments = config?.BugReportMaxAttachments ?? 3,
+                    BugReportMaxAttachmentMb = config?.BugReportMaxAttachmentMb ?? 2,
+
                     // UI toggles
                     DefaultLanguage = config?.DefaultLanguage ?? "en",
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
@@ -6223,6 +6230,521 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         #endregion
+
+        // Quality requests and bug reports
+        //
+        // Two support queues that sit alongside media requests. A media request asks for
+        // something the server does not have; a quality request points at an item that is already
+        // there, and a bug report is about the plugin itself. They are kept separate because they
+        // are resolved by different work and close on different conditions.
+
+        /// <summary>
+        /// The image formats a screenshot may be in, keyed by the bytes a real file of that type
+        /// starts with. The upload's declared content type is not trusted - only the bytes are.
+        /// </summary>
+        private static readonly (string ContentType, string Extension, byte[] Magic)[] AllowedImageTypes =
+        {
+            ("image/jpeg", ".jpg", new byte[] { 0xFF, 0xD8, 0xFF }),
+            ("image/png", ".png", new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+            ("image/gif", ".gif", new byte[] { 0x47, 0x49, 0x46, 0x38 }),
+        };
+
+        /// <summary>
+        /// Identifies an image by its leading bytes, so a renamed executable cannot be stored as a
+        /// screenshot. WebP is matched separately because its marker is not at offset zero.
+        /// </summary>
+        /// <param name="bytes">The uploaded bytes.</param>
+        /// <returns>The content type and extension, or null when this is not an allowed image.</returns>
+        private static (string ContentType, string Extension)? IdentifyImage(byte[] bytes)
+        {
+            foreach (var (contentType, extension, magic) in AllowedImageTypes)
+            {
+                if (bytes.Length >= magic.Length && bytes.AsSpan(0, magic.Length).SequenceEqual(magic))
+                {
+                    return (contentType, extension);
+                }
+            }
+
+            // RIFF....WEBP
+            if (bytes.Length >= 12
+                && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+            {
+                return ("image/webp", ".webp");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Shapes a quality request for the client, hiding nothing but keeping the payload small.
+        /// </summary>
+        private static object ShapeQualityRequest(QualityRequest r) => new
+        {
+            id = r.Id,
+            userId = r.UserId,
+            username = r.Username,
+            itemId = r.ItemId,
+            itemName = r.ItemName,
+            year = r.Year,
+            itemType = r.ItemType,
+            comment = r.Comment,
+            currentQuality = r.CurrentQuality,
+            status = r.Status,
+            adminResponse = r.AdminResponse,
+            createdAt = r.CreatedAt,
+            updatedAt = r.UpdatedAt,
+            resolvedAt = r.ResolvedAt,
+            resolvedBy = r.ResolvedBy,
+        };
+
+        /// <summary>
+        /// Shapes a bug report for the client. Attachments are described, never inlined - they are
+        /// fetched one at a time through the attachment endpoint.
+        /// </summary>
+        private static object ShapeBugReport(BugReport r) => new
+        {
+            id = r.Id,
+            userId = r.UserId,
+            username = r.Username,
+            comment = r.Comment,
+            context = r.Context,
+            status = r.Status,
+            adminResponse = r.AdminResponse,
+            createdAt = r.CreatedAt,
+            updatedAt = r.UpdatedAt,
+            resolvedAt = r.ResolvedAt,
+            resolvedBy = r.ResolvedBy,
+            attachments = r.Attachments.Select(a => new
+            {
+                id = a.Id,
+                fileName = a.FileName,
+                contentType = a.ContentType,
+                sizeBytes = a.SizeBytes,
+            }).ToList(),
+        };
+
+        /// <summary>
+        /// Raises a request to improve the quality of an item already in the library.
+        /// </summary>
+        /// <param name="dto">The item and what is wrong with it.</param>
+        /// <returns>The stored request.</returns>
+        [HttpPost("QualityRequests")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> CreateQualityRequest([FromBody] [Required] QualityRequestDto dto)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config != null && !config.EnableQualityRequests)
+            {
+                return NotFound(new { error = "Quality requests are disabled" });
+            }
+
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var user = _userManager.GetUserById(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
+
+            var comment = SanitizeInput(dto.Comment, 1000);
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                return BadRequest(new { error = "A comment is required" });
+            }
+
+            var item = dto.ItemId == Guid.Empty ? null : _libraryManager.GetItemById(dto.ItemId);
+            if (item == null)
+            {
+                return BadRequest(new { error = "Item not found" });
+            }
+
+            // The point of this queue is items the server already has; without the check a client
+            // could file quality complaints about anything at all.
+            if (_repository.HasOpenQualityRequest(userId, dto.ItemId))
+            {
+                return BadRequest(new { error = "You already have an open request for this title" });
+            }
+
+            var request = new QualityRequest
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Username = user.Username,
+                ItemId = item.Id,
+                ItemName = item.Name ?? string.Empty,
+                Year = item.ProductionYear,
+                ItemType = item.GetType().Name,
+                Comment = comment,
+                CurrentQuality = SanitizeInput(dto.CurrentQuality, 120),
+                Status = "open",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            _repository.AddQualityRequest(request);
+            _logger.LogInformation("Quality request raised by {User} for {Item}", user.Username, item.Name);
+
+            return Ok(ShapeQualityRequest(request));
+        }
+
+        /// <summary>
+        /// Lists quality requests. Administrators see every request; everyone else sees their own.
+        /// </summary>
+        /// <returns>The visible quality requests.</returns>
+        [HttpGet("QualityRequests")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> GetQualityRequests()
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty && !IsAdminRequest(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var isAdmin = IsAdminRequest(userId);
+            var list = isAdmin ? _repository.GetAllQualityRequests() : _repository.GetUserQualityRequests(userId);
+
+            return Ok(new
+            {
+                isAdmin,
+                requests = list.Select(ShapeQualityRequest).ToList(),
+            });
+        }
+
+        /// <summary>
+        /// Updates a quality request's status and optionally replies to its author.
+        /// </summary>
+        /// <param name="id">The request id.</param>
+        /// <param name="dto">New status and optional reply.</param>
+        /// <returns>The updated request.</returns>
+        [HttpPost("QualityRequests/{id}/Status")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<object>> UpdateQualityRequestStatus([FromRoute] Guid id, [FromBody] [Required] SupportStatusDto dto)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return Forbid();
+            }
+
+            if (!IsValidSupportStatus(dto.Status))
+            {
+                return BadRequest(new { error = "Unknown status" });
+            }
+
+            var actor = userId == Guid.Empty ? "API key" : (_userManager.GetUserById(userId)?.Username ?? string.Empty);
+            var response = dto.Response == null ? null : SanitizeInput(dto.Response, 1000);
+            var updated = _repository.UpdateQualityRequestStatus(id, dto.Status, response, actor);
+
+            return updated == null ? NotFound(new { error = "Request not found" }) : Ok(ShapeQualityRequest(updated));
+        }
+
+        /// <summary>
+        /// Deletes a quality request. Administrators may delete any; a user may withdraw their own.
+        /// </summary>
+        /// <param name="id">The request id.</param>
+        /// <returns>Success.</returns>
+        [HttpDelete("QualityRequests/{id}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<object>> DeleteQualityRequest([FromRoute] Guid id)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            var existing = _repository.GetQualityRequest(id);
+            if (existing == null)
+            {
+                return NotFound(new { error = "Request not found" });
+            }
+
+            if (!IsAdminRequest(userId) && existing.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            _repository.DeleteQualityRequest(id);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Raises a bug report, optionally with screenshots.
+        /// </summary>
+        /// <param name="comment">What went wrong.</param>
+        /// <param name="context">Where the user was when it happened.</param>
+        /// <returns>The stored report.</returns>
+        [HttpPost("BugReports")]
+        [Authorize]
+        [RequestSizeLimit(20 * 1024 * 1024)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<object>> CreateBugReport([FromForm] string? comment, [FromForm] string? context)
+        {
+            var config = Plugin.Instance?.Configuration;
+            if (config != null && !config.EnableBugReports)
+            {
+                return NotFound(new { error = "Bug reports are disabled" });
+            }
+
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var user = _userManager.GetUserById(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
+
+            var text = SanitizeInput(comment, 2000);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return BadRequest(new { error = "A description is required" });
+            }
+
+            var maxFiles = Math.Clamp(config?.BugReportMaxAttachments ?? 3, 0, 10);
+            var maxBytes = Math.Clamp(config?.BugReportMaxAttachmentMb ?? 2, 1, 20) * 1024 * 1024;
+
+            var report = new BugReport
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Username = user.Username,
+                Comment = text,
+                Context = SanitizeInput(context, 300),
+                Status = "open",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            var files = Request.HasFormContentType ? Request.Form.Files : null;
+            if (files != null && files.Count > 0)
+            {
+                if (files.Count > maxFiles)
+                {
+                    return BadRequest(new { error = $"At most {maxFiles} screenshots" });
+                }
+
+                foreach (var file in files)
+                {
+                    if (file.Length <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (file.Length > maxBytes)
+                    {
+                        return BadRequest(new { error = $"Each screenshot must be under {maxBytes / (1024 * 1024)} MB" });
+                    }
+
+                    byte[] bytes;
+                    using (var ms = new MemoryStream())
+                    {
+                        await file.CopyToAsync(ms).ConfigureAwait(false);
+                        bytes = ms.ToArray();
+                    }
+
+                    var kind = IdentifyImage(bytes);
+                    if (kind == null)
+                    {
+                        return BadRequest(new { error = "Attachments must be JPEG, PNG, GIF or WebP images" });
+                    }
+
+                    var attachment = new BugReportAttachment
+                    {
+                        Id = Guid.NewGuid(),
+                        FileName = SanitizeInput(Path.GetFileName(file.FileName), 120),
+                        ContentType = kind.Value.ContentType,
+                        Extension = kind.Value.Extension,
+                        SizeBytes = bytes.LongLength,
+                    };
+
+                    await _repository.SaveBugReportAttachmentAsync(report.Id, attachment, bytes).ConfigureAwait(false);
+                    report.Attachments.Add(attachment);
+                }
+            }
+
+            _repository.AddBugReport(report);
+            _logger.LogInformation("Bug report raised by {User} with {Count} attachment(s)", user.Username, report.Attachments.Count);
+
+            return Ok(ShapeBugReport(report));
+        }
+
+        /// <summary>
+        /// Lists bug reports. Administrators see every report; everyone else sees their own.
+        /// </summary>
+        /// <returns>The visible bug reports.</returns>
+        [HttpGet("BugReports")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> GetBugReports()
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (userId == Guid.Empty && !IsAdminRequest(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var isAdmin = IsAdminRequest(userId);
+            var list = isAdmin ? _repository.GetAllBugReports() : _repository.GetUserBugReports(userId);
+
+            return Ok(new
+            {
+                isAdmin,
+                reports = list.Select(ShapeBugReport).ToList(),
+            });
+        }
+
+        /// <summary>
+        /// Serves one screenshot from a bug report.
+        /// </summary>
+        /// <remarks>
+        /// Readable by the reporter and by administrators only. The file is located from the
+        /// stored record rather than from anything in the URL, so the ids in the path can only
+        /// ever select a file the plugin itself wrote.
+        /// </remarks>
+        /// <param name="id">The report id.</param>
+        /// <param name="attachmentId">The attachment id.</param>
+        /// <returns>The image.</returns>
+        [HttpGet("BugReports/{id}/Attachments/{attachmentId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> GetBugReportAttachment([FromRoute] Guid id, [FromRoute] Guid attachmentId)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            var report = _repository.GetBugReport(id);
+            if (report == null)
+            {
+                return NotFound();
+            }
+
+            if (!IsAdminRequest(userId) && report.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            var attachment = report.Attachments.FirstOrDefault(a => a.Id == attachmentId);
+            if (attachment == null)
+            {
+                return NotFound();
+            }
+
+            var path = _repository.BugReportAttachmentPath(id, attachment);
+            if (!System.IO.File.Exists(path))
+            {
+                return NotFound();
+            }
+
+            return PhysicalFile(path, attachment.ContentType);
+        }
+
+        /// <summary>
+        /// Updates a bug report's status and optionally replies to its author.
+        /// </summary>
+        /// <param name="id">The report id.</param>
+        /// <param name="dto">New status and optional reply.</param>
+        /// <returns>The updated report.</returns>
+        [HttpPost("BugReports/{id}/Status")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<object>> UpdateBugReportStatus([FromRoute] Guid id, [FromBody] [Required] SupportStatusDto dto)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return Forbid();
+            }
+
+            if (!IsValidSupportStatus(dto.Status))
+            {
+                return BadRequest(new { error = "Unknown status" });
+            }
+
+            var actor = userId == Guid.Empty ? "API key" : (_userManager.GetUserById(userId)?.Username ?? string.Empty);
+            var response = dto.Response == null ? null : SanitizeInput(dto.Response, 1000);
+            var updated = _repository.UpdateBugReportStatus(id, dto.Status, response, actor);
+
+            return updated == null ? NotFound(new { error = "Report not found" }) : Ok(ShapeBugReport(updated));
+        }
+
+        /// <summary>
+        /// Deletes a bug report and its screenshots. Administrators may delete any; a user may
+        /// withdraw their own.
+        /// </summary>
+        /// <param name="id">The report id.</param>
+        /// <returns>Success.</returns>
+        [HttpDelete("BugReports/{id}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<object>> DeleteBugReport([FromRoute] Guid id)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            var existing = _repository.GetBugReport(id);
+            if (existing == null)
+            {
+                return NotFound(new { error = "Report not found" });
+            }
+
+            if (!IsAdminRequest(userId) && existing.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            _repository.DeleteBugReport(id);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// How many support items are waiting, for the header badge and the admin tabs.
+        /// </summary>
+        /// <returns>Open counts, zero for non-administrators.</returns>
+        [HttpGet("Support/Counts")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<object>> GetSupportCounts()
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                // Users get their own answered-but-unseen counts rather than the server's queue.
+                return Ok(new
+                {
+                    isAdmin = false,
+                    qualityOpen = _repository.GetUserQualityRequests(userId).Count(r => r.IsOpen),
+                    bugsOpen = _repository.GetUserBugReports(userId).Count(r => r.IsOpen),
+                });
+            }
+
+            return Ok(new
+            {
+                isAdmin = true,
+                qualityOpen = _repository.GetAllQualityRequests().Count(r => r.IsOpen),
+                bugsOpen = _repository.GetAllBugReports().Count(r => r.IsOpen),
+            });
+        }
+
+        /// <summary>
+        /// The states a support item may be moved to.
+        /// </summary>
+        /// <param name="status">Candidate status.</param>
+        /// <returns>True when it is one of the four known states.</returns>
+        private static bool IsValidSupportStatus(string? status)
+            => status == "open" || status == "reviewing" || status == "solved" || status == "rejected";
     }
 
     /// <summary>

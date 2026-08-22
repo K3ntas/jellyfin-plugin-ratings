@@ -33,6 +33,8 @@ namespace Jellyfin.Plugin.Ratings.Data
         // Semaphores to prevent concurrent file writes (fixes race condition)
         private static readonly SemaphoreSlim _ratingsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _requestsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _qualityRequestsWriteLock = new(1, 1);
+        private static readonly SemaphoreSlim _bugReportsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _deletionsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _deletionRequestsWriteLock = new(1, 1);
         private static readonly SemaphoreSlim _userBansWriteLock = new(1, 1);
@@ -60,6 +62,8 @@ namespace Jellyfin.Plugin.Ratings.Data
 
         private Dictionary<Guid, ReviewLike> _reviewLikes;
         private Dictionary<Guid, MediaRequest> _mediaRequests;
+        private Dictionary<Guid, QualityRequest> _qualityRequests;
+        private Dictionary<Guid, BugReport> _bugReports;
         private List<NewMediaNotification> _notifications;
         private Dictionary<Guid, ScheduledDeletion> _scheduledDeletions;
         private Dictionary<Guid, DeletionRequest> _deletionRequests;
@@ -106,6 +110,8 @@ namespace Jellyfin.Plugin.Ratings.Data
             _ratingsByAniDbId = new Dictionary<string, List<UserRating>>();
             _reviewLikes = new Dictionary<Guid, ReviewLike>();
             _mediaRequests = new Dictionary<Guid, MediaRequest>();
+            _qualityRequests = new Dictionary<Guid, QualityRequest>();
+            _bugReports = new Dictionary<Guid, BugReport>();
             _notifications = new List<NewMediaNotification>();
             _scheduledDeletions = new Dictionary<Guid, ScheduledDeletion>();
             _deletionRequests = new Dictionary<Guid, DeletionRequest>();
@@ -133,6 +139,8 @@ namespace Jellyfin.Plugin.Ratings.Data
             System.Threading.Tasks.Parallel.Invoke(
                 LoadRatings,
                 LoadMediaRequests,
+                LoadQualityRequests,
+                LoadBugReports,
                 LoadScheduledDeletions,
                 LoadDeletionRequests,
                 LoadUserBans,
@@ -3870,6 +3878,377 @@ namespace Jellyfin.Plugin.Ratings.Data
                     .Take(limit)
                     .ToList();
             }
+        }
+
+        // Quality requests and bug reports
+
+        /// <summary>
+        /// Loads quality requests from disk.
+        /// </summary>
+        private void LoadQualityRequests()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "quality_requests.json");
+                if (File.Exists(file))
+                {
+                    var list = JsonSerializer.Deserialize<List<QualityRequest>>(File.ReadAllText(file), ReadOptions);
+                    if (list != null)
+                    {
+                        _qualityRequests = list.ToDictionary(r => r.Id);
+                        _logger.LogInformation("Loaded {Count} quality requests from disk", _qualityRequests.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading quality requests from disk");
+            }
+        }
+
+        private Task SaveQualityRequestsAsync()
+        {
+            List<QualityRequest> snapshot;
+            lock (_lock)
+            {
+                snapshot = _qualityRequests.Values.ToList();
+            }
+
+            return WriteJsonAtomicAsync("quality_requests.json", snapshot, _qualityRequestsWriteLock, "quality requests");
+        }
+
+        /// <summary>
+        /// Stores a new quality request.
+        /// </summary>
+        /// <param name="request">The request to store.</param>
+        /// <returns>The stored request.</returns>
+        public QualityRequest AddQualityRequest(QualityRequest request)
+        {
+            lock (_lock)
+            {
+                _qualityRequests[request.Id] = request;
+                _ = SaveQualityRequestsAsync();
+                return request;
+            }
+        }
+
+        /// <summary>
+        /// Gets every quality request, newest first.
+        /// </summary>
+        /// <returns>All quality requests.</returns>
+        public List<QualityRequest> GetAllQualityRequests()
+        {
+            lock (_lock)
+            {
+                return _qualityRequests.Values.OrderByDescending(r => r.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the quality requests raised by one user, newest first.
+        /// </summary>
+        /// <param name="userId">The user.</param>
+        /// <returns>That user's quality requests.</returns>
+        public List<QualityRequest> GetUserQualityRequests(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _qualityRequests.Values
+                    .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets one quality request.
+        /// </summary>
+        /// <param name="id">The request id.</param>
+        /// <returns>The request, or null.</returns>
+        public QualityRequest? GetQualityRequest(Guid id)
+        {
+            lock (_lock)
+            {
+                return _qualityRequests.TryGetValue(id, out var r) ? r : null;
+            }
+        }
+
+        /// <summary>
+        /// Whether a user already has an unresolved request open against an item, so the same
+        /// complaint cannot be filed over and over.
+        /// </summary>
+        /// <param name="userId">The user.</param>
+        /// <param name="itemId">The library item.</param>
+        /// <returns>True when one is already open.</returns>
+        public bool HasOpenQualityRequest(Guid userId, Guid itemId)
+        {
+            lock (_lock)
+            {
+                return _qualityRequests.Values.Any(r => r.UserId == userId && r.ItemId == itemId && r.IsOpen);
+            }
+        }
+
+        /// <summary>
+        /// Updates a quality request's status and optionally the reply shown to its author.
+        /// </summary>
+        /// <param name="id">The request id.</param>
+        /// <param name="status">New status.</param>
+        /// <param name="adminResponse">Optional reply, or null to leave the existing one.</param>
+        /// <param name="resolvedBy">Who made the change.</param>
+        /// <returns>The updated request, or null when it does not exist.</returns>
+        public QualityRequest? UpdateQualityRequestStatus(Guid id, string status, string? adminResponse, string resolvedBy)
+        {
+            lock (_lock)
+            {
+                if (!_qualityRequests.TryGetValue(id, out var request))
+                {
+                    return null;
+                }
+
+                request.Status = status;
+                request.UpdatedAt = DateTime.UtcNow;
+
+                if (adminResponse != null)
+                {
+                    request.AdminResponse = adminResponse;
+                }
+
+                if (status == "solved" || status == "rejected")
+                {
+                    request.ResolvedAt = DateTime.UtcNow;
+                    request.ResolvedBy = resolvedBy;
+                }
+                else
+                {
+                    // Reopening clears the closure, so a reopened item does not still claim to
+                    // have been solved by somebody.
+                    request.ResolvedAt = null;
+                    request.ResolvedBy = string.Empty;
+                }
+
+                _ = SaveQualityRequestsAsync();
+                return request;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a quality request.
+        /// </summary>
+        /// <param name="id">The request id.</param>
+        /// <returns>True when something was removed.</returns>
+        public bool DeleteQualityRequest(Guid id)
+        {
+            lock (_lock)
+            {
+                if (!_qualityRequests.Remove(id))
+                {
+                    return false;
+                }
+
+                _ = SaveQualityRequestsAsync();
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Loads bug reports from disk.
+        /// </summary>
+        private void LoadBugReports()
+        {
+            try
+            {
+                var file = Path.Combine(_dataPath, "bug_reports.json");
+                if (File.Exists(file))
+                {
+                    var list = JsonSerializer.Deserialize<List<BugReport>>(File.ReadAllText(file), ReadOptions);
+                    if (list != null)
+                    {
+                        _bugReports = list.ToDictionary(r => r.Id);
+                        _logger.LogInformation("Loaded {Count} bug reports from disk", _bugReports.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading bug reports from disk");
+            }
+        }
+
+        private Task SaveBugReportsAsync()
+        {
+            List<BugReport> snapshot;
+            lock (_lock)
+            {
+                snapshot = _bugReports.Values.ToList();
+            }
+
+            return WriteJsonAtomicAsync("bug_reports.json", snapshot, _bugReportsWriteLock, "bug reports");
+        }
+
+        /// <summary>
+        /// Stores a new bug report.
+        /// </summary>
+        /// <param name="report">The report to store.</param>
+        /// <returns>The stored report.</returns>
+        public BugReport AddBugReport(BugReport report)
+        {
+            lock (_lock)
+            {
+                _bugReports[report.Id] = report;
+                _ = SaveBugReportsAsync();
+                return report;
+            }
+        }
+
+        /// <summary>
+        /// Gets every bug report, newest first.
+        /// </summary>
+        /// <returns>All bug reports.</returns>
+        public List<BugReport> GetAllBugReports()
+        {
+            lock (_lock)
+            {
+                return _bugReports.Values.OrderByDescending(r => r.CreatedAt).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets the bug reports raised by one user, newest first.
+        /// </summary>
+        /// <param name="userId">The user.</param>
+        /// <returns>That user's reports.</returns>
+        public List<BugReport> GetUserBugReports(Guid userId)
+        {
+            lock (_lock)
+            {
+                return _bugReports.Values
+                    .Where(r => r.UserId == userId)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets one bug report.
+        /// </summary>
+        /// <param name="id">The report id.</param>
+        /// <returns>The report, or null.</returns>
+        public BugReport? GetBugReport(Guid id)
+        {
+            lock (_lock)
+            {
+                return _bugReports.TryGetValue(id, out var r) ? r : null;
+            }
+        }
+
+        /// <summary>
+        /// Updates a bug report's status and optionally the reply shown to its author.
+        /// </summary>
+        /// <param name="id">The report id.</param>
+        /// <param name="status">New status.</param>
+        /// <param name="adminResponse">Optional reply, or null to leave the existing one.</param>
+        /// <param name="resolvedBy">Who made the change.</param>
+        /// <returns>The updated report, or null when it does not exist.</returns>
+        public BugReport? UpdateBugReportStatus(Guid id, string status, string? adminResponse, string resolvedBy)
+        {
+            lock (_lock)
+            {
+                if (!_bugReports.TryGetValue(id, out var report))
+                {
+                    return null;
+                }
+
+                report.Status = status;
+                report.UpdatedAt = DateTime.UtcNow;
+
+                if (adminResponse != null)
+                {
+                    report.AdminResponse = adminResponse;
+                }
+
+                if (status == "solved" || status == "rejected")
+                {
+                    report.ResolvedAt = DateTime.UtcNow;
+                    report.ResolvedBy = resolvedBy;
+                }
+                else
+                {
+                    report.ResolvedAt = null;
+                    report.ResolvedBy = string.Empty;
+                }
+
+                _ = SaveBugReportsAsync();
+                return report;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a bug report along with the screenshots attached to it.
+        /// </summary>
+        /// <param name="id">The report id.</param>
+        /// <returns>True when something was removed.</returns>
+        public bool DeleteBugReport(Guid id)
+        {
+            lock (_lock)
+            {
+                if (!_bugReports.Remove(id))
+                {
+                    return false;
+                }
+
+                _ = SaveBugReportsAsync();
+            }
+
+            try
+            {
+                var dir = BugReportDirectory(id);
+                if (Directory.Exists(dir))
+                {
+                    Directory.Delete(dir, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                // The record is already gone; a few orphaned images are not worth failing on.
+                _logger.LogWarning(ex, "Could not delete attachments for bug report {ReportId}", id);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// The directory holding one report's screenshots.
+        /// </summary>
+        /// <remarks>
+        /// Built only from the report's own GUID, never from anything a caller supplied, so a
+        /// crafted filename has no route out of the data directory.
+        /// </remarks>
+        /// <param name="reportId">The report id.</param>
+        /// <returns>Absolute directory path.</returns>
+        public string BugReportDirectory(Guid reportId)
+            => Path.Combine(_dataPath, "bug-reports", reportId.ToString("N"));
+
+        /// <summary>
+        /// The path of one screenshot on disk.
+        /// </summary>
+        /// <param name="reportId">The report id.</param>
+        /// <param name="attachment">The attachment record.</param>
+        /// <returns>Absolute file path.</returns>
+        public string BugReportAttachmentPath(Guid reportId, BugReportAttachment attachment)
+            => Path.Combine(BugReportDirectory(reportId), attachment.Id.ToString("N") + attachment.Extension);
+
+        /// <summary>
+        /// Writes one screenshot to disk under its report's directory.
+        /// </summary>
+        /// <param name="reportId">The report id.</param>
+        /// <param name="attachment">The attachment record, whose id names the file.</param>
+        /// <param name="bytes">Image bytes, already validated by the caller.</param>
+        /// <returns>A task.</returns>
+        public async Task SaveBugReportAttachmentAsync(Guid reportId, BugReportAttachment attachment, byte[] bytes)
+        {
+            var dir = BugReportDirectory(reportId);
+            Directory.CreateDirectory(dir);
+            await File.WriteAllBytesAsync(BugReportAttachmentPath(reportId, attachment), bytes).ConfigureAwait(false);
         }
     }
 }

@@ -96,6 +96,25 @@
                 requestFailed: 'Failed to submit request', statusUpdated: 'Status updated', statusUpdateFailed: 'Failed to update status',
                 addLink: '+ Link', enterMediaLink: 'Enter media link:', delete: 'Delete', confirmDelete: 'Are you sure you want to delete this request?',
                 mediaLinkPlaceholder: 'Media link (paste URL when done)', unknown: 'Unknown', loading: 'Loading...',
+                // Support queues: better-quality requests and bug reports.
+                qualityTab: 'Better Quality', qualityTabTitle: 'Ask for better quality',
+                qualityTabHint: 'Find a title that is already on the server and tell us what is wrong with the current copy.',
+                qualitySearchPlaceholder: 'Search the library...', qualityNoResults: 'Nothing in the library matches that.',
+                qualityAsk: 'Ask for better quality', qualityWhat: 'What is wrong with the current copy?',
+                qualityCommentPlaceholder: 'Blurry, wrong audio track, missing subtitles, out of sync...',
+                qualityCommentRequired: 'Please describe the problem.', qualityMine: 'Your requests',
+                qualityNoneYet: 'You have not asked for anything yet.', qualityNone: 'No quality requests',
+                qualityRequests: 'Quality', qualityRequest: 'Quality request',
+                reportBug: 'Report a problem', bugWhat: 'What went wrong?',
+                bugPlaceholder: 'What were you doing, and what happened instead?',
+                bugCommentRequired: 'Please describe the problem.', bugAddPhoto: 'Add screenshot',
+                bugLimits: 'Up to {n} images, {mb} MB each', bugTooMany: 'At most {n} images',
+                bugTooBig: 'Each image must be under {mb} MB', bugThanks: 'Thanks - your report has been sent.',
+                bugReports: 'Bug Reports', bugReport: 'Bug report', bugsNone: 'No bug reports',
+                supportOpen: 'Open', supportReviewing: 'Looking into it', supportSolved: 'Solved',
+                supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
+                supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
+                sending: 'Sending...', send: 'Send', cancel: 'Cancel',
                 snooze: 'Snooze', unsnooze: 'Unsnooze', snoozed: 'SNOOZED', snoozedUntil: 'Snoozed until', snoozeDate: 'Snooze until date',
                 categoryNew: '🆕 New', categoryProcessing: '🔄 Processing', categoryPending: '⏳ Pending', categorySnoozed: '💤 Snoozed', categoryDone: '✅ Done', categoryRejected: '❌ Rejected',
                 createRequest: 'Create Request', latestMedia: 'Latest Media', latestMediaLoading: 'Loading...', latestMediaEmpty: 'No recent media found', latestMediaError: 'Failed to load',
@@ -4878,6 +4897,9 @@
                 '<button class="lb-tab" data-tab="activity">Activity</button>' +
                 '<button class="lb-tab" data-tab="following">Following</button>' +
                 '<button class="lb-tab" data-tab="followers">Followers</button>' +
+                ((self._configCache || {}).EnableQualityRequests !== false
+                    ? '<button class="lb-tab" data-tab="quality">' + (self.t('qualityTab') || 'Better Quality') + '</button>'
+                    : '') +
                 '<button class="lb-tab" data-tab="users">Other Users</button>' +
                 '</div>';
 
@@ -4949,6 +4971,12 @@
 
             if (status.isSelf) {
                 html += '<button class="lb-btn secondary" onclick="RatingsPlugin.openProfileSettings()">Edit Profile</button>';
+                if ((self._configCache || {}).EnableBugReports !== false) {
+                    html += '<button class="lb-btn secondary lb-report-bug" title="' +
+                        self.escapeHtml(self.t('reportBug') || 'Report a problem') +
+                        '" onclick="RatingsPlugin.openBugReportModal()">🐞 ' +
+                        self.escapeHtml(self.t('reportBug') || 'Report a problem') + '</button>';
+                }
             } else if (status.hasBlocked) {
                 html += '<button class="lb-btn secondary" onclick="RatingsPlugin.profileUnblockUser(\'' + self.escapeJs(userId) + '\')">Unblock</button>';
             } else if (status.isBlockedBy) {
@@ -5049,6 +5077,9 @@
                 case 'followers':
                     self.renderProfileFollowersTab();
                     break;
+                case 'quality':
+                    self.renderProfileQualityTab();
+                    break;
                 case 'users':
                     self.renderProfileAllUsersTab();
                     break;
@@ -5059,6 +5090,642 @@
          * Render the "Other Users" tab - everyone else on this server, so profiles can be browsed
          * without already knowing a name to search for.
          */
+        /* ------------------------------------------------------------------
+         * Support queues: quality requests and bug reports
+         *
+         * Both are raised from the profile and land in the Request Media modal for admins.
+         * Kept apart from media requests: one asks for a title the server does not have, these
+         * two are about a file that is already here and about the plugin itself.
+         * ------------------------------------------------------------------ */
+
+        _supportHeaders: function () {
+            return { 'X-Emby-Token': ApiClient.accessToken() };
+        },
+
+        _supportUrl: function (path) {
+            return ApiClient.serverAddress() + '/Ratings/' + path;
+        },
+
+        /** Status pill shared by both queues. */
+        supportStatusChip: function (status) {
+            var map = {
+                open: ['support-chip open', this.t('supportOpen') || 'Open'],
+                reviewing: ['support-chip reviewing', this.t('supportReviewing') || 'Looking into it'],
+                solved: ['support-chip solved', this.t('supportSolved') || 'Solved'],
+                rejected: ['support-chip rejected', this.t('supportRejected') || 'Declined']
+            };
+            var entry = map[status] || map.open;
+            return '<span class="' + entry[0] + '">' + this.escapeHtml(entry[1]) + '</span>';
+        },
+
+        /**
+         * Profile tab: find something already in the library and ask for a better copy of it.
+         */
+        renderProfileQualityTab: function () {
+            var self = this;
+            var content = document.getElementById('lbProfileContent');
+            if (!content) return;
+
+            content.innerHTML =
+                '<div class="quality-tab">' +
+                    '<div class="quality-intro">' +
+                        '<h3>' + self.escapeHtml(self.t('qualityTabTitle') || 'Ask for better quality') + '</h3>' +
+                        '<p>' + self.escapeHtml(self.t('qualityTabHint') || 'Find a title that is already on the server and tell us what is wrong with the current copy.') + '</p>' +
+                    '</div>' +
+                    '<div class="quality-search">' +
+                        '<input type="text" id="qualitySearchInput" autocomplete="off" placeholder="' +
+                            self.escapeHtml(self.t('qualitySearchPlaceholder') || 'Search the library...') + '">' +
+                    '</div>' +
+                    '<div class="quality-results" id="qualityResults"></div>' +
+                    '<div class="quality-mine">' +
+                        '<h4>' + self.escapeHtml(self.t('qualityMine') || 'Your requests') + '</h4>' +
+                        '<div id="qualityMineList"><div class="lb-loading">' + self.escapeHtml(self.t('loading') || 'Loading...') + '</div></div>' +
+                    '</div>' +
+                '</div>';
+
+            var input = document.getElementById('qualitySearchInput');
+            if (input) {
+                var timer = null;
+                input.addEventListener('input', function () {
+                    clearTimeout(timer);
+                    var term = input.value.trim();
+                    // Debounced so typing a title does not fire a query per keystroke.
+                    timer = setTimeout(function () { self.qualitySearch(term); }, 300);
+                });
+                input.focus();
+            }
+
+            self.loadMyQualityRequests();
+        },
+
+        qualitySearch: function (term) {
+            var self = this;
+            var box = document.getElementById('qualityResults');
+            if (!box) return;
+
+            if (!term || term.length < 2) {
+                box.innerHTML = '';
+                return;
+            }
+
+            box.innerHTML = '<div class="lb-loading">' + self.escapeHtml(self.t('loading') || 'Loading...') + '</div>';
+
+            fetch(self._supportUrl('Search?query=' + encodeURIComponent(term) + '&limit=12'), {
+                credentials: 'include',
+                headers: self._supportHeaders()
+            })
+            .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+            .then(function (data) {
+                var items = data.items || data.Items || data.results || [];
+                if (!items.length) {
+                    box.innerHTML = '<div class="quality-empty">' +
+                        self.escapeHtml(self.t('qualityNoResults') || 'Nothing in the library matches that.') + '</div>';
+                    return;
+                }
+
+                var html = '';
+                items.forEach(function (item) {
+                    var id = item.id || item.Id || '';
+                    var name = item.name || item.Name || item.title || '';
+                    var year = item.year || item.ProductionYear || item.productionYear || '';
+                    var poster = item.posterUrl || item.PosterUrl || '';
+                    if (!id || !name) return;
+
+                    html += '<div class="quality-card">' +
+                        (poster
+                            ? '<img class="quality-card-poster" src="' + self.escapeHtml(poster) + '" alt="" loading="lazy">'
+                            : '<div class="quality-card-poster placeholder"></div>') +
+                        '<div class="quality-card-body">' +
+                            '<div class="quality-card-title">' + self.escapeHtml(name) + '</div>' +
+                            (year ? '<div class="quality-card-year">' + self.escapeHtml(String(year)) + '</div>' : '') +
+                        '</div>' +
+                        '<button class="quality-ask-btn" onclick="RatingsPlugin.openQualityDialog(\'' +
+                            self.escapeJs(id) + '\', \'' + self.escapeJs(name) + '\')">' +
+                            self.escapeHtml(self.t('qualityAsk') || 'Ask for better quality') +
+                        '</button>' +
+                    '</div>';
+                });
+                box.innerHTML = html;
+            })
+            .catch(function () {
+                box.innerHTML = '<div class="lb-error">' + self.escapeHtml(self.t('errorLoading') || 'Failed to load') + '</div>';
+            });
+        },
+
+        /** Comment dialog shown after picking a title. */
+        openQualityDialog: function (itemId, itemName) {
+            var self = this;
+            self.closeSupportDialog();
+
+            var overlay = document.createElement('div');
+            overlay.className = 'support-overlay';
+            overlay.id = 'supportDialog';
+            overlay.innerHTML =
+                '<div class="support-dialog">' +
+                    '<div class="support-dialog-head">' +
+                        '<h3>' + self.escapeHtml(self.t('qualityAsk') || 'Ask for better quality') + '</h3>' +
+                        '<button class="support-close" onclick="RatingsPlugin.closeSupportDialog()">&times;</button>' +
+                    '</div>' +
+                    '<div class="support-dialog-body">' +
+                        '<div class="support-target">' + self.escapeHtml(itemName) + '</div>' +
+                        '<label class="support-label" for="qualityComment">' +
+                            self.escapeHtml(self.t('qualityWhat') || 'What is wrong with the current copy?') + '</label>' +
+                        '<textarea id="qualityComment" maxlength="1000" placeholder="' +
+                            self.escapeHtml(self.t('qualityCommentPlaceholder') || 'Blurry, wrong audio track, missing subtitles, out of sync...') +
+                            '"></textarea>' +
+                        '<div class="support-error" id="qualityError"></div>' +
+                    '</div>' +
+                    '<div class="support-dialog-foot">' +
+                        '<button class="support-btn ghost" onclick="RatingsPlugin.closeSupportDialog()">' +
+                            self.escapeHtml(self.t('cancel') || 'Cancel') + '</button>' +
+                        '<button class="support-btn primary" id="qualitySubmit">' +
+                            self.escapeHtml(self.t('send') || 'Send') + '</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) self.closeSupportDialog(); });
+
+            var btn = document.getElementById('qualitySubmit');
+            if (btn) {
+                btn.addEventListener('click', function () { self.submitQualityRequest(itemId, btn); });
+            }
+
+            var ta = document.getElementById('qualityComment');
+            if (ta) ta.focus();
+        },
+
+        submitQualityRequest: function (itemId, btn) {
+            var self = this;
+            var ta = document.getElementById('qualityComment');
+            var err = document.getElementById('qualityError');
+            var comment = ta ? ta.value.trim() : '';
+
+            if (!comment) {
+                if (err) err.textContent = self.t('qualityCommentRequired') || 'Please describe the problem.';
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = self.t('sending') || 'Sending...'; }
+
+            fetch(self._supportUrl('QualityRequests'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, self._supportHeaders()),
+                body: JSON.stringify({ itemId: itemId, comment: comment })
+            })
+            .then(function (r) {
+                return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    if (err) err.textContent = (res.body && res.body.error) || (self.t('requestFailed') || 'Request failed');
+                    if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
+                    return;
+                }
+                self.closeSupportDialog();
+                self.loadMyQualityRequests();
+                var input = document.getElementById('qualitySearchInput');
+                if (input) { input.value = ''; }
+                var results = document.getElementById('qualityResults');
+                if (results) { results.innerHTML = ''; }
+            })
+            .catch(function () {
+                if (err) err.textContent = self.t('requestFailed') || 'Request failed';
+                if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
+            });
+        },
+
+        loadMyQualityRequests: function () {
+            var self = this;
+            var box = document.getElementById('qualityMineList');
+            if (!box) return;
+
+            fetch(self._supportUrl('QualityRequests'), {
+                credentials: 'include',
+                headers: self._supportHeaders()
+            })
+            .then(function (r) { return r.ok ? r.json() : { requests: [] }; })
+            .then(function (data) {
+                var list = (data.requests || []).filter(function (r) {
+                    return r.userId === ApiClient.getCurrentUserId();
+                });
+                if (!list.length) {
+                    box.innerHTML = '<div class="quality-empty">' +
+                        self.escapeHtml(self.t('qualityNoneYet') || 'You have not asked for anything yet.') + '</div>';
+                    return;
+                }
+
+                var html = '';
+                list.forEach(function (r) {
+                    html += '<div class="support-row">' +
+                        '<div class="support-row-main">' +
+                            '<div class="support-row-title">' + self.escapeHtml(r.itemName || '') +
+                                (r.year ? ' <span class="support-dim">(' + self.escapeHtml(String(r.year)) + ')</span>' : '') + '</div>' +
+                            '<div class="support-row-comment">' + self.escapeHtml(r.comment || '') + '</div>' +
+                            (r.adminResponse
+                                ? '<div class="support-reply"><b>' + self.escapeHtml(self.t('supportReply') || 'Reply') + ':</b> ' +
+                                  self.escapeHtml(r.adminResponse) + '</div>'
+                                : '') +
+                        '</div>' +
+                        '<div class="support-row-side">' + self.supportStatusChip(r.status) + '</div>' +
+                    '</div>';
+                });
+                box.innerHTML = html;
+            })
+            .catch(function () {
+                box.innerHTML = '<div class="lb-error">' + self.escapeHtml(self.t('errorLoading') || 'Failed to load') + '</div>';
+            });
+        },
+
+        /** Bug report dialog: a description plus optional screenshots. */
+        openBugReportModal: function () {
+            var self = this;
+            self.closeSupportDialog();
+
+            var cfg = self._configCache || {};
+            var maxFiles = cfg.BugReportMaxAttachments || 3;
+            var maxMb = cfg.BugReportMaxAttachmentMb || 2;
+            self._bugFiles = [];
+
+            var overlay = document.createElement('div');
+            overlay.className = 'support-overlay';
+            overlay.id = 'supportDialog';
+            overlay.innerHTML =
+                '<div class="support-dialog">' +
+                    '<div class="support-dialog-head">' +
+                        '<h3>' + self.escapeHtml(self.t('reportBug') || 'Report a problem') + '</h3>' +
+                        '<button class="support-close" onclick="RatingsPlugin.closeSupportDialog()">&times;</button>' +
+                    '</div>' +
+                    '<div class="support-dialog-body">' +
+                        '<label class="support-label" for="bugComment">' +
+                            self.escapeHtml(self.t('bugWhat') || 'What went wrong?') + '</label>' +
+                        '<textarea id="bugComment" maxlength="2000" placeholder="' +
+                            self.escapeHtml(self.t('bugPlaceholder') || 'What were you doing, and what happened instead?') +
+                            '"></textarea>' +
+                        '<div class="support-attach">' +
+                            '<button type="button" class="support-btn ghost" id="bugPickBtn">' +
+                                self.escapeHtml(self.t('bugAddPhoto') || 'Add screenshot') + '</button>' +
+                            '<span class="support-dim">' +
+                                self.escapeHtml((self.t('bugLimits') || 'Up to {n} images, {mb} MB each')
+                                    .replace('{n}', maxFiles).replace('{mb}', maxMb)) + '</span>' +
+                            '<input type="file" id="bugFileInput" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>' +
+                        '</div>' +
+                        '<div class="support-thumbs" id="bugThumbs"></div>' +
+                        '<div class="support-error" id="bugError"></div>' +
+                    '</div>' +
+                    '<div class="support-dialog-foot">' +
+                        '<button class="support-btn ghost" onclick="RatingsPlugin.closeSupportDialog()">' +
+                            self.escapeHtml(self.t('cancel') || 'Cancel') + '</button>' +
+                        '<button class="support-btn primary" id="bugSubmit">' +
+                            self.escapeHtml(self.t('send') || 'Send') + '</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) self.closeSupportDialog(); });
+
+            var input = document.getElementById('bugFileInput');
+            var pick = document.getElementById('bugPickBtn');
+            if (pick && input) {
+                pick.addEventListener('click', function () { input.click(); });
+                input.addEventListener('change', function () {
+                    self.addBugFiles(Array.prototype.slice.call(input.files || []), maxFiles, maxMb);
+                    input.value = '';
+                });
+            }
+
+            // Pasting a screenshot straight from the clipboard is how people actually attach one.
+            var ta = document.getElementById('bugComment');
+            if (ta) {
+                ta.addEventListener('paste', function (e) {
+                    var items = (e.clipboardData && e.clipboardData.items) || [];
+                    var picked = [];
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].type && items[i].type.indexOf('image/') === 0) {
+                            var f = items[i].getAsFile();
+                            if (f) picked.push(f);
+                        }
+                    }
+                    if (picked.length) {
+                        e.preventDefault();
+                        self.addBugFiles(picked, maxFiles, maxMb);
+                    }
+                });
+                ta.focus();
+            }
+
+            var btn = document.getElementById('bugSubmit');
+            if (btn) btn.addEventListener('click', function () { self.submitBugReport(btn); });
+        },
+
+        addBugFiles: function (files, maxFiles, maxMb) {
+            var self = this;
+            var err = document.getElementById('bugError');
+            if (err) err.textContent = '';
+
+            files.forEach(function (f) {
+                if (self._bugFiles.length >= maxFiles) {
+                    if (err) err.textContent = (self.t('bugTooMany') || 'At most {n} images').replace('{n}', maxFiles);
+                    return;
+                }
+                if (f.size > maxMb * 1024 * 1024) {
+                    if (err) err.textContent = (self.t('bugTooBig') || 'Each image must be under {mb} MB').replace('{mb}', maxMb);
+                    return;
+                }
+                self._bugFiles.push(f);
+            });
+
+            self.renderBugThumbs();
+        },
+
+        renderBugThumbs: function () {
+            var self = this;
+            var box = document.getElementById('bugThumbs');
+            if (!box) return;
+
+            box.innerHTML = '';
+            self._bugFiles.forEach(function (f, idx) {
+                var wrap = document.createElement('div');
+                wrap.className = 'support-thumb';
+
+                var img = document.createElement('img');
+                img.alt = '';
+                var reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(f);
+
+                var del = document.createElement('button');
+                del.className = 'support-thumb-remove';
+                del.type = 'button';
+                del.innerHTML = '&times;';
+                del.addEventListener('click', function () {
+                    self._bugFiles.splice(idx, 1);
+                    self.renderBugThumbs();
+                });
+
+                wrap.appendChild(img);
+                wrap.appendChild(del);
+                box.appendChild(wrap);
+            });
+        },
+
+        submitBugReport: function (btn) {
+            var self = this;
+            var ta = document.getElementById('bugComment');
+            var err = document.getElementById('bugError');
+            var comment = ta ? ta.value.trim() : '';
+
+            if (!comment) {
+                if (err) err.textContent = self.t('bugCommentRequired') || 'Please describe the problem.';
+                return;
+            }
+
+            var form = new FormData();
+            form.append('comment', comment);
+            form.append('context', (location.hash || '') + ' | ' + navigator.userAgent);
+            (self._bugFiles || []).forEach(function (f) { form.append('files', f, f.name || 'screenshot.png'); });
+
+            if (btn) { btn.disabled = true; btn.textContent = self.t('sending') || 'Sending...'; }
+
+            fetch(self._supportUrl('BugReports'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: self._supportHeaders(),   // no Content-Type: the browser sets the multipart boundary
+                body: form
+            })
+            .then(function (r) {
+                return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    if (err) err.textContent = (res.body && res.body.error) || (self.t('requestFailed') || 'Request failed');
+                    if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
+                    return;
+                }
+                self._bugFiles = [];
+                self.closeSupportDialog();
+                self.showSupportToast(self.t('bugThanks') || 'Thanks - your report has been sent.');
+            })
+            .catch(function () {
+                if (err) err.textContent = self.t('requestFailed') || 'Request failed';
+                if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
+            });
+        },
+
+        closeSupportDialog: function () {
+            var existing = document.getElementById('supportDialog');
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+        },
+
+        showSupportToast: function (message) {
+            var el = document.createElement('div');
+            el.className = 'support-toast';
+            el.textContent = message;
+            document.body.appendChild(el);
+            setTimeout(function () { el.classList.add('visible'); }, 10);
+            setTimeout(function () {
+                el.classList.remove('visible');
+                setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+            }, 3200);
+        },
+
+        /* ---------------- admin side ---------------- */
+
+        renderQualityRequestsTab: function () {
+            this.renderSupportAdminTab('quality');
+        },
+
+        renderBugReportsTab: function () {
+            this.renderSupportAdminTab('bugs');
+        },
+
+        renderSupportAdminTab: function (kind) {
+            var self = this;
+            var tabContent = document.getElementById('adminTabContent');
+            if (!tabContent) return;
+
+            tabContent.innerHTML = '<div class="admin-loading">' + self.escapeHtml(self.t('loading') || 'Loading...') + '</div>';
+
+            var path = kind === 'quality' ? 'QualityRequests' : 'BugReports';
+            fetch(self._supportUrl(path), { credentials: 'include', headers: self._supportHeaders() })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data) {
+                    tabContent.innerHTML = '<div class="admin-empty">' + self.escapeHtml(self.t('errorLoading') || 'Failed to load') + '</div>';
+                    return;
+                }
+
+                var list = kind === 'quality' ? (data.requests || []) : (data.reports || []);
+                self._supportCache = self._supportCache || {};
+                self._supportCache[kind] = list;
+
+                if (!list.length) {
+                    tabContent.innerHTML = '<div class="admin-empty">' +
+                        self.escapeHtml(kind === 'quality'
+                            ? (self.t('qualityNone') || 'No quality requests')
+                            : (self.t('bugsNone') || 'No bug reports')) + '</div>';
+                    return;
+                }
+
+                // Open items first: the queue exists to show what still needs attention.
+                var open = list.filter(function (r) { return r.status === 'open' || r.status === 'reviewing'; });
+                var closed = list.filter(function (r) { return r.status !== 'open' && r.status !== 'reviewing'; });
+
+                var html = '<div class="support-admin-list">';
+                open.concat(closed).forEach(function (r) {
+                    var title = kind === 'quality'
+                        ? (r.itemName || '') + (r.year ? ' (' + r.year + ')' : '')
+                        : (r.comment || '').slice(0, 70);
+                    var attach = (kind === 'bugs' && r.attachments && r.attachments.length)
+                        ? '<span class="support-attach-count">' + r.attachments.length + ' 🖼</span>' : '';
+
+                    html += '<div class="support-admin-row" onclick="RatingsPlugin.openSupportDetail(\'' +
+                            self.escapeJs(kind) + '\', \'' + self.escapeJs(r.id) + '\')">' +
+                        '<div class="support-admin-main">' +
+                            '<div class="support-admin-title">' + self.escapeHtml(title) + '</div>' +
+                            '<div class="support-admin-meta">' +
+                                '<span class="support-user">' + self.escapeHtml(r.username || '') + '</span>' +
+                                '<span class="support-dim">' + self.escapeHtml(self.formatSupportDate(r.createdAt)) + '</span>' +
+                                attach +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="support-admin-side">' + self.supportStatusChip(r.status) + '</div>' +
+                    '</div>';
+                });
+                html += '</div>';
+                tabContent.innerHTML = html;
+            })
+            .catch(function () {
+                tabContent.innerHTML = '<div class="admin-empty">' + self.escapeHtml(self.t('errorLoading') || 'Failed to load') + '</div>';
+            });
+        },
+
+        formatSupportDate: function (iso) {
+            if (!iso) return '';
+            try {
+                var d = new Date(iso);
+                return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return '';
+            }
+        },
+
+        /** Admin detail view: read it, look at the screenshots, reply, close it. */
+        openSupportDetail: function (kind, id) {
+            var self = this;
+            var list = (self._supportCache && self._supportCache[kind]) || [];
+            var r = list.filter(function (x) { return x.id === id; })[0];
+            if (!r) return;
+
+            self.closeSupportDialog();
+
+            var shots = '';
+            if (kind === 'bugs' && r.attachments && r.attachments.length) {
+                shots = '<div class="support-shots">';
+                r.attachments.forEach(function (a) {
+                    var url = self._supportUrl('BugReports/' + encodeURIComponent(id) + '/Attachments/' + encodeURIComponent(a.id)) +
+                              '?api_key=' + encodeURIComponent(ApiClient.accessToken());
+                    shots += '<a class="support-shot" href="' + self.escapeHtml(url) + '" target="_blank" rel="noopener">' +
+                             '<img src="' + self.escapeHtml(url) + '" alt="" loading="lazy"></a>';
+                });
+                shots += '</div>';
+            }
+
+            var title = kind === 'quality'
+                ? (self.t('qualityRequest') || 'Quality request')
+                : (self.t('bugReport') || 'Bug report');
+
+            var overlay = document.createElement('div');
+            overlay.className = 'support-overlay';
+            overlay.id = 'supportDialog';
+            overlay.innerHTML =
+                '<div class="support-dialog wide">' +
+                    '<div class="support-dialog-head">' +
+                        '<h3>' + self.escapeHtml(title) + '</h3>' +
+                        '<button class="support-close" onclick="RatingsPlugin.closeSupportDialog()">&times;</button>' +
+                    '</div>' +
+                    '<div class="support-dialog-body">' +
+                        '<div class="support-detail-meta">' +
+                            '<span class="support-user">' + self.escapeHtml(r.username || '') + '</span>' +
+                            '<span class="support-dim">' + self.escapeHtml(self.formatSupportDate(r.createdAt)) + '</span>' +
+                            self.supportStatusChip(r.status) +
+                        '</div>' +
+                        (kind === 'quality'
+                            ? '<div class="support-target">' + self.escapeHtml(r.itemName || '') +
+                              (r.year ? ' (' + self.escapeHtml(String(r.year)) + ')' : '') + '</div>'
+                            : '') +
+                        '<div class="support-detail-comment">' + self.escapeHtml(r.comment || '') + '</div>' +
+                        (r.context ? '<div class="support-context">' + self.escapeHtml(r.context) + '</div>' : '') +
+                        shots +
+                        '<label class="support-label" for="supportReply">' +
+                            self.escapeHtml(self.t('supportReplyLabel') || 'Reply to the user') + '</label>' +
+                        '<textarea id="supportReply" maxlength="1000">' + self.escapeHtml(r.adminResponse || '') + '</textarea>' +
+                        '<div class="support-error" id="supportDetailError"></div>' +
+                    '</div>' +
+                    '<div class="support-dialog-foot spread">' +
+                        '<button class="support-btn danger" onclick="RatingsPlugin.updateSupportStatus(\'' +
+                            self.escapeJs(kind) + '\', \'' + self.escapeJs(id) + '\', \'rejected\')">' +
+                            self.escapeHtml(self.t('supportDecline') || 'Decline') + '</button>' +
+                        '<div class="support-foot-right">' +
+                            '<button class="support-btn ghost" onclick="RatingsPlugin.updateSupportStatus(\'' +
+                                self.escapeJs(kind) + '\', \'' + self.escapeJs(id) + '\', \'reviewing\')">' +
+                                self.escapeHtml(self.t('supportReviewing') || 'Looking into it') + '</button>' +
+                            '<button class="support-btn primary" onclick="RatingsPlugin.updateSupportStatus(\'' +
+                                self.escapeJs(kind) + '\', \'' + self.escapeJs(id) + '\', \'solved\')">' +
+                                self.escapeHtml(self.t('supportMarkSolved') || 'Mark solved') + '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) self.closeSupportDialog(); });
+        },
+
+        updateSupportStatus: function (kind, id, status) {
+            var self = this;
+            var reply = document.getElementById('supportReply');
+            var err = document.getElementById('supportDetailError');
+            var path = (kind === 'quality' ? 'QualityRequests/' : 'BugReports/') + encodeURIComponent(id) + '/Status';
+
+            fetch(self._supportUrl(path), {
+                method: 'POST',
+                credentials: 'include',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, self._supportHeaders()),
+                body: JSON.stringify({ status: status, response: reply ? reply.value : null })
+            })
+            .then(function (r) {
+                if (!r.ok) throw new Error('failed');
+                self.closeSupportDialog();
+                self.renderSupportAdminTab(kind);
+                self.refreshSupportBadges();
+            })
+            .catch(function () {
+                if (err) err.textContent = self.t('requestFailed') || 'Request failed';
+            });
+        },
+
+        /** Keeps the counts on the two admin tabs current. */
+        refreshSupportBadges: function () {
+            var self = this;
+            fetch(self._supportUrl('Support/Counts'), { credentials: 'include', headers: self._supportHeaders() })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.isAdmin) return;
+                [['qualityTabBadge', data.qualityOpen], ['bugsTabBadge', data.bugsOpen]].forEach(function (pair) {
+                    var el = document.getElementById(pair[0]);
+                    if (!el) return;
+                    if (pair[1] > 0) {
+                        el.textContent = pair[1];
+                        el.style.setProperty('display', 'inline-flex', 'important');
+                    } else {
+                        el.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            })
+            .catch(function () { /* a missing badge is not worth surfacing */ });
+        },
+
         renderProfileAllUsersTab: function () {
             var content = document.getElementById('lbProfileContent');
             if (!content) return;
@@ -14807,6 +15474,8 @@
                     <button class="admin-tab" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
                     <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
                     <button class="admin-tab" data-tab="deletions">${this.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
+                    <button class="admin-tab" data-tab="quality">${this.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>
+                    <button class="admin-tab" data-tab="bugs">${this.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>
                 </div>
                 <div class="admin-tab-content" id="adminTabContent"></div>
             `;
@@ -14830,6 +15499,10 @@
                         self.renderUserInterfaceInTab(config);
                     } else if (tabName === 'deletions') {
                         self.renderDeletionRequestsTab(config);
+                    } else if (tabName === 'quality') {
+                        self.renderQualityRequestsTab();
+                    } else if (tabName === 'bugs') {
+                        self.renderBugReportsTab();
                     } else {
                         self.renderAdminInterfaceInTab(config);
                     }
@@ -14838,6 +15511,7 @@
 
             // Load manage tab by default for admins
             this.renderAdminInterfaceInTab(config);
+            this.refreshSupportBadges();
         },
 
         /**
