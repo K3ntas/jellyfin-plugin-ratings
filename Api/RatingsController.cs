@@ -6359,7 +6359,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return BadRequest(new { error = "A comment is required" });
             }
 
-            var item = dto.ItemId == Guid.Empty ? null : _libraryManager.GetItemById(dto.ItemId);
+            // Resolved through a user-scoped query rather than GetItemById, so Jellyfin applies
+            // this account's library permissions - the same rule the search and sorted-library
+            // endpoints follow. Without it the reply would confirm the name of a title in a
+            // library the caller is not allowed to browse.
+            var requester = _userManager.GetUserById(userId);
+            var item = dto.ItemId == Guid.Empty || requester == null
+                ? null
+                : _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery(requester) { ItemIds = new[] { dto.ItemId } })
+                    .FirstOrDefault();
             if (item == null)
             {
                 return BadRequest(new { error = "Item not found" });

@@ -5669,6 +5669,11 @@
         closeSupportDialog: function () {
             var existing = document.getElementById('supportDialog');
             if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+            (this._supportObjectUrls || []).forEach(function (u) {
+                try { URL.revokeObjectURL(u); } catch (e) { /* already gone */ }
+            });
+            this._supportObjectUrls = [];
         },
 
         showSupportToast: function (message) {
@@ -5776,11 +5781,12 @@
             var shots = '';
             if (kind === 'bugs' && r.attachments && r.attachments.length) {
                 shots = '<div class="support-shots">';
+                // The token goes in a header, not the query string: a src="...?api_key=" would
+                // put the admin's access token into browser history and the address bar.
+                // Each image is fetched and shown from an object URL instead.
                 r.attachments.forEach(function (a) {
-                    var url = self._supportUrl('BugReports/' + encodeURIComponent(id) + '/Attachments/' + encodeURIComponent(a.id)) +
-                              '?api_key=' + encodeURIComponent(ApiClient.accessToken());
-                    shots += '<a class="support-shot" href="' + self.escapeHtml(url) + '" target="_blank" rel="noopener">' +
-                             '<img src="' + self.escapeHtml(url) + '" alt="" loading="lazy"></a>';
+                    shots += '<a class="support-shot" data-attachment="' + self.escapeHtml(a.id) +
+                             '" target="_blank" rel="noopener"><img alt="" loading="lazy"></a>';
                 });
                 shots += '</div>';
             }
@@ -5833,6 +5839,36 @@
 
             document.body.appendChild(overlay);
             overlay.addEventListener('click', function (e) { if (e.target === overlay) self.closeSupportDialog(); });
+
+            if (kind === 'bugs') {
+                self.loadSupportAttachments(id, overlay);
+            }
+        },
+
+        /**
+         * Fetches each screenshot with the auth header and shows it from an object URL, so the
+         * access token never appears in a URL.
+         */
+        loadSupportAttachments: function (reportId, root) {
+            var self = this;
+            root.querySelectorAll('.support-shot[data-attachment]').forEach(function (link) {
+                var attId = link.getAttribute('data-attachment');
+                var img = link.querySelector('img');
+                fetch(self._supportUrl('BugReports/' + encodeURIComponent(reportId) +
+                                       '/Attachments/' + encodeURIComponent(attId)),
+                      { credentials: 'include', headers: self._supportHeaders() })
+                    .then(function (r) { return r.ok ? r.blob() : null; })
+                    .then(function (blob) {
+                        if (!blob) return;
+                        var objectUrl = URL.createObjectURL(blob);
+                        // Revoked when the dialog closes, so the blobs do not accumulate.
+                        self._supportObjectUrls = self._supportObjectUrls || [];
+                        self._supportObjectUrls.push(objectUrl);
+                        if (img) img.src = objectUrl;
+                        link.href = objectUrl;
+                    })
+                    .catch(function () { /* a missing screenshot is not worth an error box */ });
+            });
         },
 
         updateSupportStatus: function (kind, id, status) {
