@@ -111,6 +111,7 @@
                 bugLimits: 'Up to {n} images, {mb} MB each', bugTooMany: 'At most {n} images',
                 bugTooBig: 'Each image must be under {mb} MB', bugThanks: 'Thanks - your report has been sent.',
                 bugReports: 'Bug Reports', bugReport: 'Bug report', bugsNone: 'No bug reports',
+                bugMine: 'Your reports', bugNoneYet: 'You have not reported anything yet.',
                 supportOpen: 'Open', supportReviewing: 'Looking into it', supportSolved: 'Solved',
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
@@ -5373,6 +5374,11 @@
                         '</div>' +
                         '<div class="support-thumbs" id="bugThumbs"></div>' +
                         '<div class="support-error" id="bugError"></div>' +
+                        '<div class="support-mine">' +
+                            '<h4>' + self.escapeHtml(self.t('bugMine') || 'Your reports') + '</h4>' +
+                            '<div id="bugMineList"><div class="lb-loading">' +
+                                self.escapeHtml(self.t('loading') || 'Loading...') + '</div></div>' +
+                        '</div>' +
                     '</div>' +
                     '<div class="support-dialog-foot">' +
                         '<button class="support-btn ghost" onclick="RatingsPlugin.closeSupportDialog()">' +
@@ -5417,6 +5423,60 @@
 
             var btn = document.getElementById('bugSubmit');
             if (btn) btn.addEventListener('click', function () { self.submitBugReport(btn); });
+
+            self.loadMyBugReports();
+        },
+
+        /**
+         * The reporter's own history, so "has anyone looked at this?" has an answer without
+         * having to ask. Shows each report's state and any reply that came back.
+         */
+        loadMyBugReports: function () {
+            var self = this;
+            var box = document.getElementById('bugMineList');
+            if (!box) return;
+
+            fetch(self._supportUrl('BugReports'), {
+                credentials: 'include',
+                headers: self._supportHeaders()
+            })
+            .then(function (r) { return r.ok ? r.json() : { reports: [] }; })
+            .then(function (data) {
+                // Admins receive every report from this endpoint, so narrow it to their own.
+                var mine = (data.reports || []).filter(function (r) {
+                    return r.userId === ApiClient.getCurrentUserId();
+                });
+
+                if (!mine.length) {
+                    box.innerHTML = '<div class="quality-empty">' +
+                        self.escapeHtml(self.t('bugNoneYet') || 'You have not reported anything yet.') + '</div>';
+                    return;
+                }
+
+                var html = '';
+                mine.forEach(function (r) {
+                    var shots = (r.attachments && r.attachments.length)
+                        ? '<span class="support-attach-count">' + r.attachments.length + ' &#128247;</span>' : '';
+                    html += '<div class="support-row">' +
+                        '<div class="support-row-main">' +
+                            '<div class="support-row-comment">' + self.escapeHtml(r.comment || '') + '</div>' +
+                            '<div class="support-admin-meta">' +
+                                '<span class="support-dim">' + self.escapeHtml(self.formatSupportDate(r.createdAt)) + '</span>' +
+                                shots +
+                            '</div>' +
+                            (r.adminResponse
+                                ? '<div class="support-reply"><b>' + self.escapeHtml(self.t('supportReply') || 'Reply') + ':</b> ' +
+                                  self.escapeHtml(r.adminResponse) + '</div>'
+                                : '') +
+                        '</div>' +
+                        '<div class="support-row-side">' + self.supportStatusChip(r.status) + '</div>' +
+                    '</div>';
+                });
+                box.innerHTML = html;
+            })
+            .catch(function () {
+                box.innerHTML = '<div class="lb-error">' + self.escapeHtml(self.t('errorLoading') || 'Failed to load') + '</div>';
+            });
         },
 
         addBugFiles: function (files, maxFiles, maxMb) {
@@ -5503,8 +5563,13 @@
                     if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
                     return;
                 }
+                // Stay open: the list underneath is the point - the reporter should watch it
+                // land and then be able to track it, which closing the dialog would hide.
                 self._bugFiles = [];
-                self.closeSupportDialog();
+                if (ta) ta.value = '';
+                self.renderBugThumbs();
+                self.loadMyBugReports();
+                if (btn) { btn.disabled = false; btn.textContent = self.t('send') || 'Send'; }
                 self.showSupportToast(self.t('bugThanks') || 'Thanks - your report has been sent.');
             })
             .catch(function () {
