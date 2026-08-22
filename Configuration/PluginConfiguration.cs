@@ -39,6 +39,10 @@ namespace Jellyfin.Plugin.Ratings.Configuration
 
             // Media management settings
             EnableMediaManagement = true;
+            EnableQualityRequests = true;
+            EnableBugReports = true;
+            BugReportMaxAttachments = 3;
+            BugReportMaxAttachmentMb = 2;
             DefaultDeletionDelayDays = 7;
             AutoCancelDeletionThreshold = 0;
 
@@ -284,6 +288,28 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether the Media Management feature is enabled for admins.
         /// </summary>
         public bool EnableMediaManagement { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether users can ask for a better copy of something
+        /// already in the library, from a tab on their profile.
+        /// </summary>
+        public bool EnableQualityRequests { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether users can report a problem with the plugin,
+        /// optionally attaching screenshots.
+        /// </summary>
+        public bool EnableBugReports { get; set; }
+
+        /// <summary>
+        /// Gets or sets how many screenshots may be attached to one bug report.
+        /// </summary>
+        public int BugReportMaxAttachments { get; set; }
+
+        /// <summary>
+        /// Gets or sets the size ceiling for a single screenshot, in megabytes.
+        /// </summary>
+        public int BugReportMaxAttachmentMb { get; set; }
 
         /// <summary>
         /// Gets or sets the default delay in days for scheduled deletions.
