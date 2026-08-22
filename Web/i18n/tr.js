@@ -186,5 +186,9 @@ window.RatingsPluginI18n.tr = {
             username: 'Kullanıcı adı', viewProfile: 'Profili görüntüle', watch: 'İzle',
             watchItFromTheTop: 'Baştan izle', watchThisToo: 'Bunu da izle', watchToo: 'Sen de izle',
             whatDidYouThink: 'Ne düşündünüz?', writeAComment: 'Bir yorum yazın...',
-            writeAReviewOptional: 'İnceleme yazın (isteğe bağlı):'
+            writeAReviewOptional: 'İnceleme yazın (isteğe bağlı):',
+            add: 'Ekle', bio: 'Hakkında', cancel: 'İptal', currentlySet: 'Şu an: {type} ayarlı.',
+            headerMediaHint: 'Adınızın ve resminizin arkasında döngüyle oynatılan GIF veya video (GIF, MP4 veya WEBM, en fazla 25 MB)',
+            noneSet: 'Ayarlanmadı.',
+            tmdbTokenHint: 'Tüm kataloğu aramak için eklenti ayarlarına ücretsiz bir TMDB anahtarı ekleyin.'
 };

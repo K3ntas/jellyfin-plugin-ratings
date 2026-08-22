@@ -1128,6 +1128,40 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="file">The uploaded media file (GIF, MP4 or WEBM).</param>
         /// <returns>The stored media URL and type.</returns>
+
+        /// <summary>
+        /// Whether the leading bytes match the container the extension claimed.
+        /// </summary>
+        /// <remarks>
+        /// GIF starts with GIF87a/GIF89a, WebM with the EBML magic, and ISO-BMFF (MP4) carries
+        /// "ftyp" at offset 4 rather than at the start.
+        /// </remarks>
+        /// <param name="mediaType">"gif" or "video".</param>
+        /// <param name="head">The first bytes of the upload.</param>
+        /// <param name="read">How many bytes were actually read.</param>
+        /// <returns>True when the bytes match.</returns>
+        private static bool HeaderMediaBytesMatch(string mediaType, byte[] head, int read)
+        {
+            if (read < 12)
+            {
+                return false;
+            }
+
+            if (mediaType == "gif")
+            {
+                return head[0] == 0x47 && head[1] == 0x49 && head[2] == 0x46 && head[3] == 0x38;
+            }
+
+            // WebM / Matroska
+            if (head[0] == 0x1A && head[1] == 0x45 && head[2] == 0xDF && head[3] == 0xA3)
+            {
+                return true;
+            }
+
+            // ISO base media (MP4): "ftyp" at offset 4
+            return head[4] == 0x66 && head[5] == 0x74 && head[6] == 0x79 && head[7] == 0x70;
+        }
+
         [HttpPost("MyProfile/HeaderMedia")]
         [Authorize]
         [RequestSizeLimit(26000000)]
@@ -1168,6 +1202,20 @@ namespace Jellyfin.Plugin.Ratings.Api
             else
             {
                 return BadRequest("Unsupported file type. Use GIF, MP4 or WEBM.");
+            }
+
+            // The extension decided the type above, and the extension comes from the uploader.
+            // Confirm the bytes agree before this lands in a directory served anonymously by
+            // GetHeaderMedia, so the endpoint cannot be used to host arbitrary content from
+            // this origin under an image or video content type.
+            using (var probe = file.OpenReadStream())
+            {
+                var head = new byte[16];
+                var read = await probe.ReadAsync(head, 0, head.Length).ConfigureAwait(false);
+                if (!HeaderMediaBytesMatch(mediaType, head, read))
+                {
+                    return BadRequest("That file is not a valid GIF, MP4 or WEBM.");
+                }
             }
 
             var dir = HeaderMediaDir;

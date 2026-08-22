@@ -154,5 +154,8 @@ window.RatingsPluginI18n.zh = {
             submitRating: '提交评分', tellOthersAboutYourself: '介绍一下你自己...', testNotification: '测试通知', textStyle: '文字样式：',
             toggleFullscreen: '切换全屏', typeAtLeast2Characters: '请至少输入 2 个字符', unfriend: '解除好友', username: '用户名',
             viewProfile: '查看资料', watch: '观看', watchItFromTheTop: '从头开始观看', watchThisToo: '我也要看', watchToo: '一起看',
-            whatDidYouThink: '你觉得怎么样？', writeAComment: '写下评论...', writeAReviewOptional: '写一篇评论（可选）：'
+            whatDidYouThink: '你觉得怎么样？', writeAComment: '写下评论...', writeAReviewOptional: '写一篇评论（可选）：',
+            add: '添加', bio: '简介', cancel: '取消', currentlySet: '当前：已设置 {type}。',
+            headerMediaHint: '循环播放的 GIF 或视频，显示在你的名字和头像后面（GIF、MP4 或 WEBM，最大 25 MB）', noneSet: '未设置。',
+            tmdbTokenHint: '在插件设置中添加免费的 TMDB 令牌即可搜索完整影片目录。'
 };

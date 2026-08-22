@@ -181,5 +181,8 @@ window.RatingsPluginI18n.ar = {
             typeAtLeast2Characters: 'اكتب حرفين على الأقل', unfriend: 'إلغاء الصداقة', username: 'اسم المستخدم',
             viewProfile: 'عرض الملف الشخصي', watch: 'مشاهدة', watchItFromTheTop: 'شاهده من البداية',
             watchThisToo: 'شاهد هذا أيضًا', watchToo: 'شاهد أيضًا', whatDidYouThink: 'ما رأيك؟',
-            writeAComment: 'اكتب تعليقًا...', writeAReviewOptional: 'اكتب مراجعة (اختياري):'
+            writeAComment: 'اكتب تعليقًا...', writeAReviewOptional: 'اكتب مراجعة (اختياري):',
+            add: 'إضافة', bio: 'نبذة', cancel: 'إلغاء', currentlySet: 'الحالي: تم تعيين {type}.',
+            headerMediaHint: 'صورة GIF أو فيديو متكرر يظهر خلف اسمك وصورتك (GIF أو MP4 أو WEBM، بحد أقصى 25 ميجابايت)',
+            noneSet: 'لا شيء.', tmdbTokenHint: 'أضف رمز TMDB مجاني في إعدادات الإضافة للبحث في الكتالوج بالكامل.'
 };

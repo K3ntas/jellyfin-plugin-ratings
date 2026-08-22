@@ -141,11 +141,11 @@ window.RatingsPluginI18n.nl = {
             background: 'Achtergrond', block: 'Blokkeren', clickToView: 'Klik om te bekijken', close: 'Sluiten',
             comments: 'Reacties', communityRating: 'Communitybeoordeling', createRow: 'Rij maken',
             defaultStyleApplied: 'Standaardstijl toegepast', deleteRow: 'Rij verwijderen', disagree: 'Niet mee eens',
-            dismiss: 'Negeren', editRating: 'Beoordeling bewerken', emojis: 'Emoji's',
+            dismiss: 'Negeren', editRating: 'Beoordeling bewerken', emojis: 'Emoji\'s',
             enterCustomTitle: 'Voer een titel in...', enterUsername: 'Voer een gebruikersnaam in...',
             filterUsers: 'Gebruikers filteren...', friend: 'Vriend',
             genreBreakdownByWatchTime: 'Genres naar kijktijd', genreTasteMatch: 'Overeenkomst in genresmaak',
-            gifs: 'GIF's', headerBackground: 'Kopachtergrond', incomingRequests: 'Ontvangen verzoeken',
+            gifs: 'GIF\'s', headerBackground: 'Kopachtergrond', incomingRequests: 'Ontvangen verzoeken',
             jumpToLatest: 'Naar het nieuwste', leftoverTrickplayData: 'Overgebleven trickplay-gegevens',
             loadingActivity: 'Activiteit laden...', loadingAvailableTypes: 'Beschikbare typen laden...',
             loadingCategories: 'Categorieën laden...', loadingGenres: 'Genres laden...',
@@ -157,7 +157,7 @@ window.RatingsPluginI18n.nl = {
             noActivityYet: 'Nog geen activiteit', noBlockedUsers: 'Geen geblokkeerde gebruikers',
             noCommentsYetBeTheFirst: 'Nog geen reacties. Wees de eerste!',
             noDescriptionAvailable: 'Geen beschrijving beschikbaar.', noGenresFound: 'Geen genres gevonden',
-            noGifsFound: 'Geen GIF's gevonden', noItemsFound: 'Geen items gevonden',
+            noGifsFound: 'Geen GIF\'s gevonden', noItemsFound: 'Geen items gevonden',
             noListsCreatedYet: 'Nog geen lijsten gemaakt', noMatchesFound: 'Geen overeenkomsten gevonden.',
             noMoreItems: 'Geen items meer', noOneElseHasWatchedEnoughYet: 'Niemand anders heeft nog genoeg gekeken',
             noOnlineUsers: 'Geen gebruikers online',
@@ -190,5 +190,9 @@ window.RatingsPluginI18n.nl = {
             username: 'Gebruikersnaam', viewProfile: 'Profiel bekijken', watch: 'Bekijken',
             watchItFromTheTop: 'Bekijk het vanaf het begin', watchThisToo: 'Dit ook bekijken', watchToo: 'Mee kijken',
             whatDidYouThink: 'Wat vond je ervan?', writeAComment: 'Schrijf een reactie...',
-            writeAReviewOptional: 'Schrijf een recensie (optioneel):'
+            writeAReviewOptional: 'Schrijf een recensie (optioneel):',
+            add: 'Toevoegen', bio: 'Bio', cancel: 'Annuleren', currentlySet: 'Huidig: {type} ingesteld.',
+            headerMediaHint: 'Herhalende GIF of video achter je naam en foto (GIF, MP4 of WEBM, max. 25 MB)',
+            noneSet: 'Geen ingesteld.',
+            tmdbTokenHint: 'Voeg een gratis TMDB-token toe in de plug-ininstellingen om de hele catalogus te doorzoeken.'
 };

@@ -116,6 +116,10 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                add: 'Add', bio: 'Bio', currentlySet: 'Current: {type} set.',
+                headerMediaHint: 'Looping GIF or video shown behind your name & picture (GIF, MP4 or WEBM, max 25 MB)',
+                noneSet: 'None set.',
+                tmdbTokenHint: 'Add a free TMDB token in plugin settings to search the full film catalog.',
                 addNewRow: 'Add New Row', addToARow: 'Add to a row', agree: 'Agree', allRatings: 'All Ratings',
                 allowOthersToFollowMe: 'Allow others to follow me', background: 'Background', block: 'Block',
                 clickToView: 'Click to view', close: 'Close', comments: 'Comments',
@@ -3916,7 +3920,7 @@
                 var extFiltered = extResults.filter(function (e) { return !localTitles[(e.title || '').toLowerCase()]; });
 
                 if (ext.configured === false) {
-                    html += '<div class="lb-am-hint">Add a free TMDB token in plugin settings to search the full film catalog.</div>';
+                    html += '<div class="lb-am-hint">' + RatingsPlugin.t('tmdbTokenHint') + '</div>';
                 } else if (extFiltered.length) {
                     html += '<div class="lb-am-section">' + RatingsPlugin.t('requestFromCatalog') + '</div>';
                     extFiltered.forEach(function (e) {
@@ -5665,6 +5669,11 @@
         closeSupportDialog: function () {
             var existing = document.getElementById('supportDialog');
             if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+            (this._supportObjectUrls || []).forEach(function (u) {
+                try { URL.revokeObjectURL(u); } catch (e) { /* already gone */ }
+            });
+            this._supportObjectUrls = [];
         },
 
         showSupportToast: function (message) {
@@ -5772,11 +5781,15 @@
             var shots = '';
             if (kind === 'bugs' && r.attachments && r.attachments.length) {
                 shots = '<div class="support-shots">';
+                // The token goes in a header, not the query string: a src="...?api_key=" would
+                // put the admin's access token into browser history and the address bar.
+                // Each image is fetched and shown from an object URL instead.
                 r.attachments.forEach(function (a) {
-                    var url = self._supportUrl('BugReports/' + encodeURIComponent(id) + '/Attachments/' + encodeURIComponent(a.id)) +
-                              '?api_key=' + encodeURIComponent(ApiClient.accessToken());
-                    shots += '<a class="support-shot" href="' + self.escapeHtml(url) + '" target="_blank" rel="noopener">' +
-                             '<img src="' + self.escapeHtml(url) + '" alt="" loading="lazy"></a>';
+                    // No loading="lazy" here: a lazily-loaded <img> never fetches an object URL
+                    // assigned after it is in the document, so the thumbnails stayed blank. There
+                    // are at most a handful in a dialog, so nothing is gained by deferring them.
+                    shots += '<a class="support-shot" data-attachment="' + self.escapeHtml(a.id) +
+                             '" target="_blank" rel="noopener"><img alt=""></a>';
                 });
                 shots += '</div>';
             }
@@ -5829,6 +5842,36 @@
 
             document.body.appendChild(overlay);
             overlay.addEventListener('click', function (e) { if (e.target === overlay) self.closeSupportDialog(); });
+
+            if (kind === 'bugs') {
+                self.loadSupportAttachments(id, overlay);
+            }
+        },
+
+        /**
+         * Fetches each screenshot with the auth header and shows it from an object URL, so the
+         * access token never appears in a URL.
+         */
+        loadSupportAttachments: function (reportId, root) {
+            var self = this;
+            root.querySelectorAll('.support-shot[data-attachment]').forEach(function (link) {
+                var attId = link.getAttribute('data-attachment');
+                var img = link.querySelector('img');
+                fetch(self._supportUrl('BugReports/' + encodeURIComponent(reportId) +
+                                       '/Attachments/' + encodeURIComponent(attId)),
+                      { credentials: 'include', headers: self._supportHeaders() })
+                    .then(function (r) { return r.ok ? r.blob() : null; })
+                    .then(function (blob) {
+                        if (!blob) return;
+                        var objectUrl = URL.createObjectURL(blob);
+                        // Revoked when the dialog closes, so the blobs do not accumulate.
+                        self._supportObjectUrls = self._supportObjectUrls || [];
+                        self._supportObjectUrls.push(objectUrl);
+                        if (img) img.src = objectUrl;
+                        link.href = objectUrl;
+                    })
+                    .catch(function () { /* a missing screenshot is not worth an error box */ });
+            });
         },
 
         updateSupportStatus: function (kind, id, status) {
@@ -8021,16 +8064,16 @@
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('profileInformation') + '</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label>Bio</label>' +
+                '<label>' + RatingsPlugin.t('bio') + '</label>' +
                 '<textarea id="settingsBio" placeholder="' + RatingsPlugin.t('tellOthersAboutYourself') + '">' + self.escapeHtml(profile.bio || '') + '</textarea>' +
                 '</div>' +
                 '</div>' +
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('headerBackground') + '</h3>' +
                 '<div class="lb-settings-field">' +
-                '<label>Looping GIF or video shown behind your name &amp; picture (GIF, MP4 or WEBM, max 25&nbsp;MB)</label>' +
+                '<label>' + RatingsPlugin.t('headerMediaHint') + '</label>' +
                 '<input type="file" id="settingsHeaderMedia" accept="image/gif,video/mp4,video/webm" onchange="RatingsPlugin.uploadHeaderMedia(this)" />' +
-                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? ('Current: ' + (profile.headerMediaType === 'video' ? 'video' : 'GIF') + ' set.') : 'None set.') + '</div>' +
+                '<div id="settingsHeaderMediaStatus" class="lb-settings-hint" style="margin-top:6px;color:#9ab;">' + (profile.headerMediaUrl ? (RatingsPlugin.t('currentlySet').replace('{type}', profile.headerMediaType === 'video' ? 'video' : 'GIF')) : RatingsPlugin.t('noneSet')) + '</div>' +
                 '<button class="lb-btn-cancel" id="settingsHeaderMediaRemove" style="margin-top:8px;' + (profile.headerMediaUrl ? '' : 'display:none;') + '" onclick="RatingsPlugin.removeHeaderMedia()">' + RatingsPlugin.t('removeHeaderBackground') + '</button>' +
                 '</div>' +
                 '</div>' +
