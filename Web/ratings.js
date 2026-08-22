@@ -5785,8 +5785,11 @@
                 // put the admin's access token into browser history and the address bar.
                 // Each image is fetched and shown from an object URL instead.
                 r.attachments.forEach(function (a) {
+                    // No loading="lazy" here: a lazily-loaded <img> never fetches an object URL
+                    // assigned after it is in the document, so the thumbnails stayed blank. There
+                    // are at most a handful in a dialog, so nothing is gained by deferring them.
                     shots += '<a class="support-shot" data-attachment="' + self.escapeHtml(a.id) +
-                             '" target="_blank" rel="noopener"><img alt="" loading="lazy"></a>';
+                             '" target="_blank" rel="noopener"><img alt=""></a>';
                 });
                 shots += '</div>';
             }
