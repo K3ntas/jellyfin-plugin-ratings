@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.384.0",
+        "changelog": "Finishes the translation work and adds a security pass. An audit of the whole plugin found another 141 phrases written straight into the markup - the profile settings window, the rating box, review comments, the media picker and its sort menu, friend menus, chat controls, moderator and ban dialogs, and every \"nothing here yet\" message. All of them are translated now, in all fifteen languages, and each pack carries around 560 phrases where it had about 348. On security: no exploitable weakness was found, and three things were tightened. Profile header uploads now check the file really is a GIF, MP4 or WEBM rather than trusting its name, since the address serving them is public by design. Bug report screenshots are fetched with your access token in a header instead of the web address, keeping it out of browser history. And asking for better quality now respects each account's library access. The dashboard heading also shows the right version again.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.384.0/jellyfin-plugin-ratings_1.0.384.0.zip",
+        "checksum": "3a217fb7cce10ac8e7bcaa5d61bf682a",
+        "timestamp": "2026-08-22T16:54:55Z"
+      },
+      {
         "version": "1.0.383.0",
         "changelog": "The profile page, the friends panel and the star rating widget are translated at last. Those three areas were never connected to the translation system - the words were written straight into the markup - so they stayed in English no matter which language you picked, in all sixteen languages. Forty-seven labels now go through the translation layer and are filled in for every language: the friends panel and its tabs, the profile tab strip and stat row, follow, block and friend buttons, the rating popup, and the whole sidebar down to Stats, Films, Shows, Hours, Taste, Similar Taste, Add a film, Back, Member since and the \"not on server\" badge. The thirty-eight strings from the quality-request and bug-report queues are translated too. Every language pack gains eighty-five entries. Thanks to chosqui for reporting it in discussion #76 with a Spanish patch that showed exactly what was missing.",
         "targetAbi": "10.11.0.0",
