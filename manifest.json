@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.383.0",
+        "changelog": "The profile page, the friends panel and the star rating widget are translated at last. Those three areas were never connected to the translation system - the words were written straight into the markup - so they stayed in English no matter which language you picked, in all sixteen languages. Forty-seven labels now go through the translation layer and are filled in for every language: the friends panel and its tabs, the profile tab strip and stat row, follow, block and friend buttons, the rating popup, and the whole sidebar down to Stats, Films, Shows, Hours, Taste, Similar Taste, Add a film, Back, Member since and the \"not on server\" badge. The thirty-eight strings from the quality-request and bug-report queues are translated too. Every language pack gains eighty-five entries. Thanks to chosqui for reporting it in discussion #76 with a Spanish patch that showed exactly what was missing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.383.0/jellyfin-plugin-ratings_1.0.383.0.zip",
+        "checksum": "733365fe0c89366002ac2ddad9bf86c3",
+        "timestamp": "2026-08-22T15:34:00Z"
+      },
+      {
         "version": "1.0.382.0",
         "changelog": "Three fixes to the support queues added last release, all found by using them on a real server. The Quality and Bug Reports tabs never appeared in the Request Media window: that window is built in more than one place in the client and only one of them had been given the new tabs, so the two queues had no way in. Opening a request or a report drew the detail window underneath the one it was launched from, which made clicking a Quality row look as though nothing happened at all. And people who sent a bug report had no way of telling whether anyone had looked at it - the report box now lists your own reports beneath it with their status and any reply, and sending one no longer closes the window, so the report lands in that list in front of you. Note: after updating, reload the page with the cache cleared. The browser holds on to the page that references the previous version of the plugin's script, and until it lets go you will still be running the old one.",
         "targetAbi": "10.11.0.0",
