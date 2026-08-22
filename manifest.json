@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.383.0",
+        "changelog": "A security pass over the whole plugin. No exploitable weakness was found, and three smaller things were tightened. Profile header uploads now check that the file really is a GIF, MP4 or WEBM instead of believing the file name - the address that serves them is public by design, so it should not be possible to park arbitrary content there. Screenshots on a bug report are now fetched with the access token in a header rather than in the web address, keeping it out of browser history. And asking for better quality now respects each account's library access, so the reply cannot confirm the name of something in a library you are not allowed to browse.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.383.0/Jellyfin.Plugin.Ratings_2.0.383.0.zip",
+        "checksum": "15e7b7462955b116af75bc8534f2a679",
+        "timestamp": "2026-08-22T16:40:38Z"
+      },
+      {
         "version": "2.0.382.0",
         "changelog": "Closes the last translation gaps, found by opening the app in French rather than by scanning for them: the Bio label, the header background hint, the TMDB catalog hint, and the \"Current: GIF set\" line. Cancel is also translated everywhere now - it had a key, but that key existed only in English and in none of the fifteen packs, so every language fell back to the English word.",
         "targetAbi": "10.11.0.0",
