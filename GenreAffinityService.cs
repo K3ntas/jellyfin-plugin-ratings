@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,35 @@ namespace Jellyfin.Plugin.Ratings
         /// Gets or sets how many played items contributed.
         /// </summary>
         public int ItemCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of distinct movies the user has played.
+        /// </summary>
+        /// <remarks>
+        /// Counted for every played movie, including ones carrying no genre, so this is a true
+        /// "films watched" figure rather than the subset that happens to feed the genre chart.
+        /// </remarks>
+        public int MovieCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of distinct series the user has played an episode of.
+        /// </summary>
+        public int SeriesCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets total minutes of played runtime, whether or not the item carried a genre.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="TotalMinutes"/> only counts genre-bearing items because the chart's
+        /// percentages have to add up to it. Callers that want "time watched" want this instead.
+        /// </remarks>
+        public double PlayedMinutes { get; set; }
+
+        /// <summary>
+        /// Gets the ids of every played item counted here, so callers can fold in another source
+        /// (ratings, say) without counting the same title twice.
+        /// </summary>
+        public HashSet<Guid> PlayedItemIds { get; } = new();
 
         /// <summary>
         /// Gets a value indicating whether there is enough data to be meaningful.
@@ -187,11 +217,27 @@ namespace Jellyfin.Plugin.Ratings
                     }
                 }
 
+                // Counted separately from the genre tally below, which skips anything without a
+                // genre: a film with no genre metadata is still a film the user watched.
+                var playedSeries = new HashSet<Guid>();
+
                 foreach (var item in items)
                 {
                     var minutes = item.RunTimeTicks.HasValue
                         ? item.RunTimeTicks.Value / (double)TimeSpan.TicksPerMinute
                         : 0;
+
+                    profile.PlayedItemIds.Add(item.Id);
+                    profile.PlayedMinutes += minutes;
+
+                    if (item is Movie)
+                    {
+                        profile.MovieCount++;
+                    }
+                    else if (item is Episode ep && !ep.SeriesId.Equals(Guid.Empty))
+                    {
+                        playedSeries.Add(ep.SeriesId);
+                    }
 
                     if (minutes <= 0)
                     {
@@ -230,6 +276,8 @@ namespace Jellyfin.Plugin.Ratings
                     profile.TotalMinutes += minutes;
                     profile.ItemCount++;
                 }
+
+                profile.SeriesCount = playedSeries.Count;
             }
             catch (Exception ex)
             {
