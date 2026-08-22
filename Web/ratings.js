@@ -16950,6 +16950,8 @@
                     <div class="admin-tabs">
                         <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
                         <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
+                        <button class="admin-tab" data-tab="quality">${self.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>
+                        <button class="admin-tab" data-tab="bugs">${self.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>
                     </div>
                     <div class="admin-tab-content" id="adminTabContent"></div>
                 `;
@@ -16967,6 +16969,10 @@
                         const tabName = e.target.closest('.admin-tab').getAttribute('data-tab');
                         if (tabName === 'deletions') {
                             self.renderDeletionRequestsTab(config);
+                        } else if (tabName === 'quality') {
+                            self.renderQualityRequestsTab();
+                        } else if (tabName === 'bugs') {
+                            self.renderBugReportsTab();
                         } else {
                             self.renderAdminInterfaceInTab(config);
                         }
@@ -16975,6 +16981,7 @@
 
                 // Load manage tab by default
                 self.renderAdminInterfaceInTab(config);
+                self.refreshSupportBadges();
             });
         },
 
