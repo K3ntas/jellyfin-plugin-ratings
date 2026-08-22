@@ -130,5 +130,10 @@ window.RatingsPluginI18n.ru = {
             supportMarkSolved: 'Отметить решённым', supportOpen: 'Открыто', supportRejected: 'Отклонено',
             supportReply: 'Ответ', supportReplyLabel: 'Ответить пользователю', supportReviewing: 'В работе',
             supportSolved: 'Решено', unblock: 'Разблокировать', userRatings: 'Оценки пользователей',
-            wantsToBeFriends: 'Хочет добавить вас в друзья'
+            wantsToBeFriends: 'Хочет добавить вас в друзья',
+            addAFilm: 'Добавить фильм', addFilmPlaceholder: 'Название или IMDb id…', avgLabel: 'Средняя',
+            back: 'Назад', backToProfile: 'Назад к профилю', filmsLabel: 'Фильмы', hoursLabel: 'Часы',
+            memberSince: 'С нами с', notOnServer: 'Нет на сервере', recentActivity: 'Недавняя активность',
+            recentReviews: 'Недавние отзывы', sectionFavoriteFilms: 'Любимые фильмы', settings: 'Настройки',
+            showsLabel: 'Сериалы', similarTaste: 'Похожие вкусы', statsTitle: 'Статистика', taste: 'Вкусы'
 };

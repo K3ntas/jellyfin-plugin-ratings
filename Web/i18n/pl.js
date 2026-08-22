@@ -130,5 +130,10 @@ window.RatingsPluginI18n.pl = {
             supportMarkSolved: 'Oznacz jako rozwiązane', supportOpen: 'Otwarte', supportRejected: 'Odrzucone',
             supportReply: 'Odpowiedź', supportReplyLabel: 'Odpowiedz użytkownikowi', supportReviewing: 'W trakcie',
             supportSolved: 'Rozwiązane', unblock: 'Odblokuj', userRatings: 'Oceny użytkowników',
-            wantsToBeFriends: 'Chce zostać znajomym'
+            wantsToBeFriends: 'Chce zostać znajomym',
+            addAFilm: 'Dodaj film', addFilmPlaceholder: 'Tytuł lub id IMDb…', avgLabel: 'Średnia', back: 'Wstecz',
+            backToProfile: 'Wróć do profilu', filmsLabel: 'Filmy', hoursLabel: 'Godziny', memberSince: 'Dołączył',
+            notOnServer: 'Nie ma na serwerze', recentActivity: 'Ostatnia aktywność',
+            recentReviews: 'Ostatnie recenzje', sectionFavoriteFilms: 'Ulubione filmy', settings: 'Ustawienia',
+            showsLabel: 'Seriale', similarTaste: 'Podobny gust', statsTitle: 'Statystyki', taste: 'Gust'
 };

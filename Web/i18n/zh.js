@@ -118,5 +118,9 @@ window.RatingsPluginI18n.zh = {
             reportBug: '报告问题', requestPending: '请求待处理', requestSent: '请求已发送', reviews: '评论', send: '发送',
             sending: '发送中...', supportDecline: '拒绝', supportMarkSolved: '标记为已解决', supportOpen: '待处理',
             supportRejected: '已拒绝', supportReply: '回复', supportReplyLabel: '回复用户', supportReviewing: '处理中',
-            supportSolved: '已解决', unblock: '解除屏蔽', userRatings: '用户评分', wantsToBeFriends: '想加你为好友'
+            supportSolved: '已解决', unblock: '解除屏蔽', userRatings: '用户评分', wantsToBeFriends: '想加你为好友',
+            addAFilm: '添加影片', addFilmPlaceholder: '搜索片名或 IMDb id…', avgLabel: '平均', back: '返回',
+            backToProfile: '返回资料页', filmsLabel: '影片', hoursLabel: '小时', memberSince: '注册于', notOnServer: '服务器上没有',
+            recentActivity: '最近动态', recentReviews: '最近评论', sectionFavoriteFilms: '收藏影片', settings: '设置',
+            showsLabel: '剧集', similarTaste: '口味相近', statsTitle: '统计', taste: '口味'
 };
