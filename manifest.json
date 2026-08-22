@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.378.0",
+        "changelog": "Fixes the Quality and Bug Reports tabs never appearing in the Request Media window. That window is built in two places in the client and only one of them was given the new tabs - the one that was missed is the one that actually runs, so the two queues had no way in at all. Both now show the same five tabs.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.378.0/Jellyfin.Plugin.Ratings_2.0.378.0.zip",
+        "checksum": "da5fe58d43a18742c130e4d4fd86cbc5",
+        "timestamp": "2026-08-22T14:30:44Z"
+      },
+      {
         "version": "2.0.377.0",
         "changelog": "Fixes the two support windows opening behind the Request Media window. Clicking a row under Quality looked as though nothing happened at all - the detail dialog was opening, just underneath the window it was launched from. Bug reports had the same problem, only visible enough through the dimmed background to notice. Both now open on top. Reporters can also see what happened to a bug report: the dialog lists your own reports underneath the box with their status and any reply from an admin, and sending one no longer closes the window, so the report lands in that list in front of you instead of vanishing.",
         "targetAbi": "10.11.0.0",
