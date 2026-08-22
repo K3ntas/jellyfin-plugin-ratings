@@ -629,6 +629,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
+            // Same visibility rule as GetProfile - see CheckProfileVisibility. This endpoint was
+            // the one member of the profile family without it, so a private profile's viewing
+            // habits were readable by anyone who asked for them directly.
+            var visibilityError = CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, GetCurrentUserId()!.Value);
+            if (visibilityError != null)
+            {
+                return visibilityError;
+            }
+
             limit = Math.Clamp(limit, 3, 20);
 
             var profile = _genreAffinity.GetProfile(userId);
@@ -930,20 +939,41 @@ namespace Jellyfin.Plugin.Ratings.Api
             var memberSince = profile?.CreatedAt ?? DateTime.UtcNow;
             var memberDays = (int)(DateTime.UtcNow - memberSince).TotalDays;
 
-            // Films / shows / hours derived from the user's RATINGS (this plugin's own data),
-            // resolved in a single library query. Playback-based counts were 0 for users who
-            // rate items without marking them played, and the per-series query loop was slow.
-            _ = canSeeWatchHistory; // (kept for future watch-history use)
+            // Films / shows / hours come from playback, folded together with anything the user
+            // rated but never marked as played.
+            //
+            // Ratings alone used to be the only source, which reads 0 for anyone who watches
+            // without rating - the common case on a family server. That rendered a profile
+            // showing "0 FILMS / 0 HOURS" directly beside a taste chart reporting hundreds of
+            // hours, both on the same screen and both correct by their own definition. Playback
+            // alone has the opposite hole (people who rate without playing), so count the union.
             int moviesWatched = 0;
             int seriesWatched = 0;
-            long totalWatchTicks = 0;
+            double totalMinutes = 0;
+            IReadOnlySet<Guid> alreadyCounted = new HashSet<Guid>();
+
+            if (canSeeWatchHistory)
+            {
+                // Cached, and the same profile the taste chart is drawn from, so the two panels
+                // can no longer disagree about how much this person has watched.
+                var watched = _genreAffinity.GetProfile(userId);
+                moviesWatched = watched.MovieCount;
+                seriesWatched = watched.SeriesCount;
+                totalMinutes = watched.PlayedMinutes;
+                alreadyCounted = watched.PlayedItemIds;
+            }
+
             try
             {
-                var ratedIds = userRatings.Select(r => r.ItemId).Where(id => id != Guid.Empty).Distinct().ToArray();
+                var ratedIds = userRatings
+                    .Select(r => r.ItemId)
+                    .Where(id => id != Guid.Empty && !alreadyCounted.Contains(id))
+                    .Distinct()
+                    .ToArray();
+
                 if (ratedIds.Length > 0)
                 {
-                    var ratedItems = _libraryManager.GetItemList(new InternalItemsQuery { ItemIds = ratedIds });
-                    foreach (var item in ratedItems)
+                    foreach (var item in _libraryManager.GetItemList(new InternalItemsQuery { ItemIds = ratedIds }))
                     {
                         if (item is MediaBrowser.Controller.Entities.Movies.Movie)
                         {
@@ -956,18 +986,17 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                         if (item.RunTimeTicks.HasValue)
                         {
-                            totalWatchTicks += item.RunTimeTicks.Value;
+                            totalMinutes += item.RunTimeTicks.Value / (double)TimeSpan.TicksPerMinute;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to compute rated stats for user {UserId}", userId);
+                _logger.LogWarning(ex, "Failed to fold rated items into stats for user {UserId}", userId);
             }
 
-            // Convert ticks to hours (1 tick = 100 nanoseconds, 10,000,000 ticks = 1 second)
-            var totalWatchHours = (int)(totalWatchTicks / TimeSpan.TicksPerHour);
+            var totalWatchHours = (int)(totalMinutes / 60);
 
             return Ok(new
             {
