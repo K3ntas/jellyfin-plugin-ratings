@@ -101,5 +101,25 @@ window.RatingsPluginI18n.ja = {
             changeLanguage: '言語を変更',
             testNotificationTooltip: 'テスト通知を送信',
             notificationsOn: '通知が有効',
-            notificationsOff: '通知が無効'
+            notificationsOff: '通知が無効',
+            // Social, profile, rating widget and the support queues.
+            accept: '承認', activity: 'アクティビティ', addFriend: 'フレンド追加', away: '離席中', blockUser: 'ユーザーをブロック',
+            blocked: 'ブロック済み', bugAddPhoto: 'スクリーンショットを追加', bugCommentRequired: '問題を記入してください。',
+            bugLimits: '最大 {n} 枚、各 {mb} MB', bugMine: 'あなたの報告', bugNoneYet: 'まだ何も報告していません。',
+            bugPlaceholder: '何をしていて、代わりに何が起きましたか？', bugReport: '不具合報告', bugReports: '不具合報告',
+            bugThanks: 'ありがとうございます。報告を送信しました。', bugTooBig: '各画像は {mb} MB 未満にしてください', bugTooMany: '最大 {n} 枚まで',
+            bugWhat: '何が起きましたか？', bugsNone: '不具合報告はありません', doNotDisturb: '取り込み中', editProfile: 'プロフィール編集',
+            follow: 'フォロー', followers: 'フォロワー', following: 'フォロー中', friendRequests: 'リクエスト', friends: 'フレンド',
+            likes: 'いいね', noFriendsYet: 'まだフレンドがいません', noRatingsBeFirst: 'まだ評価がありません。最初の一人になりましょう！',
+            noRatingsYet: 'まだ評価がありません', offline: 'オフライン', online: 'オンライン', otherUsers: '他のユーザー', overview: '概要',
+            qualityAsk: '高画質をリクエスト', qualityCommentPlaceholder: '画質が粗い、音声が違う、字幕がない、ずれている...',
+            qualityCommentRequired: '問題を記入してください。', qualityMine: 'あなたのリクエスト', qualityNoResults: 'ライブラリに該当するものがありません。',
+            qualityNone: '高画質リクエストはありません', qualityNoneYet: 'まだ何もリクエストしていません。', qualityRequest: '高画質リクエスト',
+            qualityRequests: '画質', qualitySearchPlaceholder: 'ライブラリを検索...', qualityTab: '高画質',
+            qualityTabHint: 'サーバーにすでにある作品を探し、現在のファイルの問題点を教えてください。', qualityTabTitle: '高画質をリクエスト',
+            qualityWhat: '現在のファイルの問題点は？', ratings: '評価', reject: '拒否', removeFriend: 'フレンド削除', reportBug: '問題を報告',
+            requestPending: 'リクエスト保留中', requestSent: 'リクエスト送信済み', reviews: 'レビュー', send: '送信', sending: '送信中...',
+            supportDecline: '却下', supportMarkSolved: '解決済みにする', supportOpen: '未対応', supportRejected: '却下',
+            supportReply: '返信', supportReplyLabel: 'ユーザーに返信', supportReviewing: '確認中', supportSolved: '解決済み',
+            unblock: 'ブロック解除', userRatings: 'ユーザー評価', wantsToBeFriends: 'フレンドになりたがっています'
 };

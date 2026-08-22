@@ -101,5 +101,22 @@ window.RatingsPluginI18n.zh = {
             changeLanguage: '更改语言',
             testNotificationTooltip: '发送测试通知',
             notificationsOn: '通知已启用',
-            notificationsOff: '通知已禁用'
+            notificationsOff: '通知已禁用',
+            // Social, profile, rating widget and the support queues.
+            accept: '接受', activity: '动态', addFriend: '添加好友', away: '离开', blockUser: '屏蔽用户', blocked: '已屏蔽',
+            bugAddPhoto: '添加截图', bugCommentRequired: '请描述一下问题。', bugLimits: '最多 {n} 张图片，每张 {mb} MB', bugMine: '你的反馈',
+            bugNoneYet: '你还没有提交过反馈。', bugPlaceholder: '你当时在做什么？实际发生了什么？', bugReport: '问题反馈', bugReports: '问题反馈',
+            bugThanks: '谢谢，你的反馈已发送。', bugTooBig: '每张图片不得超过 {mb} MB', bugTooMany: '最多 {n} 张图片', bugWhat: '出了什么问题？',
+            bugsNone: '暂无问题反馈', doNotDisturb: '请勿打扰', editProfile: '编辑资料', follow: '关注', followers: '粉丝',
+            following: '关注中', friendRequests: '请求', friends: '好友', likes: '点赞', noFriendsYet: '还没有好友',
+            noRatingsBeFirst: '暂无评分，来做第一个吧！', noRatingsYet: '暂无评分', offline: '离线', online: '在线', otherUsers: '其他用户',
+            overview: '概览', qualityAsk: '申请更佳画质', qualityCommentPlaceholder: '画面模糊、音轨错误、缺少字幕、音画不同步……',
+            qualityCommentRequired: '请描述一下问题。', qualityMine: '你的申请', qualityNoResults: '媒体库中没有匹配项。',
+            qualityNone: '暂无画质申请', qualityNoneYet: '你还没有提交过申请。', qualityRequest: '画质申请', qualityRequests: '画质',
+            qualitySearchPlaceholder: '搜索媒体库...', qualityTab: '更佳画质', qualityTabHint: '找到服务器上已有的影片，并告诉我们当前版本有什么问题。',
+            qualityTabTitle: '申请更佳画质', qualityWhat: '当前版本有什么问题？', ratings: '评分', reject: '拒绝', removeFriend: '删除好友',
+            reportBug: '报告问题', requestPending: '请求待处理', requestSent: '请求已发送', reviews: '评论', send: '发送',
+            sending: '发送中...', supportDecline: '拒绝', supportMarkSolved: '标记为已解决', supportOpen: '待处理',
+            supportRejected: '已拒绝', supportReply: '回复', supportReplyLabel: '回复用户', supportReviewing: '处理中',
+            supportSolved: '已解决', unblock: '解除屏蔽', userRatings: '用户评分', wantsToBeFriends: '想加你为好友'
 };
