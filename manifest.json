@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.384.0",
+        "changelog": "Fixes bug report screenshots showing as blank frames after the previous release. Moving the access token out of the image address meant the pictures load from memory instead, and a lazily loaded image never fetches an address given to it that way - so the thumbnails stayed empty. Caught by opening a report on a real server rather than by reading the code.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.384.0/Jellyfin.Plugin.Ratings_2.0.384.0.zip",
+        "checksum": "bca1470d6363cc07aee583c26ab8bfcc",
+        "timestamp": "2026-08-22T16:49:11Z"
+      },
+      {
         "version": "2.0.383.0",
         "changelog": "A security pass over the whole plugin. No exploitable weakness was found, and three smaller things were tightened. Profile header uploads now check that the file really is a GIF, MP4 or WEBM instead of believing the file name - the address that serves them is public by design, so it should not be possible to park arbitrary content there. Screenshots on a bug report are now fetched with the access token in a header rather than in the web address, keeping it out of browser history. And asking for better quality now respects each account's library access, so the reply cannot confirm the name of something in a library you are not allowed to browse.",
         "targetAbi": "10.11.0.0",
