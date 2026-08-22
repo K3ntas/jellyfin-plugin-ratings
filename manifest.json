@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.377.0",
+        "changelog": "Fixes the two support windows opening behind the Request Media window. Clicking a row under Quality looked as though nothing happened at all - the detail dialog was opening, just underneath the window it was launched from. Bug reports had the same problem, only visible enough through the dimmed background to notice. Both now open on top. Reporters can also see what happened to a bug report: the dialog lists your own reports underneath the box with their status and any reply from an admin, and sending one no longer closes the window, so the report lands in that list in front of you instead of vanishing.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.377.0/Jellyfin.Plugin.Ratings_2.0.377.0.zip",
+        "checksum": "c0adef2c850b291009eafc7fca714a00",
+        "timestamp": "2026-08-22T14:14:14Z"
+      },
+      {
         "version": "2.0.376.0",
         "changelog": "Two new ways for people to tell you something is wrong, and one place to work through both. A Better Quality tab on the profile searches what is already on the server, and every result carries a button to say what is wrong with the current copy - blurry, wrong audio, missing subtitles. A Report a problem button next to Edit Profile takes a description plus screenshots, pasted straight from the clipboard or picked from disk. Both land in the Request Media modal as their own tabs, badged with how many are still open, where you can read the report, look at the screenshots, reply to the person who sent it, and mark it solved or declined - the reply is shown back to them. Also fixes a profile that read 0 films and 0 hours beside a taste chart reporting hundreds: those stats were derived from ratings alone, so anyone who watches without rating saw zeros. They now count what you have watched as well as what you have rated. And the genre breakdown endpoint was the one profile endpoint missing its visibility check, so a private profile's viewing habits could be read directly.",
         "targetAbi": "10.11.0.0",
