@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.381.0",
+        "changelog": "Two new ways for people to tell you something is wrong, and one place to work through both. A Better Quality tab on the profile searches what is already on the server, and every result carries a button to say what is wrong with the current copy - blurry, wrong audio, missing subtitles. A Report a problem button next to Edit Profile takes a description plus screenshots, pasted straight from the clipboard or picked from disk. Both land in the Request Media window as their own tabs, badged with how many are still open, where you can read the report, look at the screenshots, reply to the person who sent it, and mark it solved or declined - your reply is shown back to them. This release also fixes a profile showing 0 films and 0 hours next to a taste chart reporting hundreds of hours: those figures came from ratings alone, so anyone who watches without rating saw zeros. They now count what you have watched as well as what you have rated. And the genre breakdown was the one part of a profile with no privacy check, so a private profile's viewing habits could be read by anyone signed in.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.381.0/jellyfin-plugin-ratings_1.0.381.0.zip",
+        "checksum": "0e851e378863bc2e5214138378e4410e",
+        "timestamp": "2026-08-22T13:52:36Z"
+      },
+      {
         "version": "1.0.380.0",
         "changelog": "The request list in the admin panel now lays out properly on a phone. Each request kept its title, user, date and status on a single row, so on a narrow screen the title was squeezed down to a few characters, and the media-link and rejection-reason boxes were split across a width that could not hold them. The title now takes a line of its own with the details underneath it, the expand arrow sits at the right edge, and the two input boxes stack at full width. Reported and written by @daki456. The input rules also apply in every language now - they previously keyed off the English placeholder text, so they did nothing on a translated server.",
         "targetAbi": "10.11.0.0",
