@@ -5237,6 +5237,46 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 
 .duplicate-actions {
     margin-left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+/* Which copy to keep is a per-group choice: the chosen row shows the badge, every other row
+   offers "Keep this" plus the bin. Toggling .is-keeper swaps both without a re-render. */
+.duplicate-keep-badge {
+    color: #52b54b;
+    font-size: 14px;
+}
+
+.keep-duplicate-btn {
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #aaa;
+    font-size: 12px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.keep-duplicate-btn:hover {
+    border-color: #52b54b;
+    color: #52b54b;
+}
+
+.duplicate-item.is-keeper .keep-duplicate-btn,
+.duplicate-item.is-keeper .delete-duplicate-btn {
+    display: none;
+}
+
+.duplicate-item:not(.is-keeper) .duplicate-keep-badge {
+    display: none;
+}
+
+.duplicate-item.is-keeper {
+    background: rgba(82, 181, 75, 0.06);
 }
 
 .delete-duplicate-btn {
@@ -8369,6 +8409,20 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     height: 48px;
     fill: #444;
     margin-bottom: 12px;
+}
+.social-retry-btn {
+    margin-top: 12px;
+    padding: 6px 16px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: transparent;
+    color: #aaa;
+    font-size: 13px;
+    cursor: pointer;
+}
+.social-retry-btn:hover {
+    border-color: #00a4dc;
+    color: #00a4dc;
 }
 
 /* Privacy Settings */

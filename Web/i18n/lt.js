@@ -196,5 +196,9 @@ window.RatingsPluginI18n.lt = {
             add: 'Pridėti', bio: 'Aprašymas', cancel: 'Atšaukti', currentlySet: 'Dabar: {type} nustatytas.',
             headerMediaHint: 'Cikliškas GIF arba vaizdo įrašas už jūsų vardo ir nuotraukos (GIF, MP4 arba WEBM, iki 25 MB)',
             noneSet: 'Nenustatyta.',
-            tmdbTokenHint: 'Pridėkite nemokamą TMDB raktą papildinio nustatymuose, kad ieškotumėte visame kataloge.'
+            tmdbTokenHint: 'Pridėkite nemokamą TMDB raktą papildinio nustatymuose, kad ieškotumėte visame kataloge.',
+            duplicateDeleteFailed: 'Nepavyko ištrinti šios kopijos.', duplicateKeepThis: 'Palikti šią',
+            duplicateKeepThisTooltip: 'Vietoj to palikti šią kopiją',
+            duplicatesLoadFailed: 'Klaida įkeliant dublikatus', retry: 'Bandyti dar kartą',
+            socialLoadFailed: 'Nepavyko įkelti. Bandykite dar kartą.'
 };

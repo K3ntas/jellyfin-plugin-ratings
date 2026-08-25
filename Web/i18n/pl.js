@@ -194,5 +194,9 @@ window.RatingsPluginI18n.pl = {
             add: 'Dodaj', bio: 'O mnie', cancel: 'Anuluj', currentlySet: 'Obecnie: ustawiono {type}.',
             headerMediaHint: 'Zapętlony GIF lub film wyświetlany za twoim imieniem i zdjęciem (GIF, MP4 lub WEBM, maks. 25 MB)',
             noneSet: 'Brak.',
-            tmdbTokenHint: 'Dodaj darmowy token TMDB w ustawieniach wtyczki, aby przeszukiwać cały katalog.'
+            tmdbTokenHint: 'Dodaj darmowy token TMDB w ustawieniach wtyczki, aby przeszukiwać cały katalog.',
+            duplicateDeleteFailed: 'Nie udało się usunąć tej kopii.', duplicateKeepThis: 'Zachowaj tę',
+            duplicateKeepThisTooltip: 'Zachowaj tę kopię zamiast tamtej',
+            duplicatesLoadFailed: 'Błąd wczytywania duplikatów', retry: 'Spróbuj ponownie',
+            socialLoadFailed: 'Nie udało się wczytać. Spróbuj ponownie.'
 };

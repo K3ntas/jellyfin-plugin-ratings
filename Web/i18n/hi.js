@@ -191,5 +191,9 @@ window.RatingsPluginI18n.hi = {
             add: 'जोड़ें', bio: 'परिचय', cancel: 'रद्द करें', currentlySet: 'वर्तमान: {type} सेट है।',
             headerMediaHint: 'आपके नाम और चित्र के पीछे दिखने वाला लूपिंग GIF या वीडियो (GIF, MP4 या WEBM, अधिकतम 25 MB)',
             noneSet: 'कुछ नहीं।',
-            tmdbTokenHint: 'पूरा कैटलॉग खोजने के लिए प्लगइन सेटिंग्स में मुफ़्त TMDB टोकन जोड़ें।'
+            tmdbTokenHint: 'पूरा कैटलॉग खोजने के लिए प्लगइन सेटिंग्स में मुफ़्त TMDB टोकन जोड़ें।',
+            duplicateDeleteFailed: 'वह प्रति हटाई नहीं जा सकी।', duplicateKeepThis: 'यह रखें',
+            duplicateKeepThisTooltip: 'इसके बजाय यह प्रति रखें',
+            duplicatesLoadFailed: 'डुप्लिकेट लोड करने में त्रुटि', retry: 'पुनः प्रयास करें',
+            socialLoadFailed: 'लोड नहीं हो सका। कृपया फिर से प्रयास करें।'
 };

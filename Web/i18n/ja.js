@@ -166,5 +166,8 @@ window.RatingsPluginI18n.ja = {
             whatDidYouThink: '感想はいかがですか？', writeAComment: 'コメントを書く...', writeAReviewOptional: 'レビューを書く（任意）:',
             add: '追加', bio: '自己紹介', cancel: 'キャンセル', currentlySet: '現在: {type} を設定済み。',
             headerMediaHint: '名前と写真の背後に表示されるループする GIF または動画（GIF、MP4、WEBM、最大 25 MB）', noneSet: '未設定です。',
-            tmdbTokenHint: 'プラグイン設定に無料の TMDB トークンを追加すると、全カタログを検索できます。'
+            tmdbTokenHint: 'プラグイン設定に無料の TMDB トークンを追加すると、全カタログを検索できます。',
+            duplicateDeleteFailed: 'そのコピーを削除できませんでした。', duplicateKeepThis: 'これを保持',
+            duplicateKeepThisTooltip: '代わりにこのコピーを保持する', duplicatesLoadFailed: '重複の読み込みエラー', retry: '再試行',
+            socialLoadFailed: '読み込めませんでした。もう一度お試しください。'
 };

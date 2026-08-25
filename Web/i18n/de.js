@@ -194,5 +194,9 @@ window.RatingsPluginI18n.de = {
             add: 'Hinzufügen', bio: 'Bio', cancel: 'Abbrechen', currentlySet: 'Aktuell: {type} gesetzt.',
             headerMediaHint: 'Schleifen-GIF oder -Video hinter deinem Namen und Bild (GIF, MP4 oder WEBM, max. 25 MB)',
             noneSet: 'Nichts festgelegt.',
-            tmdbTokenHint: 'Füge in den Plugin-Einstellungen ein kostenloses TMDB-Token hinzu, um den ganzen Katalog zu durchsuchen.'
+            tmdbTokenHint: 'Füge in den Plugin-Einstellungen ein kostenloses TMDB-Token hinzu, um den ganzen Katalog zu durchsuchen.',
+            duplicateDeleteFailed: 'Diese Kopie konnte nicht gelöscht werden.', duplicateKeepThis: 'Diese behalten',
+            duplicateKeepThisTooltip: 'Stattdessen diese Kopie behalten',
+            duplicatesLoadFailed: 'Fehler beim Laden der Duplikate', retry: 'Erneut versuchen',
+            socialLoadFailed: 'Konnte nicht geladen werden. Bitte erneut versuchen.'
 };

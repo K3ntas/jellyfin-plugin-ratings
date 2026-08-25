@@ -157,5 +157,7 @@ window.RatingsPluginI18n.zh = {
             whatDidYouThink: '你觉得怎么样？', writeAComment: '写下评论...', writeAReviewOptional: '写一篇评论（可选）：',
             add: '添加', bio: '简介', cancel: '取消', currentlySet: '当前：已设置 {type}。',
             headerMediaHint: '循环播放的 GIF 或视频，显示在你的名字和头像后面（GIF、MP4 或 WEBM，最大 25 MB）', noneSet: '未设置。',
-            tmdbTokenHint: '在插件设置中添加免费的 TMDB 令牌即可搜索完整影片目录。'
+            tmdbTokenHint: '在插件设置中添加免费的 TMDB 令牌即可搜索完整影片目录。',
+            duplicateDeleteFailed: '无法删除该副本。', duplicateKeepThis: '保留此个', duplicateKeepThisTooltip: '改为保留这个副本',
+            duplicatesLoadFailed: '加载重复项时出错', retry: '重试', socialLoadFailed: '加载失败。请重试。'
 };

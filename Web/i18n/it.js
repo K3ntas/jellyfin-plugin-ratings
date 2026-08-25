@@ -197,5 +197,9 @@ window.RatingsPluginI18n.it = {
             add: 'Aggiungi', bio: 'Bio', cancel: 'Annulla', currentlySet: 'Attuale: {type} impostato.',
             headerMediaHint: 'GIF o video in loop mostrato dietro il tuo nome e la tua immagine (GIF, MP4 o WEBM, max 25 MB)',
             noneSet: 'Nessuno.',
-            tmdbTokenHint: 'Aggiungi un token TMDB gratuito nelle impostazioni del plugin per cercare nell\'intero catalogo.'
+            tmdbTokenHint: 'Aggiungi un token TMDB gratuito nelle impostazioni del plugin per cercare nell\'intero catalogo.',
+            duplicateDeleteFailed: 'Impossibile eliminare quella copia.', duplicateKeepThis: 'Mantieni questa',
+            duplicateKeepThisTooltip: 'Mantieni questa copia al posto dell\'altra',
+            duplicatesLoadFailed: 'Errore nel caricamento dei duplicati', retry: 'Riprova',
+            socialLoadFailed: 'Impossibile caricare. Riprova.'
 };

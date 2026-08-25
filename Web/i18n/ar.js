@@ -184,5 +184,9 @@ window.RatingsPluginI18n.ar = {
             writeAComment: 'اكتب تعليقًا...', writeAReviewOptional: 'اكتب مراجعة (اختياري):',
             add: 'إضافة', bio: 'نبذة', cancel: 'إلغاء', currentlySet: 'الحالي: تم تعيين {type}.',
             headerMediaHint: 'صورة GIF أو فيديو متكرر يظهر خلف اسمك وصورتك (GIF أو MP4 أو WEBM، بحد أقصى 25 ميجابايت)',
-            noneSet: 'لا شيء.', tmdbTokenHint: 'أضف رمز TMDB مجاني في إعدادات الإضافة للبحث في الكتالوج بالكامل.'
+            noneSet: 'لا شيء.', tmdbTokenHint: 'أضف رمز TMDB مجاني في إعدادات الإضافة للبحث في الكتالوج بالكامل.',
+            duplicateDeleteFailed: 'تعذر حذف هذه النسخة.', duplicateKeepThis: 'احتفظ بهذه',
+            duplicateKeepThisTooltip: 'احتفظ بهذه النسخة بدلاً من ذلك',
+            duplicatesLoadFailed: 'خطأ في تحميل النسخ المكررة', retry: 'إعادة المحاولة',
+            socialLoadFailed: 'تعذر التحميل. يرجى المحاولة مرة أخرى.'
 };
