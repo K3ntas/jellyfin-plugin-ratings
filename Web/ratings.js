@@ -14856,9 +14856,9 @@
                                     <div class="duplicate-size">${item.SizeGB} GB</div>
                                 </div>
                                 <div class="duplicate-actions">
-                                    <span class="duplicate-keep-badge">&#10003; ${self.t('duplicateKeep')}</span>
-                                    <button class="keep-duplicate-btn" data-item-id="${dupId}" title="${self.t('duplicateKeepThisTooltip')}">${self.t('duplicateKeepThis')}</button>
-                                    <button class="delete-duplicate-btn" data-item-id="${dupId}" title="${self.t('duplicateDelete')}">&#128465;</button>
+                                    <span class="duplicate-keep-badge">&#10003; ${self.escapeHtml(self.t('duplicateKeep'))}</span>
+                                    <button class="keep-duplicate-btn" data-item-id="${dupId}" title="${self.escapeHtml(self.t('duplicateKeepThisTooltip'))}">${self.escapeHtml(self.t('duplicateKeepThis'))}</button>
+                                    <button class="delete-duplicate-btn" data-item-id="${dupId}" title="${self.escapeHtml(self.t('duplicateDelete'))}">&#128465;&#65039;</button>
                                 </div>
                             </div>
                         `;

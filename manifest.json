@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.386.0",
+        "changelog": "Restores the bin icon in the duplicates list to its normal look - the previous release drew it as a plain outline glyph instead of the usual symbol.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.386.0/Jellyfin.Plugin.Ratings_2.0.386.0.zip",
+        "checksum": "73ab03b5f07064be89de4a81ab735699",
+        "timestamp": "2026-08-25T21:53:55Z"
+      },
+      {
         "version": "2.0.385.0",
         "changelog": "Fixes the friends list showing \"Failed to load friends\" for anyone who actually had friends (issue #79). The list was loading correctly; it crashed while drawing the first friend, and that crash was being reported as a loading failure. Reported by Alorski, who was right that the JS Injector extension had nothing to do with it. The panel now says what went wrong in the console, offers a Retry button, and speaks your language when it does fail. In media management you can also choose which copy of a duplicate to keep (issue #80, reported by NotVic) - press Keep this on any copy and the bin moves to the others, which matters when identical copies sit on different drives.",
         "targetAbi": "10.11.0.0",
