@@ -194,5 +194,9 @@ window.RatingsPluginI18n.nl = {
             add: 'Toevoegen', bio: 'Bio', cancel: 'Annuleren', currentlySet: 'Huidig: {type} ingesteld.',
             headerMediaHint: 'Herhalende GIF of video achter je naam en foto (GIF, MP4 of WEBM, max. 25 MB)',
             noneSet: 'Geen ingesteld.',
-            tmdbTokenHint: 'Voeg een gratis TMDB-token toe in de plug-ininstellingen om de hele catalogus te doorzoeken.'
+            tmdbTokenHint: 'Voeg een gratis TMDB-token toe in de plug-ininstellingen om de hele catalogus te doorzoeken.',
+            duplicateDeleteFailed: 'Kon die kopie niet verwijderen.', duplicateKeepThis: 'Deze behouden',
+            duplicateKeepThisTooltip: 'Behoud deze kopie in plaats daarvan',
+            duplicatesLoadFailed: 'Fout bij het laden van duplicaten', retry: 'Opnieuw proberen',
+            socialLoadFailed: 'Kon niet laden. Probeer het opnieuw.'
 };

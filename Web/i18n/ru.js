@@ -194,5 +194,9 @@ window.RatingsPluginI18n.ru = {
             add: 'Добавить', bio: 'О себе', cancel: 'Отмена', currentlySet: 'Сейчас: {type} задан.',
             headerMediaHint: 'Зацикленный GIF или видео позади вашего имени и фото (GIF, MP4 или WEBM, до 25 МБ)',
             noneSet: 'Не задано.',
-            tmdbTokenHint: 'Добавьте бесплатный токен TMDB в настройках плагина, чтобы искать по всему каталогу.'
+            tmdbTokenHint: 'Добавьте бесплатный токен TMDB в настройках плагина, чтобы искать по всему каталогу.',
+            duplicateDeleteFailed: 'Не удалось удалить эту копию.', duplicateKeepThis: 'Оставить эту',
+            duplicateKeepThisTooltip: 'Оставить вместо этой копии',
+            duplicatesLoadFailed: 'Ошибка загрузки дубликатов', retry: 'Повторить',
+            socialLoadFailed: 'Не удалось загрузить. Попробуйте ещё раз.'
 };

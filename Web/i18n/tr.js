@@ -190,5 +190,9 @@ window.RatingsPluginI18n.tr = {
             add: 'Ekle', bio: 'Hakkında', cancel: 'İptal', currentlySet: 'Şu an: {type} ayarlı.',
             headerMediaHint: 'Adınızın ve resminizin arkasında döngüyle oynatılan GIF veya video (GIF, MP4 veya WEBM, en fazla 25 MB)',
             noneSet: 'Ayarlanmadı.',
-            tmdbTokenHint: 'Tüm kataloğu aramak için eklenti ayarlarına ücretsiz bir TMDB anahtarı ekleyin.'
+            tmdbTokenHint: 'Tüm kataloğu aramak için eklenti ayarlarına ücretsiz bir TMDB anahtarı ekleyin.',
+            duplicateDeleteFailed: 'Bu kopya silinemedi.', duplicateKeepThis: 'Bunu tut',
+            duplicateKeepThisTooltip: 'Bunun yerine bu kopyayı tut',
+            duplicatesLoadFailed: 'Yinelenenler yüklenirken hata oluştu', retry: 'Yeniden dene',
+            socialLoadFailed: 'Yüklenemedi. Lütfen tekrar deneyin.'
 };

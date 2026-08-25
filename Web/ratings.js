@@ -116,6 +116,9 @@
                 supportRejected: 'Declined', supportReply: 'Reply', supportReplyLabel: 'Reply to the user',
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
+                duplicateDeleteFailed: 'Could not delete that copy.', duplicateKeepThis: 'Keep this',
+                duplicateKeepThisTooltip: 'Keep this copy instead', duplicatesLoadFailed: 'Error loading duplicates',
+                retry: 'Retry', socialLoadFailed: 'Could not load. Please try again.',
                 add: 'Add', bio: 'Bio', currentlySet: 'Current: {type} set.',
                 headerMediaHint: 'Looping GIF or video shown behind your name & picture (GIF, MP4 or WEBM, max 25 MB)',
                 noneSet: 'None set.',
@@ -1272,6 +1275,40 @@
         },
 
         /**
+         * GET a friends-panel endpoint as JSON, failing loudly on a non-2xx response.
+         *
+         * Calling r.json() straight off the response turned every 401/403/500 - which answers with
+         * a plain-text or HTML body - into an opaque JSON parse error, so the panel could not tell
+         * "you are logged out" from "the server broke".
+         */
+        socialFetchJson: function (url, headers) {
+            return fetch(url, { method: 'GET', credentials: 'include', headers: headers })
+                .then(function (r) {
+                    if (!r.ok) {
+                        throw new Error('HTTP ' + r.status + ' ' + r.statusText + ' from ' + url);
+                    }
+                    return r.json();
+                });
+        },
+
+        /**
+         * Show a translated failure message for a friends-panel tab, with the real cause logged.
+         *
+         * The old inline catches printed a hardcoded English string and discarded the error. That
+         * hid issue #79 - a render-time TypeError in renderFriendsList reached this same catch and
+         * was reported as "Failed to load friends", even though the request had succeeded.
+         */
+        socialLoadError: function (tab, err) {
+            console.error('[Social] "' + tab + '" tab failed:', err);
+            var content = document.getElementById('social-panel-content');
+            if (!content) return;
+            content.innerHTML = '<div class="social-empty-state">' +
+                '<div>' + this.escapeHtml(this.t('socialLoadFailed') || 'Could not load. Please try again.') + '</div>' +
+                '<button class="social-retry-btn" onclick="RatingsPlugin.loadFriendsData(\'' + this.escapeJs(tab) + '\')">' +
+                this.escapeHtml(this.t('retry') || 'Retry') + '</button></div>';
+        },
+
+        /**
          * Load friends or requests data
          */
         loadFriendsData: function (tab) {
@@ -1286,8 +1323,8 @@
             if (tab === 'friends') {
                 // Fetch both friends list and online statuses
                 Promise.all([
-                    fetch(baseUrl + '/Social/Friends', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
-                    fetch(baseUrl + '/Social/OnlineStatus', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }).catch(function () { return { friends: [] }; })
+                    self.socialFetchJson(baseUrl + '/Social/Friends', headers),
+                    self.socialFetchJson(baseUrl + '/Social/OnlineStatus', headers).catch(function () { return { friends: [] }; })
                 ]).then(function (results) {
                     var friendsData = results[0].friends || [];
                     var statusData = results[1].friends || [];
@@ -1326,54 +1363,51 @@
                     });
 
                     self.renderFriendsList(friendsData);
-                }).catch(function () {
-                    content.innerHTML = '<div class="social-empty-state">Failed to load friends</div>';
+                }).catch(function (err) {
+                    self.socialLoadError('friends', err);
                 });
             } else if (tab === 'requests') {
                 // Fetch both incoming and outgoing requests
                 Promise.all([
-                    fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); }),
-                    fetch(baseUrl + '/Social/FriendRequests/Outgoing', { method: 'GET', credentials: 'include', headers: headers }).then(function (r) { return r.json(); })
+                    self.socialFetchJson(baseUrl + '/Social/FriendRequests/Incoming', headers),
+                    self.socialFetchJson(baseUrl + '/Social/FriendRequests/Outgoing', headers)
                 ]).then(function (results) {
                     var incoming = results[0].requests || [];
                     var outgoing = results[1].requests || [];
                     self.renderRequestsList(incoming, outgoing);
                     self.updateRequestsBadge(incoming.length);
-                }).catch(function () {
-                    content.innerHTML = '<div class="social-empty-state">Failed to load requests</div>';
+                }).catch(function (err) {
+                    self.socialLoadError('requests', err);
                 });
             } else if (tab === 'addFriend') {
                 // Show search UI for adding friends
                 self.renderAddFriendSearch();
             } else if (tab === 'blocked') {
                 // Fetch blocked users list
-                fetch(baseUrl + '/Social/Blocked', { method: 'GET', credentials: 'include', headers: headers })
-                    .then(function (r) { return r.json(); })
+                self.socialFetchJson(baseUrl + '/Social/Blocked', headers)
                     .then(function (data) {
                         self.renderBlockedList(data.blockedUsers || []);
                     })
-                    .catch(function () {
-                        content.innerHTML = '<div class="social-empty-state">Failed to load blocked users</div>';
+                    .catch(function (err) {
+                        self.socialLoadError('blocked', err);
                     });
             } else if (tab === 'online') {
                 // Fetch all online users
-                fetch(baseUrl + '/Social/AllOnlineUsers', { method: 'GET', credentials: 'include', headers: headers })
-                    .then(function (r) { return r.json(); })
+                self.socialFetchJson(baseUrl + '/Social/AllOnlineUsers', headers)
                     .then(function (data) {
                         self.renderOnlineUsersList(data.users || []);
                     })
-                    .catch(function () {
-                        content.innerHTML = '<div class="social-empty-state">Failed to load online users</div>';
+                    .catch(function (err) {
+                        self.socialLoadError('online', err);
                     });
             } else if (tab === 'settings') {
                 // Fetch privacy settings
-                fetch(baseUrl + '/Social/Settings', { method: 'GET', credentials: 'include', headers: headers })
-                    .then(function (r) { return r.json(); })
+                self.socialFetchJson(baseUrl + '/Social/Settings', headers)
                     .then(function (data) {
                         self.renderPrivacySettings(data);
                     })
-                    .catch(function () {
-                        content.innerHTML = '<div class="social-empty-state">Failed to load settings</div>';
+                    .catch(function (err) {
+                        self.socialLoadError('settings', err);
                     });
             }
         },
@@ -1718,7 +1752,11 @@
                 var initial = (friend.username || '?')[0].toUpperCase();
                 var status = friend.status || 'Offline';
                 var statusClass = status.toLowerCase().replace('donotdisturb', 'dnd');
-                var statusText = this.presenceLabel(status);
+                // `self`, not `this`: the file is strict mode, so inside a forEach callback with no
+                // thisArg `this` is undefined. Using it here threw on the first friend, and the
+                // throw was swallowed by loadFriendsData's .catch, which reported the render crash
+                // as "Failed to load friends" for every user who had any friends (issue #79).
+                var statusText = self.presenceLabel(status);
 
                 // Build watching info if available
                 var watchingHtml = '';
@@ -14803,19 +14841,25 @@
                             <div class="duplicate-items">
                     `;
 
+                    // Every row carries both controls and the keeper is marked with a class, so
+                    // switching which copy to keep is a class swap - no re-render, no refetch.
+                    // The server sorts a group largest-file-first, which is only a default: with
+                    // same-size copies on different drives it picked arbitrarily and there was no
+                    // way to overrule it (issue #80).
                     group.Items.forEach((item, index) => {
+                        const dupId = self.escapeHtml(String(item.itemId ?? item.ItemId));
                         html += `
-                            <div class="duplicate-item" data-item-id="${(item.itemId ?? item.ItemId)}">
+                            <div class="duplicate-item${index === 0 ? ' is-keeper' : ''}" data-item-id="${dupId}">
                                 <div class="duplicate-info">
-                                    <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${item.Quality}]</span></div>
+                                    <div class="duplicate-name">${self.escapeHtml(item.Name)} <span style="color:#888">[${self.escapeHtml(item.Quality)}]</span></div>
                                     <div class="duplicate-path">${self.escapeHtml(item.Path || self.t('unknown'))}</div>
                                     <div class="duplicate-size">${item.SizeGB} GB</div>
                                 </div>
-                                ${index > 0 ? `
-                                    <div class="duplicate-actions">
-                                        <button class="delete-duplicate-btn" data-item-id="${(item.itemId ?? item.ItemId)}" title="${self.t('duplicateDelete')}">🗑️</button>
-                                    </div>
-                                ` : `<div class="duplicate-actions"><span style="color:#52b54b">✓ ${self.t('duplicateKeep')}</span></div>`}
+                                <div class="duplicate-actions">
+                                    <span class="duplicate-keep-badge">&#10003; ${self.escapeHtml(self.t('duplicateKeep'))}</span>
+                                    <button class="keep-duplicate-btn" data-item-id="${dupId}" title="${self.escapeHtml(self.t('duplicateKeepThisTooltip'))}">${self.escapeHtml(self.t('duplicateKeepThis'))}</button>
+                                    <button class="delete-duplicate-btn" data-item-id="${dupId}" title="${self.escapeHtml(self.t('duplicateDelete'))}">&#128465;&#65039;</button>
+                                </div>
                             </div>
                         `;
                     });
@@ -14826,10 +14870,26 @@
                 html += '</div>';
                 body.innerHTML = html;
 
+                // Bind "keep this one instead" handlers
+                body.querySelectorAll('.keep-duplicate-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const row = btn.closest('.duplicate-item');
+                        const group = btn.closest('.duplicate-group');
+                        if (!row || !group) return;
+                        group.querySelectorAll('.duplicate-item').forEach(other => {
+                            other.classList.toggle('is-keeper', other === row);
+                        });
+                    });
+                });
+
                 // Bind delete handlers
                 body.querySelectorAll('.delete-duplicate-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const itemId = btn.getAttribute('data-item-id');
+                        const row = btn.closest('.duplicate-item');
+                        // The keeper's delete button is hidden, but a stale click target or a
+                        // keyboard activation must not delete the copy the admin chose to keep.
+                        if (row && row.classList.contains('is-keeper')) return;
                         if (!confirm(self.t('duplicateConfirm'))) return;
 
                         const deleteFiles = confirm(self.t('duplicateDeleteFiles'));
@@ -14843,17 +14903,28 @@
                                 credentials: 'include'
                             });
 
-                            if (deleteResponse.ok) {
-                                btn.closest('.duplicate-item').remove();
+                            if (!deleteResponse.ok) {
+                                throw new Error('HTTP ' + deleteResponse.status);
+                            }
+
+                            const group = row ? row.closest('.duplicate-group') : null;
+                            if (row) row.remove();
+                            // One copy left is no longer a duplicate - drop the whole group.
+                            if (group && group.querySelectorAll('.duplicate-item').length < 2) {
+                                group.remove();
+                            }
+                            if (!body.querySelector('.duplicate-group')) {
+                                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
                             }
                         } catch (error) {
                             console.error('Error deleting duplicate:', error);
+                            alert(self.t('duplicateDeleteFailed'));
                         }
                     });
                 });
             } catch (error) {
                 console.error('Error loading duplicates:', error);
-                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">Error loading duplicates</div>`;
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">${self.escapeHtml(self.t('duplicatesLoadFailed'))}</div>`;
             }
         },
 

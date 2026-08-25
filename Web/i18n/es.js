@@ -197,5 +197,9 @@ window.RatingsPluginI18n.es = {
             add: 'Añadir', bio: 'Biografía', cancel: 'Cancelar', currentlySet: 'Actual: {type} configurado.',
             headerMediaHint: 'GIF o vídeo en bucle que se muestra detrás de tu nombre y foto (GIF, MP4 o WEBM, máx. 25 MB)',
             noneSet: 'Ninguno.',
-            tmdbTokenHint: 'Añade un token gratuito de TMDB en los ajustes del plugin para buscar en todo el catálogo.'
+            tmdbTokenHint: 'Añade un token gratuito de TMDB en los ajustes del plugin para buscar en todo el catálogo.',
+            duplicateDeleteFailed: 'No se pudo eliminar esa copia.', duplicateKeepThis: 'Conservar esta',
+            duplicateKeepThisTooltip: 'Conservar esta copia en su lugar',
+            duplicatesLoadFailed: 'Error al cargar los duplicados', retry: 'Reintentar',
+            socialLoadFailed: 'No se pudo cargar. Inténtalo de nuevo.'
 };

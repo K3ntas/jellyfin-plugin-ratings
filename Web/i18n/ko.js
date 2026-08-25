@@ -165,5 +165,8 @@ window.RatingsPluginI18n.ko = {
             whatDidYouThink: '어떠셨나요?', writeAComment: '댓글 작성...', writeAReviewOptional: '리뷰 작성 (선택):',
             add: '추가', bio: '소개', cancel: '취소', currentlySet: '현재: {type} 설정됨.',
             headerMediaHint: '이름과 사진 뒤에 반복 재생되는 GIF 또는 동영상 (GIF, MP4, WEBM, 최대 25 MB)', noneSet: '설정되지 않음.',
-            tmdbTokenHint: '플러그인 설정에 무료 TMDB 토큰을 추가하면 전체 카탈로그를 검색할 수 있습니다.'
+            tmdbTokenHint: '플러그인 설정에 무료 TMDB 토큰을 추가하면 전체 카탈로그를 검색할 수 있습니다.',
+            duplicateDeleteFailed: '해당 사본을 삭제하지 못했습니다.', duplicateKeepThis: '이것 유지',
+            duplicateKeepThisTooltip: '대신 이 사본을 유지', duplicatesLoadFailed: '중복 항목을 불러오는 중 오류', retry: '다시 시도',
+            socialLoadFailed: '불러오지 못했습니다. 다시 시도해 주세요.'
 };
