@@ -4783,6 +4783,52 @@ namespace Jellyfin.Plugin.Ratings.Api
             return Guid.Empty;
         }
 
+        /// <summary>
+        /// Narrows a set of item ids to the ones this account is actually allowed to see.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ILibraryManager.GetItemById"/> ignores both library permissions and parental
+        /// ratings. That is fine when the caller already supplied the id of an item they are
+        /// looking at, but the aggregate feeds (recent activity, top rated, items by rating) turn
+        /// ids from *other* people's activity into titles, so any signed-in account could read the
+        /// names and posters of things in libraries it cannot browse. Putting the user on the
+        /// query makes Jellyfin apply that account's rules, which is the same idiom the search and
+        /// sorted-library endpoints use.
+        /// Resolved in chunks so a large feed cannot build one enormous id list.
+        /// </remarks>
+        /// <param name="userId">The requesting account.</param>
+        /// <param name="itemIds">Candidate item ids.</param>
+        /// <returns>The subset the account may see; empty when the user cannot be resolved.</returns>
+        private HashSet<Guid> VisibleItemIds(Guid userId, IEnumerable<Guid> itemIds)
+        {
+            var distinct = itemIds.Where(id => id != Guid.Empty).Distinct().ToList();
+
+            var user = userId == Guid.Empty ? null : _userManager.GetUserById(userId);
+            if (user == null)
+            {
+                // No user on the request means an API key, which authenticates the server rather
+                // than a person and has no library permissions to apply - Jellyfin's ApiKeys table
+                // has no user column at all. Returning an empty set here would silently blank these
+                // feeds for every key-based caller, so pass the candidates straight through. The
+                // endpoints are still behind [Authorize], so this is not an unauthenticated path.
+                return new HashSet<Guid>(distinct);
+            }
+
+            var visible = new HashSet<Guid>();
+            const int Chunk = 200;
+            for (var i = 0; i < distinct.Count; i += Chunk)
+            {
+                var slice = distinct.GetRange(i, Math.Min(Chunk, distinct.Count - i)).ToArray();
+                foreach (var item in _libraryManager.GetItemList(
+                    new MediaBrowser.Controller.Entities.InternalItemsQuery(user) { ItemIds = slice }))
+                {
+                    visible.Add(item.Id);
+                }
+            }
+
+            return visible;
+        }
+
         #region Admin - Orphaned trickplay data
 
         /// <summary>
@@ -5917,8 +5963,20 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 // Get recent ratings (includes reviews)
                 var recentRatings = _repository.GetRecentRatings(limit);
+
+                // This feed reports what OTHER people rated and commented on, so every title in it
+                // has to be checked against the caller's own library access - otherwise the feed
+                // names things they are not allowed to browse.
+                var viewerId = User.GetUserId();
+                var visibleItems = VisibleItemIds(viewerId, recentRatings.Select(r => r.ItemId));
+
                 foreach (var rating in recentRatings)
                 {
+                    if (!visibleItems.Contains(rating.ItemId))
+                    {
+                        continue;
+                    }
+
                     var item = _libraryManager.GetItemById(rating.ItemId);
                     var user = _userManager.GetUserById(rating.UserId);
                     var hasReview = !string.IsNullOrWhiteSpace(rating.ReviewText);
@@ -5956,8 +6014,14 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 // Get recent review comments
                 var recentComments = _repository.GetRecentReviewComments(limit);
+                var visibleCommentItems = VisibleItemIds(viewerId, recentComments.Select(c => c.ItemId));
                 foreach (var comment in recentComments)
                 {
+                    if (!visibleCommentItems.Contains(comment.ItemId))
+                    {
+                        continue;
+                    }
+
                     var commenter = _userManager.GetUserById(comment.CommenterId);
                     var reviewer = _userManager.GetUserById(comment.ReviewerUserId);
                     var item = _libraryManager.GetItemById(comment.ItemId);
@@ -6020,12 +6084,24 @@ namespace Jellyfin.Plugin.Ratings.Api
                 limit = Math.Clamp(limit, 1, 50);
                 var allRatings = _repository.GetAllItemRatingStats();
 
-                var topItems = allRatings
+                var ranked = allRatings
                     .Where(r => r.Value.RatingCount >= 1)
                     .OrderByDescending(r => r.Value.AverageRating)
                     .ThenByDescending(r => r.Value.RatingCount)
-                    .Take(limit)
                     .ToList();
+
+                // Filter by what this account may see BEFORE taking the page, so hiding a title
+                // shortens the chart rather than leaving a gap in it. Walked a page at a time so
+                // a library with thousands of rated items is not resolved in one go just to show
+                // ten rows; an admin (who sees everything) resolves a single page.
+                var viewerId = User.GetUserId();
+                var topItems = new List<KeyValuePair<Guid, (double AverageRating, int RatingCount)>>();
+                for (var offset = 0; offset < ranked.Count && topItems.Count < limit; offset += limit * 2)
+                {
+                    var window = ranked.GetRange(offset, Math.Min(limit * 2, ranked.Count - offset));
+                    var visible = VisibleItemIds(viewerId, window.Select(w => w.Key));
+                    topItems.AddRange(window.Where(w => visible.Contains(w.Key)).Take(limit - topItems.Count));
+                }
 
                 var result = new List<object>();
                 foreach (var item in topItems)
@@ -6196,10 +6272,17 @@ namespace Jellyfin.Plugin.Ratings.Api
                 limit = Math.Clamp(limit, 1, 100);
 
                 var recentRatings = _repository.GetRecentRatings(1000);
-                var itemsWithRating = recentRatings
+                var candidates = recentRatings
                     .Where(r => r.Rating == rating)
                     .GroupBy(r => r.ItemId)
                     .Select(g => g.First())
+                    .ToList();
+
+                // Same rule as the other feeds: these ids come from everyone's ratings, so drop
+                // the ones this account may not browse before taking the page.
+                var visibleByRating = VisibleItemIds(User.GetUserId(), candidates.Select(c => c.ItemId));
+                var itemsWithRating = candidates
+                    .Where(c => visibleByRating.Contains(c.ItemId))
                     .Take(limit)
                     .ToList();
 
