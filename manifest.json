@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.386.0",
+        "changelog": "Fixes the plugin on Jellyfin 12, where every panel read \"Failed to load\" and film pages showed \"Error loading ratings\" (issue #83). Jellyfin 12 switched off the older ways of proving who you are and the plugin was still using them, so the server refused each request even though you were signed in - while the public files it serves kept working, which is why the interface still appeared but had no data in it. It now asks the way Jellyfin 12 expects; older Jellyfin versions accept the same form, so this one build works on both and there is nothing to choose when installing. Also stops the activity feed, top rated list and browse-by-rating from naming titles that live in libraries an account is not allowed to open.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.386.0/Jellyfin.Plugin.Ratings_1.0.386.0.zip",
+        "checksum": "7111c053e3d9f5c91e076919655cc42b",
+        "timestamp": "2026-09-08T23:19:01Z"
+      },
+      {
         "version": "1.0.385.0",
         "changelog": "Fixes the friends list showing \"Failed to load friends\" for anyone who actually had friends (issue #79). The list was loading correctly - it crashed while drawing the first friend, and that crash was being reported as a loading failure. A user with no friends never hit it, which is why it took a report to find. The panel now explains what went wrong instead of showing one generic line, offers a Retry, and is translated in every language. In media management you can also choose which copy of a duplicate to keep (issue #80) - press Keep this on any copy and the bin moves to the others, which matters when identical copies sit on different drives.",
         "targetAbi": "10.11.0.0",

@@ -284,6 +284,34 @@
             return this.translations[this.currentLanguage]?.[key] || this.translations.en[key] || key;
         },
 
+        /**
+         * Builds the one Authorization header Jellyfin still accepts.
+         *
+         * Jellyfin 12.0 disabled every legacy mechanism this plugin used to authenticate with -
+         * the X-Emby-Token, X-Emby-Authorization and X-MediaBrowser-Token headers, the api_key
+         * query parameter and the "Emby" scheme - so every authenticated call started coming back
+         * 401 and the whole UI read "Failed to load" (issue #83). The Authorization header with
+         * the MediaBrowser scheme is accepted by 10.x and 12.x alike, so this is deliberately not
+         * conditional on the server version.
+         *
+         * @param {string} [token] Access token; defaults to the signed-in user's.
+         * @returns {string} e.g. 'MediaBrowser Token="abc123"'
+         */
+        authHeader: function (token) {
+            var t = token || (window.ApiClient && ApiClient.accessToken()) || '';
+            // Token is a hex string from Jellyfin, but quote-strip anyway so a malformed value
+            // cannot break out of the quoted parameter and forge extra header parameters.
+            return 'MediaBrowser Token="' + String(t).replace(/["\\\r\n]/g, '') + '"';
+        },
+
+        /**
+         * Standard headers for an authenticated plugin API call.
+         * @param {object} [extra] Additional headers to merge in.
+         */
+        authHeaders: function (extra) {
+            return Object.assign({ 'Authorization': this.authHeader() }, extra || {});
+        },
+
         // In-flight / completed language pack loads, keyed by language code.
         _langPackPromises: {},
 
@@ -717,7 +745,7 @@
                     fetch(baseUrl + '/Social/Offline', {
                         method: 'POST',
                         headers: {
-                            'X-Emby-Token': token,
+                            'Authorization': RatingsPlugin.authHeader(token),
                             'Content-Type': 'application/json'
                         },
                         body: '{}'
@@ -744,7 +772,7 @@
                 }
 
                 var baseUrl = ApiClient.serverAddress();
-                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
                 // Expose testing functions to window.Social for console testing
                 window.Social = {
@@ -1318,7 +1346,7 @@
             if (!content || !window.ApiClient) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             if (tab === 'friends') {
                 // Fetch both friends list and online statuses
@@ -1545,7 +1573,7 @@
 
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -1578,7 +1606,7 @@
             if (!window.ApiClient) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Settings/Preset/' + preset, {
                 method: 'POST',
@@ -1610,7 +1638,7 @@
             }
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Block/' + userId, {
                 method: 'POST',
@@ -1637,7 +1665,7 @@
             if (!window.ApiClient || !userId) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Block/' + userId, {
                 method: 'DELETE',
@@ -1715,7 +1743,7 @@
             }
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Friend/' + userId, {
                 method: 'DELETE',
@@ -1857,7 +1885,7 @@
         acceptFriendRequest: function (requestId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -1874,7 +1902,7 @@
         rejectFriendRequest: function (requestId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -1891,7 +1919,7 @@
         cancelFriendRequest: function (requestId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId, { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -1979,7 +2007,7 @@
 
             var baseUrl = ApiClient.serverAddress();
             var wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
-            wsUrl += '/socket?api_key=' + encodeURIComponent(ApiClient.accessToken());
+            wsUrl += '/socket?ApiKey=' + encodeURIComponent(ApiClient.accessToken());
 
             try {
                 self._socialWebSocket = new WebSocket(wsUrl);
@@ -2278,7 +2306,7 @@
             if (!window.ApiClient || !ApiClient.accessToken()) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/OnlineStatus', {
                 method: 'GET',
@@ -2652,7 +2680,7 @@
 
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -2674,7 +2702,7 @@
 
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -2696,7 +2724,7 @@
 
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -2774,7 +2802,7 @@
             if (!window.ApiClient) return;
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             var resultsDiv = document.getElementById('social-user-results');
 
             resultsDiv.innerHTML = '<div style="color:#666;font-size:12px;padding:10px;">' + RatingsPlugin.t('searching') + '</div>';
@@ -2847,7 +2875,7 @@
             btn.textContent = 'Sending...';
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + userId, {
                 method: 'POST',
@@ -2879,7 +2907,7 @@
 
             // Find the request ID for this user
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequests/Incoming', { method: 'GET', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -3508,7 +3536,7 @@
 
             // Register as viewer for real-time updates
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             fetch(baseUrl + '/Social/Profile/' + userId + '/View', {
                 method: 'POST',
                 credentials: 'include',
@@ -3871,7 +3899,7 @@
             return fetch(baseUrl + '/Ratings/Search?query=' + encodeURIComponent(q) + '&limit=' + (limit || 10), {
                 method: 'GET',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
                 .then(function (r) { return r.ok ? r.json() : { items: [] }; })
                 .then(function (d) {
@@ -3915,7 +3943,7 @@
             results.innerHTML = '<div class="lb-loading-small">Searching…</div>';
             // 1) Local server library
             var localUrl = baseUrl + '/Items?searchTerm=' + encodeURIComponent(q) + '&IncludeItemTypes=Movie,Series&Recursive=true&Limit=6&Fields=ProductionYear,Overview';
-            var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'X-Emby-Authorization': authHeader } })
+            var pLocal = fetch(localUrl, { method: 'GET', credentials: 'include', headers: { 'Authorization': authHeader } })
                 .then(function (r) { return r.json(); })
                 .then(function (d) { return (d && d.Items) || []; })
                 .then(function (items) {
@@ -3928,7 +3956,7 @@
                 .catch(function () { return []; });
 
             // 2) External TMDB catalog (server-side proxy; the token never reaches the browser)
-            var pExt = fetch(baseUrl + '/Ratings/ExternalSearch?q=' + encodeURIComponent(q), { method: 'GET', credentials: 'include', headers: { 'X-Emby-Token': token } })
+            var pExt = fetch(baseUrl + '/Ratings/ExternalSearch?q=' + encodeURIComponent(q), { method: 'GET', credentials: 'include', headers: { 'Authorization': RatingsPlugin.authHeader(token) } })
                 .then(function (r) { return r.json(); })
                 .catch(function () { return { configured: true, results: [] }; });
 
@@ -3995,7 +4023,7 @@
             fetch(baseUrl + '/Ratings/Requests', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                headers: { 'Authorization': RatingsPlugin.authHeader(token), 'Authorization': authHeader, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -4024,7 +4052,7 @@
             var body = { Title: title, Type: data.type || 'Movie', Notes: data.tmdbId ? ('TMDB:' + data.tmdbId) : '' };
             fetch(baseUrl + '/Ratings/Requests', {
                 method: 'POST', credentials: 'include',
-                headers: { 'X-Emby-Token': token, 'X-Emby-Authorization': authHeader, 'Content-Type': 'application/json' },
+                headers: { 'Authorization': RatingsPlugin.authHeader(token), 'Authorization': authHeader, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -4173,7 +4201,7 @@
                     + '?rating=' + value + '&review=' + encodeURIComponent(review), {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'X-Emby-Token': token }
+                    headers: { 'Authorization': RatingsPlugin.authHeader(token) }
                 });
             } else {
                 if (!data.tmdbId) {
@@ -4183,7 +4211,7 @@
                 request = fetch(baseUrl + '/Ratings/External/Rating', {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': RatingsPlugin.authHeader(token), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         tmdbId: String(data.tmdbId),
                         mediaType: data.mediaType === 'Series' || data.type === 'Series' ? 'Series' : 'Movie',
@@ -4270,7 +4298,7 @@
             fetch(baseUrl + '/Ratings/Reviews/' + encodeURIComponent(userId) + '/' + encodeURIComponent(itemId) + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
                 .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
                 .then(function (data) {
@@ -4322,7 +4350,7 @@
             fetch(baseUrl + '/Ratings/Items/' + encodeURIComponent(itemId) + '/Rating', {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
                 .then(function (r) {
                     // 404 means the rating is already gone, which is the outcome asked for -
@@ -4366,7 +4394,7 @@
             fetch(baseUrl + '/Ratings/External/Rating', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': token, 'Content-Type': 'application/json' },
+                headers: { 'Authorization': RatingsPlugin.authHeader(token), 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tmdbId: String(data.tmdbId),
                     mediaType: data.type === 'Series' ? 'Series' : 'Movie',
@@ -4732,7 +4760,7 @@
                     var uid = ApiClient.getCurrentUserId();
                     fetch(baseUrl + '/Users/' + uid + '/Items/' + itemId + '?Fields=Overview', {
                         credentials: 'include',
-                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                        headers: { 'Authorization': RatingsPlugin.authHeader() }
                     })
                     .then(function (r) { return r.ok ? r.json() : null; })
                     .then(function (d) {
@@ -4876,7 +4904,7 @@
             self._profileRatingsPending = [cb];
             self._profileRatingsPendingUser = userId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=500', { method: 'GET', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
@@ -4915,7 +4943,7 @@
             fetch(baseUrl + '/Ratings/Reviews/' + reviewerUserId + '/' + itemId + '/Like?isLike=' + (isLike ? 'true' : 'false'), {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': token }
+                headers: { 'Authorization': RatingsPlugin.authHeader(token) }
             })
                 .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(function (res) {
@@ -5226,7 +5254,7 @@
          * ------------------------------------------------------------------ */
 
         _supportHeaders: function () {
-            return { 'X-Emby-Token': ApiClient.accessToken() };
+            return { 'Authorization': RatingsPlugin.authHeader() };
         },
 
         _supportUrl: function (path) {
@@ -5964,7 +5992,7 @@
 
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Users', {
                 method: 'GET',
@@ -6192,7 +6220,7 @@
             fetch(baseUrl + '/Social/Profile/' + userId + '/Genres?limit=8', {
                 method: 'GET',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -6272,7 +6300,7 @@
             fetch(baseUrl + '/Social/Profile/' + userId + '/SimilarUsers?limit=5', {
                 method: 'GET',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -6410,7 +6438,7 @@
 
             fetch(baseUrl + '/Users/' + uid + '/Items/' + itemId + '?Fields=Overview,Genres,RunTimeTicks,ProductionYear', {
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (d) {
@@ -6693,7 +6721,7 @@
             fetch(baseUrl + '/PlayingItems/' + encodeURIComponent(itemId) + '/Progress?positionTicks=' + (positionTicks || 0), {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': token }
+                headers: { 'Authorization': RatingsPlugin.authHeader(token) }
             })
             .catch(function () { /* opening the item still works without it */ })
             .then(function () {
@@ -6903,7 +6931,7 @@
             var self = this;
             var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=50', {
                 method: 'GET',
@@ -7039,7 +7067,7 @@
             var self = this;
             var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             // Get ratings and filter for those with reviews
             fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=100', {
@@ -7197,7 +7225,7 @@
             var self = this;
             var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Profile/' + userId + '/Following', {
                 method: 'GET',
@@ -7226,7 +7254,7 @@
             var self = this;
             var userId = self._viewingProfileUserId;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Profile/' + userId + '/Followers', {
                 method: 'GET',
@@ -7423,7 +7451,7 @@
             }
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             var userId = ApiClient.getCurrentUserId();
 
             // Build query
@@ -7488,7 +7516,7 @@
             var self = this;
             var results = document.getElementById('pickerResults');
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             var userId = ApiClient.getCurrentUserId();
 
             // First get all user ratings
@@ -7586,7 +7614,7 @@
         getUserRatingsForItems: function (itemIds) {
             var baseUrl = ApiClient.serverAddress();
             var userId = ApiClient.getCurrentUserId();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             return fetch(baseUrl + '/Ratings/Users/' + userId + '/Ratings?limit=1000', {
                 method: 'GET', credentials: 'include', headers: headers
@@ -7736,7 +7764,7 @@
             clearTimeout(self._pickerSearchTimeout);
             self._pickerSearchTimeout = setTimeout(function () {
                 var baseUrl = ApiClient.serverAddress();
-                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                var headers = { 'Authorization': RatingsPlugin.authHeader() };
                 var startIndex = self._pickerPage * self._pickerItemsPerPage;
 
                 // Search for movies and series
@@ -8030,7 +8058,7 @@
             var self = this;
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -8162,7 +8190,7 @@
             var self = this;
             var baseUrl = ApiClient.serverAddress();
             var headers = {
-                'X-Emby-Token': ApiClient.accessToken(),
+                'Authorization': RatingsPlugin.authHeader(),
                 'Content-Type': 'application/json'
             };
 
@@ -8236,7 +8264,7 @@
             fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() },
+                headers: { 'Authorization': RatingsPlugin.authHeader() },
                 body: fd
             })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -8265,7 +8293,7 @@
             fetch(baseUrl + '/Social/MyProfile/HeaderMedia', {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
             })
             .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(function () {
@@ -8288,7 +8316,7 @@
         profileFollow: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Follow/' + userId, { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8301,7 +8329,7 @@
         profileUnfollow: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Follow/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8314,7 +8342,7 @@
         profileLike: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8327,7 +8355,7 @@
         profileUnlike: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Profile/' + userId + '/Like', { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8413,7 +8441,7 @@
             if (self._viewingProfileUserId) {
                 self._viewingProfileUserId = null;
                 var baseUrl = ApiClient.serverAddress();
-                var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+                var headers = { 'Authorization': RatingsPlugin.authHeader() };
                 fetch(baseUrl + '/Social/Profile/View', {
                     method: 'DELETE',
                     credentials: 'include',
@@ -8449,7 +8477,7 @@
         profileSendRequest: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/FriendRequest/' + userId, { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8467,7 +8495,7 @@
         profileAcceptRequest: function (requestId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             var userId = self.getProfileUserIdFromUrl();
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Accept', { method: 'POST', credentials: 'include', headers: headers })
@@ -8485,7 +8513,7 @@
         profileRejectRequest: function (requestId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
             var userId = self.getProfileUserIdFromUrl();
 
             fetch(baseUrl + '/Social/FriendRequest/' + requestId + '/Reject', { method: 'POST', credentials: 'include', headers: headers })
@@ -8507,7 +8535,7 @@
             }
 
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Friend/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8524,7 +8552,7 @@
         profileBlockUser: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Block/' + userId, { method: 'POST', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8541,7 +8569,7 @@
         profileUnblockUser: function (userId) {
             var self = this;
             var baseUrl = ApiClient.serverAddress();
-            var headers = { 'X-Emby-Token': ApiClient.accessToken() };
+            var headers = { 'Authorization': RatingsPlugin.authHeader() };
 
             fetch(baseUrl + '/Social/Block/' + userId, { method: 'DELETE', credentials: 'include', headers: headers })
                 .then(function (r) { return r.json(); })
@@ -8991,7 +9019,7 @@
                 localStorage.setItem('_deviceId2', deviceId);
             }
 
-            // Build proper X-Emby-Authorization header
+            // Build the Authorization header value (MediaBrowser scheme)
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
 
@@ -9000,7 +9028,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
                 .then(response => {
@@ -9123,7 +9151,7 @@
             const url = `${baseUrl}/Ratings/Items/${itemId}/Rating?rating=${rating}`;
 
 
-            // Build proper X-Emby-Authorization header (Jellyfin's dedicated auth header)
+            // Build the Authorization header value (MediaBrowser scheme)
             const authHeader = `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${deviceId}", Version="10.11.0", Token="${accessToken}"`;
 
             const requestOptions = {
@@ -9131,7 +9159,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             };
 
@@ -9196,7 +9224,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             };
 
@@ -9327,7 +9355,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     }
                 })
                 .then(r => r.json())
@@ -9429,7 +9457,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {
@@ -9507,7 +9535,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(r => r.json())
@@ -9692,7 +9720,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(r => r.json())
@@ -9774,7 +9802,7 @@
                 method: 'GET',
                 credentials: 'include',
                 headers: {
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(r => r.json())
@@ -10187,7 +10215,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(r => r.json())
@@ -10278,7 +10306,7 @@
                 fetch(url, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 })
                 .then(r => r.json())
                 .then(newComment => {
@@ -10305,7 +10333,7 @@
 
                 fetch(url, {
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 })
                 .then(r => r.json())
                 .then(comments => {
@@ -10347,7 +10375,7 @@
                                 fetch(`${baseUrl}/Ratings/Reviews/Comments/${commentId}`, {
                                     method: 'DELETE',
                                     credentials: 'include',
-                                    headers: { 'X-Emby-Authorization': authHeader }
+                                    headers: { 'Authorization': authHeader }
                                 })
                                 .then(r => {
                                     if (r.ok) {
@@ -10427,7 +10455,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (response.ok) {
@@ -10515,7 +10543,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {
@@ -12548,12 +12576,12 @@
                 fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 }).then(r => r.json()).catch(() => ({ Items: [] })),
                 fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 }).then(r => r.json()).catch(() => [])
             ])
             .then(([mediaData, deletions]) => {
@@ -12673,13 +12701,13 @@
                 fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 }).then(r => r.json()),
                 // Latest episodes (to find existing series that just got new episodes)
                 fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 }).then(r => r.json()),
 
                 // What the plugin ITSELF announced as new. The two queries above sort by
@@ -12691,7 +12719,7 @@
                 fetch(`${baseUrl}/Ratings/LatestMedia?limit=30`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 }).then(r => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }))
             ])
             .then(([mediaData, episodeData, announcedData]) => {
@@ -12760,7 +12788,7 @@
                     : fetch(`${baseUrl}/Users/${userId}/Items?Ids=${seriesIds.join(',')}&Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
                         method: 'GET',
                         credentials: 'include',
-                        headers: { 'X-Emby-Authorization': authHeader }
+                        headers: { 'Authorization': authHeader }
                     }).then(r => r.ok ? r.json() : { Items: [] })
                       .then(data => data.Items || [])
                       .catch(() => []);
@@ -12990,7 +13018,7 @@
             fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                 method: 'GET',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(r => r.json())
             .then(deletions => {
@@ -13116,7 +13144,7 @@
                             const response = await fetch(`${baseUrl}/Ratings/KeepRequest/${itemId}`, {
                                 method: 'POST',
                                 credentials: 'include',
-                                headers: { 'X-Emby-Authorization': authHeader }
+                                headers: { 'Authorization': authHeader }
                             });
 
                             if (response.ok) {
@@ -13228,7 +13256,7 @@
                 try {
                     const baseUrl = ApiClient.serverAddress();
                     const response = await fetch(`${baseUrl}/Items/${itemId}`, {
-                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                        headers: { 'Authorization': RatingsPlugin.authHeader() }
                     });
                     if (response.ok) {
                         const data = await response.json();
@@ -13676,7 +13704,7 @@
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
                     credentials: 'include',
                     cache: 'no-store'
@@ -14022,7 +14050,7 @@
             fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion?delayHours=${hours}`, {
                 method: 'POST',
                 headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                 },
                 credentials: 'include'
             })
@@ -14048,7 +14076,7 @@
             fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion?delayDays=${delayDays}`, {
                 method: 'POST',
                 headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                 },
                 credentials: 'include'
             })
@@ -14078,7 +14106,7 @@
             fetch(`${baseUrl}/Ratings/Media/${itemId}/ScheduleDeletion`, {
                 method: 'DELETE',
                 headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                 },
                 credentials: 'include'
             })
@@ -14120,7 +14148,7 @@
             fetch(`${baseUrl}/Ratings/ScheduledDeletions`, {
                 method: 'GET',
                 headers: {
-                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                 },
                 credentials: 'include'
             })
@@ -14443,7 +14471,7 @@
                 const response = await fetch(`${baseUrl}/Users/${userId}/Views`, {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
                     credentials: 'include'
                 });
@@ -14629,7 +14657,7 @@
                 const response = await fetch(`${baseUrl}/Ratings/Admin/DiskUsage`, {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
                     credentials: 'include'
                 });
@@ -14703,7 +14731,7 @@
                 const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    headers: { 'Authorization': RatingsPlugin.authHeader() }
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
@@ -14781,7 +14809,7 @@
                 const res = await fetch(`${baseUrl}/Ratings/Admin/OrphanedTrickplay/Delete`, {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'X-Emby-Token': ApiClient.accessToken(), 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': RatingsPlugin.authHeader(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -14814,7 +14842,7 @@
                 const response = await fetch(`${baseUrl}/Ratings/Admin/Duplicates`, {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
                     credentials: 'include'
                 });
@@ -14898,7 +14926,7 @@
                             const deleteResponse = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/${itemId}?deleteFile=${deleteFiles}`, {
                                 method: 'DELETE',
                                 headers: {
-                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                                 },
                                 credentials: 'include'
                             });
@@ -14945,7 +14973,7 @@
                 const statusResponse = await fetch(`${baseUrl}/Ratings/Admin/RestartStatus`, {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                     },
                     credentials: 'include'
                 });
@@ -14999,7 +15027,7 @@
                         await fetch(`${baseUrl}/Ratings/Admin/ScheduleRestart`, {
                             method: 'DELETE',
                             headers: {
-                                'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                             },
                             credentials: 'include'
                         });
@@ -15021,7 +15049,7 @@
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
+                                    'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="Ratings", Version="1.0", Token="${token}"`
                                 },
                                 body: JSON.stringify({ DelayMinutes: minutes, Reason: reason }),
                                 credentials: 'include'
@@ -15336,7 +15364,7 @@
 
                 const response = await fetch(searchUrl, {
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Firefox", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Firefox", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
                     }
                 });
 
@@ -15505,7 +15533,7 @@
 
                 const response = await fetch(searchUrl, {
                     headers: {
-                        'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
+                        'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="${ApiClient.deviceId()}", Version="10.11.0", Token="${ApiClient.accessToken()}"`
                     }
                 });
 
@@ -16188,7 +16216,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to update status');
@@ -16228,7 +16256,7 @@
             fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to delete');
@@ -16403,7 +16431,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to snooze');
@@ -16442,7 +16470,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to unsnooze');
@@ -16495,7 +16523,7 @@
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Emby-Authorization': authHeader
+                            'Authorization': authHeader
                         }
                     })
                     .then(response => response.json())
@@ -17005,7 +17033,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 },
                 body: JSON.stringify(requestData)
             })
@@ -17058,7 +17086,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {
@@ -17438,7 +17466,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to snooze');
@@ -17477,7 +17505,7 @@
             fetch(url, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             })
             .then(response => {
                 if (!response.ok) throw new Error('Failed to unsnooze');
@@ -17613,7 +17641,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     },
                     body: JSON.stringify(requestData)
                 })
@@ -17678,7 +17706,7 @@
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Emby-Authorization': authHeader
+                            'Authorization': authHeader
                         }
                     })
                     .then(response => {
@@ -17719,7 +17747,7 @@
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Emby-Authorization': authHeader
+                            'Authorization': authHeader
                         }
                     })
                     .then(response => {
@@ -17760,7 +17788,7 @@
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Emby-Authorization': authHeader
+                            'Authorization': authHeader
                         }
                     })
                     .then(response => {
@@ -17832,7 +17860,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     },
                     body: JSON.stringify({
                         MediaRequestId: mediaRequestId,
@@ -18026,7 +18054,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     }
                 })
                 .then(response => {
@@ -18155,7 +18183,7 @@
                 return fetch(`${baseUrl}/Ratings/Bans?banType=${banType}`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 })
                 .then(r => r.ok ? r.json() : [])
                 .catch(() => []);
@@ -18174,7 +18202,7 @@
                 return fetch(`${baseUrl}/Ratings/Bans/Check?banType=${banType}`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: { 'X-Emby-Authorization': authHeader }
+                    headers: { 'Authorization': authHeader }
                 })
                 .then(r => r.ok ? r.json() : { banned: false })
                 .catch(() => ({ banned: false }));
@@ -18193,7 +18221,7 @@
             return fetch(`${baseUrl}/Ratings/Bans?userId=${userId}&banType=${banType}&duration=${duration}`, {
                 method: 'POST',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             }).then(r => {
                 if (!r.ok) throw new Error('Ban failed');
                 return r.json();
@@ -18209,7 +18237,7 @@
             return fetch(`${baseUrl}/Ratings/Bans/${banId}`, {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'X-Emby-Authorization': authHeader }
+                headers: { 'Authorization': authHeader }
             }).then(r => {
                 if (!r.ok) throw new Error('Unban failed');
                 return r.json();
@@ -18334,7 +18362,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     }
                 })
                 .then(response => {
@@ -18400,7 +18428,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     }
                 })
                 .then(response => {
@@ -19115,7 +19143,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
                 .then(response => {
@@ -19480,7 +19508,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {                return response.json();
@@ -20354,7 +20382,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {
@@ -20582,7 +20610,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => response.json())
@@ -20690,7 +20718,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Emby-Authorization': authHeader
+                        'Authorization': authHeader
                     }
                 })
                 .then(response => {
@@ -20833,7 +20861,7 @@
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
             .then(response => {
@@ -20901,7 +20929,7 @@
             if (window.ApiClient && ApiClient._serverInfo) {
                 const token = ApiClient._serverInfo.AccessToken;
                 if (token) {
-                    headers['X-Emby-Authorization'] = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + (ApiClient._deviceId || 'unknown') + '", Version="10.11.0", Token="' + token + '"';
+                    headers['Authorization'] = 'MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="' + (ApiClient._deviceId || 'unknown') + '", Version="10.11.0", Token="' + token + '"';
                 }
             }
             return headers;
@@ -22526,7 +22554,7 @@
                 method: 'GET',
                 credentials: 'include',
                 headers: {
-                    'X-Emby-Authorization': authHeader
+                    'Authorization': authHeader
                 }
             })
                 .then(function (r) { return r.json(); })

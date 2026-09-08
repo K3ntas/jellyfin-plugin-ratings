@@ -2629,7 +2629,7 @@
                 fetch(ApiClient.serverAddress() + '/Ratings/Backup/Status', {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                        'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
                     }
                 })
                 .then(function(r) { return r.json(); })
@@ -2666,7 +2666,7 @@
                 fetch(ApiClient.serverAddress() + '/Ratings/Backup/Export', {
                     method: 'GET',
                     headers: {
-                        'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                        'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
                     }
                 })
                 .then(function(response) {
@@ -2723,7 +2723,7 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-Emby-Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
+                                'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"'
                             },
                             body: JSON.stringify(backupData)
                         })
@@ -2768,7 +2768,7 @@
                             if (status) { status.style.color = '#9ab'; status.textContent = 'Working… this can take a moment on large libraries.'; }
                             fetch(ApiClient.serverAddress() + '/Ratings/Admin/BackfillNativeRatings', {
                                 method: 'POST',
-                                headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                                headers: { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' }
                             })
                             .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
                             .then(function (d) {
