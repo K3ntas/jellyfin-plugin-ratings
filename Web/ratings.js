@@ -6845,7 +6845,9 @@
                 ratings.forEach(function (r) {
                     var rating = r.rating || r.Rating;
                     if (rating >= 1 && rating <= 10) {
-                        distribution[rating]++;
+                        // Rounded to a whole star: the chart has ten bars, and a decimal rating
+                        // would otherwise invent a "7.5" bucket that no bar ever reads.
+                        distribution[Math.round(rating)]++;
                     }
                 });
 
@@ -8721,6 +8723,7 @@
             container.innerHTML = `
                 <div class="ratings-plugin-stars" id="ratingsPluginStars">
                     ${this.generateStars()}
+                    <span class="ratings-plugin-value" id="ratingsPluginValue" aria-live="polite"></span>
                     <div class="ratings-plugin-popup" id="ratingsPluginPopup">
                         <div class="ratings-plugin-popup-title">${this.t('userRatings')}</div>
                         <ul class="ratings-plugin-popup-list" id="ratingsPluginPopupList">
@@ -8787,6 +8790,65 @@
         },
 
         /**
+         * Smallest rating step. Ratings are stored to one decimal (issue #82).
+         */
+        RATING_STEP: 0.1,
+
+        /**
+         * Formats a rating for display: 8 rather than 8.0, 7.5 rather than 7.5000000001.
+         * @param {number} value Rating value.
+         * @returns {string} Display text.
+         */
+        formatRating: function (value) {
+            const n = Math.round(Number(value) * 10) / 10;
+            if (!isFinite(n)) {
+                return '';
+            }
+            return Number.isInteger(n) ? String(n) : n.toFixed(1);
+        },
+
+        /**
+         * Snaps a raw value to the rating step and clamps it into range.
+         * @param {number} value Raw value.
+         * @returns {number} Rating between the step and 10.
+         */
+        snapRating: function (value) {
+            const step = this.RATING_STEP;
+            let n = Math.round(value / step) * step;
+            n = Math.round(n * 10) / 10;
+            return Math.min(10, Math.max(step, n));
+        },
+
+        /**
+         * Converts a pointer position over the star row into a rating.
+         *
+         * Measured against the row rather than an individual star so it works in all three
+         * display modes: ten stars worth one point each, or five worth two, still span the same
+         * 0-10 across the same box.
+         *
+         * @param {Element} container The stars container.
+         * @param {number} clientX Pointer X in client coordinates.
+         * @returns {number} Rating value.
+         */
+        ratingFromPointer: function (container, clientX) {
+            const stars = Array.prototype.filter.call(
+                container.querySelectorAll('.ratings-plugin-star'),
+                s => s.offsetParent !== null || s.getClientRects().length);
+            if (!stars.length) {
+                return this.RATING_STEP;
+            }
+            const first = stars[0].getBoundingClientRect();
+            const last = stars[stars.length - 1].getBoundingClientRect();
+            const left = Math.min(first.left, last.left);
+            const right = Math.max(first.right, last.right);
+            const width = right - left;
+            if (width <= 0) {
+                return this.RATING_STEP;
+            }
+            return this.snapRating(((clientX - left) / width) * 10);
+        },
+
+        /**
          * Generate star HTML based on starDisplayMode
          * Modes: '10-stars' (default), '5-stars-half', '5-stars'
          */
@@ -8839,14 +8901,14 @@
                     if (leftHalf) {
                         leftHalf.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            const rating = parseFloat(leftHalf.getAttribute('data-rating'));
                             self.handleStarClick(itemId, rating);
                         });
                     }
                     if (rightHalf) {
                         rightHalf.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            const rating = parseFloat(rightHalf.getAttribute('data-rating'));
                             self.handleStarClick(itemId, rating);
                         });
                     }
@@ -8863,25 +8925,25 @@
                     // Hover on left/right halves for visual feedback
                     if (leftHalf) {
                         leftHalf.addEventListener('mouseenter', () => {
-                            const rating = parseInt(leftHalf.getAttribute('data-rating'));
+                            const rating = parseFloat(leftHalf.getAttribute('data-rating'));
                             self.highlightStars(rating);
                         });
                     }
                     if (rightHalf) {
                         rightHalf.addEventListener('mouseenter', () => {
-                            const rating = parseInt(rightHalf.getAttribute('data-rating'));
+                            const rating = parseFloat(rightHalf.getAttribute('data-rating'));
                             self.highlightStars(rating);
                         });
                     }
                 } else {
                     // Standard click (10-stars or 5-stars mode)
                     star.addEventListener('click', () => {
-                        const rating = parseInt(star.getAttribute('data-rating'));
+                        const rating = parseFloat(star.getAttribute('data-rating'));
                         self.handleStarClick(itemId, rating);
                     });
 
                     star.addEventListener('mouseenter', () => {
-                        const rating = parseInt(star.getAttribute('data-rating'));
+                        const rating = parseFloat(star.getAttribute('data-rating'));
                         self.highlightStars(rating);
                     });
                 }
@@ -8899,6 +8961,8 @@
                 });
                 this.loadRatings(itemId); // Refresh to show actual rating
             });
+
+            this.attachStarDrag(itemId, starsContainer);
 
             // Show popup on hover over stars container
             starsContainer.addEventListener('mouseenter', () => {
@@ -8923,11 +8987,131 @@
         },
 
         /**
+         * Lets the rating be dragged across the stars to any tenth (issue #82).
+         *
+         * Asked for by three people who wanted 7.5 rather than being forced to pick 7 or 8.
+         * A plain tap is left alone and still gives the whole number the star is worth, so nobody
+         * who never drags sees a change; the decimals only appear once the pointer actually moves.
+         * That threshold is what stops a slightly wobbly tap from turning 8 into 7.9.
+         *
+         * Pointer events cover mouse, touch and pen in one path. Once the drag starts the pointer
+         * is captured, so sliding off the row keeps updating instead of dropping the gesture, and
+         * touch-action on the container stops the page scrolling under the finger mid-swipe.
+         *
+         * @param {string} itemId The item being rated.
+         * @param {Element} container The stars container.
+         */
+        attachStarDrag: function (itemId, container) {
+            const self = this;
+            let dragging = false;
+            let moved = false;
+            let startX = 0;
+            let value = 0;
+            // Enough travel to read as a swipe rather than a tap that wobbled.
+            const MOVE_THRESHOLD = 4;
+
+            container.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) {
+                    return;
+                }
+                // Anywhere on the row starts a drag, not just on a star: the gaps between stars
+                // are part of the strip as far as a finger is concerned, and requiring a hit on
+                // the glyph itself made presses that landed between two stars do nothing at all.
+                // The hover popup is the one thing inside the row that must keep its own clicks.
+                if (e.target.closest('.ratings-plugin-popup')) {
+                    return;
+                }
+                dragging = true;
+                moved = false;
+                startX = e.clientX;
+                container.classList.add('dragging');
+                value = self.ratingFromPointer(container, e.clientX);
+                try {
+                    container.setPointerCapture(e.pointerId);
+                } catch (err) { /* capture is a nicety, not a requirement */ }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (!dragging) {
+                    // Nothing pressed: still preview what the pointer is over, so moving across
+                    // the row shows the value it would give without having to hold the button
+                    // down. Skipped for touch, where "hovering" is not a thing and a stray move
+                    // between a tap's down and up would flicker the row.
+                    if (e.pointerType !== 'touch' && !e.target.closest('.ratings-plugin-popup')) {
+                        self.fillStarsTo(self.ratingFromPointer(container, e.clientX), true);
+                    }
+                    return;
+                }
+                if (!moved && Math.abs(e.clientX - startX) < MOVE_THRESHOLD) {
+                    return;
+                }
+                moved = true;
+                // Only now is this a swipe, so stop the page scrolling with the finger.
+                e.preventDefault();
+                value = self.ratingFromPointer(container, e.clientX);
+                self.fillStarsTo(value, true);
+            });
+
+            const finish = (e) => {
+                if (!dragging) {
+                    return;
+                }
+                dragging = false;
+                container.classList.remove('dragging');
+                try {
+                    container.releasePointerCapture(e.pointerId);
+                } catch (err) { /* nothing to release */ }
+
+                if (!moved) {
+                    // A tap: leave it to the existing per-star click handlers, which keep the
+                    // whole-number and half-star behaviour exactly as it was.
+                    return;
+                }
+                // Read the release point rather than reusing the last move: where the finger is
+                // lifted is the value the person chose, and the two can differ if the pointer
+                // moves after the final move event is delivered.
+                if (typeof e.clientX === 'number') {
+                    value = self.ratingFromPointer(container, e.clientX);
+                }
+                self.fillStarsTo(value, false);
+                self.handleStarClick(itemId, value);
+            };
+
+            container.addEventListener('pointerup', finish);
+            container.addEventListener('pointercancel', () => {
+                dragging = false;
+                moved = false;
+                container.classList.remove('dragging');
+            });
+
+            // A plain click commits whatever the pointer is over, to the same tenth the row was
+            // previewing. Taken in the capture phase so the per-star handlers underneath never
+            // run: they would submit the whole number for the star that was hit, which would
+            // disagree with the value the row just showed.
+            container.addEventListener('click', (e) => {
+                if (e.target.closest('.ratings-plugin-popup')) {
+                    return;
+                }
+                e.stopPropagation();
+                e.preventDefault();
+                if (moved) {
+                    // Already committed on pointerup at the end of the drag.
+                    moved = false;
+                    return;
+                }
+                self.handleStarClick(itemId, self.ratingFromPointer(container, e.clientX));
+            }, true);
+        },
+
+        /**
          * Handle star click - either submit directly (quick mode) or open modal
          */
         handleStarClick: function (itemId, rating) {
-            // Check if clicking the same rating - toggle off (delete)
-            if (this.currentUserRating === rating) {
+            // Check if clicking the same rating - toggle off (delete).
+            // Compared with a tolerance rather than ===: ratings carry a decimal now and an exact
+            // float match would make the toggle fire only by luck.
+            if (this.currentUserRating != null &&
+                Math.abs(Number(this.currentUserRating) - Number(rating)) < 0.05) {
                 this.deleteRating(itemId);
             } else if (this.quickRatingMode) {
                 // Quick mode: submit rating directly without modal
@@ -8939,14 +9123,77 @@
         },
 
         /**
+         * Fills the star row to an exact fractional rating, and updates the number beside it.
+         *
+         * Whole stars get the plain filled state; the star the value lands inside is painted with
+         * a gradient stop at the exact percentage, which is the same background-clip:text trick
+         * the old half-star state used, generalised from a fixed 50% to any fraction. Used while
+         * dragging so the fill tracks the finger or pointer continuously (issue #82).
+         *
+         * @param {number} rating Rating between 0.1 and 10.
+         * @param {boolean} [preview] True while dragging - marks the row as a preview rather than
+         *                            the saved value.
+         */
+        fillStarsTo: function (rating, preview) {
+            const visiblePage = this.getVisibleDetailPage();
+            const stars = visiblePage
+                ? visiblePage.querySelectorAll('.ratings-plugin-star')
+                : document.querySelectorAll('.ratings-plugin-star');
+            if (!stars.length) {
+                return;
+            }
+            // Ten stars are worth one point each, five stars two.
+            const perStar = 10 / stars.length;
+
+            stars.forEach((star, index) => {
+                const filledUpTo = (index + 1) * perStar;
+                const fraction = (rating - index * perStar) / perStar;
+                star.classList.remove('half-hover', 'half-filled', 'current-rating');
+                star.removeAttribute('data-hover-num');
+
+                if (rating >= filledUpTo) {
+                    star.classList.add(preview ? 'hover' : 'filled');
+                    star.classList.remove(preview ? 'filled' : 'hover', 'partial');
+                    star.style.removeProperty('--star-fill');
+                } else if (fraction > 0) {
+                    star.classList.add('partial', preview ? 'hover' : 'filled');
+                    star.classList.remove(preview ? 'filled' : 'hover');
+                    star.style.setProperty('--star-fill', (fraction * 100).toFixed(2) + '%');
+                } else {
+                    star.classList.remove('hover', 'filled', 'partial');
+                    star.style.removeProperty('--star-fill');
+                }
+            });
+
+            const valueEl = this.queryInVisiblePage('#ratingsPluginValue');
+            if (valueEl) {
+                valueEl.textContent = this.formatRating(rating);
+                valueEl.classList.toggle('preview', !!preview);
+            }
+        },
+
+        /**
          * Highlight stars up to rating
          */
         highlightStars: function (rating) {
+            // A fractional value cannot be shown by the whole-star paths below, so hand those to
+            // the continuous filler. Whole numbers keep the original behaviour untouched.
+            if (!Number.isInteger(rating)) {
+                this.fillStarsTo(rating, true);
+                return;
+            }
+
             const visiblePage = this.getVisibleDetailPage();
             const stars = visiblePage
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
             const mode = this.starDisplayMode || '10-stars';
+
+            const valueEl = this.queryInVisiblePage('#ratingsPluginValue');
+            if (valueEl) {
+                valueEl.textContent = this.formatRating(rating);
+                valueEl.classList.add('preview');
+            }
 
             if (mode === '5-stars' || mode === '5-stars-half') {
                 // For 5-star modes, rating is 1-10 but we have 5 stars
@@ -9108,6 +9355,25 @@
                 ? visiblePage.querySelectorAll('.ratings-plugin-star')
                 : document.querySelectorAll('.ratings-plugin-star');
             const mode = this.starDisplayMode || '10-stars';
+
+            const valueEl = this.queryInVisiblePage('#ratingsPluginValue');
+            if (valueEl) {
+                valueEl.textContent = rating > 0 ? this.formatRating(rating) : '';
+                valueEl.classList.remove('preview');
+            }
+
+            // A stored rating can now land between stars, which the whole-star branches below
+            // cannot draw - the continuous filler paints that exactly.
+            if (rating > 0 && !Number.isInteger(rating)) {
+                this.fillStarsTo(rating, false);
+                return;
+            }
+
+            // Clear any leftover partial fill from a previous fractional value.
+            stars.forEach(star => {
+                star.classList.remove('partial');
+                star.style.removeProperty('--star-fill');
+            });
 
             if (mode === '5-stars' || mode === '5-stars-half') {
                 // For 5-star modes, rating is 1-10 but we have 5 stars
@@ -9377,7 +9643,7 @@
 
             modalStars.forEach(star => {
                 star.addEventListener('mouseenter', function() {
-                    const r = parseInt(this.getAttribute('data-rating'));
+                    const r = parseFloat(this.getAttribute('data-rating'));
                     modalStars.forEach((s, idx) => {
                         s.classList.toggle('hover', idx < r);
                     });
@@ -9388,7 +9654,7 @@
                 });
 
                 star.addEventListener('click', function() {
-                    selectedRating = parseInt(this.getAttribute('data-rating'));
+                    selectedRating = parseFloat(this.getAttribute('data-rating'));
                     modalStars.forEach((s, idx) => {
                         s.classList.toggle('filled', idx < selectedRating);
                     });

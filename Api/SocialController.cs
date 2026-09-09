@@ -331,7 +331,10 @@ namespace Jellyfin.Plugin.Ratings.Api
             var distribution = new int[10];
             foreach (var r in ratings)
             {
-                var bucket = r.Rating - 1;
+                // Ten whole-star buckets. Ratings carry a decimal now, so round to the nearest
+                // star before indexing - truncating would push 7.6 into the 7 bucket, and the
+                // index has to be an integer regardless.
+                var bucket = (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) - 1;
                 if (bucket >= 0 && bucket < distribution.Length)
                 {
                     distribution[bucket]++;
@@ -415,7 +418,10 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             foreach (var r in ratings)
             {
-                var bucket = r.Rating - 1;
+                // Ten whole-star buckets. Ratings carry a decimal now, so round to the nearest
+                // star before indexing - truncating would push 7.6 into the 7 bucket, and the
+                // index has to be an integer regardless.
+                var bucket = (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) - 1;
                 if (bucket >= 0 && bucket < distribution.Length)
                 {
                     distribution[bucket]++;
@@ -3732,7 +3738,8 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 if (rating.Rating >= 1 && rating.Rating <= 10)
                 {
-                    distribution[rating.Rating - 1]++;
+                    // Whole-star bucket - see the note on the other distributions.
+                    distribution[(int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero) - 1]++;
                 }
             }
 

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.388.0",
+        "changelog": "A rebuilt rating system with real precision. Until now every rating was one of ten fixed steps, so a film was a 7 or an 8 with nothing in between. The whole star row is now a single sliding control: move across it and the stars fill smoothly under your pointer, a tenth of a star at a time, with the exact value appearing beside them as you go. Give something a 7.5 when 7 feels harsh and 8 feels generous. On a phone, swipe along the stars for the same control. The value appears while you are choosing and steps out of the way once you are done, so nothing clutters the page, and a deliberate press is still what saves a rating - simply passing over the stars never changes one you have already given. Everything you have rated before carries over untouched, and whole numbers work exactly as they always did.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.388.0/Jellyfin.Plugin.Ratings_1.0.388.0.zip",
+        "checksum": "014077a6183df2b0c569fe4454d1b6a3",
+        "timestamp": "2026-09-09T22:54:52Z"
+      },
+      {
         "version": "1.0.387.0",
         "changelog": "Brings the header buttons back on Jellyfin 12. Jellyfin 12 rebuilt its web interface, and while it still leaves the old header in the page it collapses it to nothing - so the buttons were being created into something invisible. They now go into the new header, in the same place as before: immediately left of Jellyfin's own cast and search icons. The collapsed menu on phones is unchanged, and the buttons now also survive moving around the app, including in and out of the admin dashboard, which previously lost them until a manual refresh. Nothing changes on Jellyfin 10.x, where the old header is still used.",
         "targetAbi": "10.11.0.0",

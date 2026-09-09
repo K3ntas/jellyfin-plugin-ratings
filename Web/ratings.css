@@ -181,6 +181,83 @@
     background-clip: text;
 }
 
+/* Partially filled star, to any fraction. Same background-clip:text trick as the half state
+   above, with the gradient stop driven by --star-fill instead of a fixed 50% - that is what lets
+   the fill follow a swipe by tenths (issue #82). Two hard stops, so it reads as a filled portion
+   of a star rather than a blur. */
+.ratings-plugin-star.partial {
+    background: linear-gradient(90deg,
+        #ffd700 var(--star-fill, 50%), #555 var(--star-fill, 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Dragging across the stars must not scroll the page under the finger. */
+.ratings-plugin-stars {
+    touch-action: pan-y;
+}
+
+/* The exact value, sitting at the end of the row.
+   Only visible while the row is being pointed at - the number is there to tell you what you are
+   about to pick, not to sit on the page afterwards. Visibility is driven by :hover rather than a
+   JS flag so it can never be left showing by a code path that forgot to clear it; .dragging
+   covers touch, where there is no hover at all. */
+.ratings-plugin-value {
+    flex: 0 0 auto;
+    align-self: center;
+    /* Relative to the row, not to a star. A star is 1.6em of this same box, so this lands the
+       digits at roughly half a star's height - the earlier 0.42em was sized against the row and
+       came out tiny next to them. */
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+    box-sizing: content-box;
+    text-align: center;
+    border-radius: 999px;
+    color: #ffd700;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    pointer-events: none;
+    /* Collapsed to nothing while hidden, so the row is only as wide as the stars and does not sit
+       padded out to the right waiting for a number that is not being shown. It grows back on
+       hover. Sized with width rather than min-width because min-width beats max-width in CSS and
+       would keep the chip propping the row open. */
+    width: 0;
+    margin-left: 0;
+    padding: 0.22em 0;
+    border-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.14s ease, margin 0.14s ease, padding 0.14s ease,
+                border-width 0.14s ease, opacity 0.12s ease;
+    /* Optical, not geometric: the star glyph's ink sits low inside its line box while digits sit
+       high, so centring the two boxes still reads as the number floating above the stars. */
+    position: relative;
+    top: 0.08em;
+}
+
+/* Fixed width once shown - wide enough for "10" - so sweeping from 7 to 10 does not resize the
+   chip and shove the centred stars sideways under the pointer. */
+.ratings-plugin-stars:hover .ratings-plugin-value,
+.ratings-plugin-stars.dragging .ratings-plugin-value {
+    width: 2.4em;
+    margin-left: 0.5em;
+    padding: 0.22em 0.5em;
+    border-width: 1px;
+    opacity: 1;
+}
+
+/* While the pointer is choosing a value rather than showing the saved one. Kept to a brightness
+   change on the same gold so the chip does not flicker between two colours as you sweep across. */
+.ratings-plugin-value.preview {
+    color: #fff3b0;
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
 .ratings-plugin-star.half-hover {
     background: linear-gradient(90deg, #ffd700 50%, #555 50%);
     -webkit-background-clip: text;

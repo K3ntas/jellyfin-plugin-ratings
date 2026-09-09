@@ -45,10 +45,15 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string? AniDbId { get; set; }
 
         /// <summary>
-        /// Gets or sets the rating value (1-10).
+        /// Gets or sets the rating value (0.1-10, to one decimal place).
         /// </summary>
+        /// <remarks>
+        /// Widened from int for issue #82. Files written by older versions hold whole numbers,
+        /// which deserialize into this without a migration. Values are rounded to one decimal
+        /// before being stored.
+        /// </remarks>
         [JsonPropertyName("rating")]
-        public int Rating { get; set; }
+        public double Rating { get; set; }
 
         /// <summary>
         /// Gets or sets the optional review text.
