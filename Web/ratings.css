@@ -206,18 +206,12 @@
 .ratings-plugin-value {
     flex: 0 0 auto;
     align-self: center;
-    margin-left: 0.5em;
     /* Relative to the row, not to a star. A star is 1.6em of this same box, so this lands the
        digits at roughly half a star's height - the earlier 0.42em was sized against the row and
        came out tiny next to them. */
     font-size: 0.85em;
     font-weight: 700;
     line-height: 1;
-    padding: 0.22em 0.5em;
-    /* Fixed width, wide enough for "10". The row is centre-justified, so a chip that grew from
-       "" to "7" to "10" would shove the stars sideways under the pointer - which made the value
-       jump around while sweeping, because the star the cursor was over kept moving. */
-    min-width: 2.4em;
     box-sizing: content-box;
     text-align: center;
     border-radius: 999px;
@@ -227,17 +221,33 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     user-select: none;
-    opacity: 0;
-    transition: opacity 0.12s ease;
     pointer-events: none;
+    /* Collapsed to nothing while hidden, so the row is only as wide as the stars and does not sit
+       padded out to the right waiting for a number that is not being shown. It grows back on
+       hover. Sized with width rather than min-width because min-width beats max-width in CSS and
+       would keep the chip propping the row open. */
+    width: 0;
+    margin-left: 0;
+    padding: 0.22em 0;
+    border-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.14s ease, margin 0.14s ease, padding 0.14s ease,
+                border-width 0.14s ease, opacity 0.12s ease;
     /* Optical, not geometric: the star glyph's ink sits low inside its line box while digits sit
        high, so centring the two boxes still reads as the number floating above the stars. */
     position: relative;
     top: 0.08em;
 }
 
+/* Fixed width once shown - wide enough for "10" - so sweeping from 7 to 10 does not resize the
+   chip and shove the centred stars sideways under the pointer. */
 .ratings-plugin-stars:hover .ratings-plugin-value,
 .ratings-plugin-stars.dragging .ratings-plugin-value {
+    width: 2.4em;
+    margin-left: 0.5em;
+    padding: 0.22em 0.5em;
+    border-width: 1px;
     opacity: 1;
 }
 

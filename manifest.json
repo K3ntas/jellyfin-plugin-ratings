@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.391.0",
+        "changelog": "The rating row no longer sits padded out to the right when the number is hidden. The value now takes up space only while it is on screen, so the row grows as you point at the stars and shrinks back to just the stars when you move away.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.391.0/Jellyfin.Plugin.Ratings_2.0.391.0.zip",
+        "checksum": "1a6a8300acb25e9d20ae3e7061f16168",
+        "timestamp": "2026-09-09T22:46:26Z"
+      },
+      {
         "version": "2.0.390.0",
         "changelog": "The rating number beside the stars now shows only while you are pointing at them, and disappears again once you move away - including after a rating is saved.",
         "targetAbi": "10.11.0.0",
