@@ -927,6 +927,17 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     margin-right: 8px !important;
 }
 
+/* Jellyfin 12's header is a React/MUI AppBar with a 48px dense toolbar, and the group now sits
+   in the same flex row as Jellyfin's own Cast/Search icons instead of the old .headerRight.
+   Only layout is adjusted here - the pill styling above is deliberately shared so the buttons
+   look identical to how they did before. These rules are outside the mobile media query, so the
+   collapsed-menu rules (which are !important and set position:fixed) still win on phones. */
+#ratingsButtonGroup.ratings-modern-header {
+    flex: 0 0 auto !important;
+    align-self: center !important;
+    max-height: 40px !important;
+}
+
 /* Force button order using CSS order (async loading causes random DOM order) */
 #headerSearchField { order: 1 !important; }
 #languageBtn { order: 2 !important; }
