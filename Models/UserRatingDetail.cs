@@ -18,9 +18,9 @@ namespace Jellyfin.Plugin.Ratings.Models
         public string Username { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the rating value.
+        /// Gets or sets the rating value (0.1-10, to one decimal place).
         /// </summary>
-        public int Rating { get; set; }
+        public double Rating { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when the rating was created.

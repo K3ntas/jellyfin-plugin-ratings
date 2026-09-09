@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.389.0",
+        "changelog": "Ratings can now be given to one decimal place (issue #82). Move across the stars and the fill follows your pointer by tenths, with the exact value shown beside them - 7.5 or 6.8 instead of having to settle for 7 or 8. On a phone you can swipe along the stars to the same precision. The number stays on screen once you have rated something, and changing a rating still needs a deliberate press, so passing over the stars never alters what you saved. Existing whole-number ratings are unaffected and need no conversion.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.389.0/Jellyfin.Plugin.Ratings_2.0.389.0.zip",
+        "checksum": "9fdce5bf2128ae15e536367c9f644f7b",
+        "timestamp": "2026-09-09T22:22:58Z"
+      },
+      {
         "version": "2.0.388.0",
         "changelog": "Brings the header buttons back on Jellyfin 12. Jellyfin 12 rebuilt its web interface, and while it still leaves the old header in the page it collapses it to nothing - so the buttons were being created into something invisible. They now go into the new header, in the same place as before: immediately left of Jellyfin's own cast and search icons. The collapsed menu on phones is unchanged, and the buttons now also survive moving around the app, including in and out of the admin dashboard, which previously lost them until a manual refresh.",
         "targetAbi": "10.11.0.0",

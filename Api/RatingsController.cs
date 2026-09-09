@@ -220,14 +220,14 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Sets a rating for an item.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
-        /// <param name="rating">Rating value (1-10).</param>
+        /// <param name="rating">Rating value (0.1-10; rounded to one decimal place).</param>
         /// <param name="review">Optional review text.</param>
         /// <returns>The created or updated rating.</returns>
         [HttpPost("Items/{itemId}/Rating")]
         [Authorize]
         public async Task<ActionResult<UserRating>> SetRating(
             [FromRoute] [Required] Guid itemId,
-            [FromQuery] [Required] [Range(1, 10)] int rating,
+            [FromQuery] [Required] [Range(0.1, 10)] double rating,
             [FromQuery] string? review = null)
         {
             try
@@ -1629,7 +1629,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// Mirrors a just-saved rating into Jellyfin's native fields so external tools (e.g. via the
         /// Jellyfin API) can read it. Best-effort - never throws back into the rating flow.
         /// </summary>
-        private void WriteNativeRating(Guid userId, MediaBrowser.Controller.Entities.BaseItem item, int rating)
+        private void WriteNativeRating(Guid userId, MediaBrowser.Controller.Entities.BaseItem item, double rating)
         {
             var config = Plugin.Instance?.Configuration;
 
@@ -6061,7 +6061,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             public string UserName { get; set; } = string.Empty;
             public string? ItemId { get; set; }
             public string ItemName { get; set; } = string.Empty;
-            public int? Rating { get; set; }
+            public double? Rating { get; set; }
             public string? ReviewPreview { get; set; }
             public string? RequestType { get; set; }
             public string? RequestStatus { get; set; }
@@ -6194,11 +6194,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 var recentRatings = _repository.GetRecentRatings(1000);
 
+                // Bucketed by whole star. The chart has ten bars, and since ratings can carry a
+                // decimal an exact comparison would count almost nothing.
                 var distribution = Enumerable.Range(1, 10)
                     .Select(rating => new
                     {
                         Rating = rating,
-                        Count = recentRatings.Count(r => r.Rating == rating)
+                        Count = recentRatings.Count(r =>
+                            (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) == rating)
                     })
                     .ToList();
 
@@ -6272,8 +6275,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 limit = Math.Clamp(limit, 1, 100);
 
                 var recentRatings = _repository.GetRecentRatings(1000);
+                // Ratings can carry a decimal now (issue #82), so an exact match would return
+                // almost nothing here - this endpoint browses by whole star, so 7.5 and 6.8 both
+                // belong under 7.
                 var candidates = recentRatings
-                    .Where(r => r.Rating == rating)
+                    .Where(r => (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) == rating)
                     .GroupBy(r => r.ItemId)
                     .Select(g => g.First())
                     .ToList();

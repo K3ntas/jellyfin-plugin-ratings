@@ -407,8 +407,13 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// <param name="reviewText">Optional review text.</param>
         /// <param name="snapshot">Optional title/year/type/poster to remember with the rating.</param>
         /// <returns>The created or updated rating.</returns>
-        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, int rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null, string? reviewText = null, RatingSnapshot? snapshot = null)
+        public async Task<UserRating> SetRatingAsync(Guid userId, Guid itemId, double rating, string? tmdbId = null, string? imdbId = null, string? aniDbId = null, string? reviewText = null, RatingSnapshot? snapshot = null)
         {
+            // One decimal place, decided here rather than at the call sites so nothing can put
+            // 7.30000000000000004 (or a value from a hand-made API call) into the file. Doing it
+            // once at the single write path also keeps every reader free of rounding concerns.
+            rating = Math.Round(Math.Clamp(rating, 0.1, 10), 1, MidpointRounding.AwayFromZero);
+
             lock (_lock)
             {
                 var existing = FindUserRatingInternal(userId, itemId, tmdbId, imdbId, aniDbId);
@@ -794,7 +799,7 @@ namespace Jellyfin.Plugin.Ratings.Data
         /// </summary>
         /// <param name="userId">User ID.</param>
         /// <returns>Dictionary mapping ItemId to UserRating value.</returns>
-        public Dictionary<Guid, int> GetUserRatingsMap(Guid userId)
+        public Dictionary<Guid, double> GetUserRatingsMap(Guid userId)
         {
             lock (_lock)
             {
@@ -844,13 +849,14 @@ namespace Jellyfin.Plugin.Ratings.Data
                 return stats;
             }
 
-            var sum = 0L;
+            var sum = 0d;
             for (var i = 0; i < itemRatings.Count; i++)
             {
                 var rating = itemRatings[i];
                 sum += rating.Rating;
 
-                var bucket = rating.Rating - 1;
+                // Whole-star bucket: ratings carry a decimal, and an array index cannot.
+                var bucket = (int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero) - 1;
                 if (bucket >= 0 && bucket < stats.Distribution.Length)
                 {
                     stats.Distribution[bucket]++;

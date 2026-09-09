@@ -30,7 +30,7 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// Gets or sets the user's rating (if applicable).
         /// </summary>
         [JsonPropertyName("userRating")]
-        public int? UserRating { get; set; }
+        public double? UserRating { get; set; }
 
         /// <summary>
         /// Gets or sets the rating distribution (count for each rating value 1-10).
