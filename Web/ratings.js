@@ -11258,8 +11258,11 @@
                         if (buttonGroup) {
                             buttonGroup.appendChild(searchContainer);
                         } else {
-                            // Fallback to headerRight if button group doesn't exist
-                            const headerRight = document.querySelector('.headerRight');
+                            // Fallback when the group is missing. resolveHeaderSlot, not
+                            // .headerRight: on Jellyfin 12 that element is the collapsed
+                            // legacy header and anything put in it is invisible.
+                            const slot = RatingsPlugin.resolveHeaderSlot();
+                            const headerRight = slot && slot.el;
                             if (headerRight) {
                                 headerRight.insertBefore(searchContainer, headerRight.firstChild);
                             } else {
@@ -11571,6 +11574,45 @@
         },
 
         /**
+         * Resolves the element the header buttons belong in.
+         *
+         * Jellyfin 12 rewrote the web client in React/MUI. It still leaves the old
+         * `.skinHeader` in the DOM but collapses it to zero height, so the buttons this plugin
+         * injected into `.headerRight` were still being created correctly and then rendered
+         * inside a 0x0 element - present in the DOM, invisible on screen. Jellyfin's own old
+         * Cast/Search/Player buttons sit in there too, equally invisible.
+         *
+         * The legacy header is preferred while it is genuinely visible, so nothing moves on
+         * 10.x/11.x. On 12 the group goes at the START of the toolbar cluster that holds
+         * Cast/Search, which is where `.headerRight`'s first child used to sit - i.e. the same
+         * spot on screen, immediately left of Jellyfin's own icons.
+         *
+         * The cluster is found by looking for Jellyfin's Cast/Search icons rather than by class
+         * name: MUI's emotion classes (css-1riowxi and friends) are content hashes that change
+         * whenever the client is rebuilt.
+         *
+         * @returns {{el: Element, modern: boolean}|null} Target container, or null if no header.
+         */
+        resolveHeaderSlot: function () {
+            const legacy = document.querySelector('.headerRight');
+            if (legacy && legacy.getBoundingClientRect().height > 0) {
+                return { el: legacy, modern: false };
+            }
+
+            const toolbar = document.querySelector('header.MuiAppBar-root .MuiToolbar-root');
+            if (toolbar) {
+                for (let i = 0; i < toolbar.children.length; i++) {
+                    const child = toolbar.children[i];
+                    if (child.querySelector('svg[data-testid="SearchIcon"], svg[data-testid="CastIcon"], svg[data-testid="GroupsIcon"]')) {
+                        return { el: child, modern: true };
+                    }
+                }
+            }
+
+            return legacy ? { el: legacy, modern: false } : null;
+        },
+
+        /**
          * Initialize unified button group container
          */
         initButtonGroup: function () {
@@ -11581,18 +11623,26 @@
                     return; // Already exists
                 }
 
-                const headerRight = document.querySelector('.headerRight');
-                if (!headerRight) {
+                const slot = self.resolveHeaderSlot();
+                if (!slot) {
                     setTimeout(tryCreate, 500);
                     return;
                 }
+                const headerRight = slot.el;
 
                 // Create the container
                 const buttonGroup = document.createElement('div');
                 buttonGroup.id = 'ratingsButtonGroup';
+                if (slot.modern) {
+                    buttonGroup.classList.add('ratings-modern-header');
+                }
 
                 // Insert at the beginning of headerRight
                 headerRight.insertBefore(buttonGroup, headerRight.firstChild);
+
+                if (slot.modern) {
+                    self.keepHeaderGroupAttached(buttonGroup);
+                }
 
                 // Apply custom styles if already loaded
                 if (self.headerButtonStyle) {
@@ -11601,6 +11651,79 @@
             };
 
             setTimeout(tryCreate, 500);
+        },
+
+        /**
+         * Puts the button group back if Jellyfin 12's React header re-renders and drops it.
+         *
+         * The old header was plain DOM that survived SPA navigation, so a single injection was
+         * enough. React owns its toolbar and will discard children it did not create, which would
+         * take the group and every button inside it.
+         *
+         * This re-attaches the SAME element rather than rebuilding it, so every button, event
+         * handler and unread badge survives - rebuilding would mean re-running each feature's
+         * injector and would drop state. The callback exits on an `isConnected` property read in
+         * the overwhelmingly common case, which is why watching a busy subtree is affordable.
+         *
+         * @param {Element} group The #ratingsButtonGroup element.
+         */
+        keepHeaderGroupAttached: function (group) {
+            const self = this;
+            if (self._headerSlotObserver) {
+                return;
+            }
+
+            // Checking only for a detached element is not enough. Leaving the admin dashboard
+            // leaves the group attached to a header that is no longer the live one, so it stays
+            // in the document while being invisible - and never comes back. Placement has to be
+            // verified against the currently resolved slot, not merely that the node still exists.
+            let known = group.parentElement;
+
+            const ensurePlaced = () => {
+                const toggle = self._headerToggleEl;
+                // Cheap path first: same parent as last time, still on screen, and the collapsed
+                // menu's toggle still attached. The toggle has to be checked separately - React
+                // can drop it on its own while leaving the group where it is, and that alone
+                // leaves phones with no way to reach the buttons.
+                if (group.parentElement === known && known && known.isConnected &&
+                    (!toggle || toggle.isConnected) &&
+                    known.getBoundingClientRect().height > 0) {
+                    return;
+                }
+
+                const slot = self.resolveHeaderSlot();
+                if (!slot) {
+                    return;
+                }
+
+                if (slot.el !== group.parentElement) {
+                    slot.el.insertBefore(group, slot.el.firstChild);
+                    group.classList.toggle('ratings-modern-header', !!slot.modern);
+                }
+                // The collapsed-menu toggle is a sibling, so it travels with the group.
+                if (toggle && !toggle.isConnected) {
+                    slot.el.insertBefore(toggle, group.nextSibling);
+                }
+                known = slot.el;
+            };
+
+            // Throttled: the React client mutates constantly, and each run reads layout.
+            let queued = false;
+            const schedule = () => {
+                if (queued) {
+                    return;
+                }
+                queued = true;
+                window.setTimeout(() => {
+                    queued = false;
+                    ensurePlaced();
+                }, 300);
+            };
+
+            self._headerSlotObserver = new MutationObserver(schedule);
+            self._headerSlotObserver.observe(document.body, { childList: true, subtree: true });
+            // Route changes swap whole headers, and can settle without further mutations.
+            window.addEventListener('hashchange', schedule);
         },
 
         // Screens at or below this width get the collapsed header menu. Chosen so phones in both
@@ -11668,11 +11791,12 @@
                 }
 
                 const group = document.getElementById('ratingsButtonGroup');
-                const headerRight = document.querySelector('.headerRight');
-                if (!group || !headerRight) {
+                const slot = self.resolveHeaderSlot();
+                if (!group || !slot) {
                     setTimeout(tryCreate, 500);
                     return;
                 }
+                const headerRight = slot.el;
 
                 const toggle = document.createElement('button');
                 toggle.id = 'ratingsMenuToggle';
@@ -11794,6 +11918,9 @@
                 window.addEventListener('scroll', reposition, true);
 
                 headerRight.insertBefore(toggle, headerRight.firstChild);
+                // Held so the header watchdog can put this exact node back if React drops it -
+                // getElementById cannot find an element that is no longer in the document.
+                self._headerToggleEl = toggle;
             };
 
             setTimeout(tryCreate, 700);
@@ -12496,8 +12623,10 @@
                         if (buttonGroup) {
                             buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: insert into headerRight
-                            const headerRight = document.querySelector('.headerRight');
+                            // Fallback: same reasoning as above - the legacy header is
+                            // present but zero-height on Jellyfin 12.
+                            const slot = RatingsPlugin.resolveHeaderSlot();
+                            const headerRight = slot && slot.el;
                             if (headerRight) {
                                 headerRight.insertBefore(btn, headerRight.firstChild);
                             }
@@ -13425,8 +13554,10 @@
                         if (buttonGroup) {
                             buttonGroup.appendChild(btn);
                         } else {
-                            // Fallback: insert into headerRight
-                            const headerRight = document.querySelector('.headerRight');
+                            // Fallback: same reasoning as above - the legacy header is
+                            // present but zero-height on Jellyfin 12.
+                            const slot = RatingsPlugin.resolveHeaderSlot();
+                            const headerRight = slot && slot.el;
                             if (headerRight) {
                                 headerRight.insertBefore(btn, headerRight.firstChild);
                             } else {
@@ -20997,8 +21128,6 @@
 
             const tryInject = function () {
                 attempts++;
-                const headerRight = document.querySelector('.headerRight');
-
                 const buttonGroup = document.getElementById('ratingsButtonGroup');
                 if (buttonGroup && !document.getElementById('chatBtn')) {
                     // Create chat button - same structure as Latest Media button
