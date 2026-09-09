@@ -9169,10 +9169,6 @@
             if (valueEl) {
                 valueEl.textContent = this.formatRating(rating);
                 valueEl.classList.toggle('preview', !!preview);
-                // A committed value stays on screen; a preview only lives while pointed at.
-                if (!preview) {
-                    valueEl.classList.add('has-value');
-                }
             }
         },
 
@@ -9364,9 +9360,6 @@
             if (valueEl) {
                 valueEl.textContent = rating > 0 ? this.formatRating(rating) : '';
                 valueEl.classList.remove('preview');
-                // Shown permanently once this account has rated the item, and otherwise only
-                // while the row is being pointed at.
-                valueEl.classList.toggle('has-value', rating > 0);
             }
 
             // A stored rating can now land between stars, which the whole-star branches below

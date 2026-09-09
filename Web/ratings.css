@@ -200,7 +200,7 @@
 
 /* The exact value, sitting at the end of the row.
    Only visible while the row is being pointed at - the number is there to tell you what you are
-   about to pick, not to sit on the page permanently. Visibility is driven by :hover rather than a
+   about to pick, not to sit on the page afterwards. Visibility is driven by :hover rather than a
    JS flag so it can never be left showing by a code path that forgot to clear it; .dragging
    covers touch, where there is no hover at all. */
 .ratings-plugin-value {
@@ -237,8 +237,7 @@
 }
 
 .ratings-plugin-stars:hover .ratings-plugin-value,
-.ratings-plugin-stars.dragging .ratings-plugin-value,
-.ratings-plugin-value.has-value {
+.ratings-plugin-stars.dragging .ratings-plugin-value {
     opacity: 1;
 }
 
