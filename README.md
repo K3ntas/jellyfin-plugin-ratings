@@ -51,6 +51,10 @@ all injected straight into the Jellyfin web UI, with no separate app to run.
 Everything is optional. Each subsystem can be switched off from the plugin settings page,
 and the plugin stays inert when disabled.
 
+
+☕ If this plugin saves you time, makes your workflow easier, or helps you ship better code, consider buying me a coffee. Your support keeps the project alive and motivates me to keep building, improving, and hecking! 💻🐈
+https://buymeacoffee.com/k3ntas
+
 ---
 
 ## Screenshots
