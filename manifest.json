@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.392.0",
+        "changelog": "Fixes the Ratings dashboard, which showed Failed to load in every panel on Jellyfin 12 - it was still identifying itself the old way that Jellyfin 12 no longer accepts. The version shown in its heading is now read from the plugin Jellyfin actually loaded instead of being typed in by hand, so it can no longer go stale. On phones, the header menu opens under its button again instead of being dragged onto the header with its buttons running off the screen, and every button now fits on one line without scrolling. The rating, all-ratings and media management dialogs are sized to the screen as well, and the media management tabs scroll sideways rather than stretching the dialog past the edge.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.392.0/Jellyfin.Plugin.Ratings_2.0.392.0.zip",
+        "checksum": "TBD",
+        "timestamp": "2026-09-10T14:06:04Z"
+      },
+      {
         "version": "2.0.391.0",
         "changelog": "The rating row no longer sits padded out to the right when the number is hidden. The value now takes up space only while it is on screen, so the row grows as you point at the stars and shrinks back to just the stars when you move away.",
         "targetAbi": "10.11.0.0",

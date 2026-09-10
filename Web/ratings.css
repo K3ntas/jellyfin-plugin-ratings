@@ -1008,8 +1008,13 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
    in the same flex row as Jellyfin's own Cast/Search icons instead of the old .headerRight.
    Only layout is adjusted here - the pill styling above is deliberately shared so the buttons
    look identical to how they did before. These rules are outside the mobile media query, so the
-   collapsed-menu rules (which are !important and set position:fixed) still win on phones. */
-#ratingsButtonGroup.ratings-modern-header {
+   collapsed-menu rules (which are !important and set position:fixed) still win on phones.
+
+   :not(.ratings-menu-open) matters. The same element becomes the dropdown panel on a phone, and
+   capping it at one toolbar row there cut off every button that wrapped onto a second line -
+   media management and chat were being clipped away entirely. The cap is only meaningful while
+   the group is an inline row inside the toolbar. */
+#ratingsButtonGroup.ratings-modern-header:not(.ratings-menu-open) {
     flex: 0 0 auto !important;
     align-self: center !important;
     max-height: 40px !important;
@@ -1129,24 +1134,14 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 
 /* Mobile - Second header row - Full width bar */
 @media screen and (max-width: 600px) {
+    /* Only spacing here. The buttons used to be a full-width bar pinned under the header, and
+       the position/inset/width rules that made it one carried !important - which beats the
+       inline style JavaScript sets, so the collapsed menu was dragged back onto the header
+       instead of opening under its toggle, with its contents running off the right edge. The
+       floating panel's own rules (in the max-width: 768px block) own all of that now. */
     #ratingsButtonGroup {
-        position: fixed !important;
-        top: 56px !important;
-        left: 0 !important;
-        right: 0 !important;
-        transform: none !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        justify-content: center !important;
-        background: rgba(30, 30, 30, 0.98) !important;
-        border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        padding: 8px 12px !important;
+        padding: 8px !important;
         gap: 8px !important;
-        z-index: 999 !important;
-        width: 100% !important;
-        max-width: none !important;
-        box-sizing: border-box !important;
     }
 
     #ratingsButtonGroup > button,
@@ -1182,34 +1177,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         width: 100% !important;
     }
 
-    /* Push ALL content down to account for the second header bar.
-       ONLY while that bar is actually showing. These date from when the plugin's buttons
-       occupied a full-width row under the header; they now collapse behind the dropdown
-       toggle, so unconditionally reserving the space left a 48-56px empty gap between the
-       header and the tabs on every phone (visible as the blank strip above Home/Favourites).
-       .ratings-menu-expanded is set on <html> while the panel is open. */
-    html.ratings-menu-expanded .skinBody {
-        padding-top: 48px !important;
-    }
-
-    html.ratings-menu-expanded .mainAnimatedPages {
-        margin-top: 48px !important;
-    }
-
-    html.ratings-menu-expanded .view,
-    html.ratings-menu-expanded .page {
-        padding-top: 48px !important;
-    }
-
-    /* Push Home/Favorites tabs container down - use padding on parent */
-    html.ratings-menu-expanded .tabs-viewmenubar.emby-tabs {
-        padding-top: 56px !important;
-    }
-
-    /* Reset any extra margins on slider */
-    .emby-tabs-slider {
-        margin-top: 0 !important;
-    }
+    /* No page-push here any more. Reserving 48-56px of room made sense when the buttons were a
+       bar that physically occupied the top of the page; the menu is a floating panel that draws
+       over the content like any other dropdown, so pushing the page as well only made it jump. */
 }
 
 /* Very small mobile */
@@ -10592,12 +10562,18 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         z-index: 100000 !important;
     }
 
+    /* One row, always. nowrap plus a shrinkable search field means the strip cannot spill onto a
+       second line however many buttons an install ends up with - it squeezes instead. */
     #ratingsButtonGroup.ratings-menu-open {
         display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 3px !important;
+        padding: 6px !important;
     }
 
     /* Buttons size to their icon. The forced 100% width / 190px min-width that went with the
-       vertical list is what made each one a full-width row. */
+       vertical list is what made each one a full-width row. Padding is tight here so eight of
+       them plus the search field clear a 360px screen. */
     #ratingsButtonGroup.ratings-menu-open > button,
     #ratingsButtonGroup.ratings-menu-open > .ratingsGroupBtn,
     #ratingsButtonGroup.ratings-menu-open > div {
@@ -10605,23 +10581,35 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         min-width: unset !important;
         height: auto !important;
         min-height: unset !important;
+        flex: 0 0 auto !important;
         justify-content: center !important;
         border-radius: 8px !important;
-        padding: 6px 8px !important;
+        padding: 4px 5px !important;
         margin: 0 !important;
     }
 
-    /* Search gets the full panel width. This also overrides the narrow-screen
-       collapse-to-icon rules (issue #69), which exist for the cramped header
-       and would be wrong inside a roomy panel. */
+    #ratingsButtonGroup.ratings-menu-open > button svg,
+    #ratingsButtonGroup.ratings-menu-open > .ratingsGroupBtn svg,
+    #ratingsButtonGroup.ratings-menu-open > div > svg {
+        width: 19px !important;
+        height: 19px !important;
+    }
+
+    /* Search sits inline at the left of the strip and gives up width first. It used to take a
+       full line of its own, which pushed the icons onto a second row - on a 400px phone that
+       stranded a single chat icon alone on the line below. Shrinking it instead fits all eight
+       controls across one row. This also overrides the narrow-screen collapse-to-icon rules,
+       which exist for the cramped header and would be wrong inside a panel. */
     #ratingsButtonGroup.ratings-menu-open #headerSearchField {
         position: static !important;
         left: auto !important;
         right: auto !important;
-        width: 100% !important;
-        /* Own line under the icon strip - it is the one control that wants the full width. */
-        flex: 0 0 100% !important;
-        padding: 6px 10px !important;
+        /* Shrinkable to nothing so the icons always win the space they need. */
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 130px !important;
+        padding: 4px 8px !important;
         background: rgba(255, 255, 255, 0.1) !important;
     }
 
@@ -11841,3 +11829,73 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
 }
 
 .support-row-side { flex-shrink: 0 !important; }
+
+/* ---------------------------------------------------------------------------
+   Phones: keep the plugin's dialogs inside the screen.
+
+   Measured on a 400px viewport before this existed: the ratings dialog was
+   446px wide and hung 28px off each edge, so its title read "l Ratings" and
+   usernames lost their first characters. min-width was the culprit - it beats
+   max-width, so no amount of capping the maximum helped.
+
+   The media management dialog has more tabs than fit any phone, so its strip
+   scrolls sideways rather than stretching the dialog past the screen.
+   --------------------------------------------------------------------------- */
+@media screen and (max-width: 600px) {
+    .ratings-modal,
+    .all-ratings-modal {
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        padding: 1em !important;
+    }
+
+    #mediaManagementModalContent {
+        box-sizing: border-box !important;
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        margin: 0 auto !important;
+    }
+
+    #mediaManagementModal {
+        box-sizing: border-box !important;
+        padding: 8px !important;
+        overflow-x: hidden !important;
+    }
+
+    /* More tabs than a phone is ever going to fit: let them scroll instead of
+       forcing the dialog wider than the screen. */
+    #mediaManagementTabs {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-wrap: nowrap !important;
+        padding: 0 8px !important;
+        scrollbar-width: none !important;
+    }
+
+    #mediaManagementTabs::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    #mediaManagementTabs .media-tab {
+        flex: 0 0 auto !important;
+        padding: 10px 12px !important;
+        font-size: 0.9em !important;
+        white-space: nowrap !important;
+    }
+
+    #mediaManagementBody {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    /* Long file paths in the duplicates list are the widest thing the plugin
+       renders; let them wrap instead of pushing the dialog sideways. */
+    .duplicate-path,
+    .duplicate-name {
+        word-break: break-all !important;
+        white-space: normal !important;
+    }
+}
