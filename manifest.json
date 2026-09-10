@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.395.0",
+        "changelog": "Opening the header menu on a phone no longer leaves the page heading showing through it. The panel is fully opaque now, and the heading it covers - along with that row's scroll arrows - steps out of the way while the menu is open and comes straight back when it closes, without the page shifting.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.395.0/Jellyfin.Plugin.Ratings_2.0.395.0.zip",
+        "checksum": "78b1614283189c2b2481eb08032be8ee",
+        "timestamp": "2026-09-10T14:41:56Z"
+      },
+      {
         "version": "2.0.394.0",
         "changelog": "Fixes the Ratings dashboard, which showed Failed to load in every panel on Jellyfin 12 - it was still identifying itself the old way that Jellyfin 12 no longer accepts - and the version in its heading is now read from the plugin Jellyfin actually loaded rather than typed in by hand. On phones the header menu opens under its button again instead of being dragged onto the header, and all of its buttons sit on one line with the search box at the left, down to a 320px screen, with no second row and no scrolling. The button that opens it is a small flat arrow now rather than a large filled circle, and Jellyfin 12's account avatar is brought down to the same size as the icons beside it. The rating, all-ratings and media management dialogs are sized to the screen too, with the media management tabs scrolling sideways rather than stretching the dialog past the edge.",
         "targetAbi": "10.11.0.0",

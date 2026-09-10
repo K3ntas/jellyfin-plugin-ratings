@@ -10580,7 +10580,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         padding: 8px !important;
         margin: 0 !important;
         border-radius: 12px !important;
-        background: rgba(28, 28, 28, 0.98) !important;
+        /* Fully opaque. At 0.98 the page heading directly underneath ghosted through the panel -
+           it lands within a couple of pixels of "My Media" on the home page. */
+        background: rgb(28, 28, 28) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
         max-height: 70vh !important;
@@ -11924,5 +11926,33 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     .duplicate-name {
         word-break: break-all !important;
         white-space: normal !important;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   The open header menu lands directly on top of the first section's header row.
+   Measured on a 400px phone: the panel occupies 46-93px, the "My Media" heading
+   48-94px and that row's scroll arrows 48-102px. Even with an opaque panel the
+   parts poking out around it read as clutter, so the whole row steps aside while
+   the menu is showing and comes straight back when it closes.
+
+   visibility rather than display, so the heading keeps its space and the content
+   below does not jump up and back down as the menu opens and closes.
+
+   html.ratings-menu-expanded is set by the toggle for exactly this purpose.
+   Scoped to the first section: headings further down the page are nowhere near
+   the panel and must stay where they are.
+   --------------------------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+    /* Direct children only. A descendant selector here (".homeSectionsContainer
+       .verticalSection:first-child") also matched sections nested inside other sections further
+       down the page - any of them that happened to be its own parent's first child - and hid
+       their scroll arrows too. Every selector below is anchored with ">" so it can only ever
+       reach the top section of the page. */
+    html.ratings-menu-expanded .verticalSection.section0 > .sectionTitle,
+    html.ratings-menu-expanded .verticalSection.section0 > .emby-scrollbuttons,
+    html.ratings-menu-expanded .sections > .verticalSection:first-child > .sectionTitle,
+    html.ratings-menu-expanded .sections > .verticalSection:first-child > .emby-scrollbuttons {
+        visibility: hidden !important;
     }
 }
