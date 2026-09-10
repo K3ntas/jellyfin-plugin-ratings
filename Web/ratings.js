@@ -11947,12 +11947,16 @@
 
             const ensurePlaced = () => {
                 const toggle = self._headerToggleEl;
-                // Cheap path first: same parent as last time, still on screen, and the collapsed
-                // menu's toggle still attached. The toggle has to be checked separately - React
-                // can drop it on its own while leaving the group where it is, and that alone
-                // leaves phones with no way to reach the buttons.
+                // Cheap path first: both the group and the collapsed menu's toggle still sitting
+                // in the parent we last placed them in, and that parent still on screen.
+                //
+                // The toggle is checked by PARENT, not merely by being connected. Navigating the
+                // app left it re-homed into the old zero-height .skinHeader while the group stayed
+                // correctly in the toolbar - still in the document, so an isConnected test saw
+                // nothing wrong, and a phone was left with an invisible button and no way to open
+                // the menu at all.
                 if (group.parentElement === known && known && known.isConnected &&
-                    (!toggle || toggle.isConnected) &&
+                    (!toggle || toggle.parentElement === known) &&
                     known.getBoundingClientRect().height > 0) {
                     return;
                 }
@@ -11967,8 +11971,11 @@
                     group.classList.toggle('ratings-modern-header', !!slot.modern);
                 }
                 // The collapsed-menu toggle is a sibling, so it travels with the group.
-                if (toggle && !toggle.isConnected) {
+                if (toggle && toggle.parentElement !== slot.el) {
                     slot.el.insertBefore(toggle, group.nextSibling);
+                }
+                if (toggle) {
+                    toggle.classList.toggle('ratings-modern-header', !!slot.modern);
                 }
                 known = slot.el;
             };

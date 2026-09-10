@@ -10496,21 +10496,31 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 34px !important;
-        height: 34px !important;
+        /* Matches the size and flatness of Jellyfin's own header buttons, which measure 46x46
+           around a 22px icon with no background. The old 34px filled circle read as a heavier,
+           odd-sized blob sitting between them. */
+        width: 40px !important;
+        height: 40px !important;
         padding: 0 !important;
-        margin: 0 2px !important;
+        margin: 0 !important;
         flex-shrink: 0 !important;
+        /* Centred against its neighbours rather than stretched by the toolbar's align-items. */
+        align-self: center !important;
         border: none !important;
         border-radius: 50% !important;
-        background: rgba(40, 40, 40, 0.95) !important;
+        background: transparent !important;
         color: #fff !important;
         cursor: pointer !important;
     }
 
+    /* A hint of a background only while the menu it opens is showing, so it reads as pressed. */
+    #ratingsMenuToggle.open {
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+
     #ratingsMenuToggle svg {
-        width: 20px !important;
-        height: 20px !important;
+        width: 22px !important;
+        height: 22px !important;
         transition: transform 0.2s ease !important;
     }
 
