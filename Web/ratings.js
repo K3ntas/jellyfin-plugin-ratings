@@ -12312,13 +12312,17 @@
                     opacity: 1 !important;
                 }
 
-                /* Mobile - maintain styling */
+                /* Mobile: only the colour, never the shape.
+
+                   This block used to square the corners off and swap the border for a single
+                   bottom rule, which made sense when the buttons were a full-width bar pinned
+                   under the header. They are a floating rounded panel now, and because these
+                   rules are injected into the document AFTER the stylesheet they beat it on
+                   source order - so the panel lost its rounded ends however the stylesheet asked
+                   for them. Shape belongs to ratings.css; this only carries the user's colours. */
                 @media screen and (max-width: 600px) {
                     #ratingsButtonGroup {
                         background: ${bgColor} !important;
-                        border: none !important;
-                        border-bottom: ${style.noBorder ? 'none' : `1px solid ${style.groupBorderColor}`} !important;
-                        border-radius: 0 !important;
                         ${style.glowEffect ? `box-shadow: 0 2px 10px ${style.glowColor} !important;` : ''}
                     }
                 }

@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.396.0",
+        "changelog": "Makes the open header menu on phones properly solid, so nothing on the page shows through it.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.396.0/Jellyfin.Plugin.Ratings_2.0.396.0.zip",
+        "checksum": "75a7717b93b10f8956fb2a6ed7686a88",
+        "timestamp": "2026-09-10T14:54:28Z"
+      },
+      {
         "version": "2.0.395.0",
         "changelog": "Opening the header menu on a phone no longer leaves the page heading showing through it. The panel is fully opaque now, and the heading it covers - along with that row's scroll arrows - steps out of the way while the menu is open and comes straight back when it closes, without the page shifting.",
         "targetAbi": "10.11.0.0",

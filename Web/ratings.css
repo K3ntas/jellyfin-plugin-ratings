@@ -10597,7 +10597,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         display: flex !important;
         flex-wrap: nowrap !important;
         gap: 3px !important;
-        padding: 6px !important;
+        /* Horizontal padding at least the corner radius. At 6px the last icon sat inside the
+           curve of the 12px rounded end and looked like it was bleeding into it. */
+        padding: 6px 12px !important;
     }
 
     /* Buttons size to their icon. The forced 100% width / 190px min-width that went with the
@@ -11954,5 +11956,28 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
     html.ratings-menu-expanded .sections > .verticalSection:first-child > .sectionTitle,
     html.ratings-menu-expanded .sections > .verticalSection:first-child > .emby-scrollbuttons {
         visibility: hidden !important;
+    }
+
+    /* Opaque panel, written with enough specificity to actually take effect. The plugin also
+       injects a <style id="ratingsHeaderBtnStyles"> at runtime that sets this background, and an
+       injected style tag lands after this file in the document - so a plain #ratingsButtonGroup
+       rule here loses to it no matter how late in the file it sits, however many !importants it
+       carries. Adding the html class and the open class outweighs it on specificity instead.
+
+       The width cap is what makes the panel sit evenly. The script anchors it to the toggle and
+       then clamps it to an 8px margin, but nothing bounded its width - so on a narrow screen it
+       filled every pixel to the right edge, leaving a tidy rounded corner on the left and a
+       squared-off one running past the edge on the right. Capped to the viewport less both
+       margins, it lands at 8px in from each side with both corners showing. */
+    html.ratings-menu-expanded #ratingsButtonGroup.ratings-menu-open {
+        background: rgb(28, 28, 28) !important;
+        box-sizing: border-box !important;
+        /* A fixed width rather than a maximum: anchored to the toggle and merely capped, the
+           panel came out narrower than the space available and sat hard against the left margin
+           with a gap on the right. Spanning the full width between the two margins puts it 8px
+           in from each edge at any screen size, so both ends read the same. */
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        border-radius: 12px !important;
     }
 }
