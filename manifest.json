@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.389.0",
+        "changelog": "Fixes the admin Ratings dashboard on Jellyfin 12, where every panel read \"Failed to load\" and the counters stayed empty. The dashboard's own pages were still identifying themselves the older way that Jellyfin 12 no longer accepts; they now use the current form, which Jellyfin 10.x accepts just as well, so one build covers both. The version shown at the top of the dashboard is now read from the plugin that is actually running instead of being typed into the page, so it can no longer drift out of date. The phone header also had a pass. Opening the plugin menu now keeps every button on a single line all the way down to a narrow phone, on a panel that spans the screen with even margins and rounded ends instead of sitting flush against one edge. The menu button and the account picture next to it were brought down to the size of everything else in the row, and while the menu is open the heading and the row-scrolling arrows underneath step out of sight so nothing shows through it. Closing it puts them straight back. The plugin's dialogs - media management, duplicates and the full ratings list - now fit inside a phone screen instead of pushing the page sideways.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.389.0/Jellyfin.Plugin.Ratings_1.0.389.0.zip",
+        "checksum": "9aa8dc060a318e5b47b0e825b30f6b98",
+        "timestamp": "2026-09-10T15:11:58Z"
+      },
+      {
         "version": "1.0.388.0",
         "changelog": "A rebuilt rating system with real precision. Until now every rating was one of ten fixed steps, so a film was a 7 or an 8 with nothing in between. The whole star row is now a single sliding control: move across it and the stars fill smoothly under your pointer, a tenth of a star at a time, with the exact value appearing beside them as you go. Give something a 7.5 when 7 feels harsh and 8 feels generous. On a phone, swipe along the stars for the same control. The value appears while you are choosing and steps out of the way once you are done, so nothing clutters the page, and a deliberate press is still what saves a rating - simply passing over the stars never changes one you have already given. Everything you have rated before carries over untouched, and whole numbers work exactly as they always did.",
         "targetAbi": "10.11.0.0",

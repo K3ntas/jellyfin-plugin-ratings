@@ -20,6 +20,7 @@ export default function (view, params) {
         LibraryMenu.setTabs('ratings_dashboard', 0, getTabs);
 
         // Load all dashboard data
+        showPluginVersion();
         loadStats();
         loadRecentActivity();
         loadTopRated();
@@ -28,11 +29,35 @@ export default function (view, params) {
         loadRecentRequests();
     });
 
+    /**
+     * Puts the running plugin version in the heading.
+     *
+     * It used to be typed into the HTML by hand, which meant it only told the truth on the day it
+     * was edited - it still read v2.0.341.0 fifty releases later. Asking Jellyfin which build it
+     * actually loaded cannot drift.
+     */
+    function showPluginVersion() {
+        const el = document.querySelector('.dashboard-version');
+        if (!el) return;
+        const PLUGIN_GUID = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+        fetch(window.ApiClient.getUrl('Plugins'), {
+            method: 'GET',
+            headers: { 'Authorization': getAuthHeader() }
+        })
+        .then(r => r.ok ? r.json() : [])
+        .then(list => {
+            const me = (list || []).find(p =>
+                (p.Id || '').replace(/-/g, '').toLowerCase() === PLUGIN_GUID.replace(/-/g, '').toLowerCase());
+            el.textContent = me && me.Version ? 'v' + me.Version : '';
+        })
+        .catch(() => { el.textContent = ''; });
+    }
+
     function loadStats() {
         const url = window.ApiClient.getUrl('Ratings/Stats');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -48,7 +73,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl('Ratings/RecentActivity?limit=10');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -141,7 +166,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl('Ratings/TopRated?limit=8');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -182,7 +207,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl('Ratings/MostActiveUsers?limit=6');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -218,7 +243,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl('Ratings/RatingDistribution');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -286,7 +311,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl(`Ratings/ItemsByRating?rating=${rating}&limit=50`);
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -324,7 +349,7 @@ export default function (view, params) {
         const url = window.ApiClient.getUrl('Ratings/RecentRequests?limit=6');
         fetch(url, {
             method: 'GET',
-            headers: { 'X-Emby-Authorization': getAuthHeader() }
+            headers: { 'Authorization': getAuthHeader() }
         })
         .then(response => response.json())
         .then(data => {
@@ -373,6 +398,10 @@ export default function (view, params) {
         }
     };
 
+    // Jellyfin 12 switched off the legacy X-Emby-Authorization header, which is what this used
+    // to be sent as - every panel on this page came back 401 and read "Failed to load". The
+    // MediaBrowser scheme below is unchanged and is accepted by 10.x and 12.x alike; only the
+    // header it travels in had to change.
     function getAuthHeader() {
         const token = window.ApiClient.accessToken();
         const deviceId = localStorage.getItem('_deviceId2') || 'unknown';

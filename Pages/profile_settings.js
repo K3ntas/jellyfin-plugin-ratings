@@ -10,9 +10,15 @@
     let currentPrivacy = null;
 
     // Get auth header
+    // Jellyfin 12 no longer accepts a bare X-Emby-Token header. The Authorization header with
+    // the MediaBrowser scheme works on 10.x and 12.x alike.
     function getAuthHeader() {
         const token = window.ApiClient?.accessToken();
-        return token ? { 'X-Emby-Token': token } : {};
+        if (!token) return {};
+        // Keep the token to the characters Jellyfin actually issues, so a malformed value
+        // cannot break out of the quoted parameter and forge extra header parameters.
+        const safe = String(token).replace(/[^A-Za-z0-9._-]/g, '');
+        return { 'Authorization': 'MediaBrowser Token="' + safe + '"' };
     }
 
     // API helper

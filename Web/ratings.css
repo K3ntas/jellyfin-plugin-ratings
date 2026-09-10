@@ -1008,8 +1008,13 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
    in the same flex row as Jellyfin's own Cast/Search icons instead of the old .headerRight.
    Only layout is adjusted here - the pill styling above is deliberately shared so the buttons
    look identical to how they did before. These rules are outside the mobile media query, so the
-   collapsed-menu rules (which are !important and set position:fixed) still win on phones. */
-#ratingsButtonGroup.ratings-modern-header {
+   collapsed-menu rules (which are !important and set position:fixed) still win on phones.
+
+   :not(.ratings-menu-open) matters. The same element becomes the dropdown panel on a phone, and
+   capping it at one toolbar row there cut off every button that wrapped onto a second line -
+   media management and chat were being clipped away entirely. The cap is only meaningful while
+   the group is an inline row inside the toolbar. */
+#ratingsButtonGroup.ratings-modern-header:not(.ratings-menu-open) {
     flex: 0 0 auto !important;
     align-self: center !important;
     max-height: 40px !important;
@@ -1129,24 +1134,14 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 
 /* Mobile - Second header row - Full width bar */
 @media screen and (max-width: 600px) {
+    /* Only spacing here. The buttons used to be a full-width bar pinned under the header, and
+       the position/inset/width rules that made it one carried !important - which beats the
+       inline style JavaScript sets, so the collapsed menu was dragged back onto the header
+       instead of opening under its toggle, with its contents running off the right edge. The
+       floating panel's own rules (in the max-width: 768px block) own all of that now. */
     #ratingsButtonGroup {
-        position: fixed !important;
-        top: 56px !important;
-        left: 0 !important;
-        right: 0 !important;
-        transform: none !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        justify-content: center !important;
-        background: rgba(30, 30, 30, 0.98) !important;
-        border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        padding: 8px 12px !important;
+        padding: 8px !important;
         gap: 8px !important;
-        z-index: 999 !important;
-        width: 100% !important;
-        max-width: none !important;
-        box-sizing: border-box !important;
     }
 
     #ratingsButtonGroup > button,
@@ -1182,34 +1177,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         width: 100% !important;
     }
 
-    /* Push ALL content down to account for the second header bar.
-       ONLY while that bar is actually showing. These date from when the plugin's buttons
-       occupied a full-width row under the header; they now collapse behind the dropdown
-       toggle, so unconditionally reserving the space left a 48-56px empty gap between the
-       header and the tabs on every phone (visible as the blank strip above Home/Favourites).
-       .ratings-menu-expanded is set on <html> while the panel is open. */
-    html.ratings-menu-expanded .skinBody {
-        padding-top: 48px !important;
-    }
-
-    html.ratings-menu-expanded .mainAnimatedPages {
-        margin-top: 48px !important;
-    }
-
-    html.ratings-menu-expanded .view,
-    html.ratings-menu-expanded .page {
-        padding-top: 48px !important;
-    }
-
-    /* Push Home/Favorites tabs container down - use padding on parent */
-    html.ratings-menu-expanded .tabs-viewmenubar.emby-tabs {
-        padding-top: 56px !important;
-    }
-
-    /* Reset any extra margins on slider */
-    .emby-tabs-slider {
-        margin-top: 0 !important;
-    }
+    /* No page-push here any more. Reserving 48-56px of room made sense when the buttons were a
+       bar that physically occupied the top of the page; the menu is a floating panel that draws
+       over the content like any other dropdown, so pushing the page as well only made it jump. */
 }
 
 /* Very small mobile */
@@ -10526,22 +10496,49 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 34px !important;
-        height: 34px !important;
+        /* Deliberately smaller than Jellyfin's own 46px header buttons. This is a disclosure
+           arrow, not a peer of Cast and Search, and at their size it read as the heaviest thing
+           in the header. */
+        width: 32px !important;
+        height: 32px !important;
         padding: 0 !important;
-        margin: 0 2px !important;
+        margin: 0 !important;
         flex-shrink: 0 !important;
+        /* Centred against its neighbours rather than stretched by the toolbar's align-items. */
+        align-self: center !important;
         border: none !important;
         border-radius: 50% !important;
-        background: rgba(40, 40, 40, 0.95) !important;
+        /* Flat in both states. The filled circle it used to wear while open is exactly what made
+           it look like an oversized button rather than an arrow. */
+        background: transparent !important;
         color: #fff !important;
         cursor: pointer !important;
     }
 
+    /* Open state shows in the arrow itself (it flips) rather than a filled disc behind it. */
+    #ratingsMenuToggle.open {
+        background: transparent !important;
+        opacity: 0.75 !important;
+    }
+
     #ratingsMenuToggle svg {
-        width: 20px !important;
-        height: 20px !important;
+        width: 18px !important;
+        height: 18px !important;
         transition: transform 0.2s ease !important;
+    }
+
+    /* Jellyfin 12 draws the account avatar with a 30px glyph while every other header icon is
+       22px, which leaves it looming over the rest of the row on a phone. Brought into line with
+       its neighbours. Scoped to phones only - the desktop header has room for it. */
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root svg,
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root img {
+        width: 22px !important;
+        height: 22px !important;
     }
 
     #ratingsMenuToggle.open svg {
@@ -10583,7 +10580,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         padding: 8px !important;
         margin: 0 !important;
         border-radius: 12px !important;
-        background: rgba(28, 28, 28, 0.98) !important;
+        /* Fully opaque. At 0.98 the page heading directly underneath ghosted through the panel -
+           it lands within a couple of pixels of "My Media" on the home page. */
+        background: rgb(28, 28, 28) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
         max-height: 70vh !important;
@@ -10592,12 +10591,20 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         z-index: 100000 !important;
     }
 
+    /* One row, always. nowrap plus a shrinkable search field means the strip cannot spill onto a
+       second line however many buttons an install ends up with - it squeezes instead. */
     #ratingsButtonGroup.ratings-menu-open {
         display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 3px !important;
+        /* Horizontal padding at least the corner radius. At 6px the last icon sat inside the
+           curve of the 12px rounded end and looked like it was bleeding into it. */
+        padding: 6px 12px !important;
     }
 
     /* Buttons size to their icon. The forced 100% width / 190px min-width that went with the
-       vertical list is what made each one a full-width row. */
+       vertical list is what made each one a full-width row. Padding is tight here so eight of
+       them plus the search field clear a 360px screen. */
     #ratingsButtonGroup.ratings-menu-open > button,
     #ratingsButtonGroup.ratings-menu-open > .ratingsGroupBtn,
     #ratingsButtonGroup.ratings-menu-open > div {
@@ -10605,23 +10612,35 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         min-width: unset !important;
         height: auto !important;
         min-height: unset !important;
+        flex: 0 0 auto !important;
         justify-content: center !important;
         border-radius: 8px !important;
-        padding: 6px 8px !important;
+        padding: 4px 5px !important;
         margin: 0 !important;
     }
 
-    /* Search gets the full panel width. This also overrides the narrow-screen
-       collapse-to-icon rules (issue #69), which exist for the cramped header
-       and would be wrong inside a roomy panel. */
+    #ratingsButtonGroup.ratings-menu-open > button svg,
+    #ratingsButtonGroup.ratings-menu-open > .ratingsGroupBtn svg,
+    #ratingsButtonGroup.ratings-menu-open > div > svg {
+        width: 19px !important;
+        height: 19px !important;
+    }
+
+    /* Search sits inline at the left of the strip and gives up width first. It used to take a
+       full line of its own, which pushed the icons onto a second row - on a 400px phone that
+       stranded a single chat icon alone on the line below. Shrinking it instead fits all eight
+       controls across one row. This also overrides the narrow-screen collapse-to-icon rules,
+       which exist for the cramped header and would be wrong inside a panel. */
     #ratingsButtonGroup.ratings-menu-open #headerSearchField {
         position: static !important;
         left: auto !important;
         right: auto !important;
-        width: 100% !important;
-        /* Own line under the icon strip - it is the one control that wants the full width. */
-        flex: 0 0 100% !important;
-        padding: 6px 10px !important;
+        /* Shrinkable to nothing so the icons always win the space they need. */
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 130px !important;
+        padding: 4px 8px !important;
         background: rgba(255, 255, 255, 0.1) !important;
     }
 
@@ -11841,3 +11860,124 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
 }
 
 .support-row-side { flex-shrink: 0 !important; }
+
+/* ---------------------------------------------------------------------------
+   Phones: keep the plugin's dialogs inside the screen.
+
+   Measured on a 400px viewport before this existed: the ratings dialog was
+   446px wide and hung 28px off each edge, so its title read "l Ratings" and
+   usernames lost their first characters. min-width was the culprit - it beats
+   max-width, so no amount of capping the maximum helped.
+
+   The media management dialog has more tabs than fit any phone, so its strip
+   scrolls sideways rather than stretching the dialog past the screen.
+   --------------------------------------------------------------------------- */
+@media screen and (max-width: 600px) {
+    .ratings-modal,
+    .all-ratings-modal {
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        padding: 1em !important;
+    }
+
+    #mediaManagementModalContent {
+        box-sizing: border-box !important;
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        margin: 0 auto !important;
+    }
+
+    #mediaManagementModal {
+        box-sizing: border-box !important;
+        padding: 8px !important;
+        overflow-x: hidden !important;
+    }
+
+    /* More tabs than a phone is ever going to fit: let them scroll instead of
+       forcing the dialog wider than the screen. */
+    #mediaManagementTabs {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-wrap: nowrap !important;
+        padding: 0 8px !important;
+        scrollbar-width: none !important;
+    }
+
+    #mediaManagementTabs::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    #mediaManagementTabs .media-tab {
+        flex: 0 0 auto !important;
+        padding: 10px 12px !important;
+        font-size: 0.9em !important;
+        white-space: nowrap !important;
+    }
+
+    #mediaManagementBody {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    /* Long file paths in the duplicates list are the widest thing the plugin
+       renders; let them wrap instead of pushing the dialog sideways. */
+    .duplicate-path,
+    .duplicate-name {
+        word-break: break-all !important;
+        white-space: normal !important;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   The open header menu lands directly on top of the first section's header row.
+   Measured on a 400px phone: the panel occupies 46-93px, the "My Media" heading
+   48-94px and that row's scroll arrows 48-102px. Even with an opaque panel the
+   parts poking out around it read as clutter, so the whole row steps aside while
+   the menu is showing and comes straight back when it closes.
+
+   visibility rather than display, so the heading keeps its space and the content
+   below does not jump up and back down as the menu opens and closes.
+
+   html.ratings-menu-expanded is set by the toggle for exactly this purpose.
+   Scoped to the first section: headings further down the page are nowhere near
+   the panel and must stay where they are.
+   --------------------------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+    /* Direct children only. A descendant selector here (".homeSectionsContainer
+       .verticalSection:first-child") also matched sections nested inside other sections further
+       down the page - any of them that happened to be its own parent's first child - and hid
+       their scroll arrows too. Every selector below is anchored with ">" so it can only ever
+       reach the top section of the page. */
+    html.ratings-menu-expanded .verticalSection.section0 > .sectionTitle,
+    html.ratings-menu-expanded .verticalSection.section0 > .emby-scrollbuttons,
+    html.ratings-menu-expanded .sections > .verticalSection:first-child > .sectionTitle,
+    html.ratings-menu-expanded .sections > .verticalSection:first-child > .emby-scrollbuttons {
+        visibility: hidden !important;
+    }
+
+    /* Opaque panel, written with enough specificity to actually take effect. The plugin also
+       injects a <style id="ratingsHeaderBtnStyles"> at runtime that sets this background, and an
+       injected style tag lands after this file in the document - so a plain #ratingsButtonGroup
+       rule here loses to it no matter how late in the file it sits, however many !importants it
+       carries. Adding the html class and the open class outweighs it on specificity instead.
+
+       The width cap is what makes the panel sit evenly. The script anchors it to the toggle and
+       then clamps it to an 8px margin, but nothing bounded its width - so on a narrow screen it
+       filled every pixel to the right edge, leaving a tidy rounded corner on the left and a
+       squared-off one running past the edge on the right. Capped to the viewport less both
+       margins, it lands at 8px in from each side with both corners showing. */
+    html.ratings-menu-expanded #ratingsButtonGroup.ratings-menu-open {
+        background: rgb(28, 28, 28) !important;
+        box-sizing: border-box !important;
+        /* A fixed width rather than a maximum: anchored to the toggle and merely capped, the
+           panel came out narrower than the space available and sat hard against the left margin
+           with a gap on the right. Spanning the full width between the two margins puts it 8px
+           in from each edge at any screen size, so both ends read the same. */
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        border-radius: 12px !important;
+    }
+}
