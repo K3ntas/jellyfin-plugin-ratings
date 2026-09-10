@@ -10496,11 +10496,11 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        /* Matches the size and flatness of Jellyfin's own header buttons, which measure 46x46
-           around a 22px icon with no background. The old 34px filled circle read as a heavier,
-           odd-sized blob sitting between them. */
-        width: 40px !important;
-        height: 40px !important;
+        /* Deliberately smaller than Jellyfin's own 46px header buttons. This is a disclosure
+           arrow, not a peer of Cast and Search, and at their size it read as the heaviest thing
+           in the header. */
+        width: 32px !important;
+        height: 32px !important;
         padding: 0 !important;
         margin: 0 !important;
         flex-shrink: 0 !important;
@@ -10508,20 +10508,37 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
         align-self: center !important;
         border: none !important;
         border-radius: 50% !important;
+        /* Flat in both states. The filled circle it used to wear while open is exactly what made
+           it look like an oversized button rather than an arrow. */
         background: transparent !important;
         color: #fff !important;
         cursor: pointer !important;
     }
 
-    /* A hint of a background only while the menu it opens is showing, so it reads as pressed. */
+    /* Open state shows in the arrow itself (it flips) rather than a filled disc behind it. */
     #ratingsMenuToggle.open {
-        background: rgba(255, 255, 255, 0.12) !important;
+        background: transparent !important;
+        opacity: 0.75 !important;
     }
 
     #ratingsMenuToggle svg {
+        width: 18px !important;
+        height: 18px !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    /* Jellyfin 12 draws the account avatar with a 30px glyph while every other header icon is
+       22px, which leaves it looming over the rest of the row on a phone. Brought into line with
+       its neighbours. Scoped to phones only - the desktop header has room for it. */
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root svg,
+    header.MuiAppBar-root .MuiToolbar-root .MuiAvatar-root img {
         width: 22px !important;
         height: 22px !important;
-        transition: transform 0.2s ease !important;
     }
 
     #ratingsMenuToggle.open svg {
