@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -126,19 +127,42 @@ namespace Jellyfin.Plugin.Ratings
                     }
 
                     Version? otherVersion = null;
+                    var metaPath = Path.Combine(dir, "meta.json");
                     try
                     {
-                        var metaPath = Path.Combine(dir, "meta.json");
-                        if (!File.Exists(metaPath))
+                        if (File.Exists(metaPath))
                         {
-                            continue;
-                        }
+                            using var doc = JsonDocument.Parse(File.ReadAllText(metaPath));
+                            if (!doc.RootElement.TryGetProperty("guid", out var guidEl)
+                                || !string.Equals(guidEl.GetString(), PluginGuid, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue; // not our plugin - leave it alone
+                            }
 
-                        using var doc = JsonDocument.Parse(File.ReadAllText(metaPath));
-                        if (!doc.RootElement.TryGetProperty("guid", out var guidEl)
-                            || !string.Equals(guidEl.GetString(), PluginGuid, StringComparison.OrdinalIgnoreCase))
+                            if (doc.RootElement.TryGetProperty("version", out var verEl))
+                            {
+                                Version.TryParse(verEl.GetString(), out otherVersion);
+                            }
+                        }
+                        else if (File.Exists(Path.Combine(dir, PluginAssemblyFile)))
                         {
-                            continue; // not our plugin - leave it alone
+                            // One of ours with no meta.json. Older builds of this plugin deleted
+                            // that file to "deregister" a folder whose DLL was locked, which does
+                            // not work: Jellyfin does not treat a plugin as gone when meta.json is
+                            // missing, it synthesises an Active manifest from the folder name and
+                            // loads the assembly anyway. The result is two live copies of this
+                            // plugin - every controller, hosted service and middleware registered
+                            // twice, and the stale DLL able to answer requests (issue #67). Such a
+                            // folder has to be recognised and finished off, not skipped.
+                            otherVersion = VersionFromFolderName(folderName);
+                            _logger.LogInformation(
+                                "Ratings cleanup: folder '{Dir}' has no meta.json; treating it as version {Ver} left behind by an earlier cleanup",
+                                dir,
+                                otherVersion);
+                        }
+                        else
+                        {
+                            continue; // no manifest and no assembly of ours - not our business
                         }
 
                         ours++;
@@ -152,9 +176,7 @@ namespace Jellyfin.Plugin.Ratings
                         }
 
                         // Only delete STRICTLY older versions, so we can never remove the current/newest.
-                        if (!doc.RootElement.TryGetProperty("version", out var verEl)
-                            || !Version.TryParse(verEl.GetString(), out otherVersion)
-                            || otherVersion >= myVersion)
+                        if (otherVersion == null || otherVersion >= myVersion)
                         {
                             _logger.LogInformation(
                                 "Ratings cleanup: keeping folder '{Dir}' (version {Other} not older than {Current})",
@@ -180,17 +202,17 @@ namespace Jellyfin.Plugin.Ratings
                     catch (Exception ex)
                     {
                         // On Windows the old DLL is usually still mapped into the process, so the
-                        // folder cannot be deleted until the next restart. Deleting the folder's
-                        // meta.json is normally still allowed, and that is what Jellyfin reads to
-                        // decide a plugin is installed - so removing it stops the stale version
-                        // being listed and loaded, even while the DLL itself lingers (issue #67).
-                        var neutralized = TryNeutralizePluginFolder(dir);
+                        // folder cannot be deleted until the next restart. Mark it Deleted in its
+                        // own manifest instead: Jellyfin skips any plugin whose status is below
+                        // Active, and retries removing a Deleted one at every restart - which is
+                        // what its own uninstall does for a folder it cannot delete (issue #67).
+                        var markedDeleted = TryMarkFolderDeleted(dir, metaPath, otherVersion, folderName);
 
-                        if (neutralized)
+                        if (markedDeleted)
                         {
                             removed++;
                             _logger.LogInformation(
-                                "Ratings cleanup: could not delete '{Dir}' (locked DLL), but removed its meta.json so the stale version is no longer registered; the folder itself will go on a later restart",
+                                "Ratings cleanup: could not delete '{Dir}' (locked DLL), so marked it Deleted in meta.json - Jellyfin will not load it, and removes the folder on a later restart",
                                 dir);
                         }
                         else
@@ -215,56 +237,90 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
-        /// Last resort when a stale plugin folder cannot be deleted: strip everything deletable
-        /// inside it, above all meta.json.
+        /// Name of this plugin's assembly, used to recognise one of our folders when its meta.json
+        /// has gone missing.
+        /// </summary>
+        private const string PluginAssemblyFile = "Jellyfin.Plugin.Ratings.dll";
+
+        /// <summary>
+        /// Reads the version out of a plugin folder name the same way Jellyfin does for a folder
+        /// with no manifest: whatever follows the last underscore.
+        /// </summary>
+        /// <param name="folderName">Folder name, for example "Ratings_1.0.359.0".</param>
+        /// <returns>The version, or null when the name does not carry one.</returns>
+        private static Version? VersionFromFolderName(string folderName)
+        {
+            var underscore = folderName.LastIndexOf('_');
+            if (underscore < 0 || underscore == folderName.Length - 1)
+            {
+                return null;
+            }
+
+            return Version.TryParse(folderName.AsSpan(underscore + 1), out var parsed) ? parsed : null;
+        }
+
+        /// <summary>
+        /// Last resort when a stale plugin folder cannot be deleted: mark it Deleted in its own
+        /// manifest so Jellyfin stops loading it.
         /// </summary>
         /// <remarks>
-        /// Jellyfin identifies an installed plugin by the meta.json in its folder. With that file
-        /// gone the stale version stops appearing in the plugin list and stops being loaded, which
-        /// is the visible half of the "two versions installed / restart required" loop, even though
-        /// the locked DLL itself has to wait for a restart (issue #67).
+        /// An earlier attempt at this deleted meta.json outright, on the assumption that Jellyfin
+        /// decides a plugin is installed by the presence of that file. It does not: a folder with
+        /// no manifest gets an <c>Active</c> one synthesised from its name, so the stale assembly
+        /// was still loaded - a second live copy of the plugin, with every controller and hosted
+        /// service registered twice - and no meta.json was left for this cleanup to recognise the
+        /// folder by on the next restart.
+        /// <para>
+        /// Writing <c>"status": "Deleted"</c> is what Jellyfin's own uninstall does for a folder it
+        /// cannot remove. Any status below Active is skipped at load, and a Deleted one is retried
+        /// for removal at every restart, so the folder goes on its own once the DLL is unmapped.
+        /// </para>
         /// </remarks>
         /// <param name="dir">Plugin folder that could not be deleted.</param>
-        /// <returns>True if meta.json is gone when this returns.</returns>
-        private bool TryNeutralizePluginFolder(string dir)
+        /// <param name="metaPath">Path to that folder's meta.json, which may not exist.</param>
+        /// <param name="version">Version of the stale folder, for a manifest that has to be rebuilt.</param>
+        /// <param name="folderName">Folder name, used as the plugin name when rebuilding.</param>
+        /// <returns>True if the folder is now marked as not to be loaded.</returns>
+        private bool TryMarkFolderDeleted(string dir, string metaPath, Version? version, string folderName)
         {
-            var metaPath = Path.Combine(dir, "meta.json");
-
             try
             {
+                JsonObject manifest;
+
                 if (File.Exists(metaPath))
                 {
-                    File.Delete(metaPath);
+                    // Keep every field the installer wrote - above all the guid, which is how this
+                    // cleanup recognises the folder next time - and change only the status.
+                    manifest = JsonNode.Parse(File.ReadAllText(metaPath)) as JsonObject ?? new JsonObject();
                 }
+                else
+                {
+                    // Left without a manifest by an older build of this plugin. Rebuild enough of
+                    // one that Jellyfin reads it instead of synthesising an Active manifest.
+                    var underscore = folderName.LastIndexOf('_');
+                    manifest = new JsonObject
+                    {
+                        ["guid"] = PluginGuid,
+                        ["name"] = underscore > 0 ? folderName.Substring(0, underscore) : folderName,
+                        ["version"] = (version ?? new Version(0, 0, 0, 0)).ToString(),
+                        ["owner"] = "K3ntas",
+                        ["description"] = "Superseded copy, pending removal"
+                    };
+                }
+
+                manifest["status"] = "Deleted";
+
+                File.WriteAllText(metaPath, manifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Ratings cleanup: could not remove '{Meta}'", metaPath);
+                // Leave the folder exactly as it is. A stale folder that still holds its original
+                // manifest is the lesser problem: Jellyfin sees two versions of one plugin and
+                // supersedes the older itself. Breaking the manifest would cost us that.
+                _logger.LogWarning(ex, "Ratings cleanup: could not mark '{Dir}' as deleted", dir);
                 return false;
             }
-
-            // Best effort: clear whatever else will delete, so the leftover folder is as small as
-            // possible until a restart lets it go entirely.
-            try
-            {
-                foreach (var file in Directory.GetFiles(dir))
-                {
-                    try
-                    {
-                        File.Delete(file);
-                    }
-                    catch
-                    {
-                        // Locked (typically the DLL itself) - leave it for the next restart.
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Ratings cleanup: partial cleanup of '{Dir}' incomplete", dir);
-            }
-
-            return !File.Exists(metaPath);
         }
 
         /// <summary>

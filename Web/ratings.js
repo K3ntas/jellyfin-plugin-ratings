@@ -9452,6 +9452,9 @@
                     // Then reload full stats from server (pass rating to avoid race condition)
                     self.loadRatings(itemId, rating);
 
+                    // The review cards carry the rating, so they go stale on a plain re-rate too.
+                    self.refreshUserReviews(itemId);
+
                     if (window.require) {
                         require(['toast'], function(toast) {
                             toast('Rated ' + rating + '/10');
@@ -9508,6 +9511,9 @@
                     self.currentUserRating = 0;
                     self.updateStarDisplay(0);
                     self.loadRatings(itemId, 0);
+
+                    // Removing the rating removes its review with it.
+                    self.refreshUserReviews(itemId);
 
                     if (window.require) {
                         require(['toast'], function(toast) {
@@ -9736,6 +9742,7 @@
                 self.currentUserRating = rating;
                 self.updateStarDisplay(rating);
                 self.loadRatings(itemId, rating);
+                self.refreshUserReviews(itemId);
 
                 if (window.require) {
                     require(['toast'], function(toast) {
@@ -10015,6 +10022,31 @@
                     });
                 }
             });
+        },
+
+        /**
+         * Re-reads the User Reviews block for an item that is open on screen.
+         *
+         * injectUserReviewsSection runs once per detail page and returns early when the section
+         * is already there, so writing a review from the rating modal saved it on the server but
+         * never drew it: the block kept saying "No reviews yet" until the page was rebuilt by
+         * navigating away and back. That is why a review looked like it only took on the second
+         * attempt - the first one had worked all along. Every path that adds, edits or removes a
+         * rating calls this.
+         * @param {string} itemId The item whose reviews should be re-read.
+         */
+        refreshUserReviews: function (itemId) {
+            const page = this.getVisibleDetailPage();
+            if (!page) { return; }
+
+            const section = page.querySelector('.user-reviews-section');
+            if (section) {
+                this.loadUserReviews(itemId, section);
+                return;
+            }
+
+            // Page is still being built - let the injector create the section and load it.
+            this.injectUserReviewsSection(itemId);
         },
 
         /**
@@ -10443,8 +10475,14 @@
         formatReviewTimestamp: function (dateStr) {
             if (!dateStr) return '';
             const date = new Date(dateStr);
+            if (isNaN(date.getTime())) { return ''; }
             const now = new Date();
-            const diffMs = now - date;
+
+            // Clamped at zero. A review is drawn the instant it is saved now, and the server
+            // stamps it from its own clock - a few milliseconds ahead of the browser's is enough
+            // for the difference to go negative, and Math.floor turns any negative value into -1,
+            // so a brand new review was labelled "-1 days ago" instead of "Today".
+            const diffMs = Math.max(0, now - date);
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {

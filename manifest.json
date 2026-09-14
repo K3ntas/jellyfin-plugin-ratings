@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.397.0",
+        "changelog": "Fixes a review not appearing after you write it. The review was always saved - the block of reviews further down the page just never re-read itself, so it kept showing whatever was there when the page opened, and the review only turned up once you had navigated away and back. That is why writing it a second time seemed to work: the first one had taken all along. The reviews now refresh as soon as a rating or review is added, changed or removed.\n\nAlso fixes stale plugin folders being left behind after an update (mostly on Windows, where the old copy's file stays locked until Jellyfin restarts). The previous attempt deleted the old folder's meta.json to take it out of circulation, which turns out to do the opposite: Jellyfin treats a plugin folder with no meta.json as an active plugin named after the folder and loads it anyway. The result was two copies of this plugin running at once - doubled up services and duplicate endpoints, with the old copy able to answer requests - and a folder this plugin could no longer recognise in order to clean up. An old folder that cannot be deleted is now marked as deleted in its own manifest instead, which is what Jellyfin does itself: it is not loaded, and Jellyfin removes the folder at a later restart. Folders already left in the broken state are picked up and finished off.\n\nAlso: a review written moments ago was labelled \"-1 days ago\" instead of \"Today\", because the server stamps the time from its own clock and being a fraction of a second ahead of the browser was enough to push the age below zero. It now never reads as less than today.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.397.0/Jellyfin.Plugin.Ratings_2.0.397.0.zip",
+        "checksum": "ec6c0a470bd88181caff781781b6fbc2",
+        "timestamp": "2026-09-14T20:05:15Z"
+      },
+      {
         "version": "2.0.396.0",
         "changelog": "Makes the open header menu on phones properly solid, so nothing on the page shows through it.",
         "targetAbi": "10.11.0.0",
