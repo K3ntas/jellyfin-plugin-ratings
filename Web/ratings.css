@@ -433,10 +433,14 @@
     color: #555;
     transition: all 0.2s ease;
 }
+/* No scale on hover. The row is measured as one continuous 0-10 strip, from the left edge of the
+   first star to the right edge of the last, so anything that resizes a star moves those edges
+   under the pointer: the value previewed on hover and the value committed on the click that
+   follows disagreed by a tenth (5.4 previewed, 5.3 committed). The small row on the detail page
+   has never had a transform here, which is why it was always stable. */
 .ratings-modal-star:hover,
 .ratings-modal-star.hover {
     color: #ffd700;
-    transform: scale(1.1);
 }
 .ratings-modal-star.filled {
     color: #ffd700;
@@ -453,12 +457,10 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
-    transform: none;
 }
-/* Mid-swipe the row is the thing being pointed at, so the per-star hover lift is noise. */
-.ratings-modal-stars.dragging .ratings-modal-star,
-.ratings-modal-stars.dragging .ratings-modal-star:hover {
-    transform: none;
+/* The colour fade is pleasant on a single hover and wrong during a swipe, where ten stars are
+   repainted per frame and the lag reads as the fill trailing the finger. */
+.ratings-modal-stars.dragging .ratings-modal-star {
     transition: none;
 }
 .ratings-modal-rating-display {

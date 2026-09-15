@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.401.0",
+        "changelog": "The stars in the rating window now work exactly like the ones on the movie page. Moving across them shows the decimal you are about to pick, and clicking takes it - 5.4, not 5. Before, each big star was a separate button, so the window could only ever give whole numbers no matter how the small stars behaved. Swiping on a phone gives decimals too, and the star you stop on fills part-way to match.\n\nAlso removes the slight zoom a big star did when pointed at. It moved the row under the pointer, so the value shown while hovering could end up a tenth away from the value taken on the click.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.401.0/Jellyfin.Plugin.Ratings_2.0.401.0.zip",
+        "checksum": "36ca819ebc78ac7fd1f32feeac791f70",
+        "timestamp": "2026-09-15T22:22:22Z"
+      },
+      {
         "version": "2.0.400.0",
         "changelog": "Fixes plugin updates not reaching the browser at all. After updating, the page kept running the previous version's code: everything fixed in a release looked like it had never been released, and only a manual hard refresh (Ctrl+Shift+R) brought it through. The plugin adds its script tag to the page as Jellyfin sends it, but when the browser asked whether its copy of the page was still current, Jellyfin answered \"unchanged\" without sending the page - so there was nothing to add the tag to, and the browser reused its stored copy, still pointing at the old version's script. That script is cached for a year on purpose, so it was never re-requested. The page is now always sent in full and is no longer stored by the browser, so a new version shows up on the next ordinary page load. The large script and stylesheet keep their long-term caching, which is what makes the plugin load quickly.\n\nThis is why the decimal star swipe in the rating window and the clickable \"No reviews yet\" button from the previous two releases appeared to be missing.",
         "targetAbi": "10.11.0.0",

@@ -9659,6 +9659,13 @@
 
             row.addEventListener('pointermove', (e) => {
                 if (!dragging) {
+                    // Nothing pressed: still preview what the pointer is over, so moving across the
+                    // row shows the value it would give without having to hold the button down.
+                    // Skipped for touch, where "hovering" is not a thing and a stray move between
+                    // a tap's down and up would flicker the row.
+                    if (e.pointerType !== 'touch') {
+                        setRating(valueAt(e.clientX), true);
+                    }
                     return;
                 }
                 // A press released off the row before it became a drag never reaches pointerup
@@ -9696,7 +9703,8 @@
                 } catch (err) { /* nothing to release */ }
 
                 if (!moved) {
-                    // A tap: the per-star click handlers give the whole number, unchanged.
+                    // Not a drag, so this was a tap. The click that follows commits it, to the
+                    // tenth under the pointer - same as a click on the small row.
                     return;
                 }
                 moved = false;
@@ -9712,14 +9720,21 @@
                 row.classList.remove('dragging');
             });
 
-            // A click that ended a drag must not also fire the star's own handler underneath: that
-            // would overwrite the swiped 7.5 with the whole 8 the finger happened to lift over.
+            // A plain click commits whatever the pointer is over, to the same tenth the row was
+            // previewing - so what you saw before pressing is what you get. Taken in the capture
+            // phase so nothing underneath can commit a different value first. A click that merely
+            // ended a drag is swallowed instead: the drag already committed on pointerup, and
+            // re-reading the release point here could disagree with it.
             row.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
                 if (suppressClick) {
                     suppressClick = false;
-                    e.stopPropagation();
-                    e.preventDefault();
+                    return;
                 }
+
+                setRating(valueAt(e.clientX), false);
             }, true);
         },
 
@@ -9793,7 +9808,6 @@
 
             // Star hover and click handlers
             const starsRow = overlay.querySelector('.ratings-modal-stars');
-            const modalStars = overlay.querySelectorAll('.ratings-modal-star');
             const ratingDisplay = overlay.querySelector('.ratings-modal-rating-display');
             const submitBtn = overlay.querySelector('[data-action="submit"]');
 
@@ -9813,20 +9827,12 @@
                 }
             };
 
-            modalStars.forEach(star => {
-                star.addEventListener('mouseenter', function() {
-                    if (starsRow.classList.contains('dragging')) {
-                        return;
-                    }
-                    const r = parseFloat(this.getAttribute('data-rating'));
-                    self.fillModalStars(starsRow, r, true);
-                    ratingDisplay.textContent = self.formatRating(r) + '/10';
-                });
-
-                star.addEventListener('click', function() {
-                    setRating(parseFloat(this.getAttribute('data-rating')), false);
-                });
-            });
+            // Deliberately no per-star handlers. The row is one continuous 0-10 strip, exactly like
+            // the small row on the detail page: pointing anywhere along it previews the tenth it
+            // would give, and clicking commits that tenth. Treating each star as a discrete button
+            // was what made the big stars snap to whole numbers while the small ones gave 7.5 -
+            // the mismatch reported in issue #82. Everything is driven from the row by
+            // attachModalStarDrag below.
 
             // Leaving the row puts back whatever is actually selected, so a preview never sticks.
             starsRow.addEventListener('mouseleave', function() {
