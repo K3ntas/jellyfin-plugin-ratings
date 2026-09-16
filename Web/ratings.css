@@ -424,6 +424,8 @@
     justify-content: center;
     gap: 0.3em;
     margin: 1em 0;
+    /* Swiping the big stars must not scroll the modal under the finger (issue #82). */
+    touch-action: pan-y;
 }
 .ratings-modal-star {
     font-size: 2em;
@@ -431,13 +433,35 @@
     color: #555;
     transition: all 0.2s ease;
 }
+/* No scale on hover. The row is measured as one continuous 0-10 strip, from the left edge of the
+   first star to the right edge of the last, so anything that resizes a star moves those edges
+   under the pointer: the value previewed on hover and the value committed on the click that
+   follows disagreed by a tenth (5.4 previewed, 5.3 committed). The small row on the detail page
+   has never had a transform here, which is why it was always stable. */
 .ratings-modal-star:hover,
 .ratings-modal-star.hover {
     color: #ffd700;
-    transform: scale(1.1);
 }
 .ratings-modal-star.filled {
     color: #ffd700;
+}
+/* Partially filled big star, to any fraction - the same background-clip:text gradient the small
+   row uses, so a swiped 7.5 looks the same in both places. The transform and the colour are
+   dropped here: with the text painted by the gradient, a colour would win over it and the scale
+   would leave the fill edge sitting slightly off the glyph. */
+.ratings-modal-star.partial,
+.ratings-modal-star.partial:hover {
+    background: linear-gradient(90deg,
+        #ffd700 var(--star-fill, 50%), #555 var(--star-fill, 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+/* The colour fade is pleasant on a single hover and wrong during a swipe, where ten stars are
+   repainted per frame and the lag reads as the fill trailing the finger. */
+.ratings-modal-stars.dragging .ratings-modal-star {
+    transition: none;
 }
 .ratings-modal-rating-display {
     text-align: center;
@@ -797,6 +821,43 @@
     color: #666;
     padding: 2em;
     font-style: italic;
+}
+/* The empty state is a button when there is nothing to show: it opens the rating dialog, so it
+   has to look pressable rather than like a caption (issue #82). Reset the button chrome first -
+   a bare <button> would otherwise arrive with the browser's own background and border. */
+.user-reviews-empty-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    width: auto;
+    margin: 0 auto;
+    font: inherit;
+    font-style: italic;
+    padding: 1.2em 1.8em;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.user-reviews-empty-action:hover,
+.user-reviews-empty-action:focus-visible {
+    background: rgba(255, 215, 0, 0.08);
+    border-color: rgba(255, 215, 0, 0.45);
+    color: #ffd700;
+    outline: none;
+}
+.user-reviews-empty-icon {
+    font-style: normal;
+    font-size: 1.25em;
+    line-height: 1;
+}
+/* The grid centres its cards; the button is a single item and would otherwise stretch across it. */
+.user-reviews-grid .user-reviews-empty-action {
+    grid-column: 1 / -1;
+    justify-self: center;
 }
 .user-reviews-loading {
     text-align: center;

@@ -166,6 +166,7 @@
                 showAllRandom: 'Show all (random)', showMyActivityFeed: 'Show my activity feed',
                 showMyRatingsToOthers: 'Show my ratings to others', sortBy: 'Sort by:',
                 startFromTheBeginning: 'Start from the beginning', startWhereTheyAreNow: 'Start where they are now',
+                selectARating: 'Select a rating', writeAReview: 'Write a review',
                 status: 'Status', styleApplied: 'Style Applied', submitRating: 'Submit Rating',
                 tellOthersAboutYourself: 'Tell others about yourself...', testNotification: 'Test Notification',
                 textStyle: 'Text style:', toggleFullscreen: 'Toggle Fullscreen',
@@ -8828,11 +8829,13 @@
          *
          * @param {Element} container The stars container.
          * @param {number} clientX Pointer X in client coordinates.
+         * @param {string} [selector] Star selector, for rows that are not the detail page's own
+         *                            (the rating modal draws its own, larger, stars).
          * @returns {number} Rating value.
          */
-        ratingFromPointer: function (container, clientX) {
+        ratingFromPointer: function (container, clientX, selector) {
             const stars = Array.prototype.filter.call(
-                container.querySelectorAll('.ratings-plugin-star'),
+                container.querySelectorAll(selector || '.ratings-plugin-star'),
                 s => s.offsetParent !== null || s.getClientRects().length);
             if (!stars.length) {
                 return this.RATING_STEP;
@@ -9575,6 +9578,167 @@
         },
 
         /**
+         * Paints the rating modal's large star row to an exact fractional rating.
+         *
+         * The small row on the detail page has fillStarsTo; this is the same idea for the modal's
+         * own stars, which are a separate element with their own classes. Kept as its own function
+         * rather than folded into fillStarsTo because that one addresses the visible detail page
+         * and would repaint the row behind the modal instead of the one in front of it.
+         *
+         * @param {Element} row The .ratings-modal-stars container.
+         * @param {number} rating Rating between 0 and 10.
+         * @param {boolean} [preview] True while dragging or hovering, i.e. not yet chosen.
+         */
+        fillModalStars: function (row, rating, preview) {
+            if (!row) {
+                return;
+            }
+            const stars = row.querySelectorAll('.ratings-modal-star');
+            const perStar = stars.length ? 10 / stars.length : 1;
+
+            stars.forEach((star, index) => {
+                const filledUpTo = (index + 1) * perStar;
+                const fraction = (rating - index * perStar) / perStar;
+
+                if (rating >= filledUpTo) {
+                    star.classList.add(preview ? 'hover' : 'filled');
+                    star.classList.remove(preview ? 'filled' : 'hover', 'partial');
+                    star.style.removeProperty('--star-fill');
+                } else if (fraction > 0) {
+                    star.classList.add('partial', preview ? 'hover' : 'filled');
+                    star.classList.remove(preview ? 'filled' : 'hover');
+                    star.style.setProperty('--star-fill', (fraction * 100).toFixed(2) + '%');
+                } else {
+                    star.classList.remove('hover', 'filled', 'partial');
+                    star.style.removeProperty('--star-fill');
+                }
+            });
+        },
+
+        /**
+         * Lets the modal's large stars be swiped to any tenth, same as the small row (issue #82).
+         *
+         * The small stars got this in v1.0.388.0 but the modal kept its whole-number-only click
+         * handlers, so a phone user who opened "Edit Your Rating" and swiped the big stars saw
+         * nothing happen - the two rows disagreed about what a swipe meant. The gesture rules here
+         * match attachStarDrag deliberately: a tap still gives the whole number the star is worth,
+         * and only real movement produces decimals.
+         *
+         * Nothing is submitted from here. The modal is a form - the drag only moves the selection,
+         * and Submit is still what sends it.
+         *
+         * @param {Element} row The .ratings-modal-stars container.
+         * @param {Function} setRating Called with (value, preview) as the pointer moves and lands.
+         */
+        attachModalStarDrag: function (row, setRating) {
+            const self = this;
+            let dragging = false;
+            let moved = false;
+            let suppressClick = false;
+            let startX = 0;
+            // Enough travel to read as a swipe rather than a tap that wobbled.
+            const MOVE_THRESHOLD = 4;
+
+            const valueAt = (clientX) => self.ratingFromPointer(row, clientX, '.ratings-modal-star');
+
+            row.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) {
+                    return;
+                }
+                dragging = true;
+                moved = false;
+                // Cleared here rather than only when a click arrives: a drag that ends off the row
+                // may produce no click at all, and a flag left standing would swallow the next tap.
+                suppressClick = false;
+                startX = e.clientX;
+                // Capture is deliberately NOT taken here. While a pointer is captured the browser
+                // retargets the following click to the capturing element, which would rob the
+                // stars of the plain taps they still handle. It is taken below instead, once the
+                // gesture is known to be a drag and the tap is no longer in play.
+            });
+
+            row.addEventListener('pointermove', (e) => {
+                if (!dragging) {
+                    // Nothing pressed: still preview what the pointer is over, so moving across the
+                    // row shows the value it would give without having to hold the button down.
+                    // Skipped for touch, where "hovering" is not a thing and a stray move between
+                    // a tap's down and up would flicker the row.
+                    if (e.pointerType !== 'touch') {
+                        setRating(valueAt(e.clientX), true);
+                    }
+                    return;
+                }
+                // A press released off the row before it became a drag never reaches pointerup
+                // here, so notice the button is no longer down rather than staying stuck in a
+                // drag that the pointer has already finished.
+                if (!moved && e.pointerType === 'mouse' && e.buttons === 0) {
+                    dragging = false;
+                    return;
+                }
+                if (!moved && Math.abs(e.clientX - startX) < MOVE_THRESHOLD) {
+                    return;
+                }
+                if (!moved) {
+                    moved = true;
+                    row.classList.add('dragging');
+                    // Now that it is a drag, hold the pointer so sliding off the row keeps
+                    // updating instead of dropping the gesture halfway.
+                    try {
+                        row.setPointerCapture(e.pointerId);
+                    } catch (err) { /* capture is a nicety, not a requirement */ }
+                }
+                // Stop the modal scrolling with the finger mid-swipe.
+                e.preventDefault();
+                setRating(valueAt(e.clientX), true);
+            });
+
+            const finish = (e) => {
+                if (!dragging) {
+                    return;
+                }
+                dragging = false;
+                row.classList.remove('dragging');
+                try {
+                    row.releasePointerCapture(e.pointerId);
+                } catch (err) { /* nothing to release */ }
+
+                if (!moved) {
+                    // Not a drag, so this was a tap. The click that follows commits it, to the
+                    // tenth under the pointer - same as a click on the small row.
+                    return;
+                }
+                moved = false;
+                suppressClick = true;
+                // Where the finger lifts is the value chosen, which can differ from the last move.
+                setRating(typeof e.clientX === 'number' ? valueAt(e.clientX) : valueAt(startX), false);
+            };
+
+            row.addEventListener('pointerup', finish);
+            row.addEventListener('pointercancel', () => {
+                dragging = false;
+                moved = false;
+                row.classList.remove('dragging');
+            });
+
+            // A plain click commits whatever the pointer is over, to the same tenth the row was
+            // previewing - so what you saw before pressing is what you get. Taken in the capture
+            // phase so nothing underneath can commit a different value first. A click that merely
+            // ended a drag is swallowed instead: the drag already committed on pointerup, and
+            // re-reading the release point here could disagree with it.
+            row.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+
+                setRating(valueAt(e.clientX), false);
+            }, true);
+        },
+
+        /**
          * Open rating modal for submitting/editing rating with review
          */
         openRatingModal: function (itemId, initialRating) {
@@ -9603,7 +9767,7 @@
                         <button class="ratings-modal-close">&times;</button>
                     </div>
                     <div class="ratings-modal-stars">${starsHtml}</div>
-                    <div class="ratings-modal-rating-display">${selectedRating > 0 ? selectedRating + '/10' : 'Select a rating'}</div>
+                    <div class="ratings-modal-rating-display">${selectedRating > 0 ? this.formatRating(selectedRating) + '/10' : RatingsPlugin.t('selectARating')}</div>
                     <div class="ratings-modal-review-label">${RatingsPlugin.t('writeAReviewOptional')}</div>
                     <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"></textarea>
                     <div class="ratings-modal-buttons">
@@ -9643,31 +9807,45 @@
             }
 
             // Star hover and click handlers
-            const modalStars = overlay.querySelectorAll('.ratings-modal-star');
+            const starsRow = overlay.querySelector('.ratings-modal-stars');
             const ratingDisplay = overlay.querySelector('.ratings-modal-rating-display');
             const submitBtn = overlay.querySelector('[data-action="submit"]');
 
-            modalStars.forEach(star => {
-                star.addEventListener('mouseenter', function() {
-                    const r = parseFloat(this.getAttribute('data-rating'));
-                    modalStars.forEach((s, idx) => {
-                        s.classList.toggle('hover', idx < r);
-                    });
-                });
+            // The row was opened with whatever the detail page handed over, which can be a tenth
+            // now that the small stars swipe. Paint it properly so 7.5 does not arrive here
+            // looking like 7.
+            if (selectedRating > 0) {
+                this.fillModalStars(starsRow, selectedRating, false);
+            }
 
-                star.addEventListener('mouseleave', function() {
-                    modalStars.forEach(s => s.classList.remove('hover'));
-                });
-
-                star.addEventListener('click', function() {
-                    selectedRating = parseFloat(this.getAttribute('data-rating'));
-                    modalStars.forEach((s, idx) => {
-                        s.classList.toggle('filled', idx < selectedRating);
-                    });
-                    ratingDisplay.textContent = selectedRating + '/10';
+            const setRating = (value, preview) => {
+                self.fillModalStars(starsRow, value, preview);
+                ratingDisplay.textContent = self.formatRating(value) + '/10';
+                if (!preview) {
+                    selectedRating = value;
                     submitBtn.disabled = false;
-                });
+                }
+            };
+
+            // Deliberately no per-star handlers. The row is one continuous 0-10 strip, exactly like
+            // the small row on the detail page: pointing anywhere along it previews the tenth it
+            // would give, and clicking commits that tenth. Treating each star as a discrete button
+            // was what made the big stars snap to whole numbers while the small ones gave 7.5 -
+            // the mismatch reported in issue #82. Everything is driven from the row by
+            // attachModalStarDrag below.
+
+            // Leaving the row puts back whatever is actually selected, so a preview never sticks.
+            starsRow.addEventListener('mouseleave', function() {
+                if (starsRow.classList.contains('dragging')) {
+                    return;
+                }
+                self.fillModalStars(starsRow, selectedRating, false);
+                ratingDisplay.textContent = selectedRating > 0
+                    ? self.formatRating(selectedRating) + '/10'
+                    : RatingsPlugin.t('selectARating');
             });
+
+            this.attachModalStarDrag(starsRow, setRating);
 
             // Close button
             overlay.querySelector('.ratings-modal-close').addEventListener('click', function() {
@@ -10141,9 +10319,30 @@
 
             if (!reviews || reviews.length === 0) {
                 grid.textContent = '';
-                var emptyDiv = document.createElement('div');
-                emptyDiv.className = 'user-reviews-empty';
-                emptyDiv.textContent = this.t('noReviews') || 'No reviews yet. Be the first to write one!';
+                // The invitation is the only thing on screen at this point, so it may as well do
+                // what it asks for: people read "be the first to write one" and tried to click it,
+                // then scrolled back up hunting for the stars. A pencil and button styling say it
+                // is pressable; the keyboard attributes are there because this is a real control
+                // now, not a caption.
+                var emptyDiv = document.createElement('button');
+                emptyDiv.type = 'button';
+                emptyDiv.className = 'user-reviews-empty user-reviews-empty-action';
+                emptyDiv.title = this.t('writeAReview');
+
+                var emptyIcon = document.createElement('span');
+                emptyIcon.className = 'user-reviews-empty-icon';
+                emptyIcon.setAttribute('aria-hidden', 'true');
+                emptyIcon.textContent = '✍️';
+                emptyDiv.appendChild(emptyIcon);
+
+                var emptyText = document.createElement('span');
+                emptyText.textContent = this.t('noReviews') || 'No reviews yet. Be the first to write one!';
+                emptyDiv.appendChild(emptyText);
+
+                emptyDiv.addEventListener('click', function () {
+                    self.openRatingModal(itemId, self.currentUserRating || 0);
+                });
+
                 grid.appendChild(emptyDiv);
                 return;
             }

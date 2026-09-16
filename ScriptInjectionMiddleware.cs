@@ -56,6 +56,26 @@ namespace Jellyfin.Plugin.Ratings
             // Remove Accept-Encoding to prevent compressed response
             context.Request.Headers.Remove("Accept-Encoding");
 
+            // Drop the conditional-request headers too, which is what makes a plugin update
+            // actually reach the browser.
+            //
+            // index.html is a static file, so Jellyfin answers a matching If-None-Match with 304
+            // and no body. A body is the one thing this middleware needs, so the 304 passes
+            // straight through and the browser keeps the copy it already had - including the
+            // <script src="...ratings.js?v=OLD"> tag from whichever plugin version was current
+            // when that copy was cached. That URL is served immutable for a year, so the browser
+            // never asks about it again: the page goes on running the old bundle, and every fix
+            // looks like it was never released. Only a manual hard reload cleared it.
+            //
+            // Jellyfin's own ETag cannot help here - it is computed from the file on disk, which
+            // does not change when the plugin version does.
+            //
+            // Forcing a full 200 costs one small HTML body per page load. The heavy assets are
+            // untouched: they keep their per-version immutable caching, which is the whole point
+            // of the ?v= scheme.
+            context.Request.Headers.Remove("If-None-Match");
+            context.Request.Headers.Remove("If-Modified-Since");
+
             // Store original body stream
             var originalBodyStream = context.Response.Body;
 
@@ -157,6 +177,17 @@ namespace Jellyfin.Plugin.Ratings
 
                 // Write modified response
                 var modifiedBytes = Encoding.UTF8.GetBytes(modifiedBody);
+
+                // The body is no longer the file Jellyfin validated, so its validators must not
+                // survive: an ETag or Last-Modified left in place would let the browser revalidate
+                // its way back to a cached page carrying a stale ?v=. Marking the HTML
+                // non-cacheable keeps the injected script tag honest across plugin updates,
+                // without touching the year-long caching of the assets it points at.
+                context.Response.Headers.Remove("ETag");
+                context.Response.Headers.Remove("Last-Modified");
+                context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+                context.Response.Headers["Pragma"] = "no-cache";
+                context.Response.Headers["Expires"] = "0";
 
                 // Clear and set new content length
                 context.Response.Headers.Remove("Content-Length");

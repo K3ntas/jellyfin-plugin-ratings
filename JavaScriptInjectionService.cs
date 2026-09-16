@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -20,16 +22,25 @@ namespace Jellyfin.Plugin.Ratings
     {
         private readonly ILogger<JavaScriptInjectionService> _logger;
         private readonly IApplicationPaths _appPaths;
+        private readonly IServiceProvider _serviceProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JavaScriptInjectionService"/> class.
         /// </summary>
         /// <param name="logger">Instance of the <see cref="ILogger{JavaScriptInjectionService}"/> interface.</param>
         /// <param name="appPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
-        public JavaScriptInjectionService(ILogger<JavaScriptInjectionService> logger, IApplicationPaths appPaths)
+        /// <param name="serviceProvider">Service provider, used to reach Jellyfin's plugin manager.
+        /// Taken as the provider and resolved lazily rather than injected as
+        /// <see cref="IPluginManager"/> directly, so that a server which does not register that
+        /// interface cannot stop this service from being constructed at all.</param>
+        public JavaScriptInjectionService(
+            ILogger<JavaScriptInjectionService> logger,
+            IApplicationPaths appPaths,
+            IServiceProvider serviceProvider)
         {
             _logger = logger;
             _appPaths = appPaths;
+            _serviceProvider = serviceProvider;
         }
 
         /// <summary>
@@ -190,38 +201,72 @@ namespace Jellyfin.Plugin.Ratings
                         continue;
                     }
 
-                    // Separate try so a Windows file-lock on the old DLL is reported clearly.
-                    try
+                    // Ask Jellyfin to remove the folder rather than deleting it behind its back.
+                    //
+                    // Deleting the directory ourselves is what broke the dashboard's Plugins page.
+                    // Jellyfin keeps a LocalPlugin in memory for every folder it scanned at startup,
+                    // and GET /Packages writes each one's logo.png and meta.json back into its own
+                    // folder; with the folder gone that write throws DirectoryNotFoundException,
+                    // the endpoint 500s, and the page shows "An error occurred while loading
+                    // plugins" until the next restart. Only Linux ever saw it: on Windows the old
+                    // DLL is locked, the delete failed, and the mark-Deleted path below ran
+                    // instead - which leaves the folder in place and so never triggers it.
+                    //
+                    // IPluginManager.RemovePlugin deletes the folder AND drops the in-memory entry,
+                    // falling back to marking the manifest Deleted when the files are locked, which
+                    // is exactly what Jellyfin's own uninstall does.
+                    var outcome = AskHostToRemovePlugin(dir);
+
+                    if (outcome == StaleFolderOutcome.HandledByHost)
                     {
-                        Directory.Delete(dir, true);
                         removed++;
                         _logger.LogInformation(
-                            "Ratings cleanup: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
+                            "Ratings cleanup: Jellyfin removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current})",
                             dir, otherVersion, myVersion);
+                        continue;
                     }
-                    catch (Exception ex)
-                    {
-                        // On Windows the old DLL is usually still mapped into the process, so the
-                        // folder cannot be deleted until the next restart. Mark it Deleted in its
-                        // own manifest instead: Jellyfin skips any plugin whose status is below
-                        // Active, and retries removing a Deleted one at every restart - which is
-                        // what its own uninstall does for a folder it cannot delete (issue #67).
-                        var markedDeleted = TryMarkFolderDeleted(dir, metaPath, otherVersion, folderName);
 
-                        if (markedDeleted)
+                    if (outcome == StaleFolderOutcome.UnknownToHost)
+                    {
+                        // Jellyfin has no record of this folder, so nothing in memory can be left
+                        // pointing at it once it is gone. Separate try so a file-lock on the old
+                        // DLL is reported clearly.
+                        try
                         {
+                            Directory.Delete(dir, true);
                             removed++;
                             _logger.LogInformation(
-                                "Ratings cleanup: could not delete '{Dir}' (locked DLL), so marked it Deleted in meta.json - Jellyfin will not load it, and removes the folder on a later restart",
-                                dir);
+                                "Ratings cleanup: removed stale duplicate plugin folder '{Dir}' (version {Old}, keeping {Current}); Jellyfin had no record of it",
+                                dir, otherVersion, myVersion);
+                            continue;
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            failed++;
-                            _logger.LogWarning(ex,
-                                "Ratings cleanup: FAILED to remove old folder '{Dir}' (likely a locked DLL on Windows); will retry next restart",
+                            _logger.LogInformation(
+                                ex,
+                                "Ratings cleanup: could not delete '{Dir}' outright; falling back to marking it Deleted",
                                 dir);
                         }
+                    }
+
+                    // Either Jellyfin could not be asked, or nothing managed to delete the folder.
+                    // Mark it Deleted in its own manifest: Jellyfin skips any plugin whose status
+                    // is below Active, and removes a Deleted one at a later restart (issue #67).
+                    // Never fall back to a raw delete here - a folder Jellyfin still holds in
+                    // memory has to keep existing until the server restarts.
+                    if (TryMarkFolderDeleted(dir, metaPath, otherVersion, folderName))
+                    {
+                        removed++;
+                        _logger.LogInformation(
+                            "Ratings cleanup: marked '{Dir}' Deleted in meta.json - Jellyfin will not load it, and removes the folder on a later restart",
+                            dir);
+                    }
+                    else
+                    {
+                        failed++;
+                        _logger.LogWarning(
+                            "Ratings cleanup: FAILED to remove old folder '{Dir}'; will retry next restart",
+                            dir);
                     }
                 }
 
@@ -233,6 +278,91 @@ namespace Jellyfin.Plugin.Ratings
             {
                 // Cleanup is best-effort and must never break startup.
                 _logger.LogWarning(ex, "Ratings cleanup: plugin version cleanup failed");
+            }
+        }
+
+        /// <summary>
+        /// What happened when Jellyfin was asked to remove a stale plugin folder.
+        /// </summary>
+        private enum StaleFolderOutcome
+        {
+            /// <summary>Jellyfin removed the folder, or marked it for removal, and forgot the plugin.</summary>
+            HandledByHost,
+
+            /// <summary>Jellyfin has no record of the folder, so it is ours alone to delete.</summary>
+            UnknownToHost,
+
+            /// <summary>Jellyfin could not be asked, or refused.</summary>
+            HostUnavailable
+        }
+
+        /// <summary>
+        /// Asks Jellyfin's own plugin manager to remove a stale plugin folder.
+        /// </summary>
+        /// <remarks>
+        /// This exists because a folder must never be deleted while Jellyfin still has it in
+        /// memory: the plugin manager writes every known plugin's manifest and image back into its
+        /// own directory when the dashboard asks for /Packages, and a missing directory turns that
+        /// into a 500 for the whole Plugins page. Going through the plugin manager keeps the
+        /// in-memory list and the disk in step, and it already knows how to fall back to marking a
+        /// locked folder Deleted.
+        /// </remarks>
+        /// <param name="dir">The stale plugin folder.</param>
+        /// <returns>What the host did about it.</returns>
+        private StaleFolderOutcome AskHostToRemovePlugin(string dir)
+        {
+            IPluginManager? pluginManager;
+            try
+            {
+                pluginManager = _serviceProvider.GetService<IPluginManager>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Ratings cleanup: could not resolve Jellyfin's plugin manager");
+                return StaleFolderOutcome.HostUnavailable;
+            }
+
+            if (pluginManager == null)
+            {
+                _logger.LogInformation("Ratings cleanup: this server exposes no plugin manager to ask");
+                return StaleFolderOutcome.HostUnavailable;
+            }
+
+            try
+            {
+                var full = Path.GetFullPath(dir);
+                LocalPlugin? match = null;
+
+                foreach (var candidate in pluginManager.Plugins)
+                {
+                    if (candidate?.Path == null)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(Path.GetFullPath(candidate.Path), full, StringComparison.OrdinalIgnoreCase))
+                    {
+                        match = candidate;
+                        break;
+                    }
+                }
+
+                if (match == null)
+                {
+                    return StaleFolderOutcome.UnknownToHost;
+                }
+
+                return pluginManager.RemovePlugin(match)
+                    ? StaleFolderOutcome.HandledByHost
+                    : StaleFolderOutcome.HostUnavailable;
+            }
+            catch (Exception ex)
+            {
+                // A signature change in a future server would surface here as a
+                // MissingMethodException; the caller falls back to marking the folder Deleted,
+                // which needs nothing from Jellyfin at all.
+                _logger.LogWarning(ex, "Ratings cleanup: Jellyfin's plugin manager could not remove '{Dir}'", dir);
+                return StaleFolderOutcome.HostUnavailable;
             }
         }
 
