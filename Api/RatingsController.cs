@@ -125,6 +125,23 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
 
         /// <summary>
+        /// Whether an item is something a person can rate. Library folders ("Movies", "TV Shows"),
+        /// grouped views and plain file-system folders are containers, not media: Jellyfin still
+        /// opens them on a details page, which is how people ended up rating a whole library.
+        /// </summary>
+        /// <param name="item">The library item.</param>
+        /// <returns>True when the item can carry a rating.</returns>
+        private static bool IsRateableItem(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            return item is not MediaBrowser.Controller.Entities.CollectionFolder
+                && item is not MediaBrowser.Controller.Entities.UserView
+                && item is not MediaBrowser.Controller.Entities.AggregateFolder
+                && item is not MediaBrowser.Controller.Entities.UserRootFolder
+                && item is not MediaBrowser.Controller.Entities.BasePluginFolder
+                && item.GetType() != typeof(MediaBrowser.Controller.Entities.Folder);
+        }
+
+        /// <summary>
         /// Sanitizes user input to prevent XSS attacks.
         /// Strips HTML tags and encodes special characters.
         /// </summary>
@@ -247,6 +264,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (item == null)
                 {
                     return NotFound($"Item {itemId} not found");
+                }
+
+                if (!IsRateableItem(item))
+                {
+                    return BadRequest("Libraries and folders cannot be rated");
                 }
 
                 // Check plugin configuration
@@ -1826,6 +1848,108 @@ namespace Jellyfin.Plugin.Ratings.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during native ratings backfill");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Ratings stored on libraries or folders rather than on media. Before 2.0.402.0 / 1.0.392.0
+        /// the star widget also appeared on a library's details page, so people rated "Movies" or
+        /// "TV Shows" itself. Items that no longer exist are left alone - that is a different case.
+        /// </summary>
+        /// <returns>Each such rating with the item it is attached to.</returns>
+        private List<(UserRating Rating, MediaBrowser.Controller.Entities.BaseItem Item)> FindLibraryRatings()
+        {
+            var found = new List<(UserRating, MediaBrowser.Controller.Entities.BaseItem)>();
+            foreach (var r in _repository.GetAllRatings())
+            {
+                var item = _libraryManager.GetItemById(r.ItemId);
+                if (item != null && !IsRateableItem(item))
+                {
+                    found.Add((r, item));
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Lists ratings left on libraries and folders, for the cleanup button. Admin only.
+        /// </summary>
+        /// <returns>The count, how many carry a review, and a per-library breakdown.</returns>
+        [HttpGet("Admin/LibraryRatings")]
+        [Authorize]
+        public async Task<ActionResult> GetLibraryRatings()
+        {
+            try
+            {
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(adminId))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+                }
+
+                var found = FindLibraryRatings();
+                return Ok(new
+                {
+                    count = found.Count,
+                    withReview = found.Count(f => !string.IsNullOrWhiteSpace(f.Rating.ReviewText)),
+                    items = found
+                        .GroupBy(f => f.Item.Id)
+                        .Select(g => new { itemId = g.Key, name = g.First().Item.Name, count = g.Count() })
+                        .OrderByDescending(g => g.count)
+                        .ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error listing ratings on libraries");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
+        /// Deletes every rating (and its review) left on a library or folder. Admin only.
+        /// </summary>
+        /// <returns>How many were deleted.</returns>
+        [HttpPost("Admin/LibraryRatings/Delete")]
+        [Authorize]
+        public async Task<ActionResult> DeleteLibraryRatings()
+        {
+            try
+            {
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(adminId))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+                }
+
+                int deleted = 0, errors = 0;
+                foreach (var (rating, item) in FindLibraryRatings())
+                {
+                    try
+                    {
+                        if (await _repository.DeleteRatingAsync(rating.UserId, rating.ItemId).ConfigureAwait(false))
+                        {
+                            deleted++;
+
+                            // An older version may have mirrored it into the folder's native fields.
+                            ClearNativeRating(rating.UserId, item);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errors++;
+                        _logger.LogWarning(ex, "Could not delete rating {RatingId} on {ItemName}", rating.Id, item.Name);
+                    }
+                }
+
+                _logger.LogInformation("Deleted {Deleted} rating(s) left on libraries and folders ({Errors} failed)", deleted, errors);
+                return Ok(new { deleted, errors });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting ratings on libraries");
                 return StatusCode(500, "Internal server error");
             }
         }

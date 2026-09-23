@@ -8629,13 +8629,42 @@
 
                 if (detailRibbon) {
                     clearInterval(checkInterval);
-                    self.injectRatingComponent(itemId);
-                    self.injectUserReviewsSection(itemId);
+                    self.isRateableItem(itemId).then(function (rateable) {
+                        // The user may have moved on while the type lookup was in flight.
+                        if (!rateable || self.getItemIdFromUrl() !== itemId) return;
+                        self.injectRatingComponent(itemId);
+                        self.injectUserReviewsSection(itemId);
+                    });
                 } else if (attempts >= maxAttempts) {
                     // Give up after max attempts
                     clearInterval(checkInterval);
                 }
             }, 100); // Check every 100ms for faster detection
+        },
+
+        /**
+         * Resolve whether an item can be rated. Library folders ("Movies", "TV Shows") and other
+         * plain folders open on a details page like any movie, so the ribbon alone is not enough:
+         * without this the stars and reviews appeared on the library page and people rated it.
+         * Fails open - if the lookup fails, show the widget as before.
+         */
+        isRateableItem: function (itemId) {
+            const self = this;
+            self._rateableCache = self._rateableCache || {};
+            if (itemId in self._rateableCache) {
+                return Promise.resolve(self._rateableCache[itemId]);
+            }
+            const folderTypes = ['CollectionFolder', 'UserView', 'AggregateFolder', 'UserRootFolder',
+                'Folder', 'BasePluginFolder', 'PlaylistsFolder', 'ManualPlaylistsFolder'];
+            try {
+                return Promise.resolve(ApiClient.getItem(ApiClient.getCurrentUserId(), itemId)).then(function (item) {
+                    const rateable = !(item && folderTypes.indexOf(item.Type) !== -1);
+                    self._rateableCache[itemId] = rateable;
+                    return rateable;
+                }).catch(function () { return true; });
+            } catch (e) {
+                return Promise.resolve(true);
+            }
         },
 
         /**
@@ -8694,7 +8723,7 @@
             }
 
             // Pattern 4: Anywhere in URL
-            match = url.match(/id=([a-f0-9]{32})/i);
+            match = url.match(/[?&]id=([a-f0-9]{32})/i);
             if (match) {
                 return match[1];
             }

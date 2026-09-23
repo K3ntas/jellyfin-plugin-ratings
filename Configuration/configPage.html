@@ -78,6 +78,19 @@
                                 <div id="backfillNativeStatus" class="fieldDescription" style="color: #9ab;"></div>
                             </div>
 
+                            <div class="inputContainer" style="margin-top: 8px;">
+                                <button id="btnCleanupLibraryRatings" type="button" is="emby-button" class="raised block">
+                                    <span>Remove ratings left on libraries</span>
+                                </button>
+                                <div class="fieldDescription">
+                                    Older versions showed the stars on library pages such as "Movies" or "TV Shows", so some
+                                    users rated or reviewed the library itself. This finds those ratings and, after you
+                                    confirm, deletes them together with their review text. Ratings on movies and shows are
+                                    not touched.
+                                </div>
+                                <div id="cleanupLibraryRatingsStatus" class="fieldDescription" style="color: #9ab;"></div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
                                 <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
@@ -2783,6 +2796,47 @@
                                 if (status) { status.style.color = '#f44336'; status.textContent = 'Backfill failed — check the server logs.'; }
                             })
                             .finally(function () { backfillBtn.disabled = false; });
+                        };
+                    }
+
+                    // Remove ratings people left on libraries/folders: look first, confirm, then delete.
+                    var cleanupBtn = document.getElementById('btnCleanupLibraryRatings');
+                    if (cleanupBtn) {
+                        cleanupBtn.onclick = function () {
+                            var status = document.getElementById('cleanupLibraryRatingsStatus');
+                            var headers = { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' };
+                            var setStatus = function (color, text) {
+                                if (status) { status.style.color = color; status.textContent = text; }
+                            };
+                            cleanupBtn.disabled = true;
+                            setStatus('#9ab', 'Looking for ratings on libraries…');
+                            fetch(ApiClient.serverAddress() + '/Ratings/Admin/LibraryRatings', { headers: headers })
+                            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                            .then(function (d) {
+                                if (!d.count) {
+                                    setStatus('#4CAF50', 'Nothing to remove - no ratings are left on libraries.');
+                                    return;
+                                }
+                                var where = (d.items || []).map(function (i) { return '"' + i.name + '" (' + i.count + ')'; }).join(', ');
+                                var question = 'Found ' + d.count + ' rating(s) on ' + where +
+                                    (d.withReview ? ', ' + d.withReview + ' of them with a written review' : '') +
+                                    '.\n\nDelete them? The review text is deleted too and cannot be restored.';
+                                if (!window.confirm(question)) {
+                                    setStatus('#9ab', 'Cancelled - found ' + d.count + ' rating(s) on ' + where + ', nothing deleted.');
+                                    return;
+                                }
+                                setStatus('#9ab', 'Deleting…');
+                                return fetch(ApiClient.serverAddress() + '/Ratings/Admin/LibraryRatings/Delete', { method: 'POST', headers: headers })
+                                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                                .then(function (res) {
+                                    setStatus('#4CAF50', 'Done - removed ' + res.deleted + ' rating(s)' +
+                                        (res.errors ? (' (' + res.errors + ' failed, see the server log)') : '') + '.');
+                                });
+                            })
+                            .catch(function () {
+                                setStatus('#f44336', 'Cleanup failed - check the server logs.');
+                            })
+                            .finally(function () { cleanupBtn.disabled = false; });
                         };
                     }
                     document.querySelector('#txtMinRating').value = config.MinRating;
