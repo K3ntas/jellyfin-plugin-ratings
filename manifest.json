@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.403.0",
+        "changelog": "Adds a \"Remove ratings left on libraries\" button to the plugin's settings page, under the Jellyfin rating sync options. Updating does not delete ratings people already left on a library, and with the stars gone from library pages they could no longer remove them themselves. The button shows how many there are and on which libraries, including how many have a written review, and deletes them only after you confirm. The review text goes with them. Ratings on movies and shows are not touched.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.403.0/Jellyfin.Plugin.Ratings_2.0.403.0.zip",
+        "checksum": "8f8946177d4ef1aff8a942c70724d53a",
+        "timestamp": "2026-09-23T22:05:00Z"
+      },
+      {
         "version": "2.0.402.0",
         "changelog": "Fixes the stars and the reviews section appearing on library pages. Opening a library such as \"Movies\" or \"TV Shows\" from its header shows it on a details page, the same layout a movie uses, so the rating widget and \"User Reviews\" were added there too. People rated and reviewed the library itself, and the page then said you had rated \"TV Shows\". Libraries and folders no longer show the widget, and the server refuses a rating for them.",
         "targetAbi": "10.11.0.0",
