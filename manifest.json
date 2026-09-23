@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.402.0",
+        "changelog": "Fixes the stars and the reviews section appearing on library pages. Opening a library such as \"Movies\" or \"TV Shows\" from its header shows it on a details page, the same layout a movie uses, so the rating widget and \"User Reviews\" were added there too. People rated and reviewed the library itself, and the page then said you had rated \"TV Shows\". Libraries and folders no longer show the widget, and the server refuses a rating for them.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.402.0/Jellyfin.Plugin.Ratings_2.0.402.0.zip",
+        "checksum": "657f22d67ded3e65c953156683301a49",
+        "timestamp": "2026-09-23T21:50:00Z"
+      },
+      {
         "version": "2.0.401.0",
         "changelog": "The stars in the rating window now work exactly like the ones on the movie page. Moving across them shows the decimal you are about to pick, and clicking takes it - 5.4, not 5. Before, each big star was a separate button, so the window could only ever give whole numbers no matter how the small stars behaved. Swiping on a phone gives decimals too, and the star you stop on fills part-way to match.\n\nAlso removes the slight zoom a big star did when pointed at. It moved the row under the pointer, so the value shown while hovering could end up a tenth away from the value taken on the click.",
         "targetAbi": "10.11.0.0",

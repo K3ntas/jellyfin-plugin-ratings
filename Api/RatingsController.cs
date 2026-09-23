@@ -125,6 +125,23 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static readonly Regex EventHandlerRegex = new(@"on\w+\s*=", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
 
         /// <summary>
+        /// Whether an item is something a person can rate. Library folders ("Movies", "TV Shows"),
+        /// grouped views and plain file-system folders are containers, not media: Jellyfin still
+        /// opens them on a details page, which is how people ended up rating a whole library.
+        /// </summary>
+        /// <param name="item">The library item.</param>
+        /// <returns>True when the item can carry a rating.</returns>
+        private static bool IsRateableItem(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            return item is not MediaBrowser.Controller.Entities.CollectionFolder
+                && item is not MediaBrowser.Controller.Entities.UserView
+                && item is not MediaBrowser.Controller.Entities.AggregateFolder
+                && item is not MediaBrowser.Controller.Entities.UserRootFolder
+                && item is not MediaBrowser.Controller.Entities.BasePluginFolder
+                && item.GetType() != typeof(MediaBrowser.Controller.Entities.Folder);
+        }
+
+        /// <summary>
         /// Sanitizes user input to prevent XSS attacks.
         /// Strips HTML tags and encodes special characters.
         /// </summary>
@@ -247,6 +264,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (item == null)
                 {
                     return NotFound($"Item {itemId} not found");
+                }
+
+                if (!IsRateableItem(item))
+                {
+                    return BadRequest("Libraries and folders cannot be rated");
                 }
 
                 // Check plugin configuration
