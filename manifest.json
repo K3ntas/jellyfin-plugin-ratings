@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.393.0",
+        "changelog": "Removes the \"Unknown\" cards with a blank poster and a \"Not on server\" tag from profiles. They were ratings of media that has since been deleted from the server and was rated before the plugin started remembering titles and posters, so there was nothing to show but the stars. They are now left out of the profile grid, reviews and activity. Deleted media that the plugin remembers keeps showing with its title and poster, as before. Nothing is deleted: if the media comes back to the library, its rating shows up again.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.393.0/Jellyfin.Plugin.Ratings_1.0.393.0.zip",
+        "checksum": "7d2d386d84b7bbce65fe3ce6bbed033b",
+        "timestamp": "2026-09-25T19:15:37Z"
+      },
+      {
         "version": "1.0.392.0",
         "changelog": "Fixes the stars and the reviews section appearing on library pages. Opening a library such as \"Movies\" or \"TV Shows\" from its header shows it on a details page, the same layout a movie uses, so the rating widget and \"User Reviews\" were added there too. People rated and reviewed the library itself, and the page then said you had rated \"TV Shows\". Libraries and folders no longer show the widget, and the server refuses a rating for them.\n\nAdds a \"Remove ratings left on libraries\" button to the plugin's settings page, under the Jellyfin rating sync options. Updating does not delete ratings people already left on a library, and with the stars gone from library pages they could no longer remove them themselves. The button shows how many there are and on which libraries, including how many have a written review, and deletes them only after you confirm. The review text goes with them. Ratings on movies and shows are not touched.",
         "targetAbi": "10.11.0.0",
