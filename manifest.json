@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.404.0",
+        "changelog": "Removes the \"Unknown\" cards with a blank poster and a \"Not on server\" tag from profiles. They were ratings of media that has since been deleted from the server and was rated before the plugin started remembering titles and posters, so there was nothing to show but the stars. They are now left out of the profile grid, reviews and activity. Deleted media that the plugin remembers keeps showing with its title and poster, as before. Nothing is deleted: if the media comes back to the library, its rating shows up again.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.404.0/Jellyfin.Plugin.Ratings_2.0.404.0.zip",
+        "checksum": "805ac0450a76af607afd3a35dfead847",
+        "timestamp": "2026-09-25T18:51:00Z"
+      },
+      {
         "version": "2.0.403.0",
         "changelog": "Adds a \"Remove ratings left on libraries\" button to the plugin's settings page, under the Jellyfin rating sync options. Updating does not delete ratings people already left on a library, and with the stars gone from library pages they could no longer remove them themselves. The button shows how many there are and on which libraries, including how many have a written review, and deletes them only after you confirm. The review text goes with them. Ratings on movies and shows are not touched.",
         "targetAbi": "10.11.0.0",

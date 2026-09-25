@@ -662,6 +662,14 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 itemMap.TryGetValue(r.ItemId, out var item);
 
+                // Media deleted before ratings started keeping a title snapshot leaves nothing to
+                // show - it rendered as an "Unknown" card with a blank poster. Skip it; the rating
+                // itself stays stored, and reappears if the item comes back to the library.
+                if (item == null && string.IsNullOrWhiteSpace(r.Title))
+                {
+                    continue;
+                }
+
                 likeMap.TryGetValue((r.UserId, r.ItemId), out var lc);
                 var likeCount = lc.LikeCount;
                 var dislikeCount = lc.DislikeCount;

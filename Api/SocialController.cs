@@ -586,6 +586,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 itemMap.TryGetValue(r.ItemId, out var item);
                 var inLibrary = item != null;
 
+                // Deleted media with no title snapshot - nothing to show but "Unknown" (see
+                // RatingsController.EnrichRatings).
+                if (!inLibrary && string.IsNullOrWhiteSpace(r.Title))
+                {
+                    continue;
+                }
+
                 result.Add(new
                 {
                     id = r.Id,
