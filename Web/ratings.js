@@ -117,6 +117,10 @@
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
                 duplicateDeleteFailed: 'Could not delete that copy.', duplicateKeepThis: 'Keep this',
+                duplicateKeepBoth: 'Keep both', duplicateKeepAll: 'Keep all',
+                duplicateKeepBothTooltip: 'Keep every copy (for example two languages) and stop listing this group',
+                duplicateKeptHidden: '{n} group(s) marked "Keep both" are hidden.', duplicateShowKept: 'Show them again',
+                duplicateKeepFailed: 'Could not save that choice.',
                 duplicateKeepThisTooltip: 'Keep this copy instead', duplicatesLoadFailed: 'Error loading duplicates',
                 retry: 'Retry', socialLoadFailed: 'Could not load. Please try again.',
                 add: 'Add', bio: 'Bio', currentlySet: 'Current: {type} set.',
@@ -6876,10 +6880,11 @@
                 for (var i = 1; i <= 10; i++) distribution[i] = 0;
                 ratings.forEach(function (r) {
                     var rating = r.rating || r.Rating;
-                    if (rating >= 1 && rating <= 10) {
+                    if (rating > 0 && rating <= 10) {
                         // Rounded to a whole star: the chart has ten bars, and a decimal rating
-                        // would otherwise invent a "7.5" bucket that no bar ever reads.
-                        distribution[Math.round(rating)]++;
+                        // would otherwise invent a "7.5" bucket that no bar ever reads. Ratings
+                        // under 1 (down to 0.1) count in the first bar.
+                        distribution[Math.min(10, Math.max(1, Math.round(rating)))]++;
                     }
                 });
 
@@ -15668,20 +15673,50 @@
                 const data = await response.json();
                 const duplicates = data.Duplicates || [];
 
+                const keptCount = Number(data.KeptGroupCount ?? data.keptGroupCount) || 0;
+                const keptNote = keptCount > 0
+                    ? `<div class="duplicates-kept-note">${self.escapeHtml(self.t('duplicateKeptHidden').replace('{n}', keptCount))} <button type="button" class="duplicates-show-kept">${self.escapeHtml(self.t('duplicateShowKept'))}</button></div>`
+                    : '';
+                const bindShowKept = function () {
+                    const btn = body.querySelector('.duplicates-show-kept');
+                    if (!btn) return;
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        await fetch(`${baseUrl}/Ratings/Admin/Duplicates/KeepAll`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': RatingsPlugin.authHeader() },
+                            credentials: 'include'
+                        }).catch(() => {});
+                        self.loadDuplicates();
+                    });
+                };
+
                 if (!duplicates || duplicates.length === 0) {
-                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
+                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>` + keptNote;
+                    bindShowKept();
                     return;
                 }
 
-                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
+                let html = keptNote + `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
                 html += '<div class="duplicates-container">';
 
                 duplicates.forEach(group => {
+                    // Music groups are keyed on artist|title, not an IMDB id - showing that key
+                    // as "IMDB: artist|track 01" only confused people.
+                    const isMusic = (group.MediaType ?? group.mediaType) === 'Music';
+                    const label = isMusic
+                        ? '&#127925; ' + self.escapeHtml((group.title ?? group.Title))
+                        : 'IMDB: ' + self.escapeHtml((group.imdbId ?? group.ImdbId)) + ' - ' + self.escapeHtml((group.title ?? group.Title));
+                    const groupIds = (group.Items || []).map(it => String(it.itemId ?? it.ItemId)).join(',');
+                    const keepAllLabel = self.t(group.ItemCount === 2 ? 'duplicateKeepBoth' : 'duplicateKeepAll');
                     html += `
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
-                                <span class="imdb-id">IMDB: ${self.escapeHtml((group.imdbId ?? group.ImdbId))} - ${self.escapeHtml((group.title ?? group.Title))}</span>
-                                <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
+                                <span class="imdb-id">${label}</span>
+                                <span class="duplicate-group-meta">
+                                    <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
+                                    <button type="button" class="keep-all-duplicates-btn" data-item-ids="${self.escapeHtml(groupIds)}" title="${self.escapeHtml(self.t('duplicateKeepBothTooltip'))}">${self.escapeHtml(keepAllLabel)}</button>
+                                </span>
                             </div>
                             <div class="duplicate-items">
                     `;
@@ -15714,6 +15749,33 @@
 
                 html += '</div>';
                 body.innerHTML = html;
+                bindShowKept();
+
+                // "Keep both": remember the group on the server and drop it from the list.
+                body.querySelectorAll('.keep-all-duplicates-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const ids = (btn.getAttribute('data-item-ids') || '').split(',').filter(Boolean);
+                        btn.disabled = true;
+                        try {
+                            const r = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/KeepAll`, {
+                                method: 'POST',
+                                headers: { 'Authorization': RatingsPlugin.authHeader(), 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify(ids)
+                            });
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            const group = btn.closest('.duplicate-group');
+                            if (group) group.remove();
+                            if (!body.querySelector('.duplicate-group')) {
+                                self.loadDuplicates();
+                            }
+                        } catch (error) {
+                            console.error('Error keeping duplicates:', error);
+                            btn.disabled = false;
+                            alert(self.t('duplicateKeepFailed'));
+                        }
+                    });
+                });
 
                 // Bind "keep this one instead" handlers
                 body.querySelectorAll('.keep-duplicate-btn').forEach(btn => {

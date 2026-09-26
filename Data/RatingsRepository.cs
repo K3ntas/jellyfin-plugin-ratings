@@ -90,6 +90,11 @@ namespace Jellyfin.Plugin.Ratings.Data
         private Dictionary<Guid, UserStyleOverride> _userStyleOverrides;
         private Dictionary<Guid, MediaQuota> _mediaQuotas;
         private List<KeepRequest> _keepRequests;
+
+        // Duplicate groups an admin marked "Keep both", as sorted item-id signatures (see
+        // DuplicateGroupSignature). Keyed on the exact set of copies, so a new third copy of the same
+        // film brings the group back rather than being hidden with it.
+        private HashSet<string> _keptDuplicateGroups;
         private Dictionary<Guid, ReviewComment> _reviewComments;
 
         /// <summary>
@@ -125,6 +130,7 @@ namespace Jellyfin.Plugin.Ratings.Data
             _userStyleOverrides = new Dictionary<Guid, UserStyleOverride>();
             _mediaQuotas = new Dictionary<Guid, MediaQuota>();
             _keepRequests = new List<KeepRequest>();
+            _keptDuplicateGroups = new HashSet<string>(StringComparer.Ordinal);
             _reviewComments = new Dictionary<Guid, ReviewComment>();
             _notifiedItems = new Dictionary<Guid, DateTime>();
             _seenMediaKeys = new Dictionary<string, DateTime>();
@@ -154,6 +160,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadUserStyleOverrides,
                 LoadMediaQuotas,
                 LoadKeepRequests,
+                LoadKeptDuplicateGroups,
                 LoadReviewLikes,
                 LoadReviewComments,
                 LoadNotifiedItems,
@@ -211,6 +218,7 @@ namespace Jellyfin.Plugin.Ratings.Data
                 LoadModeratorActions();
                 LoadUserStyleOverrides();
                 LoadMediaQuotas();
+                LoadKeptDuplicateGroups();
             }
 
             _logger.LogInformation("All data reloaded from disk after backup import");
@@ -855,8 +863,9 @@ namespace Jellyfin.Plugin.Ratings.Data
                 var rating = itemRatings[i];
                 sum += rating.Rating;
 
-                // Whole-star bucket: ratings carry a decimal, and an array index cannot.
-                var bucket = (int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero) - 1;
+                // Whole-star bucket: ratings carry a decimal, and an array index cannot. Anything
+                // under 0.5 goes in the 1-star bar rather than rounding to 0 and vanishing.
+                var bucket = Math.Clamp((int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero), 1, 10) - 1;
                 if (bucket >= 0 && bucket < stats.Distribution.Length)
                 {
                     stats.Distribution[bucket]++;
@@ -1722,6 +1731,107 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         // Keep Request Methods (for "Ask to not delete" feature)
+
+        /// <summary>
+        /// Builds the identity of a duplicate group from its members: item ids, order-independent.
+        /// </summary>
+        /// <param name="itemIds">The copies in the group.</param>
+        /// <returns>A stable signature string.</returns>
+        public static string DuplicateGroupSignature(IEnumerable<Guid> itemIds)
+        {
+            return string.Join(",", itemIds.Select(id => id.ToString("N")).OrderBy(s => s, StringComparer.Ordinal));
+        }
+
+        /// <summary>
+        /// Whether an admin chose to keep every copy in this group.
+        /// </summary>
+        /// <param name="signature">Group signature from <see cref="DuplicateGroupSignature"/>.</param>
+        /// <returns>True if the group should be left out of the duplicate finder.</returns>
+        public bool IsDuplicateGroupKept(string signature)
+        {
+            lock (_lock)
+            {
+                return _keptDuplicateGroups.Contains(signature);
+            }
+        }
+
+        /// <summary>
+        /// Number of groups marked "Keep both".
+        /// </summary>
+        /// <returns>The count.</returns>
+        public int GetKeptDuplicateGroupCount()
+        {
+            lock (_lock)
+            {
+                return _keptDuplicateGroups.Count;
+            }
+        }
+
+        /// <summary>
+        /// Marks a duplicate group as intentionally kept (e.g. the same film in two languages).
+        /// </summary>
+        /// <param name="signature">Group signature.</param>
+        /// <returns>A task that completes once saved.</returns>
+        public Task KeepDuplicateGroupAsync(string signature)
+        {
+            lock (_lock)
+            {
+                if (!_keptDuplicateGroups.Add(signature))
+                {
+                    return Task.CompletedTask;
+                }
+            }
+
+            return SaveKeptDuplicateGroupsAsync();
+        }
+
+        /// <summary>
+        /// Forgets every "Keep both" choice, so those groups show in the duplicate finder again.
+        /// </summary>
+        /// <returns>How many were cleared.</returns>
+        public async Task<int> ClearKeptDuplicateGroupsAsync()
+        {
+            int count;
+            lock (_lock)
+            {
+                count = _keptDuplicateGroups.Count;
+                _keptDuplicateGroups.Clear();
+            }
+
+            await SaveKeptDuplicateGroupsAsync().ConfigureAwait(false);
+            return count;
+        }
+
+        private void LoadKeptDuplicateGroups()
+        {
+            try
+            {
+                var filePath = Path.Combine(_dataPath, "kept_duplicate_groups.json");
+                if (File.Exists(filePath))
+                {
+                    var groups = JsonSerializer.Deserialize<List<string>>(File.ReadAllText(filePath), ReadOptions);
+                    if (groups != null)
+                    {
+                        _keptDuplicateGroups = new HashSet<string>(groups, StringComparer.Ordinal);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading kept duplicate groups from disk");
+            }
+        }
+
+        private Task SaveKeptDuplicateGroupsAsync()
+        {
+            List<string> snapshot;
+            lock (_lock)
+            {
+                snapshot = _keptDuplicateGroups.OrderBy(s => s, StringComparer.Ordinal).ToList();
+            }
+
+            return WriteJsonAtomicAsync("kept_duplicate_groups.json", snapshot, _keepRequestsWriteLock, "kept duplicate groups");
+        }
 
         /// <summary>
         /// Loads keep requests from disk.

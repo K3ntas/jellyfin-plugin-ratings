@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.407.0",
+        "changelog": "Ratings under 1 (0.1 to 0.9) now save - the stars offered them, but the server turned them away because the minimum rating setting still said 1. A minimum of 1 now means \"down to 0.1\"; a higher minimum you set yourself is still enforced. Duplicates: each group has a \"Keep both\" button (\"Keep all\" for three or more) for copies you want to keep, such as the same film in two languages; the group stops being listed, a new extra copy brings it back, and \"Show them again\" undoes it. Series now show their real size (all episodes added up) and quality instead of 0 GB [Unknown]. Music tracks with generic names like \"Track 01\" (audio dramas, audiobooks) are only compared within the same album, and copies must be about the same length, so episodes are no longer flagged as duplicates of each other.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.407.0/Jellyfin.Plugin.Ratings_2.0.407.0.zip",
+        "checksum": "1eac4227411e395a803f6415c5f06059",
+        "timestamp": "2026-09-26T12:25:11Z"
+      },
+      {
         "version": "2.0.406.0",
         "changelog": "Adds an \"Enable Reviews\" checkbox to the plugin settings, on by default. Turn it off to keep star ratings only: the review box in the rating window, the User Reviews section on title pages and the Reviews tab and count on profiles disappear for everyone, and the server stops accepting new reviews, likes and comments on reviews. Existing reviews are not deleted - they come back if you turn the setting on again.",
         "targetAbi": "10.11.0.0",

@@ -89,6 +89,22 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// The lowest rating the server accepts.
+        /// </summary>
+        /// <remarks>
+        /// MinRating is a whole number that has always defaulted to 1, and every existing server has
+        /// that 1 saved in its config. Since ratings gained a decimal the stars go down to 0.1, so
+        /// comparing against MinRating as-is rejected every rating under 1 with a 400 and the low
+        /// picks silently never saved. 1 (or less) now means "the lowest star, 0.1"; a minimum an
+        /// admin deliberately raised above 1 is still enforced.
+        /// </remarks>
+        private static double MinAllowedRating(global::Jellyfin.Plugin.Ratings.Configuration.PluginConfiguration? config)
+        {
+            var min = config?.MinRating ?? 1;
+            return min <= 1 ? 0.1 : min;
+        }
+
+        /// <summary>
         /// Checks if a user is a Jellyfin administrator (server-side check).
         /// </summary>
         private bool IsJellyfinAdmin(Guid userId)
@@ -283,9 +299,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Validate rating range
-                if (rating < (config?.MinRating ?? 1) || rating > (config?.MaxRating ?? 10))
+                if (rating < MinAllowedRating(config) || rating > (config?.MaxRating ?? 10))
                 {
-                    return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
+                    return BadRequest($"Rating must be between {MinAllowedRating(config)} and {config?.MaxRating ?? 10}");
                 }
 
                 // Extract provider IDs for fallback lookup (handles replaced media files)
@@ -1184,9 +1200,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("tmdbId is required");
                 }
 
-                if (request.Rating < (config?.MinRating ?? 1) || request.Rating > (config?.MaxRating ?? 10))
+                if (request.Rating < MinAllowedRating(config) || request.Rating > (config?.MaxRating ?? 10))
                 {
-                    return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
+                    return BadRequest($"Rating must be between {MinAllowedRating(config)} and {config?.MaxRating ?? 10}");
                 }
 
                 var mediaType = string.Equals(request.MediaType, "Series", StringComparison.OrdinalIgnoreCase)
@@ -5730,25 +5746,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                 });
 
                 var musicDuplicates = musicItems
-                    .Where(i => !string.IsNullOrEmpty(i.Name))
-                    .GroupBy(i =>
-                    {
-                        // Group by normalized: artist + title (lowercase, trimmed)
-                        var artist = (i as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
-                        var title = i.Name?.Trim().ToLowerInvariant() ?? "";
-                        return $"{artist.Trim().ToLowerInvariant()}|{title}";
-                    })
-                    .Where(g => g.Count() > 1 && !string.IsNullOrEmpty(g.Key.Split('|').LastOrDefault()))
-                    .Select(g =>
-                    {
-                        var first = g.First();
-                        var artist = (first as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
-                        var displayTitle = string.IsNullOrEmpty(artist) ? first.Name : $"{artist} - {first.Name}";
-                        return BuildDuplicateGroup(g.Key, displayTitle, first.ProductionYear, g.ToList(), "Music");
-                    })
+                    .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                    .GroupBy(GetMusicDuplicateKey)
+                    .Where(g => g.Count() > 1)
+                    // Same key is not enough on its own: copies of one recording are the same
+                    // length, so split each group wherever the running times drift apart.
+                    .SelectMany(g => SplitByRuntime(g.ToList())
+                        .Where(cluster => cluster.Count > 1)
+                        .Select(cluster =>
+                        {
+                            var first = cluster[0];
+                            var artist = (first as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
+                            var displayTitle = string.IsNullOrEmpty(artist) ? first.Name : $"{artist} - {first.Name}";
+                            return BuildDuplicateGroup(g.Key, displayTitle, first.ProductionYear, cluster, "Music");
+                        }))
                     .ToList();
 
                 duplicateGroups.AddRange(musicDuplicates);
+
+                // Leave out the groups an admin chose to keep in full ("Keep both").
+                duplicateGroups = duplicateGroups
+                    .Where(d => !_repository.IsDuplicateGroupKept((string)((dynamic)d).Signature))
+                    .ToList();
 
                 // Sort all by size descending
                 var sortedDuplicates = duplicateGroups
@@ -5762,7 +5781,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Duplicates = sortedDuplicates,
                     TotalDuplicateGroups = sortedDuplicates.Count,
                     TotalDuplicateItems = sortedDuplicates.Sum(d => (int)((dynamic)d).ItemCount),
-                    PotentialSavingsGB = Math.Round(potentialSavings, 2)
+                    PotentialSavingsGB = Math.Round(potentialSavings, 2),
+                    KeptGroupCount = _repository.GetKeptDuplicateGroupCount()
                 });
             }
             catch (Exception ex)
@@ -5802,6 +5822,159 @@ namespace Jellyfin.Plugin.Ratings.Api
                  + "E" + int.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
+        // A track title that says nothing about the content: "Track 01", "01", "Titel 3",
+        // "Kapitel 2", "CD1 - Track 04", "Untitled". Audio dramas and audiobooks outside MusicBrainz
+        // are commonly tagged like this, so every "Track 01" by one artist looked like a copy of
+        // every other episode's "Track 01".
+        private static readonly System.Text.RegularExpressions.Regex _genericTrackTitleRegex =
+            new System.Text.RegularExpressions.Regex(
+                @"^\s*(?:(?:cd|disc|disk)\s*\d+\s*[-_.:]?\s*)?(?:\d+\s*[-_.:]\s*)?(?:(?:track|titel|title|tr|piste|pista|traccia|spår|spor|nummer|number|no|nr|kapitel|chapter|part|teil|folge|episode|untitled|unknown|unbekannt|unbenannt)(?![a-z])\.?\s*)?[#\-_.]*\s*\d*\s*$",
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant
+                    | System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                    | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Grouping key for music duplicates: artist + title, and for a generic title ("Track 01")
+        /// also the album (or folder when there is no album tag), so only the same track of the same
+        /// album can match.
+        /// </summary>
+        private static string GetMusicDuplicateKey(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            var audio = item as MediaBrowser.Controller.Entities.Audio.Audio;
+            var artist = (audio?.Artists?.FirstOrDefault() ?? string.Empty).Trim().ToLowerInvariant();
+            var title = (item.Name ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (_genericTrackTitleRegex.IsMatch(title))
+            {
+                var album = audio?.Album;
+                if (string.IsNullOrWhiteSpace(album))
+                {
+                    album = string.IsNullOrEmpty(item.Path) ? string.Empty : System.IO.Path.GetDirectoryName(item.Path);
+                }
+
+                return $"{artist}|{(album ?? string.Empty).Trim().ToLowerInvariant()}|{title}";
+            }
+
+            return $"{artist}|{title}";
+        }
+
+        /// <summary>
+        /// Splits a candidate group into runs of tracks whose lengths are within a few seconds of
+        /// each other. Tracks with no known length stay together in their own run.
+        /// </summary>
+        private static List<List<MediaBrowser.Controller.Entities.BaseItem>> SplitByRuntime(List<MediaBrowser.Controller.Entities.BaseItem> items)
+        {
+            const long toleranceTicks = 5L * TimeSpan.TicksPerSecond;
+            var clusters = new List<List<MediaBrowser.Controller.Entities.BaseItem>>();
+
+            var unknown = items.Where(i => !i.RunTimeTicks.HasValue || i.RunTimeTicks.Value <= 0).ToList();
+            if (unknown.Count > 0)
+            {
+                clusters.Add(unknown);
+            }
+
+            List<MediaBrowser.Controller.Entities.BaseItem>? current = null;
+            long previous = 0;
+            foreach (var item in items.Where(i => i.RunTimeTicks > 0).OrderBy(i => i.RunTimeTicks))
+            {
+                var ticks = item.RunTimeTicks!.Value;
+                if (current == null || ticks - previous > toleranceTicks)
+                {
+                    current = new List<MediaBrowser.Controller.Entities.BaseItem>();
+                    clusters.Add(current);
+                }
+
+                current.Add(item);
+                previous = ticks;
+            }
+
+            return clusters;
+        }
+
+        /// <summary>
+        /// Size on disk, plus the item to read stream quality from. A series' path is its folder,
+        /// so File.Exists said no and every series showed "0 GB [Unknown]"; add up its episodes
+        /// instead and take the quality from one of them.
+        /// </summary>
+        private (long Bytes, MediaBrowser.Controller.Entities.BaseItem StreamSource) GetDuplicateSize(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            if (item is MediaBrowser.Controller.Entities.TV.Series)
+            {
+                var episodes = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                    AncestorIds = new[] { item.Id },
+                    Recursive = true
+                });
+
+                long total = 0;
+                MediaBrowser.Controller.Entities.BaseItem? sample = null;
+                foreach (var episode in episodes)
+                {
+                    if (!string.IsNullOrEmpty(episode.Path) && System.IO.File.Exists(episode.Path))
+                    {
+                        total += new FileInfo(episode.Path).Length;
+                        sample ??= episode;
+                    }
+                }
+
+                return (total, sample ?? item);
+            }
+
+            if (!string.IsNullOrEmpty(item.Path) && System.IO.File.Exists(item.Path))
+            {
+                return (new FileInfo(item.Path).Length, item);
+            }
+
+            return (0, item);
+        }
+
+        /// <summary>
+        /// Marks a duplicate group as intentionally kept in full - e.g. the same film in two
+        /// languages - so the finder stops listing it. Keyed on the exact copies sent, so a later
+        /// third copy still shows up.
+        /// </summary>
+        /// <param name="itemIds">Every item in the group.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("Admin/Duplicates/KeepAll")]
+        [Authorize]
+        public async Task<ActionResult> KeepAllDuplicates([FromBody] List<Guid> itemIds)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+            }
+
+            var ids = (itemIds ?? new List<Guid>()).Where(id => id != Guid.Empty).Distinct().ToList();
+            if (ids.Count < 2)
+            {
+                return BadRequest("A duplicate group has at least two items");
+            }
+
+            await _repository.KeepDuplicateGroupAsync(RatingsRepository.DuplicateGroupSignature(ids)).ConfigureAwait(false);
+            _logger.LogInformation("Admin marked a duplicate group of {Count} items as keep-all", ids.Count);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Forgets every "Keep both" choice, so those groups are listed again.
+        /// </summary>
+        /// <returns>How many were cleared.</returns>
+        [HttpDelete("Admin/Duplicates/KeepAll")]
+        [Authorize]
+        public async Task<ActionResult> ClearKeptDuplicates()
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+            }
+
+            var cleared = await _repository.ClearKeptDuplicateGroupsAsync().ConfigureAwait(false);
+            return Ok(new { Cleared = cleared });
+        }
+
         /// <summary>
         /// Helper to build duplicate group object.
         /// </summary>
@@ -5813,16 +5986,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 string quality = "Unknown";
                 try
                 {
-                    if (!string.IsNullOrEmpty(i.Path) && System.IO.File.Exists(i.Path))
-                    {
-                        var fileInfo = new FileInfo(i.Path);
-                        sizeGB = Math.Round(fileInfo.Length / 1073741824.0, 2);
-                    }
+                    var (bytes, streamSource) = GetDuplicateSize(i);
+                    sizeGB = Math.Round(bytes / 1073741824.0, 2);
 
                     // Try to determine quality from video stream (for video items)
                     if (mediaType == "Video")
                     {
-                        var mediaStreams = i.GetMediaStreams();
+                        var mediaStreams = streamSource.GetMediaStreams();
                         var videoStream = mediaStreams?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Video);
                         if (videoStream != null && videoStream.Height.HasValue)
                         {
@@ -5850,7 +6020,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     SizeGB = sizeGB,
                     DateAdded = i.DateCreated,
                     Quality = quality,
-                    Container = System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
+                    Container = i is MediaBrowser.Controller.Entities.TV.Series ? "" : System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
                 };
             }).OrderByDescending(x => x.SizeGB).ToList();
 
@@ -5862,7 +6032,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 MediaType = mediaType,
                 Items = itemDetails,
                 TotalSizeGB = Math.Round(itemDetails.Sum(x => x.SizeGB), 2),
-                ItemCount = itemDetails.Count
+                ItemCount = itemDetails.Count,
+                Signature = RatingsRepository.DuplicateGroupSignature(items.Select(i => i.Id))
             };
         }
 
@@ -5898,10 +6069,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var filePath = item.Path;
                 double freedSpace = 0;
 
-                if (deleteFile && !string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+                if (deleteFile)
                 {
-                    var fileInfo = new FileInfo(filePath);
-                    freedSpace = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                    freedSpace = Math.Round(GetDuplicateSize(item).Bytes / 1073741824.0, 2);
                 }
 
                 // Trickplay tiles and extracted subtitles/attachments live outside the media
@@ -6424,7 +6594,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         Rating = rating,
                         Count = recentRatings.Count(r =>
-                            (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) == rating)
+                            Math.Clamp((int)Math.Round(r.Rating, MidpointRounding.AwayFromZero), 1, 10) == rating)
                     })
                     .ToList();
 
