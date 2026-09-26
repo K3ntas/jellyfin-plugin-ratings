@@ -32,6 +32,18 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkEnableReviews" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Reviews</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Let users write a review alongside their star rating. Turn off to keep star ratings only:
+                                    the review box, the User Reviews section and the profile Reviews tab disappear for everyone.
+                                    Existing reviews are kept, not deleted, and come back if you turn this on again.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkShowCardRatingOverlay" type="checkbox" is="emby-checkbox" />
                                     <span>Show rating badge on poster cards</span>
                                 </label>
@@ -2778,6 +2790,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
+                    document.querySelector('#chkEnableReviews').checked = config.EnableReviews !== false;
                     document.querySelector('#chkShowCardRatingOverlay').checked = config.ShowCardRatingOverlay !== false;
                     document.querySelector('#chkWriteRatingsToJellyfin').checked = config.WriteRatingsToJellyfin !== false;
                     document.querySelector('#chkWriteAverageToCommunityRating').checked = config.WriteAverageToCommunityRating === true;
@@ -3160,6 +3173,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
+                    config.EnableReviews = document.querySelector('#chkEnableReviews').checked;
                     config.ShowCardRatingOverlay = document.querySelector('#chkShowCardRatingOverlay').checked;
                     config.WriteRatingsToJellyfin = document.querySelector('#chkWriteRatingsToJellyfin').checked;
                     config.WriteAverageToCommunityRating = document.querySelector('#chkWriteAverageToCommunityRating').checked;

@@ -34,6 +34,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowNotificationToggle = true;
             ShowHeaderProfileButton = true;
             EnableOtherUsersList = true;
+            EnableReviews = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
             HideHomeDuplicates = false;
@@ -290,6 +291,13 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// everyone on the server. Off hides the tab and makes /Social/Users refuse.
         /// </summary>
         public bool EnableOtherUsersList { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether users can write reviews alongside their star
+        /// ratings. Off leaves star ratings working, hides every review and refuses new ones;
+        /// stored reviews are kept and return if this is switched back on.
+        /// </summary>
+        public bool EnableReviews { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the Media Management feature is enabled for admins.

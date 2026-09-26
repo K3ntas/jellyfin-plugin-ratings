@@ -299,8 +299,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                 }
 
-                // Sanitize review text
-                var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
+                // With reviews switched off the text is dropped rather than refused, so older
+                // clients can still rate. Null leaves any stored review as it was.
+                var sanitizedReview = Plugin.ReviewsEnabled && review != null ? SanitizeInput(review, 2000) : null;
 
                 // Remember what was rated, so the entry still shows a title and a poster if the
                 // item is later removed from the library (issue #72).
@@ -700,7 +701,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     r.ImdbId,
                     r.AniDbId,
                     r.Rating,
-                    r.ReviewText,
+                    ReviewText = Plugin.ReviewsEnabled ? r.ReviewText : null,
                     r.CreatedAt,
                     r.UpdatedAt,
                     ItemName = name,
@@ -1210,7 +1211,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     IsExternal = true
                 };
 
-                var sanitizedReview = request.Review != null ? SanitizeInput(request.Review, 2000) : null;
+                var sanitizedReview = Plugin.ReviewsEnabled && request.Review != null ? SanitizeInput(request.Review, 2000) : null;
 
                 var result = await _repository.SetRatingAsync(
                     userId, itemId, request.Rating, request.TmdbId, null, null, sanitizedReview, snapshot).ConfigureAwait(false);
@@ -1989,6 +1990,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                 var ratings = _repository.GetItemRatings(itemId);
                 var canModerate = IsJellyfinAdmin(currentUserId);
+                var reviewsEnabled = Plugin.ReviewsEnabled;
                 var detailedRatings = ratings.Select(r =>
                 {
                     var user = _userManager.GetUserById(r.UserId);
@@ -2004,8 +2006,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Username = user?.Username ?? "Unknown User",
                         Rating = r.Rating,
                         CreatedAt = r.CreatedAt,
-                        ReviewText = r.ReviewText,
-                        HasReview = !string.IsNullOrWhiteSpace(r.ReviewText),
+                        ReviewText = reviewsEnabled ? r.ReviewText : null,
+                        HasReview = reviewsEnabled && !string.IsNullOrWhiteSpace(r.ReviewText),
                         LikeCount = likeCounts.LikeCount,
                         DislikeCount = likeCounts.DislikeCount,
                         UserLiked = userLike,
@@ -2039,6 +2041,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] bool isLike)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2137,6 +2144,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] string text)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2295,6 +2307,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] string? review = null)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2362,6 +2379,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // entirely when these are off, rather than letting them 404 on submit.
                     EnableQualityRequests = config?.EnableQualityRequests ?? true,
                     EnableOtherUsersList = config?.EnableOtherUsersList ?? true,
+                    EnableReviews = config?.EnableReviews ?? true,
                     EnableBugReports = config?.EnableBugReports ?? true,
                     BugReportMaxAttachments = config?.BugReportMaxAttachments ?? 3,
                     BugReportMaxAttachmentMb = config?.BugReportMaxAttachmentMb ?? 2,

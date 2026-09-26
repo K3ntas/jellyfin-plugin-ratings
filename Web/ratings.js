@@ -292,6 +292,15 @@
         },
 
         /**
+         * False when the admin has switched written reviews off (EnableReviews). Star ratings keep
+         * working; every place a review is written or shown checks this. Treated as on until the
+         * config has loaded - the server strips review text anyway, so nothing leaks meanwhile.
+         */
+        reviewsEnabled: function () {
+            return (this._configCache || {}).EnableReviews !== false;
+        },
+
+        /**
          * Builds the one Authorization header Jellyfin still accepts.
          *
          * Jellyfin 12.0 disabled every legacy mechanism this plugin used to authenticate with -
@@ -4131,9 +4140,11 @@
                     'and will attach themselves to the film automatically if it is added later.</p>') +
                 '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
                 '<div class="lb-ext-value" id="lbExtValue">' + (chosen ? chosen + ' / 10' : 'Select a rating') + '</div>' +
-                '<label class="lb-ext-review-label" for="lbExtReview">' + RatingsPlugin.t('review') + ' <span>(optional)</span></label>' +
-                '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
-                'placeholder="' + RatingsPlugin.t('whatDidYouThink') + '">' + self.escapeHtml(data.review || '') + '</textarea>' +
+                (self.reviewsEnabled()
+                    ? '<label class="lb-ext-review-label" for="lbExtReview">' + RatingsPlugin.t('review') + ' <span>(optional)</span></label>' +
+                      '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
+                      'placeholder="' + RatingsPlugin.t('whatDidYouThink') + '">' + self.escapeHtml(data.review || '') + '</textarea>'
+                    : '') +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
                 (isEdit && data.itemId
@@ -5045,9 +5056,11 @@
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'ratings\')">' +
                 '<span class="lb-stat-value">' + (stats.ratingsCount || 0) + '</span>' +
                 '<span class="lb-stat-label">' + self.t('ratings') + '</span></div>' +
-                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
-                '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
-                '<span class="lb-stat-label">' + self.t('reviews') + '</span></div>' +
+                (self.reviewsEnabled()
+                    ? '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
+                      '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
+                      '<span class="lb-stat-label">' + self.t('reviews') + '</span></div>'
+                    : '') +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
                 '<span class="lb-stat-label">' + self.t('following') + '</span></div>' +
@@ -5063,7 +5076,7 @@
             html += '<div class="lb-tabs">' +
                 '<button class="lb-tab active" data-tab="overview">' + (self.t('overview')) + '</button>' +
                 '<button class="lb-tab" data-tab="ratings">' + (self.t('ratings')) + '</button>' +
-                '<button class="lb-tab" data-tab="reviews">' + (self.t('reviews')) + '</button>' +
+                (self.reviewsEnabled() ? '<button class="lb-tab" data-tab="reviews">' + (self.t('reviews')) + '</button>' : '') +
                 '<button class="lb-tab" data-tab="activity">' + (self.t('activity')) + '</button>' +
                 '<button class="lb-tab" data-tab="following">' + (self.t('following')) + '</button>' +
                 '<button class="lb-tab" data-tab="followers">' + (self.t('followers')) + '</button>' +
@@ -9804,6 +9817,7 @@
 
             // Get existing review if editing
             let existingReview = '';
+            const reviewsOn = this.reviewsEnabled();
             const isEditing = this.currentUserRating > 0;
 
             // Create modal overlay
@@ -9825,8 +9839,8 @@
                     </div>
                     <div class="ratings-modal-stars">${starsHtml}</div>
                     <div class="ratings-modal-rating-display">${selectedRating > 0 ? this.formatRating(selectedRating) + '/10' : RatingsPlugin.t('selectARating')}</div>
-                    <div class="ratings-modal-review-label">${RatingsPlugin.t('writeAReviewOptional')}</div>
-                    <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"></textarea>
+                    <div class="ratings-modal-review-label"${reviewsOn ? '' : ' style="display:none"'}>${RatingsPlugin.t('writeAReviewOptional')}</div>
+                    <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"${reviewsOn ? '' : ' style="display:none"'}></textarea>
                     <div class="ratings-modal-buttons">
                         <button class="ratings-modal-btn ratings-modal-btn-secondary" data-action="cancel">${RatingsPlugin.t('cancel')}</button>
                         <button class="ratings-modal-btn ratings-modal-btn-primary" data-action="submit" ${selectedRating === 0 ? 'disabled' : ''}>${RatingsPlugin.t('submitRating')}</button>
@@ -10289,6 +10303,7 @@
          */
         injectUserReviewsSection: function (itemId) {
             const self = this;
+            if (!this.reviewsEnabled()) return;
             const visiblePage = this.getVisibleDetailPage();
             if (!visiblePage) return;
 
@@ -10369,6 +10384,13 @@
             const countEl = container.querySelector('.user-reviews-count');
             const currentUserId = ApiClient.getCurrentUserId();
             const baseUrl = ApiClient.serverAddress();
+
+            // Config can arrive after the section was injected; drop it rather than invite people
+            // to "be the first to write one" when writing one is switched off.
+            if (!self.reviewsEnabled()) {
+                container.remove();
+                return;
+            }
 
             if (countEl) {
                 countEl.textContent = `(${reviews.length})`;

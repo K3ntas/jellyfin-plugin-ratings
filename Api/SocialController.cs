@@ -376,7 +376,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     totalRatings = ratings.Count,
                     averageRating = ratings.Count > 0 ? Math.Round(ratings.Average(r => r.Rating), 2) : 0,
-                    reviewCount = ratings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)),
+                    reviewCount = Plugin.ReviewsEnabled ? ratings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)) : 0,
                     watchedMinutes = (long)Math.Round(genres.TotalMinutes),
                     watchedItems = genres.ItemCount
                 },
@@ -491,7 +491,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             var all = _ratingsRepository.GetUserRatings(userId);
             if (reviewsOnly)
             {
-                all = all.Where(r => !string.IsNullOrWhiteSpace(r.ReviewText)).ToList();
+                // Reviews switched off: the Reviews tab is gone on the client, and this answers
+                // empty rather than 403 so an older client just shows nothing.
+                all = Plugin.ReviewsEnabled
+                    ? all.Where(r => !string.IsNullOrWhiteSpace(r.ReviewText)).ToList()
+                    : new List<UserRating>();
             }
 
             var total = all.Count;
@@ -610,7 +614,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     id = r.Id,
                     itemId = r.ItemId,
                     rating = r.Rating,
-                    review = r.ReviewText,
+                    review = Plugin.ReviewsEnabled ? r.ReviewText : null,
                     createdAt = r.CreatedAt,
                     updatedAt = r.UpdatedAt,
 
@@ -971,7 +975,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get ratings data
             var userRatings = _ratingsRepository.GetUserRatings(userId);
             var ratingsCount = userRatings.Count;
-            var reviewsCount = userRatings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText));
+            var reviewsCount = Plugin.ReviewsEnabled ? userRatings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)) : 0;
             var averageRating = ratingsCount > 0
                 ? Math.Round(userRatings.Average(r => r.Rating), 1)
                 : 0;
@@ -3880,6 +3884,11 @@ namespace Jellyfin.Plugin.Ratings.Api
                 return Unauthorized();
             }
 
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "Reviews are turned off on this server" });
+            }
+
             // Check if user has a review for this item
             var rating = _ratingsRepository.GetUserRating(currentUserId.Value, itemId);
             if (rating == null || string.IsNullOrEmpty(rating.ReviewText))
@@ -3932,6 +3941,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (hiddenError != null)
             {
                 return hiddenError;
+            }
+
+            if (!Plugin.ReviewsEnabled)
+            {
+                return Ok(new { featuredReviews = Array.Empty<object>() });
             }
 
             var featured = _socialRepository.GetFeaturedReviews(userId);
