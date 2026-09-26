@@ -32,6 +32,7 @@ all injected straight into the Jellyfin web UI, with no separate app to run.
 | 🏷️ | **[Card badges](#card-rating-badges)** | Average score overlaid on poster cards, lazy-loaded for huge libraries |
 | 🎬 | **[Netflix view](#netflix-style-view)** | Horizontal genre rows with per-row sorting and reordering |
 | 👤 | **[Social profiles](#social-profiles)** | Letterboxd-style profiles: favourites, stats, taste graph, activity |
+| 👥 | **[Community page](#community-page)** | What everyone has rated: totals, top rated, most active users, distribution, activity |
 | 🤝 | **[Friends & follows](#friends-follows-likes-and-blocks)** | Friend requests, following, profile likes, blocking |
 | 📋 | **[Custom lists](#custom-lists)** | Build, reorder, clone and share film lists |
 | 🟢 | **[Live presence](#live-presence-and-now-watching)** | Online dots and a live "now watching" card |
@@ -440,6 +441,34 @@ Finds items that exist more than once in the library and offers direct deletion.
 Schedule a server restart with a countdown, cancellable while it is pending.
 
 ---
+
+### Community page
+
+The server-wide view, for **everyone** rather than just admins: a Jellyfin plugin page is
+registered through the Dashboard controller and `GET /web/ConfigurationPages` answers 403 to
+non-administrators, so this page is rendered by the injected script instead and reads the same
+endpoints - none of which are admin-only.
+
+- **Headline numbers** — total ratings, reviews, members, titles and the server-wide average.
+- **Top rated** titles, as a poster wall.
+- **Most active users** — each entry opens that user's profile.
+- **Rating distribution** histogram for the whole server.
+- **Recent activity** across all users, with the review text.
+
+Three ways in:
+
+| Entry point | Notes |
+|---|---|
+| **Sidebar**, in the block under your username, above Sign out | Where every user already looks |
+| **Card at the top of the home page** | With the headline numbers on it |
+| `?community=1` link | Shareable and bookmarkable |
+
+```
+https://jellyfin.example.com/web/#/home?community=1
+```
+
+All three can be hidden by the admin with **Enable the Community Page** (on by default).
+
 
 ### Admin dashboard
 

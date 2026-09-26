@@ -10138,6 +10138,38 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     margin-top: 6px;
 }
 
+/* Review text under a community activity row */
+.lb-activity-review {
+    display: block;
+    color: #9ab;
+    font-style: italic;
+}
+
+/* Community card at the top of the home page */
+.ratings-community-home .ratings-community-home-open {
+    margin-left: 12px;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #00e054, #40bcf4);
+    color: #0b0f12;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.ratings-community-home-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 4px 0 10px;
+    color: #9ab;
+    font-size: 14px;
+}
+.ratings-community-home-stat strong {
+    color: #fff;
+    font-size: 17px;
+}
+
 /* Activity List */
 .lb-activity-list { }
 .lb-activity-item {
@@ -10423,6 +10455,18 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     font-size: 16px;
     font-weight: 600;
     color: #fff;
+    /* The picture sits over the initial it falls back to. */
+    position: relative;
+    overflow: hidden;
+}
+.lb-user-avatar-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
 }
 .lb-user-name {
     font-size: 14px;

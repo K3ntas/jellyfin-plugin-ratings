@@ -825,6 +825,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkEnableCommunity" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable the Community Page</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Shows a page with what everyone on the server has rated (totals, top rated, most active users, rating distribution and the recent activity feed). Reachable from a sidebar entry above Sign out, a card at the top of the home page, and a <code>?community=1</code> link. Turn off to hide all three; ratings themselves are untouched.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkNotificationsEnabledByDefault" type="checkbox" is="emby-checkbox" />
                                     <span>Enable Notifications by Default</span>
                                 </label>
@@ -2891,6 +2901,7 @@
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkShowHeaderProfileButton').checked = config.ShowHeaderProfileButton !== false;
                     document.querySelector('#chkEnableOtherUsersList').checked = config.EnableOtherUsersList !== false;
+                    document.querySelector('#chkEnableCommunity').checked = config.EnableCommunity !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
                     document.querySelector('#chkHideHomeDuplicates').checked = config.HideHomeDuplicates !== false;
@@ -3215,6 +3226,7 @@
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.ShowHeaderProfileButton = document.querySelector('#chkShowHeaderProfileButton').checked;
                     config.EnableOtherUsersList = document.querySelector('#chkEnableOtherUsersList').checked;
+                    config.EnableCommunity = document.querySelector('#chkEnableCommunity').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
                     config.HideHomeDuplicates = document.querySelector('#chkHideHomeDuplicates').checked;

@@ -34,6 +34,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             ShowNotificationToggle = true;
             ShowHeaderProfileButton = true;
             EnableOtherUsersList = true;
+            EnableCommunity = true;
             EnableReviews = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
@@ -291,6 +292,13 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// everyone on the server. Off hides the tab and makes /Social/Users refuse.
         /// </summary>
         public bool EnableOtherUsersList { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the community page is available to users: what
+        /// everyone on the server has rated, reachable from the sidebar entry above Sign out, the
+        /// home page card and a ?community=1 link. Off hides those entry points; no rating changes.
+        /// </summary>
+        public bool EnableCommunity { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether users can write reviews alongside their star

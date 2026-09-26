@@ -131,6 +131,9 @@
                 allowOthersToFollowMe: 'Allow others to follow me', background: 'Background', block: 'Block',
                 clickToView: 'Click to view', close: 'Close', comments: 'Comments',
                 communityRating: 'Community Rating', createRow: 'Create Row',
+                community: 'Community', communitySubtitle: 'What everyone on this server has been rating',
+                communityOpen: 'Open Community', topRated: 'Top Rated', mostActiveUsers: 'Most Active Users',
+                ratingDistribution: 'Rating Distribution', members: 'Members', titles: 'Titles', refresh: 'Refresh',
                 defaultStyleApplied: 'Default style applied', deleteRow: 'Delete row', disagree: 'Disagree',
                 dismiss: 'Dismiss', editRating: 'Edit rating', emojis: 'Emojis',
                 enterCustomTitle: 'Enter custom title...', enterUsername: 'Enter username...',
@@ -657,6 +660,9 @@
             this.applyElegantFinFix();
             this.observeDetailPages();
             this.observeHomePageCards();
+
+            // Community page entry points: the sidebar entry above Sign out and the home card.
+            this.initCommunity();
 
             // Initialize unified button group container first
             this.initButtonGroup();
@@ -3505,6 +3511,15 @@
             const itemId = this.getItemIdFromUrl();
             if (itemId) {
                 this.waitForElementAndInject(itemId);
+            }
+
+            // The community overlay follows the URL: ?community=1 opens it, and losing that
+            // parameter closes it again - including when a poster opened from inside it navigates
+            // away, which leaves the overlay dangling otherwise.
+            if (this.communityRequestedInUrl()) {
+                this.showCommunityPage();
+            } else if (this._communityOpen) {
+                this.closeCommunityPage();
             }
         },
 
@@ -8497,6 +8512,483 @@
                     headers: headers
                 }).catch(function () { /* ignore errors */ });
             }
+        },
+
+        /* ------------------------------------------------------------------ *
+         * Community page
+         *
+         * The plugin's dashboard page cannot serve this. A Jellyfin plugin page is registered
+         * through the Dashboard controller, and GET /web/ConfigurationPages answers 403 to
+         * anyone who is not an administrator, so a normal user never gets the sidebar entry or
+         * the route. This page is rendered by the injected script every user already loads, and
+         * reads the same endpoints - none of which are admin-only.
+         * ------------------------------------------------------------------ */
+
+        /** True when the admin has left the community page switched on. */
+        communityEnabled: function () {
+            return (this._configCache || {}).EnableCommunity !== false;
+        },
+
+        /**
+         * Make a Ratings API call as the current user.
+         *
+         * @param {string} path Path including any query string, e.g. '/Ratings/Stats'.
+         * @returns {Promise<any>} Parsed JSON.
+         */
+        communityFetch: function (path) {
+            return fetch(ApiClient.serverAddress() + path, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            });
+        },
+
+        /**
+         * Remove one parameter from the current URL, in the search or in the hash, without a
+         * reload and without leaving a history entry behind.
+         *
+         * @param {string} name Parameter name to drop.
+         */
+        stripUrlParam: function (name) {
+            try {
+                var url = new URL(window.location.href);
+                if (!url.searchParams.has(name) && url.hash.indexOf(name + '=') === -1) {
+                    return;
+                }
+                url.searchParams.delete(name);
+                // Jellyfin routes on the hash, so the parameter usually lives there instead.
+                url.hash = url.hash
+                    .replace(new RegExp('([?&])' + name + '=[^&]*'), '$1')
+                    .replace(/\?&/, '?')
+                    .replace(/[?&]$/, '');
+                window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+            } catch (e) {
+                // A URL that cannot be parsed is not worth breaking the close over.
+            }
+        },
+
+        /** True when the URL asks for the community page, e.g. ?community=1. */
+        communityRequestedInUrl: function () {
+            return /[?&]community=(?:1|true|yes)\b/i.test(window.location.href);
+        },
+
+        /**
+         * Open the community page: what everyone on the server has rated.
+         */
+        showCommunityPage: function () {
+            var self = this;
+
+            if (!self.communityEnabled()) {
+                return;
+            }
+            if (document.getElementById('communityPage')) {
+                return;
+            }
+            // Nothing to show before login.
+            if (typeof ApiClient === 'undefined' || !ApiClient.accessToken()) {
+                return;
+            }
+
+            var page = document.createElement('div');
+            page.id = 'communityPage';
+            page.className = 'social-profile-page letterboxd-style';
+            page.innerHTML =
+                '<div class="social-profile-container letterboxd">' +
+                    '<div class="lb-toolbar">' +
+                        '<div class="lb-back" onclick="RatingsPlugin.closeCommunityPage()">' +
+                            '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+                            self.t('back') +
+                        '</div>' +
+                        '<div class="lb-toolbar-actions">' +
+                            '<button type="button" class="lb-toolbar-btn" onclick="RatingsPlugin.loadCommunityPage()" title="' + self.t('refresh') + '">⟳</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="lb-profile-header">' +
+                        '<div class="lb-header-content">' +
+                            '<div class="lb-avatar">' +
+                                '<svg viewBox="0 0 24 24" width="54" height="54" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>' +
+                            '</div>' +
+                            '<div class="lb-user-info">' +
+                                '<h1 class="lb-username">' + self.escapeHtml(self.t('community')) + '</h1>' +
+                                '<p class="lb-bio">' + self.escapeHtml(self.t('communitySubtitle')) + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="lb-stats-bar" id="communityStats"></div>' +
+                    '<div class="lb-content">' +
+                        '<div class="lb-overview lb-grid">' +
+                            '<div class="lb-main">' +
+                                '<section class="lb-section lb-anim">' +
+                                    '<h3 class="lb-sec-title">' + self.escapeHtml(self.t('topRated')) + '</h3>' +
+                                    '<div class="lb-poster-strip" id="communityTopRated"></div>' +
+                                '</section>' +
+                                '<section class="lb-section lb-anim">' +
+                                    '<h3 class="lb-sec-title">' + self.escapeHtml(self.t('recentActivity')) + '</h3>' +
+                                    '<div class="lb-activity-list" id="communityActivity"></div>' +
+                                '</section>' +
+                            '</div>' +
+                            '<aside class="lb-sidebar">' +
+                                '<section class="lb-side-card lb-anim">' +
+                                    '<h4 class="lb-side-title">' + self.escapeHtml(self.t('mostActiveUsers')) + '</h4>' +
+                                    '<div class="lb-user-list" id="communityUsers"></div>' +
+                                '</section>' +
+                                '<section class="lb-side-card lb-anim">' +
+                                    '<h4 class="lb-side-title">' + self.escapeHtml(self.t('ratingDistribution')) + '</h4>' +
+                                    '<div id="communityDistribution"></div>' +
+                                '</section>' +
+                            '</aside>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+
+            // Clicking the backdrop closes, exactly like the profile overlay.
+            page.addEventListener('click', function (e) {
+                if (e.target === page) {
+                    self.closeCommunityPage();
+                }
+            });
+
+            document.body.appendChild(page);
+            self._communityOpen = true;
+
+            // Same scroll lock the profile overlay uses.
+            self._prevBodyOverflow = document.body.style.overflow;
+            self._prevHtmlOverflow = document.documentElement.style.overflow;
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+
+            self.loadCommunityPage();
+        },
+
+        /**
+         * Close the community page, and drop the deep link that may have opened it.
+         */
+        closeCommunityPage: function () {
+            var self = this;
+            var page = document.getElementById('communityPage');
+            if (page) {
+                page.remove();
+            }
+            self._communityOpen = false;
+            document.body.style.overflow = self._prevBodyOverflow || '';
+            document.documentElement.style.overflow = self._prevHtmlOverflow || '';
+            self.stripUrlParam('community');
+        },
+
+        /** (Re)fill every panel on an open community page. */
+        loadCommunityPage: function () {
+            this.loadCommunityStats();
+            this.loadCommunityTopRated();
+            this.loadCommunityMostActiveUsers();
+            this.loadCommunityDistribution();
+            this.loadCommunityActivity();
+        },
+
+        /** Server-wide totals. */
+        loadCommunityStats: function () {
+            var self = this;
+            var el = document.getElementById('communityStats');
+            if (!el) return;
+
+            self.communityFetch('/Ratings/Stats').then(function (stats) {
+                if (!document.getElementById('communityStats')) return;
+                var cards = [
+                    [stats.TotalRatings, self.t('ratings')],
+                    [stats.TotalReviews, self.t('reviews')],
+                    [stats.TotalUsers, self.t('members')],
+                    [stats.TotalItems, self.t('titles')],
+                    [stats.AverageRating ? Number(stats.AverageRating).toFixed(1) : '0', self.t('avgLabel')]
+                ];
+                el.innerHTML = cards.map(function (card) {
+                    return '<div class="lb-stat">' +
+                        '<span class="lb-stat-value">' + self.escapeHtml(String(card[0] == null ? 0 : card[0])) + '</span>' +
+                        '<span class="lb-stat-label">' + self.escapeHtml(card[1]) + '</span>' +
+                        '</div>';
+                }).join('');
+            }).catch(function () {
+                el.innerHTML = '';
+            });
+        },
+
+        /** The highest-scoring titles on the server. */
+        loadCommunityTopRated: function () {
+            var self = this;
+            var el = document.getElementById('communityTopRated');
+            if (!el) return;
+
+            self.communityFetch('/Ratings/TopRated?limit=12').then(function (items) {
+                if (!document.getElementById('communityTopRated')) return;
+                if (!items || !items.length) {
+                    el.innerHTML = '<div class="lb-empty-mini">' + self.escapeHtml(self.t('noRatingsYet')) + '</div>';
+                    return;
+                }
+                var baseUrl = ApiClient.serverAddress();
+                el.innerHTML = items.map(function (item) {
+                    var id = item.Id || item.id;
+                    var name = item.Name || item.name || '';
+                    var poster = item.ImageUrl || item.imageUrl;
+                    var background = poster
+                        ? ' style="background-image:url(\'' + self.escapeHtml(baseUrl + poster + '?maxHeight=300') + '\')"'
+                        : '';
+                    return '<div class="lb-poster-card" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')" title="' + self.escapeHtml(name) + '">' +
+                        '<div class="lb-poster-img"' + background + '></div>' +
+                        '<div class="lb-poster-stars">' + self.renderStars(item.AverageRating || item.averageRating) + '</div>' +
+                        '</div>';
+                }).join('');
+            }).catch(function () {
+                el.innerHTML = '';
+            });
+        },
+
+        /** Who rates the most, as a list that opens their profile. */
+        loadCommunityMostActiveUsers: function () {
+            var self = this;
+            var el = document.getElementById('communityUsers');
+            if (!el) return;
+
+            self.communityFetch('/Ratings/MostActiveUsers?limit=10').then(function (users) {
+                if (!document.getElementById('communityUsers')) return;
+                if (!users || !users.length) {
+                    el.innerHTML = '<div class="lb-empty-mini">' + self.escapeHtml(self.t('noRatingsYet')) + '</div>';
+                    return;
+                }
+                var baseUrl = ApiClient.serverAddress();
+                el.innerHTML = users.map(function (user) {
+                    var userId = user.UserId || user.userId;
+                    var name = user.UserName || user.userName || 'Unknown';
+                    var count = user.RatingCount || user.ratingCount || 0;
+                    var average = user.AverageRating || user.averageRating || 0;
+                    // Same picture the rest of the UI shows, initial behind it as the fallback.
+                    var avatarUrl = userId
+                        ? baseUrl + '/Users/' + encodeURIComponent(userId) + '/Images/Primary?height=80&quality=90'
+                        : '';
+                    var avatar = self.escapeHtml(name.charAt(0).toUpperCase()) +
+                        (avatarUrl
+                            ? '<img class="lb-user-avatar-img plugin-img-fallback" src="' + self.escapeHtml(avatarUrl) + '" alt="" />'
+                            : '');
+                    return '<div class="lb-user-card" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(userId) + '\')">' +
+                        '<div class="lb-user-avatar">' + avatar + '</div>' +
+                        '<div class="lb-user-meta">' +
+                            '<div class="lb-user-name">' + self.escapeHtml(name) + '</div>' +
+                            '<div class="lb-user-bio">' + self.escapeHtml(String(count)) + ' ' + self.escapeHtml(self.t('ratings')) +
+                                ' · ' + self.escapeHtml(self.t('avgLabel')) + ' ' + self.escapeHtml(String(average ? Number(average).toFixed(1) : '0')) +
+                            '</div>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            }).catch(function () {
+                el.innerHTML = '';
+            });
+        },
+
+        /** The same 1-10 histogram the admin dashboard draws. */
+        loadCommunityDistribution: function () {
+            var self = this;
+            var el = document.getElementById('communityDistribution');
+            if (!el) return;
+
+            self.communityFetch('/Ratings/RatingDistribution').then(function (distribution) {
+                if (!document.getElementById('communityDistribution')) return;
+                var counts = {};
+                (distribution || []).forEach(function (entry) {
+                    counts[entry.Rating || entry.rating] = entry.Count || entry.count || 0;
+                });
+                var peak = 1;
+                for (var star = 1; star <= 10; star++) {
+                    peak = Math.max(peak, counts[star] || 0);
+                }
+                var html = '<div class="lb-dist-chart">';
+                for (var i = 1; i <= 10; i++) {
+                    var count = counts[i] || 0;
+                    html += '<div class="lb-dist-bar-wrap" title="' + i + ' stars: ' + count + ' ratings">' +
+                        '<div class="lb-dist-bar" style="height: ' + (count / peak * 100) + '%"></div>' +
+                        '<span class="lb-dist-label">' + i + '</span>' +
+                        '</div>';
+                }
+                el.innerHTML = html + '</div>';
+            }).catch(function () {
+                el.innerHTML = '';
+            });
+        },
+
+        /**
+         * Everyone's latest ratings, with the review text.
+         *
+         * The endpoint caps this at 100 entries and orders it by recency, so this is the recent
+         * end of the feed rather than everything ever rated.
+         */
+        loadCommunityActivity: function () {
+            var self = this;
+            var el = document.getElementById('communityActivity');
+            if (!el) return;
+
+            self.communityFetch('/Ratings/RecentActivity?limit=50').then(function (activity) {
+                if (!document.getElementById('communityActivity')) return;
+                if (!activity || !activity.length) {
+                    el.innerHTML = '<div class="lb-empty-mini">' + self.escapeHtml(self.t('noRatingsYet')) + '</div>';
+                    return;
+                }
+                el.innerHTML = activity.map(function (entry) {
+                    var itemId = entry.ItemId || entry.itemId || '';
+                    var itemName = entry.ItemName || entry.itemName || 'Unknown';
+                    var userId = entry.UserId || entry.userId || '';
+                    var userName = entry.UserName || entry.userName || 'Unknown';
+                    var review = entry.ReviewPreview || entry.reviewPreview || '';
+                    var title = itemId
+                        ? '<strong style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(itemId) + '\')">' + self.escapeHtml(itemName) + '</strong>'
+                        : '<strong>' + self.escapeHtml(itemName) + '</strong>';
+                    var who = userId
+                        ? '<strong style="cursor:pointer" onclick="RatingsPlugin.showProfilePage(\'' + self.escapeJs(userId) + '\')">' + self.escapeHtml(userName) + '</strong>'
+                        : '<strong>' + self.escapeHtml(userName) + '</strong>';
+                    var when = entry.Timestamp || entry.timestamp;
+                    return '<div class="lb-activity-item">' +
+                        '<span class="lb-activity-type">' + (review ? '📝' : '⭐') + '</span>' +
+                        '<span class="lb-activity-text">' + who + ' ' +
+                            (review ? 'reviewed' : 'rated') + ' ' + title + ' ' + self.renderStars(entry.Rating || entry.rating) +
+                            (review ? '<br /><span class="lb-activity-review">' + self.escapeHtml(review) + '</span>' : '') +
+                        '</span>' +
+                        '<span class="lb-activity-time">' + (when ? self.formatTimeAgo(new Date(when)) : '') + '</span>' +
+                        '</div>';
+                }).join('');
+            }).catch(function () {
+                el.innerHTML = '';
+            });
+        },
+
+        /**
+         * Put "Community" in Jellyfin's own sidebar, in the block under the username and above
+         * Sign out - the menu every user already opens.
+         *
+         * Jellyfin re-renders that block on navigation and empties it on the login page, so this
+         * is re-checked rather than done once. It only ever inserts before Sign out; nothing of
+         * Jellyfin's own is moved or replaced.
+         */
+        injectCommunitySidebarLink: function () {
+            var self = this;
+            if (!self.communityEnabled()) {
+                return;
+            }
+
+            var block = document.querySelector('.userMenuOptions');
+            if (!block || block.querySelector('.ratings-community-link')) {
+                return;
+            }
+
+            var link = document.createElement('a');
+            link.setAttribute('is', 'emby-linkbutton');
+            link.className = 'navMenuOption lnkMediaFolder ratings-community-link';
+            link.setAttribute('data-itemid', 'ratingscommunity');
+            link.href = '#/home?community=1';
+            link.innerHTML = '<span class="material-icons navMenuOptionIcon" aria-hidden="true">people</span>' +
+                '<span class="navMenuOptionText">' + self.escapeHtml(self.t('community')) + '</span>';
+
+            // Open in place; the href above still serves middle-click and open-in-new-tab.
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (document.querySelector('#social-friends-panel.open')) {
+                    document.querySelector('#social-friends-panel').classList.remove('open');
+                }
+                self.showCommunityPage();
+            });
+
+            var signOut = block.querySelector('.btnLogout');
+            if (signOut && signOut.parentNode === block) {
+                block.insertBefore(link, signOut);
+            } else {
+                block.appendChild(link);
+            }
+        },
+
+        /**
+         * A Community card at the top of the home page, carrying the server-wide totals.
+         * Uses Jellyfin's own .verticalSection markup so it spaces and scrolls like the rows
+         * around it. Only ran on the home page.
+         */
+        injectCommunityHomeCard: function () {
+            var self = this;
+            if (!self.communityEnabled()) {
+                return;
+            }
+
+            var hash = window.location.hash;
+            if (hash && hash !== '#/' && hash !== '#!/' && !hash.includes('home')) {
+                return;
+            }
+
+            var container = document.querySelector('.homeSectionsContainer');
+            if (!container || container.querySelector('#ratingsCommunityHomeCard')) {
+                return;
+            }
+
+            var card = document.createElement('div');
+            card.className = 'verticalSection ratings-community-home';
+            card.id = 'ratingsCommunityHomeCard';
+            card.innerHTML =
+                '<div class="sectionTitleContainer flex align-items-center">' +
+                    '<h2 class="sectionTitle">' + self.escapeHtml(self.t('community')) + '</h2>' +
+                    '<button type="button" class="ratings-community-home-open">' + self.escapeHtml(self.t('communityOpen')) + '</button>' +
+                '</div>' +
+                '<div class="ratings-community-home-stats" id="ratingsCommunityHomeStats"></div>';
+            card.querySelector('.ratings-community-home-open').addEventListener('click', function () {
+                self.showCommunityPage();
+            });
+
+            container.insertBefore(card, container.firstChild);
+
+            self.communityFetch('/Ratings/Stats').then(function (stats) {
+                var target = document.getElementById('ratingsCommunityHomeStats');
+                if (!target) return;
+                var facts = [
+                    [stats.TotalRatings, self.t('ratings')],
+                    [stats.TotalReviews, self.t('reviews')],
+                    [stats.TotalUsers, self.t('members')],
+                    [stats.TotalItems, self.t('titles')],
+                    [stats.AverageRating ? Number(stats.AverageRating).toFixed(1) : '0', self.t('avgLabel')]
+                ];
+                target.innerHTML = facts.map(function (fact) {
+                    return '<span class="ratings-community-home-stat"><strong>' +
+                        self.escapeHtml(String(fact[0] == null ? 0 : fact[0])) + '</strong> ' + self.escapeHtml(fact[1]) +
+                        '</span>';
+                }).join('');
+            }).catch(function () {
+                var target = document.getElementById('ratingsCommunityHomeStats');
+                if (target) target.innerHTML = '';
+            });
+        },
+
+        /**
+         * Keep the community entry points in place.
+         *
+         * The sidebar block is rebuilt by Jellyfin on navigation, and the home page re-renders
+         * constantly, so both injections are re-checked on a slow interval - a querySelector and
+         * a contains() - as well as on navigation.
+         */
+        initCommunity: function () {
+            var self = this;
+            if (self._communityInitialised) {
+                return;
+            }
+            self._communityInitialised = true;
+
+            var refresh = function () {
+                try {
+                    self.injectCommunitySidebarLink();
+                    self.injectCommunityHomeCard();
+                } catch (e) {
+                    // A missing drawer or a half-rendered home page must not break anything else.
+                }
+            };
+
+            window.addEventListener('hashchange', function () {
+                setTimeout(refresh, 300);
+            });
+            setInterval(refresh, 2000);
+            setTimeout(refresh, 1500);
         },
 
         /**
