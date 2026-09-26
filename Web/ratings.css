@@ -816,6 +816,28 @@
 .user-review-action-btn.disliked {
     color: #f44336;
 }
+/* Admin-only remove control: pushed to the far end so it is not mistaken for a vote button. */
+.user-review-action-btn.admin-remove {
+    margin-left: auto;
+}
+.user-review-action-btn.admin-remove:hover,
+.user-review-action-btn.admin-remove-confirm {
+    color: #f44336;
+}
+.user-review-admin-prompt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em;
+    width: 100%;
+    color: #ccc;
+    font-size: 0.85em;
+}
+/* Someone who hid their profile: name shown, but it is not a link. */
+.user-review-card .user-review-avatar.profile-hidden,
+.user-review-card .user-review-user-link.profile-hidden {
+    cursor: default;
+}
 .user-reviews-empty {
     text-align: center;
     color: #666;
@@ -5303,6 +5325,37 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     font-weight: 500;
 }
 
+.duplicate-group-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.keep-all-duplicates-btn,
+.duplicates-show-kept {
+    background: transparent;
+    border: 1px solid rgba(76, 175, 80, 0.6);
+    color: #4caf50;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+.keep-all-duplicates-btn:hover,
+.duplicates-show-kept:hover {
+    background: rgba(76, 175, 80, 0.12);
+}
+.keep-all-duplicates-btn:disabled,
+.duplicates-show-kept:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+.duplicates-kept-note {
+    color: #9ab;
+    font-size: 0.9em;
+    margin: 0 0 10px;
+}
 .duplicate-count {
     font-size: 12px;
     color: #888;

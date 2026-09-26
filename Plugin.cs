@@ -35,6 +35,13 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         public static Plugin? Instance { get; private set; }
 
+        /// <summary>
+        /// Gets a value indicating whether written reviews are switched on (EnableReviews). Off
+        /// hides and refuses review text everywhere but keeps what is stored, so turning it back on
+        /// brings existing reviews back.
+        /// </summary>
+        public static bool ReviewsEnabled => Instance?.Configuration?.EnableReviews != false;
+
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
         {

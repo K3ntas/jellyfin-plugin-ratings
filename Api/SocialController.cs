@@ -140,6 +140,10 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             var results = allUsers
                 .Where(u => u.Id != userId.Value && u.Username.ToLowerInvariant().Contains(queryLower))
+
+                // Hidden profiles stay out of search too, or hiding would only cost a keystroke
+                // to get round. Existing friends can still find each other.
+                .Where(u => !IsProfileHidden(u.Id) || _socialRepository.AreFriends(userId.Value, u.Id))
                 .Take(limit)
                 .Select(u => {
                     var isFriend = _socialRepository.AreFriends(userId.Value, u.Id);
@@ -169,8 +173,9 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <remarks>
         /// SearchUsers only answers once you have typed two characters, which is no help if you do
         /// not already know who else is here. This backs the "Other Users" tab on the profile page.
-        /// Users who have set their profile to Private are omitted, and blocked users in either
-        /// direction are hidden from each other.
+        /// Users who have hidden their profile (Private) are omitted, and blocked users in either
+        /// direction are hidden from each other. Admins can turn the list off with
+        /// EnableOtherUsersList.
         /// </remarks>
         /// <param name="limit">Maximum users to return.</param>
         /// <returns>The list of users.</returns>
@@ -184,6 +189,13 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (userId == null)
             {
                 return Unauthorized();
+            }
+
+            // Admins can switch the whole list off - it shows everyone on the server to everyone,
+            // which not every household wants. The client hides the tab on the same setting.
+            if (Plugin.Instance?.Configuration?.EnableOtherUsersList == false)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "The user list is turned off on this server" });
             }
 
             limit = Math.Clamp(limit, 1, 500);
@@ -334,7 +346,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Ten whole-star buckets. Ratings carry a decimal now, so round to the nearest
                 // star before indexing - truncating would push 7.6 into the 7 bucket, and the
                 // index has to be an integer regardless.
-                var bucket = (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) - 1;
+                var bucket = Math.Clamp((int)Math.Round(r.Rating, MidpointRounding.AwayFromZero), 1, 10) - 1;
                 if (bucket >= 0 && bucket < distribution.Length)
                 {
                     distribution[bucket]++;
@@ -364,7 +376,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 {
                     totalRatings = ratings.Count,
                     averageRating = ratings.Count > 0 ? Math.Round(ratings.Average(r => r.Rating), 2) : 0,
-                    reviewCount = ratings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)),
+                    reviewCount = Plugin.ReviewsEnabled ? ratings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)) : 0,
                     watchedMinutes = (long)Math.Round(genres.TotalMinutes),
                     watchedItems = genres.ItemCount
                 },
@@ -421,7 +433,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Ten whole-star buckets. Ratings carry a decimal now, so round to the nearest
                 // star before indexing - truncating would push 7.6 into the 7 bucket, and the
                 // index has to be an integer regardless.
-                var bucket = (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) - 1;
+                var bucket = Math.Clamp((int)Math.Round(r.Rating, MidpointRounding.AwayFromZero), 1, 10) - 1;
                 if (bucket >= 0 && bucket < distribution.Length)
                 {
                     distribution[bucket]++;
@@ -479,7 +491,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             var all = _ratingsRepository.GetUserRatings(userId);
             if (reviewsOnly)
             {
-                all = all.Where(r => !string.IsNullOrWhiteSpace(r.ReviewText)).ToList();
+                // Reviews switched off: the Reviews tab is gone on the client, and this answers
+                // empty rather than 403 so an older client just shows nothing.
+                all = Plugin.ReviewsEnabled
+                    ? all.Where(r => !string.IsNullOrWhiteSpace(r.ReviewText)).ToList()
+                    : new List<UserRating>();
             }
 
             var total = all.Count;
@@ -598,7 +614,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     id = r.Id,
                     itemId = r.ItemId,
                     rating = r.Rating,
-                    review = r.ReviewText,
+                    review = Plugin.ReviewsEnabled ? r.ReviewText : null,
                     createdAt = r.CreatedAt,
                     updatedAt = r.UpdatedAt,
 
@@ -707,6 +723,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult<object> GetSimilarUsers([FromRoute] Guid userId, [FromQuery] int limit = 5)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var currentUserId = GetCurrentUserId();
             if (currentUserId == null)
             {
@@ -736,6 +758,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // Blocking is still honoured - it is not a privacy preference but an explicit
                 // "keep this person away from me", and the card offers a direct message button.
                 if (_socialRepository.IsBlockedEitherWay(currentUserId.Value, other.Id))
+                {
+                    continue;
+                }
+
+                // A hidden profile is the one exception: its owner asked not to be listed
+                // anywhere, and every match card links straight to the profile.
+                if (other.Id != currentUserId.Value && IsProfileHidden(other.Id))
                 {
                     continue;
                 }
@@ -901,6 +930,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<object> GetProfileStats([FromRoute] [Required] Guid userId)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var currentUserId = GetCurrentUserId();
             if (currentUserId == null)
             {
@@ -940,7 +975,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             // Get ratings data
             var userRatings = _ratingsRepository.GetUserRatings(userId);
             var ratingsCount = userRatings.Count;
-            var reviewsCount = userRatings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText));
+            var reviewsCount = Plugin.ReviewsEnabled ? userRatings.Count(r => !string.IsNullOrWhiteSpace(r.ReviewText)) : 0;
             var averageRating = ratingsCount > 0
                 ? Math.Round(userRatings.Average(r => r.Rating), 1)
                 : 0;
@@ -2760,6 +2795,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetFollowers(Guid userId, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             limit = Math.Clamp(limit, 1, 500);
             offset = Math.Max(0, offset);
 
@@ -2793,6 +2834,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetFollowing(Guid userId, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             limit = Math.Clamp(limit, 1, 500);
             offset = Math.Max(0, offset);
 
@@ -2933,6 +2980,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetProfileLikes(Guid userId)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var currentUserId = GetCurrentUserId();
             var likers = _socialRepository.GetProfileLikers(userId);
             var profile = _socialRepository.GetProfile(userId);
@@ -3054,6 +3107,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetUserLists(Guid userId)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var currentUserId = GetCurrentUserId();
             var isFriend = currentUserId.HasValue && _socialRepository.AreFriends(currentUserId.Value, userId);
             var isOwner = currentUserId.HasValue && currentUserId.Value == userId;
@@ -3458,6 +3517,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<UserProfileStyle> GetProfileStyle(Guid userId)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var style = _socialRepository.GetProfileStyle(userId);
             if (style == null)
             {
@@ -3536,6 +3601,35 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// CheckProfileVisibility for the endpoints that only have a user id to go on.
+        /// </summary>
+        /// <remarks>
+        /// Followers, lists, stats, style and featured reviews all answered for a hidden profile,
+        /// so hiding it stopped nothing but the header - anyone who kept the id could still pull
+        /// the rest.
+        /// </remarks>
+        /// <param name="userId">The profile's owner.</param>
+        /// <returns>A result to return, or null if viewing is allowed.</returns>
+        private ActionResult? GuardProfile(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized();
+            }
+
+            return CheckProfileVisibility(_socialRepository.GetProfile(userId), userId, currentUserId.Value);
+        }
+
+        /// <summary>
+        /// Whether someone has hidden their profile, so lists of other people leave them out.
+        /// </summary>
+        private bool IsProfileHidden(Guid userId)
+        {
+            return _socialRepository.GetProfile(userId)?.Privacy?.ProfileVisibility == "Private";
         }
 
         private static FavoriteItem SanitizeFavoriteItem(FavoriteItem item)
@@ -3715,6 +3809,12 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetYearlyStats(Guid userId, int year)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
             var userRatings = _ratingsRepository.GetUserRatings(userId);
             var yearRatings = userRatings.Where(r => r.CreatedAt.Year == year).ToList();
 
@@ -3746,7 +3846,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 if (rating.Rating >= 1 && rating.Rating <= 10)
                 {
                     // Whole-star bucket - see the note on the other distributions.
-                    distribution[(int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero) - 1]++;
+                    // Clamped: anything under 0.5 rounds to 0, which indexed -1 and threw.
+                    distribution[Math.Clamp((int)Math.Round(rating.Rating, MidpointRounding.AwayFromZero), 1, 10) - 1]++;
                 }
             }
 
@@ -3782,6 +3883,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             if (currentUserId == null)
             {
                 return Unauthorized();
+            }
+
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "Reviews are turned off on this server" });
             }
 
             // Check if user has a review for this item
@@ -3832,6 +3938,17 @@ namespace Jellyfin.Plugin.Ratings.Api
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<object> GetFeaturedReviews(Guid userId)
         {
+            var hiddenError = GuardProfile(userId);
+            if (hiddenError != null)
+            {
+                return hiddenError;
+            }
+
+            if (!Plugin.ReviewsEnabled)
+            {
+                return Ok(new { featuredReviews = Array.Empty<object>() });
+            }
+
             var featured = _socialRepository.GetFeaturedReviews(userId);
             var result = featured.Select(f =>
             {

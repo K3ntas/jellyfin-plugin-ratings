@@ -40,6 +40,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IApplicationPaths _appPaths;
         private readonly ILogger<RatingsController> _logger;
         private readonly SocialWebSocketListener _socialWebSocketListener;
+        private readonly SocialRepository _socialRepository;
         private readonly ISystemManager _systemManager;
         private readonly MediaBrowser.Controller.IO.IPathManager? _pathManager;
 
@@ -60,6 +61,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="logger">Logger instance.</param>
         /// <param name="socialWebSocketListener">Social WebSocket listener.</param>
         /// <param name="systemManager">System manager for server control.</param>
+        /// <param name="socialRepository">Social repository, for reviewers' profile privacy.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
@@ -70,6 +72,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             ILogger<RatingsController> logger,
             SocialWebSocketListener socialWebSocketListener,
             ISystemManager systemManager,
+            SocialRepository socialRepository,
             MediaBrowser.Controller.IO.IPathManager? pathManager = null)
         {
             _repository = repository;
@@ -81,7 +84,24 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger = logger;
             _socialWebSocketListener = socialWebSocketListener;
             _systemManager = systemManager;
+            _socialRepository = socialRepository;
             _pathManager = pathManager;
+        }
+
+        /// <summary>
+        /// The lowest rating the server accepts.
+        /// </summary>
+        /// <remarks>
+        /// MinRating is a whole number that has always defaulted to 1, and every existing server has
+        /// that 1 saved in its config. Since ratings gained a decimal the stars go down to 0.1, so
+        /// comparing against MinRating as-is rejected every rating under 1 with a 400 and the low
+        /// picks silently never saved. 1 (or less) now means "the lowest star, 0.1"; a minimum an
+        /// admin deliberately raised above 1 is still enforced.
+        /// </remarks>
+        private static double MinAllowedRating(global::Jellyfin.Plugin.Ratings.Configuration.PluginConfiguration? config)
+        {
+            var min = config?.MinRating ?? 1;
+            return min <= 1 ? 0.1 : min;
         }
 
         /// <summary>
@@ -279,9 +299,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 // Validate rating range
-                if (rating < (config?.MinRating ?? 1) || rating > (config?.MaxRating ?? 10))
+                if (rating < MinAllowedRating(config) || rating > (config?.MaxRating ?? 10))
                 {
-                    return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
+                    return BadRequest($"Rating must be between {MinAllowedRating(config)} and {config?.MaxRating ?? 10}");
                 }
 
                 // Extract provider IDs for fallback lookup (handles replaced media files)
@@ -295,8 +315,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     item.ProviderIds.TryGetValue("AniDB", out aniDbId);
                 }
 
-                // Sanitize review text
-                var sanitizedReview = review != null ? SanitizeInput(review, 2000) : null;
+                // With reviews switched off the text is dropped rather than refused, so older
+                // clients can still rate. Null leaves any stored review as it was.
+                var sanitizedReview = Plugin.ReviewsEnabled && review != null ? SanitizeInput(review, 2000) : null;
 
                 // Remember what was rated, so the entry still shows a title and a poster if the
                 // item is later removed from the library (issue #72).
@@ -696,7 +717,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     r.ImdbId,
                     r.AniDbId,
                     r.Rating,
-                    r.ReviewText,
+                    ReviewText = Plugin.ReviewsEnabled ? r.ReviewText : null,
                     r.CreatedAt,
                     r.UpdatedAt,
                     ItemName = name,
@@ -1179,9 +1200,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     return BadRequest("tmdbId is required");
                 }
 
-                if (request.Rating < (config?.MinRating ?? 1) || request.Rating > (config?.MaxRating ?? 10))
+                if (request.Rating < MinAllowedRating(config) || request.Rating > (config?.MaxRating ?? 10))
                 {
-                    return BadRequest($"Rating must be between {config?.MinRating ?? 1} and {config?.MaxRating ?? 10}");
+                    return BadRequest($"Rating must be between {MinAllowedRating(config)} and {config?.MaxRating ?? 10}");
                 }
 
                 var mediaType = string.Equals(request.MediaType, "Series", StringComparison.OrdinalIgnoreCase)
@@ -1206,7 +1227,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     IsExternal = true
                 };
 
-                var sanitizedReview = request.Review != null ? SanitizeInput(request.Review, 2000) : null;
+                var sanitizedReview = Plugin.ReviewsEnabled && request.Review != null ? SanitizeInput(request.Review, 2000) : null;
 
                 var result = await _repository.SetRatingAsync(
                     userId, itemId, request.Rating, request.TmdbId, null, null, sanitizedReview, snapshot).ConfigureAwait(false);
@@ -1984,6 +2005,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var currentUserId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 var ratings = _repository.GetItemRatings(itemId);
+                var canModerate = IsJellyfinAdmin(currentUserId);
+                var reviewsEnabled = Plugin.ReviewsEnabled;
                 var detailedRatings = ratings.Select(r =>
                 {
                     var user = _userManager.GetUserById(r.UserId);
@@ -1999,12 +2022,15 @@ namespace Jellyfin.Plugin.Ratings.Api
                         Username = user?.Username ?? "Unknown User",
                         Rating = r.Rating,
                         CreatedAt = r.CreatedAt,
-                        ReviewText = r.ReviewText,
-                        HasReview = !string.IsNullOrWhiteSpace(r.ReviewText),
+                        ReviewText = reviewsEnabled ? r.ReviewText : null,
+                        HasReview = reviewsEnabled && !string.IsNullOrWhiteSpace(r.ReviewText),
                         LikeCount = likeCounts.LikeCount,
                         DislikeCount = likeCounts.DislikeCount,
                         UserLiked = userLike,
-                        CommentCount = commentCount
+                        CommentCount = commentCount,
+                        ProfileHidden = r.UserId != currentUserId
+                            && _socialRepository.GetProfile(r.UserId)?.Privacy?.ProfileVisibility == "Private",
+                        CanModerate = canModerate
                     };
                 }).OrderByDescending(r => r.Rating).ThenBy(r => r.Username).ToList();
 
@@ -2031,6 +2057,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] bool isLike)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2129,6 +2160,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] [Required] string text)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2212,6 +2248,70 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Removes someone else's review, or their whole rating, as an admin.
+        /// </summary>
+        /// <remarks>
+        /// Users could only ever delete their own rating, so an admin had no way to take down an
+        /// abusive or spoiler review short of editing the JSON on disk. By default only the text
+        /// goes and the star rating stays; <paramref name="removeRating"/> drops both. Either way
+        /// the likes, replies and "featured" pin that belonged to the review go with it.
+        /// </remarks>
+        /// <param name="reviewerUserId">Whose review.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="removeRating">True to delete the rating as well as the review.</param>
+        /// <returns>No content on success.</returns>
+        [HttpDelete("Admin/Reviews/{reviewerUserId}/{itemId}")]
+        [Authorize]
+        public async Task<ActionResult> AdminDeleteReview(
+            [FromRoute] [Required] Guid reviewerUserId,
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] bool removeRating = false)
+        {
+            try
+            {
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(adminId))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+                }
+
+                if (removeRating)
+                {
+                    if (!await _repository.DeleteRatingAsync(reviewerUserId, itemId).ConfigureAwait(false))
+                    {
+                        return NotFound("No rating found to delete");
+                    }
+
+                    var deletedItem = _libraryManager.GetItemById(itemId);
+                    if (deletedItem != null)
+                    {
+                        ClearNativeRating(reviewerUserId, deletedItem);
+                    }
+                }
+                else if (await _repository.UpdateReviewTextAsync(reviewerUserId, itemId, null).ConfigureAwait(false) == null)
+                {
+                    return NotFound("No rating found for that review");
+                }
+
+                await _repository.RemoveReviewInteractionsAsync(reviewerUserId, itemId).ConfigureAwait(false);
+                await _socialRepository.UnfeatureReviewAsync(reviewerUserId, itemId).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "Admin {AdminId} removed the {What} by {UserId} on item {ItemId}",
+                    adminId,
+                    removeRating ? "rating and review" : "review",
+                    reviewerUserId,
+                    itemId);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing review by {UserId} on item {ItemId}", reviewerUserId, itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Updates only the review text for an existing rating.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
@@ -2223,6 +2323,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             [FromRoute] [Required] Guid itemId,
             [FromQuery] string? review = null)
         {
+            if (!Plugin.ReviewsEnabled)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Reviews are turned off on this server");
+            }
+
             try
             {
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
@@ -2289,6 +2394,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Support queues - the client hides the profile tab and the report button
                     // entirely when these are off, rather than letting them 404 on submit.
                     EnableQualityRequests = config?.EnableQualityRequests ?? true,
+                    EnableOtherUsersList = config?.EnableOtherUsersList ?? true,
+                    EnableReviews = config?.EnableReviews ?? true,
                     EnableBugReports = config?.EnableBugReports ?? true,
                     BugReportMaxAttachments = config?.BugReportMaxAttachments ?? 3,
                     BugReportMaxAttachmentMb = config?.BugReportMaxAttachmentMb ?? 2,
@@ -5639,25 +5746,28 @@ namespace Jellyfin.Plugin.Ratings.Api
                 });
 
                 var musicDuplicates = musicItems
-                    .Where(i => !string.IsNullOrEmpty(i.Name))
-                    .GroupBy(i =>
-                    {
-                        // Group by normalized: artist + title (lowercase, trimmed)
-                        var artist = (i as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
-                        var title = i.Name?.Trim().ToLowerInvariant() ?? "";
-                        return $"{artist.Trim().ToLowerInvariant()}|{title}";
-                    })
-                    .Where(g => g.Count() > 1 && !string.IsNullOrEmpty(g.Key.Split('|').LastOrDefault()))
-                    .Select(g =>
-                    {
-                        var first = g.First();
-                        var artist = (first as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
-                        var displayTitle = string.IsNullOrEmpty(artist) ? first.Name : $"{artist} - {first.Name}";
-                        return BuildDuplicateGroup(g.Key, displayTitle, first.ProductionYear, g.ToList(), "Music");
-                    })
+                    .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                    .GroupBy(GetMusicDuplicateKey)
+                    .Where(g => g.Count() > 1)
+                    // Same key is not enough on its own: copies of one recording are the same
+                    // length, so split each group wherever the running times drift apart.
+                    .SelectMany(g => SplitByRuntime(g.ToList())
+                        .Where(cluster => cluster.Count > 1)
+                        .Select(cluster =>
+                        {
+                            var first = cluster[0];
+                            var artist = (first as MediaBrowser.Controller.Entities.Audio.Audio)?.Artists?.FirstOrDefault() ?? "";
+                            var displayTitle = string.IsNullOrEmpty(artist) ? first.Name : $"{artist} - {first.Name}";
+                            return BuildDuplicateGroup(g.Key, displayTitle, first.ProductionYear, cluster, "Music");
+                        }))
                     .ToList();
 
                 duplicateGroups.AddRange(musicDuplicates);
+
+                // Leave out the groups an admin chose to keep in full ("Keep both").
+                duplicateGroups = duplicateGroups
+                    .Where(d => !_repository.IsDuplicateGroupKept((string)((dynamic)d).Signature))
+                    .ToList();
 
                 // Sort all by size descending
                 var sortedDuplicates = duplicateGroups
@@ -5671,7 +5781,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                     Duplicates = sortedDuplicates,
                     TotalDuplicateGroups = sortedDuplicates.Count,
                     TotalDuplicateItems = sortedDuplicates.Sum(d => (int)((dynamic)d).ItemCount),
-                    PotentialSavingsGB = Math.Round(potentialSavings, 2)
+                    PotentialSavingsGB = Math.Round(potentialSavings, 2),
+                    KeptGroupCount = _repository.GetKeptDuplicateGroupCount()
                 });
             }
             catch (Exception ex)
@@ -5711,6 +5822,160 @@ namespace Jellyfin.Plugin.Ratings.Api
                  + "E" + int.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
+        // A track title that says nothing about the content: "Track 01", "01", "Titel 3",
+        // "Kapitel 2", "CD1 - Track 04", "Untitled" - and "01 Track 01", which is what Jellyfin
+        // names an untagged file after its file name. Audio dramas and audiobooks outside MusicBrainz
+        // are commonly tagged like this, so every "Track 01" by one artist looked like a copy of
+        // every other episode's "Track 01".
+        private static readonly System.Text.RegularExpressions.Regex _genericTrackTitleRegex =
+            new System.Text.RegularExpressions.Regex(
+                @"^\s*(?:(?:cd|disc|disk)\s*\d+\s*[-_.:]?\s*)?(?:\d+\s*[-_.:]?\s*)?(?:(?:track|titel|title|tr|piste|pista|traccia|spår|spor|nummer|number|no|nr|kapitel|chapter|part|teil|folge|episode|untitled|unknown|unbekannt|unbenannt)(?![a-z])\.?\s*)?[#\-_.]*\s*\d*\s*$",
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant
+                    | System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                    | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Grouping key for music duplicates: artist + title, and for a generic title ("Track 01")
+        /// also the album (or folder when there is no album tag), so only the same track of the same
+        /// album can match.
+        /// </summary>
+        private static string GetMusicDuplicateKey(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            var audio = item as MediaBrowser.Controller.Entities.Audio.Audio;
+            var artist = (audio?.Artists?.FirstOrDefault() ?? string.Empty).Trim().ToLowerInvariant();
+            var title = (item.Name ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (_genericTrackTitleRegex.IsMatch(title))
+            {
+                var album = audio?.Album;
+                if (string.IsNullOrWhiteSpace(album))
+                {
+                    album = string.IsNullOrEmpty(item.Path) ? string.Empty : System.IO.Path.GetDirectoryName(item.Path);
+                }
+
+                return $"{artist}|{(album ?? string.Empty).Trim().ToLowerInvariant()}|{title}";
+            }
+
+            return $"{artist}|{title}";
+        }
+
+        /// <summary>
+        /// Splits a candidate group into runs of tracks whose lengths are within a few seconds of
+        /// each other. Tracks with no known length stay together in their own run.
+        /// </summary>
+        private static List<List<MediaBrowser.Controller.Entities.BaseItem>> SplitByRuntime(List<MediaBrowser.Controller.Entities.BaseItem> items)
+        {
+            const long toleranceTicks = 5L * TimeSpan.TicksPerSecond;
+            var clusters = new List<List<MediaBrowser.Controller.Entities.BaseItem>>();
+
+            var unknown = items.Where(i => !i.RunTimeTicks.HasValue || i.RunTimeTicks.Value <= 0).ToList();
+            if (unknown.Count > 0)
+            {
+                clusters.Add(unknown);
+            }
+
+            List<MediaBrowser.Controller.Entities.BaseItem>? current = null;
+            long previous = 0;
+            foreach (var item in items.Where(i => i.RunTimeTicks > 0).OrderBy(i => i.RunTimeTicks))
+            {
+                var ticks = item.RunTimeTicks!.Value;
+                if (current == null || ticks - previous > toleranceTicks)
+                {
+                    current = new List<MediaBrowser.Controller.Entities.BaseItem>();
+                    clusters.Add(current);
+                }
+
+                current.Add(item);
+                previous = ticks;
+            }
+
+            return clusters;
+        }
+
+        /// <summary>
+        /// Size on disk, plus the item to read stream quality from. A series' path is its folder,
+        /// so File.Exists said no and every series showed "0 GB [Unknown]"; add up its episodes
+        /// instead and take the quality from one of them.
+        /// </summary>
+        private (long Bytes, MediaBrowser.Controller.Entities.BaseItem StreamSource) GetDuplicateSize(MediaBrowser.Controller.Entities.BaseItem item)
+        {
+            if (item is MediaBrowser.Controller.Entities.TV.Series)
+            {
+                var episodes = _libraryManager.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+                {
+                    IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Episode },
+                    AncestorIds = new[] { item.Id },
+                    Recursive = true
+                });
+
+                long total = 0;
+                MediaBrowser.Controller.Entities.BaseItem? sample = null;
+                foreach (var episode in episodes)
+                {
+                    if (!string.IsNullOrEmpty(episode.Path) && System.IO.File.Exists(episode.Path))
+                    {
+                        total += new FileInfo(episode.Path).Length;
+                        sample ??= episode;
+                    }
+                }
+
+                return (total, sample ?? item);
+            }
+
+            if (!string.IsNullOrEmpty(item.Path) && System.IO.File.Exists(item.Path))
+            {
+                return (new FileInfo(item.Path).Length, item);
+            }
+
+            return (0, item);
+        }
+
+        /// <summary>
+        /// Marks a duplicate group as intentionally kept in full - e.g. the same film in two
+        /// languages - so the finder stops listing it. Keyed on the exact copies sent, so a later
+        /// third copy still shows up.
+        /// </summary>
+        /// <param name="itemIds">Every item in the group.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("Admin/Duplicates/KeepAll")]
+        [Authorize]
+        public async Task<ActionResult> KeepAllDuplicates([FromBody] List<Guid> itemIds)
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+            }
+
+            var ids = (itemIds ?? new List<Guid>()).Where(id => id != Guid.Empty).Distinct().ToList();
+            if (ids.Count < 2)
+            {
+                return BadRequest("A duplicate group has at least two items");
+            }
+
+            await _repository.KeepDuplicateGroupAsync(RatingsRepository.DuplicateGroupSignature(ids)).ConfigureAwait(false);
+            _logger.LogInformation("Admin marked a duplicate group of {Count} items as keep-all", ids.Count);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Forgets every "Keep both" choice, so those groups are listed again.
+        /// </summary>
+        /// <returns>How many were cleared.</returns>
+        [HttpDelete("Admin/Duplicates/KeepAll")]
+        [Authorize]
+        public async Task<ActionResult> ClearKeptDuplicates()
+        {
+            var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+            if (!IsAdminRequest(userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+            }
+
+            var cleared = await _repository.ClearKeptDuplicateGroupsAsync().ConfigureAwait(false);
+            return Ok(new { Cleared = cleared });
+        }
+
         /// <summary>
         /// Helper to build duplicate group object.
         /// </summary>
@@ -5722,16 +5987,13 @@ namespace Jellyfin.Plugin.Ratings.Api
                 string quality = "Unknown";
                 try
                 {
-                    if (!string.IsNullOrEmpty(i.Path) && System.IO.File.Exists(i.Path))
-                    {
-                        var fileInfo = new FileInfo(i.Path);
-                        sizeGB = Math.Round(fileInfo.Length / 1073741824.0, 2);
-                    }
+                    var (bytes, streamSource) = GetDuplicateSize(i);
+                    sizeGB = Math.Round(bytes / 1073741824.0, 2);
 
                     // Try to determine quality from video stream (for video items)
                     if (mediaType == "Video")
                     {
-                        var mediaStreams = i.GetMediaStreams();
+                        var mediaStreams = streamSource.GetMediaStreams();
                         var videoStream = mediaStreams?.FirstOrDefault(s => s.Type == MediaBrowser.Model.Entities.MediaStreamType.Video);
                         if (videoStream != null && videoStream.Height.HasValue)
                         {
@@ -5759,7 +6021,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     SizeGB = sizeGB,
                     DateAdded = i.DateCreated,
                     Quality = quality,
-                    Container = System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
+                    Container = i is MediaBrowser.Controller.Entities.TV.Series ? "" : System.IO.Path.GetExtension(i.Path)?.TrimStart('.') ?? ""
                 };
             }).OrderByDescending(x => x.SizeGB).ToList();
 
@@ -5771,7 +6033,8 @@ namespace Jellyfin.Plugin.Ratings.Api
                 MediaType = mediaType,
                 Items = itemDetails,
                 TotalSizeGB = Math.Round(itemDetails.Sum(x => x.SizeGB), 2),
-                ItemCount = itemDetails.Count
+                ItemCount = itemDetails.Count,
+                Signature = RatingsRepository.DuplicateGroupSignature(items.Select(i => i.Id))
             };
         }
 
@@ -5807,10 +6070,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var filePath = item.Path;
                 double freedSpace = 0;
 
-                if (deleteFile && !string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+                if (deleteFile)
                 {
-                    var fileInfo = new FileInfo(filePath);
-                    freedSpace = Math.Round(fileInfo.Length / 1073741824.0, 2);
+                    freedSpace = Math.Round(GetDuplicateSize(item).Bytes / 1073741824.0, 2);
                 }
 
                 // Trickplay tiles and extracted subtitles/attachments live outside the media
@@ -6333,7 +6595,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     {
                         Rating = rating,
                         Count = recentRatings.Count(r =>
-                            (int)Math.Round(r.Rating, MidpointRounding.AwayFromZero) == rating)
+                            Math.Clamp((int)Math.Round(r.Rating, MidpointRounding.AwayFromZero), 1, 10) == rating)
                     })
                     .ToList();
 

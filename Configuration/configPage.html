@@ -32,6 +32,18 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkEnableReviews" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Reviews</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Let users write a review alongside their star rating. Turn off to keep star ratings only:
+                                    the review box, the User Reviews section and the profile Reviews tab disappear for everyone.
+                                    Existing reviews are kept, not deleted, and come back if you turn this on again.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkShowCardRatingOverlay" type="checkbox" is="emby-checkbox" />
                                     <span>Show rating badge on poster cards</span>
                                 </label>
@@ -94,7 +106,7 @@
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="txtMinRating">Minimum Rating</label>
                                 <input id="txtMinRating" type="number" is="emby-input" min="1" max="10" step="1" />
-                                <div class="fieldDescription">Minimum rating value (default: 1)</div>
+                                <div class="fieldDescription">Minimum rating value (default: 1). 1 lets users go all the way down to 0.1; a higher number blocks ratings below it.</div>
                             </div>
 
                             <div class="inputContainer">
@@ -798,6 +810,16 @@
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription">
                                     Show profile button in header to access your Letterboxd-style profile page.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableOtherUsersList" type="checkbox" is="emby-checkbox" />
+                                    <span>Show "Other Users" Tab on Profiles</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Lets everyone browse a list of all users on the server from their profile. Turn off to remove the tab for everyone. Users can also hide their own profile from Edit Profile &rarr; Privacy.
                                 </div>
                             </div>
 
@@ -2768,6 +2790,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     document.querySelector('#chkEnableRatings').checked = config.EnableRatings;
+                    document.querySelector('#chkEnableReviews').checked = config.EnableReviews !== false;
                     document.querySelector('#chkShowCardRatingOverlay').checked = config.ShowCardRatingOverlay !== false;
                     document.querySelector('#chkWriteRatingsToJellyfin').checked = config.WriteRatingsToJellyfin !== false;
                     document.querySelector('#chkWriteAverageToCommunityRating').checked = config.WriteAverageToCommunityRating === true;
@@ -2867,6 +2890,7 @@
                     document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkShowHeaderProfileButton').checked = config.ShowHeaderProfileButton !== false;
+                    document.querySelector('#chkEnableOtherUsersList').checked = config.EnableOtherUsersList !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
                     document.querySelector('#chkHideHomeDuplicates').checked = config.HideHomeDuplicates !== false;
@@ -3149,6 +3173,7 @@
                 ApiClient.getPluginConfiguration(RatingsConfig.pluginId).then(function (config) {
                     // Core settings
                     config.EnableRatings = document.querySelector('#chkEnableRatings').checked;
+                    config.EnableReviews = document.querySelector('#chkEnableReviews').checked;
                     config.ShowCardRatingOverlay = document.querySelector('#chkShowCardRatingOverlay').checked;
                     config.WriteRatingsToJellyfin = document.querySelector('#chkWriteRatingsToJellyfin').checked;
                     config.WriteAverageToCommunityRating = document.querySelector('#chkWriteAverageToCommunityRating').checked;
@@ -3189,6 +3214,7 @@
                     config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.ShowHeaderProfileButton = document.querySelector('#chkShowHeaderProfileButton').checked;
+                    config.EnableOtherUsersList = document.querySelector('#chkEnableOtherUsersList').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
                     config.HideHomeDuplicates = document.querySelector('#chkHideHomeDuplicates').checked;

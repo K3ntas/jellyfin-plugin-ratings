@@ -56,5 +56,17 @@ namespace Jellyfin.Plugin.Ratings.Models
         /// Gets or sets the number of comments on the review.
         /// </summary>
         public int CommentCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the reviewer has hidden their profile, so the
+        /// client shows their name without linking to it.
+        /// </summary>
+        public bool ProfileHidden { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the viewer is an admin and may remove this
+        /// review or rating.
+        /// </summary>
+        public bool CanModerate { get; set; }
     }
 }

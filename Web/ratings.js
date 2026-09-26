@@ -117,6 +117,10 @@
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
                 duplicateDeleteFailed: 'Could not delete that copy.', duplicateKeepThis: 'Keep this',
+                duplicateKeepBoth: 'Keep both', duplicateKeepAll: 'Keep all',
+                duplicateKeepBothTooltip: 'Keep every copy (for example two languages) and stop listing this group',
+                duplicateKeptHidden: '{n} group(s) marked "Keep both" are hidden.', duplicateShowKept: 'Show them again',
+                duplicateKeepFailed: 'Could not save that choice.',
                 duplicateKeepThisTooltip: 'Keep this copy instead', duplicatesLoadFailed: 'Error loading duplicates',
                 retry: 'Retry', socialLoadFailed: 'Could not load. Please try again.',
                 add: 'Add', bio: 'Bio', currentlySet: 'Current: {type} set.',
@@ -165,6 +169,12 @@
                 shareYourThoughtsAboutThisTitle: 'Share your thoughts about this title...',
                 showAllRandom: 'Show all (random)', showMyActivityFeed: 'Show my activity feed',
                 showMyRatingsToOthers: 'Show my ratings to others', sortBy: 'Sort by:',
+                hideMyProfile: 'Hide my profile - nobody else can open it, and I am left out of user lists and search',
+                profileIsPrivate: 'This profile is private',
+                adminRemoveReview: 'Remove (admin)', adminRemoveReviewPrompt: 'Remove this review?',
+                adminRemoveReviewTextOnly: 'Review only', adminRemoveReviewAndRating: 'Review and rating',
+                adminReviewRemoved: 'Review removed', adminRatingRemoved: 'Rating and review removed',
+                adminRemoveFailed: 'Could not remove it',
                 startFromTheBeginning: 'Start from the beginning', startWhereTheyAreNow: 'Start where they are now',
                 selectARating: 'Select a rating', writeAReview: 'Write a review',
                 status: 'Status', styleApplied: 'Style Applied', submitRating: 'Submit Rating',
@@ -283,6 +293,15 @@
         // Get translation for current language
         t: function(key) {
             return this.translations[this.currentLanguage]?.[key] || this.translations.en[key] || key;
+        },
+
+        /**
+         * False when the admin has switched written reviews off (EnableReviews). Star ratings keep
+         * working; every place a review is written or shown checks this. Treated as on until the
+         * config has loaded - the server strips review text anyway, so nothing leaks meanwhile.
+         */
+        reviewsEnabled: function () {
+            return (this._configCache || {}).EnableReviews !== false;
         },
 
         /**
@@ -3594,6 +3613,14 @@
                     return;
                 }
 
+                // A hidden profile answers 404 with an error body, which parsed into a truthy
+                // object and rendered as an empty, half-broken profile page.
+                if (!profile.userId) {
+                    var hidden = /private|friends-only/i.test(String(profile.error || ''));
+                    self.renderProfileError(page, hidden ? self.t('profileIsPrivate') : (profile.error || 'User not found'));
+                    return;
+                }
+
                 // Determine relationship status
                 var isSelf = profile.userId === ApiClient.getCurrentUserId();
                 var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
@@ -4117,9 +4144,11 @@
                     'and will attach themselves to the film automatically if it is added later.</p>') +
                 '<div class="lb-ext-stars" id="lbExtStars">' + stars + '</div>' +
                 '<div class="lb-ext-value" id="lbExtValue">' + (chosen ? chosen + ' / 10' : 'Select a rating') + '</div>' +
-                '<label class="lb-ext-review-label" for="lbExtReview">' + RatingsPlugin.t('review') + ' <span>(optional)</span></label>' +
-                '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
-                'placeholder="' + RatingsPlugin.t('whatDidYouThink') + '">' + self.escapeHtml(data.review || '') + '</textarea>' +
+                (self.reviewsEnabled()
+                    ? '<label class="lb-ext-review-label" for="lbExtReview">' + RatingsPlugin.t('review') + ' <span>(optional)</span></label>' +
+                      '<textarea class="lb-ext-review" id="lbExtReview" rows="4" maxlength="4000" ' +
+                      'placeholder="' + RatingsPlugin.t('whatDidYouThink') + '">' + self.escapeHtml(data.review || '') + '</textarea>'
+                    : '') +
                 '</div>' +
                 '<div class="lb-settings-footer">' +
                 (isEdit && data.itemId
@@ -5031,9 +5060,11 @@
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'ratings\')">' +
                 '<span class="lb-stat-value">' + (stats.ratingsCount || 0) + '</span>' +
                 '<span class="lb-stat-label">' + self.t('ratings') + '</span></div>' +
-                '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
-                '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
-                '<span class="lb-stat-label">' + self.t('reviews') + '</span></div>' +
+                (self.reviewsEnabled()
+                    ? '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'reviews\')">' +
+                      '<span class="lb-stat-value">' + (stats.reviewsCount || 0) + '</span>' +
+                      '<span class="lb-stat-label">' + self.t('reviews') + '</span></div>'
+                    : '') +
                 '<div class="lb-stat" onclick="RatingsPlugin.switchProfileTab(\'following\')">' +
                 '<span class="lb-stat-value">' + (followStatus.followingCount || 0) + '</span>' +
                 '<span class="lb-stat-label">' + self.t('following') + '</span></div>' +
@@ -5049,14 +5080,18 @@
             html += '<div class="lb-tabs">' +
                 '<button class="lb-tab active" data-tab="overview">' + (self.t('overview')) + '</button>' +
                 '<button class="lb-tab" data-tab="ratings">' + (self.t('ratings')) + '</button>' +
-                '<button class="lb-tab" data-tab="reviews">' + (self.t('reviews')) + '</button>' +
+                (self.reviewsEnabled() ? '<button class="lb-tab" data-tab="reviews">' + (self.t('reviews')) + '</button>' : '') +
                 '<button class="lb-tab" data-tab="activity">' + (self.t('activity')) + '</button>' +
                 '<button class="lb-tab" data-tab="following">' + (self.t('following')) + '</button>' +
                 '<button class="lb-tab" data-tab="followers">' + (self.t('followers')) + '</button>' +
                 ((self._configCache || {}).EnableQualityRequests !== false
                     ? '<button class="lb-tab" data-tab="quality">' + (self.t('qualityTab') || 'Better Quality') + '</button>'
                     : '') +
-                '<button class="lb-tab" data-tab="users">' + (self.t('otherUsers')) + '</button>' +
+                // Admins can switch the list of every user off (a privacy complaint: anyone could
+                // browse everybody on the server); the server refuses the request as well.
+                ((self._configCache || {}).EnableOtherUsersList !== false
+                    ? '<button class="lb-tab" data-tab="users">' + (self.t('otherUsers')) + '</button>'
+                    : '') +
                 '</div>';
 
             // Tab content area
@@ -6845,10 +6880,11 @@
                 for (var i = 1; i <= 10; i++) distribution[i] = 0;
                 ratings.forEach(function (r) {
                     var rating = r.rating || r.Rating;
-                    if (rating >= 1 && rating <= 10) {
+                    if (rating > 0 && rating <= 10) {
                         // Rounded to a whole star: the chart has ten bars, and a decimal rating
-                        // would otherwise invent a "7.5" bucket that no bar ever reads.
-                        distribution[Math.round(rating)]++;
+                        // would otherwise invent a "7.5" bucket that no bar ever reads. Ratings
+                        // under 1 (down to 0.1) count in the first bar.
+                        distribution[Math.min(10, Math.max(1, Math.round(rating)))]++;
                     }
                 });
 
@@ -8149,6 +8185,9 @@
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('privacy') + '</h3>' +
                 '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsHideProfile" ' + ((privacy.profileVisibility || privacy.ProfileVisibility) === 'Private' ? 'checked' : '') + '> ' + RatingsPlugin.t('hideMyProfile') + '</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
                 '<label><input type="checkbox" id="settingsShowRatings" ' + (privacy.ratingsVisibleRegular !== false ? 'checked' : '') + '> ' + RatingsPlugin.t('showMyRatingsToOthers') + '</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
@@ -8202,6 +8241,12 @@
             var showActivity = document.getElementById('settingsShowActivity')?.checked !== false;
             var allowFollows = document.getElementById('settingsAllowFollows')?.checked !== false;
 
+            // "Hide my profile" is the existing Private visibility. Unticking it only goes back to
+            // Public from Private, so a Friends-only setting made in the Friends panel survives.
+            var hideProfile = document.getElementById('settingsHideProfile')?.checked === true;
+            var currentPrivacy = (self._currentProfile || {}).privacy || (self._currentProfile || {}).Privacy || {};
+            var profileVisibility = hideProfile ? 'Private' : ((currentPrivacy.profileVisibility || currentPrivacy.ProfileVisibility) === 'Private' ? 'Public' : undefined);
+
             // This used to PUT /Social/MyProfile - a route that never existed. Jellyfin answered
             // 405 with "Allow: GET", the response body was empty, and .json() then threw, so the
             // Save button silently did nothing (issue #72). The bio and the privacy toggles live
@@ -8220,7 +8265,8 @@
                 body: JSON.stringify({
                     showRatings: showRatings,
                     showActivity: showActivity,
-                    allowFollows: allowFollows
+                    allowFollows: allowFollows,
+                    profileVisibility: profileVisibility
                 })
             });
 
@@ -9776,6 +9822,7 @@
 
             // Get existing review if editing
             let existingReview = '';
+            const reviewsOn = this.reviewsEnabled();
             const isEditing = this.currentUserRating > 0;
 
             // Create modal overlay
@@ -9797,8 +9844,8 @@
                     </div>
                     <div class="ratings-modal-stars">${starsHtml}</div>
                     <div class="ratings-modal-rating-display">${selectedRating > 0 ? this.formatRating(selectedRating) + '/10' : RatingsPlugin.t('selectARating')}</div>
-                    <div class="ratings-modal-review-label">${RatingsPlugin.t('writeAReviewOptional')}</div>
-                    <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"></textarea>
+                    <div class="ratings-modal-review-label"${reviewsOn ? '' : ' style="display:none"'}>${RatingsPlugin.t('writeAReviewOptional')}</div>
+                    <textarea class="ratings-modal-review" placeholder="${RatingsPlugin.t('shareYourThoughtsAboutThisTitle')}"${reviewsOn ? '' : ' style="display:none"'}></textarea>
                     <div class="ratings-modal-buttons">
                         <button class="ratings-modal-btn ratings-modal-btn-secondary" data-action="cancel">${RatingsPlugin.t('cancel')}</button>
                         <button class="ratings-modal-btn ratings-modal-btn-primary" data-action="submit" ${selectedRating === 0 ? 'disabled' : ''}>${RatingsPlugin.t('submitRating')}</button>
@@ -10261,6 +10308,7 @@
          */
         injectUserReviewsSection: function (itemId) {
             const self = this;
+            if (!this.reviewsEnabled()) return;
             const visiblePage = this.getVisibleDetailPage();
             if (!visiblePage) return;
 
@@ -10342,6 +10390,13 @@
             const currentUserId = ApiClient.getCurrentUserId();
             const baseUrl = ApiClient.serverAddress();
 
+            // Config can arrive after the section was injected; drop it rather than invite people
+            // to "be the first to write one" when writing one is switched off.
+            if (!self.reviewsEnabled()) {
+                container.remove();
+                return;
+            }
+
             if (countEl) {
                 countEl.textContent = `(${reviews.length})`;
             }
@@ -10384,7 +10439,11 @@
                 const safeItemId = String(itemId || '').replace(/[^a-zA-Z0-9-]/g, '');
                 const avatarUrl = baseUrl + '/Users/' + safeUserId + '/Images/Primary?height=80&quality=90';
                 const timestamp = this.formatReviewTimestamp((review.createdAt ?? review.CreatedAt));
-                const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
+                // Someone who hid their profile keeps their name on the review, but it no longer
+                // leads anywhere - the profile would only answer "private" anyway.
+                const profileHidden = review.ProfileHidden === true || review.profileHidden === true;
+                const canModerate = review.CanModerate === true || review.canModerate === true;
+                const profileTooltip = (self.showReviewProfileTooltip && !profileHidden) ? 'Click to view profile' : '';
 
                 var card = document.createElement('div');
                 card.className = 'user-review-card';
@@ -10397,7 +10456,7 @@
 
                 // Avatar
                 var avatarDiv = document.createElement('div');
-                avatarDiv.className = 'user-review-avatar clickable';
+                avatarDiv.className = 'user-review-avatar' + (profileHidden ? ' profile-hidden' : ' clickable');
                 avatarDiv.setAttribute('data-user-id', safeUserId);
                 if (profileTooltip) avatarDiv.title = profileTooltip;
 
@@ -10419,7 +10478,7 @@
 
                 // User link
                 var userLink = document.createElement('a');
-                userLink.className = 'user-review-user-link';
+                userLink.className = 'user-review-user-link' + (profileHidden ? ' profile-hidden' : '');
                 userLink.setAttribute('data-user-id', safeUserId);
                 if (profileTooltip) userLink.title = profileTooltip;
 
@@ -10482,6 +10541,20 @@
                 commentBtn.innerHTML = '💬 <span class="comment-count">' + (Number(review.CommentCount) || 0) + '</span>';
                 actionsDiv.appendChild(commentBtn);
 
+                // Admins can take down anyone's review. Users could only ever delete their own,
+                // which left no way to remove an abusive or spoiler review from the page.
+                if (canModerate) {
+                    var removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'user-review-action-btn admin-remove';
+                    removeBtn.title = self.t('adminRemoveReview');
+                    removeBtn.textContent = '🗑';
+                    removeBtn.addEventListener('click', function () {
+                        self.showAdminRemovePrompt(actionsDiv, safeUserId, itemId);
+                    });
+                    actionsDiv.appendChild(removeBtn);
+                }
+
                 card.appendChild(actionsDiv);
                 grid.appendChild(card);
             });
@@ -10538,7 +10611,7 @@
             });
 
             // Add user profile click handlers
-            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link').forEach(el => {
+            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link:not(.profile-hidden)').forEach(el => {
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
                     const userId = this.getAttribute('data-user-id');
@@ -10550,6 +10623,81 @@
             if (self.reviewCardStyle) {
                 self.applyReviewCardStyles();
             }
+        },
+
+        /**
+         * Swaps a review card's action row for "Remove this review? [Review only] [Review and
+         * rating] [Cancel]". Inline rather than a confirm() so the admin can pick which of the
+         * two they mean - the star rating is often fine when the text is the problem.
+         */
+        showAdminRemovePrompt: function (actionsDiv, reviewerUserId, itemId) {
+            const self = this;
+            const saved = Array.prototype.slice.call(actionsDiv.childNodes);
+
+            const prompt = document.createElement('div');
+            prompt.className = 'user-review-admin-prompt';
+
+            const label = document.createElement('span');
+            label.textContent = self.t('adminRemoveReviewPrompt');
+            prompt.appendChild(label);
+
+            const makeBtn = function (text, extraClass, onClick) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'user-review-action-btn' + (extraClass ? ' ' + extraClass : '');
+                b.textContent = text;
+                b.addEventListener('click', onClick);
+                prompt.appendChild(b);
+                return b;
+            };
+
+            const restore = function () {
+                actionsDiv.textContent = '';
+                saved.forEach(function (n) { actionsDiv.appendChild(n); });
+            };
+
+            const run = function (removeRating) {
+                prompt.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+                self.adminRemoveReview(reviewerUserId, itemId, removeRating)
+                    .then(function () {
+                        self.lbToast(self.t(removeRating ? 'adminRatingRemoved' : 'adminReviewRemoved'));
+                        self.refreshUserReviews(itemId);
+                        if (removeRating) {
+                            self.loadRatings(itemId, self.currentUserRating || 0);
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error('[Ratings] Admin remove failed:', err);
+                        self.lbToast(self.t('adminRemoveFailed'));
+                        restore();
+                    });
+            };
+
+            makeBtn(self.t('adminRemoveReviewTextOnly'), 'admin-remove-confirm', function () { run(false); });
+            makeBtn(self.t('adminRemoveReviewAndRating'), 'admin-remove-confirm', function () { run(true); });
+            makeBtn(self.t('cancel'), '', restore);
+
+            actionsDiv.textContent = '';
+            actionsDiv.appendChild(prompt);
+        },
+
+        /**
+         * Admin-only: removes someone's review text, or with removeRating their whole rating.
+         * @returns {Promise} Rejects on any non-2xx answer.
+         */
+        adminRemoveReview: function (reviewerUserId, itemId, removeRating) {
+            const url = ApiClient.serverAddress() + '/Ratings/Admin/Reviews/' +
+                encodeURIComponent(reviewerUserId) + '/' + encodeURIComponent(itemId) +
+                (removeRating ? '?removeRating=true' : '');
+            return fetch(url, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
+            }).then(function (r) {
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status);
+                }
+            });
         },
 
         /**
@@ -15525,20 +15673,50 @@
                 const data = await response.json();
                 const duplicates = data.Duplicates || [];
 
+                const keptCount = Number(data.KeptGroupCount ?? data.keptGroupCount) || 0;
+                const keptNote = keptCount > 0
+                    ? `<div class="duplicates-kept-note">${self.escapeHtml(self.t('duplicateKeptHidden').replace('{n}', keptCount))} <button type="button" class="duplicates-show-kept">${self.escapeHtml(self.t('duplicateShowKept'))}</button></div>`
+                    : '';
+                const bindShowKept = function () {
+                    const btn = body.querySelector('.duplicates-show-kept');
+                    if (!btn) return;
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        await fetch(`${baseUrl}/Ratings/Admin/Duplicates/KeepAll`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': RatingsPlugin.authHeader() },
+                            credentials: 'include'
+                        }).catch(() => {});
+                        self.loadDuplicates();
+                    });
+                };
+
                 if (!duplicates || duplicates.length === 0) {
-                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>`;
+                    body.innerHTML = `<div style="text-align: center; padding: 40px; color: #888;">${self.t('duplicatesNone')}</div>` + keptNote;
+                    bindShowKept();
                     return;
                 }
 
-                let html = `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
+                let html = keptNote + `<div class="duplicates-header">${data.TotalDuplicateGroups} ${self.t('duplicatesGroups')}, ${data.TotalDuplicateItems} ${self.t('duplicatesItems')} - ${data.PotentialSavingsGB} GB ${self.t('duplicatesFound')}</div>`;
                 html += '<div class="duplicates-container">';
 
                 duplicates.forEach(group => {
+                    // Music groups are keyed on artist|title, not an IMDB id - showing that key
+                    // as "IMDB: artist|track 01" only confused people.
+                    const isMusic = (group.MediaType ?? group.mediaType) === 'Music';
+                    const label = isMusic
+                        ? '&#127925; ' + self.escapeHtml((group.title ?? group.Title))
+                        : 'IMDB: ' + self.escapeHtml((group.imdbId ?? group.ImdbId)) + ' - ' + self.escapeHtml((group.title ?? group.Title));
+                    const groupIds = (group.Items || []).map(it => String(it.itemId ?? it.ItemId)).join(',');
+                    const keepAllLabel = self.t(group.ItemCount === 2 ? 'duplicateKeepBoth' : 'duplicateKeepAll');
                     html += `
                         <div class="duplicate-group">
                             <div class="duplicate-group-header">
-                                <span class="imdb-id">IMDB: ${self.escapeHtml((group.imdbId ?? group.ImdbId))} - ${self.escapeHtml((group.title ?? group.Title))}</span>
-                                <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
+                                <span class="imdb-id">${label}</span>
+                                <span class="duplicate-group-meta">
+                                    <span class="duplicate-count">${group.ItemCount} ${self.t('duplicateCopies')} (${group.TotalSizeGB} GB)</span>
+                                    <button type="button" class="keep-all-duplicates-btn" data-item-ids="${self.escapeHtml(groupIds)}" title="${self.escapeHtml(self.t('duplicateKeepBothTooltip'))}">${self.escapeHtml(keepAllLabel)}</button>
+                                </span>
                             </div>
                             <div class="duplicate-items">
                     `;
@@ -15571,6 +15749,33 @@
 
                 html += '</div>';
                 body.innerHTML = html;
+                bindShowKept();
+
+                // "Keep both": remember the group on the server and drop it from the list.
+                body.querySelectorAll('.keep-all-duplicates-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const ids = (btn.getAttribute('data-item-ids') || '').split(',').filter(Boolean);
+                        btn.disabled = true;
+                        try {
+                            const r = await fetch(`${baseUrl}/Ratings/Admin/Duplicates/KeepAll`, {
+                                method: 'POST',
+                                headers: { 'Authorization': RatingsPlugin.authHeader(), 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify(ids)
+                            });
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            const group = btn.closest('.duplicate-group');
+                            if (group) group.remove();
+                            if (!body.querySelector('.duplicate-group')) {
+                                self.loadDuplicates();
+                            }
+                        } catch (error) {
+                            console.error('Error keeping duplicates:', error);
+                            btn.disabled = false;
+                            alert(self.t('duplicateKeepFailed'));
+                        }
+                    });
+                });
 
                 // Bind "keep this one instead" handlers
                 body.querySelectorAll('.keep-duplicate-btn').forEach(btn => {
