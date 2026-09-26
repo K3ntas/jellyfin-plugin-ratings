@@ -5823,12 +5823,13 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         // A track title that says nothing about the content: "Track 01", "01", "Titel 3",
-        // "Kapitel 2", "CD1 - Track 04", "Untitled". Audio dramas and audiobooks outside MusicBrainz
+        // "Kapitel 2", "CD1 - Track 04", "Untitled" - and "01 Track 01", which is what Jellyfin
+        // names an untagged file after its file name. Audio dramas and audiobooks outside MusicBrainz
         // are commonly tagged like this, so every "Track 01" by one artist looked like a copy of
         // every other episode's "Track 01".
         private static readonly System.Text.RegularExpressions.Regex _genericTrackTitleRegex =
             new System.Text.RegularExpressions.Regex(
-                @"^\s*(?:(?:cd|disc|disk)\s*\d+\s*[-_.:]?\s*)?(?:\d+\s*[-_.:]\s*)?(?:(?:track|titel|title|tr|piste|pista|traccia|spår|spor|nummer|number|no|nr|kapitel|chapter|part|teil|folge|episode|untitled|unknown|unbekannt|unbenannt)(?![a-z])\.?\s*)?[#\-_.]*\s*\d*\s*$",
+                @"^\s*(?:(?:cd|disc|disk)\s*\d+\s*[-_.:]?\s*)?(?:\d+\s*[-_.:]?\s*)?(?:(?:track|titel|title|tr|piste|pista|traccia|spår|spor|nummer|number|no|nr|kapitel|chapter|part|teil|folge|episode|untitled|unknown|unbekannt|unbenannt)(?![a-z])\.?\s*)?[#\-_.]*\s*\d*\s*$",
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant
                     | System.Text.RegularExpressions.RegexOptions.IgnoreCase
                     | System.Text.RegularExpressions.RegexOptions.Compiled);

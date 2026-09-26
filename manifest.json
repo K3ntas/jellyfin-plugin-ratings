@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.408.0",
+        "changelog": "Follow-up to 2.0.407.0: music files without tags, which Jellyfin names after the file (for example \"01 Track 01\"), are now also recognised as generic track names, so untagged audio-drama episodes are not flagged as duplicates of each other either.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.408.0/Jellyfin.Plugin.Ratings_2.0.408.0.zip",
+        "checksum": "d1f19ab945436af4affcd1b755f7faa7",
+        "timestamp": "2026-09-26T12:33:37Z"
+      },
+      {
         "version": "2.0.407.0",
         "changelog": "Ratings under 1 (0.1 to 0.9) now save - the stars offered them, but the server turned them away because the minimum rating setting still said 1. A minimum of 1 now means \"down to 0.1\"; a higher minimum you set yourself is still enforced. Duplicates: each group has a \"Keep both\" button (\"Keep all\" for three or more) for copies you want to keep, such as the same film in two languages; the group stops being listed, a new extra copy brings it back, and \"Show them again\" undoes it. Series now show their real size (all episodes added up) and quality instead of 0 GB [Unknown]. Music tracks with generic names like \"Track 01\" (audio dramas, audiobooks) are only compared within the same album, and copies must be about the same length, so episodes are no longer flagged as duplicates of each other.",
         "targetAbi": "10.11.0.0",
