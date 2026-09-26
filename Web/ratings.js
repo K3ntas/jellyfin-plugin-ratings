@@ -165,6 +165,12 @@
                 shareYourThoughtsAboutThisTitle: 'Share your thoughts about this title...',
                 showAllRandom: 'Show all (random)', showMyActivityFeed: 'Show my activity feed',
                 showMyRatingsToOthers: 'Show my ratings to others', sortBy: 'Sort by:',
+                hideMyProfile: 'Hide my profile - nobody else can open it, and I am left out of user lists and search',
+                profileIsPrivate: 'This profile is private',
+                adminRemoveReview: 'Remove (admin)', adminRemoveReviewPrompt: 'Remove this review?',
+                adminRemoveReviewTextOnly: 'Review only', adminRemoveReviewAndRating: 'Review and rating',
+                adminReviewRemoved: 'Review removed', adminRatingRemoved: 'Rating and review removed',
+                adminRemoveFailed: 'Could not remove it',
                 startFromTheBeginning: 'Start from the beginning', startWhereTheyAreNow: 'Start where they are now',
                 selectARating: 'Select a rating', writeAReview: 'Write a review',
                 status: 'Status', styleApplied: 'Style Applied', submitRating: 'Submit Rating',
@@ -3594,6 +3600,14 @@
                     return;
                 }
 
+                // A hidden profile answers 404 with an error body, which parsed into a truthy
+                // object and rendered as an empty, half-broken profile page.
+                if (!profile.userId) {
+                    var hidden = /private|friends-only/i.test(String(profile.error || ''));
+                    self.renderProfileError(page, hidden ? self.t('profileIsPrivate') : (profile.error || 'User not found'));
+                    return;
+                }
+
                 // Determine relationship status
                 var isSelf = profile.userId === ApiClient.getCurrentUserId();
                 var isFriend = (friendsData.friends || []).some(function (f) { return f.userId === userId; });
@@ -5056,7 +5070,11 @@
                 ((self._configCache || {}).EnableQualityRequests !== false
                     ? '<button class="lb-tab" data-tab="quality">' + (self.t('qualityTab') || 'Better Quality') + '</button>'
                     : '') +
-                '<button class="lb-tab" data-tab="users">' + (self.t('otherUsers')) + '</button>' +
+                // Admins can switch the list of every user off (a privacy complaint: anyone could
+                // browse everybody on the server); the server refuses the request as well.
+                ((self._configCache || {}).EnableOtherUsersList !== false
+                    ? '<button class="lb-tab" data-tab="users">' + (self.t('otherUsers')) + '</button>'
+                    : '') +
                 '</div>';
 
             // Tab content area
@@ -8149,6 +8167,9 @@
                 '<div class="lb-settings-section">' +
                 '<h3>' + RatingsPlugin.t('privacy') + '</h3>' +
                 '<div class="lb-settings-field">' +
+                '<label><input type="checkbox" id="settingsHideProfile" ' + ((privacy.profileVisibility || privacy.ProfileVisibility) === 'Private' ? 'checked' : '') + '> ' + RatingsPlugin.t('hideMyProfile') + '</label>' +
+                '</div>' +
+                '<div class="lb-settings-field">' +
                 '<label><input type="checkbox" id="settingsShowRatings" ' + (privacy.ratingsVisibleRegular !== false ? 'checked' : '') + '> ' + RatingsPlugin.t('showMyRatingsToOthers') + '</label>' +
                 '</div>' +
                 '<div class="lb-settings-field">' +
@@ -8202,6 +8223,12 @@
             var showActivity = document.getElementById('settingsShowActivity')?.checked !== false;
             var allowFollows = document.getElementById('settingsAllowFollows')?.checked !== false;
 
+            // "Hide my profile" is the existing Private visibility. Unticking it only goes back to
+            // Public from Private, so a Friends-only setting made in the Friends panel survives.
+            var hideProfile = document.getElementById('settingsHideProfile')?.checked === true;
+            var currentPrivacy = (self._currentProfile || {}).privacy || (self._currentProfile || {}).Privacy || {};
+            var profileVisibility = hideProfile ? 'Private' : ((currentPrivacy.profileVisibility || currentPrivacy.ProfileVisibility) === 'Private' ? 'Public' : undefined);
+
             // This used to PUT /Social/MyProfile - a route that never existed. Jellyfin answered
             // 405 with "Allow: GET", the response body was empty, and .json() then threw, so the
             // Save button silently did nothing (issue #72). The bio and the privacy toggles live
@@ -8220,7 +8247,8 @@
                 body: JSON.stringify({
                     showRatings: showRatings,
                     showActivity: showActivity,
-                    allowFollows: allowFollows
+                    allowFollows: allowFollows,
+                    profileVisibility: profileVisibility
                 })
             });
 
@@ -10384,7 +10412,11 @@
                 const safeItemId = String(itemId || '').replace(/[^a-zA-Z0-9-]/g, '');
                 const avatarUrl = baseUrl + '/Users/' + safeUserId + '/Images/Primary?height=80&quality=90';
                 const timestamp = this.formatReviewTimestamp((review.createdAt ?? review.CreatedAt));
-                const profileTooltip = self.showReviewProfileTooltip ? 'Click to view profile' : '';
+                // Someone who hid their profile keeps their name on the review, but it no longer
+                // leads anywhere - the profile would only answer "private" anyway.
+                const profileHidden = review.ProfileHidden === true || review.profileHidden === true;
+                const canModerate = review.CanModerate === true || review.canModerate === true;
+                const profileTooltip = (self.showReviewProfileTooltip && !profileHidden) ? 'Click to view profile' : '';
 
                 var card = document.createElement('div');
                 card.className = 'user-review-card';
@@ -10397,7 +10429,7 @@
 
                 // Avatar
                 var avatarDiv = document.createElement('div');
-                avatarDiv.className = 'user-review-avatar clickable';
+                avatarDiv.className = 'user-review-avatar' + (profileHidden ? ' profile-hidden' : ' clickable');
                 avatarDiv.setAttribute('data-user-id', safeUserId);
                 if (profileTooltip) avatarDiv.title = profileTooltip;
 
@@ -10419,7 +10451,7 @@
 
                 // User link
                 var userLink = document.createElement('a');
-                userLink.className = 'user-review-user-link';
+                userLink.className = 'user-review-user-link' + (profileHidden ? ' profile-hidden' : '');
                 userLink.setAttribute('data-user-id', safeUserId);
                 if (profileTooltip) userLink.title = profileTooltip;
 
@@ -10482,6 +10514,20 @@
                 commentBtn.innerHTML = '💬 <span class="comment-count">' + (Number(review.CommentCount) || 0) + '</span>';
                 actionsDiv.appendChild(commentBtn);
 
+                // Admins can take down anyone's review. Users could only ever delete their own,
+                // which left no way to remove an abusive or spoiler review from the page.
+                if (canModerate) {
+                    var removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'user-review-action-btn admin-remove';
+                    removeBtn.title = self.t('adminRemoveReview');
+                    removeBtn.textContent = '🗑';
+                    removeBtn.addEventListener('click', function () {
+                        self.showAdminRemovePrompt(actionsDiv, safeUserId, itemId);
+                    });
+                    actionsDiv.appendChild(removeBtn);
+                }
+
                 card.appendChild(actionsDiv);
                 grid.appendChild(card);
             });
@@ -10538,7 +10584,7 @@
             });
 
             // Add user profile click handlers
-            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link').forEach(el => {
+            grid.querySelectorAll('.user-review-avatar.clickable, .user-review-user-link:not(.profile-hidden)').forEach(el => {
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
                     const userId = this.getAttribute('data-user-id');
@@ -10550,6 +10596,81 @@
             if (self.reviewCardStyle) {
                 self.applyReviewCardStyles();
             }
+        },
+
+        /**
+         * Swaps a review card's action row for "Remove this review? [Review only] [Review and
+         * rating] [Cancel]". Inline rather than a confirm() so the admin can pick which of the
+         * two they mean - the star rating is often fine when the text is the problem.
+         */
+        showAdminRemovePrompt: function (actionsDiv, reviewerUserId, itemId) {
+            const self = this;
+            const saved = Array.prototype.slice.call(actionsDiv.childNodes);
+
+            const prompt = document.createElement('div');
+            prompt.className = 'user-review-admin-prompt';
+
+            const label = document.createElement('span');
+            label.textContent = self.t('adminRemoveReviewPrompt');
+            prompt.appendChild(label);
+
+            const makeBtn = function (text, extraClass, onClick) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'user-review-action-btn' + (extraClass ? ' ' + extraClass : '');
+                b.textContent = text;
+                b.addEventListener('click', onClick);
+                prompt.appendChild(b);
+                return b;
+            };
+
+            const restore = function () {
+                actionsDiv.textContent = '';
+                saved.forEach(function (n) { actionsDiv.appendChild(n); });
+            };
+
+            const run = function (removeRating) {
+                prompt.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+                self.adminRemoveReview(reviewerUserId, itemId, removeRating)
+                    .then(function () {
+                        self.lbToast(self.t(removeRating ? 'adminRatingRemoved' : 'adminReviewRemoved'));
+                        self.refreshUserReviews(itemId);
+                        if (removeRating) {
+                            self.loadRatings(itemId, self.currentUserRating || 0);
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error('[Ratings] Admin remove failed:', err);
+                        self.lbToast(self.t('adminRemoveFailed'));
+                        restore();
+                    });
+            };
+
+            makeBtn(self.t('adminRemoveReviewTextOnly'), 'admin-remove-confirm', function () { run(false); });
+            makeBtn(self.t('adminRemoveReviewAndRating'), 'admin-remove-confirm', function () { run(true); });
+            makeBtn(self.t('cancel'), '', restore);
+
+            actionsDiv.textContent = '';
+            actionsDiv.appendChild(prompt);
+        },
+
+        /**
+         * Admin-only: removes someone's review text, or with removeRating their whole rating.
+         * @returns {Promise} Rejects on any non-2xx answer.
+         */
+        adminRemoveReview: function (reviewerUserId, itemId, removeRating) {
+            const url = ApiClient.serverAddress() + '/Ratings/Admin/Reviews/' +
+                encodeURIComponent(reviewerUserId) + '/' + encodeURIComponent(itemId) +
+                (removeRating ? '?removeRating=true' : '');
+            return fetch(url, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'Authorization': RatingsPlugin.authHeader() }
+            }).then(function (r) {
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status);
+                }
+            });
         },
 
         /**

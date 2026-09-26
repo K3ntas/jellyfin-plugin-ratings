@@ -816,6 +816,28 @@
 .user-review-action-btn.disliked {
     color: #f44336;
 }
+/* Admin-only remove control: pushed to the far end so it is not mistaken for a vote button. */
+.user-review-action-btn.admin-remove {
+    margin-left: auto;
+}
+.user-review-action-btn.admin-remove:hover,
+.user-review-action-btn.admin-remove-confirm {
+    color: #f44336;
+}
+.user-review-admin-prompt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em;
+    width: 100%;
+    color: #ccc;
+    font-size: 0.85em;
+}
+/* Someone who hid their profile: name shown, but it is not a link. */
+.user-review-card .user-review-avatar.profile-hidden,
+.user-review-card .user-review-user-link.profile-hidden {
+    cursor: default;
+}
 .user-reviews-empty {
     text-align: center;
     color: #666;

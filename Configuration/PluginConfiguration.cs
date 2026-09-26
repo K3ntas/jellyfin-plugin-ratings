@@ -33,6 +33,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             SearchExcludeEpisodes = true;
             ShowNotificationToggle = true;
             ShowHeaderProfileButton = true;
+            EnableOtherUsersList = true;
             NotificationsEnabledByDefault = true;
             ShowLatestMediaButton = true;
             HideHomeDuplicates = false;
@@ -283,6 +284,12 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether duplicate cards are hidden on the home page.
         /// </summary>
         public bool HideHomeDuplicates { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether profiles show an "Other Users" tab listing
+        /// everyone on the server. Off hides the tab and makes /Social/Users refuse.
+        /// </summary>
+        public bool EnableOtherUsersList { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the Media Management feature is enabled for admins.

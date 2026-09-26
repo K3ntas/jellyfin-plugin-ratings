@@ -803,6 +803,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkEnableOtherUsersList" type="checkbox" is="emby-checkbox" />
+                                    <span>Show "Other Users" Tab on Profiles</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Lets everyone browse a list of all users on the server from their profile. Turn off to remove the tab for everyone. Users can also hide their own profile from Edit Profile &rarr; Privacy.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkNotificationsEnabledByDefault" type="checkbox" is="emby-checkbox" />
                                     <span>Enable Notifications by Default</span>
                                 </label>
@@ -2867,6 +2877,7 @@
                     document.querySelector('#chkShowHeaderLanguageButton').checked = config.ShowHeaderLanguageButton !== false;
                     document.querySelector('#chkShowNotificationToggle').checked = config.ShowNotificationToggle !== false;
                     document.querySelector('#chkShowHeaderProfileButton').checked = config.ShowHeaderProfileButton !== false;
+                    document.querySelector('#chkEnableOtherUsersList').checked = config.EnableOtherUsersList !== false;
                     document.querySelector('#chkNotificationsEnabledByDefault').checked = config.NotificationsEnabledByDefault !== false;
                     document.querySelector('#chkShowLatestMediaButton').checked = config.ShowLatestMediaButton !== false;
                     document.querySelector('#chkHideHomeDuplicates').checked = config.HideHomeDuplicates !== false;
@@ -3189,6 +3200,7 @@
                     config.ShowHeaderLanguageButton = document.querySelector('#chkShowHeaderLanguageButton').checked;
                     config.ShowNotificationToggle = document.querySelector('#chkShowNotificationToggle').checked;
                     config.ShowHeaderProfileButton = document.querySelector('#chkShowHeaderProfileButton').checked;
+                    config.EnableOtherUsersList = document.querySelector('#chkEnableOtherUsersList').checked;
                     config.NotificationsEnabledByDefault = document.querySelector('#chkNotificationsEnabledByDefault').checked;
                     config.ShowLatestMediaButton = document.querySelector('#chkShowLatestMediaButton').checked;
                     config.HideHomeDuplicates = document.querySelector('#chkHideHomeDuplicates').checked;

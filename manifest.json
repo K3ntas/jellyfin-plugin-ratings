@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.405.0",
+        "changelog": "Admins can now remove anyone's review: a bin icon on each review card (visible to admins only) offers to remove just the review text, keeping the star rating, or the rating and review together. Its likes and comments go with it. Users can hide their profile from Edit Profile > Privacy > \"Hide my profile\": nobody else can open it, it is left out of the Other Users list, search and similar-users suggestions, and their name on reviews is no longer a link. A new plugin setting, \"Show 'Other Users' Tab on Profiles\", lets admins remove the list of every user on the server for everyone. Profile followers, following, lists, stats and featured reviews now respect a hidden profile too; before, only the profile header did.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.405.0/Jellyfin.Plugin.Ratings_2.0.405.0.zip",
+        "checksum": "69bba0f703f74cd6619a35d02d5982f5",
+        "timestamp": "2026-09-26T11:04:09Z"
+      },
+      {
         "version": "2.0.404.0",
         "changelog": "Removes the \"Unknown\" cards with a blank poster and a \"Not on server\" tag from profiles. They were ratings of media that has since been deleted from the server and was rated before the plugin started remembering titles and posters, so there was nothing to show but the stars. They are now left out of the profile grid, reviews and activity. Deleted media that the plugin remembers keeps showing with its title and poster, as before. Nothing is deleted: if the media comes back to the library, its rating shows up again.",
         "targetAbi": "10.11.0.0",

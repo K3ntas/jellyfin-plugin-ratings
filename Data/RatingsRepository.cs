@@ -1913,6 +1913,48 @@ namespace Jellyfin.Plugin.Ratings.Data
         }
 
         /// <summary>
+        /// Drops the likes and comments hanging off one review.
+        /// </summary>
+        /// <remarks>
+        /// Used when an admin removes a review. Both are keyed on (reviewer, item) rather than on
+        /// the review itself, so leaving them behind would bring the old likes and the replies to
+        /// the removed text back the next time that person wrote a review of the same title.
+        /// </remarks>
+        /// <param name="reviewerUserId">User ID of the review owner.</param>
+        /// <param name="itemId">Item ID of the review.</param>
+        /// <returns>A task that completes once the change is on disk.</returns>
+        public async Task RemoveReviewInteractionsAsync(Guid reviewerUserId, Guid itemId)
+        {
+            int likesRemoved, commentsRemoved;
+            lock (_lock)
+            {
+                var likeIds = _reviewLikes.Values
+                    .Where(l => l.ReviewerUserId == reviewerUserId && l.ItemId == itemId)
+                    .Select(l => l.Id)
+                    .ToList();
+                likeIds.ForEach(id => _reviewLikes.Remove(id));
+                likesRemoved = likeIds.Count;
+
+                var commentIds = _reviewComments.Values
+                    .Where(c => c.ReviewerUserId == reviewerUserId && c.ItemId == itemId)
+                    .Select(c => c.Id)
+                    .ToList();
+                commentIds.ForEach(id => _reviewComments.Remove(id));
+                commentsRemoved = commentIds.Count;
+            }
+
+            if (likesRemoved > 0)
+            {
+                await SaveReviewLikesAsync().ConfigureAwait(false);
+            }
+
+            if (commentsRemoved > 0)
+            {
+                await SaveReviewCommentsAsync().ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
         /// Sets or updates a like/dislike on a review.
         /// </summary>
         /// <param name="reviewerUserId">User ID of the review owner.</param>

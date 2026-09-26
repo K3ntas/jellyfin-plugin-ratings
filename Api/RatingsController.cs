@@ -40,6 +40,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         private readonly IApplicationPaths _appPaths;
         private readonly ILogger<RatingsController> _logger;
         private readonly SocialWebSocketListener _socialWebSocketListener;
+        private readonly SocialRepository _socialRepository;
         private readonly ISystemManager _systemManager;
         private readonly MediaBrowser.Controller.IO.IPathManager? _pathManager;
 
@@ -60,6 +61,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="logger">Logger instance.</param>
         /// <param name="socialWebSocketListener">Social WebSocket listener.</param>
         /// <param name="systemManager">System manager for server control.</param>
+        /// <param name="socialRepository">Social repository, for reviewers' profile privacy.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
@@ -70,6 +72,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             ILogger<RatingsController> logger,
             SocialWebSocketListener socialWebSocketListener,
             ISystemManager systemManager,
+            SocialRepository socialRepository,
             MediaBrowser.Controller.IO.IPathManager? pathManager = null)
         {
             _repository = repository;
@@ -81,6 +84,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             _logger = logger;
             _socialWebSocketListener = socialWebSocketListener;
             _systemManager = systemManager;
+            _socialRepository = socialRepository;
             _pathManager = pathManager;
         }
 
@@ -1984,6 +1988,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var currentUserId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
                 var ratings = _repository.GetItemRatings(itemId);
+                var canModerate = IsJellyfinAdmin(currentUserId);
                 var detailedRatings = ratings.Select(r =>
                 {
                     var user = _userManager.GetUserById(r.UserId);
@@ -2004,7 +2009,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                         LikeCount = likeCounts.LikeCount,
                         DislikeCount = likeCounts.DislikeCount,
                         UserLiked = userLike,
-                        CommentCount = commentCount
+                        CommentCount = commentCount,
+                        ProfileHidden = r.UserId != currentUserId
+                            && _socialRepository.GetProfile(r.UserId)?.Privacy?.ProfileVisibility == "Private",
+                        CanModerate = canModerate
                     };
                 }).OrderByDescending(r => r.Rating).ThenBy(r => r.Username).ToList();
 
@@ -2212,6 +2220,70 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
+        /// Removes someone else's review, or their whole rating, as an admin.
+        /// </summary>
+        /// <remarks>
+        /// Users could only ever delete their own rating, so an admin had no way to take down an
+        /// abusive or spoiler review short of editing the JSON on disk. By default only the text
+        /// goes and the star rating stays; <paramref name="removeRating"/> drops both. Either way
+        /// the likes, replies and "featured" pin that belonged to the review go with it.
+        /// </remarks>
+        /// <param name="reviewerUserId">Whose review.</param>
+        /// <param name="itemId">Item ID.</param>
+        /// <param name="removeRating">True to delete the rating as well as the review.</param>
+        /// <returns>No content on success.</returns>
+        [HttpDelete("Admin/Reviews/{reviewerUserId}/{itemId}")]
+        [Authorize]
+        public async Task<ActionResult> AdminDeleteReview(
+            [FromRoute] [Required] Guid reviewerUserId,
+            [FromRoute] [Required] Guid itemId,
+            [FromQuery] bool removeRating = false)
+        {
+            try
+            {
+                var adminId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
+                if (!IsAdminRequest(adminId))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Admin access required");
+                }
+
+                if (removeRating)
+                {
+                    if (!await _repository.DeleteRatingAsync(reviewerUserId, itemId).ConfigureAwait(false))
+                    {
+                        return NotFound("No rating found to delete");
+                    }
+
+                    var deletedItem = _libraryManager.GetItemById(itemId);
+                    if (deletedItem != null)
+                    {
+                        ClearNativeRating(reviewerUserId, deletedItem);
+                    }
+                }
+                else if (await _repository.UpdateReviewTextAsync(reviewerUserId, itemId, null).ConfigureAwait(false) == null)
+                {
+                    return NotFound("No rating found for that review");
+                }
+
+                await _repository.RemoveReviewInteractionsAsync(reviewerUserId, itemId).ConfigureAwait(false);
+                await _socialRepository.UnfeatureReviewAsync(reviewerUserId, itemId).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "Admin {AdminId} removed the {What} by {UserId} on item {ItemId}",
+                    adminId,
+                    removeRating ? "rating and review" : "review",
+                    reviewerUserId,
+                    itemId);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing review by {UserId} on item {ItemId}", reviewerUserId, itemId);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        /// <summary>
         /// Updates only the review text for an existing rating.
         /// </summary>
         /// <param name="itemId">Item ID.</param>
@@ -2289,6 +2361,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Support queues - the client hides the profile tab and the report button
                     // entirely when these are off, rather than letting them 404 on submit.
                     EnableQualityRequests = config?.EnableQualityRequests ?? true,
+                    EnableOtherUsersList = config?.EnableOtherUsersList ?? true,
                     EnableBugReports = config?.EnableBugReports ?? true,
                     BugReportMaxAttachments = config?.BugReportMaxAttachments ?? 3,
                     BugReportMaxAttachmentMb = config?.BugReportMaxAttachmentMb ?? 2,
