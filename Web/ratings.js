@@ -19501,10 +19501,7 @@
                         label: self.t('requestNotifyNew'),
                         title: self.apiField(r, 'title') || '',
                         detail: self.t('requestNotifyNewBy').replace('{user}', self.apiField(r, 'username') || '?'),
-                        onClick: () => {
-                            const btn = document.getElementById('requestMediaBtn');
-                            if (btn) btn.click();
-                        }
+                        onClick: () => self.openRequestById(String(self.apiField(r, 'id')))
                     }));
             }
             self._writeAnnounced(KEY, ids);
@@ -19540,13 +19537,46 @@
                         if (safe) {
                             window.location.href = safe;
                         } else {
-                            const btn = document.getElementById('requestMediaBtn');
-                            if (btn) btn.click();
+                            // No link to the media: open the request itself instead.
+                            self.openRequestById(id);
                         }
                     }
                 });
             });
             self._writeAnnounced(KEY, announced);
+        },
+
+        /**
+         * Opens the request window and brings one request into view, expanded - what clicking a
+         * request pop-up should land on, rather than the top of a list to search through. The list
+         * is built asynchronously after the window opens, so wait for the row to appear.
+         */
+        openRequestById: function (requestId) {
+            const btn = document.getElementById('requestMediaBtn');
+            if (!btn) return;
+            const modal = document.getElementById('requestMediaModal');
+            const isOpen = modal && modal.classList.contains('show');
+            if (!isOpen) btn.click();
+
+            const safeId = String(requestId || '').replace(/[^a-zA-Z0-9-]/g, '');
+            if (!safeId) return;
+            const started = Date.now();
+            const find = () => {
+                const row = document.querySelector(`.admin-request-item[data-request-id="${safeId}"]`)
+                    || document.querySelector(`[data-request-id="${safeId}"]`);
+                if (row) {
+                    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    const compact = row.querySelector('.admin-request-compact');
+                    if (compact && row.classList.contains('admin-request-item') && !row.classList.contains('expanded')) {
+                        compact.click();
+                    }
+                    row.classList.add('request-highlight');
+                    setTimeout(() => row.classList.remove('request-highlight'), 2500);
+                    return;
+                }
+                if (Date.now() - started < 8000) setTimeout(find, 250);
+            };
+            setTimeout(find, 250);
         },
 
         /**

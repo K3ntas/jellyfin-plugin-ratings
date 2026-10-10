@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.412.0",
+        "changelog": "Clicking a request pop-up now opens that request: admins land on the new request, opened up in the request window, and users go to the media they asked for (or to their request if there is no link).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.412.0/Jellyfin.Plugin.Ratings_2.0.412.0.zip",
+        "checksum": "2e35bb8a17b9913142e08504cfadde28",
+        "timestamp": "2026-10-10T19:40:05Z"
+      },
+      {
         "version": "2.0.411.0",
         "changelog": "Adding a new series now gives one \"New Series\" notification instead of one for every episode. New episodes of a series you already have are grouped more reliably into one notification per season.",
         "targetAbi": "10.11.0.0",

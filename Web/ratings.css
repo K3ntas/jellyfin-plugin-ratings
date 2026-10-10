@@ -1193,6 +1193,12 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     display: flex !important;
 }
 
+/* The request a pop-up was clicked for, briefly marked once it has been scrolled into view. */
+.request-highlight {
+    box-shadow: 0 0 0 2px #00a4dc !important;
+    transition: box-shadow 0.3s ease;
+}
+
 /* Mobile Responsive */
 @media screen and (max-width: 925px) {
     #ratingsButtonGroup {
