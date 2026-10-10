@@ -117,6 +117,8 @@
                 supportMarkSolved: 'Mark solved', supportDecline: 'Decline',
                 sending: 'Sending...', send: 'Send', cancel: 'Cancel',
                 duplicateDeleteFailed: 'Could not delete that copy.', duplicateKeepThis: 'Keep this',
+                requestNotifyNew: 'New request', requestNotifyNewBy: 'requested by {user}',
+                requestNotifyDone: 'Your request is available', requestNotifyOpen: 'Click to open',
                 duplicateKeepBoth: 'Keep both', duplicateKeepAll: 'Keep all',
                 duplicateKeepBothTooltip: 'Keep every copy (for example two languages) and stop listing this group',
                 duplicateKeptHidden: '{n} group(s) marked "Keep both" are hidden.', duplicateShowKept: 'Show them again',
@@ -8923,7 +8925,13 @@
             if (width <= 0) {
                 return this.RATING_STEP;
             }
-            return this.snapRating(((clientX - left) / width) * 10);
+            // The last few percent of the row all read as 10. Mapped straight across, 10 needed
+            // the final half-percent - a pixel or two on a desktop row, and the star glyph's ink
+            // ends before its box does, so the visible tip of the last star read 9.8 and people
+            // aiming at that star got 9.5 (issue #89). The rest of the row is stretched evenly to
+            // make room, so every tenth below 10 is still reachable.
+            const END_ZONE = 0.035;
+            return this.snapRating(((clientX - left) / (width * (1 - END_ZONE))) * 10);
         },
 
         /**
@@ -18807,8 +18815,8 @@
 
                 // Sort: pending first, then by date
                 const sorted = requests.sort((a, b) => {
-                    if (a.Status === 'pending' && b.Status !== 'pending') return -1;
-                    if (a.Status !== 'pending' && b.Status === 'pending') return 1;
+                    if (self.apiField(a, 'status') === 'pending' && self.apiField(b, 'status') !== 'pending') return -1;
+                    if (self.apiField(a, 'status') !== 'pending' && self.apiField(b, 'status') === 'pending') return 1;
                     return new Date((b.createdAt ?? b.CreatedAt)) - new Date((a.createdAt ?? a.CreatedAt));
                 });
 
@@ -19369,19 +19377,25 @@
                     Promise.all([requestsPromise, deletionPromise]).then(([requests, deletionRequests]) => {
                         let count = 0;
 
+                        // Read through apiField: Jellyfin 12 sends these camelCase (status, id)
+                        // and 10.x PascalCase. Reading only r.Status made every count 0 on 12, so
+                        // the badge on the request button never appeared for anyone (issue #89).
+                        const statusOf = r => self.apiField(r, 'status');
                         if (isAdmin) {
                             // For admin: show count of pending requests + pending deletion requests
-                            count = requests.filter(r => r.Status === 'pending').length;
-                            count += deletionRequests.filter(r => r.Status === 'pending').length;
+                            count = requests.filter(r => statusOf(r) === 'pending').length;
+                            count += deletionRequests.filter(r => statusOf(r) === 'pending').length;
+                            self.announceNewRequests(requests);
                         } else {
                             // For users: show count of completed (done) requests they haven't seen yet
-                            const doneRequests = requests.filter(r => r.Status === 'done');
+                            const doneRequests = requests.filter(r => statusOf(r) === 'done');
 
                             // Get viewed request IDs from localStorage
                             const viewedRequests = self.getViewedRequestIds();
 
                             // Count only done requests that haven't been viewed
-                            count = doneRequests.filter(r => !viewedRequests.includes(r.Id)).length;
+                            count = doneRequests.filter(r => !viewedRequests.includes(self.apiField(r, 'id'))).length;
+                            self.announceFulfilledRequests(doneRequests, viewedRequests);
                         }
 
                         // Update badge
@@ -19419,8 +19433,8 @@
                     self.fetchAllRequests(),
                     self.fetchDeletionRequests()
                 ]).then(([requests, deletionRequests]) => {
-                    const pendingRequests = requests.filter(r => r.Status === 'pending').length;
-                    const pendingDeletions = deletionRequests.filter(r => r.Status === 'pending').length;
+                    const pendingRequests = requests.filter(r => self.apiField(r, 'status') === 'pending').length;
+                    const pendingDeletions = deletionRequests.filter(r => self.apiField(r, 'status') === 'pending').length;
 
                     const manageBadge = document.getElementById('manageTabBadge');
                     if (manageBadge) {
@@ -19446,6 +19460,155 @@
         },
 
         /**
+         * Reads a set of request ids this browser has already announced. Returns null when the
+         * key has never been written, so the first run can tell "nothing seen yet" from "seen
+         * nothing".
+         */
+        _readAnnounced: function (key) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        _writeAnnounced: function (key, ids) {
+            try {
+                // Bounded: only the ids still relevant are passed in, but guard anyway.
+                localStorage.setItem(key, JSON.stringify(ids.slice(-500)));
+            } catch (e) { /* storage full or blocked - worst case a pop-up repeats */ }
+        },
+
+        /**
+         * Admins: pops up a notification for each request that has arrived since the last check.
+         * Admins previously had no signal at all that someone had asked for something (issue
+         * #89). Runs off the same 30-second refresh as the badge. The first run in a browser only
+         * records what is already pending - the badge already counts those, and a stack of
+         * pop-ups for old requests would be noise.
+         */
+        announceNewRequests: function (requests) {
+            const self = this;
+            const KEY = 'ratingsPlugin_announcedPendingRequests';
+            const pending = requests.filter(r => self.apiField(r, 'status') === 'pending');
+            const ids = pending.map(r => String(self.apiField(r, 'id')));
+            const seen = self._readAnnounced(KEY);
+            if (seen !== null) {
+                pending
+                    .filter(r => !seen.includes(String(self.apiField(r, 'id'))))
+                    .forEach(r => self.showRequestNotification({
+                        icon: '📬',
+                        label: self.t('requestNotifyNew'),
+                        title: self.apiField(r, 'title') || '',
+                        detail: self.t('requestNotifyNewBy').replace('{user}', self.apiField(r, 'username') || '?'),
+                        onClick: () => {
+                            const btn = document.getElementById('requestMediaBtn');
+                            if (btn) btn.click();
+                        }
+                    }));
+            }
+            self._writeAnnounced(KEY, ids);
+        },
+
+        /**
+         * Users: pops up once when one of their requests is marked done, so they hear that it is
+         * available without having to open the request window to find out (issue #89). Skips
+         * requests already opened in the request window, and on the first run only ones completed
+         * in the last two weeks, so an old fulfilled request does not suddenly announce itself.
+         */
+        announceFulfilledRequests: function (doneRequests, viewedIds) {
+            const self = this;
+            const KEY = 'ratingsPlugin_announcedDoneRequests';
+            const seen = self._readAnnounced(KEY);
+            const firstRun = seen === null;
+            const announced = seen || [];
+            const cutoff = Date.now() - 14 * 24 * 3600 * 1000;
+            doneRequests.forEach(r => {
+                const id = String(self.apiField(r, 'id'));
+                if (announced.includes(id) || viewedIds.includes(self.apiField(r, 'id'))) return;
+                announced.push(id);
+                const completed = Date.parse(self.apiField(r, 'completedAt') || '') || 0;
+                if (firstRun && completed && completed < cutoff) return;
+                const link = self.apiField(r, 'mediaLink') || '';
+                self.showRequestNotification({
+                    icon: '🎉',
+                    label: self.t('requestNotifyDone'),
+                    title: self.apiField(r, 'title') || '',
+                    detail: link ? self.t('requestNotifyOpen') : '',
+                    onClick: () => {
+                        const safe = self.sanitizeUrl(link);
+                        if (safe) {
+                            window.location.href = safe;
+                        } else {
+                            const btn = document.getElementById('requestMediaBtn');
+                            if (btn) btn.click();
+                        }
+                    }
+                });
+            });
+            self._writeAnnounced(KEY, announced);
+        },
+
+        /**
+         * A pop-up in the same style as the new-media ones, for request events. Builds the
+         * container itself when new-media notifications are switched off.
+         */
+        showRequestNotification: function (opts) {
+            this.createNotificationContainer();
+            const container = document.getElementById('ratingsNotificationContainer');
+            if (!container) return;
+
+            const el = document.createElement('div');
+            el.className = 'ratings-notification ratings-request-notification';
+            el.style.cursor = 'pointer';
+
+            const content = document.createElement('div');
+            content.className = 'ratings-notification-content';
+            const header = document.createElement('div');
+            header.className = 'ratings-notification-header';
+            const icon = document.createElement('span');
+            icon.className = 'ratings-notification-icon';
+            icon.textContent = opts.icon;
+            const label = document.createElement('span');
+            label.className = 'ratings-notification-label';
+            label.textContent = opts.label;
+            header.appendChild(icon);
+            header.appendChild(label);
+            content.appendChild(header);
+            const title = document.createElement('div');
+            title.className = 'ratings-notification-title';
+            title.textContent = opts.title;
+            content.appendChild(title);
+            if (opts.detail) {
+                const detail = document.createElement('div');
+                detail.className = 'ratings-notification-message';
+                detail.textContent = opts.detail;
+                content.appendChild(detail);
+            }
+            el.appendChild(content);
+
+            const close = document.createElement('button');
+            close.className = 'ratings-notification-close';
+            close.title = this.t('dismiss');
+            close.innerHTML = '&times;';
+            close.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.hideNotification(el);
+            });
+            el.appendChild(close);
+
+            el.addEventListener('click', () => {
+                this.hideNotification(el);
+                if (opts.onClick) opts.onClick();
+            });
+
+            container.appendChild(el);
+            // Longer than the new-media pop-ups: these are about something the reader asked for
+            // or has to act on.
+            setTimeout(() => this.hideNotification(el), 15000);
+        },
+
+        /**
          * Get list of viewed request IDs from localStorage
          */
         getViewedRequestIds: function () {
@@ -19465,7 +19628,7 @@
             const self = this;
             try {
                 this.fetchMyRequests().then(requests => {
-                    const doneRequests = requests.filter(r => r.Status === 'done');
+                    const doneRequests = requests.filter(r => self.apiField(r, 'status') === 'done');
 
                     // Get current viewed list
                     const viewedIds = self.getViewedRequestIds();
@@ -19758,8 +19921,12 @@
                     if (notifications && notifications.length > 0) {
                         notifications.forEach(notification => {
                             // Don't show duplicates
-                            if (!self.shownNotificationIds.includes(notification.Id)) {
-                                self.shownNotificationIds.push(notification.Id);
+                            // apiField: on Jellyfin 12 this is "id", and reading only .Id gave
+                            // every notification the same undefined key, so after the first one
+                            // the rest were all discarded as duplicates.
+                            const nid = self.apiField(notification, 'id');
+                            if (!self.shownNotificationIds.includes(nid)) {
+                                self.shownNotificationIds.push(nid);
                                 self.showNotification(notification);
                             } else {
                             }
@@ -19793,6 +19960,15 @@
         showNotification: function (notification) {
             const container = document.getElementById('ratingsNotificationContainer');
             if (!container) return;
+
+            // Jellyfin 12 sends these camelCase, 10.x PascalCase; normalise once here so the
+            // poster, test flag and episode details below are not silently missing on 12.
+            const f = name => this.apiField(notification, name);
+            notification = Object.assign({}, notification, {
+                Id: f('id'), IsTest: f('isTest'), ImageUrl: f('imageUrl'), Message: f('message'),
+                SeriesName: f('seriesName'), SeasonNumber: f('seasonNumber'),
+                EpisodeNumber: f('episodeNumber'), EpisodeNumbers: f('episodeNumbers')
+            });
 
             const baseUrl = window.ApiClient ? ApiClient.serverAddress() : '';
 

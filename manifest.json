@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.410.0",
+        "changelog": "Rating 10 is easy to reach: the last part of the last star now counts as 10, instead of only its very edge. The red count on the request (+) button works again on Jellyfin 12 - it showed nothing there - so admins see how many requests are waiting and users see how many of theirs are ready. New pop-ups: admins are told when someone makes a request, and users are told when their request has been fulfilled. New-media pop-ups on Jellyfin 12 show their poster and episode details again, and no longer stop after the first one.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.410.0/Jellyfin.Plugin.Ratings_2.0.410.0.zip",
+        "checksum": "fbc0a713b3421e2f4744bd1a04611770",
+        "timestamp": "2026-10-10T19:08:48Z"
+      },
+      {
         "version": "2.0.409.0",
         "changelog": "The Revision History on the Ratings dashboard is up to date again - it had stopped at 2.0.332.0 - and now scrolls inside its panel.",
         "targetAbi": "10.11.0.0",
