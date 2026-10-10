@@ -185,6 +185,8 @@ window.RatingsPluginI18n.lt = {
             showAllRandom: 'Rodyti viską (atsitiktinai)', showMyActivityFeed: 'Rodyti mano veiklą',
             showMyRatingsToOthers: 'Rodyti mano įvertinimus kitiems', sortBy: 'Rikiuoti pagal:',
             duplicateKeepBoth: 'Palikti abu', duplicateKeepAll: 'Palikti visus',
+            requestNotifyNew: 'Nauja užklausa', requestNotifyNewBy: 'užsakė {user}',
+            requestNotifyDone: 'Jūsų užklausa įvykdyta', requestNotifyOpen: 'Spustelėkite, kad atidarytumėte',
             duplicateKeepBothTooltip: 'Palikti visas kopijas (pvz. dvi kalbos) ir nebe rodyti šios grupės',
             duplicateKeptHidden: 'Paslėpta grupių, pažymėtų „Palikti abu“: {n}.', duplicateShowKept: 'Vėl rodyti',
             duplicateKeepFailed: 'Nepavyko išsaugoti pasirinkimo.',
