@@ -698,6 +698,19 @@ namespace Jellyfin.Plugin.Ratings
             // join the season most of the batch belongs to, instead of getting one of their own.
             foreach (var batch in batchesToProcess)
             {
+                // Re-read the numbers now. An episode is queued the moment it appears, often before
+                // Jellyfin has filled in its episode number, so batches went out with no numbers at
+                // all and read "New episode available" instead of "Episodes 1-4". By the time a
+                // batch is announced the scan has caught up.
+                foreach (var pending in batch.Episodes)
+                {
+                    if (_libraryManager.GetItemById(pending.EpisodeId) is Episode current)
+                    {
+                        pending.EpisodeNumber = current.IndexNumber ?? pending.EpisodeNumber;
+                        pending.SeasonNumber = current.ParentIndexNumber ?? current.Season?.IndexNumber ?? pending.SeasonNumber;
+                    }
+                }
+
                 var known = batch.Episodes.Where(e => e.SeasonNumber > 0).ToList();
                 var mainSeason = known.Count > 0
                     ? known.GroupBy(e => e.SeasonNumber).OrderByDescending(g => g.Count()).First().Key

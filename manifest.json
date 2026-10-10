@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.413.0",
+        "changelog": "Grouped new-episode notifications say which episodes arrived (for example Episodes 1-4) instead of just New episode available.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.413.0/Jellyfin.Plugin.Ratings_2.0.413.0.zip",
+        "checksum": "7d867a438a5ed9504426e6ba089775f4",
+        "timestamp": "2026-10-10T19:57:10Z"
+      },
+      {
         "version": "2.0.412.0",
         "changelog": "Clicking a request pop-up now opens that request: admins land on the new request, opened up in the request window, and users go to the media they asked for (or to their request if there is no link).",
         "targetAbi": "10.11.0.0",
