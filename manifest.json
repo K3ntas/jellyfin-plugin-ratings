@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.396.0",
+        "changelog": "A new series gives one notification instead of one per episode. New episodes of a series you already have are grouped into one notification per season, showing which episodes arrived. Clicking a request pop-up opens that request, or the media once it is available.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.396.0/Jellyfin.Plugin.Ratings_1.0.396.0.zip",
+        "checksum": "8262299c3db4491855cd6da0fad386bf",
+        "timestamp": "2026-10-10T20:14:43Z"
+      },
+      {
         "version": "1.0.395.0",
         "changelog": "Rating 10 is easier to reach. The red count on the request (+) button works on Jellyfin 12. Admins get a pop-up when someone makes a request, and users get one when their request is fulfilled. New-media pop-ups show posters and episode details again on Jellyfin 12.",
         "targetAbi": "10.11.0.0",
