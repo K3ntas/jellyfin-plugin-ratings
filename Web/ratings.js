@@ -17689,7 +17689,7 @@
                     ` : '';
 
                     html += `
-                        <li class="user-request-item">
+                        <li class="user-request-item" data-request-id="${self.escapeHtml(String(self.apiField(request, 'id') || ''))}">
                             <div class="user-request-info">
                                 <div class="user-request-item-title">${self.escapeHtml((request.title ?? request.Title))}</div>
                                 <div class="user-request-item-type">${self.apiField(request, 'type') ? self.escapeHtml(self.apiField(request, 'type')) : self.t('notSpecified')}</div>
@@ -19562,8 +19562,10 @@
             if (!safeId) return;
             const started = Date.now();
             const find = () => {
+                // The admin row, or the user's own list row - never one of the buttons inside a
+                // row, which carry the same attribute.
                 const row = document.querySelector(`.admin-request-item[data-request-id="${safeId}"]`)
-                    || document.querySelector(`[data-request-id="${safeId}"]`);
+                    || document.querySelector(`.user-request-item[data-request-id="${safeId}"]`);
                 if (row) {
                     row.scrollIntoView({ block: 'center', behavior: 'smooth' });
                     const compact = row.querySelector('.admin-request-compact');

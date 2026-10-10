@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.414.0",
+        "changelog": "When a fulfilled request has no link to the media, clicking its pop-up now opens the request window at that request.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.414.0/Jellyfin.Plugin.Ratings_2.0.414.0.zip",
+        "checksum": "8a8af44d5885601cc1230b7dd8da2524",
+        "timestamp": "2026-10-10T20:08:44Z"
+      },
+      {
         "version": "2.0.413.0",
         "changelog": "Grouped new-episode notifications say which episodes arrived (for example Episodes 1-4) instead of just New episode available.",
         "targetAbi": "10.11.0.0",
