@@ -32,8 +32,17 @@ namespace Jellyfin.Plugin.Ratings
         private Timer? _batchTimer;
         private bool _disposed;
 
-        // How long to wait for more episodes before batching (seconds)
-        private const int BatchDelaySeconds = 60;
+        // How long a series must go quiet before its pending episodes are announced together
+        // (seconds). Was 60: an episode only queues once it has artwork, and on a real server the
+        // artwork for a batch arrives over several minutes, so a one-minute gap split one season
+        // into a string of single-episode notifications (issue #93).
+        private const int BatchDelaySeconds = 180;
+
+        // A series announced within this window still counts as "new" for its episodes, so
+        // episodes that finish scanning after the series announcement do not announce themselves
+        // on top of it (issue #93).
+        private static readonly TimeSpan NewSeriesWindow = TimeSpan.FromHours(6);
+        private readonly ConcurrentDictionary<Guid, DateTime> _recentlyAnnouncedSeries = new ConcurrentDictionary<Guid, DateTime>();
 
         // Items added longer ago than this are part of the EXISTING library, not "new media".
         // Secondary sanity gate only - the authoritative check is the persistent seen-media set
@@ -324,6 +333,59 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
+        /// True when an episode belongs to a series that is new itself, so the series notification
+        /// already covers it.
+        /// </summary>
+        /// <remarks>
+        /// A series the seen-set does not know yet has not been announced or recorded - it is
+        /// arriving right now (the existing library was all recorded by the baseline). One that was
+        /// announced a short while ago is still new as far as its episodes are concerned: episode
+        /// metadata often finishes after the series has already been announced.
+        /// </remarks>
+        private bool IsPartOfNewSeries(Episode episode)
+        {
+            var series = episode.Series;
+            if (series == null)
+            {
+                return false;
+            }
+
+            if (_recentlyAnnouncedSeries.TryGetValue(series.Id, out var announcedAt))
+            {
+                if (DateTime.UtcNow - announcedAt < NewSeriesWindow)
+                {
+                    return true;
+                }
+
+                _recentlyAnnouncedSeries.TryRemove(series.Id, out _);
+            }
+
+            // Unrecorded and recently added. The age check keeps an old series that somehow never
+            // made it into the seen-set (no poster, so it was never announced) from silencing its
+            // new episodes for good.
+            return !_repository.HasSeenMedia(GetContentKey(series))
+                && DateTime.UtcNow - series.DateCreated <= MaxItemAgeForNotification;
+        }
+
+        /// <summary>
+        /// Forgets episodes waiting to be grouped for a series that has just been announced as new.
+        /// </summary>
+        private void DropPendingEpisodes(Guid seriesId)
+        {
+            lock (_pendingLock)
+            {
+                foreach (var kvp in _pendingEpisodes.ToList())
+                {
+                    kvp.Value.RemoveAll(e => e.SeriesId == seriesId);
+                    if (kvp.Value.Count == 0)
+                    {
+                        _pendingEpisodes.TryRemove(kvp.Key, out _);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Single decision path for both ItemAdded and ItemUpdated. Decides whether a movie/series/
         /// episode is genuinely newly-acquired media that should be announced, and records what it
         /// has seen so the same item can never be announced twice.
@@ -378,7 +440,17 @@ namespace Jellyfin.Plugin.Ratings
                 return;
             }
 
-            // (5) Genuinely new, but only announce once a primary image exists. If not yet, DEFER:
+            // (5) An episode of a series that is itself new. The series gets one "New Series"
+            //     notification; announcing every episode as well buried it under a notification per
+            //     episode (issue #93). Recorded as seen so it never comes back.
+            if (item is Episode newEpisode && IsPartOfNewSeries(newEpisode))
+            {
+                _logger.LogDebug("Not announcing '{Title}' separately - its series is new and is announced as a whole", item.Name);
+                _repository.MarkSeenMedia(key);
+                return;
+            }
+
+            // (6) Genuinely new, but only announce once a primary image exists. If not yet, DEFER:
             //     do not mark seen, so a later ItemUpdated (image arrived) gets another chance.
             if (!HasUsableImage(item))
             {
@@ -414,6 +486,8 @@ namespace Jellyfin.Plugin.Ratings
             else if (item is Series series)
             {
                 CreateNotification(series.Id, series.Name, "Series", series.ProductionYear, item);
+                _recentlyAnnouncedSeries[series.Id] = DateTime.UtcNow;
+                DropPendingEpisodes(series.Id);
             }
             else if (item is Episode episode)
             {
@@ -553,8 +627,12 @@ namespace Jellyfin.Plugin.Ratings
                 return;
             }
 
-            // Create batch key: SeriesName|SeasonNumber
-            var batchKey = $"{cleanedSeriesName}|{seasonNumber ?? 0}";
+            // One batch per series. Keying on the season as well split a batch whenever an episode
+            // arrived before its season number was known (it filed under season 0); the seasons are
+            // separated again when the batch is announced.
+            var batchKey = episode.Series != null
+                ? "series|" + episode.Series.Id.ToString("N")
+                : "name|" + cleanedSeriesName;
 
             var pendingEpisode = new PendingEpisode
             {
@@ -616,10 +694,20 @@ namespace Jellyfin.Plugin.Ratings
                 }
             }
 
-            // Create grouped notifications for each batch
+            // One notification per season in each batch. Episodes whose season was not known yet
+            // join the season most of the batch belongs to, instead of getting one of their own.
             foreach (var batch in batchesToProcess)
             {
-                CreateGroupedEpisodeNotification(batch.Episodes);
+                var known = batch.Episodes.Where(e => e.SeasonNumber > 0).ToList();
+                var mainSeason = known.Count > 0
+                    ? known.GroupBy(e => e.SeasonNumber).OrderByDescending(g => g.Count()).First().Key
+                    : 0;
+                foreach (var season in batch.Episodes.GroupBy(e => e.SeasonNumber > 0 ? e.SeasonNumber : mainSeason))
+                {
+                    var episodes = season.ToList();
+                    episodes.ForEach(e => e.SeasonNumber = season.Key);
+                    CreateGroupedEpisodeNotification(episodes);
+                }
             }
         }
 
