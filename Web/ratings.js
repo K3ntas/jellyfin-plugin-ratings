@@ -3500,8 +3500,12 @@
             // Close chat window and moderator panel on page navigation
             this.closeChatOnPageChange();
 
-            // Close profile page on navigation
-            this.closeProfilePage();
+            // Close the profile page on navigation, but leave a ?profile= link in the URL alone
+            // so the deep link below can re-open it after the page re-renders.
+            this.closeProfilePage(true);
+
+            // A shared ?profile=<userId> link opens that profile.
+            this.checkProfileDeepLink();
 
             if (!this.ratingsEnabled) return;
             const itemId = this.getItemIdFromUrl();
@@ -8463,11 +8467,22 @@
             self.closeProfilePage();
         },
 
-        closeProfilePage: function () {
+        /**
+         * Close the profile page.
+         *
+         * @param {boolean} [keepDeepLink] True when the close is part of navigation, so a
+         *      ?profile= link in the URL survives it. A close the user asked for also drops the
+         *      link, so refreshing does not reopen what was just dismissed.
+         */
+        closeProfilePage: function (keepDeepLink) {
             var self = this;
             var page = document.getElementById('socialProfilePage');
             if (page) {
                 page.remove();
+            }
+
+            if (!keepDeepLink) {
+                self.clearProfileDeepLink();
             }
 
             // Closing for real ends the trail - a later profile open starts fresh.
@@ -8777,6 +8792,70 @@
             }
 
             return null;
+        },
+
+        /**
+         * Read the user id from a ?profile=<id> deep link.
+         *
+         * Dashed, undashed and any casing are accepted, because the id reaches people in
+         * whatever form they happened to copy it in.
+         *
+         * @returns {string|null} 32-character lowercase user id, or null when there is none.
+         */
+        getProfileIdFromUrl: function () {
+            var match = window.location.href.match(/[?&]profile=([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+            if (!match) {
+                return null;
+            }
+            var id = match[1].replace(/-/g, '').toLowerCase();
+            return id.length === 32 ? id : null;
+        },
+
+        /**
+         * Drop the ?profile= parameter from the current URL, without reloading or leaving a
+         * history entry behind.
+         */
+        clearProfileDeepLink: function () {
+            if (!this.getProfileIdFromUrl()) {
+                return;
+            }
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('profile');
+                // Jellyfin routes on the hash, so the parameter usually lives there instead.
+                url.hash = url.hash
+                    .replace(/([?&])profile=[^&]*/, '$1')
+                    .replace(/\?&/, '?')
+                    .replace(/[?&]$/, '');
+                window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+            } catch (e) {
+                // Nothing worth breaking the close over if the URL cannot be parsed.
+            }
+        },
+
+        /**
+         * Open the profile named by a ?profile=<userId> deep link.
+         *
+         * This is what gives a profile an address of its own: showProfilePage() is otherwise
+         * only reachable from a click, so a profile could not be linked to or bookmarked.
+         */
+        checkProfileDeepLink: function () {
+            var userId = this.getProfileIdFromUrl();
+            if (!userId) {
+                return;
+            }
+
+            // Nothing to do before login - onPageChange runs again once the app has navigated.
+            if (typeof ApiClient === 'undefined' || !ApiClient.accessToken()) {
+                return;
+            }
+
+            // Already showing it: re-opening would tear the overlay down and refetch everything.
+            if (this._viewingProfileUserId === userId && document.getElementById('socialProfilePage')) {
+                return;
+            }
+
+            this.showProfilePage(userId);
         },
 
         /**

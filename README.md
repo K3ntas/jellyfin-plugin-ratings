@@ -217,6 +217,14 @@ Popup notifications when something is added to the library.
 Every user gets a profile page in the style of Letterboxd, reachable from the header or by
 clicking any username.
 
+**Direct links** — a profile has an address of its own: add `?profile=<userId>` to any
+Jellyfin web URL and that profile opens on load, so it can be shared, bookmarked or pasted
+into chat. Closing the profile takes the parameter back out of the URL.
+
+```
+https://jellyfin.example.com/web/#/home?profile=80a5ff1987584ae4baa9d575cea9d761
+```
+
 **Header** — custom header media (image, GIF or video), avatar with a live online dot,
 member-since date, and a stat row: ratings, reviews, following, followers, likes.
 
