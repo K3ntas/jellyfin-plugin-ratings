@@ -4991,6 +4991,29 @@
         },
 
         /**
+         * Picture to show for a profile.
+         *
+         * The profile's own avatar wins when one has been set; otherwise this falls back to the
+         * image Jellyfin already holds for that user, so a profile looks like the same person as
+         * everywhere else in the UI. Returns '' when there is nothing to show at all, which
+         * leaves the username's initial as the avatar.
+         *
+         * @param {object} profile Profile payload from GET /Social/Profile/{id}.
+         * @param {string} userId Jellyfin user id the profile belongs to.
+         * @returns {string} Image URL, or '' when there is none.
+         */
+        getProfileAvatarUrl: function (profile, userId) {
+            var custom = (profile && (profile.avatarUrl || profile.AvatarUrl)) || '';
+            if (custom) {
+                return custom.charAt(0) === '/' ? ApiClient.serverAddress() + custom : custom;
+            }
+            if (!userId) {
+                return '';
+            }
+            return ApiClient.serverAddress() + '/Users/' + encodeURIComponent(userId) + '/Images/Primary?height=240&quality=90';
+        },
+
+        /**
          * Render Letterboxd-style profile
          */
         renderLetterboxdProfile: function (page, profile, status) {
@@ -5009,6 +5032,15 @@
             // Status indicator
             var statusClass = status.onlineStatus.toLowerCase().replace('donotdisturb', 'dnd');
             var statusText = self.presenceLabel(status.onlineStatus);
+
+            // Default the avatar to the user's own Jellyfin picture (see getProfileAvatarUrl). The
+            // initial letter stays behind the image as the fallback, and a 404 hides the image
+            // through the delegated .plugin-img-fallback handler rather than an inline onerror.
+            var avatarSrc = self.getProfileAvatarUrl(profile, profile.userId);
+            var avatarInner = self.escapeHtml(initial) +
+                (avatarSrc
+                    ? '<img class="lb-avatar-img plugin-img-fallback" src="' + self.escapeHtml(avatarSrc) + '" alt="" />'
+                    : '');
 
             // Build the Letterboxd-style layout
             var html = '';
@@ -5046,7 +5078,7 @@
             html += '<div class="lb-profile-header' + (headerMediaUrl ? ' has-media' : '') + '">' +
                 '<div class="lb-header-bg">' + headerBgInner + '</div>' +
                 '<div class="lb-header-content">' +
-                '<div class="lb-avatar">' + initial + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
+                '<div class="lb-avatar">' + avatarInner + '<span class="lb-status-dot ' + statusClass + '"></span></div>' +
                 '<div class="lb-user-info">' +
                 '<h1 class="lb-username">' + self.escapeHtml(username) + '</h1>' +
                 (bio ? '<p class="lb-bio">' + self.escapeHtml(bio) + '</p>' : '') +

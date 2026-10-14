@@ -9244,6 +9244,16 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     border: 4px solid #14181c;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
+/* The profile picture sits inside the ring, over the initial letter it falls back to. */
+.lb-avatar-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
 .lb-status-dot {
     position: absolute;
     bottom: 4px;
