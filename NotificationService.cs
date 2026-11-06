@@ -390,8 +390,9 @@ namespace Jellyfin.Plugin.Ratings
         /// </summary>
         /// <param name="item">Media item to check.</param>
         /// <param name="filterString">Comma- or semicolon-separated filter keywords.</param>
+        /// <param name="libraryManager">Optional library manager instance for hierarchy lookups.</param>
         /// <returns>True if the item should be excluded from new-media notifications.</returns>
-        private bool IsItemExcluded(BaseItem item, string? filterString)
+        public static bool IsItemExcluded(BaseItem item, string? filterString, ILibraryManager? libraryManager = null)
         {
             if (string.IsNullOrWhiteSpace(filterString))
             {
@@ -408,20 +409,36 @@ namespace Jellyfin.Plugin.Ratings
 
             var itemPath = item.Path ?? string.Empty;
             var itemName = item.Name ?? string.Empty;
-            var parentName = item.GetParent()?.Name ?? string.Empty;
 
             string seriesPath = string.Empty;
             string seriesName = string.Empty;
             if (item is Episode ep)
             {
-                seriesPath = ep.Series?.Path ?? string.Empty;
-                seriesName = ep.SeriesName ?? ep.Series?.Name ?? string.Empty;
+                var series = ep.Series;
+                if (series == null && ep.SeriesId != Guid.Empty && libraryManager != null)
+                {
+                    series = libraryManager.GetItemById(ep.SeriesId) as Series;
+                }
+
+                seriesPath = series?.Path ?? string.Empty;
+                seriesName = ep.SeriesName ?? series?.Name ?? string.Empty;
             }
 
-            var collectionNames = _libraryManager.GetCollectionFolders(item)
-                .Select(f => f.Name)
-                .Where(n => !string.IsNullOrEmpty(n))
-                .ToList();
+            List<string> collectionNames = new List<string>();
+            if (libraryManager != null)
+            {
+                try
+                {
+                    collectionNames = libraryManager.GetCollectionFolders(item)
+                        .Select(f => f.Name)
+                        .Where(n => !string.IsNullOrEmpty(n))
+                        .ToList();
+                }
+                catch
+                {
+                    // Ignore library lookup errors
+                }
+            }
 
             foreach (var filter in filters)
             {
@@ -447,15 +464,27 @@ namespace Jellyfin.Plugin.Ratings
                     return true;
                 }
 
-                // Check item name or parent folder name
+                // Check item name
                 if (!string.IsNullOrEmpty(itemName) && itemName.Contains(filter, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
 
-                if (!string.IsNullOrEmpty(parentName) && parentName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                // Check all ancestor folders up to root (season, series, collection folders)
+                var currentParent = item.GetParent();
+                while (currentParent != null)
                 {
-                    return true;
+                    if (!string.IsNullOrEmpty(currentParent.Name) && currentParent.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (!string.IsNullOrEmpty(currentParent.Path) && currentParent.Path.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    currentParent = currentParent.GetParent();
                 }
 
                 // Check library collection names
@@ -489,7 +518,7 @@ namespace Jellyfin.Plugin.Ratings
             var key = GetContentKey(item);
 
             // Library & path exclusion filter (e.g. YouTube feeds, trailers, podcasts)
-            if (IsItemExcluded(item, config.NotificationExcludedPaths))
+            if (IsItemExcluded(item, config.NotificationExcludedPaths, _libraryManager))
             {
                 _logger.LogDebug(
                     "Skipping '{Title}' - matches notification exclusion filter '{Filter}'",
