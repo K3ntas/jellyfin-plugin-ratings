@@ -62,6 +62,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// <param name="socialWebSocketListener">Social WebSocket listener.</param>
         /// <param name="systemManager">System manager for server control.</param>
         /// <param name="socialRepository">Social repository, for reviewers' profile privacy.</param>
+        /// <param name="pathManager">Path manager instance.</param>
         public RatingsController(
             RatingsRepository repository,
             IUserManager userManager,
@@ -628,6 +629,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// All original UserRating fields are preserved for backward compatibility.
         /// </summary>
         /// <param name="ratings">The raw ratings.</param>
+        /// <param name="viewerId">Optional ID of the viewing user for vote status resolution.</param>
         /// <returns>Enriched rating objects.</returns>
         private List<object> EnrichRatings(IEnumerable<UserRating> ratings, Guid viewerId = default)
         {
@@ -744,12 +746,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         private static readonly TimeSpan _searchIndexTtl = TimeSpan.FromMinutes(5);
 
         /// <summary>
-        /// Reduces a title to letters and digits, lower-cased, so punctuation and spacing stop
-        /// mattering: "The X-Files" and "xfiles" both become comparable.
-        /// </summary>
-        /// <param name="value">Title or query.</param>
-        /// <returns>The normalized form.</returns>
-        /// <summary>
         /// Returns a link only if it parses as an absolute http(s) URL, in its parsed form.
         ///
         /// Storing the string as typed is not safe even after a host check: Uri.TryCreate accepts
@@ -774,6 +770,12 @@ namespace Jellyfin.Plugin.Ratings.Api
             return uri.AbsoluteUri;
         }
 
+        /// <summary>
+        /// Reduces a title to letters and digits, lower-cased, so punctuation and spacing stop
+        /// mattering: "The X-Files" and "xfiles" both become comparable.
+        /// </summary>
+        /// <param name="value">Title or query.</param>
+        /// <returns>The normalized form.</returns>
         private static string NormalizeForSearch(string? value)
         {
             if (string.IsNullOrEmpty(value))
@@ -954,15 +956,6 @@ namespace Jellyfin.Plugin.Ratings.Api
             return new Guid(bytes);
         }
 
-        /// <summary>
-        /// Looks up a TMDB poster for a rating in the background and stores it on the rating.
-        /// </summary>
-        /// <remarks>
-        /// Only runs when a TMDB token is configured, the rating has a TMDB id, and no poster has
-        /// been stored yet. Failure is silent: a missing poster is a cosmetic loss, and this must
-        /// never affect whether the rating itself was saved.
-        /// </remarks>
-        /// <param name="rating">The rating just written.</param>
         /// <summary>
         /// Looks up a TMDB poster for a library item Jellyfin holds no artwork for.
         ///
@@ -2540,11 +2533,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Gets notifications since a specific time.
-        /// </summary>
-        /// <param name="since">ISO 8601 timestamp to get notifications since.</param>
-        /// <returns>List of notifications.</returns>
-        /// <summary>
         /// Items the plugin has actually announced as new, newest first.
         /// </summary>
         /// <remarks>
@@ -2669,6 +2657,11 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
+        /// <summary>
+        /// Gets notifications since a specific time.
+        /// </summary>
+        /// <param name="since">ISO 8601 timestamp to get notifications since.</param>
+        /// <returns>List of notifications.</returns>
         [HttpGet("Notifications")]
         [Authorize]
         public async Task<ActionResult<List<Models.NewMediaNotification>>> GetNotifications([FromQuery] string? since = null)
@@ -3661,6 +3654,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="search">Optional search term for title.</param>
         /// <param name="type">Optional filter by type (Movie, Series).</param>
+        /// <param name="parentId">Optional parent folder or library ID filter.</param>
         /// <param name="sortBy">Sort field (title, year, playCount, watchTime, size, rating, dateAdded).</param>
         /// <param name="sortOrder">Sort order (asc, desc).</param>
         /// <param name="page">Page number (1-based).</param>
@@ -4054,6 +4048,7 @@ namespace Jellyfin.Plugin.Ratings.Api
         /// </summary>
         /// <param name="itemId">The item ID.</param>
         /// <param name="delayDays">Number of days until deletion.</param>
+        /// <param name="delayHours">Number of hours until deletion.</param>
         /// <returns>The scheduled deletion.</returns>
         [HttpPost("Media/{itemId}/ScheduleDeletion")]
         [Authorize]
@@ -5678,7 +5673,6 @@ namespace Jellyfin.Plugin.Ratings.Api
                 var grouped = driveDevicePairs.GroupBy(p => p.Device).ToList();
 
                 int diskNumber = 1;
-                int mediaNumber = 1;
 
                 foreach (var group in grouped)
                 {
@@ -6491,7 +6485,7 @@ namespace Jellyfin.Plugin.Ratings.Api
             }
         }
 
-        private class ActivityItem
+        private sealed class ActivityItem
         {
             public string Type { get; set; } = string.Empty;
             public string UserId { get; set; } = string.Empty;
