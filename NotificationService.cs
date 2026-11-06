@@ -386,6 +386,89 @@ namespace Jellyfin.Plugin.Ratings
         }
 
         /// <summary>
+        /// Determines if an item matches the configured path or library exclusion filters for notifications.
+        /// </summary>
+        /// <param name="item">Media item to check.</param>
+        /// <param name="filterString">Comma- or semicolon-separated filter keywords.</param>
+        /// <returns>True if the item should be excluded from new-media notifications.</returns>
+        private bool IsItemExcluded(BaseItem item, string? filterString)
+        {
+            if (string.IsNullOrWhiteSpace(filterString))
+            {
+                return false;
+            }
+
+            var filters = filterString
+                .Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (filters.Length == 0)
+            {
+                return false;
+            }
+
+            var itemPath = item.Path ?? string.Empty;
+            var itemName = item.Name ?? string.Empty;
+            var parentName = item.GetParent()?.Name ?? string.Empty;
+
+            string seriesPath = string.Empty;
+            string seriesName = string.Empty;
+            if (item is Episode ep)
+            {
+                seriesPath = ep.Series?.Path ?? string.Empty;
+                seriesName = ep.SeriesName ?? ep.Series?.Name ?? string.Empty;
+            }
+
+            var collectionNames = _libraryManager.GetCollectionFolders(item)
+                .Select(f => f.Name)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToList();
+
+            foreach (var filter in filters)
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    continue;
+                }
+
+                // Check item file path
+                if (!string.IsNullOrEmpty(itemPath) && itemPath.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // Check series path or name for episodes
+                if (!string.IsNullOrEmpty(seriesPath) && seriesPath.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(seriesName) && seriesName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // Check item name or parent folder name
+                if (!string.IsNullOrEmpty(itemName) && itemName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(parentName) && parentName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // Check library collection names
+                if (collectionNames.Any(c => c.Contains(filter, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Single decision path for both ItemAdded and ItemUpdated. Decides whether a movie/series/
         /// episode is genuinely newly-acquired media that should be announced, and records what it
         /// has seen so the same item can never be announced twice.
@@ -404,6 +487,17 @@ namespace Jellyfin.Plugin.Ratings
             }
 
             var key = GetContentKey(item);
+
+            // Library & path exclusion filter (e.g. YouTube feeds, trailers, podcasts)
+            if (IsItemExcluded(item, config.NotificationExcludedPaths))
+            {
+                _logger.LogDebug(
+                    "Skipping '{Title}' - matches notification exclusion filter '{Filter}'",
+                    item.Name,
+                    config.NotificationExcludedPaths);
+                _repository.MarkSeenMedia(key);
+                return;
+            }
 
             // (1) Until the existing library has been baselined, never announce - just remember.
             //     This makes the initial scan of a brand-new install silent.
