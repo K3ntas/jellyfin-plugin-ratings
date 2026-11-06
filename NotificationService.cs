@@ -913,7 +913,7 @@ namespace Jellyfin.Plugin.Ratings
         /// <summary>
         /// Holds information about a pending episode notification before batching.
         /// </summary>
-        private class PendingEpisode
+        private sealed class PendingEpisode
         {
             public Guid EpisodeId { get; set; }
             public Guid SeriesId { get; set; }
