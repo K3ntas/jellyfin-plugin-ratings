@@ -2402,6 +2402,7 @@ namespace Jellyfin.Plugin.Ratings.Api
 
                     // UI toggles
                     DefaultLanguage = config?.DefaultLanguage ?? "en",
+                    NotificationExcludedPaths = config?.NotificationExcludedPaths ?? string.Empty,
                     ShowLanguageSwitch = config?.ShowLanguageSwitch ?? true,
                     ShowHeaderLanguageButton = config?.ShowHeaderLanguageButton ?? true,
                     ShowSearchButton = config?.ShowSearchButton ?? true,
@@ -2610,6 +2611,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                     _logger.LogDebug(ex, "Could not resolve announced items");
                 }
 
+                var config = Plugin.Instance?.Configuration;
+                var excludedPaths = config?.NotificationExcludedPaths;
+
                 var results = new List<object>();
                 foreach (var n in newest)
                 {
@@ -2624,6 +2628,16 @@ namespace Jellyfin.Plugin.Ratings.Api
                     var displayItem = item is MediaBrowser.Controller.Entities.TV.Episode ep && ep.SeriesId != Guid.Empty
                         ? (itemMap.TryGetValue(ep.SeriesId, out var s) ? s : item)
                         : item;
+
+                    // Filter out items matching excluded paths or libraries
+                    if (!string.IsNullOrWhiteSpace(excludedPaths))
+                    {
+                        if (NotificationService.IsItemExcluded(item, excludedPaths, _libraryManager) ||
+                            (displayItem != item && NotificationService.IsItemExcluded(displayItem, excludedPaths, _libraryManager)))
+                        {
+                            continue;
+                        }
+                    }
 
                     results.Add(new
                     {
@@ -2687,6 +2701,35 @@ namespace Jellyfin.Plugin.Ratings.Api
                 }
 
                 var notifications = _repository.GetNotificationsSince(sinceTime);
+
+                var config = Plugin.Instance?.Configuration;
+                var excludedPaths = config?.NotificationExcludedPaths;
+                if (!string.IsNullOrWhiteSpace(excludedPaths) && notifications.Count > 0)
+                {
+                    var filters = excludedPaths.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    notifications = notifications.Where(n =>
+                    {
+                        if (n.IsTest)
+                        {
+                            return true;
+                        }
+
+                        if (n.ItemId != Guid.Empty)
+                        {
+                            var item = _libraryManager.GetItemById(n.ItemId);
+                            if (item != null && NotificationService.IsItemExcluded(item, excludedPaths, _libraryManager))
+                            {
+                                return false;
+                            }
+                        }
+
+                        return !filters.Any(f =>
+                            (!string.IsNullOrEmpty(n.Title) && n.Title.Contains(f, StringComparison.OrdinalIgnoreCase)) ||
+                            (!string.IsNullOrEmpty(n.SeriesName) && n.SeriesName.Contains(f, StringComparison.OrdinalIgnoreCase))
+                        );
+                    }).ToList();
+                }
+
                 return Ok(notifications);
             }
             catch (Exception ex)
