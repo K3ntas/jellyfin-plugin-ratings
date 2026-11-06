@@ -26,6 +26,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             EnableNetflixView = false;
             EnableRequestButton = true;
             EnableNewMediaNotifications = true;
+            NotificationExcludedPaths = string.Empty;
             EnableEpisodeGrouping = true;
             ShowLanguageSwitch = true;
             ShowHeaderLanguageButton = true;
@@ -231,6 +232,11 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets a value indicating whether new media notifications are enabled.
         /// </summary>
         public bool EnableNewMediaNotifications { get; set; }
+
+        /// <summary>
+        /// Gets or sets comma- or semicolon-separated library names, folder paths, or keywords to exclude from new-media notifications.
+        /// </summary>
+        public string NotificationExcludedPaths { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether episode notifications should be grouped.

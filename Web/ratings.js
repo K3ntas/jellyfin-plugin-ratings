@@ -13380,6 +13380,41 @@
         },
 
         /**
+         * Determines if a media item or notification matches configured exclusion filters (e.g. YouTube feeds).
+         * @param {Object} item The item to test.
+         * @returns {boolean} True if excluded.
+         */
+        isNotificationExcluded: function (item) {
+            if (!item) return false;
+            const config = this._configCache;
+            const excludedString = config && config.NotificationExcludedPaths;
+            if (!excludedString || typeof excludedString !== 'string' || !excludedString.trim()) {
+                return false;
+            }
+
+            const filters = excludedString
+                .split(/[,;\n\r]/)
+                .map(s => s.trim().toLowerCase())
+                .filter(s => s.length > 0);
+
+            if (filters.length === 0) return false;
+
+            const path = (item.Path || item.path || '').toLowerCase();
+            const name = (item.Name || item.name || item.Title || item.title || '').toLowerCase();
+            const seriesName = (item.SeriesName || item.seriesName || '').toLowerCase();
+            const seriesPath = (item.SeriesPath || item.seriesPath || '').toLowerCase();
+            const collectionName = (item.CollectionName || item.collectionName || '').toLowerCase();
+
+            return filters.some(f =>
+                (path && path.includes(f)) ||
+                (name && name.includes(f)) ||
+                (seriesName && seriesName.includes(f)) ||
+                (seriesPath && seriesPath.includes(f)) ||
+                (collectionName && collectionName.includes(f))
+            );
+        },
+
+        /**
          * Update the badge count on Latest Media button
          */
         updateLatestMediaBadge: function () {
@@ -13401,7 +13436,7 @@
             // measurably faster here than /Items/Latest (which does extra per-view/grouping work),
             // so we use it directly. This runs on a timer in the background; see the interval below.
             Promise.all([
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=50&Fields=DateCreated,SeriesId,Path,SeriesName`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'Authorization': authHeader }
@@ -13419,6 +13454,7 @@
                 let newMediaCount = 0;
 
                 items.forEach(item => {
+                    if (self.isNotificationExcluded(item)) return;
                     const itemDate = new Date(item.DateCreated);
                     if (itemDate > lastSeen) {
                         if (item.Type === 'Episode') {
@@ -13526,13 +13562,13 @@
             // query directly. 1) new movies/series 2) latest episodes (to detect series with new content).
             Promise.all([
                 // New movies and series
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Movie,Series&Recursive=true&Limit=30&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,DateCreated,Path`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'Authorization': authHeader }
                 }).then(r => r.json()),
                 // Latest episodes (to find existing series that just got new episodes)
-                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated`, {
+                fetch(`${baseUrl}/Users/${userId}/Items?SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Episode&Recursive=true&Limit=100&Fields=SeriesId,SeriesName,DateCreated,Path`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'Authorization': authHeader }
@@ -13579,7 +13615,7 @@
 
                 // Track series IDs from new media (these are completely new series)
                 const newSeriesIds = new Set();
-                const mediaItems = mediaData.Items || [];
+                const mediaItems = (mediaData.Items || []).filter(item => !self.isNotificationExcluded(item));
                 mediaItems.forEach(item => {
                     if (item.Type === 'Series') {
                         newSeriesIds.add(item.Id);
@@ -13588,7 +13624,7 @@
 
                 // Find series with new episodes (that aren't completely new series)
                 const seriesWithNewEpisodes = new Map(); // seriesId -> { count, latestDate, seriesName }
-                const episodes = episodeData.Items || [];
+                const episodes = (episodeData.Items || []).filter(ep => !self.isNotificationExcluded(ep));
                 episodes.forEach(ep => {
                     if (ep.SeriesId && !newSeriesIds.has(ep.SeriesId)) {
                         if (!seriesWithNewEpisodes.has(ep.SeriesId)) {
@@ -13613,12 +13649,12 @@
                 const seriesIds = Array.from(seriesWithNewEpisodes.keys()).slice(0, 20);
                 const seriesDetailsPromise = seriesIds.length === 0
                     ? Promise.resolve([])
-                    : fetch(`${baseUrl}/Users/${userId}/Items?Ids=${seriesIds.join(',')}&Fields=PrimaryImageAspectRatio,Genres,ProductionYear`, {
+                    : fetch(`${baseUrl}/Users/${userId}/Items?Ids=${seriesIds.join(',')}&Fields=PrimaryImageAspectRatio,Genres,ProductionYear,Path`, {
                         method: 'GET',
                         credentials: 'include',
                         headers: { 'Authorization': authHeader }
                     }).then(r => r.ok ? r.json() : { Items: [] })
-                      .then(data => data.Items || [])
+                      .then(data => (data.Items || []).filter(s => !self.isNotificationExcluded(s)))
                       .catch(() => []);
 
                 return seriesDetailsPromise.then(seriesDetails => {
@@ -13651,7 +13687,7 @@
 
                     // Anything the plugin announced must appear here, and must be dated by when
                     // the plugin saw it rather than by the file's own timestamp.
-                    const announced = (announcedData && announcedData.items) || [];
+                    const announced = ((announcedData && announcedData.items) || []).filter(a => !self.isNotificationExcluded(a));
                     const byId = new Map(combinedItems.map(i => [i.Id, i]));
 
                     announced.forEach(a => {
@@ -19957,7 +19993,7 @@
                             // every notification the same undefined key, so after the first one
                             // the rest were all discarded as duplicates.
                             const nid = self.apiField(notification, 'id');
-                            if (!self.shownNotificationIds.includes(nid)) {
+                            if (!self.isNotificationExcluded(notification) && !self.shownNotificationIds.includes(nid)) {
                                 self.shownNotificationIds.push(nid);
                                 self.showNotification(notification);
                             } else {

@@ -884,6 +884,14 @@
                                 </div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="txtNotificationExcludedPaths">Excluded Libraries &amp; Paths</label>
+                                <input id="txtNotificationExcludedPaths" type="text" is="emby-input" />
+                                <div class="fieldDescription">
+                                    Comma- or semicolon-separated library names, folder paths, or keywords to exclude from new-media notifications (e.g. YouTube, /data/youtube, Trailers). Media matching these will never trigger notification popups.
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -2883,6 +2891,7 @@
                     document.querySelector('#selectDefaultLanguage').value = config.DefaultLanguage || 'en';
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
+                    document.querySelector('#txtNotificationExcludedPaths').value = config.NotificationExcludedPaths || '';
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
                     document.querySelector('#chkSearchExcludeEpisodes').checked = config.SearchExcludeEpisodes !== false;
@@ -3207,6 +3216,7 @@
                     config.DefaultLanguage = document.querySelector('#selectDefaultLanguage').value;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
+                    config.NotificationExcludedPaths = document.querySelector('#txtNotificationExcludedPaths').value;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;
                     config.SearchExcludeEpisodes = document.querySelector('#chkSearchExcludeEpisodes').checked;
