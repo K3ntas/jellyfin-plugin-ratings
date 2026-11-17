@@ -498,6 +498,10 @@ namespace Jellyfin.Plugin.Ratings.Api
                     : new List<UserRating>();
             }
 
+            // Drop removed media before counting, so total and paging match what is returned
+            // (EnrichRatingList hides those entries, issue #104).
+            all = WithoutRemovedMedia(all);
+
             var total = all.Count;
             var page = all.OrderByDescending(r => r.UpdatedAt).Skip(offset).Take(limit).ToList();
 
@@ -555,7 +559,8 @@ namespace Jellyfin.Plugin.Ratings.Api
 
             limit = Math.Clamp(limit, 1, 100);
 
-            var recent = _ratingsRepository.GetUserRatings(userId)
+            // Removed media is dropped first, so it does not eat into the requested count.
+            var recent = WithoutRemovedMedia(_ratingsRepository.GetUserRatings(userId))
                 .OrderByDescending(r => r.UpdatedAt)
                 .Take(limit)
                 .ToList();
@@ -568,6 +573,35 @@ namespace Jellyfin.Plugin.Ratings.Api
                 total = enriched.Count,
                 items = enriched
             });
+        }
+
+        /// <summary>
+        /// Ratings whose item is still in the library, plus catalog-only (IsExternal) ones.
+        /// </summary>
+        /// <remarks>
+        /// One library query for every id. If it fails the list is returned unfiltered, which is
+        /// what this endpoint did before, rather than hiding everything.
+        /// </remarks>
+        /// <param name="ratings">Ratings to filter.</param>
+        /// <returns>The ratings a profile shows.</returns>
+        private List<UserRating> WithoutRemovedMedia(List<UserRating> ratings)
+        {
+            var ids = ratings.Where(r => !r.IsExternal && r.ItemId != Guid.Empty).Select(r => r.ItemId).Distinct().ToArray();
+            if (ids.Length == 0)
+            {
+                return ratings;
+            }
+
+            try
+            {
+                var present = new HashSet<Guid>(_libraryManager.GetItemList(new InternalItemsQuery { ItemIds = ids }).Select(i => i.Id));
+                return ratings.Where(r => r.IsExternal || present.Contains(r.ItemId)).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "[Social] Could not check which rated items are still in the library");
+                return ratings;
+            }
         }
 
         /// <summary>
