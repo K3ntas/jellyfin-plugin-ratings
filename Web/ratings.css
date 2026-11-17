@@ -12107,3 +12107,21 @@ body:has(.videoPlayerContainer) #ratingsMenuToggle {
         border-radius: 12px !important;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   Browsers without aspect-ratio (Chrome < 88), chiefly Jellyfin Media Player 1.12, the
+   official desktop app, which embeds Chrome 83 (issue #97). There these boxes had no height,
+   so profile posters vanished. padding-top keeps the 2:3 shape; their badges and buttons
+   are absolutely positioned, so they are unaffected.
+   -------------------------------------------------------------------------- */
+@supports not (aspect-ratio: 1 / 1) {
+    .lb-picker-poster,
+    .lb-rating-poster {
+        height: 0;
+        padding-top: 150%;
+    }
+
+    .lb-review-poster {
+        height: 120px;
+    }
+}

@@ -3698,6 +3698,7 @@
 .social-profile-page.letterboxd-style .lb-poster-img{width:100%;aspect-ratio:2/3;border-radius:9px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
 .social-profile-page.letterboxd-style .lb-poster-img.lb-poster-noimg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px;box-sizing:border-box;text-align:center;color:#9ab;font-size:13px;line-height:1.3;overflow:hidden;word-break:break-word;}
 .social-profile-page.letterboxd-style .lb-poster-noimg small{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#678;}
+@supports not (aspect-ratio:1/1){.social-profile-page.letterboxd-style .lb-poster-img{height:0;padding-top:150%;}.social-profile-page.letterboxd-style .lb-poster-img.lb-poster-noimg{height:auto;padding-top:10px;min-height:150px;}}
 .social-profile-page.letterboxd-style .lb-poster-stars{font-size:11px;margin-top:5px;text-align:center;}
 .social-profile-page.letterboxd-style .lb-rev2{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #232b34;transition:transform .15s;}
 .social-profile-page.letterboxd-style .lb-rev2:hover{transform:translateX(3px);}
@@ -11316,9 +11317,12 @@
                 rootMargin: '50px' // Start loading slightly before card comes into view
             });
 
-            // Comprehensive card selector for all page types including collections
-            const cardSelector = [
-                '.card:not(.card .card)',
+            // Comprehensive card selector for all page types including collections.
+            // A plain '.card' only counts when it is not nested in another card. That used to be
+            // the selector '.card:not(.card .card)', but a complex selector inside :not() needs
+            // Chrome 88; on Chrome 83 (Jellyfin Media Player 1.12) matches() threw and no card
+            // ever got its rating badge (issue #97). The nesting is checked in isRatingCard.
+            const otherCardSelector = [
                 '.portraitCard',
                 '.squareCard',
                 '.overflowPortraitCard',
@@ -11327,6 +11331,9 @@
                 '.itemTile',
                 '[data-type="BoxSet"]'
             ].join(', ');
+            const cardSelector = '.card, ' + otherCardSelector;
+            const isRatingCard = (el) => el.matches(otherCardSelector)
+                || !(el.parentElement && el.parentElement.closest('.card'));
 
             // Cards already handed to the IntersectionObserver. A WeakSet rather than a
             // data-ratingsObserved attribute: writing that attribute was itself a DOM mutation,
@@ -11335,7 +11342,7 @@
             const observedCards = new WeakSet();
 
             const observeCard = (card) => {
-                if (observedCards.has(card)) {
+                if (observedCards.has(card) || !isRatingCard(card)) {
                     return;
                 }
 

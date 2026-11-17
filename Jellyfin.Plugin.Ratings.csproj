@@ -8,7 +8,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <Version>2.0.418.0</Version>
+    <Version>2.0.419.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -67,9 +67,13 @@
   <!-- Build-time minification of the injected web bundle.
        The source Web/ratings.js stays readable/editable; the build embeds a minified copy.
        esbuild only compacts whitespace and LOCAL variable names - it never renames object or
-       API property names - so runtime behavior is preserved. -->
+       API property names - so runtime behavior is preserved.
+       target=chrome83: Jellyfin Media Player 1.12 (the official desktop app) embeds QtWebEngine
+       5.15 = Chrome 83. Without a target esbuild assumes the newest browsers and, for the CSS,
+       merges top/right/bottom/left into the "inset" shorthand (Chrome 87+), which left every
+       pop-up off-screen in the app (issue #97). -->
   <Target Name="MinifyRatingsJs" BeforeTargets="CoreCompile" Inputs="Web/ratings.js" Outputs="$(IntermediateOutputPath)ratings.min.js">
-    <Exec Command="npx --yes esbuild@0.28.0 &quot;Web/ratings.js&quot; --minify --charset=utf8 --legal-comments=none --log-level=error --outfile=&quot;$(IntermediateOutputPath)ratings.min.js&quot;"
+    <Exec Command="npx --yes esbuild@0.28.0 &quot;Web/ratings.js&quot; --minify --charset=utf8 --legal-comments=none --target=chrome83 --log-level=error --outfile=&quot;$(IntermediateOutputPath)ratings.min.js&quot;"
           WorkingDirectory="$(MSBuildProjectDirectory)"
           ContinueOnError="true" />
     <Error Condition="'$(RequireMinification)' == 'true' And !Exists('$(IntermediateOutputPath)ratings.min.js')"
@@ -82,7 +86,7 @@
        literal inside ratings.js the CSS was copied byte-for-byte by esbuild (template contents are
        string data, not code), so ~374 KB of indented CSS shipped completely unminified. -->
   <Target Name="MinifyRatingsCss" BeforeTargets="CoreCompile" Inputs="Web/ratings.css" Outputs="$(IntermediateOutputPath)ratings.min.css">
-    <Exec Command="npx --yes esbuild@0.28.0 &quot;Web/ratings.css&quot; --minify --charset=utf8 --legal-comments=none --log-level=error --outfile=&quot;$(IntermediateOutputPath)ratings.min.css&quot;"
+    <Exec Command="npx --yes esbuild@0.28.0 &quot;Web/ratings.css&quot; --minify --charset=utf8 --legal-comments=none --target=chrome83 --log-level=error --outfile=&quot;$(IntermediateOutputPath)ratings.min.css&quot;"
           WorkingDirectory="$(MSBuildProjectDirectory)"
           ContinueOnError="true" />
     <Error Condition="'$(RequireMinification)' == 'true' And !Exists('$(IntermediateOutputPath)ratings.min.css')"
