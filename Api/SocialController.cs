@@ -602,9 +602,9 @@ namespace Jellyfin.Plugin.Ratings.Api
                 itemMap.TryGetValue(r.ItemId, out var item);
                 var inLibrary = item != null;
 
-                // Deleted media with no title snapshot - nothing to show but "Unknown" (see
-                // RatingsController.EnrichRatings).
-                if (!inLibrary && string.IsNullOrWhiteSpace(r.Title))
+                // Media removed from the server is hidden; catalog-only ratings are kept (see
+                // RatingsController.EnrichRatings, issue #104).
+                if (!inLibrary && !r.IsExternal)
                 {
                     continue;
                 }

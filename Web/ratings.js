@@ -220,6 +220,7 @@
                 mediaSortDateAdded: 'Date Added', mediaSortPlayCount: 'Plays', mediaSortWatchTime: 'Watch Time', mediaLoading: 'Loading media...', mediaNoResults: 'No media found', mediaError: 'Error loading media',
                 mediaScheduleDelete: 'Schedule Delete', mediaCancelDelete: 'Cancel Deletion', mediaDeleteIn: 'Delete in', mediaLeavingIn: 'Leaving in',
                 media1Day: '1 Day', media3Days: '3 Days', media1Week: '1 Week', media2Weeks: '2 Weeks', mediaCustom: 'Custom...', mediaCustomHours: 'Hours', defaultLabel: 'default',
+                itemMenuScheduleDeletion: 'Schedule deletion', itemMenuCancelDeletion: 'Cancel scheduled deletion',
                 mediaSchedule: 'Schedule', mediaCancel: 'Cancel', mediaNoScheduled: 'No scheduled deletions', mediaScheduledBy: 'Scheduled By', mediaDeletesIn: 'Deletes In',
                 mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
@@ -704,6 +705,8 @@
             if (config.EnableMediaManagement !== false) {
                 // Initialize media management button (admin only)
                 this.initMediaManagementButtonWithRetry();
+                // "Schedule deletion" in the item ... menu (admin only, issue #102)
+                this.initItemMenuDeletion();
             }
 
             // Deletion badges stay ungated: deletions scheduled while media management was on
@@ -14394,67 +14397,179 @@
                 }
 
                 // Create deletion dialog if not exists
-                if (!document.getElementById('deletionDialog')) {
-                    const deletionDialog = document.createElement('div');
-                    deletionDialog.id = 'deletionDialog';
-                    deletionDialog.innerHTML = `
-                        <div id="deletionDialogContent">
-                            <button class="deletion-close-btn" title="${RatingsPlugin.t('close')}">×</button>
-                            <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
-                            <div id="deletionDialogOptions">
-                                <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
-                                <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
-                                <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
-                                <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
-                            </div>
-                            <div id="deletionDialogCustom">
-                                <input type="number" id="deletionCustomHours" min="1" max="8760" placeholder="${self.t('mediaCustomHours') || 'Hours'}" />
-                                <button class="deletion-custom-btn">${self.t('mediaSchedule') || 'Schedule'}</button>
-                            </div>
-                            <button class="deletion-cancel-btn">${self.t('mediaCancel') || 'Cancel'}</button>
-                        </div>
-                    `;
-                    document.body.appendChild(deletionDialog);
+                self.ensureDeletionDialog();
+        },
 
-                    // Close button click
-                    deletionDialog.querySelector('.deletion-close-btn').addEventListener('click', () => {
-                        deletionDialog.classList.remove('show');
-                    });
+        /**
+         * Adds "Schedule deletion" (or "Cancel scheduled deletion") to Jellyfin's ... menu on
+         * items, for admins (issue #102). Scheduling used to be reachable only from the Media
+         * Management window.
+         *
+         * Jellyfin builds that menu as an .actionSheet dialog and gives it no hook, so this
+         * remembers which card or details page opened it, and recognises the item menu by its
+         * standard entries (other action sheets - sort, audio track - have none of them). The
+         * entry is a clone of a real one so it matches the theme; Jellyfin closes the sheet on
+         * click as for its own entries, and the plugin's dialog opens once it has.
+         */
+        initItemMenuDeletion: function () {
+            const self = this;
+            if (this._itemMenuDeletionInit) {
+                return;
+            }
+            this._itemMenuDeletionInit = true;
 
-                    // Click outside to close
-                    deletionDialog.addEventListener('click', (e) => {
-                        if (e.target === deletionDialog) {
-                            deletionDialog.classList.remove('show');
-                        }
-                    });
+            const ITEM_COMMANDS = ['addtocollection', 'addtoplaylist', 'edit', 'editimages', 'identify', 'moremediainfo', 'refresh'];
+            const DELETABLE = ['Movie', 'Series', 'Season', 'Episode', 'Video', 'MusicVideo', 'MusicAlbum', 'Audio'];
+            let target = null;
+            let isAdmin = false;
 
-                    // Deletion dialog option clicks. Delegated, because the configured default
-                    // can be added as an extra button each time the dialog opens.
-                    deletionDialog.querySelector('#deletionDialogOptions').addEventListener('click', (e) => {
-                        const btn = e.target.closest('.deletion-option-btn');
-                        if (!btn) return;
-                        const days = parseInt(btn.getAttribute('data-days'));
-                        const itemId = deletionDialog.getAttribute('data-item-id');
-                        if (itemId && days) {
-                            self.scheduleDeletion(itemId, days);
-                        }
-                        deletionDialog.classList.remove('show');
-                    });
+            self.checkIfAdmin().then(admin => { isAdmin = !!admin; }).catch(() => {});
 
-                    // Custom hours button
-                    deletionDialog.querySelector('.deletion-custom-btn').addEventListener('click', () => {
-                        const hours = parseInt(document.getElementById('deletionCustomHours').value);
-                        const itemId = deletionDialog.getAttribute('data-item-id');
-                        if (itemId && hours && hours > 0) {
-                            self.scheduleDeletionHours(itemId, hours);
-                            deletionDialog.classList.remove('show');
-                        }
-                    });
-
-                    deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
-                        deletionDialog.classList.remove('show');
-                    });
+            const remember = (el, fromCard) => {
+                const card = fromCard ? el.closest('[data-id]') : null;
+                let id = card ? card.getAttribute('data-id') : null;
+                let type = card ? card.getAttribute('data-type') : null;
+                if (!id) {
+                    const m = (window.location.hash || '').match(/[?&]id=([0-9a-f]{32})/i);
+                    id = m ? m[1] : null;
                 }
+                target = id ? { id: id, type: type, at: Date.now() } : null;
+            };
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest && e.target.closest('[data-action="menu"], .btnMoreCommands');
+                if (btn) {
+                    remember(btn, !btn.classList.contains('btnMoreCommands'));
+                }
+            }, true);
+            document.addEventListener('contextmenu', (e) => {
+                const card = e.target.closest && e.target.closest('.card[data-id]');
+                if (card) {
+                    remember(card, true);
+                }
+            }, true);
+
+            const addEntry = (sheet) => {
+                sheet.setAttribute('data-ratings-deletion', '1');
+                if (!isAdmin || !target || Date.now() - target.at > 5000) {
+                    return;
+                }
+                if (target.type && DELETABLE.indexOf(target.type) === -1) {
+                    return;
+                }
+                const items = Array.from(sheet.querySelectorAll('.actionSheetMenuItem'));
+                if (!items.some(b => ITEM_COMMANDS.indexOf(b.getAttribute('data-id')) !== -1)) {
+                    return;
+                }
+
+                const itemId = target.id;
+                const scheduled = !!(self.scheduledDeletionsCache || {})[itemId.toLowerCase()];
+                const label = scheduled
+                    ? (self.t('itemMenuCancelDeletion') || 'Cancel scheduled deletion')
+                    : (self.t('itemMenuScheduleDeletion') || 'Schedule deletion');
+
+                const template = items[items.length - 1];
+                const entry = template.cloneNode(true);
+                entry.setAttribute('data-id', 'ratingsScheduleDeletion');
+                entry.classList.add('ratings-menu-schedule-deletion');
+                const icon = entry.querySelector('.actionsheetMenuItemIcon, .listItemIcon');
+                if (icon) {
+                    icon.textContent = scheduled ? 'restore_from_trash' : 'auto_delete';
+                }
+                const text = entry.querySelector('.actionSheetItemText') || entry.querySelector('.listItemBodyText') || entry;
+                text.textContent = label;
+                entry.addEventListener('click', () => {
+                    // Let Jellyfin close its sheet first, then open ours on a clean screen.
+                    setTimeout(() => {
+                        if (scheduled) {
+                            if (confirm(label + '?')) {
+                                self.cancelDeletion(itemId);
+                            }
+                        } else {
+                            self.ensureDeletionDialog();
+                            self.showDeletionDialog(itemId);
+                        }
+                    }, 150);
+                });
+                template.parentNode.insertBefore(entry, template.nextSibling);
+            };
+
+            new MutationObserver(() => {
+                document.querySelectorAll('.actionSheet:not([data-ratings-deletion])').forEach(sheet => {
+                    if (sheet.querySelector('.actionSheetMenuItem')) {
+                        addEntry(sheet);
+                    }
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        },
+
+        /**
+         * Creates the schedule-deletion dialog once. Used by Media Management and by the
+         * "Schedule deletion" entry in the item menu (issue #102), so it depends on neither.
+         */
+        ensureDeletionDialog: function () {
+            const self = this;
+            if (!document.getElementById('deletionDialog')) {
+                const deletionDialog = document.createElement('div');
+                deletionDialog.id = 'deletionDialog';
+                deletionDialog.innerHTML = `
+                    <div id="deletionDialogContent">
+                        <button class="deletion-close-btn" title="${RatingsPlugin.t('close')}">×</button>
+                        <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
+                        <div id="deletionDialogOptions">
+                            <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
+                            <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
+                            <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
+                            <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
+                        </div>
+                        <div id="deletionDialogCustom">
+                            <input type="number" id="deletionCustomHours" min="1" max="8760" placeholder="${self.t('mediaCustomHours') || 'Hours'}" />
+                            <button class="deletion-custom-btn">${self.t('mediaSchedule') || 'Schedule'}</button>
+                        </div>
+                        <button class="deletion-cancel-btn">${self.t('mediaCancel') || 'Cancel'}</button>
+                    </div>
+                `;
+                document.body.appendChild(deletionDialog);
+
+                // Close button click
+                deletionDialog.querySelector('.deletion-close-btn').addEventListener('click', () => {
+                    deletionDialog.classList.remove('show');
+                });
+
+                // Click outside to close
+                deletionDialog.addEventListener('click', (e) => {
+                    if (e.target === deletionDialog) {
+                        deletionDialog.classList.remove('show');
+                    }
+                });
+
+                // Deletion dialog option clicks. Delegated, because the configured default
+                // can be added as an extra button each time the dialog opens.
+                deletionDialog.querySelector('#deletionDialogOptions').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.deletion-option-btn');
+                    if (!btn) return;
+                    const days = parseInt(btn.getAttribute('data-days'));
+                    const itemId = deletionDialog.getAttribute('data-item-id');
+                    if (itemId && days) {
+                        self.scheduleDeletion(itemId, days);
+                    }
+                    deletionDialog.classList.remove('show');
+                });
+
+                // Custom hours button
+                deletionDialog.querySelector('.deletion-custom-btn').addEventListener('click', () => {
+                    const hours = parseInt(document.getElementById('deletionCustomHours').value);
+                    const itemId = deletionDialog.getAttribute('data-item-id');
+                    if (itemId && hours && hours > 0) {
+                        self.scheduleDeletionHours(itemId, hours);
+                        deletionDialog.classList.remove('show');
+                    }
+                });
+
+                deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
+                    deletionDialog.classList.remove('show');
+                });
+            }
         },
 
         /**

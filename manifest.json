@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.417.0",
+        "changelog": "Admins get Schedule deletion (or Cancel scheduled deletion) in every movie, show, season and episode ... menu (#102). Ratings of media removed from the server are hidden from profiles; they come back if the media returns (#104).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.417.0/Jellyfin.Plugin.Ratings_2.0.417.0.zip",
+        "checksum": "d031d31ba563407f0b99b80bdd0aac1f",
+        "timestamp": "2026-11-17T22:34:52Z"
+      },
+      {
         "version": "2.0.416.0",
         "changelog": "Jellyfin 12: clicking a rating sort button before the library grid has loaded now waits for it and sorts, instead of leaving the button lit with nothing sorted.",
         "targetAbi": "10.11.0.0",
