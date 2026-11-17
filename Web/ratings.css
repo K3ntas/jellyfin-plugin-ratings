@@ -5692,6 +5692,12 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     background: #c0392b;
 }
 
+/* The "Default Deletion Delay" from the plugin settings (issue #102). */
+.deletion-option-btn.is-default {
+    box-shadow: 0 0 0 2px #fff inset;
+    font-weight: 600;
+}
+
 .deletion-cancel-btn {
     background: #555;
     color: #fff;
