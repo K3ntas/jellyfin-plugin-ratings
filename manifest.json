@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.416.0",
+        "changelog": "Jellyfin 12: clicking a rating sort button before the library grid has loaded now waits for it and sorts, instead of leaving the button lit with nothing sorted.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.416.0/Jellyfin.Plugin.Ratings_2.0.416.0.zip",
+        "checksum": "3d8885b09bcda906b181687f5e16bd5f",
+        "timestamp": "2026-11-17T22:04:23Z"
+      },
+      {
         "version": "2.0.415.0",
         "changelog": "Sort by rating appears in the Jellyfin 12 library toolbar again (#95). The schedule-deletion dialog offers the Default Deletion Delay from settings (#102). New settings to switch off Better Quality requests and Bug Reports; their admin tabs hide when off (#103). Rated media that was removed from the server shows its title on profiles instead of a blank card (#104).",
         "targetAbi": "10.11.0.0",

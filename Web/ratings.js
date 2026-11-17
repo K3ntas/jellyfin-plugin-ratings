@@ -21484,23 +21484,32 @@
         /**
          * Sort library cards by selected field - uses server-side sorting with pagination
          */
-        sortLibraryCards: function (direction, sortField, page) {
+        sortLibraryCards: function (direction, sortField, page, attempt) {
             const self = this;
             sortField = sortField || 'local';
             page = page || 1;
+            attempt = attempt || 0;
 
             // Prevent concurrent sort operations
             if (self.librarySortState.isSorting) {
                 return;
             }
-            self.librarySortState.isSorting = true;
 
             // Find the items container
             const itemsContainer = self.findLibraryItemsContainer();
             if (!itemsContainer) {
-                self.librarySortState.isSorting = false;
+                // On Jellyfin 12 the toolbar (and so the sort buttons) is drawn before the cards,
+                // so a quick click found no grid and silently did nothing while the button stayed
+                // lit. Wait for the grid instead; give up after ~10 s and unlight the button.
+                const btn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
+                if (attempt < 33 && btn && btn.classList.contains('active')) {
+                    setTimeout(() => self.sortLibraryCards(direction, sortField, page, attempt + 1), 300);
+                } else if (btn) {
+                    btn.classList.remove('active');
+                }
                 return;
             }
+            self.librarySortState.isSorting = true;
 
             // NOTE: We no longer overwrite Jellyfin's own items container. Sorted results
             // are rendered into a dedicated plugin-owned grid (#ratingsSortedGrid) so that
