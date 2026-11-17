@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "2.0.420.0",
+        "changelog": "New setting Excluded Libraries & Paths: library names, folder paths or keywords whose media never triggers new-media notifications, for example automatic YouTube downloads (PR #100 by @FaserF).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v2.0.420.0/Jellyfin.Plugin.Ratings_2.0.420.0.zip",
+        "checksum": "bccd1b16a5be051da7afd158406f38ef",
+        "timestamp": "2026-11-17T23:53:20Z"
+      },
+      {
         "version": "2.0.419.0",
         "changelog": "Works in the official desktop app (Jellyfin Media Player, which uses an older browser engine): rating and review pop-ups and profiles show on screen again, ratings can be clicked and saved, and poster rating badges appear (#97).",
         "targetAbi": "10.11.0.0",
