@@ -755,6 +755,26 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="chkEnableQualityRequests" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Better Quality Requests</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Users can ask for a better copy of a title already on the server (broken audio, wrong language, low resolution). They send these from the "Better Quality" tab on their own profile page; admins see them in the "Quality" tab of the request window.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableBugReports" type="checkbox" is="emby-checkbox" />
+                                    <span>Enable Bug Reports</span>
+                                </label>
+                                <div class="fieldDescription checkboxFieldDescription">
+                                    Users can report a problem, with screenshots, from the "Report a problem" button on their own profile page; admins see them in the "Bug Reports" tab of the request window.
+                                </div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="chkShowSearchButton" type="checkbox" is="emby-checkbox" />
                                     <span>Show Search Button</span>
                                 </label>
@@ -2882,6 +2902,8 @@
                     // UI toggles
                     document.querySelector('#selectDefaultLanguage').value = config.DefaultLanguage || 'en';
                     document.querySelector('#chkEnableRequestButton').checked = config.EnableRequestButton;
+                    document.querySelector('#chkEnableQualityRequests').checked = config.EnableQualityRequests !== false;
+                    document.querySelector('#chkEnableBugReports').checked = config.EnableBugReports !== false;
                     document.querySelector('#chkEnableNewMediaNotifications').checked = config.EnableNewMediaNotifications;
                     document.querySelector('#chkEnableEpisodeGrouping').checked = config.EnableEpisodeGrouping;
                     document.querySelector('#chkShowSearchButton').checked = config.ShowSearchButton;
@@ -3206,6 +3228,8 @@
                     // UI toggles
                     config.DefaultLanguage = document.querySelector('#selectDefaultLanguage').value;
                     config.EnableRequestButton = document.querySelector('#chkEnableRequestButton').checked;
+                    config.EnableQualityRequests = document.querySelector('#chkEnableQualityRequests').checked;
+                    config.EnableBugReports = document.querySelector('#chkEnableBugReports').checked;
                     config.EnableNewMediaNotifications = document.querySelector('#chkEnableNewMediaNotifications').checked;
                     config.EnableEpisodeGrouping = document.querySelector('#chkEnableEpisodeGrouping').checked;
                     config.ShowSearchButton = document.querySelector('#chkShowSearchButton').checked;

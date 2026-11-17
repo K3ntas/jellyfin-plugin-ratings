@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.397.0",
+        "changelog": "Sort by rating is back in the library toolbar on Jellyfin 12. Admins can schedule a deletion from any item's ... menu, and the schedule dialog offers the Default Deletion Delay from settings. New settings to switch off Better Quality requests and Bug Reports. Media removed from the server no longer shows on profiles.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.397.0/Jellyfin.Plugin.Ratings_1.0.397.0.zip",
+        "checksum": "ec3c9fcd757f0d1b6a652078b8edac2f",
+        "timestamp": "2026-11-17T22:48:07Z"
+      },
+      {
         "version": "1.0.396.0",
         "changelog": "A new series gives one notification instead of one per episode. New episodes of a series you already have are grouped into one notification per season, showing which episodes arrived. Clicking a request pop-up opens that request, or the media once it is available.",
         "targetAbi": "10.11.0.0",

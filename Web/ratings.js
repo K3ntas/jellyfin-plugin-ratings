@@ -219,7 +219,8 @@
                 mediaSortBy: 'Sort by', mediaSortTitle: 'Title', mediaSortYear: 'Year', mediaSortRating: 'Rating', mediaSortPlays: 'Plays', mediaSortSize: 'Size',
                 mediaSortDateAdded: 'Date Added', mediaSortPlayCount: 'Plays', mediaSortWatchTime: 'Watch Time', mediaLoading: 'Loading media...', mediaNoResults: 'No media found', mediaError: 'Error loading media',
                 mediaScheduleDelete: 'Schedule Delete', mediaCancelDelete: 'Cancel Deletion', mediaDeleteIn: 'Delete in', mediaLeavingIn: 'Leaving in',
-                media1Day: '1 Day', media3Days: '3 Days', media1Week: '1 Week', media2Weeks: '2 Weeks', mediaCustom: 'Custom...', mediaCustomHours: 'Hours',
+                media1Day: '1 Day', media3Days: '3 Days', media1Week: '1 Week', media2Weeks: '2 Weeks', mediaCustom: 'Custom...', mediaCustomHours: 'Hours', defaultLabel: 'default',
+                itemMenuScheduleDeletion: 'Schedule deletion', itemMenuCancelDeletion: 'Cancel scheduled deletion',
                 mediaSchedule: 'Schedule', mediaCancel: 'Cancel', mediaNoScheduled: 'No scheduled deletions', mediaScheduledBy: 'Scheduled By', mediaDeletesIn: 'Deletes In',
                 mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
@@ -704,6 +705,8 @@
             if (config.EnableMediaManagement !== false) {
                 // Initialize media management button (admin only)
                 this.initMediaManagementButtonWithRetry();
+                // "Schedule deletion" in the item ... menu (admin only, issue #102)
+                this.initItemMenuDeletion();
             }
 
             // Deletion badges stay ungated: deletions scheduled while media management was on
@@ -3693,6 +3696,8 @@
 .social-profile-page.letterboxd-style .lb-poster-card:hover{transform:translateY(-6px) scale(1.05);box-shadow:0 14px 30px rgba(0,0,0,.55);}
 .social-profile-page.letterboxd-style .lb-poster-card:active{transform:scale(.94);}
 .social-profile-page.letterboxd-style .lb-poster-img{width:100%;aspect-ratio:2/3;border-radius:9px;background:#2c3440 center/cover no-repeat;border:1px solid #34404d;}
+.social-profile-page.letterboxd-style .lb-poster-img.lb-poster-noimg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px;box-sizing:border-box;text-align:center;color:#9ab;font-size:13px;line-height:1.3;overflow:hidden;word-break:break-word;}
+.social-profile-page.letterboxd-style .lb-poster-noimg small{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#678;}
 .social-profile-page.letterboxd-style .lb-poster-stars{font-size:11px;margin-top:5px;text-align:center;}
 .social-profile-page.letterboxd-style .lb-rev2{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #232b34;transition:transform .15s;}
 .social-profile-page.letterboxd-style .lb-rev2:hover{transform:translateX(3px);}
@@ -3874,8 +3879,14 @@
                             ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=240'
                             : self.safeCssUrl(self.apiField(r, 'posterUrl'));
                         var dragAttr = (isSelf && id) ? ' draggable="true" ondragstart="RatingsPlugin.activityDragStart(event,\'' + self.escapeJs(id) + '\',\'' + self.escapeJs(name) + '\')"' : '';
+                        // Removed from the server and no remembered poster (that needs a TMDB
+                        // token): draw the title instead of an empty grey card (issue #104).
+                        var posterHtml = img
+                            ? '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>'
+                            : '<div class="lb-poster-img lb-poster-noimg"><span>' + self.escapeHtml(name) + '</span>' +
+                                (inLib ? '' : '<small>' + self.escapeHtml(RatingsPlugin.t('notOnServer')) + '</small>') + '</div>';
                         html += '<div class="lb-poster-card"' + dragAttr + (inLib ? ' onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + ' title="' + self.escapeHtml(name) + (isSelf ? ' — drag to a row' : '') + '">' +
-                            '<div class="lb-poster-img" style="background-image:url(\'' + img + '\')"></div>' +
+                            posterHtml +
                             '<div class="lb-poster-stars">' + self.renderStars(rating) + '</div>' +
                             '</div>';
                     });
@@ -3901,7 +3912,10 @@
                         var txt = r.reviewText || (r.reviewText ?? r.ReviewText) || r.review || r.Review || '';
                         var rating = r.rating || r.Rating || 0;
                         var inLib = (r.inLibrary !== false && r.InLibrary !== false) && id;
-                        var img = id ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=120' : '';
+                        // Removed items have no Jellyfin image any more: use the remembered poster.
+                        var img = inLib
+                            ? baseUrl + '/Items/' + id + '/Images/Primary?maxHeight=120'
+                            : self.safeCssUrl(self.apiField(r, 'posterUrl'));
                         html += '<div class="lb-rev2"' + (inLib ? ' style="cursor:pointer" onclick="RatingsPlugin.openMedia(\'' + self.escapeJs(id) + '\')"' : '') + '>' +
                             '<div class="lb-rev2-poster" style="background-image:url(\'' + img + '\')"></div>' +
                             '<div class="lb-rev2-body"><div class="lb-rev2-head"><span class="lb-rev2-title">' + self.escapeHtml(name) + '</span>' + self.renderStars(rating) + '</div>' +
@@ -14383,66 +14397,179 @@
                 }
 
                 // Create deletion dialog if not exists
-                if (!document.getElementById('deletionDialog')) {
-                    const deletionDialog = document.createElement('div');
-                    deletionDialog.id = 'deletionDialog';
-                    deletionDialog.innerHTML = `
-                        <div id="deletionDialogContent">
-                            <button class="deletion-close-btn" title="${RatingsPlugin.t('close')}">×</button>
-                            <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
-                            <div id="deletionDialogOptions">
-                                <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
-                                <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
-                                <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
-                                <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
-                            </div>
-                            <div id="deletionDialogCustom">
-                                <input type="number" id="deletionCustomHours" min="1" max="8760" placeholder="${self.t('mediaCustomHours') || 'Hours'}" />
-                                <button class="deletion-custom-btn">${self.t('mediaSchedule') || 'Schedule'}</button>
-                            </div>
-                            <button class="deletion-cancel-btn">${self.t('mediaCancel') || 'Cancel'}</button>
-                        </div>
-                    `;
-                    document.body.appendChild(deletionDialog);
+                self.ensureDeletionDialog();
+        },
 
-                    // Close button click
-                    deletionDialog.querySelector('.deletion-close-btn').addEventListener('click', () => {
-                        deletionDialog.classList.remove('show');
-                    });
+        /**
+         * Adds "Schedule deletion" (or "Cancel scheduled deletion") to Jellyfin's ... menu on
+         * items, for admins (issue #102). Scheduling used to be reachable only from the Media
+         * Management window.
+         *
+         * Jellyfin builds that menu as an .actionSheet dialog and gives it no hook, so this
+         * remembers which card or details page opened it, and recognises the item menu by its
+         * standard entries (other action sheets - sort, audio track - have none of them). The
+         * entry is a clone of a real one so it matches the theme; Jellyfin closes the sheet on
+         * click as for its own entries, and the plugin's dialog opens once it has.
+         */
+        initItemMenuDeletion: function () {
+            const self = this;
+            if (this._itemMenuDeletionInit) {
+                return;
+            }
+            this._itemMenuDeletionInit = true;
 
-                    // Click outside to close
-                    deletionDialog.addEventListener('click', (e) => {
-                        if (e.target === deletionDialog) {
-                            deletionDialog.classList.remove('show');
-                        }
-                    });
+            const ITEM_COMMANDS = ['addtocollection', 'addtoplaylist', 'edit', 'editimages', 'identify', 'moremediainfo', 'refresh'];
+            const DELETABLE = ['Movie', 'Series', 'Season', 'Episode', 'Video', 'MusicVideo', 'MusicAlbum', 'Audio'];
+            let target = null;
+            let isAdmin = false;
 
-                    // Deletion dialog option clicks
-                    deletionDialog.querySelectorAll('.deletion-option-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            const days = parseInt(btn.getAttribute('data-days'));
-                            const itemId = deletionDialog.getAttribute('data-item-id');
-                            if (itemId && days) {
-                                self.scheduleDeletion(itemId, days);
-                            }
-                            deletionDialog.classList.remove('show');
-                        });
-                    });
+            self.checkIfAdmin().then(admin => { isAdmin = !!admin; }).catch(() => {});
 
-                    // Custom hours button
-                    deletionDialog.querySelector('.deletion-custom-btn').addEventListener('click', () => {
-                        const hours = parseInt(document.getElementById('deletionCustomHours').value);
-                        const itemId = deletionDialog.getAttribute('data-item-id');
-                        if (itemId && hours && hours > 0) {
-                            self.scheduleDeletionHours(itemId, hours);
-                            deletionDialog.classList.remove('show');
-                        }
-                    });
-
-                    deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
-                        deletionDialog.classList.remove('show');
-                    });
+            const remember = (el, fromCard) => {
+                const card = fromCard ? el.closest('[data-id]') : null;
+                let id = card ? card.getAttribute('data-id') : null;
+                let type = card ? card.getAttribute('data-type') : null;
+                if (!id) {
+                    const m = (window.location.hash || '').match(/[?&]id=([0-9a-f]{32})/i);
+                    id = m ? m[1] : null;
                 }
+                target = id ? { id: id, type: type, at: Date.now() } : null;
+            };
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest && e.target.closest('[data-action="menu"], .btnMoreCommands');
+                if (btn) {
+                    remember(btn, !btn.classList.contains('btnMoreCommands'));
+                }
+            }, true);
+            document.addEventListener('contextmenu', (e) => {
+                const card = e.target.closest && e.target.closest('.card[data-id]');
+                if (card) {
+                    remember(card, true);
+                }
+            }, true);
+
+            const addEntry = (sheet) => {
+                sheet.setAttribute('data-ratings-deletion', '1');
+                if (!isAdmin || !target || Date.now() - target.at > 5000) {
+                    return;
+                }
+                if (target.type && DELETABLE.indexOf(target.type) === -1) {
+                    return;
+                }
+                const items = Array.from(sheet.querySelectorAll('.actionSheetMenuItem'));
+                if (!items.some(b => ITEM_COMMANDS.indexOf(b.getAttribute('data-id')) !== -1)) {
+                    return;
+                }
+
+                const itemId = target.id;
+                const scheduled = !!(self.scheduledDeletionsCache || {})[itemId.toLowerCase()];
+                const label = scheduled
+                    ? (self.t('itemMenuCancelDeletion') || 'Cancel scheduled deletion')
+                    : (self.t('itemMenuScheduleDeletion') || 'Schedule deletion');
+
+                const template = items[items.length - 1];
+                const entry = template.cloneNode(true);
+                entry.setAttribute('data-id', 'ratingsScheduleDeletion');
+                entry.classList.add('ratings-menu-schedule-deletion');
+                const icon = entry.querySelector('.actionsheetMenuItemIcon, .listItemIcon');
+                if (icon) {
+                    icon.textContent = scheduled ? 'restore_from_trash' : 'auto_delete';
+                }
+                const text = entry.querySelector('.actionSheetItemText') || entry.querySelector('.listItemBodyText') || entry;
+                text.textContent = label;
+                entry.addEventListener('click', () => {
+                    // Let Jellyfin close its sheet first, then open ours on a clean screen.
+                    setTimeout(() => {
+                        if (scheduled) {
+                            if (confirm(label + '?')) {
+                                self.cancelDeletion(itemId);
+                            }
+                        } else {
+                            self.ensureDeletionDialog();
+                            self.showDeletionDialog(itemId);
+                        }
+                    }, 150);
+                });
+                template.parentNode.insertBefore(entry, template.nextSibling);
+            };
+
+            new MutationObserver(() => {
+                document.querySelectorAll('.actionSheet:not([data-ratings-deletion])').forEach(sheet => {
+                    if (sheet.querySelector('.actionSheetMenuItem')) {
+                        addEntry(sheet);
+                    }
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        },
+
+        /**
+         * Creates the schedule-deletion dialog once. Used by Media Management and by the
+         * "Schedule deletion" entry in the item menu (issue #102), so it depends on neither.
+         */
+        ensureDeletionDialog: function () {
+            const self = this;
+            if (!document.getElementById('deletionDialog')) {
+                const deletionDialog = document.createElement('div');
+                deletionDialog.id = 'deletionDialog';
+                deletionDialog.innerHTML = `
+                    <div id="deletionDialogContent">
+                        <button class="deletion-close-btn" title="${RatingsPlugin.t('close')}">×</button>
+                        <div id="deletionDialogTitle">${self.t('mediaScheduleDelete')}</div>
+                        <div id="deletionDialogOptions">
+                            <button class="deletion-option-btn" data-days="1">${self.t('media1Day')}</button>
+                            <button class="deletion-option-btn" data-days="3">${self.t('media3Days')}</button>
+                            <button class="deletion-option-btn" data-days="7">${self.t('media1Week')}</button>
+                            <button class="deletion-option-btn" data-days="14">${self.t('media2Weeks')}</button>
+                        </div>
+                        <div id="deletionDialogCustom">
+                            <input type="number" id="deletionCustomHours" min="1" max="8760" placeholder="${self.t('mediaCustomHours') || 'Hours'}" />
+                            <button class="deletion-custom-btn">${self.t('mediaSchedule') || 'Schedule'}</button>
+                        </div>
+                        <button class="deletion-cancel-btn">${self.t('mediaCancel') || 'Cancel'}</button>
+                    </div>
+                `;
+                document.body.appendChild(deletionDialog);
+
+                // Close button click
+                deletionDialog.querySelector('.deletion-close-btn').addEventListener('click', () => {
+                    deletionDialog.classList.remove('show');
+                });
+
+                // Click outside to close
+                deletionDialog.addEventListener('click', (e) => {
+                    if (e.target === deletionDialog) {
+                        deletionDialog.classList.remove('show');
+                    }
+                });
+
+                // Deletion dialog option clicks. Delegated, because the configured default
+                // can be added as an extra button each time the dialog opens.
+                deletionDialog.querySelector('#deletionDialogOptions').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.deletion-option-btn');
+                    if (!btn) return;
+                    const days = parseInt(btn.getAttribute('data-days'));
+                    const itemId = deletionDialog.getAttribute('data-item-id');
+                    if (itemId && days) {
+                        self.scheduleDeletion(itemId, days);
+                    }
+                    deletionDialog.classList.remove('show');
+                });
+
+                // Custom hours button
+                deletionDialog.querySelector('.deletion-custom-btn').addEventListener('click', () => {
+                    const hours = parseInt(document.getElementById('deletionCustomHours').value);
+                    const itemId = deletionDialog.getAttribute('data-item-id');
+                    if (itemId && hours && hours > 0) {
+                        self.scheduleDeletionHours(itemId, hours);
+                        deletionDialog.classList.remove('show');
+                    }
+                });
+
+                deletionDialog.querySelector('.deletion-cancel-btn').addEventListener('click', () => {
+                    deletionDialog.classList.remove('show');
+                });
+            }
         },
 
         /**
@@ -14865,8 +14992,50 @@
             const dialog = document.getElementById('deletionDialog');
             if (dialog) {
                 dialog.setAttribute('data-item-id', itemId);
+                this.addDefaultDeletionOption(dialog);
                 dialog.classList.add('show');
             }
+        },
+
+        /**
+         * Offers the "Default Deletion Delay" from the plugin settings in the schedule dialog.
+         *
+         * The dialog only had fixed 1 day / 3 days / 1 week / 2 weeks buttons, so a server set to
+         * 30 days could never schedule that from here: the setting was only used by API callers
+         * that sent no delay at all (issue #102). The configured value is marked as the default,
+         * and added as its own button when it is not one of the fixed ones.
+         * @param {HTMLElement} dialog The #deletionDialog element.
+         */
+        addDefaultDeletionOption: function (dialog) {
+            const options = dialog.querySelector('#deletionDialogOptions');
+            if (!options) {
+                return;
+            }
+
+            options.querySelectorAll('.deletion-option-default').forEach(el => el.remove());
+            options.querySelectorAll('.deletion-option-btn.is-default').forEach(el => {
+                el.classList.remove('is-default');
+                el.textContent = el.getAttribute('data-label') || el.textContent;
+            });
+
+            const days = parseInt((this._configCache || {}).DefaultDeletionDelayDays, 10);
+            if (!days || days < 1) {
+                return;
+            }
+
+            const suffix = ' (' + (this.t('defaultLabel') || 'default') + ')';
+            let btn = options.querySelector('.deletion-option-btn[data-days="' + days + '"]');
+            if (btn) {
+                btn.setAttribute('data-label', btn.textContent);
+            } else {
+                btn = document.createElement('button');
+                btn.className = 'deletion-option-btn deletion-option-default';
+                btn.setAttribute('data-days', String(days));
+                btn.setAttribute('data-label', days + ' ' + (this.t('modDays') || 'days'));
+                options.appendChild(btn);
+            }
+            btn.classList.add('is-default');
+            btn.textContent = btn.getAttribute('data-label') + suffix;
         },
 
         /**
@@ -16646,14 +16815,24 @@
 
             modalTitle.textContent = this.t('requestMedia') || 'Request Media';
 
+            // Quality and Bug Reports are fed from the users' profile pages. When the feature is
+            // switched off nothing can arrive, so the tab is just noise (issue #103).
+            const cfg = config || this._configCache || {};
+            const qualityTab = cfg.EnableQualityRequests !== false
+                ? `<button class="admin-tab" data-tab="quality">${this.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>`
+                : '';
+            const bugsTab = cfg.EnableBugReports !== false
+                ? `<button class="admin-tab" data-tab="bugs">${this.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>`
+                : '';
+
             // Create tabs - Manage tab is active by default for admins
             const tabsHtml = `
                 <div class="admin-tabs">
                     <button class="admin-tab" data-tab="create">${this.t('createRequest') || 'Create Request'}</button>
                     <button class="admin-tab active" data-tab="manage">${this.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
                     <button class="admin-tab" data-tab="deletions">${this.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
-                    <button class="admin-tab" data-tab="quality">${this.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>
-                    <button class="admin-tab" data-tab="bugs">${this.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>
+                    ${qualityTab}
+                    ${bugsTab}
                 </div>
                 <div class="admin-tab-content" id="adminTabContent"></div>
             `;
@@ -18063,8 +18242,8 @@
                     <div class="admin-tabs">
                         <button class="admin-tab active" data-tab="manage">${self.t('manageRequests') || 'Manage Requests'}<span class="admin-tab-badge" id="manageTabBadge" style="display:none !important;"></span></button>
                         <button class="admin-tab" data-tab="deletions">${self.t('deletionRequests') || 'Deletion Requests'}<span class="admin-tab-badge" id="deletionsTabBadge" style="display:none !important;"></span></button>
-                        <button class="admin-tab" data-tab="quality">${self.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>
-                        <button class="admin-tab" data-tab="bugs">${self.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>
+                        ${(config || {}).EnableQualityRequests !== false ? `<button class="admin-tab" data-tab="quality">${self.t('qualityRequests') || 'Quality'}<span class="admin-tab-badge" id="qualityTabBadge" style="display:none !important;"></span></button>` : ''}
+                        ${(config || {}).EnableBugReports !== false ? `<button class="admin-tab" data-tab="bugs">${self.t('bugReports') || 'Bug Reports'}<span class="admin-tab-badge" id="bugsTabBadge" style="display:none !important;"></span></button>` : ''}
                     </div>
                     <div class="admin-tab-content" id="adminTabContent"></div>
                 `;
@@ -21114,8 +21293,7 @@
                 // Skip if Netflix view is rendered
                 const netflixContainer = document.querySelector('.netflix-view-container');
                 if (netflixContainer && netflixContainer.isConnected) {
-                    const existing = document.getElementById('librarySortContainer');
-                    if (existing) existing.remove();
+                    self.removeLibrarySortButtons();
                     self.clearSortedGrid();
                     self.librarySortState.active = false;
                     retryCount = 0;
@@ -21132,8 +21310,7 @@
                                      hash.includes('parentId=');
 
                 if (!isLibraryPage) {
-                    const existing = document.getElementById('librarySortContainer');
-                    if (existing) existing.remove();
+                    self.removeLibrarySortButtons();
                     self.clearSortedGrid();
                     self.librarySortState.active = false;
                     retryCount = 0;
@@ -21146,17 +21323,8 @@
                 }
                 lastUrl = url;
 
-                // Find the VISIBLE .btnSort and check its toolbar
-                const allBtnSort = document.querySelectorAll('.btnSort');
-                let btnSort = null;
-                for (const btn of allBtnSort) {
-                    const rect = btn.getBoundingClientRect();
-                    if (rect.width > 0 && rect.height > 0) {
-                        btnSort = btn;
-                        break;
-                    }
-                }
-                const toolbar = btnSort ? btnSort.parentElement : null;
+                // The visible library toolbar: the classic .btnSort row, or Jellyfin 12's MUI one
+                const toolbar = self.findLibraryToolbar();
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 if (containerInToolbar) {
@@ -21164,7 +21332,7 @@
                         return; // Already exists and visible
                     }
                     // Remove ALL orphaned sort buttons
-                    document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                 }
 
                 // Try to inject buttons
@@ -21188,24 +21356,13 @@
                                   hash.includes('collectionType=') || hash.includes('parentId=');
                 if (!isLibrary) return;
 
-                // Find the VISIBLE .btnSort
-                const allBtnSort = document.querySelectorAll('.btnSort');
-                let btnSort = null;
-                for (const btn of allBtnSort) {
-                    const rect = btn.getBoundingClientRect();
-                    if (rect.width > 0 && rect.height > 0) {
-                        btnSort = btn;
-                        break;
-                    }
-                }
-                if (!btnSort) return;
-
-                const toolbar = btnSort.parentElement;
+                const toolbar = self.findLibraryToolbar();
+                if (!toolbar) return;
                 const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
 
                 if (!containerInToolbar && toolbar.isConnected) {
                     // Remove ALL existing sort buttons globally before injecting
-                    document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                     self.injectLibrarySortButtons();
                 }
             });
@@ -21222,29 +21379,69 @@
          * Inject sort buttons into library view header
          * @returns {boolean} true if injection succeeded, false if container not found
          */
+        /**
+         * The visible library toolbar the sort controls belong in, or null.
+         *
+         * Jellyfin 10.x draws a classic row holding .btnSort. Jellyfin 12 replaced it with an MUI
+         * toolbar (issue #95): a Stack of ButtonGroups - Play All/Shuffle, then Filter/Sort/View,
+         * then Previous/Next - with none of the old class names, so the controls never appeared.
+         * Button titles are translated, so the MUI toolbar is recognised by its shape instead.
+         * @returns {HTMLElement|null} The element the controls are appended to.
+         */
+        removeLibrarySortButtons: function () {
+            document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+        },
+
+        findLibraryToolbar: function () {
+            const isVisible = (el) => {
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            };
+
+            for (const btn of document.querySelectorAll('.btnSort')) {
+                if (isVisible(btn)) {
+                    return btn.parentElement;
+                }
+            }
+
+            for (const bar of document.querySelectorAll('.MuiToolbar-root')) {
+                if (!isVisible(bar)) {
+                    continue;
+                }
+                for (const stack of bar.querySelectorAll(':scope > .MuiStack-root')) {
+                    const groups = stack.querySelectorAll('.MuiButtonGroup-root');
+                    if (groups.length >= 2 && stack.querySelector('.MuiButtonGroup-text')) {
+                        return stack;
+                    }
+                }
+            }
+
+            return null;
+        },
+
         injectLibrarySortButtons: function () {
             const self = this;
 
-            // Find the VISIBLE .btnSort
-            const allBtnSort = document.querySelectorAll('.btnSort');
-            let visibleBtnSort = null;
-            for (const btn of allBtnSort) {
-                const rect = btn.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    visibleBtnSort = btn;
-                    break;
-                }
+            // The Netflix view has its own per-row sorting. The classic toolbar was hidden under it,
+            // but Jellyfin 12's toolbar stays visible, so refuse here rather than in each caller.
+            const netflix = document.querySelector('.netflix-view-container');
+            if (netflix && netflix.isConnected) {
+                self.removeLibrarySortButtons();
+                return true;
             }
-            const toolbar = visibleBtnSort ? visibleBtnSort.parentElement : null;
+
+            const toolbar = self.findLibraryToolbar();
+            const visibleBtnSort = toolbar && toolbar.querySelector('.btnSort');
+            const isMuiToolbar = !!(toolbar && toolbar.classList.contains('MuiStack-root'));
 
             // Check if our buttons already exist in the current visible toolbar
             const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
             if (containerInToolbar && containerInToolbar.isConnected) return true;
 
             // Remove ALL existing sort buttons globally (prevents duplicates)
-            document.querySelectorAll('#librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+            document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
 
-            let targetContainer = null;
+            let targetContainer = isMuiToolbar ? toolbar : null;
             let insertBefore = null;
 
             // Strategy 1: Find the VISIBLE .btnSort button
@@ -21328,11 +21525,25 @@
             btn2.style.cssText = 'flex-shrink: 0;'; // Prevent flex collapse
             btn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;fill:currentColor;pointer-events:none;"><path d="M12 2l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/><path d="M12 15l3-5h-6l3 5z" fill="#000" opacity="0.6"/></svg>`;
 
-            // Always append at the end of toolbar (after filter button)
-            targetContainer.appendChild(marker);
-            targetContainer.appendChild(dropdown);
-            targetContainer.appendChild(btn1);
-            targetContainer.appendChild(btn2);
+            if (isMuiToolbar) {
+                // Jellyfin 12: one flex group, placed before Previous/Next so paging stays last.
+                const group = document.createElement('div');
+                group.className = 'library-sort-mui-group';
+                group.style.cssText = 'display:flex;align-items:center;gap:4px;';
+                group.appendChild(marker);
+                group.appendChild(dropdown);
+                group.appendChild(btn1);
+                group.appendChild(btn2);
+                const groups = targetContainer.querySelectorAll(':scope > .MuiButtonGroup-root');
+                const paging = groups.length > 1 ? groups[groups.length - 1] : null;
+                targetContainer.insertBefore(group, paging);
+            } else {
+                // Always append at the end of toolbar (after filter button)
+                targetContainer.appendChild(marker);
+                targetContainer.appendChild(dropdown);
+                targetContainer.appendChild(btn1);
+                targetContainer.appendChild(btn2);
+            }
 
             // Attach click handlers for sort buttons
             [btn1, btn2].forEach(btn => {
@@ -21388,23 +21599,32 @@
         /**
          * Sort library cards by selected field - uses server-side sorting with pagination
          */
-        sortLibraryCards: function (direction, sortField, page) {
+        sortLibraryCards: function (direction, sortField, page, attempt) {
             const self = this;
             sortField = sortField || 'local';
             page = page || 1;
+            attempt = attempt || 0;
 
             // Prevent concurrent sort operations
             if (self.librarySortState.isSorting) {
                 return;
             }
-            self.librarySortState.isSorting = true;
 
             // Find the items container
             const itemsContainer = self.findLibraryItemsContainer();
             if (!itemsContainer) {
-                self.librarySortState.isSorting = false;
+                // On Jellyfin 12 the toolbar (and so the sort buttons) is drawn before the cards,
+                // so a quick click found no grid and silently did nothing while the button stayed
+                // lit. Wait for the grid instead; give up after ~10 s and unlight the button.
+                const btn = document.getElementById(direction === 'desc' ? 'librarySortDesc' : 'librarySortAsc');
+                if (attempt < 33 && btn && btn.classList.contains('active')) {
+                    setTimeout(() => self.sortLibraryCards(direction, sortField, page, attempt + 1), 300);
+                } else if (btn) {
+                    btn.classList.remove('active');
+                }
                 return;
             }
+            self.librarySortState.isSorting = true;
 
             // NOTE: We no longer overwrite Jellyfin's own items container. Sorted results
             // are rendered into a dedicated plugin-owned grid (#ratingsSortedGrid) so that
@@ -21518,6 +21738,19 @@
                 document.querySelectorAll('.listPaging, .listTopPaging, .paging').forEach(el => {
                     el.style.display = 'none';
                 });
+
+                // Jellyfin 12: Previous/Next are the last ButtonGroup of the MUI toolbar. They
+                // would page the hidden native grid, so hide them like the classic paging above
+                // (clearSortedGrid unhides anything marked data-ratings-hidden).
+                const muiToolbar = self.findLibraryToolbar();
+                if (muiToolbar && muiToolbar.classList.contains('MuiStack-root')) {
+                    const groups = muiToolbar.querySelectorAll(':scope > .MuiButtonGroup-root');
+                    const paging = groups.length > 1 ? groups[groups.length - 1] : null;
+                    if (paging && paging.style.display !== 'none') {
+                        paging.dataset.ratingsHidden = 'true';
+                        paging.style.display = 'none';
+                    }
+                }
 
                 // Render sorted items into our OWNED grid (never touch Jellyfin's container)
                 const grid = self.showSortedGrid(nativeContainer);

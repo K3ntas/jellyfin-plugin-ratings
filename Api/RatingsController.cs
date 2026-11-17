@@ -683,10 +683,12 @@ namespace Jellyfin.Plugin.Ratings.Api
             {
                 itemMap.TryGetValue(r.ItemId, out var item);
 
-                // Media deleted before ratings started keeping a title snapshot leaves nothing to
-                // show - it rendered as an "Unknown" card with a blank poster. Skip it; the rating
-                // itself stays stored, and reappears if the item comes back to the library.
-                if (item == null && string.IsNullOrWhiteSpace(r.Title))
+                // Media removed from the server is hidden from profiles (issue #104): it showed as
+                // a blank card, and people expect it gone once the media is. The rating itself
+                // stays stored and reappears if the item comes back to the library. Ratings of
+                // catalog titles that were never on the server (IsExternal) have no library item
+                // by design and are kept.
+                if (item == null && !r.IsExternal)
                 {
                     continue;
                 }
