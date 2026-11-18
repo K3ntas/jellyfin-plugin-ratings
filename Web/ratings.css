@@ -476,6 +476,8 @@
 }
 .ratings-modal-review {
     width: 100%;
+    /* Padding and border inside the 100%, so the box does not stick out past the window. */
+    box-sizing: border-box;
     min-height: 100px;
     background: #2a2a2a;
     border: 1px solid #444;
@@ -3115,6 +3117,19 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     position: relative !important;
 }
 
+/* Phones: five admin tabs do not fit one row - "Bug Reports" was off-screen and the rest wrapped
+   into three-line labels. Let the row wrap instead, one line per label. */
+@media (max-width: 600px) {
+    .admin-tabs {
+        flex-wrap: wrap !important;
+    }
+    .admin-tab {
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+        white-space: nowrap !important;
+    }
+}
+
 .admin-tab-badge {
     display: inline-flex !important;
     align-items: center !important;
@@ -4305,6 +4320,9 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     cursor: pointer !important;
     transition: color 0.15s ease, background 0.15s ease !important;
     text-align: center !important;
+    /* The Leaving Soon list is narrower than Latest Media, which pushed its count badge onto a
+       second line under the label. */
+    white-space: nowrap !important;
 }
 
 #latestMediaDropdown .latest-tab:hover {
@@ -8367,6 +8385,7 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
 }
 .social-panel-search input {
     width: 100%;
+    box-sizing: border-box; /* padding inside the 100%, so it does not run into the panel edge */
     padding: 8px 12px;
     border: 1px solid #444;
     border-radius: 6px;
@@ -9086,13 +9105,26 @@ body.ratings-no-card-overlay .netflix-card.has-rating::after {
     align-items: center;
     justify-content: center;
 }
+/* Header and Save/Cancel stay put; only the body scrolls. When the whole window scrolled, a phone
+   showed the buttons half cut off at the bottom edge, as if there were none. */
 .lb-settings-content {
     background: #14181c;
     border-radius: 8px;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.lb-settings-content > .lb-settings-body {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+}
+.lb-settings-content > .lb-settings-header,
+.lb-settings-content > .lb-settings-footer {
+    flex: 0 0 auto;
 }
 .lb-settings-header {
     display: flex;

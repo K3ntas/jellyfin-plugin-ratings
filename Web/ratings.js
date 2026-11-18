@@ -4969,6 +4969,56 @@
                 });
         },
 
+        /**
+         * A form label without a trailing "*". The translations carry "Media Title *" and
+         * "Type *", and the request form appends its own marker for required fields, so the
+         * labels read "Media Title * *".
+         * @param {string} label Label text.
+         * @returns {string} The label with any trailing asterisks removed.
+         */
+        stripRequiredMark: function (label) {
+            return String(label == null ? '' : label).replace(/\s*\*+\s*$/, '');
+        },
+
+        /**
+         * Runs cb with a toast(message) function - Jellyfin's own when its AMD loader is there,
+         * the plugin's otherwise.
+         *
+         * Every message in the plugin used require(['toast']) behind an if (window.require)
+         * guard. Jellyfin 12's web client has no window.require, so all 45 of them - "Rated
+         * 7/10", every save error - were silently skipped. A rating that failed to save looked
+         * exactly like one that worked (issue #101).
+         * @param {function(function(string))} cb Receives the toast function.
+         */
+        withToast: function (cb) {
+            try {
+                if (typeof window.require === 'function') {
+                    window.require(['toast'], cb);
+                    return;
+                }
+            } catch (e) { /* fall through to the plugin's own toast */ }
+            cb(function (msg) { RatingsPlugin.showToast(msg); });
+        },
+
+        /**
+         * The plugin's own toast, styled inline so it works on any page (the .lb-toast rules
+         * only exist once a profile page has been opened).
+         * @param {string} msg Message to show.
+         */
+        showToast: function (msg) {
+            if (msg === undefined || msg === null || msg === '') return;
+            var t = document.createElement('div');
+            t.className = 'ratings-toast';
+            t.textContent = String(msg);
+            t.style.cssText = 'position:fixed;left:50%;bottom:40px;transform:translateX(-50%);max-width:90vw;' +
+                'background:rgba(30,30,30,.95);color:#fff;padding:10px 18px;border-radius:6px;font-size:14px;' +
+                'box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:2147483647;opacity:0;transition:opacity .25s;' +
+                'pointer-events:none;text-align:center;';
+            document.body.appendChild(t);
+            setTimeout(function () { t.style.opacity = '1'; }, 10);
+            setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 3000);
+        },
+
         lbToast: function (msg) {
             var t = document.createElement('div');
             t.className = 'lb-toast';
@@ -9108,6 +9158,8 @@
             let moved = false;
             let startX = 0;
             let value = 0;
+            // When a touch tap was last committed on pointerup, so its trailing click is ignored.
+            let tapCommittedAt = 0;
             // Enough travel to read as a swipe rather than a tap that wobbled.
             const MOVE_THRESHOLD = 4;
 
@@ -9125,8 +9177,10 @@
                 dragging = true;
                 moved = false;
                 startX = e.clientX;
-                container.classList.add('dragging');
+                // Measured BEFORE .dragging is added: on touch that class widens the value chip at
+                // the end of the centred row, which slides the stars sideways under the finger.
                 value = self.ratingFromPointer(container, e.clientX);
+                container.classList.add('dragging');
                 try {
                     container.setPointerCapture(e.pointerId);
                 } catch (err) { /* capture is a nicety, not a requirement */ }
@@ -9164,8 +9218,17 @@
                 } catch (err) { /* nothing to release */ }
 
                 if (!moved) {
-                    // A tap: leave it to the existing per-star click handlers, which keep the
-                    // whole-number and half-star behaviour exactly as it was.
+                    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                        // A tap on a touch screen is committed here, with the value measured at
+                        // touch-down. Waiting for the click lost it: there is no hover on touch, so
+                        // .dragging is what expands the value chip, the centred stars slide
+                        // sideways, and the click is then hit-tested where no star is any more -
+                        // it landed on the page backdrop and nothing happened. That is issue #101
+                        // ("rated once, but changing it does nothing" on phones).
+                        tapCommittedAt = Date.now();
+                        self.handleStarClick(itemId, value);
+                    }
+                    // A mouse click is left to the click handler below, as before.
                     return;
                 }
                 // Read the release point rather than reusing the last move: where the finger is
@@ -9179,6 +9242,15 @@
             };
 
             container.addEventListener('pointerup', finish);
+
+            // A touch tap already handled on pointerup must not also produce the browser's
+            // synthetic click: it arrives after the rating window has opened and lands on the
+            // window's backdrop, which closes it again straight away.
+            container.addEventListener('touchend', (e) => {
+                if (Date.now() - tapCommittedAt < 800 && e.cancelable) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
             container.addEventListener('pointercancel', () => {
                 dragging = false;
                 moved = false;
@@ -9198,6 +9270,10 @@
                 if (moved) {
                     // Already committed on pointerup at the end of the drag.
                     moved = false;
+                    return;
+                }
+                if (Date.now() - tapCommittedAt < 800) {
+                    // The click that follows a touch tap already committed on pointerup.
                     return;
                 }
                 self.handleStarClick(itemId, self.ratingFromPointer(container, e.clientX));
@@ -9556,16 +9632,16 @@
                     // The review cards carry the rating, so they go stale on a plain re-rate too.
                     self.refreshUserReviews(itemId);
 
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Rated ' + rating + '/10');
                         });
                     }
                 })
                 .catch(function(err) {
 
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Error submitting rating: ' + err.message);
                         });
                     }
@@ -9616,15 +9692,15 @@
                     // Removing the rating removes its review with it.
                     self.refreshUserReviews(itemId);
 
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Rating removed');
                         });
                     }
                 })
                 .catch(function(err) {
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Error removing rating: ' + err.message);
                         });
                     }
@@ -10021,15 +10097,15 @@
                 self.loadRatings(itemId, rating);
                 self.refreshUserReviews(itemId);
 
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Rated ' + rating + '/10' + (review ? ' with review' : ''));
                     });
                 }
             })
             .catch(err => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error: ' + err.message);
                     });
                 }
@@ -10293,8 +10369,8 @@
                 }
             })
             .catch(err => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error: ' + err.message);
                     });
                 }
@@ -17011,7 +17087,7 @@
             // Build Type field HTML (if enabled)
             const typeHtml = typeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaType">${this.escapeHtml(typeLabel)}${typeRequired ? ' *' : ''}</label>
+                    <label for="requestMediaType">${this.escapeHtml(this.stripRequiredMark(typeLabel))}${typeRequired ? ' *' : ''}</label>
                     <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
@@ -17026,7 +17102,7 @@
             // Build IMDB Code field HTML (if enabled)
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
+                    <label for="requestImdbCode">${this.escapeHtml(this.stripRequiredMark(imdbCodeLabel))}${imdbCodeRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbCode" placeholder="${this.escapeHtml(imdbCodePlaceholder)}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -17034,7 +17110,7 @@
             // Build IMDB Link field HTML (if enabled)
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
+                    <label for="requestImdbLink">${this.escapeHtml(this.stripRequiredMark(imdbLinkLabel))}${imdbLinkRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbLink" placeholder="${this.escapeHtml(imdbLinkPlaceholder)}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -17042,7 +17118,7 @@
             // Build Notes field HTML (if enabled)
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
+                    <label for="requestMediaNotes">${this.escapeHtml(this.stripRequiredMark(notesLabel))}${notesRequired ? ' *' : ''}</label>
                     <textarea id="requestMediaNotes" placeholder="${this.escapeHtml(notesPlaceholder)}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
@@ -17051,7 +17127,7 @@
                 ${langSwitchHtml}
                 ${descriptionHtml}
                 <div class="request-input-group">
-                    <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
+                    <label for="requestMediaTitle">${this.escapeHtml(this.stripRequiredMark(titleLabel))} *</label>
                     <input type="text" id="requestMediaTitle" placeholder="${this.escapeHtml(titlePlaceholder)}" required />
                 </div>
                 ${typeHtml}
@@ -17290,8 +17366,8 @@
                         if (dateInput && dateInput.value) {
                             self.snoozeRequest(requestId, dateInput.value, config);
                         } else {
-                            if (window.require) {
-                                require(['toast'], function(toast) {
+                            {
+                                RatingsPlugin.withToast( function(toast) {
                                     toast('Please select a snooze date');
                                 });
                             }
@@ -17352,8 +17428,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('statusUpdated') || 'Status updated');
                     });
                 }
@@ -17362,8 +17438,8 @@
             })
             .catch(err => {
                 console.error('Error updating status:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error updating status');
                     });
                 }
@@ -17392,8 +17468,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('requestDeleted') || 'Request deleted');
                     });
                 }
@@ -17567,8 +17643,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('statusUpdated') || 'Request snoozed');
                     });
                 }
@@ -17576,8 +17652,8 @@
             })
             .catch(err => {
                 console.error('Error snoozing request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error snoozing request');
                     });
                 }
@@ -17606,8 +17682,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('statusUpdated') || 'Request unsnoozed');
                     });
                 }
@@ -17615,8 +17691,8 @@
             })
             .catch(err => {
                 console.error('Error unsnoozing request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error unsnoozing request');
                     });
                 }
@@ -17765,7 +17841,7 @@
             // Build Type field HTML (if enabled)
             const typeHtml = typeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaType">${this.escapeHtml(typeLabel)}${typeRequired ? ' *' : ''}</label>
+                    <label for="requestMediaType">${this.escapeHtml(this.stripRequiredMark(typeLabel))}${typeRequired ? ' *' : ''}</label>
                     <select id="requestMediaType" ${typeRequired ? 'required' : ''}>
                         <option value="">${this.t('selectType')}</option>
                         <option value="Movie">${this.t('movie')}</option>
@@ -17780,7 +17856,7 @@
             // Build IMDB Code field HTML (if enabled)
             const imdbCodeHtml = imdbCodeEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbCode">${this.escapeHtml(imdbCodeLabel)}${imdbCodeRequired ? ' *' : ''}</label>
+                    <label for="requestImdbCode">${this.escapeHtml(this.stripRequiredMark(imdbCodeLabel))}${imdbCodeRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbCode" placeholder="${this.escapeHtml(imdbCodePlaceholder)}" ${imdbCodeRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -17788,7 +17864,7 @@
             // Build IMDB Link field HTML (if enabled)
             const imdbLinkHtml = imdbLinkEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestImdbLink">${this.escapeHtml(imdbLinkLabel)}${imdbLinkRequired ? ' *' : ''}</label>
+                    <label for="requestImdbLink">${this.escapeHtml(this.stripRequiredMark(imdbLinkLabel))}${imdbLinkRequired ? ' *' : ''}</label>
                     <input type="text" id="requestImdbLink" placeholder="${this.escapeHtml(imdbLinkPlaceholder)}" ${imdbLinkRequired ? 'required' : ''} />
                 </div>
             ` : '';
@@ -17796,7 +17872,7 @@
             // Build Notes field HTML (if enabled)
             const notesHtml = notesEnabled ? `
                 <div class="request-input-group">
-                    <label for="requestMediaNotes">${this.escapeHtml(notesLabel)}${notesRequired ? ' *' : ''}</label>
+                    <label for="requestMediaNotes">${this.escapeHtml(this.stripRequiredMark(notesLabel))}${notesRequired ? ' *' : ''}</label>
                     <textarea id="requestMediaNotes" placeholder="${this.escapeHtml(notesPlaceholder)}" ${notesRequired ? 'required' : ''}></textarea>
                 </div>
             ` : '';
@@ -17808,7 +17884,7 @@
                 <div id="mediaRequestBanNotice" style="display:none;"></div>
                 <div id="mediaRequestFormFields">
                     <div class="request-input-group">
-                        <label for="requestMediaTitle">${this.escapeHtml(titleLabel)} *</label>
+                        <label for="requestMediaTitle">${this.escapeHtml(this.stripRequiredMark(titleLabel))} *</label>
                         <input type="text" id="requestMediaTitle" placeholder="${this.escapeHtml(titlePlaceholder)}" required />
                     </div>
                     ${typeHtml}
@@ -18122,8 +18198,8 @@
             const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
 
             if (!title) {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('titleRequired') || 'Title is required');
                     });
                 }
@@ -18175,8 +18251,8 @@
                 return response.json();
             })
             .then(data => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('requestUpdated') || 'Request updated successfully');
                     });
                 }
@@ -18189,8 +18265,8 @@
             })
             .catch(err => {
                 console.error('Error updating request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(err.message || 'Error updating request');
                     });
                 }
@@ -18225,8 +18301,8 @@
                 return response.json();
             })
             .then(data => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('requestDeleted') || 'Request deleted successfully');
                     });
                 }
@@ -18236,8 +18312,8 @@
             })
             .catch(err => {
                 console.error('Error deleting request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error deleting request');
                     });
                 }
@@ -18546,8 +18622,8 @@
                         if (dateInput && dateInput.value) {
                             self.snoozeRequestModal(requestId, dateInput.value);
                         } else {
-                            if (window.require) {
-                                require(['toast'], function(toast) {
+                            {
+                                RatingsPlugin.withToast( function(toast) {
                                     toast('Please select a snooze date');
                                 });
                             }
@@ -18602,8 +18678,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('statusUpdated') || 'Request snoozed');
                     });
                 }
@@ -18611,8 +18687,8 @@
             })
             .catch(err => {
                 console.error('Error snoozing request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error snoozing request');
                     });
                 }
@@ -18641,8 +18717,8 @@
                 return response.json();
             })
             .then(() => {
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast(self.t('statusUpdated') || 'Request unsnoozed');
                     });
                 }
@@ -18650,8 +18726,8 @@
             })
             .catch(err => {
                 console.error('Error unsnoozing request:', err);
-                if (window.require) {
-                    require(['toast'], function(toast) {
+                {
+                    RatingsPlugin.withToast( function(toast) {
                         toast('Error unsnoozing request');
                     });
                 }
@@ -18675,9 +18751,9 @@
                 const imdbLink = imdbLinkEl ? imdbLinkEl.value.trim() : '';
 
                 if (!title) {
-                    if (window.require) {
+                    {
                         const msg = self.t('titleRequired');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -18686,9 +18762,9 @@
 
                 // Type validation - only if element exists and is required
                 if (typeEl && typeEl.hasAttribute('required') && !type) {
-                    if (window.require) {
+                    {
                         const msg = self.t('typeRequired');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -18697,8 +18773,8 @@
 
                 // IMDB Code validation - only if element exists and is required
                 if (imdbCodeEl && imdbCodeEl.hasAttribute('required') && !imdbCode) {
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Please fill in: IMDB Code');
                         });
                     }
@@ -18707,8 +18783,8 @@
 
                 // IMDB Link validation - only if element exists and is required
                 if (imdbLinkEl && imdbLinkEl.hasAttribute('required') && !imdbLink) {
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Please fill in: IMDB Link');
                         });
                     }
@@ -18717,8 +18793,8 @@
 
                 // Notes validation - only if element exists and is required
                 if (notesEl && notesEl.hasAttribute('required') && !notes) {
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Please fill in: Notes');
                         });
                     }
@@ -18734,8 +18810,8 @@
                     const value = input.value.trim();
                     if (input.hasAttribute('required') && !value) {
                         customFieldsValid = false;
-                        if (window.require) {
-                            require(['toast'], function(toast) {
+                        {
+                            RatingsPlugin.withToast( function(toast) {
                                 toast(`Please fill in: ${fieldName}`);
                             });
                         }
@@ -18781,9 +18857,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (window.require) {
+                    {
                         const msg = self.t('requestSubmitted');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -18805,9 +18881,9 @@
                 })
                 .catch(err => {
                     console.error('Error submitting request:', err);
-                    if (window.require) {
+                    {
                         const msg = self.t('requestFailed');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -19007,9 +19083,9 @@
                     return response.json();
                 })
                 .then(() => {
-                    if (window.require) {
+                    {
                         const msg = self.t('deletionRequestSent');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -19023,9 +19099,9 @@
                 })
                 .catch(err => {
                     console.error('Error submitting deletion request:', err);
-                    if (window.require) {
+                    {
                         const msg = self.t('deletionRequestFailed');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -19204,9 +19280,9 @@
                 })
                 .catch(err => {
                     console.error('Error processing deletion action:', err);
-                    if (window.require) {
+                    {
                         const msg = self.t('deletionActionFailed');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -19501,8 +19577,8 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Request deleted');
                         });
                     }
@@ -19518,8 +19594,8 @@
                 })
                 .catch(err => {
                     console.error('Error deleting request:', err);
-                    if (window.require) {
-                        require(['toast'], function(toast) {
+                    {
+                        RatingsPlugin.withToast( function(toast) {
                             toast('Error deleting request');
                         });
                     }
@@ -19567,9 +19643,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (window.require) {
+                    {
                         const msg = self.t('statusUpdated') + ': ' + self.t(newStatus);
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -19588,9 +19664,9 @@
                 })
                 .catch(err => {
                     console.error('Error updating status:', err);
-                    if (window.require) {
+                    {
                         const msg = self.t('statusUpdateFailed');
-                        require(['toast'], function(toast) {
+                        RatingsPlugin.withToast( function(toast) {
                             toast(msg);
                         });
                     }
@@ -20477,8 +20553,8 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        if (window.require) {
-                            require(['toast'], function (toast) {
+                        {
+                            RatingsPlugin.withToast( function (toast) {
                                 toast('Test notification sent!');
                             });
                         }
@@ -20492,8 +20568,8 @@
                 })
                 .catch(err => {
                     console.error('Error sending test notification:', err);
-                    if (window.require) {
-                        require(['toast'], function (toast) {
+                    {
+                        RatingsPlugin.withToast( function (toast) {
                             toast('Error sending test notification');
                         });
                     }
@@ -21388,14 +21464,14 @@
 
                 // The visible library toolbar: the classic .btnSort row, or Jellyfin 12's MUI one
                 const toolbar = self.findLibraryToolbar();
-                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+                const containerInToolbar = self.findSortControls(toolbar);
 
                 if (containerInToolbar) {
                     if (containerInToolbar.isConnected && document.body.contains(containerInToolbar)) {
                         return; // Already exists and visible
                     }
                     // Remove ALL orphaned sort buttons
-                    document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('.library-sort-mobile-row, .library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                 }
 
                 // Try to inject buttons
@@ -21421,11 +21497,11 @@
 
                 const toolbar = self.findLibraryToolbar();
                 if (!toolbar) return;
-                const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+                const containerInToolbar = self.findSortControls(toolbar);
 
                 if (!containerInToolbar && toolbar.isConnected) {
                     // Remove ALL existing sort buttons globally before injecting
-                    document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+                    document.querySelectorAll('.library-sort-mobile-row, .library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
                     self.injectLibrarySortButtons();
                 }
             });
@@ -21451,8 +21527,54 @@
          * Button titles are translated, so the MUI toolbar is recognised by its shape instead.
          * @returns {HTMLElement|null} The element the controls are appended to.
          */
+        /**
+         * The live sort controls, whether they sit in the toolbar or in the row above the grid.
+         * @param {HTMLElement|null} toolbar The visible library toolbar.
+         * @returns {HTMLElement|null} The #librarySortContainer marker, or null.
+         */
+        findSortControls: function (toolbar) {
+            const inToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+            if (inToolbar) return inToolbar;
+            const row = document.querySelector('.library-sort-mobile-row');
+            const inRow = row && row.isConnected && row.offsetParent !== null ? row.querySelector('#librarySortContainer') : null;
+            return inRow || null;
+        },
+
+        /**
+         * On narrow screens Jellyfin 12's toolbar cannot hold the sort controls: the row does not
+         * wrap (it is a fixed header), so on a phone the star buttons and Previous/Next were
+         * pushed off the screen. When the toolbar overflows, the controls move to their own row
+         * just above the poster grid instead. Retries briefly, because the toolbar is drawn
+         * before the grid exists.
+         * @param {HTMLElement} stack The MUI toolbar Stack.
+         * @param {HTMLElement} group The plugin's control group.
+         * @param {number} [attempt] Retry counter.
+         */
+        placeSortControlsForWidth: function (stack, group, attempt) {
+            const self = this;
+            attempt = attempt || 0;
+            if (!group.isConnected || group.parentElement !== stack) return;
+
+            const r = stack.getBoundingClientRect();
+            const overflows = stack.scrollWidth > stack.clientWidth + 1 || r.right > window.innerWidth + 1;
+            if (!overflows) return;
+
+            const grid = self.findLibraryItemsContainer();
+            if (!grid) {
+                if (attempt < 40) setTimeout(() => self.placeSortControlsForWidth(stack, group, attempt + 1), 250);
+                return;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'library-sort-mobile-row';
+            // Right padding keeps the buttons clear of Jellyfin's A-Z jump list on that edge.
+            row.style.cssText = 'display:flex;justify-content:flex-end;align-items:center;padding:4px 40px 8px 12px;';
+            row.appendChild(group);
+            grid.parentNode.insertBefore(row, grid);
+        },
+
         removeLibrarySortButtons: function () {
-            document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+            document.querySelectorAll('.library-sort-mobile-row, .library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
         },
 
         findLibraryToolbar: function () {
@@ -21498,11 +21620,11 @@
             const isMuiToolbar = !!(toolbar && toolbar.classList.contains('MuiStack-root'));
 
             // Check if our buttons already exist in the current visible toolbar
-            const containerInToolbar = toolbar ? toolbar.querySelector('#librarySortContainer') : null;
+            const containerInToolbar = self.findSortControls(toolbar);
             if (containerInToolbar && containerInToolbar.isConnected) return true;
 
             // Remove ALL existing sort buttons globally (prevents duplicates)
-            document.querySelectorAll('.library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
+            document.querySelectorAll('.library-sort-mobile-row, .library-sort-mui-group, #librarySortContainer, #librarySortDropdown, #librarySortDesc, #librarySortAsc').forEach(el => el.remove());
 
             let targetContainer = isMuiToolbar ? toolbar : null;
             let insertBefore = null;
@@ -21600,6 +21722,7 @@
                 const groups = targetContainer.querySelectorAll(':scope > .MuiButtonGroup-root');
                 const paging = groups.length > 1 ? groups[groups.length - 1] : null;
                 targetContainer.insertBefore(group, paging);
+                self.placeSortControlsForWidth(targetContainer, group);
             } else {
                 // Always append at the end of toolbar (after filter button)
                 targetContainer.appendChild(marker);
@@ -25114,7 +25237,7 @@
         applyModeratorLevel: function () {
             const self = this;
             if (!this.modActionTarget) {
-                require(['toast'], function(toast) { toast('No user selected'); });
+                RatingsPlugin.withToast( function(toast) { toast('No user selected'); });
                 return;
             }
 
@@ -25184,7 +25307,7 @@
                         headers: self.getChatAuthHeaders()
                     });
                 } else {
-                    require(['toast'], function(toast) { toast(userName + ' is not a moderator'); });
+                    RatingsPlugin.withToast( function(toast) { toast(userName + ' is not a moderator'); });
                     return null;
                 }
             })
@@ -26170,7 +26293,7 @@
          */
         showModToast: function (message) {
             try {
-                require(['toast'], function (toast) {
+                RatingsPlugin.withToast( function (toast) {
                     toast(message);
                 });
             } catch (e) {

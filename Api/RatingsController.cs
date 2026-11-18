@@ -4469,12 +4469,21 @@ namespace Jellyfin.Plugin.Ratings.Api
                 // was rejected with 401 while the same token worked elsewhere (issue #72).
                 var userId = await GetAuthenticatedUserIdAsync().ConfigureAwait(false);
 
-                if (!IsAdminRequest(userId))
+                if (userId == Guid.Empty)
                 {
-                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can view all deletion requests");
+                    return Unauthorized("User not authenticated");
                 }
 
                 var requests = _repository.GetAllDeletionRequests();
+
+                // Everyone else sees only their own. The user's request list needs them to show
+                // "deletion requested", earlier rejections and the 3-request limit, but this
+                // answered 403 for non-admins, so none of that ever appeared for them.
+                if (!IsAdminRequest(userId))
+                {
+                    requests = requests.Where(r => r.UserId == userId).ToList();
+                }
+
                 return Ok(requests);
             }
             catch (Exception ex)

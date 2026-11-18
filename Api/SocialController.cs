@@ -3588,23 +3588,6 @@ namespace Jellyfin.Plugin.Ratings.Api
         }
 
         /// <summary>
-        /// Update profile favorite rows.
-        /// </summary>
-        /// <param name="request">Favorites request.</param>
-        /// <returns>Success status.</returns>
-        [HttpPut("MyProfile/Favorites")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        /// <summary>
-        /// Keeps only values a favourite entry is allowed to hold.
-        ///
-        /// ItemId must be a Jellyfin id or empty; TmdbId digits only. Both are drawn into markup
-        /// by every viewer of the profile, so they are constrained here at the point of storage
-        /// rather than relying on each render site to escape correctly.
-        /// </summary>
-        /// <param name="item">The submitted entry.</param>
-        /// <returns>The entry with unusable identifiers cleared.</returns>
-        /// <summary>
         /// Applies a profile's visibility setting, or null when the viewer may see it.
         ///
         /// This check used to live inline in GetProfile only. The endpoints added later to make a
@@ -3666,6 +3649,15 @@ namespace Jellyfin.Plugin.Ratings.Api
             return _socialRepository.GetProfile(userId)?.Privacy?.ProfileVisibility == "Private";
         }
 
+        /// <summary>
+        /// Keeps only values a favourite entry is allowed to hold.
+        ///
+        /// ItemId must be a Jellyfin id or empty; TmdbId digits only. Both are drawn into markup
+        /// by every viewer of the profile, so they are constrained here at the point of storage
+        /// rather than relying on each render site to escape correctly.
+        /// </summary>
+        /// <param name="item">The submitted entry.</param>
+        /// <returns>The entry with unusable identifiers cleared.</returns>
         private static FavoriteItem SanitizeFavoriteItem(FavoriteItem item)
         {
             if (item == null)
@@ -3686,6 +3678,19 @@ namespace Jellyfin.Plugin.Ratings.Api
             return item;
         }
 
+        /// <summary>
+        /// Update profile favorite rows.
+        /// </summary>
+        /// <remarks>
+        /// The route attributes must sit directly on this method. From 2.0.369.0 two helpers were
+        /// inserted between them and this method, so [HttpPut] landed on the private
+        /// CheckProfileVisibility instead and every save answered 404 (issue #105).
+        /// </remarks>
+        /// <param name="request">Favorites request.</param>
+        /// <returns>Success status.</returns>
+        [HttpPut("MyProfile/Favorites")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> UpdateMyProfileFavorites([FromBody] FavoritesRequest request)
         {
             var currentUserId = GetCurrentUserId();

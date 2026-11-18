@@ -1433,6 +1433,26 @@
                 max-width: 100% !important;
                 width: 100% !important;
                 padding-right: 3em;
+                /* Padding inside the 100%: without this the page was wider than the screen and
+                   the right-hand column was cut off (and everything was clipped on a phone). */
+                box-sizing: border-box !important;
+            }
+
+            @media (max-width: 600px) {
+                #ratingsConfigPage [data-role="content"] {
+                    padding-right: 0;
+                }
+                #ratingsConfigPage .content-primary,
+                .pluginConfigurationPage .content-primary {
+                    padding-right: 1em;
+                }
+            }
+
+            /* Wide tables scroll inside their group instead of widening the page on a phone. */
+            #ratingsConfigForm .bp-table {
+                display: block;
+                max-width: 100%;
+                overflow-x: auto;
             }
 
             #ratingsConfigForm {
