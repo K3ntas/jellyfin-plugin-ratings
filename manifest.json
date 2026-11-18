@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/K3ntas/jellyfin-plugin-ratings/main/images/logo.png",
     "versions": [
       {
+        "version": "1.0.399.0",
+        "changelog": "Movies and shows scheduled for deletion show a red Leaving in N days strip across the bottom of their poster in libraries, home and search, without changing the card size. New setting under Media Management to show it on the poster, inside the rating badge, or not at all.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/K3ntas/jellyfin-plugin-ratings/releases/download/v1.0.399.0/Jellyfin.Plugin.Ratings_1.0.399.0.zip",
+        "checksum": "2749e5d622ae15426852a5c31ba605cf",
+        "timestamp": "2026-11-18T00:18:04Z"
+      },
+      {
         "version": "1.0.398.0",
         "changelog": "Works in the official desktop app (Jellyfin Media Player) again: rating and review pop-ups and profiles show on screen, ratings can be clicked and saved, and poster rating badges appear. New setting Excluded Libraries & Paths keeps chosen libraries, folders or keywords out of new-media notifications (thanks to @FaserF).",
         "targetAbi": "10.11.0.0",

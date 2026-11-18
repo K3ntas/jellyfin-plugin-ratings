@@ -2410,6 +2410,7 @@ namespace Jellyfin.Plugin.Ratings.Api
                     // Media management settings
                     EnableMediaManagement = config?.EnableMediaManagement ?? true,
                     DefaultDeletionDelayDays = config?.DefaultDeletionDelayDays ?? 7,
+                    LeavingBadgeStyle = string.IsNullOrWhiteSpace(config?.LeavingBadgeStyle) ? "poster" : config!.LeavingBadgeStyle,
 
                     // Request system settings
                     EnableAdminRequests = config?.EnableAdminRequests ?? false,
