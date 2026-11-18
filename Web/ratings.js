@@ -222,7 +222,7 @@
                 media1Day: '1 Day', media3Days: '3 Days', media1Week: '1 Week', media2Weeks: '2 Weeks', mediaCustom: 'Custom...', mediaCustomHours: 'Hours', defaultLabel: 'default',
                 itemMenuScheduleDeletion: 'Schedule deletion', itemMenuCancelDeletion: 'Cancel scheduled deletion',
                 mediaSchedule: 'Schedule', mediaCancel: 'Cancel', mediaNoScheduled: 'No scheduled deletions', mediaScheduledBy: 'Scheduled By', mediaDeletesIn: 'Deletes In',
-                mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaPlays: 'plays',
+                mediaActions: 'Actions', mediaChange: 'Change', mediaChangeTime: 'Change deletion time', mediaSoon: 'Soon', mediaDays: 'days', mediaDay: 'day', mediaPlays: 'plays',
                 mediaMinutes: 'min', mediaGB: 'GB', mediaMB: 'MB', mediaPage: 'Page', mediaOf: 'of', mediaPrev: 'Prev', mediaNext: 'Next', mediaGo: 'Go',
                 mediaTypeScheduled: 'Scheduled', mediaSettings: 'Settings', mediaIncludeTypes: 'Include media types:', mediaTypesHint: 'Select which media types to show',
                 mediaDiskUsage: 'Disk Usage', mediaDuplicates: 'Duplicates', mediaRestart: 'Restart',
@@ -11502,8 +11502,9 @@
             // Build badge text - start with rating
             let badgeText = '★ ' + (stats.averageRating ?? stats.AverageRating).toFixed(1);
 
-            // Append leaving info if available
-            if (itemId && self.scheduledDeletionsCache) {
+            // Append leaving info if available - only in the "rating" style; the default "poster"
+            // style draws its own strip on the image instead (see applyPosterLeavingStrips).
+            if (itemId && self.scheduledDeletionsCache && self.leavingBadgeStyle() === 'rating') {
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
                 if (deletion) {
                     const leavingText = self.formatLeavingText(self.apiField(deletion, 'deleteAt'));
@@ -11526,49 +11527,65 @@
             const diffMs = deleteDate - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
             if (diffDays <= 0) return self.t('mediaLeavingIn') + ' Today';
-            return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
+            // "1 day", not "1 days" - but only where the language pack has the singular, so other
+            // languages keep their own plural rather than getting an English word mixed in.
+            const lang = self.translations[self.currentLanguage] || {};
+            const unit = diffDays === 1 && lang.mediaDay ? lang.mediaDay : self.t('mediaDays');
+            return self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + unit;
         },
 
         /**
-         * Add leaving badge to a card - uses same CSS approach as rating badges
-         * Called from IntersectionObserver to use exact same card detection
+         * The admin's choice for how cards show a scheduled deletion (LeavingBadgeStyle):
+         * 'poster' (default), 'rating' or 'off'.
+         * @returns {string} The style.
          */
-        addLeavingBadgeToCard: function (imageContainer, itemId) {
+        leavingBadgeStyle: function () {
+            const style = (this._configCache || {}).LeavingBadgeStyle;
+            return style === 'rating' || style === 'off' ? style : 'poster';
+        },
+
+        /**
+         * Draws a red "Leaving in N days" strip across the bottom of the poster of every card that
+         * is scheduled for deletion, and removes it from cards that no longer are (issue #102).
+         *
+         * The strip is absolutely positioned inside .cardScalable - the box the poster image
+         * already fills - so the card does not grow. A label under the title, as first requested,
+         * would have pushed every row of cards out of line. Runs from updateDeletionBadges on its
+         * 2 s timer, so new cards, cancelled schedules and the daily countdown all keep up; it
+         * only touches the DOM when a strip's text actually changes.
+         */
+        applyPosterLeavingStrips: function () {
             const self = this;
+            const cache = self.scheduledDeletionsCache || {};
+            const show = self.leavingBadgeStyle() === 'poster';
+            const hasScheduled = show && Object.keys(cache).length > 0;
 
-            // Skip if no cache or no itemId
-            if (!self.scheduledDeletionsCache || !itemId) {
+            if (!hasScheduled) {
+                document.querySelectorAll('.ratings-leaving-strip').forEach(el => el.remove());
                 return;
             }
 
-            // Check if this item has scheduled deletion
-            const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];
-            if (!deletion) {
-                return;
-            }
+            document.querySelectorAll('.card[data-id]').forEach(card => {
+                const box = card.querySelector('.cardScalable');
+                if (!box) return;
+                const deletion = cache[card.getAttribute('data-id').toLowerCase()];
+                let strip = box.querySelector(':scope > .ratings-leaving-strip');
 
-            // Get the card element
-            const card = imageContainer.closest('.card');
-            if (!card) return;
+                if (!deletion) {
+                    if (strip) strip.remove();
+                    return;
+                }
 
-            // Skip if already has leaving badge
-            if (card.querySelector('.card-leaving-badge')) {
-                return;
-            }
-
-            // Calculate days until deletion
-            const now = new Date();
-            const deleteDate = new Date(self.apiField(deletion, 'deleteAt'));
-            const diffMs = deleteDate - now;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            const text = diffDays <= 0 ? self.t('mediaLeavingIn') + ' Today' : self.t('mediaLeavingIn') + ' ' + diffDays + ' ' + self.t('mediaDays');
-
-            // Create badge and add to card (not imageContainer - that has overflow:hidden)
-            const badge = document.createElement('div');
-            badge.className = 'card-leaving-badge';
-            badge.textContent = text;
-            card.appendChild(badge);
-
+                const text = self.formatLeavingText(self.apiField(deletion, 'deleteAt'));
+                if (!strip) {
+                    strip = document.createElement('div');
+                    strip.className = 'ratings-leaving-strip';
+                    box.appendChild(strip);
+                }
+                if (strip.textContent !== text) {
+                    strip.textContent = text;
+                }
+            });
         },
 
         /**
@@ -16241,6 +16258,9 @@
             if (!self.scheduledDeletionsCache) {
                 return;
             }
+
+            // Library, home and search cards: the strip on the poster
+            self.applyPosterLeavingStrips();
 
             // Update Netflix cards (custom cards created by this plugin)
             const netflixContainers = document.querySelectorAll('.netflix-view-container, .netflix-row');
@@ -22268,9 +22288,16 @@
             }
 
             const cards = container.querySelectorAll('.netflix-card[data-item-id]');
+            const off = self.leavingBadgeStyle() === 'off';
             cards.forEach(card => {
                 const itemId = card.getAttribute('data-item-id');
                 if (!itemId) return;
+
+                if (off) {
+                    card.classList.remove('has-leaving');
+                    card.removeAttribute('data-leaving');
+                    return;
+                }
 
                 // Check if this item has scheduled deletion
                 const deletion = self.scheduledDeletionsCache[itemId.toLowerCase()];

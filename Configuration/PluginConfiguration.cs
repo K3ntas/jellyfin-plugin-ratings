@@ -47,6 +47,7 @@ namespace Jellyfin.Plugin.Ratings.Configuration
             BugReportMaxAttachments = 3;
             BugReportMaxAttachmentMb = 2;
             DefaultDeletionDelayDays = 7;
+            LeavingBadgeStyle = "poster";
             AutoCancelDeletionThreshold = 0;
 
             // Request system settings
@@ -336,6 +337,14 @@ namespace Jellyfin.Plugin.Ratings.Configuration
         /// Gets or sets the default delay in days for scheduled deletions.
         /// </summary>
         public int DefaultDeletionDelayDays { get; set; }
+
+        /// <summary>
+        /// Gets or sets how media cards show that an item is scheduled for deletion:
+        /// "poster" (a red "Leaving in N days" strip across the bottom of the poster, the default),
+        /// "rating" (appended to the star rating badge, the behaviour before issue #102) or "off".
+        /// The strip lies over the image, so the card keeps its size.
+        /// </summary>
+        public string LeavingBadgeStyle { get; set; }
 
         /// <summary>
         /// Gets or sets the number of "keep" requests needed to auto-cancel a scheduled deletion.
