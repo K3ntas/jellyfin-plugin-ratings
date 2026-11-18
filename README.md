@@ -598,6 +598,7 @@ notes, IMDb code and IMDb link fields) · Custom Fields · Chat Notification Bad
 | `ShowHeaderProfileButton` | `true` | Profile button in the header |
 | `HideHomeDuplicates` | `true` | Suppress duplicate cards on the home page |
 | `EnableNewMediaNotifications` / `EnableEpisodeGrouping` | `true` / `true` | New-media popups, and episode grouping |
+| `NotificationExcludedPaths` | `""` | Comma- or semicolon-separated folder paths, library names, or keywords to exclude from new-media notifications (e.g. YouTube feeds or metadata imports) |
 
 </details>
 
