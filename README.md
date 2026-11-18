@@ -53,7 +53,7 @@ and the plugin stays inert when disabled.
 
 
 ☕ If this plugin saves you time, makes your workflow easier, or helps you ship better code, consider buying me a coffee. Your support keeps the project alive and motivates me to keep building, improving, and hecking! 💻🐈
-https://buymeacoffee.com/k3ntas
+https://ko-fi.com/k3ntas
 
 ---
 
